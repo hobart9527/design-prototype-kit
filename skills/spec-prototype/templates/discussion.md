@@ -3,6 +3,7 @@
 ## Resume
 
 - Execution boundary: active
+- Product archetype basis (`greenfield | feature-extension | refinement-audit`):
 - Active track / current decision:
 - Route basis (`visual-first | IA-first | IA-only | visual-only | spec-only | review-only | continuation | local-repair`), with source:
 - Requested scope and stopping point:

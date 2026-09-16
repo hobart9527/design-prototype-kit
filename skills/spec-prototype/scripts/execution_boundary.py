@@ -138,16 +138,18 @@ def check(payload):
         if record is None:
             if tool in {'Write', 'Edit', 'MultiEdit'}:
                 target = (cwd/args['file_path']).resolve()
-                discussion = cwd/'prototype/discussion.md'
-                require(target == discussion and not discussion.is_symlink(),
-                        'Create prototype/discussion.md first, before other design artifacts.')
+                if target.is_relative_to(cwd/'prototype'):
+                    discussion = cwd/'prototype/discussion.md'
+                    require(target == discussion and not discussion.is_symlink(),
+                            'Create prototype/discussion.md first, before other design artifacts.')
             return
         if 'Execution boundary: released' in record.read_text():
             return
         if tool in {'Write', 'Edit', 'MultiEdit'}:
             target = (cwd/args['file_path']).resolve()
-            require(target == record.resolve(),
-                    'Update the legacy prototype/discussion.md record before other design artifacts.')
+            if target.is_relative_to(record.parent):
+                require(target == record.resolve(),
+                        'Update the legacy prototype/discussion.md record before other design artifacts.')
         return
     if tool in {'Agent', 'Task'}:
         dispatch(args, root)

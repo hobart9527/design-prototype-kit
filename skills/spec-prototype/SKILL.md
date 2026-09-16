@@ -1,6 +1,6 @@
 ---
 name: spec-prototype
-description: Canonical 5-Stage Design Delivery Engine. Before answering /spec-prototype or UX/UI design, MUST read this file. All design & "只讨论" MUST write to prototype/discussion.md.
+description: "Canonical 5-Stage Design Delivery Engine for UI/UX experience design, information architecture, interactive prototypes, design tokens, and aesthetic reviews. Triggers on: '/spec-prototype', UI/UX design, interactive prototype, design system, tokens, IA, design audit, 'UI设计', 'UX设计', '原型设计', '交互设计', '设计系统', '设计规范', '体验走查', '界面重构'. NEGATIVE TRIGGERS (DO NOT invoke): pure backend code, database schema migrations, production bug fixes, or applying approved code changes in Loom delivery."
 license: MIT
 metadata:
   author: design-prototype-kit
@@ -19,6 +19,22 @@ Before any substantive design answer or action, read
 [the shared product-design core](references/core-workflow.md) completely. It is
 the single source for the Product Experience Model, professional method routing,
 artifact chain and completion rules. This file owns only Claude Code execution.
+
+## Entry Intent & Contextual Archetype Sniffing (三大路线自适应)
+
+Before entering Stage 1, inspect existing workspace assets to detect the product archetype:
+
+| Archetype | Detection Condition | Execution Route | Anti-Pattern to Prevent |
+|---|---|---|---|
+| **Archetype A: Greenfield 0-to-1 (全新产品)** | No existing tokens, stylesheets, or UI prototypes found in workspace. | **Full 5-Stage Pipeline**: Tone & Tension → 5 Dials Register → Hero Anchor & Tokens → Tiered Rollout → Review Portal → Silent Packaging. | Do not skip Stage 1 divergence or jump straight into default unconsidered templates. |
+| **Archetype B: New Surface 1-to-N (现有产品增设功能/页面)** | Workspace contains established tokens, layout shells, or host components. | **Lineage-Inherited Pipeline**: Strictly inherit existing tokens; Stage 1 focuses on OOUX cardinality & decisive exchange; bypass token reinvention; rollout new surface slice. | Do not reinvent existing tokens or create a conflicting design language that fractures the host product. |
+| **Archetype C: Refinement & Audit (现有产品体验优化与评审)** | User requests UX/UI review, design critique, or polish of existing screens. | **Targeted Stage 4 Fast-Forward**: Directly invoke Review Portal, Break Protocol, Concentric Radii check, and WCAG AAA audit. Produce actionable CSS/DOM refactoring deltas. | Do not throw away existing implementation or rebuild from scratch when a surgical delta solves the issue. |
+
+### Negative Trigger Boundary (绝对排他防火墙)
+DO NOT invoke `spec-prototype` for:
+1. Pure backend code, database migrations, or infrastructure configuration.
+2. Production code bug fixing (e.g. 500 errors, broken API fetches, null checks).
+3. Approved code delivery under Loom Entry 2 (`loom delivery step`), which implements production components rather than disposable design prototypes.
 
 ## Canonical 5-Stage Design Workflow (五阶工序状态机)
 

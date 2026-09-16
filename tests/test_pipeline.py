@@ -169,3 +169,21 @@ def test_canonical_design_references_and_floors():
     assert "Atmospheric Undertone" in discussion_tmpl
     assert "The Break Protocol" in discussion_tmpl
 
+
+def test_archetype_routing_and_negative_triggers():
+    skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    assert "NEGATIVE TRIGGERS" in skill_text
+    assert "Archetype A: Greenfield 0-to-1" in skill_text
+    assert "Archetype B: New Surface 1-to-N" in skill_text
+    assert "Archetype C: Refinement & Audit" in skill_text
+
+    usage_text = (SKILL / "references/usage.md").read_text(encoding="utf-8")
+    assert "形态 A：全新产品从零起步" in usage_text
+    assert "形态 B：现有产品增设新页面/新功能" in usage_text
+    assert "形态 C：现有产品体验优化与评审" in usage_text
+    assert "负向排他防火墙" in usage_text
+
+    discussion_tmpl = (SKILL / "templates/discussion.md").read_text(encoding="utf-8")
+    assert "Product archetype basis" in discussion_tmpl
+
+
