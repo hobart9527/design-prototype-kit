@@ -96,3 +96,26 @@ def test_export_cannot_overwrite_source_or_symlink_target(tmp_path):
     output.symlink_to(source)
     assert _run(source, output)[0] == 1
     assert source.read_bytes() == original
+
+
+def test_export_tokens_parses_two_column_breakpoints(tmp_path: Path):
+    sample_tokens = tmp_path / "tokens.md"
+    sample_tokens.write_text("""# Design Tokens
+
+## Breakpoints
+| Token | Value |
+|---|---|
+| `--bp-mobile` | `390px` |
+| `--bp-tablet` | `768px` |
+| `--bp-desktop` | `1280px` |
+| `--bp-wide` | `1600px` |
+""", encoding="utf-8")
+
+    out_json = tmp_path / "tokens.json"
+    code, stdout, stderr = _run(sample_tokens, out_json)
+    assert code == 0, stderr
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    assert "breakpoints" in data
+    assert set(data["breakpoints"].keys()) == {"mobile", "tablet", "desktop", "wide"}
+    assert data["breakpoints"]["mobile"]["$value"] == "390px"
+    assert data["breakpoints"]["wide"]["$value"] == "1600px"

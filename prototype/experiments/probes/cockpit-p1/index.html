@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Detent Cockpit // 亚秒级电传接管中控</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  :root {
+    --bg-void: #060709;
+    --bg-base: #0a0c10;
+    --bg-surface: #10131a;
+    --bg-surface-raised: #161b24;
+    --bg-overlay: #1c222e;
+    --border-dim: #1e2533;
+    --border-subtle: #293245;
+    --border-bright: #445474;
+    --text-primary: #f0f3f8;
+    --text-secondary: #8797b0;
+    --text-muted: #4e5d76;
+    --accent-cyan: #00f0ff;
+    --accent-cyan-dim: rgba(0, 240, 255, 0.15);
+    --accent-emerald: #00e599;
+    --accent-emerald-dim: rgba(0, 229, 153, 0.15);
+    --accent-amber: #ffaa00;
+    --accent-amber-dim: rgba(255, 170, 0, 0.18);
+    --accent-rose: #ff3366;
+    --accent-rose-dim: rgba(255, 51, 102, 0.2);
+    --font-mono: "JetBrains Mono", "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --ease-hud: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.4;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
+  }
+
+  /* Scanline CRT overlay in Freeze state */
+  body.frozen::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0, 240, 255, 0.02) 0px, rgba(0, 240, 255, 0.02) 1px, transparent 2px, transparent 4px);
+    z-index: 999;
+    mix-blend-mode: screen;
+  }
+  body.frozen {
+    filter: contrast(1.08) brightness(0.92);
+  }
+
+  /* Telemetry Top Navigation */
+  header {
+    height: 44px;
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+  }
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 3px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .badge-cruise {
+    color: var(--accent-emerald);
+    background: var(--accent-emerald-dim);
+    border: 1px solid rgba(0, 229, 153, 0.35);
+  }
+  .badge-detent {
+    color: var(--accent-amber);
+    background: var(--accent-amber-dim);
+    border: 1px solid rgba(255, 170, 0, 0.45);
+    animation: detentGlow 1.2s infinite alternate ease-in-out;
+  }
+  .badge-freeze {
+    color: #fff;
+    background: var(--accent-rose);
+    border: 1px solid var(--accent-rose);
+    box-shadow: 0 0 12px rgba(255, 51, 102, 0.6);
+  }
+  @keyframes detentGlow {
+    from { box-shadow: 0 0 4px rgba(255, 170, 0, 0.2); }
+    to { box-shadow: 0 0 16px rgba(255, 170, 0, 0.6); }
+  }
+  .telemetry-strip {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .telemetry-strip .item span { color: var(--text-muted); margin-right: 5px; }
+  .telemetry-strip .item strong { color: var(--text-primary); }
+
+  /* 3-Zone Cockpit Structure */
+  .cockpit-core {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ZONE A: 1:N Fleet Confidence Horizon */
+  .zone-horizon {
+    height: 148px;
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .zone-header {
+    height: 28px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .horizon-scroll {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-dim) transparent;
+  }
+  .stream-card {
+    flex: 0 0 148px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.15s var(--ease-hud);
+    position: relative;
+  }
+  .stream-card:hover {
+    background: var(--bg-surface-raised);
+    border-color: var(--border-subtle);
+  }
+  .stream-card.active {
+    background: var(--bg-surface-raised);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2), inset 0 0 12px rgba(0, 240, 255, 0.05);
+  }
+  .stream-card.active::after {
+    content: "ACTIVE";
+    position: absolute;
+    top: -6px;
+    right: 6px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    background: var(--accent-cyan);
+    color: #000;
+    font-weight: bold;
+    padding: 0 4px;
+    border-radius: 2px;
+  }
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--font-mono);
+  }
+  .card-id { font-size: 11px; font-weight: 700; color: var(--text-primary); }
+  .card-conf { font-size: 12px; font-weight: 700; }
+  .card-conf.high { color: var(--accent-emerald); }
+  .card-conf.warn { color: var(--accent-amber); }
+  .card-conf.crit { color: var(--accent-rose); }
+  .sparkline-svg {
+    width: 100%;
+    height: 32px;
+    margin: 4px 0;
+  }
+  .card-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+  }
+  .card-status-pill {
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 8px;
+    font-weight: 600;
+  }
+  .pill-cruise { background: var(--accent-emerald-dim); color: var(--accent-emerald); }
+  .pill-detent { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .pill-fork { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+
+  /* Center Workspace: Split between Zone B (Detent Rail) and Zone C (Takeover & Ghost Forking) */
+  .workspace {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    overflow: hidden;
+    background: var(--bg-void);
+  }
+
+  /* ZONE B: Spatial Detent Rail Stage */
+  .zone-rail {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-dim);
+    position: relative;
+    background: radial-gradient(circle at 50% 35%, rgba(14, 20, 30, 0.7) 0%, rgba(6, 7, 9, 0.95) 75%);
+    overflow: hidden;
+  }
+  .hud-canvas-container {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  /* Vector HUD rings & radar */
+  .hud-compass {
+    position: absolute;
+    width: 440px;
+    height: 440px;
+    border: 1px solid var(--border-dim);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .hud-compass::before {
+    content: "";
+    position: absolute;
+    inset: 30px;
+    border: 1px dashed var(--border-subtle);
+    border-radius: 50%;
+  }
+  .hud-compass::after {
+    content: "";
+    position: absolute;
+    inset: 90px;
+    border: 1px solid rgba(0, 240, 255, 0.1);
+    border-radius: 50%;
+  }
+  .crosshair-h {
+    position: absolute;
+    width: 520px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-dim), transparent);
+    pointer-events: none;
+  }
+  .crosshair-v {
+    position: absolute;
+    height: 520px;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--border-dim), transparent);
+    pointer-events: none;
+  }
+
+  /* Focus Waypoint Card */
+  .waypoint-hero {
+    width: 500px;
+    background: rgba(16, 20, 28, 0.92);
+    border: 1px solid var(--border-bright);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    padding: 20px;
+    z-index: 5;
+    position: relative;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s var(--ease-hud);
+  }
+  .waypoint-hero.snapped-well {
+    border-color: var(--accent-amber);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 28px rgba(255, 170, 0, 0.35);
+  }
+  .hero-tagline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+  .hero-tag {
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-subtle);
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: var(--text-secondary);
+  }
+  .snapped-well .hero-tag {
+    background: var(--accent-amber-dim);
+    border-color: var(--accent-amber);
+    color: var(--accent-amber);
+  }
+  .hero-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .hero-action {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+  .hero-notional {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+  }
+  .hero-desc {
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    background: var(--bg-base);
+    padding: 10px 14px;
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    margin-bottom: 14px;
+  }
+  .metric-cell {
+    font-family: var(--font-mono);
+  }
+  .metric-cell span {
+    display: block;
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+  .metric-cell strong {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* Physical Detent Rail Controller (Bottom of Zone B) */
+  .detent-rail-dock {
+    height: 160px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border-dim);
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    z-index: 10;
+  }
+  .rail-tele-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+  .magnetic-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent-amber);
+    font-weight: 700;
+  }
+
+  /* High Frequency Rail Track */
+  .rail-canvas-wrap {
+    position: relative;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    cursor: ew-resize;
+  }
+  .rail-track-line {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    position: relative;
+  }
+  .rail-progress-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(90deg, rgba(0, 240, 255, 0.2), rgba(0, 240, 255, 0.7));
+    border-radius: 3px;
+    pointer-events: none;
+    transition: width 0.05s linear;
+  }
+  .gravity-well-point {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 2px solid var(--accent-amber);
+    box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+    cursor: pointer;
+    z-index: 3;
+    transition: transform 0.15s;
+  }
+  .gravity-well-point:hover {
+    transform: translate(-50%, -50%) scale(1.3);
+  }
+  .gravity-well-point.captured {
+    background: var(--accent-amber);
+    box-shadow: 0 0 20px var(--accent-amber);
+  }
+  .gravity-well-point::before {
+    content: "GRAVITY WELL";
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    white-space: nowrap;
+    color: var(--accent-amber);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .gravity-well-point::after {
+    content: attr(data-metric);
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    white-space: nowrap;
+    color: var(--text-secondary);
+  }
+
+  /* Regular Waypoint Ticks */
+  .waypoint-tick {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    cursor: pointer;
+    z-index: 2;
+    transition: all 0.15s;
+  }
+  .waypoint-tick:hover {
+    background: var(--accent-cyan);
+    transform: translate(-50%, -50%) scale(1.6);
+  }
+
+  /* Needle / Scrub Thumb */
+  .rail-cursor-thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 22px;
+    height: 34px;
+    background: var(--bg-base);
+    border: 2px solid var(--accent-cyan);
+    border-radius: 3px;
+    box-shadow: 0 0 14px var(--accent-cyan);
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    transition: left 0.05s linear;
+  }
+  .rail-cursor-thumb:active { cursor: grabbing; }
+  .thumb-grip {
+    width: 2px;
+    height: 14px;
+    background: var(--accent-cyan);
+  }
+
+  /* ZONE C: 1:1 Fly-by-wire Takeover & Ghost Forking */
+  .zone-takeover {
+    background: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-dim) transparent;
+  }
+  .takeover-panel-header {
+    height: 36px;
+    background: var(--bg-surface-raised);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .freeze-banner {
+    padding: 12px 14px;
+    background: rgba(255, 170, 0, 0.08);
+    border-bottom: 1px solid rgba(255, 170, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  body.frozen .freeze-banner {
+    background: rgba(255, 51, 102, 0.12);
+    border-bottom: 1px solid rgba(255, 51, 102, 0.35);
+  }
+  .freeze-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .freeze-state-tag {
+    color: var(--accent-amber);
+  }
+  body.frozen .freeze-state-tag {
+    color: var(--accent-rose);
+  }
+
+  /* Dial / Sliders section */
+  .dials-box {
+    padding: 14px;
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .dial-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .dial-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .dial-meta .lbl { color: var(--text-secondary); }
+  .dial-meta .val { color: var(--accent-cyan); font-weight: 700; }
+  .dial-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--bg-base);
+    outline: none;
+    border: 1px solid var(--border-subtle);
+  }
+  .dial-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--accent-cyan);
+    cursor: pointer;
+    box-shadow: 0 0 6px var(--accent-cyan);
+    transition: transform 0.1s;
+  }
+  .dial-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  /* Ghost Forking Comparison Matrix */
+  .ghost-diff-section {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .ghost-card {
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    padding: 12px;
+  }
+  .ghost-card.auto {
+    border-left: 3px solid var(--text-muted);
+  }
+  .ghost-card.human {
+    border-left: 3px solid var(--accent-amber);
+    background: linear-gradient(180deg, rgba(255, 170, 0, 0.04) 0%, var(--bg-base) 100%);
+  }
+  .ghost-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .table-diff {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .table-diff td {
+    padding: 4px 0;
+  }
+  .table-diff td.val {
+    text-align: right;
+    font-weight: 600;
+  }
+  .table-diff .pos { color: var(--accent-emerald); }
+  .table-diff .neg { color: var(--accent-rose); }
+  .table-diff .warn { color: var(--accent-amber); }
+
+  /* Bottom Command Legend Bar */
+  footer {
+    height: 36px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border-dim);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    z-index: 100;
+  }
+  .command-keys {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+  kbd {
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-bright);
+    color: var(--text-primary);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .footer-audit {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+  /* Scale Benchmarks & Reference Gridlines */
+  .grid-line {
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-dasharray: 2 2;
+  }
+  .axis {
+    stroke: rgba(255, 255, 255, 0.18);
+  }
+
+  /* Accessibility: Prefers-reduced-motion equivalence */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Responsive Narrow Viewport Stacking (max-width: 768px & 390px) */
+  @media (max-width: 768px) {
+    body {
+      height: auto;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+    .workspace {
+      flex-direction: column;
+      overflow: visible;
+    }
+    .zone-rail {
+      border-right: none;
+      border-bottom: 1px solid var(--border-dim);
+    }
+    .zone-takeover {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 390px) {
+    header {
+      height: auto;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px;
+      gap: 8px;
+    }
+    .telemetry-strip {
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      width: 100%;
+    }
+    .horizon-scroll {
+      padding: 8px 10px;
+      gap: 8px;
+    }
+    .stream-card {
+      width: 130px;
+      padding: 8px;
+    }
+    .hud-canvas-container {
+      padding: 14px 10px;
+    }
+    .waypoint-hero {
+      max-width: 100%;
+      padding: 14px;
+    }
+    .hero-title-row {
+      flex-direction: column;
+      gap: 4px;
+    }
+    .hero-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .detent-rail-dock {
+      padding: 12px 10px;
+    }
+    .rail-tele-row {
+      font-size: 9px;
+    }
+    footer {
+      height: auto;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px;
+      gap: 8px;
+    }
+    .command-keys {
+      flex-wrap: wrap;
+      gap: 6px 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 3v6M12 15v6M3 12h6M15 12h6"/>
+    </svg>
+    <span>AERO-DETENT COCKPIT // V-3.8 FBW</span>
+  </div>
+  <div class="telemetry-strip">
+    <div class="item"><span>ORCHESTRATED SWARM:</span><strong>24 STREAMS</strong></div>
+    <div class="item"><span>GLOBAL TPS:</span><strong id="glob-tps">1,840 op/s</strong></div>
+    <div class="item"><span>VAR (99% 1H):</span><strong style="color: var(--accent-amber)">$248,500</strong></div>
+    <div class="item"><span>SYSTEM STATE:</span><div class="status-badge badge-cruise" id="top-status-badge">CRUISING</div></div>
+  </div>
+</header>
+
+<div class="cockpit-core">
+  <!-- ZONE A: 1:N Fleet Confidence Horizon -->
+  <section class="zone-horizon">
+    <div class="zone-header">
+      <span>Zone A // 1:N Fleet Confidence Horizon (Parallel Agent Pipelines)</span>
+      <span>Cycle Hotkey: [ Previous | ] Next</span>
+    </div>
+    <div class="horizon-scroll" id="horizon-list">
+      <!-- 24 streams dynamically rendered via JS -->
+    </div>
+  </section>
+
+  <!-- Split Main Workspace -->
+  <div class="workspace">
+    <!-- ZONE B: 1:1 Spatial Detent Rail -->
+    <section class="zone-rail">
+      <div class="zone-header" style="background: transparent; border-color: var(--border-dim)">
+        <span>Zone B // 1:1 Spatial Detent Rail (Selected Stream Waypoints)</span>
+        <span id="rail-stream-id" style="color: var(--accent-cyan)">STREAM-08: HEDGE-GAMMA-EXEC</span>
+      </div>
+
+      <div class="hud-canvas-container">
+        <div class="hud-compass"></div>
+        <div class="crosshair-h"></div>
+        <div class="crosshair-v"></div>
+
+        <!-- Waypoint Focus Centerpiece -->
+        <div class="waypoint-hero" id="waypoint-card">
+          <div class="hero-tagline">
+            <span class="hero-tag" id="wp-step-num">STEP 14 / 20</span>
+            <span id="wp-clock" style="color: var(--text-muted)">T-00.42s EXECUTION HORIZON</span>
+          </div>
+          <div class="hero-title-row">
+            <div class="hero-action" id="wp-action-title">Gamma Delta Neutralization Sweep</div>
+            <div class="hero-notional" id="wp-notional">$850,000 USD</div>
+          </div>
+          <p class="hero-desc" id="wp-rationale">
+            Liquidity imbalance detected across Binance / Bybit books. Order size approaches 12% of depth. Detent gravity well triggers automatic damping to prevent runaway price impact.
+          </p>
+          <div class="hero-grid">
+            <div class="metric-cell">
+              <span>Confidence Index</span>
+              <strong id="wp-conf" style="color: var(--accent-amber)">72.4%</strong>
+            </div>
+            <div class="metric-cell">
+              <span>Expected Slippage</span>
+              <strong id="wp-slip" style="color: var(--accent-rose)">1.28%</strong>
+            </div>
+            <div class="metric-cell">
+              <span>VaR Exposure</span>
+              <strong id="wp-var">+$14,200</strong>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-snap-trigger" style="flex: 1; padding: 6px 12px; background: var(--bg-surface-raised); border: 1px solid var(--border-bright); color: var(--text-primary); border-radius: 3px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;">
+              SNAP TO NEAREST WELL
+            </button>
+            <button id="btn-force-freeze" style="flex: 1; padding: 6px 12px; background: var(--accent-rose-dim); border: 1px solid var(--accent-rose); color: #fff; border-radius: 3px; font-family: var(--font-mono); font-size: 11px; cursor: pointer; font-weight: 700;">
+              ENGAGE FBW FREEZE [SPACE]
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- High-Frequency Detent Rail Dock -->
+      <div class="detent-rail-dock">
+        <div class="rail-tele-row">
+          <span>SPATIAL TIME RUNWAY (T-60s to T+60s)</span>
+          <div class="magnetic-indicator" id="magnetic-status">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
+            <span id="magnetic-label">DETENT READY (RANGE: ±4.5%)</span>
+          </div>
+          <span id="rail-cursor-pos">CURSOR: 68.0%</span>
+        </div>
+
+        <div class="rail-canvas-wrap" id="rail-track-container">
+          <div class="rail-track-line">
+            <div class="rail-progress-fill" id="rail-fill" style="width: 68%;"></div>
+            <!-- Detent wells rendered dynamically -->
+            <div id="rail-ticks-layer"></div>
+            <div class="rail-cursor-thumb" id="rail-thumb" style="left: 68%;">
+              <div class="thumb-grip"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rail-tele-row" style="color: var(--text-muted);">
+          <span>WAYPOINT 01 [START]</span>
+          <span style="color: var(--accent-amber)">MAGNETIC WELL AT STEP 14 (68%)</span>
+          <span>WAYPOINT 20 [SETTLED]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ZONE C: 1:1 Fly-by-wire Takeover & Ghost Forking -->
+    <section class="zone-takeover">
+      <div class="takeover-panel-header">
+        <span>Zone C // Fly-by-wire Takeover</span>
+        <span id="fbw-state-badge" style="color: var(--text-secondary)">STANDBY</span>
+      </div>
+
+      <div class="freeze-banner">
+        <div class="freeze-title">
+          <span>SIMULATION STATE</span>
+          <span class="freeze-state-tag" id="freeze-tag">LIVE AUTONOMOUS CRUISE</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;">
+          Hold or tap <kbd>Space</kbd> to halt timeline in millisecond frame. Adjust parameters in-situ to project counterfactual ghost branches.
+        </p>
+      </div>
+
+      <!-- Parameter fine-tuning dials -->
+      <div class="dials-box">
+        <div class="dial-item">
+          <div class="dial-meta">
+            <span class="lbl">Slippage Tolerance Ceiling</span>
+            <span class="val" id="val-slippage">0.35%</span>
+          </div>
+          <input type="range" class="dial-slider" id="slider-slippage" min="0.05" max="2.00" step="0.05" value="0.35">
+        </div>
+
+        <div class="dial-item">
+          <div class="dial-meta">
+            <span class="lbl">Position Ratio Delta</span>
+            <span class="val" id="val-position">40%</span>
+          </div>
+          <input type="range" class="dial-slider" id="slider-position" min="10" max="100" step="5" value="40">
+        </div>
+
+        <div class="dial-item">
+          <div class="dial-meta">
+            <span class="lbl">Volatility Gate Barrier</span>
+            <span class="val" id="val-vol">1.8σ</span>
+          </div>
+          <input type="range" class="dial-slider" id="slider-vol" min="0.5" max="3.5" step="0.1" value="1.8">
+        </div>
+      </div>
+
+      <!-- Ghost Forking side-by-side -->
+      <div class="ghost-diff-section">
+        <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+          Ghost Fork Differential Projection
+        </div>
+
+        <!-- Autonomous Path -->
+        <div class="ghost-card auto">
+          <div class="ghost-header">
+            <span style="color: var(--text-secondary);">Autonomous Agent Path (Default)</span>
+            <span style="color: var(--accent-rose);">UNCONSTRAINED</span>
+          </div>
+          <table class="table-diff">
+            <tr><td>Expected Win Rate</td><td class="val" id="auto-win">64.2%</td></tr>
+            <tr><td>Max Projected Drawdown</td><td class="val neg" id="auto-dd">-11.8%</td></tr>
+            <tr><td>Projected Net PnL</td><td class="val pos" id="auto-pnl">+$38,400</td></tr>
+            <tr><td>Slippage Impact Loss</td><td class="val neg" id="auto-slip">-$9,200</td></tr>
+          </table>
+        </div>
+
+        <!-- Human Intervention Path -->
+        <div class="ghost-card human">
+          <div class="ghost-header">
+            <span style="color: var(--accent-amber);">Human Fly-By-Wire Fork (Intervention)</span>
+            <span style="color: var(--accent-emerald);" id="human-fork-tag">SAFEGUARDED</span>
+          </div>
+          <table class="table-diff">
+            <tr><td>Expected Win Rate</td><td class="val pos" id="human-win">82.6%</td></tr>
+            <tr><td>Max Projected Drawdown</td><td class="val pos" id="human-dd">-2.4%</td></tr>
+            <tr><td>Projected Net PnL</td><td class="val pos" id="human-pnl">+$27,850</td></tr>
+            <tr><td>Slippage Impact Loss</td><td class="val pos" id="human-slip">-$1,120</td></tr>
+          </table>
+        </div>
+
+        <div style="background: var(--bg-base); border: 1px dashed var(--border-subtle); border-radius: 3px; padding: 10px; font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono);">
+          <strong style="color: var(--text-primary); display: block; margin-bottom: 2px;">ZERO-MODAL CONVERGENCE:</strong>
+          Commit merges intervened weights into live execution stream without thread termination.
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer>
+  <div class="command-keys">
+    <span><kbd>[</kbd> / <kbd>]</kbd> Cycle Stream</span>
+    <span><kbd>←</kbd> / <kbd>→</kbd> Scrub Waypoints</span>
+    <span><kbd>Space</kbd> Freeze / Takeover</span>
+    <span><kbd>Drag</kbd> Scrub Timeline</span>
+    <span><kbd>Enter</kbd> Commit Delta</span>
+    <span><kbd>Esc</kbd> Cancel Cruise</span>
+  </div>
+  <div class="footer-audit">
+    <span>FLY-BY-WIRE SPEC PROBE · AERO-DETENT COCKPIT</span>
+  </div>
+</footer>
+
+<script>
+  // --- 1. State Management ---
+  const state = {
+    streams: [],
+    activeStreamIndex: 7, // Default focus on Stream-08 (low conf detent)
+    isFrozen: false,
+    isMagneticSnapped: false,
+    cursorPercent: 68.0,
+    detentWellPercent: 68.0, // Detent gravity well at step 14
+    sliderSlippage: 0.35,
+    sliderPosition: 40,
+    sliderVol: 1.8
+  };
+
+  // Generate 24 simulated stream pipelines
+  const STREAM_NAMES = [
+    "ARBITRAGE-BIN-OKX", "GAMMA-NEUTRAL-PERP", "STAT-ARB-COIN", "FUNDING-HARVEST-SOL",
+    "LIQ-SWEEP-ETH", "ORDERBOOK-IMBALANCE", "CROSS-DEX-FLASH", "HEDGE-GAMMA-EXEC",
+    "BASIS-TRADE-BTC", "MOMENTUM-DELTA-8", "VOL-SURFACE-CALC", "MULTI-SIG-ESCROW",
+    "DEPTH-PROBE-AVAX", "SPREAD-COMPRESSOR", "FLASH-REBALANCE", "LIMIT-LADDER-SYS",
+    "DELTA-PROTECT-ETH", "SLIPPAGE-OPTIMIZER", "MEAN-REVERT-DEFI", "PERP-BASIS-HUNTER",
+    "DYNAMIC-VAULT-ALLOC", "TX-MEV-DEFENDER", "GAMMA-SCALPER-01", "SETTLEMENT-ARBITER"
+  ];
+
+  for (let i = 0; i < 24; i++) {
+    // Inject low confidence well specifically at stream 8 (index 7)
+    let conf;
+    if (i === 7) {
+      conf = 72.4;
+    } else {
+      conf = +(82 + Math.random() * 17).toFixed(1);
+    }
+    const tps = Math.floor(60 + Math.random() * 120);
+    let status = "CRUISING";
+    if (conf < 75) status = "DETENT_CAPTURED";
+    else if (conf < 85) status = "FORK_PREVIEW";
+
+    // 10 historical points for sparkline
+    const spark = [];
+    for (let s = 0; s < 10; s++) {
+      spark.push(Math.floor(conf + (Math.random() * 8 - 4)));
+    }
+
+    state.streams.push({
+      id: `STREAM-${String(i + 1).padStart(2, '0')}`,
+      name: STREAM_NAMES[i],
+      conf,
+      tps,
+      status,
+      spark
+    });
+  }
+
+  // --- 2. DOM Selectors ---
+  const horizonList = document.getElementById('horizon-list');
+  const topStatusBadge = document.getElementById('top-status-badge');
+  const waypointCard = document.getElementById('waypoint-card');
+  const wpStepNum = document.getElementById('wp-step-num');
+  const wpActionTitle = document.getElementById('wp-action-title');
+  const wpNotional = document.getElementById('wp-notional');
+  const wpRationale = document.getElementById('wp-rationale');
+  const wpConf = document.getElementById('wp-conf');
+  const wpSlip = document.getElementById('wp-slip');
+  const wpVar = document.getElementById('wp-var');
+  const railStreamId = document.getElementById('rail-stream-id');
+  const railThumb = document.getElementById('rail-thumb');
+  const railFill = document.getElementById('rail-fill');
+  const railTrackContainer = document.getElementById('rail-track-container');
+  const railTicksLayer = document.getElementById('rail-ticks-layer');
+  const magneticStatus = document.getElementById('magnetic-status');
+  const magneticLabel = document.getElementById('magnetic-label');
+  const railCursorPos = document.getElementById('rail-cursor-pos');
+  const fbwStateBadge = document.getElementById('fbw-state-badge');
+  const freezeTag = document.getElementById('freeze-tag');
+  const btnForceFreeze = document.getElementById('btn-force-freeze');
+  const btnSnapTrigger = document.getElementById('btn-snap-trigger');
+
+  // Sliders & Dials
+  const sliderSlippage = document.getElementById('slider-slippage');
+  const sliderPosition = document.getElementById('slider-position');
+  const sliderVol = document.getElementById('slider-vol');
+  const valSlippage = document.getElementById('val-slippage');
+  const valPosition = document.getElementById('val-position');
+  const valVol = document.getElementById('val-vol');
+
+  // Ghost Fork Metrics
+  const autoWin = document.getElementById('auto-win');
+  const autoDd = document.getElementById('auto-dd');
+  const autoPnl = document.getElementById('auto-pnl');
+  const autoSlip = document.getElementById('auto-slip');
+  const humanWin = document.getElementById('human-win');
+  const humanDd = document.getElementById('human-dd');
+  const humanPnl = document.getElementById('human-pnl');
+  const humanSlip = document.getElementById('human-slip');
+  const humanForkTag = document.getElementById('human-fork-tag');
+
+  // --- 3. Render Zone A (Horizon) ---
+  function renderHorizon() {
+    horizonList.innerHTML = '';
+    state.streams.forEach((stream, idx) => {
+      const card = document.createElement('div');
+      card.className = `stream-card ${idx === state.activeStreamIndex ? 'active' : ''}`;
+
+      let confClass = 'high';
+      let pillClass = 'pill-cruise';
+      if (stream.conf < 75) {
+        confClass = 'crit';
+        pillClass = 'pill-detent';
+      } else if (stream.conf < 85) {
+        confClass = 'warn';
+        pillClass = 'pill-fork';
+      }
+
+      // Generate SVG sparkline
+      const maxVal = Math.max(...stream.spark);
+      const minVal = Math.min(...stream.spark);
+      const range = (maxVal - minVal) || 1;
+      const points = stream.spark.map((pt, pIdx) => {
+        const x = (pIdx / (stream.spark.length - 1)) * 128;
+        const y = 28 - ((pt - minVal) / range) * 22;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+
+      const strokeColor = stream.conf < 75 ? 'var(--accent-amber)' : (stream.conf < 85 ? 'var(--accent-cyan)' : 'var(--accent-emerald)');
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="card-id">${stream.id}</span>
+          <span class="card-conf ${confClass}">${stream.conf}%</span>
+        </div>
+        <svg class="sparkline-svg" viewBox="0 0 128 32">
+          <line class="grid-line" x1="0" y1="8" x2="128" y2="8" stroke="rgba(255,255,255,0.08)" stroke-dasharray="2 2"/>
+          <line class="grid-line" x1="0" y1="20" x2="128" y2="20" stroke="rgba(255,255,255,0.08)" stroke-dasharray="2 2"/>
+          <line class="axis" x1="0" y1="31" x2="128" y2="31" stroke="rgba(255,255,255,0.18)"/>
+          <polyline fill="none" stroke="${strokeColor}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>
+        </svg>
+        <div class="card-foot">
+          <span>${stream.tps} op/s</span>
+          <span class="card-status-pill ${pillClass}">${stream.status}</span>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        selectStream(idx);
+      });
+
+      horizonList.appendChild(card);
+    });
+
+    // Auto-scroll selected card into view
+    const activeCard = horizonList.children[state.activeStreamIndex];
+    if (activeCard) {
+      activeCard.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+    }
+  }
+
+  function selectStream(index) {
+    if (index < 0) index = state.streams.length - 1;
+    if (index >= state.streams.length) index = 0;
+    state.activeStreamIndex = index;
+    const stream = state.streams[index];
+    railStreamId.textContent = `${stream.id}: ${stream.name}`;
+
+    // If stream has a critical well, sync state
+    if (stream.conf < 75) {
+      state.detentWellPercent = 68.0;
+      setMagneticSnap(true);
+    } else {
+      state.detentWellPercent = 45.0 + (index % 5) * 8;
+      setMagneticSnap(false);
+    }
+
+    renderHorizon();
+    updateWaypointCard();
+    renderRailTicks();
+  }
+
+  // --- 4. Render Zone B (Rail & Detents) ---
+  function renderRailTicks() {
+    railTicksLayer.innerHTML = '';
+    // 20 steps
+    for (let i = 1; i <= 20; i++) {
+      const pct = (i / 21) * 100;
+      // If near detentWellPercent, render Gravity Well
+      if (Math.abs(pct - state.detentWellPercent) < 3.5) {
+        const well = document.createElement('div');
+        well.className = `gravity-well-point ${state.isMagneticSnapped ? 'captured' : ''}`;
+        well.style.left = `${state.detentWellPercent}%`;
+        well.setAttribute('data-metric', '72.4% CONF');
+        well.addEventListener('click', () => {
+          setCursorPosition(state.detentWellPercent, true);
+        });
+        railTicksLayer.appendChild(well);
+      } else {
+        const tick = document.createElement('div');
+        tick.className = 'waypoint-tick';
+        tick.style.left = `${pct}%`;
+        tick.addEventListener('click', () => {
+          setCursorPosition(pct, false);
+        });
+        railTicksLayer.appendChild(tick);
+      }
+    }
+  }
+
+  function setCursorPosition(pct, snap = false) {
+    pct = Math.max(4, Math.min(96, pct));
+
+    // Magnetic well snapping logic within ±4.5%
+    const distToWell = Math.abs(pct - state.detentWellPercent);
+    if (distToWell < 4.5 || snap) {
+      pct = state.detentWellPercent;
+      setMagneticSnap(true);
+    } else {
+      setMagneticSnap(false);
+    }
+
+    state.cursorPercent = pct;
+    railThumb.style.left = `${pct}%`;
+    railFill.style.width = `${pct}%`;
+    railCursorPos.textContent = `CURSOR: ${pct.toFixed(1)}%`;
+    updateWaypointCard();
+  }
+
+  function setMagneticSnap(isSnapped) {
+    state.isMagneticSnapped = isSnapped;
+    if (isSnapped) {
+      waypointCard.classList.add('snapped-well');
+      magneticStatus.style.color = 'var(--accent-amber)';
+      magneticLabel.textContent = 'MAGNETIC DETENT CAPTURED [STICKY]';
+      if (!state.isFrozen) {
+        topStatusBadge.textContent = 'DETENT_CAPTURED';
+        topStatusBadge.className = 'status-badge badge-detent';
+      }
+    } else {
+      waypointCard.classList.remove('snapped-well');
+      magneticStatus.style.color = 'var(--text-secondary)';
+      magneticLabel.textContent = 'CRUISING (DETENT STANDBY)';
+      if (!state.isFrozen) {
+        topStatusBadge.textContent = 'CRUISING';
+        topStatusBadge.className = 'status-badge badge-cruise';
+      }
+    }
+    renderRailTicks();
+  }
+
+  function updateWaypointCard() {
+    const stream = state.streams[state.activeStreamIndex];
+    if (state.isMagneticSnapped) {
+      wpStepNum.textContent = 'STEP 14 / 20 [CRITICAL DETENT]';
+      wpActionTitle.textContent = 'Gamma Delta Liquidity Neutralization';
+      wpNotional.textContent = '$850,000 USD';
+      wpRationale.textContent = 'Liquidity oracle detected orderbook depth vacuum. Detent magnetic lock engaged. Autonomous execution decelerated for operator verification.';
+      wpConf.textContent = '72.4%';
+      wpConf.style.color = 'var(--accent-amber)';
+      wpSlip.textContent = `${(state.sliderSlippage * 2.8).toFixed(2)}%`;
+      wpVar.textContent = '+$14,200';
+    } else {
+      const step = Math.round((state.cursorPercent / 100) * 20);
+      wpStepNum.textContent = `STEP ${step} / 20 [CRUISING]`;
+      wpActionTitle.textContent = `Nominal Arbitrage Spread Settlement #${step}`;
+      wpNotional.textContent = `$${(120000 + step * 25000).toLocaleString()} USD`;
+      wpRationale.textContent = `Execution parameters operating inside optimal variance tunnel. Autopilot maintaining continuous low-latency route.`;
+      wpConf.textContent = `${stream.conf}%`;
+      wpConf.style.color = 'var(--accent-emerald)';
+      wpSlip.textContent = '0.08%';
+      wpVar.textContent = '+$2,400';
+    }
+  }
+
+  // --- 5. Scrubbing & Drag Interaction ---
+  let isDragging = false;
+  railTrackContainer.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    handleScrub(e);
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) handleScrub(e);
+  });
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  function handleScrub(e) {
+    const rect = railTrackContainer.getBoundingClientRect();
+    let pct = ((e.clientX - rect.left) / rect.width) * 100;
+    setCursorPosition(pct);
+  }
+
+  // --- 6. Zone C: Freeze, Takeover & Ghost Fork Computation ---
+  function toggleFreeze(freeze) {
+    state.isFrozen = freeze !== undefined ? freeze : !state.isFrozen;
+    if (state.isFrozen) {
+      document.body.classList.add('frozen');
+      topStatusBadge.textContent = 'FBW_FREEZE_ACTIVE';
+      topStatusBadge.className = 'status-badge badge-freeze';
+      fbwStateBadge.textContent = 'ACTIVE FBW TAKEOVER';
+      fbwStateBadge.style.color = 'var(--accent-rose)';
+      freezeTag.textContent = 'FREEZE FRAME ENGAGED (ZERO DRIFT)';
+      btnForceFreeze.textContent = 'RELEASE CRUISE [ESC]';
+    } else {
+      document.body.classList.remove('frozen');
+      fbwStateBadge.textContent = 'STANDBY';
+      fbwStateBadge.style.color = 'var(--text-secondary)';
+      freezeTag.textContent = 'LIVE AUTONOMOUS CRUISE';
+      btnForceFreeze.textContent = 'ENGAGE FBW FREEZE [SPACE]';
+      if (state.isMagneticSnapped) {
+        topStatusBadge.textContent = 'DETENT_CAPTURED';
+        topStatusBadge.className = 'status-badge badge-detent';
+      } else {
+        topStatusBadge.textContent = 'CRUISING';
+        topStatusBadge.className = 'status-badge badge-cruise';
+      }
+    }
+  }
+
+  function updateGhostCalculations() {
+    state.sliderSlippage = parseFloat(sliderSlippage.value);
+    state.sliderPosition = parseInt(sliderPosition.value, 10);
+    state.sliderVol = parseFloat(sliderVol.value);
+
+    valSlippage.textContent = `${state.sliderSlippage.toFixed(2)}%`;
+    valPosition.textContent = `${state.sliderPosition}%`;
+    valVol.textContent = `${state.sliderVol.toFixed(1)}σ`;
+
+    // Dynamic model for counterfactual projection
+    // Position clamp reduces max drawdown & loss, stabilizes winrate
+    const ratio = state.sliderPosition / 100;
+    const baseWin = 64.2;
+    const humanWinVal = Math.min(94.5, baseWin + (1 - ratio) * 22 + (state.sliderVol > 2.0 ? 4 : 0));
+    const humanDdVal = -(1.2 + ratio * 6.5).toFixed(1);
+    const humanPnlVal = Math.round(18000 + ratio * 24000 - state.sliderSlippage * 3000);
+    const humanSlipVal = Math.round(state.sliderSlippage * 2200);
+
+    humanWin.textContent = `${humanWinVal.toFixed(1)}%`;
+    humanDd.textContent = `${humanDdVal}%`;
+    humanPnl.textContent = `+$${humanPnlVal.toLocaleString()}`;
+    humanSlip.textContent = `-$${humanSlipVal.toLocaleString()}`;
+
+    if (ratio <= 0.5) {
+      humanForkTag.textContent = 'CONSERVATIVE CLAMP';
+      humanForkTag.style.color = 'var(--accent-emerald)';
+    } else {
+      humanForkTag.textContent = 'ALPHA AGGRESSIVE';
+      humanForkTag.style.color = 'var(--accent-amber)';
+    }
+
+    updateWaypointCard();
+  }
+
+  // Step cursor along waypoints (forward/backward)
+  function stepWaypoint(direction) {
+    // Generate waypoint percentages matching renderRailTicks
+    const waypoints = [];
+    for (let i = 1; i <= 20; i++) {
+      waypoints.push((i / 21) * 100);
+    }
+    // Include the detent gravity well position as a discrete snap point
+    if (!waypoints.some(w => Math.abs(w - state.detentWellPercent) < 1.0)) {
+      waypoints.push(state.detentWellPercent);
+      waypoints.sort((a, b) => a - b);
+    }
+
+    const current = state.cursorPercent;
+    let target = null;
+
+    if (direction > 0) {
+      target = waypoints.find(w => w > current + 0.5);
+      if (target === undefined) target = waypoints[waypoints.length - 1];
+    } else {
+      target = [...waypoints].reverse().find(w => w < current - 0.5);
+      if (target === undefined) target = waypoints[0];
+    }
+
+    if (target !== null && target !== undefined) {
+      setCursorPosition(target);
+    }
+  }
+
+  // --- 7. Event Listeners & Hotkeys ---
+  sliderSlippage.addEventListener('input', updateGhostCalculations);
+  sliderPosition.addEventListener('input', updateGhostCalculations);
+  sliderVol.addEventListener('input', updateGhostCalculations);
+
+  btnForceFreeze.addEventListener('click', () => toggleFreeze());
+  btnSnapTrigger.addEventListener('click', () => setCursorPosition(state.detentWellPercent, true));
+
+  window.addEventListener('keydown', (e) => {
+    // Ignore keystrokes if focused in text or textarea
+    const activeEl = document.activeElement;
+    const isTextInput = activeEl && (
+      (activeEl.tagName === 'INPUT' && !['range', 'button', 'checkbox', 'radio'].includes(activeEl.type)) ||
+      activeEl.tagName === 'TEXTAREA'
+    );
+    if (isTextInput) return;
+
+    const navKeys = ['Space', ' ', 'ArrowLeft', 'ArrowRight', 'h', 'H', 'l', 'L', '[', ']', 'Enter', 'Escape'];
+    if (navKeys.includes(e.key) || e.code === 'Space') {
+      if (['Space', ' ', 'ArrowLeft', 'ArrowRight'].includes(e.key) || e.code === 'Space') {
+        e.preventDefault();
+      }
+      // Release focus from range inputs or buttons to guarantee consistent global shortcuts
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'BUTTON')) {
+        activeEl.blur();
+      }
+    }
+
+    if (e.code === 'Space' || e.key === ' ') {
+      e.preventDefault();
+      toggleFreeze();
+    } else if (e.key === 'ArrowLeft' || e.key === 'h' || e.key === 'H') {
+      e.preventDefault();
+      stepWaypoint(-1);
+    } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
+      e.preventDefault();
+      stepWaypoint(1);
+    } else if (e.key === '[') {
+      selectStream(state.activeStreamIndex - 1);
+    } else if (e.key === ']') {
+      selectStream(state.activeStreamIndex + 1);
+    } else if (e.key === 'Enter') {
+      // Commit Delta and unfreeze
+      if (state.isFrozen) {
+        toggleFreeze(false);
+        // Visual confirmation pulse
+        waypointCard.style.outline = '2px solid var(--accent-emerald)';
+        setTimeout(() => { waypointCard.style.outline = 'none'; }, 400);
+      }
+    } else if (e.key === 'Escape') {
+      if (state.isFrozen) {
+        toggleFreeze(false);
+      }
+    }
+  });
+
+  // Simulated live telemetry loop
+  setInterval(() => {
+    if (!state.isFrozen) {
+      const globTps = document.getElementById('glob-tps');
+      globTps.textContent = `${(1800 + Math.floor(Math.random() * 80)).toLocaleString()} op/s`;
+    }
+  }, 1000);
+
+  // Initialize
+  renderHorizon();
+  renderRailTicks();
+  setCursorPosition(68.0, true);
+  updateGhostCalculations();
+</script>
+</body>
+</html>

@@ -41,7 +41,9 @@ calibrated to the user's operational mode, avoiding both uninformative emptiness
   trigger must cleanly restore state without leaking orphan overlays, frozen inputs,
   unhandled promises, or mutated unsubmitted drafts. A single broken exit branch
   blocks `verified` unconditionally.
-- **Physical Metaphor Accountability**: Where a component claims a physical, optical, biomorphic or domain tool mapping, the implementation must genuinely express the stated phenomenon through observable interactive or visual behavior. Hollow cosmetic styling that merely names a metaphor without enacting it fails the Floor.
+- **Physical Metaphor & Kinetic Accountability**: Where a component claims a physical, optical, biomorphic or domain tool mapping, the implementation must genuinely express the stated phenomenon through observable interactive or visual behavior. Hollow cosmetic styling that merely names a metaphor without enacting it fails the Floor. Interactive buttons and levers must implement tactile feedback (`:active { transform: scale(0.97); }`) and natural deceleration curves (`cubic-bezier(0.16, 1, 0.3, 1)`).
+- **Zero Inline Hex Rule (Token Inheritance Discipline)**: Prototypes must derive all colors, spacing, radii, and transitions from inherited CSS variables (e.g. `var(--color-primary)`). Hardcoding raw Hex values (`#ffffff`, `#000000`) or raw pixel dimensions in markup is strictly prohibited.
+- **Touch Ergonomics Floor**: All interactive controls for mobile viewports must enforce a minimum touch target of `44x44px` (`min-h-[44px] min-w-[44px]`) with adequate tap clearance.
 - Do not trade away readable contrast, keyboard access, visible focus, necessary
   status, consequence or recovery information for visual effect.
 - Do not use empty generator filler such as “Lorem ipsum”, “Card 1” or “Title goes

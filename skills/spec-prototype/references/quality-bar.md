@@ -13,8 +13,9 @@ An experience fails the Floor if any of the following occurs:
 - Semantic drift or unsupported product capabilities attributed to source truth.
 - Fabricated approval provenance or false claims of independent review.
 - Silent no-ops, broken cancel/close/reopen/retry branches, or unhandled errors.
-- Basic WCAG 2.2 AA accessibility failures (contrast, focus traps, pointer targets).
-- False claims of verification without actual browser execution traces.
+- Basic WCAG 2.2 AA accessibility failures (contrast, focus traps, pointer targets); tokens intended for long-form data/text must achieve WCAG AAA (7:1 contrast) under static analysis.
+- Inline hex colors or hardcoded styling bypassing `shared/tokens.css` inheritance.
+- False claims of verification without actual browser execution traces or without a verified `review-portal.html` multi-view walkthrough harness.
 - Physical or natural metaphor masquerade: claiming a domain tool, optical phenomenon, or biomorphic mapping while delivering purely cosmetic styling with no corresponding observable behavior or interaction.
 - Generated-slop fingerprints confirmed below (see *Generated-output fingerprint check*).
 

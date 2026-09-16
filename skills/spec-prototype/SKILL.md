@@ -1,24 +1,56 @@
 ---
 name: spec-prototype
-description: Before answering /spec-prototype or UX/UI design, MUST read this file. All design & "只讨论" MUST write to prototype/discussion.md.
+description: Canonical 5-Stage Design Delivery Engine. Before answering /spec-prototype or UX/UI design, MUST read this file. All design & "只讨论" MUST write to prototype/discussion.md.
 license: MIT
 metadata:
-  author: ai-writer-master
-  version: "8.2.1"
+  author: design-prototype-kit
+  version: "9.0.0"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit|MultiEdit|NotebookEdit|Bash|Agent|Task"
       hooks:
         - type: command
-          command: 'python3 "${LOOM_CLAUDE_HOME:-$HOME/.claude}/skills/spec-prototype/scripts/execution_boundary.py"'
+          command: 'python3 -c "import os, sys, subprocess; f = [p for p in [os.environ.get(\"LOOM_CLAUDE_HOME\", os.path.expanduser(\"~/.claude\")) + \"/skills/spec-prototype/scripts/execution_boundary.py\", \"skills/spec-prototype/scripts/execution_boundary.py\"] if os.path.isfile(p)]; sys.exit(subprocess.run([sys.executable, f[0]]).returncode if f else 0)"'
 ---
 
-# Spec Prototype — Claude Code adapter
+# Spec Prototype — Canonical 5-Stage Design Delivery Engine
 
 Before any substantive design answer or action, read
 [the shared product-design core](references/core-workflow.md) completely. It is
 the single source for the Product Experience Model, professional method routing,
 artifact chain and completion rules. This file owns only Claude Code execution.
+
+## Canonical 5-Stage Design Workflow (五阶工序状态机)
+
+All product design execution follows an unbroken 5-stage state machine:
+
+```text
+[Stage 1: 破 - Tone & Tension Divergence]
+  │  Gated: AskUserQuestion (Declare core business tension, 3+ ruthless omissions, 2 distinct metaphors)
+  ▼
+[Stage 2: 立 - Core Hero Anchor Prototyping]
+  │  Gated: AskUserQuestion (Single highest-density anchor screen, signature tactile kinetics, shared/tokens.css)
+  ▼
+[Stage 3: 拓 - Tier-by-Tier Rollout]
+  │  Dispatched in discrete batches: Tier 0 (Strategic), Tier 1 (Tactical), Tier 2 (Governance)
+  │  Strict: <link rel="stylesheet" href="../../shared/tokens.css">, zero inline hex colors
+  ▼
+[Stage 4: 验 - Holistic Review & In-Place Tuning]
+  │  Harness: review-portal.html (multi-view walkthrough, 5 experience states inspection)
+  │  Controlled Loopback: Stage 3/4 -> Stage 2 (Anchor revision only)
+  ▼
+[Stage 5: 冻 - Silent Packaging & Headless Governance]
+     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (AAA), handoff.py (SHA-256)
+```
+
+## Dual-Engine Architecture: Sharp Exploration vs Silent Governance
+
+1. **Front-stage Exploration Engine (破、立、拓、验)**:
+   - Focus cognitive attention on reframing hidden business/user tensions, anchoring signature interactions, and declaring ruthless omissions over exhaustive matrix-filling.
+   - Probes and Walking Skeletons operate in **Draft Mode**: rapid, disposable, code-informed learning where interactive craft directly refines the concept model (`Craft informs Soul`). Zero immutable hash deadlocks or ceremonial forms during exploration.
+2. **Back-stage Governance Compiler (Silent Packaging - 冻)**:
+   - Immutable digests, formal manifests, and token compilation run silently via helper scripts (`handoff.py`, `export-tokens.py`, `wcag-check.js`) only when the human explicitly requests formal delivery or downstream engineering handoff.
+   - Governance serves as a quiet post-hoc compiler, never a cognitive tax on upfront design reasoning.
 
 ## Storage discipline (read before any file write)
 

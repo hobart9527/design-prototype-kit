@@ -55,6 +55,46 @@ not a competing rule.
 | ID | Question | Depends on | Impact | Recommendation | Owner |
 |---|---|---|---|---|---|
 
+## Canonical 5-Stage Design Engine Record
+
+### Stage 1: Tone & Tension Divergence (破)
+- **Business Tension**:
+- **Ruthless Omissions (at least 3 explicit exclusions)**:
+  1.
+  2.
+  3.
+- **Contrasting Metaphors**:
+  - *Option A*:
+  - *Option B*:
+- **User Gate Verdict (`AskUserQuestion`)**:
+
+### Stage 2: Core Hero Anchor & Token Materialization (立)
+- **Hero Screen Anchor Target**:
+- **Tactile Physics & Kinetics** (`:active scale(0.97)`, `cubic-bezier(0.16, 1, 0.3, 1)`, `120ms` detent):
+- **Physical Token Entity (`prototype/shared/tokens.css`)**:
+- **User Gate Verdict (`AskUserQuestion`)**:
+
+### Stage 3: Tier-by-Tier Rollout (拓)
+- **Tier 0: Strategic Orbit** (Dashboard / Telemetry):
+- **Tier 1: Tactical Station** (Workbenches / Detent Flow):
+- **Tier 2: Governance Bridge** (Audit / Gateways):
+- **Token Inheritance Verification** (`<link href="../../shared/tokens.css">`, zero inline hex):
+
+### Stage 4: Review Portal Walkthrough & Tuning (验)
+- **Review Portal Harness (`prototype/review-portal.html`)**:
+- **Five Operational States**:
+  - [ ] Loading (Skeleton)
+  - [ ] Empty (Contextual CTA)
+  - [ ] Partial (Degraded)
+  - [ ] Error (In-place retry)
+  - [ ] Overflow (Extreme length wrapping)
+- **Controlled Loopback (if triggered: Stage 4 -> Stage 2)**:
+
+### Stage 5: Silent Governance Compilation (冻)
+- **DTCG Export (`prototype/dist/tokens.json`)**:
+- **WCAG AAA Static Audit**:
+- **Handoff Manifest (`prototype/dist/manifest.json`)**:
+
 ## Evidence and changes
 
 - Research and review links:

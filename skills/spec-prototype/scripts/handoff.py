@@ -131,7 +131,7 @@ def associations(root: Path, spec_path: Path, body: str, refs: dict, contract: s
     # Identity is independent of review status. Read the old combined header
     # for immutable retained maps, but never choose between two declarations.
     declarations = re.findall(
-        r"^- Surface map revision( / status)?:[ \t]*([^\n]*)$",
+        r"^- Surface map revision( / status(?:\s*\([^)]*\))?)?:[ \t]*([^\n]*)$",
         map_body,
         re.IGNORECASE | re.MULTILINE,
     )
@@ -381,6 +381,7 @@ def packet(root: Path, spec: str) -> dict:
     if Path(declared_root).resolve() != root:
         raise HandoffError("Specification repository root mismatch")
     refs = {key: reference(root, body, label) for key, label in (
+        ("product", "Product record revision and digest"),
         ("foundation", "Foundation revision and digest"),
         ("tokens", "Token artifact path, revision, and digest"),
         ("slice_contract", "Slice Contract revision and digest"),
@@ -410,7 +411,6 @@ def packet(root: Path, spec: str) -> dict:
     resolved_craft_reads = craft_reads(body)
     for label in ("Start command", "Verification command(s)"):
         require_command_paths_exist(root, body, label)
-    require_prototype_entry(root, scopes["prototype_write_scope"])
     visual = visual_verification(body)
     screenshots = raw_field(body, "Required screenshot checkpoints")
     if visual == "required" and (not screenshots.strip() or _is_placeholder(screenshots)):
@@ -419,6 +419,7 @@ def packet(root: Path, spec: str) -> dict:
     specification = retained(root, spec)
     required_reads = [
         specification,
+        refs["product"],
         refs["slice_contract"],
         refs["foundation"],
         refs["surface_map"],
@@ -447,6 +448,7 @@ def freeze(root: Path, spec: str) -> dict:
     # Packet validation verifies that all referenced files exist and match their declared digests,
     # that scopes are valid, and that craft reads and obligations are satisfied.
     pkt = packet(root, spec)
+    require_prototype_entry(root, pkt["prototype_write_scope"])
     spec_path = within(root, spec)
     spec_body = spec_path.read_text()
 
@@ -479,6 +481,22 @@ def freeze(root: Path, spec: str) -> dict:
     return frozen_manifest
 
 
+def directory_manifest(directory: Path) -> dict:
+    directory = directory.resolve()
+    if not directory.is_dir():
+        raise HandoffError(f"Directory not found: {directory}")
+    entries = {}
+    for p in sorted(directory.rglob("*")):
+        if p.is_file() and not p.is_symlink():
+            rel = p.relative_to(directory).as_posix()
+            entries[rel] = hashlib.sha256(p.read_bytes()).hexdigest()
+    return {
+        "directory": str(directory),
+        "total_files": len(entries),
+        "files": entries,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -491,6 +509,9 @@ def main() -> int:
     frz = sub.add_parser("freeze")
     frz.add_argument("--root", type=Path, required=True)
     frz.add_argument("--spec", required=True)
+    man = sub.add_parser("manifest")
+    man.add_argument("--dir", type=Path, required=True)
+    man.add_argument("--output", type=Path)
     args = parser.parse_args()
     try:
         if args.command == "digests":
@@ -501,6 +522,14 @@ def main() -> int:
             print(json.dumps(packet(args.root, args.spec), ensure_ascii=False, indent=2))
         elif args.command == "freeze":
             print(json.dumps(freeze(args.root, args.spec), ensure_ascii=False, indent=2))
+        elif args.command == "manifest":
+            data = directory_manifest(args.dir)
+            formatted = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+            if args.output:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(formatted, encoding="utf-8")
+            else:
+                print(formatted, end="")
     except (HandoffError, OSError, UnicodeError) as error:
         print(f"prototype_blocked: {error}", file=sys.stderr)
         return 1

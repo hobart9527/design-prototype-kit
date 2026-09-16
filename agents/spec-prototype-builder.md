@@ -114,8 +114,8 @@ cannot prove rendering, interaction or screen-reader behavior.
 Every delivered prototype must not be a dead, single-frame mock. Unless explicitly scoped out by a bounded probe:
 1. **Support Dynamic Interaction**: Allow users to click, toggle, filter, or input sample data to see dynamic DOM updates and interactive feedback.
 2. **Handle Applicable Experience States**: Support and render the core operational states required by the journey—such as Loading, Empty, Partial, Error, and Overflow—via natural task interactions, representative fixtures, or harness adapters, without injecting unsolicited floating review widgets into production UI.
-3. **Physical-World Easing & Mobile Touch Ergonomics**: Apply responsive, fluid micro-interactions with natural physics (deceleration curves `cubic-bezier(0.16, 1, 0.3, 1)`, tactile active feedback `:active { transform: scale(0.97); }`, sticky headers, and smooth transitions) where appropriate to the declared design proposition. For mobile viewports, enforce minimum touch target dimensions (`min-h-[44px] min-w-[44px]`) and smooth touch drag/swipe ergonomics.
-4. **Resilient Data Fixtures**: Equip the prototype with a built-in mock data generator that produces realistic, domain-specific multi-record datasets with CRUD simulation.
+3. **Physical-World Easing & Mobile Touch Ergonomics**: Apply responsive, fluid micro-interactions with natural physics (deceleration curves `cubic-bezier(0.16, 1, 0.3, 1)`, tactile active feedback `:active { transform: scale(0.97); }`, sticky headers, and smooth transitions) where appropriate to the declared design proposition. For mobile viewports, enforce minimum touch target dimensions (`min-h-[44px] min-w-[44px]`) and touch ergonomics appropriate to the contracted interactions.
+4. **Resilient Data Fixtures**: Equip the prototype with schema-faithful fixtures that produce realistic, domain-specific multi-record datasets; simulate actions only when declared in the Contract.
 
 Before submitting a receipt, Builder must inspect the rendered screenshots against
 the craft standards and density decisions in `references/design-floor.md` and

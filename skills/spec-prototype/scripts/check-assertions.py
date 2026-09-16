@@ -66,7 +66,7 @@ def table_rows(text: str, header_contains: str) -> list[list[str]]:
 
 
 def normalize(text: str) -> str:
-    return " ".join(re.sub(r"[^a-z0-9 ]", " ", text.lower()).split())
+    return " ".join(re.sub(r"[^\w\s]", " ", text.lower(), flags=re.UNICODE).split())
 
 
 def words(text: str) -> list[str]:
@@ -111,6 +111,7 @@ def evaluate(foundation: str, evidence: str) -> list[str]:
     for assertion in required:
         label = assertion if len(assertion) <= 72 else assertion[:69] + "..."
         found = [row for row in rows if row and matches(assertion, row[0])]
+        found.sort(key=lambda r: 0 if normalize(r[0]) == normalize(assertion) else 1)
         if not found:
             violations.append(f"required assertion absent from evidence: {label}")
             continue

@@ -5,24 +5,54 @@ interaction, content, visual/brand expression, accessibility, prototype evidence
 and engineering handoff into one coherent design. HTML is an evidence medium,
 not the definition of design.
 
-## The Architectural Spine: One coherent design lineage
+## The Canonical 5-Stage Design Delivery Engine (标准五阶工序)
 
-All design work within this Skill follows one unbroken spine:
+All design work within this Skill follows the unbroken five-stage delivery state machine:
 
 ```text
- 1. 魂: Sense-making & Metaphor  ──> Domain substrate mapping, authentic physical/natural world grounding, conviction
- 2. 骨: OOUX & Surface Topology   ──> Object cardinality, 3-tier wayfinding, page necessity calculus
- 3. 皮: Atmosphere & Craft       ──> Physical/natural mapping compiled to concrete tokens and component constraints
- 4. 根: Engineering & Closure     ──> Faithful execution of constraints, state machine closure, verified evidence
+ Stage 1 (破): Tone & Tension Divergence ──> Declare core business tension, 3+ ruthless omissions, 2 distinct metaphors (Gated)
+ Stage 2 (立): Core Hero Anchor          ──> Single highest-density anchor screen, signature kinetics, shared/tokens.css (Gated)
+ Stage 3 (拓): Tier-by-Tier Rollout      ──> Discrete batch rollout (Tier 0 Orbit, Tier 1 Station, Tier 2 Bridge); strict inheritance
+ Stage 4 (验): Holistic Review Portal    ──> review-portal.html walkthrough, 5 experience states, controlled loopback
+ Stage 5 (冻): Silent Governance         ──> DTCG tokens.json, WCAG AAA static audit, SHA-256 asset manifest
 ```
 
-This spine synthesizes strategy, structure, expression, and engineering into one
-continuous dependency graph. Each layer is accountable only upward (inputs) and
-downward (outputs): design philosophy belongs at 魂, execution contracts belong
-at 皮, and builders execute what the contracts specify. It is neither a checklist
-nor a collection of disconnected tips: every visual choice traces to an object
-relationship, every surface traces to a user job, and every engineering packet
-traces to a verified design conviction.
+### Stage 1: Tone & Tension Divergence (破 - 魂)
+- **Business Tension Reframing**: Explicitly declare the central contradiction (e.g. Extreme Developer Density vs Instant Novice Clarity).
+- **Ruthless Omission (决绝断舍离)**: Author an explicit list of at least 3 capabilities, surfaces, or decorative widgets that are *deliberately excluded or deferred* to protect focus.
+- **Two Distinct Metaphors**: Present exactly 2 contrasting physical/conceptual metaphors with distinct spatial consequences.
+- **Gate**: Must obtain explicit user confirmation via `AskUserQuestion` before proceeding.
+
+### Stage 2: Core Hero Anchor Prototyping (立 - 皮)
+- **Highest-Density Anchor**: Do not spray out multiple pages. Build the single most consequential, highest-density screen first (the Hero Anchor).
+- **Tactile Physics & Micro-dynamics**:
+  - Button elastic press: `:active { transform: scale(0.97); }`
+  - Industrial deceleration: `cubic-bezier(0.16, 1, 0.3, 1)`
+  - Micro-snap: `120ms` detent transitions.
+- **Physical Token Entity**: Materialize `prototype/shared/tokens.css` with fundamental colors, typography, elevations, and motion curves.
+- **Gate**: Review the Anchor screen and token definitions via `AskUserQuestion` before expanding.
+
+### Stage 3: Tier-by-Tier Rollout (拓 - 骨)
+- **Discrete Batching**: Dispatch in phased tiers rather than a single monolithic generation:
+  - **Tier 0: Strategic Orbit** (Dashboard / Bird's Eye Telemetry / Situation Awareness)
+  - **Tier 1: Tactical Station** (Workbenches / Flow Automation / Detent Control)
+  - **Tier 2: Governance Bridge** (Audit Logs / Security Gateways / Token Registry)
+- **Strict Token Inheritance**:
+  - Every secondary screen must link: `<link rel="stylesheet" href="../../shared/tokens.css">`.
+  - Zero tolerance for inline Hex colors (`#ffffff`, `#000`) or hardcoded pixel margins.
+
+### Stage 4: Holistic Review & In-Place Tuning (验 - 鉴)
+- **Unified Review Portal (`review-portal.html`)**: Single responsive multi-view harness embedding an iframe for all screens, viewport switches (390px, 768px, 1280px, 1600px), and state triggers.
+- **Five Essential States**: Validate Loading (skeleton), Empty (contextual CTA), Partial (degraded state), Error (in-place recovery), and Overflow (long text wrapping).
+- **Controlled Loopback (FSM Re-entry)**:
+  - State reversals are strictly restricted: `Stage 3/4 -> Stage 2` (Anchor Revision).
+  - Prevents evasive concept pivots while permitting necessary token and layout refactorings.
+
+### Stage 5: Silent Governance Compilation (冻 - 根)
+- **Headless Pipeline**:
+  1. `export-tokens.py`: Compiles `shared/tokens.css` to W3C DTCG `tokens.json`.
+  2. `wcag-check.js`: Headless accessibility audit validating WCAG AAA color contrast.
+  3. `handoff.py`: Computes SHA-256 digests of all HTML/CSS assets into an immutable delivery manifest.
 
 ## Unescapable Self-Elevating Design Loop (Adapt until Delivery Qualified)
 

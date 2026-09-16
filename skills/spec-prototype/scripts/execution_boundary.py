@@ -88,6 +88,13 @@ def shell_read(command, root):
                      'python3.14': {'check-discussion.py', 'handoff.py'}}
         require(script.parent == SKILL/'scripts' and script.name in permitted[tool],
                 'Only installed helpers run in the main designer; use Builder for code/setup.')
+        if script.name == 'handoff.py' and 'freeze' in args:
+            freeze_root = None
+            if '--root' in args:
+                idx = args.index('--root')
+                if idx + 1 < len(args):
+                    freeze_root = Path(args[idx + 1]).resolve()
+            require(freeze_root == root.resolve(), 'Freeze command must target the active discussion root.')
         return
     raise ValueError('Use read-only tools or a bounded Builder for this command.')
 

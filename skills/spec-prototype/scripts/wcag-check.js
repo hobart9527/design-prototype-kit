@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 /**
  * Zero-dependency WCAG 2.1 AA/AAA contrast calculator.
- * Usage: node wcag-check.js "#ffffff" "#000000"
+ * Usage:
+ *   node wcag-check.js "#ffffff" "#000000"
+ *   node wcag-check.js tokens.json [--level AAA]
  */
+const fs = require('fs');
 
 function parseHex(hex) {
   let c = hex.replace(/^#/, '');
@@ -29,7 +32,37 @@ function getContrast(hex1, hex2) {
   return (brightest + 0.05) / (darkest + 0.05);
 }
 
-const [,, c1, c2] = process.argv;
+const args = process.argv.slice(2);
+if (args.length === 0) {
+  console.error("Usage:\n  node wcag-check.js <color1-hex> <color2-hex>\n  node wcag-check.js <tokens.json> [--level AAA]");
+  process.exit(1);
+}
+
+if (args[0].endsWith('.json') || fs.existsSync(args[0])) {
+  const content = JSON.parse(fs.readFileSync(args[0], 'utf-8'));
+  const colors = content.color || {};
+  const surface = colors.surface?.$value || colors.background?.$value || '#ffffff';
+  const targetLevel = args.includes('--level') ? args[args.indexOf('--level') + 1] : 'AA';
+  const threshold = targetLevel === 'AAA' ? 7.0 : 4.5;
+  const results = [];
+  let allPass = true;
+
+  for (const [name, def] of Object.entries(colors)) {
+    if (name === 'surface' || name === 'background') continue;
+    const val = def.$value;
+    if (typeof val === 'string' && val.startsWith('#')) {
+      const ratio = getContrast(val, surface);
+      const pass = ratio >= threshold;
+      if (!pass) allPass = false;
+      results.push({ token: name, value: val, surface, ratio: Number(ratio.toFixed(2)), pass });
+    }
+  }
+
+  console.log(JSON.stringify({ targetLevel, threshold, surface, allPass, results }, null, 2));
+  process.exit(allPass ? 0 : 1);
+}
+
+const [c1, c2] = args;
 if (!c1 || !c2) {
   console.error("Usage: node wcag-check.js <color1-hex> <color2-hex>");
   process.exit(1);

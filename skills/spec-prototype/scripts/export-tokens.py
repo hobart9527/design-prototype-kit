@@ -62,17 +62,25 @@ def parse_tokens_markdown(content: str) -> dict[str, Any]:
         group_tokens: dict[str, Any] = {}
         default_type = SECTION_TYPE_MAP.get(title_lower, "other")
 
-        # Match table rows: | Token | Value | Usage | or | Token | Value |
-        rows = re.findall(
-            r"\|\s*`?(--[a-zA-Z0-9_-]+)`?\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|",
-            body,
-        )
-        if not rows:
-            rows_2col = re.findall(
-                r"\|\s*`?(--[a-zA-Z0-9_-]+)`?\s*\|\s*([^|]*?)\s*\|",
-                body,
-            )
-            rows = [(r[0], r[1], "") for r in rows_2col]
+        # Match table rows line by line: | Token | Value | Usage | or | Token | Value |
+        rows = []
+        for line in body.splitlines():
+            line = line.strip()
+            if not line.startswith("|"):
+                continue
+            cells = [c.strip() for c in line.split("|")]
+            if cells and cells[0] == "":
+                cells = cells[1:]
+            if cells and cells[-1] == "":
+                cells = cells[:-1]
+            if len(cells) < 2:
+                continue
+            token_cell = cells[0].strip("` ")
+            if not token_cell.startswith("--") or set(token_cell) <= {"-", " "}:
+                continue
+            val_cell = cells[1].strip()
+            usage_cell = cells[2].strip() if len(cells) > 2 else ""
+            rows.append((token_cell, val_cell, usage_cell))
 
         for raw_token, raw_value, raw_usage in rows:
             name = raw_token.strip().lstrip("-")
@@ -124,9 +132,44 @@ def parse_tokens_markdown(content: str) -> dict[str, Any]:
     return tokens
 
 
+def parse_tokens_css(content: str) -> dict[str, Any]:
+    tokens: dict[str, Any] = {
+        "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
+    }
+    # Match --name: value;
+    matches = re.findall(r"(--[a-zA-Z0-9_-]+)\s*:\s*([^;]+);", content)
+    for raw_name, raw_val in matches:
+        var_name = raw_name.strip().lstrip("-")
+        val = raw_val.strip()
+        # Classify group by prefix
+        parts = var_name.split("-", 1)
+        group_name = parts[0]
+        sub_name = parts[1] if len(parts) > 1 else var_name
+        token_type = SECTION_TYPE_MAP.get(group_name, "other")
+        if group_name == "color":
+            token_type = "color"
+        elif group_name in ("space", "spacing", "bp", "radius"):
+            token_type = "dimension"
+        elif group_name == "motion" or group_name in ("duration", "ease"):
+            if "ease" in var_name:
+                token_type = "cubicBezier"
+            elif "duration" in var_name:
+                token_type = "duration"
+            else:
+                token_type = "transition"
+
+        if group_name not in tokens:
+            tokens[group_name] = {}
+        tokens[group_name][sub_name] = {
+            "$value": val,
+            "$type": token_type,
+        }
+    return tokens
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Export tokens.md to W3C DTCG format.")
-    parser.add_argument("tokens_file", type=Path, help="Path to tokens.md")
+    parser = argparse.ArgumentParser(description="Export tokens.md or tokens.css to W3C DTCG format.")
+    parser.add_argument("tokens_file", type=Path, help="Path to tokens.md or tokens.css")
     parser.add_argument("--output", "-o", type=Path, help="Destination JSON file (default: stdout)")
     args = parser.parse_args()
 
@@ -136,7 +179,10 @@ def main() -> int:
 
     try:
         content = args.tokens_file.read_text(encoding="utf-8")
-        tokens = parse_tokens_markdown(content)
+        if args.tokens_file.suffix.lower() == ".css":
+            tokens = parse_tokens_css(content)
+        else:
+            tokens = parse_tokens_markdown(content)
         formatted = json.dumps(tokens, indent=2, ensure_ascii=False) + "\n"
         if args.output:
             if args.output.suffix != '.json' or args.output.is_symlink():
