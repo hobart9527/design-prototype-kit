@@ -20,15 +20,36 @@ All design work within this Skill follows the unbroken five-stage delivery state
 ### Stage 1: Tone & Tension Divergence (破 - 魂)
 - **Business Tension Reframing**: Explicitly declare the central contradiction (e.g. Extreme Developer Density vs Instant Novice Clarity).
 - **Ruthless Omission (决绝断舍离)**: Author an explicit list of at least 3 capabilities, surfaces, or decorative widgets that are *deliberately excluded or deferred* to protect focus.
+- **Cognitive Budgeting & Context-Driven Allocation (认知借贷法则，因境设度)**:
+  - **Abolish dogmatic percentage quotas**: Do not mechanically fix innovation at 10% or 90%. Categorize by task context:
+    - *Routine & Muscle Memory*: Standard navigation, login, settings, pagination, and cancel branches must strictly adhere to proven industry conventions with zero learning tax.
+    - *Decisive Value Moments*: Where user judgment, core speed, or sensory mastery occurs, deliberately borrow cognitive attention to craft novel, expressive mechanics.
+- **5-Dial Style Register & Vague-Word Firewall (风格五轴寄存器与模糊词防火墙)**:
+  - Classify the target visual and emotional tone across five observable dials backed by evidence:
+    - `Energy`: quiet ↔ loud (saturation budget, element collision)
+    - `Finish`: raw ↔ polished (edge sharpness, alignment strictness)
+    - `Density`: sparse ↔ dense (whitespace rhythm, layering discipline)
+    - `Weight`: light ↔ heavy (font weight scale, shadow depth)
+    - `Seriousness`: playful ↔ solemn (radii scale, motion amplitude)
+  - **Firewall rule**: Vague mood adjectives (*高级感, 精致, 大气, 克制, premium, elegant, sophisticated*) are strictly banned as justifications. Every design impulse must translate into concrete token values, spacing scales, contrast ratios, and kinetic durations.
 - **OOUX Cardinality-to-Layout Anchor (`ia-interaction.md:8`)**: Define spatial container necessity from primary entity relationships before drawing layouts:
   - `1 : 1` → Focused Document, Inspection Canvas, or Dedicated Cockpit Console.
   - `1 : N` → Master-Detail, Interactive Table, or Faceted Feed with high-speed scanning.
   - `N : M` → Node-Link Canvas, Multi-Column Board, or Relational Split View.
-- **Two Distinct Metaphors with Non-transfer Boundaries (`visual-craft.md:52`)**: Present exactly 2 contrasting physical/conceptual metaphors. For each metaphor, explicitly declare its **non-transfer boundary** (which physical properties transfer, e.g. detent resistance and spatial calibration, and which must *never* transfer, e.g. faux-skeuomorphic chrome, noise textures, or decorative skeuomorphic friction).
+- **Material Honesty & Non-transfer Boundaries (`visual-craft.md:52`)**:
+  - Respect the digital medium. Eliminate faux-skeuomorphic textures, fake metallic grain, or simulated physical noise that merely masquerades as craft.
+  - For every physical or conceptual metaphor, explicitly declare its **non-transfer boundary**: which physical traits transfer (e.g. detent resistance, spatial damping) and which are strictly forbidden (e.g. decorative skeuomorphic chrome).
 - **Gate**: Must obtain explicit user confirmation via `AskUserQuestion` before proceeding.
 
 ### Stage 2: Core Hero Anchor Prototyping (立 - 皮)
 - **Highest-Density Anchor**: Do not spray out multiple pages. Build the single most consequential, highest-density screen first (the Hero Anchor).
+- **Design Engineering Floor (微观几何与字排工法)**:
+  - **Concentric Border Radius**: Nested container corners must obey $R_{inner} = \max(0, R_{outer} - padding)$ to eliminate visual pinching and distortion.
+  - **Optical Alignment (视错觉补偿)**: Asymmetric controls (e.g. play triangles, disclosure chevrons, search icons) must be manually nudged 1-2px from geometric center for perceived equilibrium.
+  - **Tabular Numerics**: Enforce `font-variant-numeric: tabular-nums` across all counters, telemetry readings, financial tables, and timers to prevent horizontal layout jitter.
+- **Atmospheric Undertone (底色气韵)**:
+  - Ban sterile dead neutral gray (`#808080`, unconsidered `gray-500` washes).
+  - Infuse subtle chromatic undertones (e.g. deep titanium with cobalt glow, warm graphite, or parchment tint) to establish character without compromising contrast.
 - **Tactile Physics & Micro-dynamics**:
   - Button elastic press: `:active { transform: scale(0.97); }`
   - Industrial deceleration: `cubic-bezier(0.16, 1, 0.3, 1)`
@@ -38,6 +59,9 @@ All design work within this Skill follows the unbroken five-stage delivery state
 - **Gate**: Review the Anchor screen and token definitions via `AskUserQuestion` before expanding.
 
 ### Stage 3: Tier-by-Tier Rollout (拓 - 骨)
+- **Compression & Release (破除均质网格套路)**:
+  - Reject monotonous uniform card grids.
+  - Couple high-density operational telemetry clusters tightly, paired with deliberate expansive negative space in contemplative zones to establish visual rhythm.
 - **Discrete Batching**: Dispatch in phased tiers rather than a single monolithic generation:
   - **Tier 0: Strategic Orbit** (Dashboard / Bird's Eye Telemetry / Situation Awareness)
   - **Tier 1: Tactical Station** (Workbenches / Flow Automation / Detent Control)
@@ -54,7 +78,12 @@ All design work within this Skill follows the unbroken five-stage delivery state
   - `Intent`: Clear signifiers on hover/focus before commitment.
   - `Detent`: Visible physical resistance/damping during execution (`:active scale(0.97)`).
   - `Settled`: Deterministic feedback, focus restoration, and reversible exit.
-- **Five Essential States**: Validate Loading (skeleton), Empty (contextual CTA), Partial (degraded state), Error (in-place recovery), and Overflow (long text wrapping).
+- **The Break Protocol & Stress Verification (破坏性应力走查)**:
+  - Subject layout to extreme content limits: long unhyphenated strings, 0 items (first-run bait), 1 item, and 1000 items (scroll containment).
+  - Inspect numerical jitter during rapid value mutations.
+- **Contextual Agency in States (在场感状态设计)**:
+  - Empty state is not a void: provide actionable first-step creation bait.
+  - Error state is not a dead end: provide in-place diagnostic telemetry and direct one-click repair/retry paths.
 - **Controlled Loopback (FSM Re-entry)**:
   - State reversals are strictly restricted: `Stage 3/4 -> Stage 2` (Anchor Revision).
   - Prevents evasive concept pivots while permitting necessary token and layout refactorings.

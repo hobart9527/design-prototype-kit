@@ -137,16 +137,35 @@ def test_canonical_design_references_and_floors():
     assert "Action Verb Lifecycle" in workflow_text
     assert "Decisive Exchange 3-Frame Inspection" in workflow_text
     assert "Native-First vs Production Handoff" in workflow_text
+    assert "Cognitive Budgeting" in workflow_text
+    assert "5-Dial Style Register" in workflow_text
+    assert "Vague-Word Firewall" in workflow_text
+    assert "Concentric Border Radius" in workflow_text
+    assert "Tabular Numerics" in workflow_text
+    assert "Optical Alignment" in workflow_text
+    assert "Atmospheric Undertone" in workflow_text
+    assert "Compression & Release" in workflow_text
+    assert "The Break Protocol" in workflow_text
 
     floor_text = (SKILL / "references/design-floor.md").read_text(encoding="utf-8")
     assert "Non-Transfer Boundary" in floor_text
     assert "Zero Naked Metrics" in floor_text
     assert "Action Verb Lifecycle Closure" in floor_text
     assert "Decisive Exchange 3-Frame Floor" in floor_text
+    assert "Concentric Border Radius Floor" in floor_text
+    assert "Tabular Numerics Floor" in floor_text
+    assert "Optical Alignment Floor" in floor_text
+    assert "Atmospheric Undertone Floor" in floor_text
+    assert "Vague-Word Firewall Floor" in floor_text
 
     discussion_tmpl = (SKILL / "templates/discussion.md").read_text(encoding="utf-8")
     assert "OOUX Cardinality-to-Layout Anchor" in discussion_tmpl
     assert "Non-transfer" in discussion_tmpl
     assert "Reference Benchmarks" in discussion_tmpl
     assert "Decisive Exchange 3-Frame Verification" in discussion_tmpl
+    assert "Cognitive Budgeting Allocation" in discussion_tmpl
+    assert "5-Dial Style Register" in discussion_tmpl
+    assert "Concentric Radius check" in discussion_tmpl
+    assert "Atmospheric Undertone" in discussion_tmpl
+    assert "The Break Protocol" in discussion_tmpl
 

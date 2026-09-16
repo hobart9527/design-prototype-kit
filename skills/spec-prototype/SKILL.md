@@ -26,17 +26,17 @@ All product design execution follows an unbroken 5-stage state machine:
 
 ```text
 [Stage 1: 破 - Tone & Tension Divergence]
-  │  Gated: AskUserQuestion (Tension reframing, 3+ ruthless omissions, OOUX cardinality anchor, 2 metaphors + non-transfer boundaries)
+  │  Gated: AskUserQuestion (Tension reframing, 3+ omissions, Cognitive Budgeting, 5 Dials register, Vague-Word Firewall, OOUX cardinality, 2 metaphors + non-transfer boundaries)
   ▼
 [Stage 2: 立 - Core Hero Anchor Prototyping]
-  │  Gated: AskUserQuestion (Highest-density anchor, tactile kinetics, shared/tokens.css, native-first component boundary)
+  │  Gated: AskUserQuestion (Highest-density anchor, Concentric Radii, Optical Alignment, Tabular Numbers, Atmospheric Undertone, Tactile Kinetics, shared/tokens.css, native-first boundary)
   ▼
 [Stage 3: 拓 - Tier-by-Tier Rollout]
   │  Dispatched in discrete batches: Tier 0 (Strategic), Tier 1 (Tactical), Tier 2 (Governance)
-  │  Strict: Reference benchmarks (zero naked metrics), Action verb lifecycle closure, <link href="../../shared/tokens.css">, zero inline hex
+  │  Strict: Compression & Release rhythm, Reference benchmarks (zero naked metrics), Action verb lifecycle closure, <link href="../../shared/tokens.css">, zero inline hex
   ▼
 [Stage 4: 验 - Holistic Review & In-Place Tuning]
-  │  Harness: review-portal.html (multi-view walkthrough, decisive exchange 3-frame check, 5 operational states)
+  │  Harness: review-portal.html (multi-view walkthrough, decisive exchange 3-frame check, The Break Protocol stress limits, 5 operational states with Contextual Agency)
   │  Controlled Loopback: Stage 3/4 -> Stage 2 (Anchor revision only)
   ▼
 [Stage 5: 冻 - Silent Packaging & Headless Governance]
