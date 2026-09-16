@@ -20,7 +20,11 @@ All design work within this Skill follows the unbroken five-stage delivery state
 ### Stage 1: Tone & Tension Divergence (破 - 魂)
 - **Business Tension Reframing**: Explicitly declare the central contradiction (e.g. Extreme Developer Density vs Instant Novice Clarity).
 - **Ruthless Omission (决绝断舍离)**: Author an explicit list of at least 3 capabilities, surfaces, or decorative widgets that are *deliberately excluded or deferred* to protect focus.
-- **Two Distinct Metaphors**: Present exactly 2 contrasting physical/conceptual metaphors with distinct spatial consequences.
+- **OOUX Cardinality-to-Layout Anchor (`ia-interaction.md:8`)**: Define spatial container necessity from primary entity relationships before drawing layouts:
+  - `1 : 1` → Focused Document, Inspection Canvas, or Dedicated Cockpit Console.
+  - `1 : N` → Master-Detail, Interactive Table, or Faceted Feed with high-speed scanning.
+  - `N : M` → Node-Link Canvas, Multi-Column Board, or Relational Split View.
+- **Two Distinct Metaphors with Non-transfer Boundaries (`visual-craft.md:52`)**: Present exactly 2 contrasting physical/conceptual metaphors. For each metaphor, explicitly declare its **non-transfer boundary** (which physical properties transfer, e.g. detent resistance and spatial calibration, and which must *never* transfer, e.g. faux-skeuomorphic chrome, noise textures, or decorative skeuomorphic friction).
 - **Gate**: Must obtain explicit user confirmation via `AskUserQuestion` before proceeding.
 
 ### Stage 2: Core Hero Anchor Prototyping (立 - 皮)
@@ -30,6 +34,7 @@ All design work within this Skill follows the unbroken five-stage delivery state
   - Industrial deceleration: `cubic-bezier(0.16, 1, 0.3, 1)`
   - Micro-snap: `120ms` detent transitions.
 - **Physical Token Entity**: Materialize `prototype/shared/tokens.css` with fundamental colors, typography, elevations, and motion curves.
+- **Prototype Component Discipline (Native-First vs Production Handoff)**: Prototypes must remain frictionless, zero-build, and immediately runnable. Use native HTML5 semantic tags (`<dialog>`, `<details>`, `<form>`) and CSS token recipes. Formal UI framework componentization (React/Vue/shadcn, prop interfaces, complex state machines) is strictly deferred to downstream Loom Entry 2 engineering delivery.
 - **Gate**: Review the Anchor screen and token definitions via `AskUserQuestion` before expanding.
 
 ### Stage 3: Tier-by-Tier Rollout (拓 - 骨)
@@ -37,12 +42,18 @@ All design work within this Skill follows the unbroken five-stage delivery state
   - **Tier 0: Strategic Orbit** (Dashboard / Bird's Eye Telemetry / Situation Awareness)
   - **Tier 1: Tactical Station** (Workbenches / Flow Automation / Detent Control)
   - **Tier 2: Governance Bridge** (Audit Logs / Security Gateways / Token Registry)
+- **Data Floor & Reference Benchmarks (`data-information.md:40`)**: Forbid naked metrics. Operational telemetry, sparklines, and status badges must include contextual reference anchors (scales, thresholds, normal bounds, or event markers) so numbers carry immediate operational meaning.
+- **Content Mechanics & Action Verb Lifecycle (`ia-interaction.md:56`)**: Verbs must maintain exact semantic continuity across the user lifecycle: trigger action verb (e.g. `Quarantine`), modal heading (`Quarantine Worker`), primary commit button (`Quarantine`), and post-completion toast must share identical vocabulary.
 - **Strict Token Inheritance**:
   - Every secondary screen must link: `<link rel="stylesheet" href="../../shared/tokens.css">`.
   - Zero tolerance for inline Hex colors (`#ffffff`, `#000`) or hardcoded pixel margins.
 
 ### Stage 4: Holistic Review & In-Place Tuning (验 - 鉴)
 - **Unified Review Portal (`review-portal.html`)**: Single responsive multi-view harness embedding an iframe for all screens, viewport switches (390px, 768px, 1280px, 1600px), and state triggers.
+- **Decisive Exchange 3-Frame Inspection (`interaction-power.md:64`)**: Visually inspect the primary decisive interaction across its three continuous phases:
+  - `Intent`: Clear signifiers on hover/focus before commitment.
+  - `Detent`: Visible physical resistance/damping during execution (`:active scale(0.97)`).
+  - `Settled`: Deterministic feedback, focus restoration, and reversible exit.
 - **Five Essential States**: Validate Loading (skeleton), Empty (contextual CTA), Partial (degraded state), Error (in-place recovery), and Overflow (long text wrapping).
 - **Controlled Loopback (FSM Re-entry)**:
   - State reversals are strictly restricted: `Stage 3/4 -> Stage 2` (Anchor Revision).

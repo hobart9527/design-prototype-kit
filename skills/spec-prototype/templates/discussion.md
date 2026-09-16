@@ -63,25 +63,33 @@ not a competing rule.
   1.
   2.
   3.
-- **Contrasting Metaphors**:
+- **OOUX Cardinality-to-Layout Anchor (`1:1` Canvas | `1:N` Master-Detail | `N:M` Relational Graph)**:
+- **Contrasting Metaphors & Non-Transfer Boundaries**:
   - *Option A*:
+    - Transfer:
+    - Non-transfer:
   - *Option B*:
+    - Transfer:
+    - Non-transfer:
 - **User Gate Verdict (`AskUserQuestion`)**:
 
 ### Stage 2: Core Hero Anchor & Token Materialization (立)
 - **Hero Screen Anchor Target**:
 - **Tactile Physics & Kinetics** (`:active scale(0.97)`, `cubic-bezier(0.16, 1, 0.3, 1)`, `120ms` detent):
 - **Physical Token Entity (`prototype/shared/tokens.css`)**:
+- **Component Boundary**: Native HTML5 (`<dialog>`, `<details>`, `<form>`) + token utility classes (no heavy JS UI frameworks)
 - **User Gate Verdict (`AskUserQuestion`)**:
 
 ### Stage 3: Tier-by-Tier Rollout (拓)
-- **Tier 0: Strategic Orbit** (Dashboard / Telemetry):
-- **Tier 1: Tactical Station** (Workbenches / Detent Flow):
+- **Tier 0: Strategic Orbit** (Dashboard / Telemetry with Reference Benchmarks):
+- **Tier 1: Tactical Station** (Workbenches / Detent Flow / Action Verb Lifecycle):
 - **Tier 2: Governance Bridge** (Audit / Gateways):
+- **Reference Benchmarks & Action Verb Lifecycle**:
 - **Token Inheritance Verification** (`<link href="../../shared/tokens.css">`, zero inline hex):
 
 ### Stage 4: Review Portal Walkthrough & Tuning (验)
 - **Review Portal Harness (`prototype/review-portal.html`)**:
+- **Decisive Exchange 3-Frame Verification** (`Intent` → `Detent (:active scale 0.97)` → `Settled`):
 - **Five Operational States**:
   - [ ] Loading (Skeleton)
   - [ ] Empty (Contextual CTA)

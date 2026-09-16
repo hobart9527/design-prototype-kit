@@ -127,3 +127,26 @@ def test_execution_boundary_freeze_rejects_foreign_root(tmp_path: Path):
     event = {"cwd": str(active_root), "tool_name": "Bash", "tool_input": {"command": cmd}}
     with pytest.raises(ValueError, match="Freeze command must target the active discussion root"):
         boundary.check(event)
+
+
+def test_canonical_design_references_and_floors():
+    workflow_text = (SKILL / "references/core-workflow.md").read_text(encoding="utf-8")
+    assert "OOUX Cardinality-to-Layout Anchor" in workflow_text
+    assert "Non-transfer Boundaries" in workflow_text or "non-transfer boundary" in workflow_text
+    assert "Reference Benchmarks" in workflow_text
+    assert "Action Verb Lifecycle" in workflow_text
+    assert "Decisive Exchange 3-Frame Inspection" in workflow_text
+    assert "Native-First vs Production Handoff" in workflow_text
+
+    floor_text = (SKILL / "references/design-floor.md").read_text(encoding="utf-8")
+    assert "Non-Transfer Boundary" in floor_text
+    assert "Zero Naked Metrics" in floor_text
+    assert "Action Verb Lifecycle Closure" in floor_text
+    assert "Decisive Exchange 3-Frame Floor" in floor_text
+
+    discussion_tmpl = (SKILL / "templates/discussion.md").read_text(encoding="utf-8")
+    assert "OOUX Cardinality-to-Layout Anchor" in discussion_tmpl
+    assert "Non-transfer" in discussion_tmpl
+    assert "Reference Benchmarks" in discussion_tmpl
+    assert "Decisive Exchange 3-Frame Verification" in discussion_tmpl
+
