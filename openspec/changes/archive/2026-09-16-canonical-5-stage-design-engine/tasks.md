@@ -1,6 +1,6 @@
 ## 1. Design Token DTCG Export Tooling
 
-- [ ] T-01 Restore and enhance `export-tokens.py` script to parse design tokens (including two-column breakpoint tables and multi-column semantic scales) and export valid W3C DTCG format
+- [x] T-01 Restore and enhance `export-tokens.py` script to parse design tokens (including two-column breakpoint tables and multi-column semantic scales) and export valid W3C DTCG format
   - Depends on: none
   - Implements: HAR-001
   - Proves: HAR-SCN-001
@@ -10,7 +10,7 @@
 
 ## 2. Pipeline Verification Harness and Execution Boundary
 
-- [ ] T-02 Restore and verify pipeline verification scripts (`handoff.py`, `check-assertions.py`, `execution_boundary.py`) to satisfy exact assertion evaluation and boundary checks
+- [x] T-02 Restore and verify pipeline verification scripts (`handoff.py`, `check-assertions.py`, `execution_boundary.py`) to satisfy exact assertion evaluation and boundary checks
   - Depends on: none
   - Implements: HAR-002
   - Proves: HAR-SCN-002
@@ -20,7 +20,7 @@
 
 ## 3. Canonical 5-Stage Lifecycle and Kinetics Alignment
 
-- [ ] T-03 Formalize the canonical 5-stage lifecycle (魂、骨、皮、根、鉴), physical-world kinetics (`cubic-bezier(0.16, 1, 0.3, 1)`, `:active { transform: scale(0.97); }`, `44x44px`), and five experience states in core workflow references and builder contracts
+- [x] T-03 Formalize the canonical 5-stage lifecycle (魂、骨、皮、根、鉴), physical-world kinetics (`cubic-bezier(0.16, 1, 0.3, 1)`, `:active { transform: scale(0.97); }`, `44x44px`), and five experience states in core workflow references and builder contracts
   - Depends on: none
   - Implements: ENG-001, ENG-002, ENG-003
   - Proves: ENG-SCN-001, ENG-SCN-002, ENG-SCN-003
