@@ -19,45 +19,39 @@ page count, Design Proposition or approval outcome.
   Prototype Specification or tokens. Never edit production source, Git state or Loom delivery state.
 - Use no other Agent or Skill.
 
-## 2. Lean Protocol & Tool Step Budget Ceiling
+## 2. Envelope-led Execution
 
-To prevent token fatigue, exploratory wandering, and slow iterative ping-pong:
-- **Target**: ≤ 5 tool turns.
-- **Hard Ceiling**: ≤ 8 tool turns.
-- **Zero Exploratory Hunting**: Do NOT read multiple reference markdown files or traverse
-  directory trees. All necessary design parameters, DOM hierarchies, token stylesheets,
-  state machines, and assertions are pre-baked directly into the incoming **Execution Envelope**.
+The Execution Envelope is the source of truth for scope, constraints, assertions,
+commands and evidence. Inspect only what the envelope identifies, then iterate as
+needed to make the supplied specification runnable and verifiable. Tool turns are
+an execution-safety budget, not a design constraint: use the minimum necessary,
+without a mandatory single-pass write or fixed turn ceiling.
 
-### Canonical 4-Turn Execution Sequence
+Run the envelope's verification command, repair implementation defects, and capture
+all requested viewport/state evidence with:
+`node skills/spec-prototype/scripts/capture.mjs --target <target_html_path> --output <evidence_dir> --viewports <requested_viewports> --states <requested_states>`.
+Return explicit evidence and failure details; do not claim verification when a
+required check or capture failed.
 
-1. **Turn 1 (Single-Pass Write)**:
-   Invoke `Write` ONCE to materialize the complete, high-craft, single-page prototype HTML
-   at the specified `target_html_path`.
-2. **Turn 2 (Quality Gate Verification)**:
-   Invoke `Bash` to run the automated verification harness:
-   `python3 skills/spec-prototype/scripts/verify_prototype_quality.py <target_html_path> --strict-divergence`
-3. **Turn 3 (Visual Evidence Capture)**:
-   Invoke `Bash` to capture authentic visual evidence via Headless Chrome:
-   `node skills/spec-prototype/scripts/capture.mjs --target <target_html_path> --output <evidence_dir> --viewports 1280`
-4. **Turn 4 (Self-Check & Receipt)**:
-   Format and return the final receipt. If a minor defect is detected during Turn 2,
-   use at most ONE surgical `Edit` in Turn 3, then capture and return.
+## 3. Specification-faithful implementation
 
-## 3. Micro-App Architecture & Craft Standards
+Implement the exact interaction model, states, content, controls, responsive behavior
+and visual rules supplied by the envelope. Preserve semantic and keyboard accessibility,
+visible feedback, focus recovery, and truthful error handling wherever the specification
+requires them. Do not impose a universal state-machine name, chart treatment, radius
+formula, typography rule, animation curve, shortcut set, action lifecycle, palette or
+single-page chassis; those belong to the supplied specification and may differ by target.
+If the envelope omits a behavior, choose the smallest native, accessible implementation
+that keeps the prototype runnable and state truthful.
 
-Every prototype must be an authentic, reactive micro-application:
-- **Centralized State Machine**: Maintain a single source of truth (`AppState` / `ClusterState`)
-  with deterministic state transitions (`selectNode`, `preemptVram`, `isolateNvlink`, `closeDrawer`).
-- **Zero Naked Metrics**: Any timeline, graph, or telemetry chart (SVG/Canvas) MUST carry
-  explicit Y-axis benchmarks, threshold reference lines (e.g. 80GB HBM3 limit), and time divisions.
-- **Microscopic Geometry**:
-  - Concentric radii: $R_{\text{inner}} = \max(0, R_{\text{outer}} - \text{padding})$.
-  - Tabular numerics: `font-variant-numeric: tabular-nums` on all metrics and counters.
-  - Tactile physics: `:active { transform: scale(0.97); }` and `cubic-bezier(0.16, 1, 0.3, 1)`.
-- **Dual-Channel Ergonomics**: Full mouse/touch clickability PLUS mandatory keyboard shortcuts
-  (`Space`/`P` for primary action, `Esc` for drawer/modal dismiss, focus recovery).
-- **Action Verb Lifecycle**: Actions must transition through visible states:
-  Ready $\to$ In-Progress (spin/pulse) $\to$ Completed / Active Bypass $\to$ Reset.
+## 4. Receipt Format
+
+Return a concise receipt containing:
+- Target path and revision identity;
+- Quality gate assertion results and any failed command output;
+- State and interaction coverage actually exercised;
+- Visual evidence screenshot paths and requested viewport/state coverage;
+- Status: `verified` only when all required checks pass, otherwise `prototype_blocked`.
 
 ## 4. Receipt Format
 

@@ -78,10 +78,17 @@ Judge the whole product experience, not only correctness or taste:
   constraints, and does each claim have evidence suited to it?
 
 Light, dark, flat, layered, dense, spacious, immediate, animated, familiar and
-experimental work can all be excellent. Do not enforce a font, palette, shadow,
-tracking, spring, press, stagger, card or page-count recipe. Diagnose generic work
-by weak product causality, interchangeable content/composition or incoherent craft,
-not by the absence of fashionable effects.
+experimental work can all be excellent. Judge the supplied specification and target
+on their own terms; there is no mandatory page count, component chassis, turn budget,
+state-machine naming, shortcut set, font, palette, shadow, tracking, spring, press,
+stagger or card recipe. Diagnose generic work by weak product causality,
+interchangeable content/composition or incoherent craft, not by the absence of
+fashionable effects or compliance with a house template.
+
+When the target is intentionally exploratory, assess whether the chosen experiment
+answers its stated question and exposes the relevant trade-off. Do not penalize it
+for omitting production-only surfaces or for diverging from a prior prototype unless
+those omissions violate the supplied contract.
 
 For each consequential Design Proposition, verify the product thesis/question,
 generative mechanism, same task-and-content specimen, retained convention,

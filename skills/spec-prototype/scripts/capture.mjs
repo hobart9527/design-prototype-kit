@@ -55,28 +55,31 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states) {
     const { chromium } = await import("playwright");
     const browser = await chromium.launch({ headless: true });
     const captured = {};
+    const failures = [];
     for (const state of states) {
       const stateUrl = buildStateUrl(baseUrl, state);
       for (const vp of viewports) {
-        const dim = VIEWPORT_PRESETS[vp] || { width: parseInt(vp, 10) || 1280, height: 800 };
-        const page = await browser.newPage({ viewport: dim });
-        await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
         const prefix = states.length > 1 ? `${state}-${vp}` : `${vp}`;
         const targetFile = path.join(outputDir, `${prefix}.png`);
-        await page.screenshot({ path: targetFile, fullPage: false });
-        if (states.length > 1 && (state === "ideal" || state === states[0])) {
-          const defaultTarget = path.join(outputDir, `${vp}.png`);
-          if (!fs.existsSync(defaultTarget)) {
-            try { fs.copyFileSync(targetFile, defaultTarget); } catch {}
+        const dim = VIEWPORT_PRESETS[vp] || { width: parseInt(vp, 10) || 1280, height: 800 };
+        try {
+          const page = await browser.newPage({ viewport: dim });
+          await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
+          await page.screenshot({ path: targetFile, fullPage: false });
+          await page.close();
+          if (states.length > 1 && (state === "ideal" || state === states[0])) {
+            const defaultTarget = path.join(outputDir, `${vp}.png`);
+            if (!fs.existsSync(defaultTarget)) fs.copyFileSync(targetFile, defaultTarget);
           }
+          captured[prefix] = targetFile;
+        } catch (error) {
+          failures.push({ state, viewport: vp, error: error instanceof Error ? error.message : String(error) });
         }
-        await page.close();
-        captured[prefix] = targetFile;
       }
     }
     await browser.close();
     const vps = {}; for (const [k, v] of Object.entries(captured)) { const vp = k.split("-").pop(); if (!vps[vp]) vps[vp] = v; }
-    return { status: "captured", runner: "playwright", viewports: vps, captures: captured };
+    return { status: failures.length ? "capture_failed" : "captured", runner: "playwright", viewports: vps, captures: captured, failures };
   } catch {
     return null;
   }
