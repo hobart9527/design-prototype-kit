@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -6,870 +6,1436 @@
 <title>GPU Control Plane — Cluster Matrix</title>
 <link rel="stylesheet" href="../../../shared/tokens.css">
 <style>
-  /* Tokens are consumed from ../../../shared/tokens.css. No custom property is
-     redeclared or shadowed here — every value below resolves to a shared token.
-     Concentric Radii Formula: R_outer(8) >= R_inner(4) + padding(4); panels carry
-     var(--radius-outer) with var(--padding-panel), their inner body var(--radius-inner). */
+  /* ------------------------------------------------------------------
+     Cluster Matrix / console hero-anchor
+     Consumes shared tokens verbatim. No :root redeclaration.
+     ------------------------------------------------------------------ */
+
   * { box-sizing: border-box; }
-  html { color-scheme: dark; }
-  html, body { margin: 0; }
+
+  html { background: var(--bg-void); }
+
   body {
-    background-color: var(--bg-void);
-    background-image:
-      radial-gradient(90% 60% at 82% -10%, rgba(0, 240, 255, 0.055), transparent 62%),
-      radial-gradient(55% 45% at -6% 96%, rgba(56, 189, 248, 0.045), transparent 70%);
-    background-attachment: fixed;
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 620px at 12% -8%, var(--accent-subtle), transparent 62%),
+      linear-gradient(180deg, var(--bg-base) 0%, var(--bg-void) 100%);
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 13px;
     line-height: 1.45;
-    min-width: 320px;
-    font-variant-numeric: var(--font-variant-numeric);
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
-  .mono { font-family: var(--font-mono); }
-  a { color: var(--accent-primary); }
 
-  /* Every metric surface carries tabular figures so digit columns never jitter. */
-  .metric, .num, .value, .baseline, .id-sub, .stat .v, .stat .base,
-  dd, kbd, time, .echo, .meter-scale {
-    font-variant-numeric: var(--font-variant-numeric);
-  }
+  code, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-  /* ---------- Shell chrome ---------- */
-  .topbar {
-    display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-4);
-    align-items: center; justify-content: space-between;
+  .tabular,
+  .metric__value,
+  .metric__baseline,
+  .kpi,
+  td, th,
+  .uuid,
+  .tile__id { font-variant-numeric: tabular-nums; }
+
+  /* ---------------------------------------------------------------- shell */
+  .shell {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
-    background: var(--bg-base);
-    border-bottom: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--bg-void) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-dim);
   }
-  .brand { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-  .led {
-    flex: none; width: 8px; height: 8px; border-radius: var(--radius-pill);
-    background: var(--status-running);
-    box-shadow: 0 0 10px var(--status-running);
-  }
-  body[data-state="error"] .led { background: var(--status-danger); box-shadow: 0 0 10px var(--status-danger); }
-  body[data-state="empty"] .led { background: var(--status-warning); box-shadow: 0 0 10px var(--status-warning); }
-  .brand h1 { margin: 0; font-size: 15px; font-weight: 640; letter-spacing: 0.015em; }
-  .brand p { margin: 2px 0 0; font-size: 11px; color: var(--text-secondary); }
-  .brand p b { color: var(--text-primary); font-weight: 600; }
 
-  .fleet { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-  .stat {
-    min-width: 132px; padding: var(--space-2) var(--space-3);
-    background: var(--bg-surface); border: 1px solid var(--border-dim);
-    border-radius: var(--radius-card);
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
   }
-  .stat .k {
-    display: block; font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.09em; color: var(--text-secondary);
-  }
-  .stat .v { display: block; margin-top: 1px; font-size: 16px; letter-spacing: -0.02em; }
-  .stat .base { display: block; font-size: 10px; color: var(--text-tertiary); }
-  .stat .spark { display: block; margin-top: 2px; color: var(--accent-primary); }
 
-  .nav-cluster { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
-  .topology-nav { display: flex; gap: var(--space-1); align-items: center; }
-  .top-link {
-    padding: 4px var(--space-2); font-size: 11px; text-decoration: none;
-    color: var(--text-secondary); background: var(--bg-surface);
-    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
-    transition: color var(--duration-fast) var(--ease-out),
-                background var(--duration-fast) var(--ease-out),
+  .brand__mark {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+    flex: none;
+  }
+
+  .brand__title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .brand__sub {
+    margin: 0;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .topology {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-left: auto;
+    padding: var(--padding-panel);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+  }
+
+  .nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-inner);
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out),
                 border-color var(--duration-fast) var(--ease-out);
   }
-  .top-link:hover { color: var(--text-primary); background: var(--bg-surface-raised); border-color: var(--border-subtle); }
-  .top-link.is-active, .top-link[aria-current="page"] {
-    color: var(--accent-primary); background: var(--accent-subtle);
-    border-color: var(--border-bright); font-weight: 600;
-  }
-  .state-nav { display: flex; gap: var(--space-1); }
-  .state-nav a {
-    padding: 4px var(--space-2); font-size: 11px; text-decoration: none;
-    color: var(--text-secondary); background: var(--bg-surface);
-    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
-  }
-  .state-nav a:hover { color: var(--text-primary); }
-  .state-nav a[aria-current="true"] {
-    color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle);
+
+  .nav-link:hover { color: var(--text-primary); background: var(--bg-surface-raised); }
+
+  .nav-link:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 1px;
   }
 
-  /* ---------- Layout ---------- */
-  .shell {
-    display: flex; flex-wrap: wrap; gap: var(--space-3);
-    padding: var(--space-3); align-items: flex-start;
+  .nav-link.is-active {
+    color: var(--text-primary);
+    background: var(--bg-overlay);
+    border-color: var(--border-bright);
   }
+
+  .nav-link__role {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+
+  .nav-link.is-active .nav-link__role { color: var(--accent-primary); }
+
+  .state-router {
+    display: flex;
+    gap: var(--space-1);
+    padding: var(--padding-panel);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+  }
+
+  .state-router__link {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-inner);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border: 1px solid transparent;
+  }
+
+  .state-router__link:hover { color: var(--text-primary); border-color: var(--border-subtle); }
+
+  .state-router__link[aria-current="true"] {
+    color: var(--accent-primary);
+    background: var(--accent-subtle);
+    border-color: var(--border-bright);
+  }
+
+  /* ----------------------------------------------------------------- main */
+  main {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: var(--space-4);
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
   .panel {
     background: var(--bg-surface);
     border: 1px solid var(--border-dim);
     border-radius: var(--radius-outer);
     padding: var(--padding-panel);
   }
-  .panel > .inner {
-    border-radius: var(--radius-inner);
+
+  .panel__inner {
     background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
     padding: var(--space-3);
   }
-  .rail { flex: 1 1 208px; min-width: 0; max-width: 260px; }
-  .stage { flex: 3 1 460px; min-width: 0; }
-  .rail h2, .stage h2 {
-    margin: 0 0 var(--space-2); font-size: 11px; font-weight: 620;
-    text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);
+
+  .panel__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
   }
 
-  /* ---------- Rail ---------- */
-  .field { display: block; margin-bottom: var(--space-3); }
-  .field > span, .field > label > span {
-    display: block; margin-bottom: 3px; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary);
+  .panel__title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
-  .field select {
-    width: 100%; font: inherit; font-size: 12px; padding: 4px var(--space-1);
-    background: var(--bg-surface-raised); color: var(--text-primary);
-    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
+
+  /* ------------------------------------------------------------------ kpi */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+    gap: var(--space-2);
   }
-  .facet { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-  .facet button, .tabs button {
-    font: inherit; font-size: 11px; cursor: pointer;
-    padding: 4px var(--space-2); color: var(--text-secondary);
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
+
+  .kpi {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+    min-width: 0;
+  }
+
+  .kpi__inner {
+    background: linear-gradient(180deg, var(--bg-surface-raised), var(--bg-surface));
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    padding: var(--space-3);
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .kpi__label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .kpi__figure {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .kpi__value {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  .kpi__unit { font-size: 11px; color: var(--text-secondary); }
+
+  .kpi__baseline {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+
+  .baseline-track {
+    position: relative;
+    flex: 1;
+    height: 4px;
+    min-width: 40px;
+    background: var(--bg-overlay);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+
+  .baseline-track__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--pct, 0%);
+    background: var(--accent-primary);
+    border-radius: var(--radius-pill);
+  }
+
+  .baseline-track__marker {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    left: var(--pct, 0%);
+    width: 1px;
+    background: var(--status-warning);
+  }
+
+  .spark { display: block; width: 100%; height: 26px; color: var(--accent-primary); }
+  .spark--warn { color: var(--status-warning); }
+  .spark--danger { color: var(--status-danger); }
+  .spark--ok { color: var(--status-running); }
+
+  /* ---------------------------------------------------------------- facet */
+  .facet-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .chip {
+    appearance: none;
+    font: inherit;
+    font-size: 11px;
+    padding: var(--space-1) var(--space-3);
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
     transition: color var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+  }
+
+  .chip:hover { color: var(--text-primary); border-color: var(--border-subtle); }
+
+  .chip[aria-pressed="true"] {
+    color: var(--bg-void);
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+  }
+
+  .chip:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+  .facet-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  /* --------------------------------------------------------------- matrix */
+  .matrix {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    gap: var(--space-1);
+  }
+
+  .tile {
+    position: relative;
+    appearance: none;
+    font: inherit;
+    display: grid;
+    gap: 3px;
+    align-content: space-between;
+    aspect-ratio: 1 / 1;
+    padding: var(--space-1);
+    text-align: left;
+    cursor: pointer;
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-card);
+    color: var(--text-secondary);
+    transition: transform var(--duration-fast) var(--ease-hud),
+                border-color var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+  }
+
+  .tile.is-off { display: none; }
+
+  .tile__id {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tile__gauge {
+    height: 3px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-overlay);
+    overflow: hidden;
+  }
+
+  .tile__gauge span {
+    display: block;
+    height: 100%;
+    width: var(--pct, 0%);
+    background: currentColor;
+  }
+
+  .tile[data-status="running"] { color: var(--status-running); border-color: var(--border-subtle); }
+  .tile[data-status="warning"] { color: var(--status-warning); border-color: var(--border-warning); }
+  .tile[data-status="danger"]  { color: var(--status-danger);  border-color: var(--border-danger); }
+  .tile[data-status="draining"]{ color: var(--text-tertiary);  border-style: dashed; }
+  .tile[data-status="preempted"]{ color: var(--accent-primary); border-color: var(--border-bright); }
+
+  .tile:hover { background: var(--bg-overlay); }
+  .tile:active { transform: scale(0.97); }
+
+  .tile:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+  .tile[aria-selected="true"] {
+    background: var(--bg-overlay);
+    border-color: var(--accent-primary);
+    box-shadow: inset 0 0 0 1px var(--accent-primary);
+  }
+
+  body[data-state="error"] .matrix { opacity: 0.45; filter: saturate(0.5); }
+
+  /* -------------------------------------------------------- empty / error */
+  .empty-card,
+  .error-banner {
+    display: none;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+  }
+
+  .empty-card__inner,
+  .error-banner__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .empty-card__glyph {
+    font-family: var(--font-mono);
+    font-size: 34px;
+    line-height: 1;
+    color: var(--border-bright);
+  }
+
+  .empty-card__copy { min-width: 0; flex: 1 1 220px; }
+  .empty-card h2, .error-banner h2 {
+    margin: 0 0 var(--space-1);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+  .empty-card p, .error-banner p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+
+  .error-banner { border-color: var(--border-danger); }
+  .error-banner__inner { border-color: var(--border-danger); }
+  .error-banner__pulse {
+    width: 10px;
+    height: 10px;
+    flex: none;
+    border-radius: var(--radius-pill);
+    background: var(--status-danger);
+    box-shadow: 0 0 0 4px var(--border-danger);
+  }
+
+  body[data-state="empty"] .matrix { display: none; }
+  body[data-state="error"] .error-banner { display: block; }
+  body[data-state="ideal"] .empty-card,
+  body[data-state="ideal"] .error-banner { display: none; }
+
+  /* Zero-item facet (Break Protocol) overrides the state-level hiding above. */
+  body.is-empty .matrix { display: none; }
+  body.is-empty .empty-card { display: block; }
+
+  /* --------------------------------------------------------------- button */
+  .btn {
+    appearance: none;
+    font: inherit;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-primary);
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out),
                 border-color var(--duration-fast) var(--ease-out);
   }
-  .facet button:hover, .tabs button:hover { color: var(--text-primary); }
-  .facet button[aria-pressed="true"], .tabs button[aria-pressed="true"] {
-    color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle);
-  }
-  .echo {
-    margin: var(--space-2) 0 0; padding-top: var(--space-2);
-    border-top: 1px solid var(--border-dim);
-    font-size: 10px; color: var(--text-tertiary); overflow-wrap: anywhere;
-  }
-  .rail-note { margin: var(--space-3) 0 0; font-size: 10px; line-height: 1.5; color: var(--text-tertiary); }
 
-  /* ---------- Matrix ---------- */
-  .tabs { display: flex; gap: var(--space-1); margin-bottom: var(--space-2); }
-  .matrix-scroll { overflow-x: auto; overscroll-behavior-x: contain; max-width: 100%; }
-  .matrix-head, .row {
-    display: grid;
-    grid-template-columns: minmax(0, 2.2fr) 0.9fr 0.9fr 0.8fr 1.5fr auto;
-    gap: var(--space-3); align-items: center;
-    min-width: 780px;
-  }
-  .matrix-head {
-    padding: var(--space-1) var(--space-2) var(--space-2);
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle);
-  }
-  .row {
-    padding: var(--space-2);
-    border-bottom: 1px solid var(--border-dim);
-    border-radius: var(--radius-inner);
-    outline: none;
-  }
-  .row:hover { background: var(--bg-surface); }
-  .row.is-active, .row:focus-visible {
-    background: var(--bg-surface-raised);
-    box-shadow: inset 2px 0 0 var(--accent-primary);
-  }
-  .cell { min-width: 0; }
-  .id-text {
-    display: block; max-width: 100%;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    font-size: 11px; color: var(--text-primary);
-  }
-  .id-sub { display: block; font-size: 10px; color: var(--text-tertiary); }
-  .value { display: block; font-size: 13px; letter-spacing: -0.01em; }
-  .baseline { display: block; font-size: 10px; color: var(--text-tertiary); }
-  .spark { display: block; margin-top: 2px; color: var(--accent-primary); }
-  body[data-state="error"] .spark { color: var(--text-tertiary); }
+  .btn:hover:not(:disabled) { background: var(--bg-overlay); border-color: var(--border-bright); }
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
 
-  /* Reference baseline rendered as a tick over the utilisation track. */
-  .meter {
-    position: relative; display: block; height: 3px; margin-top: 5px;
-    background: var(--bg-surface-raised);
-    border-radius: var(--radius-sm); overflow: hidden;
+  .btn--primary {
+    color: var(--bg-void);
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    font-weight: 600;
   }
-  .meter-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent-primary); }
-  .meter-tick {
-    position: absolute; top: -1px; bottom: -1px; width: 1px;
-    background: var(--text-secondary);
-  }
-  .cell[data-tone="warn"] .meter-fill { background: var(--status-warning); }
-  .cell[data-tone="danger"] .meter-fill { background: var(--status-danger); }
-  body[data-state="error"] .meter-fill { background: var(--text-tertiary); }
+  .btn--primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-  .badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 2px var(--space-2); font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-secondary);
-    border: 1px solid var(--border-subtle); border-radius: var(--radius-pill);
-  }
-  .badge::before {
-    content: ""; width: 6px; height: 6px;
-    border-radius: var(--radius-pill); background: currentColor;
-  }
-  .badge[data-status="running"] { color: var(--status-running); }
-  .badge[data-status="warning"] { color: var(--status-warning); border-color: var(--border-warning); }
-  .badge[data-status="critical"] { color: var(--status-danger); border-color: var(--border-danger); }
-  .badge[data-status="drained"] { color: var(--text-tertiary); }
-  .badge[data-status="vram-released"] { color: var(--accent-primary); border-color: var(--border-bright); }
+  .btn--danger { color: var(--status-danger); border-color: var(--border-danger); background: transparent; }
+  .btn--danger:hover:not(:disabled) { background: var(--bg-overlay); }
 
-  .btn {
-    font: inherit; font-size: 11px; cursor: pointer;
-    padding: 4px var(--space-3); border-radius: var(--radius-btn);
-    color: var(--text-primary); background: var(--bg-surface-raised);
-    border: 1px solid var(--border-bright);
-    transition: background var(--duration-fast) var(--ease-out),
-                border-color var(--duration-fast) var(--ease-out),
-                color var(--duration-fast) var(--ease-out);
-  }
-  .btn:hover { background: var(--bg-overlay); }
-  .btn-danger { color: var(--status-danger); border-color: var(--border-danger); }
-  .btn-danger:hover { background: var(--bg-overlay); }
-  .btn-primary { color: var(--bg-void); background: var(--accent-primary); border-color: var(--accent-primary); }
-  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-  .btn-primary[disabled], .btn[disabled] { opacity: 0.55; cursor: progress; }
-  .btn-tactile:active, .btn:active, button:active { transform: scale(0.97); }
+  .btn--warn { color: var(--status-warning); border-color: var(--border-warning); background: transparent; }
+  .btn--warn:hover:not(:disabled) { background: var(--bg-overlay); }
 
-  /* ---------- Fault / empty ---------- */
-  .fault-banner {
-    display: none; flex-wrap: wrap; gap: var(--space-3); align-items: center;
-    margin-bottom: var(--space-3); padding: var(--space-3);
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-danger); border-radius: var(--radius-outer);
-  }
-  body[data-state="error"] .fault-banner { display: flex; }
-  body[data-state="error"] .value { color: var(--text-tertiary); }
-  .fault-banner p { margin: 0; flex: 1 1 240px; font-size: 11px; color: var(--text-secondary); }
+  .btn--ghost { background: transparent; border-color: var(--border-dim); color: var(--text-secondary); }
 
-  .empty-card {
-    padding: var(--space-6); text-align: center;
-    background: var(--bg-surface-raised);
-    border: 1px dashed var(--border-bright); border-radius: var(--radius-outer);
-  }
-  .empty-card h3 { margin: 0 0 var(--space-2); font-size: 13px; }
-  .empty-card p { margin: 0 auto var(--space-4); max-width: 44ch; font-size: 12px; color: var(--text-secondary); }
+  .btn[aria-busy="true"] { pointer-events: none; }
 
-  /* ---------- Overlays ---------- */
-  .scrim { position: fixed; inset: 0; z-index: 10; background: var(--bg-void); opacity: 0.62; display: none; }
-  .scrim.is-open { display: block; }
+  /* --------------------------------------------------------------- drawer */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--bg-void) 62%, transparent);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--duration-normal) var(--ease-out), visibility 0s linear var(--duration-normal);
+  }
+
+  .scrim.is-open { opacity: 1; visibility: visible; transition-delay: 0s; }
 
   .drawer {
-    position: fixed; top: 0; right: 0; z-index: 20;
-    width: min(380px, 92vw); height: 100%; padding: var(--space-4);
-    background: var(--bg-surface); border-left: 1px solid var(--border-bright);
-    overflow-y: auto; transform: translateX(102%);
-    transition: transform var(--duration-normal) var(--ease-hud);
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 60;
+    width: min(420px, 100vw);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border-subtle);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform var(--duration-slow) var(--ease-hud), visibility 0s linear var(--duration-slow);
   }
-  .drawer.is-open { transform: translateX(0); }
-  .drawer-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
-  .drawer h2 {
-    margin: 0; font-size: 12px; font-weight: 620;
-    text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);
-  }
-  .frame-tag {
-    font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
-    color: var(--text-tertiary); white-space: nowrap;
-  }
-  .uuid {
-    margin: var(--space-3) 0 0; font-size: 11px; line-height: 1.5;
-    color: var(--text-primary); overflow-wrap: anywhere;
-  }
-  .kv { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); margin: var(--space-4) 0 0; font-size: 12px; }
-  .kv dt { color: var(--text-secondary); }
-  .kv dd { margin: 0; text-align: right; }
-  .kv dd small { display: block; font-size: 10px; color: var(--text-tertiary); }
-  .drawer-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border-dim); }
-  .drawer-note { margin: var(--space-3) 0 0; font-size: 10px; line-height: 1.5; color: var(--text-tertiary); }
 
-  .modal {
-    position: fixed; z-index: 30; top: 50%; left: 50%;
-    display: none; width: min(430px, 92vw); padding: var(--space-5);
-    background: var(--bg-overlay); border: 1px solid var(--border-bright);
-    border-radius: var(--radius-outer);
-    transform: translate(-50%, -50%) scale(0.98);
+  .drawer.is-open { transform: translateX(0); visibility: visible; transition-delay: 0s; }
+
+  .drawer__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-dim);
   }
-  .modal.is-open { display: block; transform: translate(-50%, -50%) scale(1); }
-  .modal h2 { margin: var(--space-1) 0 var(--space-2); font-size: 14px; }
-  .modal p { margin: 0 0 var(--space-4); font-size: 12px; color: var(--text-secondary); }
-  .modal-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
+
+  .drawer__title {
+    margin: var(--space-1) 0 0;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    letter-spacing: 0.02em;
+  }
+
+  .drawer__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-4);
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+  }
+
+  .drawer__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border-dim);
+    background: var(--bg-base);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    align-self: start;
+    padding: var(--space-1) var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    background: var(--bg-base);
+    transition: color var(--duration-normal) var(--ease-out),
+                border-color var(--duration-normal) var(--ease-out);
+  }
+
+  .badge[data-status="running"]   { color: var(--status-running); border-color: var(--border-subtle); }
+  .badge[data-status="warning"]   { color: var(--status-warning); border-color: var(--border-warning); }
+  .badge[data-status="danger"]    { color: var(--status-danger);  border-color: var(--border-danger); }
+  .badge[data-status="draining"]  { color: var(--text-tertiary); }
+  .badge[data-status="preempted"] { color: var(--accent-primary); border-color: var(--border-bright); }
+
+  .kv {
+    display: grid;
+    grid-template-columns: minmax(96px, auto) 1fr;
+    gap: var(--space-1) var(--space-3);
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .kv dt { color: var(--text-tertiary); letter-spacing: 0.04em; }
+
+  .kv dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .uuid {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    padding: var(--space-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: help;
+  }
+
+  .metric {
+    display: grid;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .metric__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .metric__label { font-size: 11px; color: var(--text-secondary); }
+  .metric__value { font-family: var(--font-mono); font-size: 14px; }
+  .metric__baseline { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+
+  /* ---------------------------------------------------------------- modal */
+  .modal {
+    position: fixed;
+    z-index: 70;
+    top: 50%;
+    left: 50%;
+    width: min(440px, calc(100vw - var(--space-6)));
+    transform: translate(-50%, -46%) scale(0.98);
+    opacity: 0;
+    visibility: hidden;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+    transition: opacity var(--duration-normal) var(--ease-out),
+                transform var(--duration-normal) var(--ease-hud),
+                visibility 0s linear var(--duration-normal);
+  }
+
+  .modal.is-open { opacity: 1; transform: translate(-50%, -50%) scale(1); visibility: visible; transition-delay: 0s; }
+
+  .modal__inner {
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    padding: var(--space-4);
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .modal__title { margin: 0; font-size: 15px; letter-spacing: 0.02em; }
+
+  .modal__impact {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    border-left: 2px solid var(--border-warning);
+    padding-left: var(--space-3);
+  }
+
+  .modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .modal__lock {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--status-warning);
+    min-height: 14px;
+  }
+
+  /* ---------------------------------------------------------------- toast */
+  .toast-region {
+    position: fixed;
+    z-index: 90;
+    left: 50%;
+    bottom: var(--space-5);
+    transform: translateX(-50%);
+    display: grid;
+    gap: var(--space-2);
+    width: min(420px, calc(100vw - var(--space-6)));
+    pointer-events: none;
+  }
 
   .toast {
-    position: fixed; z-index: 40; left: var(--space-4); bottom: var(--space-4);
-    display: flex; align-items: center; gap: var(--space-2);
-    max-width: calc(100vw - var(--space-8));
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--accent-primary); border-radius: var(--radius-btn);
-    font-size: 12px; opacity: 0; pointer-events: none;
-    transform: translateY(6px);
-    transition: opacity var(--duration-fast) var(--ease-out),
-                transform var(--duration-fast) var(--ease-out);
-  }
-  .toast.is-open { opacity: 1; transform: translateY(0); }
-
-  .kbdbar {
-    display: flex; flex-wrap: wrap; gap: var(--space-3);
-    padding: var(--space-2) var(--space-4);
-    background: var(--bg-base); border-top: 1px solid var(--border-subtle);
-    font-size: 11px; color: var(--text-secondary);
-  }
-  kbd {
-    padding: 1px 4px; font-family: var(--font-mono); font-size: 10px;
-    color: var(--text-primary); background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+    background: var(--bg-overlay);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-btn);
+    font-size: 12px;
+    box-shadow: 0 12px 32px color-mix(in srgb, var(--bg-void) 70%, transparent);
+    animation: toast-in var(--duration-slow) var(--ease-hud);
   }
 
-  :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+  .toast__dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: var(--radius-pill);
+    background: var(--status-running);
+  }
 
-  @media (max-width: 900px) {
-    .rail { max-width: none; flex-basis: 100%; }
-    .stage { flex-basis: 100%; }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  @media (max-width: 640px) {
-    .topbar, .shell { padding: var(--space-2); }
-    .fleet { width: 100%; }
-    .stat { flex: 1 1 132px; }
-    .nav-cluster { width: 100%; justify-content: space-between; }
+
+  /* ------------------------------------------------------------ 320px fold */
+  @media (max-width: 480px) {
+    main { padding: var(--space-2); gap: var(--space-3); }
+    .shell { padding: var(--space-2); gap: var(--space-2); }
+    .topology { margin-left: 0; width: 100%; }
+    .nav-link { flex: 1 1 auto; }
+    .state-router { width: 100%; justify-content: space-between; }
+    .matrix { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); }
+    .drawer { width: 100vw; border-left: 0; }
+    .drawer__actions { grid-template-columns: 1fr; }
+    .kpi__value { font-size: 20px; }
   }
-  @media (max-width: 380px) {
-    .brand h1 { font-size: 13px; }
-    .stat { min-width: 0; flex-basis: calc(50% - var(--space-1)); }
-    .topology-nav, .state-nav { width: 100%; flex-wrap: wrap; }
-    .top-link, .state-nav a { flex: 1 1 auto; text-align: center; }
-    .empty-card { padding: var(--space-4); }
-    .modal { padding: var(--space-4); }
-    .toast { right: var(--space-2); left: var(--space-2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 1ms !important; animation-duration: 1ms !important; }
   }
 </style>
 </head>
 <body data-state="ideal">
 
-<header class="topbar">
+<header class="shell">
   <div class="brand">
-    <span class="led" aria-hidden="true"></span>
+    <span class="brand__mark" aria-hidden="true"></span>
     <div>
-      <h1>GPU Control Plane</h1>
-      <p><b>4,096</b> × H100 SXM5 · 256 nodes / 5 regions · DCGM telemetry + Slurm batch controller · priority: deterministic drain</p>
+      <h1 class="brand__title">GPU Control Plane</h1>
+      <p class="brand__sub">4,096 × H100 SXM5 · DCGM + Slurm</p>
     </div>
   </div>
 
-  <div class="fleet" aria-label="Fleet telemetry">
-    <div class="stat">
-      <span class="k">Tensor streams</span>
-      <span class="v metric" id="fleetStreams">1,284</span>
-      <span class="base">P95 baseline 1,410</span>
-    </div>
-    <div class="stat">
-      <span class="k">Median VRAM</span>
-      <span class="v metric">88.4%</span>
-      <span class="base">pool P95 96.2%</span>
-    </div>
-    <div class="stat">
-      <span class="k">Drain RTT</span>
-      <span class="v metric">1.9s</span>
-      <span class="base">target ≤ 3.0s</span>
-      <span class="spark" id="fleetDrainSpark" aria-hidden="true"></span>
-    </div>
-  </div>
+  <nav class="topology" aria-label="Surface topology">
+    <a class="nav-link is-active" href="index.html" aria-current="page">
+      Cluster Matrix <span class="nav-link__role">主工作区 Primary</span>
+    </a>
+    <a class="nav-link" href="../../../surfaces/incident-replay/index.html">
+      Incident Replay <span class="nav-link__role">上下文视图 Contextual</span>
+    </a>
+    <a class="nav-link" href="../../../surfaces/capacity-matrix/index.html">
+      Capacity &amp; Quota <span class="nav-link__role">支撑视图 Supporting</span>
+    </a>
+  </nav>
 
-  <div class="nav-cluster">
-    <nav class="topology-nav" aria-label="Surface topology">
-      <a href="index.html" class="top-link is-active" aria-current="page" title="主工作区 (Primary)">Cluster Matrix</a>
-      <a href="../../../surfaces/incident-replay/index.html" class="top-link" title="上下文视图 (Contextual)">Incident Replay</a>
-      <a href="../../../surfaces/capacity-matrix/index.html" class="top-link" title="支撑视图 (Supporting)">Capacity &amp; Quota</a>
-    </nav>
-    <nav class="state-nav" aria-label="Prototype state">
-      <a href="#state=ideal" data-state-link="ideal" aria-current="true">ideal</a>
-      <a href="#state=empty" data-state-link="empty">empty</a>
-      <a href="#state=error" data-state-link="error">error</a>
-    </nav>
+  <div class="state-router" role="group" aria-label="Runtime state channel">
+    <a class="state-router__link" href="#state=ideal" data-state-link="ideal">ideal</a>
+    <a class="state-router__link" href="#state=empty" data-state-link="empty">empty</a>
+    <a class="state-router__link" href="#state=error" data-state-link="error">error</a>
   </div>
 </header>
 
-<div class="shell">
-  <aside class="rail panel" aria-label="Facet filters">
-    <div class="inner">
-      <h2>Facets</h2>
-      <label class="field" for="region">
-        <span>Region</span>
-        <select id="region">
-          <option value="all">All regions (5)</option>
-          <option value="us-east">us-east (3)</option>
-          <option value="us-west">us-west (2)</option>
-          <option value="ap-south">ap-south (0)</option>
-        </select>
-      </label>
-      <div class="field">
-        <span id="statusFacetLabel">Status</span>
-        <div class="facet" role="group" aria-labelledby="statusFacetLabel">
-          <button type="button" data-facet="status" data-value="all" aria-pressed="true">All</button>
-          <button type="button" data-facet="status" data-value="running" aria-pressed="false">Running</button>
-          <button type="button" data-facet="status" data-value="critical" aria-pressed="false">Critical</button>
+<main>
+  <section class="kpi-strip" aria-label="Fleet telemetry">
+    <article class="kpi">
+      <div class="kpi__inner">
+        <p class="kpi__label">Fleet Throughput</p>
+        <p class="kpi__figure">
+          <span class="kpi__value metric__value">3,912</span>
+          <span class="kpi__unit">PFLOPS/s</span>
+        </p>
+        <svg class="spark" data-spark="0" viewBox="0 0 120 26" preserveAspectRatio="none" role="img" aria-label="Throughput micro sparkline, 14 samples"></svg>
+        <div class="kpi__baseline">
+          <span>P95 4,180</span>
+          <span class="baseline-track"><span class="baseline-track__fill" style="--pct:93.6%"></span><span class="baseline-track__marker" style="--pct:100%"></span></span>
+          <span>93.6%</span>
         </div>
       </div>
-      <div class="field">
-        <span id="workloadFacetLabel">Workload</span>
-        <div class="facet" role="group" aria-labelledby="workloadFacetLabel">
-          <button type="button" data-facet="workload" data-value="all" aria-pressed="true">All</button>
-          <button type="button" data-facet="workload" data-value="sd3-xl-batch" aria-pressed="false">sd3-xl-batch</button>
-          <button type="button" data-facet="workload" data-value="flux-dev" aria-pressed="false">flux-dev</button>
+    </article>
+
+    <article class="kpi">
+      <div class="kpi__inner">
+        <p class="kpi__label">VRAM Pressure</p>
+        <p class="kpi__figure">
+          <span class="kpi__value metric__value">87.4</span>
+          <span class="kpi__unit">% HBM3</span>
+        </p>
+        <svg class="spark spark--warn" data-spark="1" viewBox="0 0 120 26" preserveAspectRatio="none" role="img" aria-label="VRAM pressure micro sparkline, 14 samples"></svg>
+        <div class="kpi__baseline">
+          <span>P95 91.2</span>
+          <span class="baseline-track"><span class="baseline-track__fill" style="--pct:87.4%"></span><span class="baseline-track__marker" style="--pct:91.2%"></span></span>
+          <span>-3.8pt</span>
         </div>
       </div>
-      <p class="echo" id="filterEcho">region=all · status=all · workload=all</p>
-      <p class="rail-note">Filters, active tab, row selection and scroll offset survive every drawer dismissal. Nothing is submitted until the commit step.</p>
+    </article>
+
+    <article class="kpi">
+      <div class="kpi__inner">
+        <p class="kpi__label">Active Batch Jobs</p>
+        <p class="kpi__figure">
+          <span class="kpi__value metric__value">1,284</span>
+          <span class="kpi__unit">/ 1,500 slots</span>
+        </p>
+        <svg class="spark spark--ok" data-spark="2" viewBox="0 0 120 26" preserveAspectRatio="none" role="img" aria-label="Active jobs micro sparkline, 14 samples"></svg>
+        <div class="kpi__baseline">
+          <span>P95 1,402</span>
+          <span class="baseline-track"><span class="baseline-track__fill" style="--pct:85.6%"></span><span class="baseline-track__marker" style="--pct:93.5%"></span></span>
+          <span>85.6%</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="kpi">
+      <div class="kpi__inner">
+        <p class="kpi__label">Node Health · Nominal</p>
+        <p class="kpi__figure">
+          <span class="kpi__value metric__value" id="kpi-health">61</span>
+          <span class="kpi__unit">/ 64 groups</span>
+        </p>
+        <svg class="spark spark--danger" data-spark="3" viewBox="0 0 120 26" preserveAspectRatio="none" role="img" aria-label="Node health micro sparkline, 14 samples"></svg>
+        <div class="kpi__baseline">
+          <span>P95 64</span>
+          <span class="baseline-track"><span class="baseline-track__fill" style="--pct:95.3%"></span><span class="baseline-track__marker" style="--pct:100%"></span></span>
+          <span>-3 nodes</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="error-banner" id="error-banner" role="alert">
+    <div class="error-banner__inner">
+      <span class="error-banner__pulse" aria-hidden="true"></span>
+      <div class="empty-card__copy">
+        <h2>DCGM telemetry stream interrupted</h2>
+        <p>NVLink fabric flap across rack R3. Values below are last-known at <span class="mono">T-42s</span>; drain and preempt verbs remain authorised against cached topology.</p>
+      </div>
+      <button type="button" class="btn" id="retry-telemetry">Retry Probe</button>
     </div>
-  </aside>
+  </section>
 
-  <main class="stage panel">
-    <div class="inner">
-      <h2 id="stageTitle">Node Matrix</h2>
-      <div class="tabs" role="tablist" aria-label="Matrix view">
-        <button type="button" role="tab" id="tabNodes" aria-pressed="true">Node Matrix</button>
-        <button type="button" role="tab" id="tabVram" aria-pressed="false">VRAM Pool</button>
-      </div>
-
-      <div class="fault-banner" role="alert">
-        <span class="badge" data-status="critical">Telemetry lost</span>
-        <p id="faultText">DCGM uplink dropped for rack-07 — last frame 00:41 ago. Readings below are stale; actions stay queued and idempotent.</p>
-        <button type="button" class="btn btn-tactile" id="retryUplink">Retry Uplink</button>
-      </div>
-
-      <div class="matrix-scroll" id="matrixScroll">
-        <div class="matrix-head" role="row">
-          <span role="columnheader">Node / cluster UUID</span>
-          <span role="columnheader">Tensor util</span>
-          <span role="columnheader">VRAM</span>
-          <span role="columnheader">Temp</span>
-          <span role="columnheader">Batch / state</span>
-          <span role="columnheader">Action</span>
+  <section class="panel matrix-panel" aria-labelledby="matrix-title">
+    <div class="panel__inner">
+      <div class="panel__head matrix-panel__head">
+        <div>
+          <p class="eyebrow">原位拓扑 · In-situ Topology</p>
+          <h2 class="panel__title" id="matrix-title">Cluster Matrix — 8 racks × 8 node groups</h2>
         </div>
-        <div id="rows" role="grid" aria-label="Cluster nodes" aria-rowcount="5"></div>
+        <p class="facet-count" id="facet-count">64 / 64 node groups · 4,096 GPUs</p>
       </div>
 
-      <div class="empty-card" id="emptyCard" hidden>
-        <h3>0 nodes match this filter</h3>
-        <p id="emptyDetail">The control plane is healthy — the facet simply selects no hardware.</p>
-        <button type="button" class="btn btn-primary btn-tactile" id="resetFilters">Reset Filters</button>
+      <div class="facet-bar" role="group" aria-label="Facet filters">
+        <button type="button" class="chip" data-filter="all" aria-pressed="true">All racks</button>
+        <button type="button" class="chip" data-filter="r1" aria-pressed="false">Rack R1–R3</button>
+        <button type="button" class="chip" data-filter="warn" aria-pressed="false">Degraded only</button>
+        <button type="button" class="chip" data-filter="spare" aria-pressed="false">Spare pool</button>
       </div>
+
+      <div class="matrix" id="matrix" role="listbox" aria-label="GPU node groups" style="margin-top:12px"></div>
     </div>
-  </main>
-</div>
+  </section>
 
-<footer class="kbdbar">
-  <span><kbd>Space</kbd> / <kbd>P</kbd> inspect active node</span>
-  <span><kbd>Esc</kbd> dismiss drawer / modal</span>
-  <span><kbd>J</kbd> / <kbd>K</kbd> navigate rows</span>
-  <span class="echo" id="selectionEcho">active: row 1 of 5</span>
-</footer>
+  <section class="empty-card" id="empty-card">
+    <div class="empty-card__inner">
+      <span class="empty-card__glyph" aria-hidden="true">&#8709;</span>
+      <div class="empty-card__copy">
+        <h2>No node groups match the active facet</h2>
+        <p>Facet <code id="empty-facet">spare</code> returned 0 of 64 node groups. Filters and scroll offset are preserved; clearing the facet restores the full 4,096-GPU matrix.</p>
+      </div>
+      <button type="button" class="btn btn--primary" id="reset-filters">Reset Filters</button>
+    </div>
+  </section>
+</main>
 
 <div class="scrim" id="scrim"></div>
 
-<aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-labelledby="drawerTitle" aria-hidden="true">
-  <div class="drawer-head">
-    <h2 id="drawerTitle">Node Inspector</h2>
-    <span class="frame-tag">Frame 1 · Intent Input</span>
+<aside class="drawer" id="inspector" aria-labelledby="drawer-title" aria-hidden="true">
+  <div class="drawer__head">
+    <div>
+      <p class="eyebrow">检视抽屉 · Inspection</p>
+      <h2 class="drawer__title" id="drawer-title">R1-N1</h2>
+    </div>
+    <button type="button" class="btn btn--ghost" id="drawer-close" aria-label="Dismiss inspection drawer">Esc</button>
   </div>
-  <p class="uuid mono" id="drawerNodeId" title=""></p>
-  <dl class="kv" id="drawerParams"></dl>
-  <p class="drawer-note">Every reading carries its reference baseline. Dismissing this drawer without committing preserves filters, tab and scroll offset.</p>
-  <div class="drawer-actions">
-    <button type="button" class="btn btn-danger btn-tactile" id="triggerDrain" data-action-id="drain-node">Drain Node</button>
-    <button type="button" class="btn btn-tactile" id="triggerPreempt" data-action-id="preempt-vram">Preempt VRAM</button>
+
+  <div class="drawer__body">
+    <span class="badge" id="drawer-badge" data-status="running">RUNNING</span>
+
+    <dl class="kv">
+      <dt>GPU group</dt><dd id="kv-gpus">64 × H100 SXM5</dd>
+      <dt>Tenant</dt><dd id="kv-tenant">diffusion-a</dd>
+      <dt>VRAM alloc</dt><dd id="kv-vram">72%</dd>
+      <dt>P95 baseline</dt><dd id="kv-p95">86%</dd>
+      <dt>Hotspot</dt><dd id="kv-temp">61 °C</dd>
+      <dt>Slurm state</dt><dd id="kv-slurm">MIXED</dd>
+    </dl>
+
+    <div class="metric">
+      <div class="metric__row">
+        <span class="metric__label">Tensor stream, 14 µs frames</span>
+        <span class="metric__baseline" id="drawer-spark-baseline">P95 88%</span>
+      </div>
+      <svg class="spark" id="drawer-spark" viewBox="0 0 120 26" preserveAspectRatio="none" role="img" aria-label="Node tensor stream micro sparkline"></svg>
+    </div>
+
+    <p class="eyebrow">Cluster identity</p>
+    <p class="uuid" id="drawer-uuid" title="node-cluster-uuid-00000000-0000-0000-0000-000000000000">node-cluster-uuid-00000000-0000-0000-0000-000000000000</p>
+  </div>
+
+  <div class="drawer__actions">
+    <button type="button" class="btn btn--danger" data-action="drain-node">Drain Node</button>
+    <button type="button" class="btn btn--warn" data-action="preempt-vram">Preempt VRAM</button>
   </div>
 </aside>
 
-<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalBody" aria-hidden="true">
-  <span class="frame-tag">Frame 2 · Decisive Commit</span>
-  <h2 id="modalTitle">Drain GPU Node</h2>
-  <p id="modalBody">Evicts the active batch job and halts the tensor stream on this node.</p>
-  <div class="modal-actions">
-    <button type="button" class="btn" id="cancelCommit">Cancel</button>
-    <button type="button" class="btn btn-primary btn-tactile" id="commitBtn" data-action-id="drain-node">Confirm Drain</button>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal__inner">
+    <p class="eyebrow">决定性提交 · Decisive Commit</p>
+    <h2 class="modal__title" id="modal-title">Drain GPU Node</h2>
+    <p class="modal__impact" id="modal-impact">Evicts active batch job and halts tensor stream</p>
+    <dl class="kv">
+      <dt>Target</dt><dd id="modal-target">R1-N1</dd>
+      <dt>Scope</dt><dd id="modal-scope">64 × H100 SXM5</dd>
+    </dl>
+    <p class="modal__lock" id="modal-lock" aria-live="polite"></p>
+    <div class="modal__actions">
+      <button type="button" class="btn btn--ghost" id="modal-cancel">Cancel</button>
+      <button type="button" class="btn btn--primary" id="modal-commit">Confirm Drain</button>
+    </div>
   </div>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite">
-  <span class="frame-tag">Frame 3 · Settled</span>
-  <span id="toastText"></span>
-</div>
+<div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
 
 <script>
 (function () {
   "use strict";
 
-  var STATES = ["ideal", "empty", "error"];
+  /* ------------------------------------------------------------ topology */
+  var UUID = "node-cluster-uuid-00000000-0000-0000-0000-000000000000";
+  var RACKS = 8;
+  var PER_RACK = 8;
+  var TOTAL_GROUPS = RACKS * PER_RACK;      /* 64 node groups */
+  var GPUS_PER_GROUP = 64;                  /* 64 × 64 = 4,096 H100 */
+  var TENANTS = ["diffusion-a", "diffusion-b", "reinforce-rl", "batch-preempt"];
+  var STATES = ["running", "warning", "danger"];
 
-  var NODES = [
-    { id: "node-cluster-uuid-00000000-0000-0000-0000-000000000000", short: "hgx-a01", region: "us-east",
-      rack: "rack-07", util: 94, utilP95: 97, vram: 91, vramP95: 96.2, temp: 71, job: "sd3-xl-batch-7742",
-      status: "critical", spark: [72, 78, 74, 88, 91, 86, 94, 94] },
-    { id: "hgx-a02.us-east.cluster-07", short: "hgx-a02", region: "us-east",
-      rack: "rack-07", util: 88, utilP95: 94, vram: 84, vramP95: 96.2, temp: 66, job: "flux-dev-1180",
-      status: "running", spark: [80, 83, 79, 85, 88, 86, 87, 88] },
-    { id: "hgx-a03.us-east.cluster-07", short: "hgx-a03", region: "us-east",
-      rack: "rack-08", util: 61, utilP95: 72, vram: 58, vramP95: 96.2, temp: 54, job: "sd3-xl-batch-7739",
-      status: "running", spark: [55, 58, 62, 60, 57, 59, 60, 61] },
-    { id: "hgx-b01.us-west.cluster-11", short: "hgx-b01", region: "us-west",
-      rack: "rack-11", util: 97, utilP95: 97, vram: 96, vramP95: 96.2, temp: 78, job: "sd3-xl-batch-7751",
-      status: "critical", spark: [84, 88, 92, 95, 93, 96, 97, 97] },
-    { id: "hgx-b02.us-west.cluster-11", short: "hgx-b02", region: "us-west",
-      rack: "rack-12", util: 43, utilP95: 66, vram: 39, vramP95: 96.2, temp: 48, job: "flux-dev-1177",
-      status: "running", spark: [40, 44, 46, 42, 41, 43, 42, 43] }
-  ];
+  /* Deterministic telemetry so every capture renders an identical fleet. */
+  function lcg(seed) {
+    var s = seed >>> 0;
+    return function () {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+  var rnd = lcg(20260917);
 
-  /* One lifecycle table, four phases: trigger -> drawer header -> commit -> toast. */
+  function sample(n, lo, hi) {
+    var out = [];
+    for (var i = 0; i < n; i++) out.push(Math.round(lo + rnd() * (hi - lo)));
+    return out;
+  }
+
+  var nodes = [];
+  for (var r = 0; r < RACKS; r++) {
+    for (var n = 0; n < PER_RACK; n++) {
+      var roll = rnd();
+      var status = roll > 0.94 ? "danger" : roll > 0.80 ? "warning" : "running";
+      nodes.push({
+        id: "R" + (r + 1) + "-N" + (n + 1),
+        rack: r + 1,
+        gpus: GPUS_PER_GROUP,
+        tenant: TENANTS[Math.floor(rnd() * TENANTS.length)],
+        vram: Math.round(46 + rnd() * 52),
+        p95: Math.round(80 + rnd() * 14),
+        temp: Math.round(52 + rnd() * 33),
+        status: status,
+        spark: sample(14, status === "danger" ? 22 : 44, status === "running" ? 92 : 74)
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------- actions */
   var ACTIONS = {
-    drain: {
+    "drain-node": {
+      id: "drain-node",
+      trigger: "Drain Node",
       header: "Drain GPU Node",
       commit: "Confirm Drain",
       toast: "Node Drained Successfully",
-      settle: "drained",
-      body: "Evicts the active batch job and halts the tensor stream on this node."
+      impact: "Evicts active batch job and halts tensor stream",
+      settle: function (node) { node.status = "draining"; node.vram = 0; node.slurm = "DRAINED"; }
     },
-    preempt: {
+    "preempt-vram": {
+      id: "preempt-vram",
+      trigger: "Preempt VRAM",
       header: "Preempt VRAM Allocation",
       commit: "Execute Preempt",
       toast: "VRAM Eviction Committed",
-      settle: "vram-released",
-      body: "Releases this node's VRAM pool back to the shared cluster."
+      impact: "Releases VRAM pool back to shared cluster",
+      settle: function (node) { node.status = "preempted"; node.vram = 4; node.slurm = "PREEMPT"; }
     }
   };
 
-  var el = {
-    rows: document.getElementById("rows"),
-    scroll: document.getElementById("matrixScroll"),
-    empty: document.getElementById("emptyCard"),
-    emptyDetail: document.getElementById("emptyDetail"),
-    region: document.getElementById("region"),
-    filterEcho: document.getElementById("filterEcho"),
-    stageTitle: document.getElementById("stageTitle"),
-    tabNodes: document.getElementById("tabNodes"),
-    tabVram: document.getElementById("tabVram"),
-    drawer: document.getElementById("drawer"),
-    drawerNodeId: document.getElementById("drawerNodeId"),
-    drawerParams: document.getElementById("drawerParams"),
-    triggerDrain: document.getElementById("triggerDrain"),
-    triggerPreempt: document.getElementById("triggerPreempt"),
-    modal: document.getElementById("modal"),
-    modalTitle: document.getElementById("modalTitle"),
-    modalBody: document.getElementById("modalBody"),
-    commitBtn: document.getElementById("commitBtn"),
-    cancelCommit: document.getElementById("cancelCommit"),
-    scrim: document.getElementById("scrim"),
-    toast: document.getElementById("toast"),
-    toastText: document.getElementById("toastText"),
-    selectionEcho: document.getElementById("selectionEcho"),
-    resetFilters: document.getElementById("resetFilters"),
-    retryUplink: document.getElementById("retryUplink"),
-    drainSpark: document.getElementById("fleetDrainSpark")
-  };
+  /* --------------------------------------------------------------- nodes */
+  var $ = function (id) { return document.getElementById(id); };
+  var matrix = $("matrix");
+  var countEl = $("facet-count");
+  var body = document.body;
 
-  /* Draft context lives here and only here: dismissal never clears it. */
-  var ctx = {
-    state: "ideal", region: "all", status: "all", workload: "all",
-    tab: "nodes", active: 0, scroll: 0, pageY: 0
-  };
-  var returnFocus = null;  // anchor that must regain focus when an overlay closes
-  var actionKey = null;    // action awaiting commit
-  var locked = false;      // idempotency guard: one settlement per commit burst
-  var toastTimer = null;
+  var tiles = {};
+  var selectedId = nodes[0].id;
+  var filter = "all";
 
-  function sparkline(values, width, height) {
-    var max = Math.max.apply(null, values), min = Math.min.apply(null, values);
-    var span = (max - min) || 1;
-    var pts = values.map(function (v, i) {
-      return ((i / (values.length - 1)) * width).toFixed(1) + "," +
-             (height - ((v - min) / span) * height).toFixed(1);
-    }).join(" ");
-    return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + " " + height +
-           '" aria-hidden="true"><polyline points="' + pts + '" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
-  }
-
-  function filtered() {
-    return NODES.filter(function (n) {
-      if (ctx.region !== "all" && n.region !== ctx.region) return false;
-      if (ctx.status !== "all" && n.status !== ctx.status) return false;
-      if (ctx.workload !== "all" && n.job.indexOf(ctx.workload) !== 0) return false;
-      return true;
+  function buildTiles() {
+    var frag = document.createDocumentFragment();
+    nodes.forEach(function (node) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tile";
+      btn.setAttribute("role", "option");
+      btn.dataset.nodeId = node.id;
+      btn.dataset.status = node.status;
+      btn.title = node.id + " · " + node.gpus + " GPUs · VRAM " + node.vram + "% · " + UUID;
+      btn.setAttribute("aria-label", node.id + ", " + node.gpus + " GPUs, VRAM " + node.vram + " percent");
+      btn.innerHTML =
+        '<span class="tile__id">' + node.id + "</span>" +
+        '<span class="tile__gauge"><span style="--pct:' + node.vram + '%"></span></span>';
+      frag.appendChild(btn);
+      tiles[node.id] = btn;
     });
+    matrix.appendChild(frag);
   }
 
-  function toneFor(value, baseline) {
-    if (value >= 95) return "danger";
-    if (value >= baseline) return "warn";
-    return "ok";
+  function matchesFilter(node) {
+    if (filter === "all") return true;
+    if (filter === "warn") return node.status !== "running";
+    if (filter === "spare") return false;          /* zero-item facet by design */
+    if (filter === "r1") return node.rack <= 3;
+    return true;
   }
 
-  function cell(value, unit, baselineLabel, tone, tick) {
-    return '<div class="cell" role="gridcell" data-tone="' + tone + '">' +
-             '<span class="value metric">' + value + unit + "</span>" +
-             '<span class="baseline">' + baselineLabel + "</span>" +
-             '<span class="meter" aria-hidden="true">' +
-               '<i class="meter-fill" style="width:' + Math.min(100, value) + '%"></i>' +
-               '<i class="meter-tick" style="left:' + Math.min(99, tick) + '%"></i>' +
-             "</span>" +
-           "</div>";
+  function visibleNodes() {
+    return nodes.filter(matchesFilter);
+  }
+
+  function paintTile(node) {
+    var btn = tiles[node.id];
+    if (!btn) return;
+    btn.dataset.status = node.status;
+    btn.querySelector(".tile__gauge span").style.setProperty("--pct", node.vram + "%");
+    btn.setAttribute("aria-label", node.id + ", " + node.gpus + " GPUs, VRAM " + node.vram + " percent");
   }
 
   function render() {
-    var list = (ctx.state === "empty") ? [] : filtered();
-    var settled = {};
+    var visible = visibleNodes();
+    var isEmpty = body.dataset.state === "empty" || visible.length === 0;
+    var shown = 0;
 
-    el.rows.innerHTML = list.map(function (n) {
-      var local = NODES.indexOf(n);
-      var badge = n.settleState || n.status;
-      return '<div class="row' + (local === ctx.active ? " is-active" : "") + '" role="row" data-item="node" ' +
-               'data-index="' + local + '" id="row-' + local + '" ' +
-               'tabindex="' + (local === ctx.active ? "0" : "-1") + '" ' +
-               'aria-selected="' + (local === ctx.active) + '">' +
-        '<div class="cell" role="gridcell">' +
-          '<span class="mono id-text" title="' + n.id + '">' + n.id + "</span>" +
-          '<span class="id-sub">' + n.short + " · " + n.region + " · " + n.rack + "</span>" +
-          '<span class="spark">' + sparkline(n.spark, 64, 14) + "</span>" +
-        "</div>" +
-        cell(n.util, "%", "P95 " + n.utilP95 + "% · 8h", toneFor(n.util, n.utilP95), n.utilP95) +
-        cell(n.vram, "%", "pool P95 " + n.vramP95 + "%", toneFor(n.vram, n.vramP95), n.vramP95) +
-        cell(n.temp, "°C", "throttle 83°C", n.temp >= 75 ? "warn" : "ok", 83) +
-        '<div class="cell" role="gridcell">' +
-          '<span class="mono id-text" title="' + n.job + '">' + n.job + "</span>" +
-          '<span class="badge" data-status="' + badge + '">' + badge + "</span>" +
-        "</div>" +
-        '<div class="cell" role="gridcell">' +
-          '<button type="button" class="btn btn-tactile" data-inspect="' + local + '" ' +
-            'data-anchor="inspect-' + local + '">Inspect</button>' +
-        "</div>" +
-      "</div>";
-    }).join("");
+    nodes.forEach(function (node) {
+      var tile = tiles[node.id];
+      var on = visible.indexOf(node) !== -1 && !isEmpty;
+      tile.classList.toggle("is-off", !on);
+      tile.setAttribute("aria-selected", String(node.id === selectedId && on));
+      tile.tabIndex = node.id === selectedId ? 0 : -1;
+      if (on) shown++;
+    });
 
-    var isEmpty = ctx.state === "empty" || list.length === 0;
-    el.empty.hidden = !isEmpty;
-    el.scroll.hidden = isEmpty;
+    body.classList.toggle("is-empty", isEmpty);
     if (isEmpty) {
-      el.emptyDetail.textContent = "Nothing in " + ctx.region + " · status=" + ctx.status +
-        " · workload=" + ctx.workload + " matches. The control plane is healthy — the facet simply selects no hardware.";
+      $("empty-facet").textContent = body.dataset.state === "empty" ? "state=empty" : filter;
+      countEl.textContent = "0 / 64 node groups · 0 GPUs reachable";
+    } else {
+      countEl.textContent = shown + " / 64 node groups · " + (shown * GPUS_PER_GROUP).toLocaleString("en-US") + " GPUs";
     }
-    el.filterEcho.textContent = "region=" + ctx.region + " · status=" + ctx.status + " · workload=" + ctx.workload;
-    el.selectionEcho.textContent = "active: " + (list.length ? "row " + (ctx.active + 1) + " of " + list.length : "none");
-    el.stageTitle.textContent = ctx.tab === "nodes" ? "Node Matrix" : "VRAM Pool";
-    el.rows.setAttribute("aria-rowcount", String(list.length));
+
+    var nominal = nodes.filter(function (x) { return x.status === "running"; }).length;
+    var health = $("kpi-health");
+    if (health) health.textContent = String(nominal);
   }
 
-  function setActive(index, focus) {
-    if (!filtered().length) return;
-    ctx.active = Math.max(0, Math.min(NODES.length - 1, index));
-    render();
-    var row = document.getElementById("row-" + ctx.active);
-    if (row) {
-      row.setAttribute("tabindex", "0");
-      if (focus) row.focus();
+  function select(id, focus) {
+    if (!tiles[id]) return;
+    selectedId = id;
+    nodes.forEach(function (node) {
+      var tile = tiles[node.id];
+      var on = !tile.classList.contains("is-off");
+      tile.setAttribute("aria-selected", String(node.id === id && on));
+      tile.tabIndex = node.id === id ? 0 : -1;
+    });
+    if (focus) {
+      var tile = tiles[id];
+      if (tile && !tile.classList.contains("is-off")) {
+        tile.focus({ preventScroll: true });
+        tile.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
     }
   }
 
-  function markReturnFocus(node) {
-    returnFocus = node;
+  function move(delta) {
+    var visible = visibleNodes().filter(function (node) {
+      return !tiles[node.id].classList.contains("is-off");
+    });
+    if (!visible.length) return;
+    var idx = visible.findIndex(function (node) { return node.id === selectedId; });
+    if (idx === -1) idx = delta > 0 ? -1 : 0;
+    var next = (idx + delta + visible.length) % visible.length;
+    select(visible[next].id, true);
+    if (drawerOpen) hydrate(visible[next]);
   }
 
-  function restoreFocus() {
-    if (returnFocus && document.contains(returnFocus)) returnFocus.focus({ preventScroll: true });
-    returnFocus = null;
-    window.scrollTo(0, ctx.pageY);   // spatial context stays pinned
+  /* --------------------------------------------------------------- spark */
+  function sparkPath(vals, w, h) {
+    var max = Math.max.apply(null, vals);
+    var min = Math.min.apply(null, vals);
+    var span = Math.max(1, max - min);
+    return vals.map(function (v, i) {
+      var x = (i / (vals.length - 1)) * w;
+      var y = h - ((v - min) / span) * (h - 4) - 2;
+      return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+    }).join(" ");
   }
 
-  /* Frame 1 — Intent Input. Repeated Space hits are absorbed, never queued. */
-  function openDrawer(index) {
-    if (el.drawer.classList.contains("is-open") || el.modal.classList.contains("is-open")) return;
-    var n = NODES[index];
-    if (!n) return;
-    ctx.scroll = el.scroll.scrollLeft;
-    ctx.pageY = window.scrollY;
-    ctx.active = index;
-    render();
-    el.drawerNodeId.textContent = n.id;
-    el.drawerNodeId.title = n.id;
-    el.drawerParams.innerHTML =
-      "<dt>Batch job</dt><dd class='mono'>" + n.job + "</dd>" +
-      "<dt>Tensor util</dt><dd>" + n.util + "%<small>P95 " + n.utilP95 + "%</small></dd>" +
-      "<dt>VRAM</dt><dd>" + n.vram + "%<small>pool P95 " + n.vramP95 + "%</small></dd>" +
-      "<dt>Temp</dt><dd>" + n.temp + "°C<small>throttle 83°C</small></dd>" +
-      "<dt>Region</dt><dd>" + n.region + "<small>" + n.rack + "</small></dd>";
-    el.drawer.classList.add("is-open");
-    el.drawer.setAttribute("aria-hidden", "false");
-    el.scrim.classList.add("is-open");
-    el.drawer.querySelector(".drawer-actions .btn").focus({ preventScroll: true });
-    window.scrollTo(0, ctx.pageY);
-    el.scroll.scrollLeft = ctx.scroll;
+  function paintSpark(svg, vals, close) {
+    if (!svg) return;
+    svg.innerHTML = "";
+    var ns = "http://www.w3.org/2000/svg";
+    var path = document.createElementNS(ns, "path");
+    path.setAttribute("d", sparkPath(vals, 120, 26));
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "1.5");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
+    if (close) {
+      var base = document.createElementNS(ns, "line");
+      base.setAttribute("x1", "0"); base.setAttribute("x2", "120");
+      base.setAttribute("y1", "24"); base.setAttribute("y2", "24");
+      base.setAttribute("stroke", "currentColor");
+      base.setAttribute("stroke-width", "0.5");
+      base.setAttribute("opacity", "0.35");
+      base.setAttribute("stroke-dasharray", "2 3");
+      svg.appendChild(base);
+    }
+  }
+
+  var KPI_SPARKS = [sample(14, 62, 96), sample(14, 74, 95), sample(14, 70, 93), sample(14, 88, 100)];
+  Array.prototype.forEach.call(document.querySelectorAll("[data-spark]"), function (svg) {
+    paintSpark(svg, KPI_SPARKS[Number(svg.dataset.spark)], true);
+  });
+
+  /* -------------------------------------------------------------- drawer */
+  var drawer = $("inspector");
+  var scrim = $("scrim");
+  var drawerOpen = false;
+  var originEl = null;
+
+  function hydrate(node) {
+    $("drawer-title").textContent = node.id;
+    var badge = $("drawer-badge");
+    badge.dataset.status = node.status;
+    badge.textContent = node.status.toUpperCase();
+    $("kv-gpus").textContent = node.gpus + " × H100 SXM5";
+    $("kv-tenant").textContent = node.tenant;
+    $("kv-vram").textContent = node.vram + "%";
+    $("kv-p95").textContent = node.p95 + "%";
+    $("kv-temp").textContent = node.temp + " °C";
+    $("kv-slurm").textContent = node.slurm || (node.status === "running" ? "MIXED" : "ALLOCATED");
+    $("drawer-uuid").textContent = UUID;
+    $("drawer-uuid").title = UUID;
+    $("drawer-spark-baseline").textContent = "P95 " + node.p95 + "%";
+    var spark = $("drawer-spark");
+    spark.classList.toggle("spark--danger", node.status === "danger");
+    spark.classList.toggle("spark--warn", node.status === "warning");
+    paintSpark(spark, node.spark, true);
+  }
+
+  function openDrawer(node, origin) {
+    originEl = origin || tiles[node.id] || null;
+    hydrate(node);
+    drawerOpen = true;
+    drawer.classList.add("is-open");
+    drawer.setAttribute("aria-hidden", "false");
+    drawer.inert = false;
+    scrim.classList.add("is-open");
+    $("drawer-close").focus({ preventScroll: true });
   }
 
   function closeDrawer() {
-    if (!el.drawer.classList.contains("is-open")) return;
-    el.drawer.classList.remove("is-open");
-    el.drawer.setAttribute("aria-hidden", "true");
-    if (!el.modal.classList.contains("is-open")) el.scrim.classList.remove("is-open");
+    if (!drawerOpen) return;
+    drawerOpen = false;
+    drawer.classList.remove("is-open");
+    drawer.setAttribute("aria-hidden", "true");
+    drawer.inert = true;
+    scrim.classList.remove("is-open");
+    if (modalOpen) closeModal(false);
     restoreFocus();
   }
 
-  /* Frame 2 — Decisive Commit. */
-  function openModal(key) {
-    if (el.modal.classList.contains("is-open") || locked) return;
-    var a = ACTIONS[key];
-    actionKey = key;
-    ctx.pageY = window.scrollY;
-    el.modalTitle.textContent = a.header;
-    el.modalBody.textContent = a.body;
-    el.commitBtn.textContent = a.commit;
-    el.commitBtn.setAttribute("data-action-id", key === "drain" ? "drain-node" : "preempt-vram");
-    el.commitBtn.disabled = false;
-    el.commitBtn.removeAttribute("aria-busy");
-    markReturnFocus(document.getElementById(key === "drain" ? "triggerDrain" : "triggerPreempt"));
-    el.modal.classList.add("is-open");
-    el.modal.setAttribute("aria-hidden", "false");
-    el.scrim.classList.add("is-open");
-    el.commitBtn.focus({ preventScroll: true });
-    window.scrollTo(0, ctx.pageY);
+  function restoreFocus() {
+    if (originEl && document.contains(originEl)) {
+      originEl.focus({ preventScroll: true });
+    }
+    originEl = null;
   }
 
-  function closeModal() {
-    if (!el.modal.classList.contains("is-open")) return;
-    el.modal.classList.remove("is-open");
-    el.modal.setAttribute("aria-hidden", "true");
-    if (!el.drawer.classList.contains("is-open")) el.scrim.classList.remove("is-open");
-    actionKey = null;
-    restoreFocus();
+  function inspect(node) {
+    if (!node) return;
+    select(node.id, false);
+    openDrawer(node, tiles[node.id]);
   }
 
-  /* Frame 3 — State Settlement & Focus Restoration. */
-  function settle() {
-    if (locked || !actionKey) return;      // double-click / rapid Space: single transition
-    locked = true;
-    var a = ACTIONS[actionKey];
-    var key = actionKey;
-    var node = NODES[ctx.active];
-    el.commitBtn.disabled = true;
-    el.commitBtn.setAttribute("aria-busy", "true");
+  function inspectSelected() {
+    inspect(nodes.find(function (x) { return x.id === selectedId; }));
+  }
+
+  /* --------------------------------------------------------------- modal */
+  var modal = $("modal");
+  var modalOpen = false;
+  var pending = null;
+  var committed = false;
+  var commitBtn = $("modal-commit");
+
+  function openModal(node, action) {
+    pending = { node: node, action: action };
+    committed = false;
+    $("modal-title").textContent = action.header;
+    $("modal-impact").textContent = action.impact;
+    $("modal-target").textContent = node.id;
+    $("modal-scope").textContent = node.gpus + " × H100 SXM5";
+    $("modal-lock").textContent = "";
+    commitBtn.textContent = action.commit;
+    commitBtn.disabled = false;
+    commitBtn.removeAttribute("aria-busy");
+    modalOpen = true;
+    modal.classList.add("is-open");
+    commitBtn.focus({ preventScroll: true });
+  }
+
+  function closeModal(restore) {
+    if (!modalOpen) return;
+    modalOpen = false;
+    modal.classList.remove("is-open");
+    if (restore !== false) {
+      var trigger = drawer.querySelector('[data-action="' + (pending ? pending.action.id : "drain-node") + '"]');
+      if (trigger) trigger.focus({ preventScroll: true });
+    }
+  }
+
+  function commit() {
+    /* Rapid-interruption guard: idempotent single transition per intent. */
+    if (!pending || committed || commitBtn.disabled) return;
+    committed = true;
+    commitBtn.disabled = true;
+    commitBtn.setAttribute("aria-busy", "true");
+    $("modal-lock").textContent = "LOCKED · idempotency key " + pending.action.id + "@" + pending.node.id;
+
+    var node = pending.node;
+    var action = pending.action;
+
     window.setTimeout(function () {
-      if (node) node.settleState = a.settle;
-      el.modal.classList.remove("is-open");
-      el.modal.setAttribute("aria-hidden", "true");
-      if (!el.drawer.classList.contains("is-open")) el.scrim.classList.remove("is-open");
+      action.settle(node);
+      paintTile(node);
+      hydrate(node);
+      closeModal(false);
+      closeDrawer();
+      toast(action.toast, node.id);
       render();
-      showToast(a.toast);
-      actionKey = null;
-      locked = false;
-      var back = document.getElementById(key === "drain" ? "triggerDrain" : "triggerPreempt");
-      markReturnFocus(back);
-      restoreFocus();
-    }, 220);
+      pending = null;
+    }, 320);
   }
 
-  function showToast(text) {
-    el.toastText.textContent = text;
-    el.toast.classList.add("is-open");
-    if (toastTimer) window.clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(function () { el.toast.classList.remove("is-open"); }, 2800);
+  function toast(message, detail) {
+    var el = document.createElement("div");
+    el.className = "toast";
+    el.setAttribute("role", "status");
+    el.innerHTML = '<span class="toast__dot" aria-hidden="true"></span><span>' +
+      message + '</span><span class="mono" style="--pct:0">' + detail + "</span>";
+    $("toast-region").appendChild(el);
+    window.setTimeout(function () {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, 2600);
   }
 
-  /* ---- Hash state router: #state=ideal | empty | error ---- */
+  /* --------------------------------------------------------- state router */
+  var SUPPORTED = ["ideal", "empty", "error"];
+
+  function readState() {
+    var raw = window.location.hash.replace(/^#/, "");
+    var params = new URLSearchParams(raw);
+    var s = params.get("state");
+    return SUPPORTED.indexOf(s) !== -1 ? s : "ideal";
+  }
+
   function applyState() {
-    var m = /state=([a-z-]+)/.exec(window.location.hash || "");
-    ctx.state = (m && STATES.indexOf(m[1]) !== -1) ? m[1] : "ideal";
-    document.body.dataset.state = ctx.state;
-    [].forEach.call(document.querySelectorAll("[data-state-link]"), function (a) {
-      a.setAttribute("aria-current", String(a.getAttribute("data-state-link") === ctx.state));
+    var s = readState();
+    body.dataset.state = s;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-state-link]"), function (link) {
+      link.setAttribute("aria-current", String(link.dataset.stateLink === s));
     });
-    closeModal();
-    closeDrawer();
     render();
   }
+
   window.addEventListener("hashchange", applyState);
 
-  /* ---- Dual-channel ergonomics: pointer and keyboard reach every action ---- */
-  document.addEventListener("keydown", function (e) {
-    var tag = (e.target && e.target.tagName) || "";
-    if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
-    if (e.key === "Escape") {
-      e.preventDefault();
-      if (el.modal.classList.contains("is-open")) closeModal();
-      else closeDrawer();
-      return;
-    }
-    if (el.modal.classList.contains("is-open")) return;
-    if (e.code === "Space" || e.key === " " || e.key === "p" || e.key === "P") {
-      e.preventDefault();
-      if (el.drawer.classList.contains("is-open")) closeDrawer();
-      else openDrawer(ctx.active);
-      return;
-    }
-    if (e.key === "j" || e.key === "J") { e.preventDefault(); setActive(ctx.active + 1, true); return; }
-    if (e.key === "k" || e.key === "K") { e.preventDefault(); setActive(ctx.active - 1, true); }
-  });
-  document.addEventListener("keyup", function (e) {
-    if (e.key === " " || e.key === "Escape" || e.key === "j" || e.key === "k") {
-      document.body.dataset.lastKey = e.key;
-    }
+  /* ---------------------------------------------------------- interaction */
+  matrix.addEventListener("click", function (event) {
+    var tile = event.target.closest(".tile");
+    if (!tile) return;
+    inspect(nodes.find(function (x) { return x.id === tile.dataset.nodeId; }));
   });
 
-  /* ---- Wiring ---- */
-  el.rows.addEventListener("click", function (e) {
-    var inspect = e.target.closest("[data-inspect]");
-    if (inspect) { markReturnFocus(inspect); openDrawer(Number(inspect.getAttribute("data-inspect"))); return; }
-    var row = e.target.closest("[data-item='node']");
-    if (row) setActive(Number(row.getAttribute("data-index")), false);
-  });
-
-  el.region.addEventListener("change", function () {
-    ctx.region = el.region.value; ctx.active = 0; render();
-  });
-
-  [].forEach.call(document.querySelectorAll("[data-facet]"), function (b) {
-    b.addEventListener("click", function () {
-      var f = b.getAttribute("data-facet");
-      ctx[f] = b.getAttribute("data-value");
-      [].forEach.call(document.querySelectorAll('[data-facet="' + f + '"]'), function (x) {
-        x.setAttribute("aria-pressed", String(x === b));
+  Array.prototype.forEach.call(document.querySelectorAll("[data-filter]"), function (chip) {
+    chip.addEventListener("click", function () {
+      filter = chip.dataset.filter;
+      Array.prototype.forEach.call(document.querySelectorAll("[data-filter]"), function (other) {
+        other.setAttribute("aria-pressed", String(other === chip));
       });
-      ctx.active = 0;
+      if (body.dataset.state === "empty") {
+        window.location.hash = "state=ideal";
+      }
       render();
     });
   });
 
-  function setTab(tab) {
-    ctx.tab = tab;
-    el.tabNodes.setAttribute("aria-pressed", String(tab === "nodes"));
-    el.tabVram.setAttribute("aria-pressed", String(tab === "vram"));
-    render();
-  }
-  el.tabNodes.addEventListener("click", function () { setTab("nodes"); });
-  el.tabVram.addEventListener("click", function () { setTab("vram"); });
-
-  el.resetFilters.addEventListener("click", function () {
-    ctx.region = "all"; ctx.status = "all"; ctx.workload = "all"; ctx.active = 0;
-    el.region.value = "all";
-    [].forEach.call(document.querySelectorAll("[data-facet]"), function (x) {
-      x.setAttribute("aria-pressed", String(x.getAttribute("data-value") === "all"));
+  $("reset-filters").addEventListener("click", function () {
+    filter = "all";
+    Array.prototype.forEach.call(document.querySelectorAll("[data-filter]"), function (other) {
+      other.setAttribute("aria-pressed", String(other.dataset.filter === "all"));
     });
-    if (ctx.state === "empty") window.location.hash = "#state=ideal";
+    window.location.hash = "state=ideal";
     render();
-    showToast("Filters Reset — 5 nodes restored");
   });
 
-  el.retryUplink.addEventListener("click", function () {
-    window.location.hash = "#state=ideal";
-    showToast("Uplink Restored — live telemetry");
+  $("retry-telemetry").addEventListener("click", function () {
+    toast("Telemetry probe re-armed", "DCGM");
   });
 
-  el.triggerDrain.addEventListener("click", function () { openModal("drain"); });
-  el.triggerPreempt.addEventListener("click", function () { openModal("preempt"); });
-  el.commitBtn.addEventListener("click", settle);
-  el.cancelCommit.addEventListener("click", closeModal);
-  el.scrim.addEventListener("click", function () { closeModal(); closeDrawer(); });
+  drawer.addEventListener("click", function (event) {
+    var trigger = event.target.closest("[data-action]");
+    if (!trigger) return;
+    var node = nodes.find(function (x) { return x.id === selectedId; });
+    if (!node) return;
+    openModal(node, ACTIONS[trigger.dataset.action]);
+  });
 
-  el.drainSpark.innerHTML = sparkline([2.6, 2.3, 2.1, 2.4, 2.0, 1.9, 2.2, 1.9], 72, 16);
+  $("drawer-close").addEventListener("click", closeDrawer);
+  scrim.addEventListener("click", closeDrawer);
+  $("modal-cancel").addEventListener("click", function () { closeModal(true); });
+  commitBtn.addEventListener("click", commit);
+
+  document.addEventListener("keydown", function (event) {
+    var target = event.target;
+    var tag = (target && target.tagName ? target.tagName : "").toLowerCase();
+    var typing = tag === "input" || tag === "textarea" || (target && target.isContentEditable);
+    if (typing) return;
+
+    var key = event.key;
+
+    if (key === "Escape" || key === "Esc") {
+      if (modalOpen) { closeModal(true); event.preventDefault(); return; }
+      if (drawerOpen) { closeDrawer(); event.preventDefault(); }
+      return;
+    }
+
+    if ((key === " " || key === "Spacebar") && !modalOpen) {
+      if (target && target.classList && target.classList.contains("tile")) {
+        event.preventDefault();
+        inspect(nodes.find(function (x) { return x.id === target.dataset.nodeId; }));
+        return;
+      }
+      if (!target || target === body || target === document.documentElement) {
+        event.preventDefault();
+        inspectSelected();
+        return;
+      }
+      return; /* other controls keep native Space activation */
+    }
+
+    if (modalOpen) return;
+
+    var lower = key.length === 1 ? key.toLowerCase() : key;
+
+    if (lower === "p") {
+      event.preventDefault();
+      if (drawerOpen) { closeDrawer(); } else { inspectSelected(); }
+      return;
+    }
+
+    if (lower === "j") { event.preventDefault(); move(1); return; }
+    if (lower === "k") { event.preventDefault(); move(-1); return; }
+  });
+
+  /* ----------------------------------------------------------------- boot */
+  buildTiles();
   applyState();
+  select(selectedId, false);
+  drawer.inert = true;
+  modal.inert = true;
+  render();
 })();
 </script>
 </body>
