@@ -183,11 +183,13 @@ async function captureWithCli(browserBin, baseUrl, outputDir, viewports, states,
   return null;
 }
 
-function syncReviewPortal() {
+function syncReviewPortal(autoOpen = true) {
   try {
     const portalScript = path.join(__dirname, "generate_review_portal.py");
     if (fs.existsSync(portalScript)) {
-      execFileSync("python3", [portalScript], { stdio: "ignore" });
+      const pArgs = [portalScript];
+      if (autoOpen) pArgs.push("--open");
+      execFileSync("python3", pArgs, { stdio: "ignore" });
     }
   } catch {}
 }
@@ -198,9 +200,14 @@ async function main() {
   let outputDir = null;
   let viewports = ["320", "390", "1280"];
   let states = ["default"];
+  let autoOpen = true;
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--slice") {
+    if (args[i] === "--no-open") {
+      autoOpen = false;
+    } else if (args[i] === "--open") {
+      autoOpen = true;
+    } else if (args[i] === "--slice") {
       const sliceId = args[++i];
       const repoRoot = path.resolve(__dirname, "../../..");
       const candidatePaths = [
@@ -244,7 +251,7 @@ async function main() {
   }
 
   if (result) {
-    syncReviewPortal();
+    syncReviewPortal(autoOpen);
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
     process.exit(0);
   } else {

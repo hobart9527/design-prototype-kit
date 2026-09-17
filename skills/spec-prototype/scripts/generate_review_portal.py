@@ -269,6 +269,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate unified review portal.")
     parser.add_argument("--root", type=str, default=".", help="Repository root")
     parser.add_argument("--output", type=str, default="prototype/review-portal.html", help="Output path")
+    parser.add_argument("--open", action="store_true", help="Open generated review portal in default browser")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -288,6 +289,18 @@ def main():
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
     print(f"Generated review portal with {len(surfaces)} surfaces -> {out_path}")
+
+    if args.open:
+        import subprocess
+        try:
+            if sys.platform == "darwin":
+                subprocess.run(["open", str(out_path)], check=False)
+            elif sys.platform.startswith("linux"):
+                subprocess.run(["xdg-open", str(out_path)], check=False)
+            elif sys.platform == "win32":
+                subprocess.run(["cmd", "/c", "start", str(out_path)], check=False)
+        except Exception as e:
+            print(f"Could not open browser: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
