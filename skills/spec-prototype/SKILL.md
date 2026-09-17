@@ -41,11 +41,20 @@ DO NOT invoke `spec-prototype` for:
 All product design execution follows an unbroken 5-stage state machine:
 
 ```text
-[Stage 1: 破 - Tone & Tension Divergence]
+[Stage 1: 破 - Tone & Tension Divergence & Spec Formulation]
   │  Gated: AskUserQuestion (Tension reframing, 4 Baselines & Reality Benchmark Anchors, OOUX Anti-Contamination, Hard Cognitive Ledger, 5 Dials register, Vague-Word Firewall)
+  │  Mandatory Spec Outputs:
+  │    1. prototype/product.md (Product thesis & jobs-to-be-done)
+  │    2. prototype/contracts/tokens/t1.json & shared/tokens.css (W3C DTCG tokens compiled via compile_tokens.py)
+  │    3. prototype/contracts/surface-maps/m1.md (OOUX Entities, Cardinality & Surface Topology)
+  │    4. prototype/contracts/slices/<slice_id>/c1.md (Slice Contract: state machines & action verb lifecycle)
+  │    5. prototype/specifications/<slice_id>/r1.md (Prototype Spec: layout wireframe & verifiable assertions)
+  │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract!
   ▼
-[Stage 2: 立 - Core Hero Anchor Prototyping]
+[Stage 2: 立 - Core Hero Anchor Prototyping via Lean Pre-baked Envelope]
   │  Gated: AskUserQuestion (Single Hero Anchor ONLY, Headless Chrome authentic rendering, Concentric Radii, Tabular Numbers, tokens.css, NO secondary pages until approved)
+  │  Dispatched via Pre-baked Envelope: Builder receives self-contained spec (paths, tokens, DOM layout, state machine, assertions)
+  │  Lean Protocol: Hard limit <= 8 tool turns; single-pass high-fidelity generation; no exploratory hunting.
   ▼
 [Stage 3: 拓 - Full IA Surface Rollout]
   │  Rollout derived strictly from genuine Surface Topology (Primary, Contextual, Supporting; unbind from rigid Tier 0/1/2)
@@ -63,10 +72,11 @@ All product design execution follows an unbroken 5-stage state machine:
 
 1. **Front-stage Exploration Engine (破、立、拓、验)**:
    - Focus cognitive attention on reframing hidden business/user tensions, anchoring signature interactions, and declaring ruthless omissions over exhaustive matrix-filling.
-   - Probes and Walking Skeletons operate in **Draft Mode**: rapid, disposable, code-informed learning where interactive craft directly refines the concept model (`Craft informs Soul`). Zero immutable hash deadlocks or ceremonial forms during exploration.
+   - Stage 1 culminates in the durable **Design Specification (Spec)**.
+   - Stage 2 & 3 Builder operates under the **Lean Pre-baked Envelope Protocol**: deterministic, rapid, single-pass code synthesis where interactive craft validates and refines the concept model (`Craft informs Soul`).
 2. **Back-stage Governance Compiler (Silent Packaging - 冻)**:
-   - Immutable digests, formal manifests, and token compilation run silently via helper scripts (`handoff.py`, `export-tokens.py`, `wcag-check.js`) only when the human explicitly requests formal delivery or downstream engineering handoff.
-   - Governance serves as a quiet post-hoc compiler, never a cognitive tax on upfront design reasoning.
+   - Immutable digests, formal manifests, and token compilation run silently via helper scripts (`handoff.py`, `compile_tokens.py`, `wcag-check.js`) when transitioning between formal phases or downstream engineering handoff.
+   - Governance serves as a quiet post-hoc compiler, never an exploratory tax on upfront design reasoning.
 
 ## Storage discipline (read before any file write)
 

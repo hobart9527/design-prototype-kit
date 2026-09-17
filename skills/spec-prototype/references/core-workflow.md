@@ -2,22 +2,38 @@
 
 Act as the product's principal designer: synthesize product strategy, UX/UE, IA,
 interaction, content, visual/brand expression, accessibility, prototype evidence
-and engineering handoff into one coherent design. HTML is an evidence medium,
-not the definition of design.
+and engineering handoff into one coherent design.
+
+## Core Philosophy: Spec as Durable Contract, Prototype as Disposable Proof (立约为本，验质为核)
+
+Why is this engine called `spec-prototype`?
+1. **Spec (设计契约 - Durable Source of Truth)**:
+   Design discussions and exploratory divergence exist to distill a **stable, unambiguous, and reusable design specification (Spec)**. This Spec includes W3C DTCG design tokens, OOUX entity relationship models, surface topology, state machines, and action verb lifecycles. Downstream engineering teams (and Loom delivery) can directly consume and implement this Spec without ambiguity.
+2. **Prototype (原型样板 - Disposable Empirical Proof)**:
+   The prototype is NOT an unguided art project or a throwaway toy. It is the rapid, inspectable, physical falsification tool that proves the Spec is ergonomic, viable, and aesthetically cohesive.
+3. **Execution Invariant**:
+   **No Prototype Code without a Frozen Spec Contract.** Bypassing Stage 1 discussion and spec formulation to write code is strictly prohibited. The Spec directs the Prototype; the Prototype validates and refines the Spec.
 
 ## The Canonical 5-Stage Design Delivery Engine (标准五阶工序)
 
 All design work within this Skill follows the unbroken five-stage delivery state machine:
 
 ```text
- Stage 1 (破): Tone & Tension Divergence ──> Declare core business tension, 3+ ruthless omissions, 2 distinct metaphors (Gated)
- Stage 2 (立): Core Hero Anchor          ──> Single highest-density anchor screen, signature kinetics, shared/tokens.css (Gated)
- Stage 3 (拓): Tier-by-Tier Rollout      ──> Discrete batch rollout (Tier 0 Orbit, Tier 1 Station, Tier 2 Bridge); strict inheritance
+ Stage 1 (破): Tone & Tension Divergence ──> Formalize Design Spec: product.md, tokens.json, tokens.css, surface-maps/m1.md, slices/c1.md, specs/r1.md (Gated)
+ Stage 2 (立): Core Hero Anchor          ──> Dispatch Lean Builder via Pre-baked Envelope: single highest-density screen, <= 8 turns (Gated)
+ Stage 3 (拓): Tier-by-Tier Rollout      ──> Discrete batch rollout (Primary, Contextual, Supporting); strict token inheritance
  Stage 4 (验): Holistic Review Portal    ──> review-portal.html walkthrough, 5 experience states, controlled loopback
- Stage 5 (冻): Silent Governance         ──> DTCG tokens.json, WCAG AAA static audit, SHA-256 asset manifest
+ Stage 5 (冻): Silent Governance         ──> DTCG tokens.json export, WCAG AAA static audit, SHA-256 asset manifest
 ```
 
-### Stage 1: Tone & Tension Divergence (破 - 魂)
+### Stage 1: Tone & Tension Divergence & Spec Formulation (破 - 魂立约)
+- **Primary Goal**: Transition from raw user intent and design dialogue to a **complete, frozen Design Specification (`spec`)**. Before any HTML/JS code is touched, the following 5 durable contract artifacts MUST be materialized:
+  1. `prototype/product.md`: Product thesis, JTBD, user roles, core tension, and reality benchmarks.
+  2. `prototype/contracts/tokens/t1.json` & `prototype/shared/tokens.css`: Formal design tokens generated from the 5-Dial register via `compile_tokens.py`.
+  3. `prototype/contracts/surface-maps/m1.md`: OOUX Entity cardinality and full Surface Topology (Primary, Contextual, Supporting).
+  4. `prototype/contracts/slices/<slice_id>/c1.md`: Slice interaction contract, state machine transitions, and action verb lifecycles.
+  5. `prototype/specifications/<slice_id>/r1.md`: Concrete prototype specification containing verifiable design assertions.
+
 - **Domain Spectrum & Reality Benchmark Anchors (四大基准与现实地锚声明)**:
   - **Dominant Baseline Selection**: Explicitly declare the primary operational baseline from `design-language.md:168` (hybrid allowed with secondary flavor):
     - `Baseline 1: Dense Data & Engineering Workbench` (Observability, telemetry, trading, high-throughput pipelines)
@@ -56,7 +72,20 @@ All design work within this Skill follows the unbroken five-stage delivery state
   - For every physical or conceptual metaphor, explicitly declare its **non-transfer boundary**: which physical traits transfer (e.g. detent resistance, spatial damping) and which are strictly forbidden (e.g. decorative skeuomorphic chrome).
 - **Gate**: Must obtain explicit user confirmation via `AskUserQuestion` before proceeding.
 
-### Stage 2: Core Hero Anchor Prototyping (立 - 皮)
+### Stage 2: Core Hero Anchor Prototyping via Lean Builder (立 - 骨肉)
+- **Lean Pre-baked Envelope Protocol (工单直投极简构建协议)**:
+  - To eliminate exploratory overhead and endless token-hunting, the Coordinator synthesizes a **Self-Contained Execution Envelope** before dispatching `spec-prototype-builder`:
+    1. *Exact Output Path*: e.g. `prototype/experiments/console/hero-anchor/index.html`.
+    2. *Exact Token CSS Reference*: `<link rel="stylesheet" href="../../../shared/tokens.css">`.
+    3. *Component & DOM Hierarchy Specification*: Layout container, header, primary operational viewport, contextual inspection drawer/panel.
+    4. *State Machine Specification*: Concrete state object (e.g. `AppState`), initial states, mutation handlers, and deterministic transitions.
+    5. *Verifiable Design Assertions*: Explicit keyboard shortcuts (`Space`, `Esc`), DOM element IDs, and life-cycle status tags.
+  - **Tool Step Hard Ceiling (步数硬顶)**: Builder execution is strictly budgeted to **≤ 8 tool turns** (ideal ≤ 5 turns). Builder executes in a single pass:
+    - Step 1: Write self-contained single-page HTML/CSS/JS conforming to the envelope.
+    - Step 2: Run syntax & quality gate assertions (`verify_prototype_quality.py`).
+    - Step 3: Headless browser visual capture (`capture.mjs`).
+    - Step 4: Return receipt.
+    Builder is strictly forbidden from open-ended filesystem discovery or micro-editing CSS in a ping-pong loop.
 - **Highest-Density Anchor**: Do not spray out multiple pages. Build the single most consequential, highest-density screen first (the Hero Anchor).
 - **Design Engineering Floor (微观几何与字排工法)**:
   - **Concentric Border Radius**: Nested container corners must obey $R_{inner} = \max(0, R_{outer} - padding)$ to eliminate visual pinching and distortion.

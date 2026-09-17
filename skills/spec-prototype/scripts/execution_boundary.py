@@ -84,8 +84,8 @@ def shell_read(command, root):
                     'Token export belongs beside its source with the same revision name.')
             return
         permitted = {'node': {'detect-design-assets.mjs', 'resolve-change.mjs', 'preview.mjs'},
-                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py'},
-                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py'}}
+                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py'},
+                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py'}}
         require(script.parent == SKILL/'scripts' and script.name in permitted[tool],
                 'Only installed helpers run in the main designer; use Builder for code/setup.')
         if script.name == 'handoff.py' and 'freeze' in args:

@@ -227,4 +227,61 @@ def test_canonical_5_stage_active_simulation_and_artifact_standards():
     assert token_data["color"]["primary"]["$value"] == "#00f0ff"
 
 
+def test_spec_first_contract_formulation_and_lean_envelope(tmp_path: Path):
+    """Verify that Stage 1 Spec-First contracts are strictly required and envelope compiles."""
+    assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
+
+    # 1. Reject when contract artifacts are missing
+    with pytest.raises(ValueError, match="Stage 1 Spec Contract incomplete"):
+        assemble_mod.check_spec_completeness(tmp_path, "test_slice")
+
+    # 2. Populate all 5 Stage 1 contract artifacts in tmp_path
+    product = tmp_path / "prototype/product.md"
+    product.parent.mkdir(parents=True, exist_ok=True)
+    product.write_text("# Product\n- Core Tension: Speed vs Safety\n", encoding="utf-8")
+
+    tokens_css = tmp_path / "prototype/shared/tokens.css"
+    tokens_css.parent.mkdir(parents=True, exist_ok=True)
+    tokens_css.write_text(":root { --radius-outer: 8px; }\n", encoding="utf-8")
+
+    smap = tmp_path / "prototype/contracts/surface-maps/m1.md"
+    smap.parent.mkdir(parents=True, exist_ok=True)
+    smap.write_text("# Surface Map\n- Scope: test\n", encoding="utf-8")
+
+    slice_c = tmp_path / "prototype/contracts/slices/test_slice/c1.md"
+    slice_c.parent.mkdir(parents=True, exist_ok=True)
+    slice_c.write_text("# Contract\n- Slice ID: test_slice\n", encoding="utf-8")
+
+    spec = tmp_path / "prototype/specifications/test_slice/r1.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text("""# Spec
+- Prototype write scope: `prototype/experiments/test_slice/hero-anchor/`
+- Evidence write scope: `prototype/evidence/probes/test_slice/`
+## Verifiable Design Assertions
+| Assertion | Expected |
+|---|---|
+| Key shortcut Space triggers action | pass |
+""", encoding="utf-8")
+
+    # 3. Assemble generates complete pre-baked envelope
+    env = assemble_mod.assemble(tmp_path, "test_slice")
+    assert env["mode"] == "lean-builder-envelope"
+    assert env["target_html_path"] == "prototype/experiments/test_slice/hero-anchor/index.html"
+    assert env["design_constraints"]["max_tool_turns"] <= 8
+    assert "Key shortcut Space triggers action" in env["verifiable_assertions"]
+
+    # 4. Verify builder agent contract specifies Lean Pre-baked Envelope Protocol
+    builder_md = (REPO / "agents/spec-prototype-builder.md").read_text(encoding="utf-8")
+    assert "Lean Pre-baked Envelope Protocol" in builder_md
+    assert "≤ 8 tool turns" in builder_md or "<= 8 tool turns" in builder_md
+    assert "Zero Exploratory Hunting" in builder_md
+
+    # 5. Verify SKILL.md and core-workflow.md declare Spec-First invariant
+    core_wf = (SKILL / "references/core-workflow.md").read_text(encoding="utf-8")
+    assert "No Prototype Code without a Frozen Spec Contract" in core_wf
+    skill_md = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    assert "ZERO Prototype Code without a complete frozen Spec Contract" in skill_md
+
+
+
 
