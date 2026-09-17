@@ -31,19 +31,21 @@ def discover_surfaces(root: Path) -> List[Dict[str, str]]:
     smap = root / "prototype/contracts/surface-maps/m1.md"
     smap_text = smap.read_text(encoding="utf-8") if smap.is_file() else ""
 
-    # Primary Hero Anchor(s)
+    # Primary Core Anchor(s) (supporting neutral anchor/ and legacy hero-anchor/)
     exp_dir = root / "prototype/experiments"
     if exp_dir.is_dir():
-        for hero in sorted(exp_dir.glob("*/hero-anchor/index.html")):
+        anchor_candidates = sorted(list(exp_dir.glob("*/anchor/index.html")) + list(exp_dir.glob("*/hero-anchor/index.html")))
+        for hero in anchor_candidates:
             rel_path = hero.relative_to(root / "prototype").as_posix()
             slice_name = hero.parent.parent.name
-            surfaces.append({
-                "id": f"primary-{slice_name}",
-                "name": f"Primary Hero Anchor [{slice_name}]",
-                "tier": "Tier 0 - Primary",
-                "url": rel_path,
-                "exists": True
-            })
+            if not any(s["id"] == f"primary-{slice_name}" for s in surfaces):
+                surfaces.append({
+                    "id": f"primary-{slice_name}",
+                    "name": f"Core Anchor [{slice_name}]",
+                    "tier": "Tier 0 - Primary",
+                    "url": rel_path,
+                    "exists": True
+                })
 
     # Contextual and Supporting surfaces in prototype/surfaces/
     surf_dir = root / "prototype/surfaces"

@@ -211,6 +211,7 @@ async function main() {
       const sliceId = args[++i];
       const repoRoot = path.resolve(__dirname, "../../..");
       const candidatePaths = [
+        path.join(repoRoot, `prototype/experiments/${sliceId}/anchor/index.html`),
         path.join(repoRoot, `prototype/experiments/${sliceId}/hero-anchor/index.html`),
         path.join(repoRoot, `prototype/surfaces/${sliceId}/index.html`),
       ];

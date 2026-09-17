@@ -581,10 +581,10 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
 </body></html>""", encoding="utf-8")
     assert verify_mod.assert_quality(str(semi_html), str(tokens_css), contract_path=str(spec_md)) is False
 
-    # 3. HTML adds keydown listener and hashchange state machine hook -> passes
+    # 3. HTML adds keydown listener, overflow containment, and hashchange state machine hook -> passes
     good_html = tmp_path / "good.html"
     good_html.write_text("""<!DOCTYPE html><html><body>
-<main id="app" class="panel" style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;">
+<main id="app" class="panel" style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums; overflow: hidden;">
   <button id="btn-action" onclick="void(0)">Run</button>
 </main>
 <script>
@@ -676,6 +676,278 @@ def test_topology_context_and_convention_cli(tmp_path: Path):
 <script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
 </body></html>""", encoding="utf-8")
     assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is True
+
+
+def test_5_system_modern_industrial_derivation_and_rogue_root_blocking(tmp_path: Path):
+    """Verify modern industrial token derivation and rogue :root blocking in quality gate."""
+    compile_mod = _load("compile_tokens", "compile_tokens.py")
+    verify_mod = _load("verify_quality", "verify_prototype_quality.py")
+    assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
+    mat_mod = _load("materialize_contracts", "materialize_contracts.py")
+
+    # 1. compile_tokens generates Teenage Engineering warm-graphite-lime palette
+    dials = {"energy": "quiet", "finish": "machined-industrial", "density": "dense", "weight": "dense-tactile", "seriousness": "solemn"}
+    te_tokens = compile_mod.compute_tokens(dials, "teenage-engineering")
+    assert te_tokens["colors"]["accent_primary"] == "#d6f56b"
+    assert te_tokens["colors"]["bg_void"] == "#080b0b"
+    assert te_tokens["colors"]["text_primary"] == "#f4f5f1"
+
+    linear_tokens = compile_mod.compute_tokens(dials, "linear-dark")
+    assert linear_tokens["colors"]["accent_primary"] == "#5e6ad2"
+    assert linear_tokens["colors"]["bg_void"] == "#08090c"
+
+    # Also test CSS rendering
+    css = compile_mod.generate_css(te_tokens)
+    assert "--accent-primary: #d6f56b;" in css
+    assert "--bg-void: #080b0b;" in css
+
+    # 2. verify_prototype_quality strictly catches and blocks rogue :root color overrides
+    tokens_css = tmp_path / "tokens.css"
+    tokens_css.write_text(":root { --accent-primary: #d6f56b; --radius-outer: 8px; font-variant-numeric: tabular-nums; }\n", encoding="utf-8")
+
+    rogue_html = tmp_path / "rogue.html"
+    rogue_html.write_text("""<!DOCTYPE html><html><head>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  :root {
+    --accent-primary: #ff00ff;
+    --bg-void: #000000;
+  }
+</style>
+</head><body>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;"><button>Go</button></main>
+<script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(rogue_html), str(tokens_css)) is False
+
+    # 3. assemble_envelope injects layout_profile and app_shell_contract
+    (tmp_path / "prototype").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/product.md").write_text("# Product\nBaseline 1: Dense Data Workbench\n", encoding="utf-8")
+    (tmp_path / "prototype/shared").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/shared/tokens.css").write_text(":root {}\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/tokens").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/tokens/t1.md").write_text("# Tokens\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/surface-maps").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/surface-maps/m1.md").write_text("# Map\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/foundation").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/foundation/f1.md").write_text("# Foundation\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/slices/telemetry").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/slices/telemetry/c1.md").write_text("# Contract\n", encoding="utf-8")
+    (tmp_path / "prototype/specifications/telemetry").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/specifications/telemetry/r1.md").write_text("""# Spec
+- Prototype write scope: `prototype/experiments/telemetry/anchor/`
+- Evidence write scope: `prototype/evidence/probes/telemetry/`
+## Verifiable Design Assertions
+| Space | pass |
+""", encoding="utf-8")
+
+    env = assemble_mod.assemble(tmp_path, "telemetry")
+    assert env["layout_profile"] == "dense-console"
+    assert "app_shell_contract" in env
+    assert "cognitive_ledger" in env
+    assert "zero_borrow_base" in env["cognitive_ledger"]
+    assert "high_yield_borrow_zone" in env["cognitive_ledger"]
+    assert env["app_shell_contract"]["profile"] == "dense-console"
+    assert env["target_html_path"] == "prototype/experiments/telemetry/anchor/index.html"
+
+    # Also verify materialize_contracts generates Cognitive Budgeting Ledger
+    (tmp_path / "prototype/discussion.md").write_text("""# Discussion
+- energy: quiet
+- finish: machined-industrial
+- density: dense
+- weight: dense-tactile
+- seriousness: solemn
+- palette: plasma-cyan
+- **Cognitive Budgeting Allocation**:
+  - *Routine Conventions (Zero-learning)*: Top bar navigation and filter chips strictly standard
+  - *Decisive Innovation (Borrowed focus)*: Real-time telemetry heat-map receives tactile detents
+""", encoding="utf-8")
+    mat_mod.materialize(tmp_path, "telemetry", force=True)
+    c1_text = (tmp_path / "prototype/contracts/slices/telemetry/c1.md").read_text(encoding="utf-8")
+    assert "## Cognitive Budgeting & Energy Return Ledger" in c1_text
+    assert "Low-Entropy Base" in c1_text
+    assert "High-Yield Borrow Zone" in c1_text
+
+    # 4. LLM dynamic custom chromatic derivation from Stage 1 discussion
+    disc_file = tmp_path / "discussion_custom.md"
+    disc_file.write_text("""# Discussion
+- energy: quiet
+- finish: machined-industrial
+- density: dense
+- weight: dense-tactile
+- seriousness: solemn
+### LLM Dynamic Chromatic Exploration
+- accent-primary: #c76b3a
+- bg-void: #141210
+""", encoding="utf-8")
+    custom_colors = compile_mod.extract_dynamic_palette(disc_file.read_text(encoding="utf-8"))
+    assert custom_colors["accent_primary"] == "#c76b3a"
+    assert custom_colors["bg_void"] == "#141210"
+    # Derived mathematical elevation
+    assert custom_colors["bg_surface"].startswith("#")
+    assert custom_colors["bg_surface"] != "#141210"
+    assert "rgba(199, 107, 58" in custom_colors["accent_subtle"]
+
+    out_json = tmp_path / "out_t1.json"
+    out_md = tmp_path / "out_t1.md"
+    out_css = tmp_path / "out_tokens.css"
+    compile_mod.compile_tokens(str(disc_file), str(out_css), str(out_json), str(out_md))
+    assert out_css.is_file()
+    css_content = out_css.read_text(encoding="utf-8")
+    assert "--accent-primary: #c76b3a;" in css_content
+    assert "--bg-void: #141210;" in css_content
+
+
+def test_operationalized_design_techniques_across_stages(tmp_path: Path):
+    """Verify all operationalized techniques across Stages 1-4 are enforced in contracts, envelopes, and quality checks."""
+    mat_mod = _load("materialize_contracts", "materialize_contracts.py")
+    assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
+    verify_mod = _load("verify_quality", "verify_prototype_quality.py")
+
+    # 1. Setup workspace with Ruthless Omissions and Material Invariants in Stage 1
+    proto = tmp_path / "prototype"
+    proto.mkdir(parents=True, exist_ok=True)
+    (proto / "product.md").write_text("""# Product Thesis
+- Dominant Baseline: Baseline 1: Dense Data & Engineering Workbench
+- Reality Anchors: Linear, Datadog
+- Tension: Throughput vs Safety
+""", encoding="utf-8")
+
+    (proto / "discussion.md").write_text("""# Discussion: GPU Cluster Control Plane
+- energy: quiet
+- finish: machined-industrial
+- density: dense
+- weight: dense-tactile
+- seriousness: solemn
+- palette: titanium-amber
+- domain: SRE GPU cluster node telemetry with node drain operations
+## 3 Ruthless Omissions
+1. Zero generic marketing cards or carousel widgets
+2. Zero nested modal inception or multi-step wizard deadlocks
+3. Zero ungrounded particle physics or #808080 dead grays
+## Material Non-Transfer Boundaries
+1. Machined Detents: tactile switches possess mechanical micro-press (:active scale(0.97))
+2. Telemetry Emissives: status indicators simulate physical LEDs with subtle bloom
+""", encoding="utf-8")
+
+    # Materialize contracts
+    mat_mod.materialize(tmp_path, "cluster-node", force=True)
+
+    # Check that f1.md contains 3 Ruthless Omissions and Material Non-Transfer Boundaries
+    f1_text = (proto / "contracts/foundation/f1.md").read_text(encoding="utf-8")
+    assert "## 3 Ruthless Omissions" in f1_text
+    assert "Zero generic marketing cards" in f1_text
+    assert "## Material Non-Transfer Boundaries" in f1_text
+    assert "Machined Detents" in f1_text
+
+    # Check that assemble_envelope injects blueprints and constraints
+    (proto / "shared").mkdir(parents=True, exist_ok=True)
+    (proto / "shared/tokens.css").write_text(":root { --radius-outer: 6px; --radius-inner: 3px; --bg-void: #0d0e10; }\n", encoding="utf-8")
+    (proto / "contracts/tokens").mkdir(parents=True, exist_ok=True)
+    (proto / "contracts/tokens/t1.md").write_text("# Tokens\n", encoding="utf-8")
+
+    env = assemble_mod.assemble(tmp_path, "cluster-node")
+    assert "app_shell_blueprint" in env
+    assert env["app_shell_blueprint"]["profile"] == "dense-console"
+    assert "operational_viewport" in env["app_shell_blueprint"]["spatial_roles"]
+    assert "tabular-nums" in env["app_shell_blueprint"]["density_rules"]
+    assert "ruthless_omissions" in env["design_constraints"]
+    assert len(env["design_constraints"]["ruthless_omissions"]) >= 3
+    assert "material_non_transfer_boundaries" in env["design_constraints"]
+    assert len(env["design_constraints"]["material_non_transfer_boundaries"]) >= 2
+
+    # 2. Test verify_prototype_quality strictly enforces Zero Naked Metrics, Tactile Detents, and full Action Lifecycle
+    r1_path = proto / "specifications/cluster-node/r1.md"
+    tokens_css = proto / "shared/tokens.css"
+
+    # Minimal HTML that lacks SVG sparklines / baseline context, lacks :active, and lacks modal/toast lifecycle
+    test_html = tmp_path / "test.html"
+    test_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="../../../shared/tokens.css"></head><body>
+<nav><a href="../../../surfaces/console/index.html">Console</a></nav>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums; overflow: hidden;">
+  <button id="drain-node">Drain Node</button>
+  <div class="metrics"><span>128 GB</span></div>
+</main>
+<script>
+  window.addEventListener('keydown', ()=>{});
+  window.addEventListener('hashchange', ()=>{});
+  document.body.dataset.state = 'ideal';
+</script>
+</body></html>""", encoding="utf-8")
+
+    # Must fail because:
+    # 1. Action Lifecycle: modal header "Drain GPU Node", commit button "Confirm Drain", and toast "Node Drained Successfully" are absent!
+    # 2. Zero Naked Metrics: metrics lack SVG sparkline or baseline/unit context
+    # 3. Tactile Detents: :active { transform: scale(...) } missing
+    assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(r1_path)) is False
+
+    # Fully conforming HTML that satisfies all operationalized techniques
+    good_html = tmp_path / "good_conforming.html"
+    good_html.write_text("""<!DOCTYPE html><html><head>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  button:active { transform: scale(0.97); }
+  .truncate { text-overflow: ellipsis; overflow: hidden; }
+</style>
+</head><body>
+<nav><a href="../../../surfaces/console/index.html">Console</a></nav>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;" class="truncate">
+  <!-- Full Action Verb Lifecycle elements -->
+  <button id="drain-node" data-action="drain-node">Drain Node</button>
+  <dialog id="modal">
+    <h3>Drain GPU Node</h3>
+    <button id="confirm-drain">Confirm Drain</button>
+  </dialog>
+  <div id="toast" class="toast">Node Drained Successfully</div>
+
+  <!-- Zero Naked Metrics: accompanied by SVG micro-sparkline & baseline class -->
+  <div class="metric-card">
+    <span class="unit">128 GB</span>
+    <span class="baseline">Nominal 95%</span>
+    <svg width="60" height="20"><polyline points="0,15 20,10 40,12 60,5" fill="none" stroke="currentColor"/></svg>
+  </div>
+</main>
+<script>
+  window.addEventListener('keydown', ()=>{});
+  window.addEventListener('hashchange', ()=>{});
+  document.body.dataset.state = 'ideal';
+</script>
+</body></html>""", encoding="utf-8")
+
+    assert verify_mod.assert_quality(str(good_html), str(tokens_css), contract_path=str(r1_path)) is True
+
+    # Modal-free Direct Manipulation HTML (Linear/Figma style optimistic action without modal header or toast)
+    direct_html = tmp_path / "direct_manipulation.html"
+    direct_html.write_text("""<!DOCTYPE html><html><head>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  button:active { transform: scale(0.97); }
+  .truncate { text-overflow: ellipsis; overflow: hidden; }
+</style>
+</head><body>
+<nav><a href="../../../surfaces/console/index.html">Console</a></nav>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;" class="truncate">
+  <!-- Direct trigger with inline feedback (no modal dialog) -->
+  <button id="drain-node" data-action="drain-node">Drain Node</button>
+  <span class="status-indicator">Node Drained Successfully</span>
+
+  <!-- Metric with HTML5 meter and unit badge -->
+  <div class="metric-card">
+    <span class="unit">128 GB</span>
+    <meter value="95" min="0" max="100">95%</meter>
+  </div>
+</main>
+<script>
+  window.addEventListener('keydown', ()=>{});
+  window.addEventListener('hashchange', ()=>{});
+  document.body.dataset.state = 'ideal';
+</script>
+</body></html>""", encoding="utf-8")
+
+    # Confirms generative freedom: no modal dialog or toast required, direct manipulation passes
+    assert verify_mod.assert_quality(str(direct_html), str(tokens_css), contract_path=str(r1_path)) is True
+
+
 
 
 

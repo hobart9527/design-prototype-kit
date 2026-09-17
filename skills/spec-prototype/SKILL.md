@@ -57,6 +57,7 @@ Execute the stages matching declared intent and required evidence. The stages re
 ```text
 [Stage 1: 破 - Tone & Tension Divergence & Spec Formulation]
   │  Gated: AskUserQuestion (Tension reframing, 4 Baselines & Reality Benchmark Anchors, OOUX Anti-Contamination, Hard Cognitive Ledger, 5 Dials register, Vague-Word Firewall)
+  │  Multi-Direction Aesthetic Proposal: Present 2-3 materially distinct design directions pairing concrete product anchors (e.g. Teenage Engineering, Linear, Apple Pro) with explicit chromatic palettes (exact hex swatches) and trade-offs.
   │  Automated Spec Materialization: python3 skills/spec-prototype/scripts/materialize_contracts.py --slice <slice_id>
   │  Formal Spec Outputs (when durable contract requested):
   │    1. prototype/product.md (Product thesis, JTBD & Reality Benchmark Anchors)

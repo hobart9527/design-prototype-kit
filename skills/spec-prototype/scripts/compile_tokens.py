@@ -29,6 +29,71 @@ from typing import Any, Dict
 
 # Legacy named palettes remain available only for callers that explicitly opt in.
 DARK_ATMOSPHERES = {
+    # Modern Industrial Craft Palettes (P9+ Reality Anchors)
+    "warm-graphite-lime": {  # Teenage Engineering / Industrial Hardware Anchor
+        "bg_void": "#080b0b",
+        "bg_base": "#101414",
+        "bg_surface": "#181d1d",
+        "bg_surface_raised": "#222929",
+        "bg_overlay": "#2c3535",
+        "border_dim": "#222a2a",
+        "border_subtle": "#2f3a3a",
+        "border_bright": "#425252",
+        "text_primary": "#f4f5f1",
+        "text_secondary": "#9aa49e",
+        "text_tertiary": "#55615a",
+        "accent_primary": "#d6f56b",  # Functional acid lime / silkscreen signal
+        "accent_subtle": "rgba(214, 245, 107, 0.12)",
+        "accent_hover": "#e2f98f",
+        "status_running": "#d6f56b",
+        "status_warning": "#f59e0b",
+        "status_danger": "#ff4d4d",
+        "border_danger": "rgba(255, 77, 77, 0.4)",
+        "border_warning": "rgba(245, 158, 11, 0.4)",
+    },
+    "zinc-cobalt": {  # Linear / Precision SaaS Pro Anchor
+        "bg_void": "#08090c",
+        "bg_base": "#0e1017",
+        "bg_surface": "#151824",
+        "bg_surface_raised": "#1d2233",
+        "bg_overlay": "#262c42",
+        "border_dim": "rgba(255, 255, 255, 0.07)",
+        "border_subtle": "rgba(255, 255, 255, 0.12)",
+        "border_bright": "rgba(255, 255, 255, 0.22)",
+        "text_primary": "#f2f4f8",
+        "text_secondary": "#8c96a8",
+        "text_tertiary": "#515a6b",
+        "accent_primary": "#5e6ad2",  # Restrained cobalt indigo
+        "accent_subtle": "rgba(94, 106, 210, 0.15)",
+        "accent_hover": "#7480e6",
+        "status_running": "#22c55e",
+        "status_warning": "#eab308",
+        "status_danger": "#ef4444",
+        "border_danger": "rgba(239, 68, 68, 0.4)",
+        "border_warning": "rgba(234, 179, 8, 0.4)",
+    },
+    "titanium-amber": {  # Datadog / Aviation Instrument Anchor
+        "bg_void": "#0d0e10",
+        "bg_base": "#14161a",
+        "bg_surface": "#1c1f24",
+        "bg_surface_raised": "#252930",
+        "bg_overlay": "#2f343d",
+        "border_dim": "#252930",
+        "border_subtle": "#333842",
+        "border_bright": "#474e5c",
+        "text_primary": "#eceff4",
+        "text_secondary": "#8f98a7",
+        "text_tertiary": "#565d6a",
+        "accent_primary": "#ff9800",  # Calibrated safety amber
+        "accent_subtle": "rgba(255, 152, 0, 0.14)",
+        "accent_hover": "#ffac33",
+        "status_running": "#10b981",
+        "status_warning": "#ff9800",
+        "status_danger": "#f43f5e",
+        "border_danger": "rgba(244, 63, 94, 0.4)",
+        "border_warning": "rgba(255, 152, 0, 0.4)",
+    },
+    # Legacy / Complementary Palettes
     "plasma-cyan": {
         "bg_void": "#05070a",
         "bg_base": "#0a0d14",
@@ -73,6 +138,21 @@ DARK_ATMOSPHERES = {
     }
 }
 
+PALETTE_ALIASES = {
+    "teenage-engineering": "warm-graphite-lime",
+    "teenage_engineering": "warm-graphite-lime",
+    "acid-lime": "warm-graphite-lime",
+    "warm-graphite": "warm-graphite-lime",
+    "linear": "zinc-cobalt",
+    "linear-dark": "zinc-cobalt",
+    "cobalt": "zinc-cobalt",
+    "datadog": "titanium-amber",
+    "amber": "titanium-amber",
+    "aviation": "titanium-amber",
+    "emerald": "obsidian-emerald",
+    "cyan": "plasma-cyan",
+}
+
 
 REQUIRED_DIALS = ("energy", "finish", "density", "weight", "seriousness")
 
@@ -90,14 +170,104 @@ def parse_5dials(discussion_text: str) -> Dict[str, str]:
     return dials
 
 
-def compute_tokens(dials: Dict[str, str], palette_name: str) -> Dict[str, Any]:
-    """Derive full design token tree from authored dials and an explicit palette."""
+def _hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
+    h = hex_code.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+
+def _rgb_to_hex(r: int, g: int, b: int) -> str:
+    return f"#{max(0, min(255, r)):02x}{max(0, min(255, g)):02x}{max(0, min(255, b)):02x}"
+
+
+def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-graphite-lime") -> Dict[str, str]:
+    """Dynamically extract authored chromatic tokens from Stage 1 discussion or synthesize mathematically."""
+    token_keys = {
+        "accent_primary": ["accent-primary", "accent_primary", "primary-accent", "accent"],
+        "accent_hover": ["accent-hover", "accent_hover"],
+        "bg_void": ["bg-void", "bg_void", "background-void", "void-bg"],
+        "bg_base": ["bg-base", "bg_base", "background-base"],
+        "bg_surface": ["bg-surface", "bg_surface", "surface-bg"],
+        "bg_surface_raised": ["bg-surface-raised", "bg_surface_raised", "surface-raised"],
+        "bg_overlay": ["bg-overlay", "bg_overlay"],
+        "border_dim": ["border-dim", "border_dim"],
+        "border_subtle": ["border-subtle", "border_subtle", "border"],
+        "border_bright": ["border-bright", "border_bright", "border-focus"],
+        "text_primary": ["text-primary", "text_primary", "primary-text"],
+        "text_secondary": ["text-secondary", "text_secondary"],
+        "text_tertiary": ["text-tertiary", "text_tertiary"],
+        "status_running": ["status-running", "status_running"],
+        "status_warning": ["status-warning", "status_warning"],
+        "status_danger": ["status-danger", "status_danger"],
+    }
+
+    extracted: Dict[str, str] = {}
+    for canon_key, aliases in token_keys.items():
+        for alias in aliases:
+            pattern = rf"(?:--)?(?:color-)?{alias}\s*[:|=]\s*[`*]*([#0-9a-fA-F]{{3,8}}|rgba?\([^)]+\))[`*]*"
+            m = re.search(pattern, discussion_text, re.IGNORECASE)
+            if m:
+                extracted[canon_key] = m.group(1).strip()
+                break
+
+    pal_match = re.search(
+        r"[`*]*(?:palette|color\s+palette|atmosphere)[`*]*\s*[:|=]\s*[`*]*([a-zA-Z0-9_-]+)[`*]*",
+        discussion_text,
+        re.IGNORECASE,
+    )
+    base_name = pal_match.group(1).lower() if pal_match else fallback_palette
+    resolved_base = PALETTE_ALIASES.get(base_name, base_name)
+    if resolved_base not in DARK_ATMOSPHERES:
+        resolved_base = "warm-graphite-lime"
+
+    base_colors = dict(DARK_ATMOSPHERES[resolved_base])
+
+    # If custom background was authored, synthesize physical elevation hierarchy
+    if "bg_void" in extracted and extracted["bg_void"].startswith("#"):
+        try:
+            vr, vg, vb = _hex_to_rgb(extracted["bg_void"])
+            base_colors["bg_void"] = extracted["bg_void"]
+            base_colors["bg_base"] = extracted.get("bg_base", _rgb_to_hex(vr + 8, vg + 9, vb + 9))
+            base_colors["bg_surface"] = extracted.get("bg_surface", _rgb_to_hex(vr + 16, vg + 18, vb + 18))
+            base_colors["bg_surface_raised"] = extracted.get("bg_surface_raised", _rgb_to_hex(vr + 26, vg + 29, vb + 29))
+            base_colors["bg_overlay"] = extracted.get("bg_overlay", _rgb_to_hex(vr + 36, vg + 40, vb + 40))
+            base_colors["border_dim"] = extracted.get("border_dim", _rgb_to_hex(vr + 24, vg + 27, vb + 27))
+            base_colors["border_subtle"] = extracted.get("border_subtle", _rgb_to_hex(vr + 36, vg + 41, vb + 41))
+            base_colors["border_bright"] = extracted.get("border_bright", _rgb_to_hex(vr + 56, vg + 64, vb + 64))
+        except Exception:
+            pass
+
+    # If custom accent was authored, derive interactive and hover variants
+    if "accent_primary" in extracted and extracted["accent_primary"].startswith("#"):
+        try:
+            ar, ag, ab = _hex_to_rgb(extracted["accent_primary"])
+            base_colors["accent_primary"] = extracted["accent_primary"]
+            base_colors["accent_subtle"] = extracted.get("accent_subtle", f"rgba({ar}, {ag}, {ab}, 0.14)")
+            base_colors["accent_hover"] = extracted.get("accent_hover", _rgb_to_hex(min(255, int(ar * 1.15)), min(255, int(ag * 1.15)), min(255, int(ab * 1.15))))
+        except Exception:
+            pass
+
+    for k, v in extracted.items():
+        base_colors[k] = v
+
+    return base_colors
+
+
+def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str]) -> Dict[str, Any]:
+    """Derive full design token tree from authored dials and an explicit palette or dynamic color dict."""
     missing = [key for key in REQUIRED_DIALS if not dials.get(key)]
     if missing:
         raise ValueError(f"Missing required 5-dial decisions: {', '.join(missing)}")
-    if palette_name not in DARK_ATMOSPHERES:
-        raise ValueError(f"Unknown explicit palette: {palette_name}")
-    colors = DARK_ATMOSPHERES[palette_name]
+
+    if isinstance(palette_or_colors, dict):
+        colors = palette_or_colors
+    else:
+        palette_name = str(palette_or_colors)
+        resolved_palette = PALETTE_ALIASES.get(palette_name.lower(), palette_name.lower())
+        if resolved_palette not in DARK_ATMOSPHERES:
+            resolved_palette = "warm-graphite-lime"
+        colors = DARK_ATMOSPHERES[resolved_palette]
 
     # Density calibration
     density = dials["density"]
@@ -393,14 +563,9 @@ def compile_tokens(
     disc_text = disc_p.read_text(encoding="utf-8") if disc_p.is_file() else ""
     dials = parse_5dials(disc_text)
 
-    palette_match = re.search(
-        r"[`*]*(?:palette|color\s+palette)[`*]*\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*",
-        disc_text,
-        re.IGNORECASE,
-    )
-    if not palette_match:
-        raise ValueError("Missing explicit palette decision")
-    computed = compute_tokens(dials, palette_match.group(1).lower())
+    # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or derives mathematically
+    dynamic_colors = extract_dynamic_palette(disc_text)
+    computed = compute_tokens(dials, dynamic_colors)
     css_content = generate_css(computed)
 
     out_css = Path(output_css_path)

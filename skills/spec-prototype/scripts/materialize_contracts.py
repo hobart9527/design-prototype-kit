@@ -59,9 +59,12 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                         "impact": parts[5] if len(parts) > 5 else "Executes action",
                     })
     if not extracted:
-        # Check if domain-specific verbs exist in discussion
-        has_drain = bool(re.search(r"排空|drain", disc_text, re.IGNORECASE))
-        has_preempt = bool(re.search(r"抢占|preempt", disc_text, re.IGNORECASE))
+        # Check domain-specific verbs dynamically based on discussion semantic content
+        has_drain = bool(re.search(r"排空|\b(?:drain)\b", disc_text, re.IGNORECASE))
+        has_preempt = bool(re.search(r"抢占|\b(?:preempt)\b", disc_text, re.IGNORECASE))
+        has_order = bool(re.search(r"订单|支付|结账|\b(?:order|checkout|cart)\b", disc_text, re.IGNORECASE))
+        has_publish = bool(re.search(r"发布|草稿|文章|\b(?:publish|draft|article)\b", disc_text, re.IGNORECASE))
+
         if has_drain or has_preempt:
             if has_drain:
                 extracted.append({
@@ -81,6 +84,24 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                     "toast": "VRAM Eviction Committed",
                     "impact": "Releases VRAM pool back to shared cluster",
                 })
+        elif has_order:
+            extracted.append({
+                "action_id": "checkout-order",
+                "trigger_btn": "Proceed to Checkout",
+                "modal_header": "Confirm Order Payment",
+                "commit_btn": "Authorize Payment",
+                "toast": "Order Placed Successfully",
+                "impact": "Charges account and initiates order fulfillment",
+            })
+        elif has_publish:
+            extracted.append({
+                "action_id": "publish-document",
+                "trigger_btn": "Publish Document",
+                "modal_header": "Confirm Publication",
+                "commit_btn": "Publish Now",
+                "toast": "Document Published to Feed",
+                "impact": "Makes draft publicly accessible across channels",
+            })
         else:
             action_id = f"execute-{slice_id}"
             extracted.append({
@@ -92,6 +113,53 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                 "impact": f"Executes decisive operational change for {slice_id}",
             })
     return extracted
+
+
+def extract_cognitive_ledger(disc_text: str, slice_id: str) -> dict[str, str]:
+    """Extract or synthesize the Cognitive Budgeting & Energy Return Ledger."""
+    routine_m = re.search(r"(?:Routine Conventions|Zero-learning|零借贷区|低熵基座)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
+    decisive_m = re.search(r"(?:Decisive Innovation|Borrowed focus|高产出借贷区|能量溢价特区)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
+    repayment_m = re.search(r"(?:Repayment|Settlement|偿还机制|状态沉降)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
+
+    zero_base = routine_m.group(1).strip() if routine_m else "Standard top navigation, breadcrumbs, and filter facets strictly follow established conventions with zero learning curve and zero distracting motion."
+    borrow_zone = decisive_m.group(1).strip() if decisive_m else f"Primary operational {slice_id} workspace is allocated high visual tension: kinetic detents, inline sparklines, and micro-flow telemetry."
+    repayment = repayment_m.group(1).strip() if repayment_m else "Upon commit action completion or inspector dismissal, focus and state settle back into calm equilibrium within 180ms."
+
+    return {
+        "zero_borrow_base": zero_base,
+        "high_yield_borrow_zone": borrow_zone,
+        "repayment_settlement": repayment,
+    }
+
+
+def extract_ruthless_omissions(disc_text: str, prod_text: str) -> list[str]:
+    """Extract or synthesize the 3 Ruthless Omissions."""
+    combined = disc_text + "\n" + prod_text
+    m = re.search(r"(?:Ruthless Omission|Deliberately Excluded|Omission|舍弃|排除|非目标)[^\n]*\n((?:[ \t]*[-*0-9.]+[^\n]+\n?)+)", combined, re.IGNORECASE)
+    if m:
+        items = [re.sub(r"^[ \t]*[-*0-9.]+\s*", "", line).strip() for line in m.group(1).splitlines() if line.strip()]
+        if len(items) >= 2:
+            return items[:5]
+    return [
+        "Zero generic marketing cards, promotional hero banners, or superficial carousel widgets.",
+        "Zero nested modal inception or multi-step wizard deadlocks; interactions stay in-canvas or single contextual drawer.",
+        "Zero ungrounded alien physics, gratuitous full-screen particles, or unconsidered neutral gray #808080 washes."
+    ]
+
+
+def extract_material_invariants(disc_text: str, prod_text: str) -> list[str]:
+    """Extract or synthesize Material Non-Transfer Boundaries."""
+    combined = disc_text + "\n" + prod_text
+    m = re.search(r"(?:Material Non-Transfer|Material Invariant|材质不可跨界|材质边界|物理映射)[^\n]*\n((?:[ \t]*[-*0-9.]+[^\n]+\n?)+)", combined, re.IGNORECASE)
+    if m:
+        items = [re.sub(r"^[ \t]*[-*0-9.]+\s*", "", line).strip() for line in m.group(1).splitlines() if line.strip()]
+        if len(items) >= 2:
+            return items[:5]
+    return [
+        "Digital Glass & Surface Layering: Semi-transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
+        "Machined Tactile Detents: Interactive controls possess mechanical micro-press (:active scale(0.97)) resistance; never frictionless float.",
+        "Precision Telemetry Emissives: Status indicators simulate calibrated hardware LEDs with subtle ambient bloom; never raw flat neon washes."
+    ]
 
 
 def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str]:
@@ -132,6 +200,10 @@ def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str
 {surface_lines}
 """
         elif key == "foundation":
+            omissions = extract_ruthless_omissions(disc_text, prod_text)
+            omissions_md = "\n".join(f"- {o}" for o in omissions)
+            invariants = extract_material_invariants(disc_text, prod_text)
+            invariants_md = "\n".join(f"- {inv}" for inv in invariants)
             content = f"""# Project Experience Foundation: f1
 
 - Product: {product_title}
@@ -141,8 +213,15 @@ def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str
 
 ## Decisions
 {prod_text.strip()}
+
+## 3 Ruthless Omissions (克制舍弃清单)
+{omissions_md}
+
+## Material Non-Transfer Boundaries (材质不可跨界定律)
+{invariants_md}
 """
         elif key == "slice_contract":
+            c_ledger = extract_cognitive_ledger(disc_text, slice_id)
             verb_table = "\n".join(
                 f"| `{v['action_id']}` | `{v['trigger_btn']}` | `{v['modal_header']}` | `{v['commit_btn']}` | `{v['toast']}` | {v['impact']} |"
                 for v in action_verbs
@@ -157,6 +236,14 @@ def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str
 ## Intent
 {tension}
 
+## Cognitive Budgeting & Energy Return Ledger (认知借贷收支账本)
+
+| Ledger Zone | Scope & Interaction Invariant | Allocation Rule | Cognitive Cost & Yield |
+|---|---|---|---|
+| **Low-Entropy Base (零借贷基座)** | {c_ledger['zero_borrow_base']} | 0 learning friction, zero distracting motion, standard UI conventions | Zero cognitive drain; preserves operator attention for decisive tasks |
+| **High-Yield Borrow Zone (能量溢价特区)** | {c_ledger['high_yield_borrow_zone']} | High-tension visual craft: tactile detents, micro-sparklines, kinetic pulses | Borrowed visual energy delivers 10x situational awareness and commit certainty |
+| **Settlement & Repayment (闭环偿还机制)** | {c_ledger['repayment_settlement']} | Transition locks settle to steady state within 180ms | Restores baseline low entropy immediately after decision execution |
+
 ## Action Verb Lifecycle Table (4-Phase Atomic Terminology)
 
 | Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact / Consequence |
@@ -165,7 +252,7 @@ def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str
 
 ## Decisive Exchange 3-Frame Specification (核心决定性交换三帧推演)
 
-- **Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; inspection drawer slides in with contextual parameters.
+- **Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.
 - **Frame 2 (Decisive Commit)**: Operator hits commit action; trigger undergoes tactile `:active scale(0.97)` mechanical response; inline state locks to prevent duplicate submissions.
 - **Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; feedback toast displays completion; focus deterministically restores to originating anchor.
 
@@ -175,13 +262,14 @@ def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str
 - **Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return.
 """
         else:
+            scope_suffix = "hero-anchor" if "hero-anchor" in disc_text else "anchor"
             content = f"""# Prototype Specification: {slice_id} / r1
 
 - Candidate revision: r1
 - Compilation status: candidate
 - Product source: `prototype/product.md`, {_digest(prod_path)}
 - Discussion source: `prototype/discussion.md`, {_digest(disc_path)}
-- Prototype write scope: `prototype/experiments/{slice_id}/hero-anchor/`
+- Prototype write scope: `prototype/experiments/{slice_id}/{scope_suffix}/`
 - Evidence write scope: `prototype/evidence/probes/{slice_id}/`
 - Visual verification: unverified
 - Browser verification: unverified
@@ -190,15 +278,15 @@ def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str
 
 | Shortcut Key | Target Action / Interaction | Scope | Focus Restoration Anchor |
 |---|---|---|---|
-| `Space` or `P` | Inspect active node / toggle inspector drawer | Active node tile or selection | Active selection anchor |
+| `Space` or `P` | Activate primary operational trigger / toggle inspector drawer | Active operational item or selection | Active selection anchor |
 | `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |
-| `J` / `K` | Navigate cluster node rows or items | Active list or matrix | Active selection index |
+| `J` / `K` | Navigate primary items or table rows | Active collection or matrix | Active selection index |
 
 ## The Break Protocol Stress Checkpoints (四维破坏性极限压测)
 
 | Reality Breaker | Concrete Test Vector / Input | Expected Graceful Behavior | Observed Result |
 |---|---|---|---|
-| **Unbreakable String** | `node-cluster-uuid-00000000-0000-0000-0000-000000000000` | CSS ellipsis + title tooltip, zero container blowout | `pending` |
+| **Unbreakable String** | `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000` | CSS ellipsis + title tooltip, zero container blowout | `pending` |
 | **Zero-Item Empty State** | Filter: 0 results / empty list | Actionable empty card with reset filter button | `pending` |
 | **Extreme 320px Fold** | 320px viewport width test | Horizontal scroll or vertical reflow, primary action reachable | `pending` |
 | **Rapid Interruption** | Double-click / rapid Space hits | Debounced submission, single idempotency state transition | `pending` |

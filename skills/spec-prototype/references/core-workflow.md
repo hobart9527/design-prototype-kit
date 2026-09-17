@@ -71,15 +71,29 @@ Route design work by declared intent and required evidence. The five stages are 
 - **Material Honesty & Non-transfer Boundaries (`visual-craft.md:52`)**:
   - Respect the digital medium. Eliminate faux-skeuomorphic textures, fake metallic grain, or simulated physical noise that merely masquerades as craft.
   - For every physical or conceptual metaphor, explicitly declare its **non-transfer boundary**: which physical traits transfer (e.g. detent resistance, spatial damping) and which are strictly forbidden (e.g. decorative skeuomorphic chrome).
+- **Aesthetic Direction Candidate Set & Chromatic Pairing Gate (多维审美方案与色彩配方候选提案门禁)**:
+  - Before writing tokens or specifications, the Coordinator MUST formulate and present **2 to 3 materially distinct, high-tension design directions** to the user via `AskUserQuestion`.
+  - To prevent abstract vagueness, each direction MUST explicitly pair:
+    1. *Modern Benchmark Anchor*: A concrete reference system (e.g. Teenage Engineering machined hardware, Linear dark zinc workspace, Apple Pro slate, Analog avionics telemetry).
+    2. *Exact Chromatic Palette Composition*: Explicit hex values for `--accent-primary` (e.g. `#d6f56b` Acid Lime / `#5e6ad2` Cobalt / `#ff9800` Safety Amber), `--bg-void` (e.g. `#080b0b` Warm Graphite / `#08090c` Deep Zinc / `#0d0e10` Slate Titanium), and secondary tones.
+    3. *Spatial & Kinetic Tonality*: Density rhythm (4px vs 8px), radius philosophy (sharp 0-4px vs smooth 8-12px), and transition detents.
+    4. *Core Trade-off*: What this direction maximally amplifies (e.g. cognitive throughput, situational calm) vs what it deliberately omits.
+  - The user's selection or customized palette is recorded directly in `prototype/discussion.md`, where `compile_tokens.py` dynamically extracts the authored colors and mathematically derives the complete 16-token elevation tree.
 - **Gate**: Must obtain explicit user confirmation via `AskUserQuestion` before proceeding.
 
-### Stage 2: Core Hero Anchor Prototyping via Lean Builder (立 - 骨肉)
+### Stage 2: Core Hero Anchor Prototyping via Lean Builder (立 - 骨肉：四大基准样板分型物化)
+- **Baseline-Aware Anchor Typologies (四类产品基准样板分型物化)**:
+  Stage 2 rejects single-template dogmatism. The Core Hero Anchor adapts its structural chassis to the primary operational baseline selected in Stage 1:
+  1. *Baseline 1 (Dense Data Workbench)*: **Workspace Console** — 4px micro-grid, multi-pane instrument rack, 11-13px tabular telemetry, zero promotional fluff.
+  2. *Baseline 2 (Modern SaaS & Commerce)*: **Operational Canvas** — 8px grid, master-detail hierarchy, progressive elevation, contextual drawers.
+  3. *Baseline 3 (Editorial & Reading)*: **Immersive Document** — 68ch measure, asymmetrical marginalia, paper-contrast foundation, zero ambient noise.
+  4. *Baseline 4 (Consumer & Touch-First)*: **Somatic Touchflow** — 44px thumb-zone touch targets, fluid spring curves, high-contrast expressive surfaces.
 - **Lean Pre-baked Envelope Protocol (工单直投极简构建协议)**:
   - To eliminate exploratory overhead and endless token-hunting, the Coordinator synthesizes a **Self-Contained Execution Envelope** before dispatching `spec-prototype-builder`:
-    1. *Exact Output Path*: e.g. `prototype/experiments/console/hero-anchor/index.html`.
+    1. *Exact Output Path*: e.g. `prototype/experiments/<slice_id>/anchor/index.html` (or `hero-anchor/index.html`).
     2. *Exact Token CSS Reference*: `<link rel="stylesheet" href="../../../shared/tokens.css">`.
-    3. *Component & DOM Hierarchy Specification*: Layout container, header, primary operational viewport, contextual inspection drawer/panel.
-    4. *State Machine Specification*: Concrete state object (e.g. `AppState`), initial states, mutation handlers, and deterministic transitions.
+    3. *AppShell Component & DOM Hierarchy*: Topbar navigation, primary operational slot, contextual drawer, bottom telemetry status.
+    4. *State Machine Specification*: Concrete state object (`ideal`, `empty`, `error`), mutation handlers, and deterministic transitions.
     5. *Verifiable Design Assertions*: Explicit keyboard shortcuts (`Space`, `Esc`), DOM element IDs, and life-cycle status tags.
   - **Bounded Builder Envelope**: Builder scope, verification, and stop conditions come from the task-specific envelope. Do not impose a universal tool-turn quota or a fixed chassis; exploration may require a different bounded sequence:
     - Step 1: Write self-contained single-page HTML/CSS/JS conforming to the envelope.

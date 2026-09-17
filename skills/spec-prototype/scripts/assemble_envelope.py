@@ -105,8 +105,9 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     contract_content = paths["slice_contract"].read_text(encoding="utf-8")
     spec_content = paths["specification"].read_text(encoding="utf-8")
 
-    # Target scopes
-    write_scope = extract_field(spec_content, "Prototype write scope", f"prototype/experiments/{slice_id}/hero-anchor/")
+    # Target scopes: support both neutral anchor/ and legacy hero-anchor/
+    default_scope = f"prototype/experiments/{slice_id}/anchor/"
+    write_scope = extract_field(spec_content, "Prototype write scope", default_scope)
     write_scope_clean = write_scope.strip("`'\" ")
     if not write_scope_clean.endswith("/"):
         write_scope_clean += "/"
@@ -150,33 +151,59 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
                 shortcuts.append(parts[0])
 
     # Parse Action Verb Lifecycle and Frame deduction from slice contract
+    cognitive_ledger = {
+        "zero_borrow_base": "Standard navigation, filter chips, and basic data tables must maintain zero cognitive friction with zero distracting motion.",
+        "high_yield_borrow_zone": f"Primary operational {slice_id} workspace is granted visual energy budget: tactile detents (:active), baseline sparklines, and micro-flow liveliness.",
+        "repayment_settlement": "Upon decisive action commit or inspector close, all dynamic visual indicators settle back into baseline calm within 180ms."
+    }
+    in_ledger = False
     in_verbs = False
     in_frames = False
     in_rules = False
     for line in contract_content.splitlines():
-        if "Action Verb Lifecycle Table" in line:
+        if "Cognitive Budgeting & Energy Return Ledger" in line:
+            in_ledger = True
+            in_verbs = False
+            in_frames = False
+            in_rules = False
+            continue
+        elif "Action Verb Lifecycle Table" in line:
+            in_ledger = False
             in_verbs = True
             in_frames = False
             in_rules = False
             continue
         elif "Decisive Exchange 3-Frame" in line:
+            in_ledger = False
             in_verbs = False
             in_frames = True
             in_rules = False
             continue
         elif "Context Preservation Rules" in line:
+            in_ledger = False
             in_verbs = False
             in_frames = False
             in_rules = True
             continue
         elif line.startswith("##"):
+            in_ledger = False
             in_verbs = False
             in_frames = False
             in_rules = False
             continue
 
-        if in_verbs and line.strip().startswith("|") and not line.strip().startswith("|---"):
+        if in_ledger and line.strip().startswith("|") and not line.strip().startswith("|---"):
             parts = [p.strip() for p in line.split("|") if p.strip()]
+            if parts and len(parts) >= 2 and parts[0] not in ("Ledger Zone",):
+                zone_name = parts[0].lower()
+                if "zero" in zone_name or "base" in zone_name or "基座" in zone_name:
+                    cognitive_ledger["zero_borrow_base"] = parts[1]
+                elif "borrow" in zone_name or "特区" in zone_name or "溢价" in zone_name:
+                    cognitive_ledger["high_yield_borrow_zone"] = parts[1]
+                elif "repayment" in zone_name or "settle" in zone_name or "偿还" in zone_name:
+                    cognitive_ledger["repayment_settlement"] = parts[1]
+        elif in_verbs and line.strip().startswith("|") and not line.strip().startswith("|---"):
+            parts = [re.sub(r"[*`]", "", p).strip() for p in line.split("|") if p.strip()]
             if parts and len(parts) >= 4 and parts[0] not in ("Action ID",):
                 verb_lifecycle.append({
                     "action_id": parts[0],
@@ -190,12 +217,46 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         elif in_rules and line.strip().startswith("- "):
             context_rules.append(line.strip()[2:].strip())
 
+    # Extract 3 Ruthless Omissions and Material Invariants from Foundation / Product
+    f1_text = paths["foundation"].read_text(encoding="utf-8")
+    omissions: List[str] = []
+    invariants: List[str] = []
+    in_om = False
+    in_inv = False
+    for line in f1_text.splitlines():
+        if "3 Ruthless Omissions" in line:
+            in_om = True
+            in_inv = False
+            continue
+        elif "Material Non-Transfer" in line:
+            in_om = False
+            in_inv = True
+            continue
+        elif line.startswith("##"):
+            in_om = False
+            in_inv = False
+            continue
+        if in_om and line.strip().startswith("- "):
+            omissions.append(line.strip()[2:].strip())
+        elif in_inv and line.strip().startswith("- "):
+            invariants.append(line.strip()[2:].strip())
+
     constraints = {
         "dual_channel_shortcuts": shortcuts,
         "action_verb_lifecycle": verb_lifecycle,
         "break_protocol_checkpoints": break_checkpoints,
         "decisive_exchange_frames": decisive_frames,
         "context_preservation_rules": context_rules,
+        "ruthless_omissions": omissions or [
+            "Zero generic marketing cards, promotional hero banners, or superficial carousel widgets.",
+            "Zero nested modal inception or multi-step wizard deadlocks; interactions stay in-canvas or single contextual drawer.",
+            "Zero ungrounded alien physics, gratuitous full-screen particles, or unconsidered neutral gray #808080 washes."
+        ],
+        "material_non_transfer_boundaries": invariants or [
+            "Digital Glass & Surface Layering: Semi-transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
+            "Machined Tactile Detents: Interactive controls possess mechanical micro-press (:active scale(0.97)) resistance; never frictionless float.",
+            "Precision Telemetry Emissives: Status indicators simulate calibrated hardware LEDs with subtle ambient bloom; never raw flat neon washes."
+        ],
     }
     explicit_turns = extract_field(spec_content, "Maximum operational repair attempts")
     if explicit_turns:
@@ -216,11 +277,21 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             if "hero-anchor" in path_raw:
                 surf_path = root / f"prototype/experiments/{path_raw}/index.html"
                 sid = path_raw.split("/")[0]
+            elif "anchor" in path_raw:
+                surf_path = root / f"prototype/experiments/{path_raw}/index.html"
+                sid = path_raw.split("/")[0]
             elif path_raw.startswith("surfaces/"):
                 surf_path = root / f"prototype/{path_raw}/index.html"
                 sid = path_raw.replace("surfaces/", "")
             else:
-                surf_path = root / f"prototype/{path_raw}/index.html"
+                p_anchor = root / f"prototype/experiments/{path_raw}/anchor/index.html"
+                p_hero = root / f"prototype/experiments/{path_raw}/hero-anchor/index.html"
+                if p_anchor.is_file():
+                    surf_path = p_anchor
+                elif p_hero.is_file():
+                    surf_path = p_hero
+                else:
+                    surf_path = root / f"prototype/{path_raw}/index.html"
                 sid = path_raw
 
             is_active = (sid == slice_id or path_raw == slice_id)
@@ -259,12 +330,59 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "break_protocol_checkpoints": break_checkpoints
     }
 
+    # Determine layout profile and app shell contract from baseline
+    all_spec_text = product_content + " " + spec_content
+    if re.search(r"Baseline 4|Consumer|Mobile|Touch", all_spec_text, re.IGNORECASE):
+        layout_profile = "somatic-touchflow"
+    elif re.search(r"Baseline 3|Editorial|Reading", all_spec_text, re.IGNORECASE):
+        layout_profile = "editorial-reading"
+    elif re.search(r"Baseline 2|SaaS|Commerce|Project", all_spec_text, re.IGNORECASE):
+        layout_profile = "operational-canvas"
+    else:
+        layout_profile = "dense-console"
+
+    app_shell_blueprints = {
+        "dense-console": {
+            "profile": "dense-console",
+            "spatial_roles": ["global_nav", "operational_viewport", "context_inspector", "status_telemetry"],
+            "density_rules": "4px micro-grid, 11-13px tabular-nums telemetry, multi-pane instrument rack, zero promotional banner",
+            "composition_guidance": "Pin viewport height (100vh); enable independent scrolling within operational matrix and contextual inspector; no page-level runaway scroll."
+        },
+        "operational-canvas": {
+            "profile": "operational-canvas",
+            "spatial_roles": ["workspace_header", "entity_rail", "operational_canvas", "context_panel"],
+            "density_rules": "8px grid rhythm, progressive visual elevation, master-detail hierarchy",
+            "composition_guidance": "Support fluid zoom/pan or split-view master-detail; contextual inspectors should overlay or dock non-destructively."
+        },
+        "editorial-reading": {
+            "profile": "editorial-reading",
+            "spatial_roles": ["reading_header", "marginalia_nav", "reading_measure"],
+            "density_rules": "68ch line-length measure, paper-contrast foundation, quiet marginalia",
+            "composition_guidance": "Prioritize typographic rhythm, asymmetrical marginalia for citations/telemetry, and distraction-free central column."
+        },
+        "somatic-touchflow": {
+            "profile": "somatic-touchflow",
+            "spatial_roles": ["touch_header", "touch_surface", "thumb_zone_nav"],
+            "density_rules": "44px thumb-zone touch targets, fluid spring curves, high-contrast expressive surfaces",
+            "composition_guidance": "Anchor primary decisive actions to bottom thumb-reach reach zone; implement spring physics and gesture signifiers."
+        }
+    }
+
     envelope = {
         "envelope_version": "2.0",
         "repository_root": str(root.resolve()),
         "skill_root": str(SKILL.resolve()),
         "slice_id": slice_id,
         "mode": "lean-builder-envelope",
+        "layout_profile": layout_profile,
+        "app_shell_blueprint": app_shell_blueprints.get(layout_profile, app_shell_blueprints["dense-console"]),
+        "app_shell_contract": {
+            "profile": layout_profile,
+            "header": "Top bar containing system title, active slice indicator, and topology navigation",
+            "main_viewport": "Primary operational slot matching declared entity cardinality",
+            "context_drawer": "Contextual parameter inspection drawer or modal",
+            "status_bar": "Footer telemetry and shortcuts guide"
+        },
         "target_html_path": target_html,
         "evidence_output_dir": evidence_scope,
         "token_stylesheet_ref": token_rel_href,
@@ -279,6 +397,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         },
         "verification_command": verification_cmd,
         "capture_command": capture_cmd,
+        "cognitive_ledger": cognitive_ledger,
         "available_tokens": extract_css_tokens(paths["tokens_css"].read_text(encoding="utf-8")),
         "interaction_spec": interaction_spec,
         "design_constraints": constraints,
@@ -286,6 +405,14 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "specification": {
             "path": spec_rel,
             "sha256": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),
+        },
+        "spec_references": {
+            "product_thesis": paths["product"].relative_to(root).as_posix(),
+            "surface_topology": paths["surface_map"].relative_to(root).as_posix(),
+            "foundation_craft": paths["foundation"].relative_to(root).as_posix(),
+            "slice_contract": paths["slice_contract"].relative_to(root).as_posix(),
+            "specification": paths["specification"].relative_to(root).as_posix(),
+            "tokens_stylesheet": paths["tokens_css"].relative_to(root).as_posix(),
         },
         "spec_sources": {
             "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest(),
