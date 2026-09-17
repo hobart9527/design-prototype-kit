@@ -25,9 +25,6 @@ def _read_verification(root: Path) -> Dict[str, str]:
 
 
 def discover_surfaces(root: Path) -> List[Dict[str, str]]:
-
-
-def discover_surfaces(root: Path) -> List[Dict[str, str]]:
     surfaces: List[Dict[str, str]] = []
 
     # Check surface map

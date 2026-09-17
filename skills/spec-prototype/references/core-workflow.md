@@ -12,11 +12,11 @@ Why is this engine called `spec-prototype`?
 2. **Prototype (原型样板 - Disposable Empirical Proof)**:
    The prototype is NOT an unguided art project or a throwaway toy. It is the rapid, inspectable, physical falsification tool that proves the Spec is ergonomic, viable, and aesthetically cohesive.
 3. **Execution Invariant**:
-   **No Prototype Code without a Frozen Spec Contract.** Bypassing Stage 1 discussion and spec formulation to write code is strictly prohibited. The Spec directs the Prototype; the Prototype validates and refines the Spec.
+   **No Prototype Code without a Frozen Spec Contract (Formal Delivery).** Bypassing Stage 1 discussion and spec formulation to write code is strictly prohibited for formal candidate delivery. Exploration proceeds from a revisable direction brief; formal candidates require frozen specification evidence. The Spec/Brief directs the Prototype; the Prototype validates and refines the Spec.
 
 ## The Canonical 5-Stage Design Delivery Engine (标准五阶工序)
 
-Route design work by declared intent and required evidence. The five stages are a capability set, not a mandatory sequence; use only the stages needed for the requested outcome. No prototype code may precede its required frozen spec evidence:
+Route design work by declared intent and required evidence. The five stages are a capability set, not a mandatory sequence; use only the stages needed for the requested outcome. Prototype code must be grounded in its matching brief or contract evidence:
 
 ```text
  Stage 1 (破): Tone & Tension Divergence ──> Formalize 6-Pillar Design Spec: product.md, surface-maps/m1.md, foundation/f1.md, tokens (t1.json/t1.md/tokens.css), slices/c1.md, specs/r1.md (Gated)

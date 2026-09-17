@@ -52,25 +52,25 @@ Evidence lens labels retained for lineage review: **Archetype A: Greenfield 0-to
 
 ## Canonical 5-Stage Design Workflow (五阶工序状态机)
 
-All product design execution follows an unbroken 5-stage state machine:
+Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
 
 ```text
 [Stage 1: 破 - Tone & Tension Divergence & Spec Formulation]
   │  Gated: AskUserQuestion (Tension reframing, 4 Baselines & Reality Benchmark Anchors, OOUX Anti-Contamination, Hard Cognitive Ledger, 5 Dials register, Vague-Word Firewall)
   │  Automated Spec Materialization: python3 skills/spec-prototype/scripts/materialize_contracts.py --slice <slice_id>
-  │  Mandatory Spec Outputs (6-Pillar Durable Design Contract):
+  │  Formal Spec Outputs (when durable contract requested):
   │    1. prototype/product.md (Product thesis, JTBD & Reality Benchmark Anchors)
   │    2. prototype/contracts/surface-maps/m1.md (OOUX Entities, Cardinality & Surface Topology)
   │    3. prototype/contracts/foundation/f1.md (Design Proposition, Reality Mapping, Signature Craft, Atmospheric Calibration)
   │    4. prototype/contracts/tokens/t1.json & t1.md & shared/tokens.css (W3C DTCG tokens, Markdown spec & physical stylesheet compiled via compile_tokens.py)
   │    5. prototype/contracts/slices/<slice_id>/c1.md (Slice Contract: state machines & action verb lifecycle)
   │    6. prototype/specifications/<slice_id>/r1.md (Prototype Spec: layout wireframe, component constraints & verifiable assertions)
-  │  Gate Rule: assemble_envelope.py --check-spec MUST pass! ZERO Prototype Code without a complete frozen Spec Contract!
+  │  Gate Rule: assemble_envelope.py verifies scope. ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; exploration uses direction briefs).
   ▼
 [Stage 2: 立 - Core Hero Anchor Prototyping via Lean Pre-baked Envelope]
   │  Gated: AskUserQuestion (Single Hero Anchor ONLY, Headless Chrome authentic rendering, Concentric Radii, Tabular Numbers, tokens.css, NO secondary pages until approved)
-  │  Dispatched via Pre-baked Envelope: Builder receives self-contained spec (paths, tokens, DOM layout, state machine, assertions)
-  │  Lean Protocol: Hard limit <= 8 tool turns; single-pass high-fidelity generation; no exploratory hunting.
+  │  Dispatched via Pre-baked Envelope: Builder receives self-contained envelope (paths, tokens, layout, states, assertions)
+  │  Execution Safety: Bounded budget with evidence-led repair; no exploratory wandering.
   ▼
 [Stage 3: 拓 - Full IA Surface Rollout]
   │  Rollout derived strictly from genuine Surface Topology (Primary, Contextual, Supporting; unbind from rigid Tier 0/1/2)
@@ -88,8 +88,8 @@ All product design execution follows an unbroken 5-stage state machine:
 
 1. **Front-stage Exploration Engine (破、立、拓、验)**:
    - Focus cognitive attention on reframing hidden business/user tensions, anchoring signature interactions, and declaring ruthless omissions over exhaustive matrix-filling.
-   - Stage 1 culminates in the durable **Design Specification (Spec)**.
-   - Stage 2 & 3 Builder operates under the **Lean Pre-baked Envelope Protocol**: deterministic, rapid, single-pass code synthesis where interactive craft validates and refines the concept model (`Craft informs Soul`).
+   - Stage 1 culminates in the durable **Design Specification (Spec)** or an exploratory direction brief.
+   - Stage 2 & 3 Builder operates under the **Lean Pre-baked Envelope Protocol**: deterministic, bounded code synthesis with evidence-led self-repair where interactive craft validates and refines the concept model (`Craft informs Soul`).
 2. **Back-stage Governance Compiler (Silent Packaging - 冻)**:
    - Immutable digests, formal manifests, and token compilation run silently via helper scripts (`handoff.py`, `compile_tokens.py`, `wcag-check.js`) when transitioning between formal phases or downstream engineering handoff.
    - Governance serves as a quiet post-hoc compiler, never an exploratory tax on upfront design reasoning.
