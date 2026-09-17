@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -22,6 +22,41 @@ ROOT = Path(__file__).resolve().parents[1]
 CASES_DIR = ROOT / "benchmarks/spec-prototype/cases"
 RESULTS_DIR = ROOT / "benchmarks/spec-prototype/results"
 SCRIPTS_DIR = ROOT / "skills/spec-prototype/scripts"
+
+# Mechanism scripts whose revisions define the control condition of a run.
+MECHANISM_SCRIPTS = {
+    "materialize_contracts": "materialize_contracts.py",
+    "compile_tokens": "compile_tokens.py",
+    "assemble_envelope": "assemble_envelope.py",
+}
+
+
+def _script_versions() -> Dict[str, Any]:
+    """Modification times of the mechanism scripts for this run.
+
+    Two runs executed against different script revisions are not comparable
+    (BENCH-004); recording the revisions here keeps that condition auditable.
+    """
+    versions: Dict[str, Any] = {}
+    for label, filename in MECHANISM_SCRIPTS.items():
+        path = SCRIPTS_DIR / filename
+        versions[label] = {
+            "file": filename,
+            "mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(path.stat().st_mtime)) if path.is_file() else None,
+        }
+    return versions
+
+
+def _run_meta() -> Dict[str, Any]:
+    """Control conditions for one round. Nothing here is a delivery claim."""
+    return {
+        "layer": "mechanism",
+        "script_versions": _script_versions(),
+        "conditions": {
+            "human_intervened": False,
+            "env_blocked": False,
+        },
+    }
 
 
 @dataclass
@@ -48,6 +83,9 @@ class CaseBenchmarkResult:
     error_context: str = ""
     error: str | None = None
     metrics: Dict[str, Any] = None
+    # run_meta: control conditions under which this round ran, so runs with
+    # mismatched conditions are refused rather than compared (BENCH-004).
+    run_meta: Dict[str, Any] = field(default_factory=_run_meta)
 
 
 def _step_context(proc: subprocess.CompletedProcess) -> str:
