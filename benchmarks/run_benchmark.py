@@ -259,7 +259,7 @@ def run_single_case(case_name: str, run_id: int, output_dir: Path) -> CaseBenchm
     )
 
 
-def run_all_benchmarks(repetitions: int = 3) -> Dict[str, Any]:
+def run_all_benchmarks(repetitions: int = 3, label: str | None = None) -> Dict[str, Any]:
     cases = [
         "incident-commander",
         "project-workspace",
@@ -295,6 +295,10 @@ def run_all_benchmarks(repetitions: int = 3) -> Dict[str, Any]:
     summary_file = run_dir / "summary.json"
     summary_data = {
         "timestamp": timestamp,
+        # User-supplied label marking which revision this run describes, so
+        # runs are comparable only when their labels and script revisions
+        # match (BENCH-004).
+        "run_label": label,
         "repetitions": repetitions,
         # Mechanism-layer run only; delivery, interaction, and design quality
         # are untested here (BENCH-001 / BENCH-SCN-001).
@@ -325,6 +329,11 @@ def run_all_benchmarks(repetitions: int = 3) -> Dict[str, Any]:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run spec-prototype benchmark suite")
     parser.add_argument("--rounds", type=int, default=3, help="Number of repetitions per case (default: 3)")
+    parser.add_argument(
+        "--label",
+        default=None,
+        help="Label identifying the revision this run describes; recorded as run_label in summary.json (BENCH-004)",
+    )
     args = parser.parse_args()
 
-    run_all_benchmarks(repetitions=args.rounds)
+    run_all_benchmarks(repetitions=args.rounds, label=args.label)
