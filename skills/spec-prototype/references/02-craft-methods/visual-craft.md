@@ -62,6 +62,65 @@ legible; it does not authorize merging their lifecycles. Texture is optional.
 For a narrative: test the later visit as carefully as the first reveal; the
 result must still communicate the person's choice after celebratory copy expires.
 
+### Lightweight Native Craft Recipes (免依赖原生工程质感与微动能配方)
+
+High-fidelity verisimilitude requires authentic craft without heavy framework bloat. Rely on clean, semantic HTML/CSS/SVG primitives:
+
+1. **Topological Flow & Stream Pulses (轻量数据流脉冲)**:
+   - For streaming or pipeline architectures (Baseline 1), convey operational liveliness via pure SVG path animation:
+   ```css
+   .flow-line {
+     stroke: var(--border-bright);
+     stroke-dasharray: 6 4;
+     animation: flow-pulse 1.2s linear infinite;
+   }
+   @keyframes flow-pulse {
+     from { stroke-dashoffset: 20; }
+     to { stroke-dashoffset: 0; }
+   }
+   ```
+   - Delivers instant subconscious confirmation of active throughput without GPU thrashing.
+
+2. **Micro Sparklines & Trend Baselines (内联轻量时序线图)**:
+   - Never show floating, context-free scalar numbers. Accompany critical metrics with compact inline SVG sparklines (40-60px width, 16px height) using `<path>` or `<polyline>` with subtle area gradients:
+   ```html
+   <svg class="sparkline" width="60" height="16" viewBox="0 0 60 16">
+     <path d="M0,12 Q15,4 30,10 T60,2" fill="none" stroke="var(--status-running)" stroke-width="1.5" />
+   </svg>
+   ```
+
+3. **Concentric Radii Standards (同心几何)**:
+   - Standardize nested rounded containers to eliminate geometric visual dissonance:
+   $$R_{\text{in}} = \max(0, R_{\text{out}} - \text{Padding})$$
+
+4. **Tactile Mechanical Detents & Feedback**:
+   - For mission-critical actions, combine tactile micro-motion with clear visual state changes:
+   ```css
+   .btn-action:active {
+     transform: scale(0.98);
+     transition: transform var(--duration-fast) var(--ease-tactile);
+   }
+   ```
+
+5. **Stateful Micro-App Architecture (数据驱动的原型微架构，彻底告别单点木偶假交互)**:
+   - Prototypes are NOT static brochure mockups; they MUST be authored as functional, self-contained interactive micro-applications.
+   - **Central App State Store**: The client-side JavaScript MUST maintain a reactive or centralized state store:
+     ```javascript
+     const AppState = {
+       entities: [...],        // Multi-node data model (minimum 3 operable entities)
+       selectedEntityId: '...',// Current inspection focus
+       filters: { ... },       // Query/status filtering
+       runtimeMetrics: { ... },// Live/simulated telemetry
+       history: []             // Audit/event stream
+     };
+     ```
+   - **Universal Entity Inspectability (全实体聚焦可查)**:
+     - Clicking ANY node or row in the primary viewport MUST dynamically load its full operational state, historical traces, and diagnostics into the contextual drawer/inspector.
+     - Never hardcode interactions to a single arbitrary node while leaving sibling nodes dead.
+   - **Multi-Branch Action Lifecycle (多动作状态分支)**:
+     - Interactive workflows must support multi-stage branching: Selection -> Parameter Tuning / Confirmation -> Execution -> Diverted Stream / State Mutation -> Reversion / Reset.
+     - Provide immediate, visible cause-and-effect across the entire layout (e.g. isolating Node 02A updates its status badge, re-routes downstream SVG connection wires, clears backpressure gauges, and posts an audit event).
+
 ### Form an aesthetic point of view
 
 Choose concrete references that illuminate the current opportunity: a familiar

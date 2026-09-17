@@ -26,15 +26,15 @@ For a formal prototype, run:
 Compare the generated packet to the supplied packet before mutation. Read every
 `required_reads` path at its exact digest: complete Specification and Slice
 Contract, cited Foundation and Surface Map sections, exact tokens,
-`references/design-floor.md`, `references/quality-bar.md` and
-`references/component-implementation.md`. A missing/mismatched reference,
+`references/03-verification/quality-floor.md` and
+`references/02-craft-methods/component-implementation.md`. A missing/mismatched reference,
 contradictory required behavior or scope mismatch returns `prototype_blocked`
 without writes.
 
-A `mode: direction-probe` envelope instead names a retained Markdown probe brief
-and sha256. Verify and read it. It needs no frozen Foundation, Contract,
-Specification or tokens and may answer a static, transition or Walking Skeleton
-question according to that brief.
+A `mode: direction-probe` (or Draft Mode) envelope instead names a retained Markdown probe brief
+and discussion record. Verify and read it. It operates in front-stage exploration mode and
+needs no frozen Foundation, Contract, Specification or tokens sha256 lock, answering a static,
+transition, Hero Anchor, or Walking Skeleton question according to that brief.
 
 ## Preflight the implementation
 
@@ -82,7 +82,7 @@ Relationship and Signature Craft:
   Do not add developer badges, visible AI labels or debug controls to product UI
   unless explicitly required by the product design.
 
-Read `references/component-implementation.md` before selecting components or
+Read `references/02-craft-methods/component-implementation.md` before selecting components or
 assembling connected surfaces. It owns reuse, theme translation, service access,
 shared state and recovery focus-continuity mechanics. Retain a small implementation
 map in evidence. If implementation reveals a missing object, topology or design
@@ -118,7 +118,7 @@ Every delivered prototype must not be a dead, single-frame mock. Unless explicit
 4. **Resilient Data Fixtures**: Equip the prototype with schema-faithful fixtures that produce realistic, domain-specific multi-record datasets; simulate actions only when declared in the Contract.
 
 Before submitting a receipt, Builder must inspect the rendered screenshots against
-the craft standards and density decisions in `references/design-floor.md` and
+the craft standards and density decisions in `references/03-verification/quality-floor.md` and
 the active `surface-map.md`:
 - Timelines and metrics must never be naked lines; they must carry appropriate scale
   benchmarks, reference gridlines, or annotated event markers where applicable.

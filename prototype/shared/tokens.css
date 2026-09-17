@@ -1,156 +1,89 @@
 /* ==========================================================================
-   Agent Detent Cockpit // Canonical Design Tokens (shared/tokens.css)
-   Materialized from prototype/contracts/tokens/t1.md
+   DTCG Design Tokens - Machine-Derived from Stage 1 5-Dial State Machine
+   Energy: quiet | Finish: machined-industrial | Density: dense
    ========================================================================== */
-
 :root {
-  /* --- Atmospheric Undertone Colors --- */
-  --bg-void: #060709;
-  --bg-base: #0a0c10;
-  --bg-surface: #10131a;
-  --bg-surface-raised: #161b24;
-  --bg-overlay: #1c222e;
+  /* Atmospheric Undertone Palette (Non-sterile chromatic surfaces) */
+  --bg-void: #05070a;
+  --bg-base: #0a0d14;
+  --bg-surface: #111622;
+  --bg-surface-raised: #182030;
+  --bg-overlay: #1f293d;
 
-  --color-surface: var(--bg-base);
-  --color-surface-raised: var(--bg-surface);
-  --color-surface-overlay: var(--bg-surface-raised);
+  /* Machined Layered Borders */
+  --border-dim: #1e2638;
+  --border-subtle: #28334a;
+  --border-bright: #3b4b6e;
+  --border-danger: rgba(239, 68, 68, 0.4);
+  --border-warning: rgba(234, 179, 8, 0.4);
 
-  /* --- Borders --- */
-  --border-dim: #1e2533;
-  --border-subtle: #293245;
-  --border-bright: #445474;
-  --color-border: var(--border-dim);
-  --color-border-strong: var(--border-subtle);
-
-  /* --- Text & Contrast --- */
-  --text-primary: #f0f3f8;
-  --text-secondary: #8797b0;
-  --text-muted: #4e5d76;
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-disabled: var(--text-muted);
-  --color-text-on-primary: #060709;
-
-  /* --- Function Accents --- */
-  --accent-cyan: #00f0ff;
-  --accent-cyan-dim: rgba(0, 240, 255, 0.15);
-  --accent-emerald: #00e599;
-  --accent-emerald-dim: rgba(0, 229, 153, 0.15);
-  --accent-amber: #ffaa00;
-  --accent-amber-dim: rgba(255, 170, 0, 0.18);
-  --accent-rose: #ff3366;
-  --accent-rose-dim: rgba(255, 51, 102, 0.2);
-
-  --color-primary: var(--accent-cyan);
-  --color-primary-hover: #33f3ff;
-  --color-secondary: var(--accent-emerald);
-  --color-success: var(--accent-emerald);
-  --color-warning: var(--accent-amber);
-  --color-error: var(--accent-rose);
-  --color-focus-ring: var(--accent-cyan);
-
-  /* --- Typography --- */
-  --font-mono: "JetBrains Mono", "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  /* Typography System */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-mono);
-  --font-body: var(--font-sans);
+  --font-mono: "SF Mono", "Fira Code", "Roboto Mono", Menlo, monospace;
   --font-variant-numeric: tabular-nums;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-tertiary: #484f58;
 
-  /* --- Spacing --- */
+  /* Accent & Telemetry */
+  --accent-primary: #38bdf8;
+  --accent-subtle: rgba(56, 189, 248, 0.12);
+  --accent-hover: #7dd3fc;
+  --status-running: #22c55e;
+  --status-warning: #eab308;
+  --status-danger: #ef4444;
+
+  /* Spacing Hierarchy */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
 
-  /* --- Concentric Radii (R_inner = max(0, R_outer - padding)) --- */
-  --radius-outer: 12px;
-  --padding-panel: 8px;
-  --radius-inner: calc(var(--radius-outer) - var(--padding-panel)); /* 4px */
+  /* Concentric Radii Hierarchy (R_inner = max(0, R_outer - Padding)) */
+  --radius-outer: 8px;
+  --padding-panel: 4px;
+  --radius-inner: 4px;
+  --radius-card: 6px;
+  --radius-btn: 4px;
   --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
   --radius-pill: 9999px;
 
-  /* --- Shadows & Glows --- */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
-  --shadow-glow-cyan: 0 0 12px rgba(0, 240, 255, 0.25);
-  --shadow-glow-amber: 0 0 12px rgba(255, 170, 0, 0.3);
-
-  /* --- Tactile Physics & Micro-dynamics --- */
+  /* Motion & Kinematic Physics */
+  --duration-fast: 80ms;
+  --duration-normal: 180ms;
+  --duration-slow: 320ms;
   --ease-hud: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --duration-fast: 80ms;
-  --duration-snap: 120ms;
-  --duration-normal: 200ms;
-  --duration-slow: 350ms;
-
-  /* --- Breakpoints --- */
-  --bp-mobile: 390px;
-  --bp-tablet: 768px;
-  --bp-desktop: 1280px;
-  --bp-ultrawide: 1600px;
 }
 
-/* Global Reset & Base */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background: var(--bg-void);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 12px;
-  line-height: 1.4;
+/* ==========================================================================
+   Global Craft, Dual-Channel Affordances & Tactile Physics
+   ========================================================================== */
+.tabular-nums {
   font-variant-numeric: tabular-nums;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* Tactile Kinetics */
-button, input[type="button"], input[type="submit"] {
-  font-family: inherit;
-  cursor: pointer;
-  transition: transform var(--duration-fast) var(--ease-hud), background-color var(--duration-fast) ease;
-}
-
-button:active, input[type="button"]:active {
+/* Mechanical Tactile Feedback (:active detent) */
+.btn-tactile:active, button:active, [role="button"]:active {
   transform: scale(0.97);
+  transition: transform 80ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-button:focus-visible, a:focus-visible, input:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 1px;
+/* High-Density Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-/* Concentric Container Recipe */
-.concentric-panel {
-  border-radius: var(--radius-outer);
-  padding: var(--padding-panel);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-dim);
+::-webkit-scrollbar-track {
+  background: var(--bg-void);
 }
-
-.concentric-panel .concentric-card {
-  border-radius: var(--radius-inner);
-  background: var(--bg-surface-raised);
-  padding: var(--space-2);
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: var(--radius-sm);
 }
-
-/* Optical Alignment Compensation */
-.optical-nudge-x {
-  transform: translateX(1px);
-}
-.optical-nudge-y {
-  transform: translateY(1px);
-}
-
-/* Tabular Metric Helpers */
-.tabular {
-  font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-bright);
 }

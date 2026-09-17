@@ -16,13 +16,13 @@ An experience fails the Floor if any of the following occurs:
 - Basic WCAG 2.2 AA accessibility failures (contrast, focus traps, pointer targets); tokens intended for long-form data/text must achieve WCAG AAA (7:1 contrast) under static analysis.
 - Inline hex colors or hardcoded styling bypassing `shared/tokens.css` inheritance.
 - False claims of verification without actual browser execution traces or without a verified `review-portal.html` multi-view walkthrough harness.
-- Physical or natural metaphor masquerade: claiming a domain tool, optical phenomenon, or biomorphic mapping while delivering purely cosmetic styling with no corresponding observable behavior or interaction.
-- Entity contamination: renaming or disguising core business objects into physics or sci-fi metaphors (e.g. calling tasks particles, calling risk controls detent rods).
+- Metaphor entity disguise: renaming or disguising core business objects into physics or sci-fi metaphors (e.g. calling tasks particles, calling risk controls detent rods).
 - Ergonomic Reality Gate failures:
   - For B-Pro systems: An unbriefed operator cannot determine overall system health and the location of anomalies within 5 seconds.
   - For C-Consumer systems: Core user loops cannot be completed through intuitive lifeworld somatic habits without reading explanatory prose.
   - Missing Dual-Channel Affordance: Critical keyboard shortcuts or gestural interactions lack visible, accessible GUI buttons or controls.
-- Generated-slop fingerprints confirmed below (see *Generated-output fingerprint check*).
+- Technical shallowness & toy-demo collapse: Presenting a trivially linear, toy mockup that strips away essential domain mechanics (e.g. non-linear branching in DAG workflows, temporal baselines in telemetry) under the pretext of omission.
+- Stale Template Plagiarism & Execution Evasion: Rote copy-pasting of prior design mockups, stale entity names, or hardcoded topologies without fresh Stage 1 divergence reasoning. Verification harness must enforce `--strict-divergence` against known stale signatures.
 
 **Non-dilution rule**: a confirmed Floor violation is a failure on sight — never
 averaged down because the overall craft is strong, the surface is minor, or the
@@ -31,9 +31,10 @@ unreported blocker is not.
 
 ### 2. Quality Criteria (Craft, conviction, and resonance)
 Above the Floor, design merit is judged by qualitative evidence across core dimensions:
-- **Sense & Metaphor**: Tangible mental-model metaphor or clear spatial coherence resolving operational tensions.
-- **IA & Topology**: Information architecture reflects task priority and entity relationships; context preserved across secondary workflows. Layout adapts contextually rather than mechanically binding to single object counts.
-- **Contextual Craft & Density**: Metrics feature legible reference benchmarks (scales, gridlines, event markers); topologies show directional flow; density calibrated to user agency without clutter or vacuum voids.
+- **Domain Verisimilitude & Professional Credibility (专业欺骗感与领域自洽性)**: The interface demonstrates genuine structural and behavioral depth. An experienced domain practitioner sitting in front of the screen immediately perceives it as an authentic, high-depth production instrument or lifeworld tool.
+- **Sense & Kinetic Clarity**: Physical or somatic mechanics resolve operational tensions; dynamic signals (such as throughput pulses or status transitions) deliver immediate situational awareness rather than superficial decoration.
+- **IA & Topology**: Information architecture reflects task priority and authentic entity relationships; non-linear topologies preserve context across branches and secondary workflows.
+- **Contextual Craft & Density**: Metrics feature legible reference benchmarks (scales, gridlines, event markers, micro-sparklines); density calibrated to high signal-to-noise ratio without cramped text or vacuum voids.
 - **Closure Rigor**: 100% state closure across core interactive branches with resilient error recovery.
 
 ## Constructive Critique & Trade-off Assessment (Anti-Bureaucratic Evaluation)

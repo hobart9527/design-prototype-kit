@@ -27,19 +27,23 @@ All design work within this Skill follows the unbroken five-stage delivery state
   - **Reality Benchmark Anchors (现实世界双地锚)**:
     - B-End/Pro systems: Cite 2 concrete reference products (e.g. Linear, Datadog, Figma, Bloomberg) ensuring interaction conventions stay grounded.
     - C-End/Consumer systems: Cite 2 consumer apps (e.g. Apple Notes, Airbnb, Duolingo) OR concrete physical lifeworld artifacts (e.g. paper notebook, dial knob, vinyl record, measuring tape) rooted in common human somatic habits. No invented alien physics.
-- **OOUX Entity Integrity & Anti-Contamination (业务本体严防隐喻污染)**:
+- **OOUX Entity Integrity & Domain Verisimilitude (业务本体纯净与领域真实信度)**:
   - Core entities (Objects) and operations (Verbs) must strictly use genuine domain terminology in plain language (e.g. `Task`, `Pipeline`, `Cart`, `Checkout`).
-  - Metaphor is a perceptual lens, NOT an entity replacement: metaphors may never rename or disguise business entities (e.g. a Task cannot be called a "Particle", a Settlement cannot be called "Fusion").
+  - **Domain Verisimilitude (专业信度优于防守禁令)**: Rather than retreating into juvenile or trivial layouts out of fear of rules, the primary test is professional authenticity. An experienced domain practitioner (SRE engineer, trader, or mobile user) must perceive the interface as a credible, deeply-considered production environment or lifeworld tool, not a junior student's static mock.
+  - Metaphors are qualitative lenses for texture, motion, and spatial hierarchy, NOT entity disguises.
 - **Business Tension Reframing**: Explicitly declare the central contradiction (e.g. Extreme Developer Density vs Instant Novice Clarity).
-- **Ruthless Omission (决绝断舍离)**: Author an explicit list of at least 3 capabilities, surfaces, or decorative widgets that are *deliberately excluded or deferred* to protect focus.
-- **Cognitive Budgeting & Hard Cognitive Ledger (认知借贷硬账本，因境设度)**:
-  - **Zero-Toll Zone (0 借贷保留地 - 90% 表面)**: Standard navigation, search, login, settings, lists, tables, pagination, and exit/cancel branches must strictly follow industry/lifeworld conventions with zero learning tax.
-  - **Borrowed High-Value Moment (借贷特区 - 唯一高光点)**: Allocate novelty exclusively to the single decisive value moment (B-End: complex divergence handling/triage; C-End: core sensory accomplishment/celebratory feedback). Must declare: What is borrowed, how it repays 5x efficiency/delight, and what explicit fallback exists.
+- **Ruthless Omission with Architectural Depth (留白而不阉割核心机制)**:
+  - Author an explicit list of at least 3 capabilities, surfaces, or decorative widgets that are *deliberately excluded or deferred* to protect focus.
+  - **Anti-Shallowness Rule**: Pruning decorative noise (e.g. gratuitous full-screen particles, random glowing orbs) must never become an excuse to strip away core domain depth (e.g. realistic non-linear DAG branching, fan-out/fan-in, telemetry baselines, and status cascades).
+- **Cognitive Budgeting & Energy Return (认知借贷与能量溢价，取代僵化配额)**:
+  - Reject arbitrary percentage quotas (e.g. rigid 90%/10% splits) that produce sterile, lifeless pages.
+  - Design expressiveness, micro-dynamics, and visual craft are welcomed across any surface **when their return on cognitive energy is positive**: delivering immediate situational awareness, spatial orientation, or tactile control confidence that far outweighs the learning effort.
+  - Critical pathways (standard navigation, forms, search, exit branches) remain grounded in intuitive lifeworld or industry patterns with zero friction.
 - **5-Dial Style Register & Vague-Word Firewall (风格五轴寄存器与模糊词防火墙)**:
   - Classify the target visual and emotional tone across five observable dials backed by evidence:
-    - `Energy`: quiet ↔ loud (saturation budget, element collision)
+    - `Energy`: quiet ↔ loud (saturation budget, rhythmic pulse; *quiet* is submarine sonar stillness—calm deep background with sharp surgical signals, NOT brain-dead static silence)
     - `Finish`: raw ↔ polished (edge sharpness, alignment strictness)
-    - `Density`: sparse ↔ dense (whitespace rhythm, layering discipline)
+    - `Density`: sparse ↔ dense (whitespace rhythm, layering discipline; *dense* is precision aeronautical charting—high signal-to-noise ratio, NOT cramped typography)
     - `Weight`: light ↔ heavy (font weight scale, shadow depth)
     - `Seriousness`: playful ↔ solemn (radii scale, motion amplitude)
   - **Firewall rule**: Vague mood adjectives (*高级感, 精致, 大气, 克制, premium, elegant, sophisticated*) are strictly banned as justifications. Every design impulse must translate into concrete token values, spacing scales, contrast ratios, and kinetic durations.
@@ -58,6 +62,13 @@ All design work within this Skill follows the unbroken five-stage delivery state
   - **Concentric Border Radius**: Nested container corners must obey $R_{inner} = \max(0, R_{outer} - padding)$ to eliminate visual pinching and distortion.
   - **Optical Alignment (视错觉补偿)**: Asymmetric controls (e.g. play triangles, disclosure chevrons, search icons) must be manually nudged 1-2px from geometric center for perceived equilibrium.
   - **Tabular Numerics**: Enforce `font-variant-numeric: tabular-nums` across all counters, telemetry readings, financial tables, and timers to prevent horizontal layout jitter.
+- **Execution Trace & Prompt Ledger (全链路提示词与执行存证)**:
+  - Every prototype generation run MUST record its full execution context and actual prompt inputs to `prototype/evidence/trace/`:
+    - `prompt-ledger.jsonl`: Logs the exact prompt texts dispatched to the builder subagent or internal generator, including system instructions, user constraints, and target specifications.
+    - `context-snapshot.json`: Records the active product thesis, 5-dials register, surface topology, and reality anchors passed into generation.
+    - `mutation-events.log`: Records every in-place refactoring delta, tool error, self-repair cycle, and verification output with timestamps.
+  - This trace ledger ensures complete audibility, eliminating intent evasion and invisible prompt degradation.
+
 - **Atmospheric Undertone (底色气韵)**:
   - Ban sterile dead neutral gray (`#808080`, unconsidered `gray-500` washes).
   - Infuse subtle chromatic undertones (e.g. deep titanium with cobalt glow, warm graphite, or parchment tint) to establish character without compromising contrast.
@@ -263,19 +274,21 @@ Do not silently bypass craft references under context pressure. When the active
 decision touches an open lens, the Designer phase must read the owning reference
 before drafting the artifact:
 - Deep sense-making, hidden tension, or primary mental-model metaphor: read
-  [product understanding](product-understanding.md).
+  [product understanding](01-foundations/product-understanding.md).
 - Object cardinality, wayfinding, context preservation, or surface topology: read
-  [IA and interaction](ia-interaction.md).
+  [IA and interaction](02-craft-methods/ia-interaction.md).
 - Visual language, typography, atmosphere or brand voice: read
-  [visual craft](design-methods/visual-craft.md).
+  [visual craft](02-craft-methods/visual-craft.md).
 - Direct manipulation, power use, generative flow or dense states: read
-  [interaction craft](design-methods/interaction-power.md).
+  [interaction craft](02-craft-methods/interaction-power.md).
 - High-consequence actions, AI agency, uncertainty or permissions: read
-  [resilience and trust](design-methods/resilience-trust.md).
+  [resilience and trust](02-craft-methods/resilience-trust.md).
 - Form ergonomics, entry and error recovery: read
-  [form ergonomics](design-methods/form-ergonomics.md).
+  [form ergonomics](02-craft-methods/form-ergonomics.md).
 - Tables, scanning, data hierarchy and batch work: read
-  [data and task design](design-methods/data-information.md).
+  [data and task design](02-craft-methods/data-information.md).
+- Quality bar, break protocol, concentric radii and verification: read
+  [quality floor](03-verification/quality-floor.md).
 
 Record the references actually consulted for the dispatch in the Prototype
 Specification's `Required craft reads` field, one `references/<file>.md` plus its

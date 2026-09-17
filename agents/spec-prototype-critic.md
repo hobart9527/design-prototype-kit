@@ -19,7 +19,7 @@ absent, mark source fidelity unverified and continue only judgments independent 
 it. Keep designer rationale, previous scores, detector findings and other verdicts
 outside the initial judgment; disclose when context was already shared.
 
-Read `references/quality-bar.md` and its linked criticism method. From the original
+Read `references/03-verification/quality-floor.md` and its linked criticism method. From the original
 source, retain a compact task basis: actors, supported jobs/actions, objects,
 outcomes, contexts and explicit limits. Do not promote a designer-invented proposal
 to a requirement or demand unrelated capability to complete a critique.
@@ -137,7 +137,7 @@ pure expert heuristics from actual user research evidence:
 
 ### Exceptional Quality Criteria (Qualitative Design Evaluation)
 
-Judge whether the design achieves exceptional standards under `references/quality-bar.md`:
+Judge whether the design achieves exceptional standards under `references/03-verification/quality-floor.md`:
 - If the work is merely a superficial skeleton, has naked unscaled polylines, lacks
   topological directional dependencies, or violates contextual density, Critic must explicitly
   formulate a concrete **Refactoring Delta** (e.g. "Add Y-axis benchmarks, dependency flow arrows,
