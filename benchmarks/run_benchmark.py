@@ -47,6 +47,23 @@ def _script_versions() -> Dict[str, Any]:
     return versions
 
 
+def _probe_l2_l3() -> str:
+    """Probe Layer 2 (Builder) / Layer 3 (Skill session) preconditions.
+
+    Mechanism scripts can never stand in for a Builder dispatch or a Skill
+    session, so a probe reporting ENVIRONMENT_BLOCKED (exit 2) is recorded as
+    an explicit "blocked" rather than silently omitted (BENCH-003).
+    """
+    probe = Path(__file__).resolve().parent / "probe_skill_session.py"
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(probe)], capture_output=True, text=True, timeout=30
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "blocked"
+    return "blocked" if proc.returncode == 2 else "not_run"
+
+
 def _run_meta() -> Dict[str, Any]:
     """Control conditions for one round. Nothing here is a delivery claim."""
     return {
@@ -270,6 +287,11 @@ def run_all_benchmarks(repetitions: int = 3) -> Dict[str, Any]:
                 line += f" | failed_step={res.failed_step} exit={res.exit_code}: {res.error_context}"
             print(line)
 
+    # Layer 2/3 status is declared, never simulated: when the probe reports
+    # ENVIRONMENT_BLOCKED, both fields are "blocked" and no mechanism-script
+    # run may be reported in their place (BENCH-003 / BENCH-SCN-006).
+    l2_l3_status = _probe_l2_l3()
+
     summary_file = run_dir / "summary.json"
     summary_data = {
         "timestamp": timestamp,
@@ -279,6 +301,9 @@ def run_all_benchmarks(repetitions: int = 3) -> Dict[str, Any]:
         "layer": "mechanism",
         "total_runs": len(results),
         "mechanism_pass_count": sum(1 for r in results if r.pipeline_exit_ok and r.wcag_aaa_contrast),
+        # Declared, never substituted by mechanism scripts (BENCH-003).
+        "l2_builder_runs": l2_l3_status,
+        "l3_skill_runs": l2_l3_status,
         "failed_steps": [
             {
                 "case_name": r.case_name,
