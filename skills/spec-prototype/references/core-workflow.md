@@ -16,12 +16,12 @@ Why is this engine called `spec-prototype`?
 
 ## The Canonical 5-Stage Design Delivery Engine (标准五阶工序)
 
-All design work within this Skill follows the unbroken five-stage delivery state machine:
+Route design work by declared intent and required evidence. The five stages are a capability set, not a mandatory sequence; use only the stages needed for the requested outcome. No prototype code may precede its required frozen spec evidence:
 
 ```text
  Stage 1 (破): Tone & Tension Divergence ──> Formalize 6-Pillar Design Spec: product.md, surface-maps/m1.md, foundation/f1.md, tokens (t1.json/t1.md/tokens.css), slices/c1.md, specs/r1.md (Gated)
- Stage 2 (立): Core Hero Anchor          ──> Dispatch Lean Builder via Pre-baked Envelope: single highest-density screen, <= 8 turns (Gated)
- Stage 3 (拓): Tier-by-Tier Rollout      ──> Discrete batch rollout (Primary, Contextual, Supporting); strict token inheritance
+ Stage 2 (立): Core Hero Anchor          ──> Dispatch a bounded Builder envelope when a hero anchor is the chosen proof (Gated when consequential)
+ Stage 3 (拓): Surface Rollout             ──> Expand only the surfaces justified by the Surface Topology; inherit tokens
  Stage 4 (验): Holistic Review Portal    ──> review-portal.html walkthrough, 5 experience states, controlled loopback
  Stage 5 (冻): Silent Governance         ──> DTCG tokens.json export, WCAG AAA static audit, SHA-256 asset manifest
 ```
@@ -81,7 +81,7 @@ All design work within this Skill follows the unbroken five-stage delivery state
     3. *Component & DOM Hierarchy Specification*: Layout container, header, primary operational viewport, contextual inspection drawer/panel.
     4. *State Machine Specification*: Concrete state object (e.g. `AppState`), initial states, mutation handlers, and deterministic transitions.
     5. *Verifiable Design Assertions*: Explicit keyboard shortcuts (`Space`, `Esc`), DOM element IDs, and life-cycle status tags.
-  - **Tool Step Hard Ceiling (步数硬顶)**: Builder execution is strictly budgeted to **≤ 8 tool turns** (ideal ≤ 5 turns). Builder executes in a single pass:
+  - **Bounded Builder Envelope**: Builder scope, verification, and stop conditions come from the task-specific envelope. Do not impose a universal tool-turn quota or a fixed chassis; exploration may require a different bounded sequence:
     - Step 1: Write self-contained single-page HTML/CSS/JS conforming to the envelope.
     - Step 2: Run syntax & quality gate assertions (`verify_prototype_quality.py`).
     - Step 3: Headless browser visual capture (`capture.mjs`).

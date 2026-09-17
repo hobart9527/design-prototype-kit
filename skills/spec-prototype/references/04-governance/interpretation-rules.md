@@ -11,6 +11,14 @@
 4. Foundation、词典、切片契约是独立设计事实，与引用的产品来源冲突时失效，但不进入产品来源生命周期。
 5. 执行拆分（OpenSpec tasks 或其他）不是产品意图证据。
 
+## 2. Intent and Route
+
+Declare the requested outcome separately from workspace state: `explore`,
+`specify`, `prototype`, or `review`. Existing tokens, shells, and screens are
+lineage evidence only; they cannot select a route or authorize production work.
+When intent is unresolved and would change scope, record `unknown` and ask one
+blocking question.
+
 ## 2. Evidence Status
 
 ### explicit

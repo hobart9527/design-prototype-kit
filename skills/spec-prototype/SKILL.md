@@ -20,21 +20,35 @@ Before any substantive design answer or action, read
 the single source for the Product Experience Model, professional method routing,
 artifact chain and completion rules. This file owns only Claude Code execution.
 
-## Entry Intent & Contextual Archetype Sniffing (三大路线自适应)
+## Entry Intent & Contextual Routing (意图优先，资产为证)
 
-Before entering Stage 1, inspect existing workspace assets to detect the product archetype:
+Classify the requested outcome before inspecting workspace assets. The requested
+artifact and authority, not a filename or token's presence, select the route:
 
-| Archetype | Detection Condition | Execution Route | Anti-Pattern to Prevent |
-|---|---|---|---|
-| **Archetype A: Greenfield 0-to-1 (全新产品)** | No existing tokens, stylesheets, or UI prototypes found in workspace. | **Full 5-Stage Pipeline**: Tone & Tension → 5 Dials Register → Hero Anchor & Tokens → Tiered Rollout → Review Portal → Silent Packaging. | Do not skip Stage 1 divergence or jump straight into default unconsidered templates. |
-| **Archetype B: New Surface 1-to-N (现有产品增设功能/页面)** | Workspace contains established tokens, layout shells, or host components. | **Lineage-Inherited Pipeline**: Strictly inherit existing tokens; Stage 1 focuses on OOUX cardinality & decisive exchange; bypass token reinvention; rollout new surface slice. | Do not reinvent existing tokens or create a conflicting design language that fractures the host product. |
-| **Archetype C: Refinement & Audit (现有产品体验优化与评审)** | User requests UX/UI review, design critique, or polish of existing screens. | **Targeted Stage 4 Fast-Forward**: Directly invoke Review Portal, Break Protocol, Concentric Radii check, and WCAG AAA audit. Produce actionable CSS/DOM refactoring deltas. | Do not throw away existing implementation or rebuild from scratch when a surgical delta solves the issue. |
+| Intent | Evidence to confirm | Route |
+|---|---|---|
+| **Explore** | User seeks alternatives, a visual direction, or a falsifiable probe. | Direction probe or one slice; use only the stages needed to answer the question. |
+| **Specify** | User asks for durable contracts, IA, tokens, or handoff. | Stage 1 contract formulation, then the stages needed to validate the contract. |
+| **Prototype** | User asks for a runnable disposable screen or interaction. | Build the smallest bounded slice after its required spec evidence exists. |
+| **Review / repair** | User asks to critique or polish an existing surface. | Targeted review and in-place delta; preserve existing behavior and lineage. |
+
+Workspace assets are contextual evidence after intent classification. Existing
+assets select inherited tokens and scope; they do not force a full pipeline,
+create a new product archetype, or authorize production edits. If intent and
+assets disagree, record the conflict and ask only the question that changes the
+route.
 
 ### Negative Trigger Boundary (绝对排他防火墙)
 DO NOT invoke `spec-prototype` for:
 1. Pure backend code, database migrations, or infrastructure configuration.
 2. Production code bug fixing (e.g. 500 errors, broken API fetches, null checks).
 3. Approved code delivery under Loom Entry 2 (`loom delivery step`), which implements production components rather than disposable design prototypes.
+
+The former archetype labels (greenfield, new surface, refinement) are evidence
+lenses, not entry triggers. Never infer user intent from the absence or presence
+of tokens, stylesheets, or prototypes alone.
+
+Evidence lens labels retained for lineage review: **Archetype A: Greenfield 0-to-1**, **Archetype B: New Surface 1-to-N**, and **Archetype C: Refinement & Audit**. These labels describe observed workspace context only.
 
 ## Canonical 5-Stage Design Workflow (五阶工序状态机)
 
