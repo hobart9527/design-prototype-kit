@@ -6,7 +6,12 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFile, execFileSync, spawnSync } from "node:child_process";
+import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
+
+const pExecFile = promisify(execFile);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const VIEWPORT_PRESETS = {
   "320": { width: 320, height: 640 },
@@ -14,6 +19,20 @@ const VIEWPORT_PRESETS = {
   "768": { width: 768, height: 1024 },
   "1280": { width: 1280, height: 800 },
 };
+
+async function mapConcurrent(items, concurrency, fn) {
+  const results = [];
+  let index = 0;
+  async function worker() {
+    while (index < items.length) {
+      const i = index++;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
 
 function findSystemBrowser() {
   const candidates = [
@@ -50,80 +69,127 @@ function buildStateUrl(baseUrl, state) {
   return baseUrl + `#state=${state}`;
 }
 
-async function captureWithPlaywright(baseUrl, outputDir, viewports, states) {
+async function captureWithPlaywright(baseUrl, outputDir, viewports, states, concurrency = 4) {
   try {
     const { chromium } = await import("playwright");
     const browser = await chromium.launch({ headless: true });
     const captured = {};
     const failures = [];
+    const runtimeErrors = [];
+
+    const tasks = [];
     for (const state of states) {
       const stateUrl = buildStateUrl(baseUrl, state);
       for (const vp of viewports) {
         const prefix = states.length > 1 ? `${state}-${vp}` : `${vp}`;
         const targetFile = path.join(outputDir, `${prefix}.png`);
         const dim = VIEWPORT_PRESETS[vp] || { width: parseInt(vp, 10) || 1280, height: 800 };
-        try {
-          const page = await browser.newPage({ viewport: dim });
-          await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
-          await page.screenshot({ path: targetFile, fullPage: false });
-          await page.close();
-          if (states.length > 1 && (state === "ideal" || state === states[0])) {
-            const defaultTarget = path.join(outputDir, `${vp}.png`);
-            if (!fs.existsSync(defaultTarget)) fs.copyFileSync(targetFile, defaultTarget);
-          }
-          captured[prefix] = targetFile;
-        } catch (error) {
-          failures.push({ state, viewport: vp, error: error instanceof Error ? error.message : String(error) });
-        }
+        tasks.push({ state, vp, prefix, targetFile, dim, stateUrl });
       }
     }
+
+    await mapConcurrent(tasks, concurrency, async ({ state, vp, prefix, targetFile, dim, stateUrl }) => {
+      try {
+        const page = await browser.newPage({ viewport: dim });
+        page.on("pageerror", (err) => runtimeErrors.push(`[${prefix}] ${err.message}`));
+        await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
+        await page.screenshot({ path: targetFile, fullPage: false });
+        await page.close();
+        if (states.length > 1 && (state === "ideal" || state === states[0])) {
+          const defaultTarget = path.join(outputDir, `${vp}.png`);
+          if (!fs.existsSync(defaultTarget)) fs.copyFileSync(targetFile, defaultTarget);
+        }
+        captured[prefix] = targetFile;
+      } catch (error) {
+        failures.push({ state, viewport: vp, error: error instanceof Error ? error.message : String(error) });
+      }
+    });
+
     await browser.close();
-    const vps = {}; for (const [k, v] of Object.entries(captured)) { const vp = k.split("-").pop(); if (!vps[vp]) vps[vp] = v; }
-    return { status: failures.length ? "capture_failed" : "captured", runner: "playwright", viewports: vps, captures: captured, failures };
+    const vps = {};
+    for (const [k, v] of Object.entries(captured)) {
+      const vp = k.split("-").pop();
+      if (!vps[vp]) vps[vp] = v;
+    }
+    return {
+      status: failures.length ? "capture_failed" : "captured",
+      runner: "playwright-concurrent",
+      viewports: vps,
+      captures: captured,
+      runtime_errors: runtimeErrors,
+      failures,
+    };
   } catch {
     return null;
   }
 }
 
-function captureWithCli(browserBin, baseUrl, outputDir, viewports, states) {
+async function captureWithCli(browserBin, baseUrl, outputDir, viewports, states, concurrency = 4) {
   const captured = {};
+  const tasks = [];
+
   for (const state of states) {
     const stateUrl = buildStateUrl(baseUrl, state);
     for (const vp of viewports) {
       const dim = VIEWPORT_PRESETS[vp] || { width: parseInt(vp, 10) || 1280, height: 800 };
       const prefix = states.length > 1 ? `${state}-${vp}` : `${vp}`;
       const targetFile = path.join(outputDir, `${prefix}.png`);
-      try {
-        execFileSync(
-          browserBin,
-          [
-            "--headless",
-            "--disable-gpu",
-            `--window-size=${dim.width},${dim.height}`,
-            `--screenshot=${targetFile}`,
-            stateUrl,
-          ],
-          { timeout: 15000, stdio: "ignore" }
-        );
-        if (fs.existsSync(targetFile)) {
-          captured[prefix] = targetFile;
-          if (states.length > 1 && (state === "ideal" || state === states[0])) {
-            const defaultTarget = path.join(outputDir, `${vp}.png`);
-            if (!fs.existsSync(defaultTarget)) {
-              try { fs.copyFileSync(targetFile, defaultTarget); } catch {}
-            }
-          }
-        }
-      } catch {
-        // continue with remaining viewports/states
-      }
+      tasks.push({ state, vp, dim, prefix, targetFile, stateUrl });
     }
   }
+
+  await mapConcurrent(tasks, concurrency, async ({ state, vp, dim, prefix, targetFile, stateUrl }) => {
+    try {
+      await pExecFile(
+        browserBin,
+        [
+          "--headless",
+          "--disable-gpu",
+          "--disable-extensions",
+          "--no-first-run",
+          "--no-default-browser-check",
+          "--disable-background-networking",
+          "--disable-sync",
+          "--hide-scrollbars",
+          "--mute-audio",
+          `--window-size=${dim.width},${dim.height}`,
+          `--screenshot=${targetFile}`,
+          stateUrl,
+        ],
+        { timeout: 15000 }
+      );
+      if (fs.existsSync(targetFile)) {
+        captured[prefix] = targetFile;
+        if (states.length > 1 && (state === "ideal" || state === states[0])) {
+          const defaultTarget = path.join(outputDir, `${vp}.png`);
+          if (!fs.existsSync(defaultTarget)) {
+            try { fs.copyFileSync(targetFile, defaultTarget); } catch {}
+          }
+        }
+      }
+    } catch {
+      // continue with remaining tasks
+    }
+  });
+
   if (Object.keys(captured).length > 0) {
-    const vps = {}; for (const [k, v] of Object.entries(captured)) { const vp = k.split("-").pop(); if (!vps[vp]) vps[vp] = v; }
-    return { status: "captured", runner: "system-browser-cli", viewports: vps, captures: captured };
+    const vps = {};
+    for (const [k, v] of Object.entries(captured)) {
+      const vp = k.split("-").pop();
+      if (!vps[vp]) vps[vp] = v;
+    }
+    return { status: "captured", runner: "system-browser-cli-concurrent", viewports: vps, captures: captured };
   }
   return null;
+}
+
+function syncReviewPortal() {
+  try {
+    const portalScript = path.join(__dirname, "generate_review_portal.py");
+    if (fs.existsSync(portalScript)) {
+      execFileSync("python3", [portalScript], { stdio: "ignore" });
+    }
+  } catch {}
 }
 
 async function main() {
@@ -161,11 +227,12 @@ async function main() {
   if (!result) {
     const browserBin = findSystemBrowser();
     if (browserBin) {
-      result = captureWithCli(browserBin, url, outputDir, viewports, states);
+      result = await captureWithCli(browserBin, url, outputDir, viewports, states);
     }
   }
 
   if (result) {
+    syncReviewPortal();
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
     process.exit(0);
   } else {

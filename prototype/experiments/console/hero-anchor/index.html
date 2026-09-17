@@ -3,398 +3,345 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Console / Hero Anchor</title>
+  <title>GPU Control Plane — Node Console</title>
   <link rel="stylesheet" href="../../../shared/tokens.css">
   <style>
     :root {
-      --ink: #e8edf2;
-      --muted: #8c9aa7;
-      --quiet: #53616d;
-      --line: rgba(163, 184, 195, .16);
-      --line-strong: rgba(163, 184, 195, .29);
-      --panel: rgba(13, 23, 31, .82);
-      --panel-2: rgba(18, 31, 40, .92);
-      --bg: #081118;
-      --cyan: #7de1de;
-      --cyan-dim: #315f68;
-      --amber: #f3b567;
-      --red: #ef767a;
-      --green: #9fe3ae;
-      --r-outer: var(--radius-outer, 8px);
-      --r-padding: var(--padding-panel, 4px);
-      --r-inner: var(--radius-inner, 4px);
-      --r-card: var(--radius-card, 6px);
-      --r-btn: var(--radius-btn, 4px);
-      --ease: cubic-bezier(.16, 1, .3, 1);
+      --bg-void: #05070a;
+      --bg-base: #0a0d14;
+      --bg-surface: #111622;
+      --bg-surface-raised: #182030;
+      --bg-overlay: #1f293d;
+      --border-dim: #1e2638;
+      --border-subtle: #28334a;
+      --border-bright: #3b4b6e;
+      --border-danger: rgba(239, 68, 68, 0.4);
+      --border-warning: rgba(234, 179, 8, 0.4);
+      --font-variant-numeric: tabular-nums;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-tertiary: #484f58;
+      --accent-primary: #00f0ff;
+      --accent-subtle: rgba(0, 240, 255, 0.12);
+      --accent-hover: #38bdf8;
+      --status-running: #22c55e;
+      --status-warning: #eab308;
+      --status-danger: #ef4444;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --radius-outer: 8px;
+      --padding-panel: 4px;
+      --radius-inner: 4px;
+      --radius-card: 6px;
+      --radius-btn: 4px;
+      --radius-sm: 2px;
+      --radius-pill: 9999px;
+      --duration-fast: 80ms;
+      --duration-normal: 180ms;
+      --duration-slow: 320ms;
+      --ease-hud: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out: cubic-bezier(0, 0, 0.2, 1);
     }
     * { box-sizing: border-box; }
-    html, body { min-height: 100%; }
+    html { background: var(--bg-void); }
     body {
       margin: 0;
-      color: var(--ink);
-      background:
-        radial-gradient(900px 500px at 76% -8%, rgba(35, 87, 94, .24), transparent 63%),
-        radial-gradient(700px 560px at -10% 38%, rgba(18, 56, 70, .18), transparent 62%),
-        var(--bg);
-      font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      letter-spacing: .01em;
+      min-width: 320px;
+      color: var(--text-primary);
+      background: var(--bg-void);
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-variant-numeric: tabular-nums;
+      letter-spacing: .01em;
     }
-    button, input { font: inherit; border-radius: var(--radius-btn); }
+    button, input { font: inherit; font-variant-numeric: tabular-nums; }
     button { color: inherit; }
-    button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
-    button:active { transform: scale(.97); }
-    .shell { width: min(1440px, 100%); min-height: 100vh; margin: auto; padding: 0 28px 34px; }
+    :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+    .shell { min-height: 100vh; background: radial-gradient(circle at 80% -10%, rgba(0,240,255,.07), transparent 34rem), var(--bg-void); }
     .topbar {
-      height: 62px; display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid var(--line); color: var(--muted);
+      height: 58px; display: flex; align-items: center; gap: 24px; padding: 0 28px;
+      border-bottom: 1px solid var(--border-dim); background: rgba(10,13,20,.9);
     }
-    .brand { display: flex; gap: 12px; align-items: center; color: var(--ink); font-weight: 700; letter-spacing: .1em; }
-    .brand-mark { width: 22px; height: 22px; border: 1px solid var(--cyan); border-radius: 7px; position: relative; box-shadow: inset 0 0 15px rgba(125,225,222,.16), 0 0 18px rgba(125,225,222,.1); }
-    .brand-mark::after { content: ''; width: 7px; height: 7px; position: absolute; inset: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 11px var(--cyan); }
-    .top-actions { display: flex; align-items: center; gap: 20px; }
-    .live { display: inline-flex; align-items: center; gap: 7px; color: var(--green); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
-    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2s ease-in-out infinite; }
-    .key { display: inline-grid; place-items: center; min-width: 22px; height: 20px; border: 1px solid var(--line-strong); border-bottom-color: rgba(255,255,255,.4); border-radius: 5px; color: var(--muted); font-size: 10px; }
-    .shortcut { display: flex; align-items: center; gap: 7px; color: var(--quiet); font-size: 10px; }
-    .hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, .6fr); gap: 24px; padding: 42px 0 32px; }
-    .eyebrow { color: var(--cyan); font-size: 10px; letter-spacing: .15em; text-transform: uppercase; }
-    h1 { max-width: 780px; margin: 14px 0 13px; font-size: clamp(30px, 4.2vw, 59px); line-height: 1.02; letter-spacing: -.065em; font-weight: 500; }
-    .hero-copy { max-width: 680px; margin: 0; color: var(--muted); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 15px; line-height: 1.65; }
-    .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
-    .chip { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; color: var(--muted); font-size: 10px; background: rgba(255,255,255,.02); }
-    .chip strong { color: var(--ink); font-weight: 500; }
-    .hero-anchor { align-self: end; min-height: 174px; padding: 20px; border: 1px solid rgba(125,225,222,.25); border-radius: var(--r-outer); background: linear-gradient(145deg, rgba(34,67,72,.44), rgba(10,22,29,.92)); position: relative; overflow: hidden; }
-    .hero-anchor::before { content: ''; position: absolute; inset: 2px; border: 1px solid rgba(125,225,222,.08); border-radius: var(--r-inner); pointer-events: none; }
-    .hero-anchor::after { content: ''; position: absolute; width: 190px; height: 190px; right: -50px; bottom: -88px; border-radius: 50%; border: 1px solid rgba(125,225,222,.18); box-shadow: 0 0 0 18px rgba(125,225,222,.025), 0 0 0 37px rgba(125,225,222,.02); }
-    .anchor-label { color: var(--muted); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
-    .anchor-number { margin: 17px 0 5px; color: var(--cyan); font-size: 42px; line-height: 1; letter-spacing: -.08em; text-shadow: 0 0 20px rgba(125,225,222,.25); }
-    .anchor-sub { color: var(--muted); font-size: 11px; }
-    .anchor-sub b { color: var(--green); font-weight: 500; }
-    .dashboard { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(290px, .55fr); gap: 16px; }
-    .panel { border: 1px solid var(--line); border-radius: var(--r-outer); background: var(--panel); box-shadow: 0 18px 50px rgba(0,0,0,.12); overflow: hidden; }
-    .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 17px 19px; border-bottom: 1px solid var(--line); }
-    .panel-title { color: var(--ink); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
-    .panel-note { color: var(--quiet); font-size: 10px; }
-    .topology { min-height: 356px; }
-    .topology-body { padding: 21px; }
-    .cluster-row { display: flex; align-items: center; gap: 12px; margin-bottom: 19px; }
-    .cluster-node { width: 41px; height: 41px; display: grid; place-items: center; border: 1px solid var(--cyan-dim); border-radius: 12px; background: rgba(125,225,222,.07); color: var(--cyan); font-size: 11px; }
-    .cluster-text { display: grid; gap: 2px; }
-    .cluster-text b { font-weight: 500; }
-    .cluster-text span { color: var(--muted); font-size: 10px; }
-    .fabric-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--cyan-dim), transparent); }
-    .fabric-state { color: var(--green); font-size: 10px; }
-    .node-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .node {
-      min-height: 150px; padding: 13px; border: 1px solid var(--line); border-radius: 14px; background: rgba(7,15,21,.7);
-      text-align: left; cursor: pointer; transition: border-color .24s var(--ease), background .24s var(--ease), transform .24s var(--ease);
-    }
-    .node:hover { border-color: rgba(125,225,222,.48); background: rgba(31,58,64,.38); }
-    .node.selected { border-color: var(--cyan); background: linear-gradient(160deg, rgba(39,89,92,.42), rgba(8,19,25,.82)); box-shadow: inset 0 0 0 1px rgba(125,225,222,.1), 0 0 26px rgba(125,225,222,.08); }
-    .node-top { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 10px; }
-    .node-status { display: inline-flex; align-items: center; gap: 5px; color: var(--green); font-size: 9px; text-transform: uppercase; }
-    .node-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 7px currentColor; }
-    .node-status.warn { color: var(--amber); }
-    .node-status.drained { color: var(--red); }
-    .node-id { margin-top: 19px; font-size: 23px; letter-spacing: -.07em; }
-    .node-gpu { margin-top: 2px; color: var(--muted); font-size: 10px; }
-    .node-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 21px; }
-    .metric-label { color: var(--quiet); font-size: 9px; text-transform: uppercase; }
-    .metric-value { margin-top: 2px; color: var(--ink); font-size: 12px; }
-    .metric-value small { color: var(--muted); font-size: 9px; }
-    .lower-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    .chart-wrap { padding: 16px 19px 14px; }
-    .chart-legend { display: flex; gap: 15px; margin-bottom: 11px; color: var(--muted); font-size: 10px; }
-    .legend-mark { display: inline-block; width: 18px; height: 1px; vertical-align: middle; margin-right: 5px; background: var(--cyan); }
-    .legend-mark.amber { background: var(--amber); }
-    svg { display: block; width: 100%; height: auto; overflow: visible; }
-    .axis { fill: var(--quiet); font: 9px ui-monospace, monospace; }
-    .gridline { stroke: rgba(163,184,195,.13); stroke-width: 1; }
-    .threshold { stroke: rgba(243,181,103,.75); stroke-width: 1; stroke-dasharray: 4 4; }
-    .trace { fill: none; stroke: var(--cyan); stroke-width: 2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 4px rgba(125,225,222,.35)); }
-    .trace-amber { fill: none; stroke: var(--amber); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
-    .drawer { min-height: 356px; background: linear-gradient(180deg, rgba(19,34,43,.95), rgba(11,21,28,.9)); }
-    .drawer-body { padding: 18px 19px; }
-    .selected-summary { display: flex; align-items: center; gap: 12px; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
-    .gpu-orb { width: 43px; height: 43px; border-radius: 50%; background: radial-gradient(circle, var(--cyan) 0 7%, rgba(125,225,222,.2) 8% 23%, transparent 24%), rgba(125,225,222,.07); box-shadow: 0 0 25px rgba(125,225,222,.2); }
-    .selected-summary b { display: block; font-size: 16px; letter-spacing: -.04em; }
-    .selected-summary span { color: var(--green); font-size: 10px; }
-    .detail-list { display: grid; gap: 13px; padding: 17px 0; border-bottom: 1px solid var(--line); }
-    .detail-line { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 10px; }
-    .detail-line strong { color: var(--ink); font-weight: 500; text-align: right; }
-    .drawer-actions { display: grid; gap: 9px; padding-top: 17px; }
-    .primary, .secondary { min-height: 42px; border-radius: 10px; padding: 0 13px; cursor: pointer; transition: transform .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease); }
-    .primary { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--cyan); background: var(--cyan); color: #071518; font-weight: 700; }
-    .primary:hover { background: #b0f4ec; }
-    .secondary { border: 1px solid var(--line-strong); background: rgba(255,255,255,.03); color: var(--muted); text-align: left; }
-    .secondary:hover { border-color: var(--cyan-dim); color: var(--ink); }
-    .action-state { min-height: 16px; color: var(--muted); font-size: 10px; }
-    .action-state.progress { color: var(--amber); animation: pulse 1.1s ease-in-out infinite; }
-    .action-state.done { color: var(--green); }
-    .action-state.bypass { color: var(--cyan); }
-    .empty-state { display: none; padding: 34px 13px; color: var(--muted); text-align: center; }
-    .empty-state.visible { display: block; }
-    .empty-state strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 7px; }
-    .footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 19px; color: var(--quiet); font-size: 10px; }
-    .hash { max-width: 100%; overflow-wrap: anywhere; }
-    .toast { position: fixed; right: 26px; bottom: 24px; z-index: 4; max-width: min(390px, calc(100vw - 32px)); padding: 13px 16px; border: 1px solid rgba(159,227,174,.5); border-radius: 11px; background: #10231c; color: var(--green); box-shadow: 0 15px 45px rgba(0,0,0,.3); transform: translateY(20px); opacity: 0; pointer-events: none; transition: opacity .24s var(--ease), transform .24s var(--ease); }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    @keyframes pulse { 50% { opacity: .45; } }
-    @media (max-width: 900px) { .hero, .dashboard { grid-template-columns: 1fr; } .hero-anchor { max-width: 500px; } .drawer { min-height: auto; } }
-    @media (max-width: 620px) { .shell { padding: 0 15px 25px; } .topbar { height: 56px; } .shortcut { display: none; } .hero { padding: 29px 0 24px; } h1 { font-size: 35px; } .hero-copy { font-size: 13px; } .node-grid { grid-template-columns: repeat(2, 1fr); } .lower-grid { grid-template-columns: 1fr; } .panel-head { padding: 14px; } .topology-body, .chart-wrap, .drawer-body { padding: 15px; } }
-    @media (max-width: 340px) { .shell { padding-inline: 10px; } h1 { font-size: 29px; } .hero-anchor { padding: 15px; min-height: 155px; } .anchor-number { font-size: 35px; } .node-grid { gap: 6px; } .node { padding: 10px; min-height: 135px; } .node-id { font-size: 19px; } .node-metrics { margin-top: 14px; } }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .11em; white-space: nowrap; }
+    .brand-mark { width: 20px; height: 20px; border: 2px solid var(--accent-primary); border-radius: var(--radius-sm); box-shadow: 0 0 15px rgba(0,240,255,.32); position: relative; }
+    .brand-mark::after { content: ""; width: 6px; height: 6px; background: var(--accent-primary); position: absolute; top: 5px; left: 5px; }
+    .breadcrumb { color: var(--text-secondary); display: flex; gap: 10px; align-items: center; min-width: 0; }
+    .breadcrumb strong { color: var(--text-primary); font-weight: 500; }
+    .slash { color: var(--text-tertiary); }
+    .top-actions { margin-left: auto; display: flex; align-items: center; gap: 14px; color: var(--text-secondary); }
+    .live { display: inline-flex; align-items: center; gap: 7px; color: var(--status-running); }
+    .live i { width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--status-running); box-shadow: 0 0 9px var(--status-running); }
+    .avatar { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--border-bright); border-radius: var(--radius-pill); color: var(--accent-primary); background: var(--bg-surface-raised); font-size: 11px; }
+    .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100vh - 58px); }
+    .rail { padding: 28px 14px; border-right: 1px solid var(--border-dim); background: rgba(10,13,20,.6); }
+    .rail-label { padding: 0 12px 10px; color: var(--text-tertiary); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .nav-item { width: 100%; display: flex; align-items: center; gap: 11px; padding: 11px 12px; margin: 2px 0; border: 0; border-radius: var(--radius-inner); background: transparent; color: var(--text-secondary); text-align: left; cursor: pointer; }
+    .nav-item:hover { color: var(--text-primary); background: var(--bg-surface); }
+    .nav-item.active { color: var(--accent-primary); background: var(--accent-subtle); box-shadow: inset 2px 0 var(--accent-primary); }
+    .nav-icon { width: 15px; text-align: center; color: currentColor; }
+    .main { min-width: 0; padding: 36px clamp(20px, 4vw, 58px) 56px; }
+    .hero { max-width: 1140px; margin: 0 auto; }
+    .eyebrow { display: flex; align-items: center; gap: 9px; color: var(--accent-primary); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--accent-primary); }
+    h1 { margin: 12px 0 8px; font-size: clamp(25px, 3vw, 38px); line-height: 1.1; letter-spacing: -.04em; font-weight: 650; }
+    .subhead { max-width: 630px; margin: 0; color: var(--text-secondary); }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 10px; margin: 30px 0 28px; }
+    .metric { min-width: 0; padding: 14px 16px; border: 1px solid var(--border-dim); border-radius: var(--radius-card); background: linear-gradient(145deg, var(--bg-surface-raised), var(--bg-surface)); }
+    .metric-label { color: var(--text-secondary); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+    .metric-row { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+    .metric-value { font-size: 24px; letter-spacing: -.06em; }
+    .metric-unit { color: var(--text-secondary); font-size: 11px; }
+    .spark { height: 18px; width: 58px; margin-left: auto; color: var(--accent-primary); overflow: visible; }
+    .spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+    .workbench { border: 1px solid var(--border-subtle); border-radius: var(--radius-outer); background: var(--bg-surface); padding: var(--padding-panel); box-shadow: 0 18px 55px rgba(0,0,0,.2); }
+    .workbench-inner { border-radius: var(--radius-inner); overflow: hidden; }
+    .toolbar { min-height: 58px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border-dim); background: var(--bg-surface-raised); }
+    .tabs { display: flex; gap: 4px; }
+    .tab { border: 0; border-radius: var(--radius-btn); padding: 8px 11px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+    .tab.active { color: var(--text-primary); background: var(--bg-overlay); }
+    .search { min-width: 150px; width: min(270px, 30vw); margin-left: auto; padding: 8px 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-btn); outline: 0; background: var(--bg-base); color: var(--text-primary); }
+    .search::placeholder { color: var(--text-tertiary); }
+    .filter-btn, .primary-btn, .danger-btn, .ghost-btn { border: 1px solid var(--border-subtle); border-radius: var(--radius-btn); padding: 8px 12px; background: var(--bg-base); color: var(--text-secondary); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast); }
+    .filter-btn:hover, .ghost-btn:hover { border-color: var(--border-bright); color: var(--text-primary); }
+    .primary-btn { border-color: rgba(0,240,255,.38); background: var(--accent-subtle); color: var(--accent-primary); }
+    .danger-btn { border-color: var(--border-danger); background: rgba(239,68,68,.1); color: #ff8d8d; }
+    .primary-btn:hover { background: rgba(0,240,255,.2); }
+    .danger-btn:hover { background: rgba(239,68,68,.18); }
+    .filter-btn:active, .primary-btn:active, .danger-btn:active, .ghost-btn:active { transform: scale(.97); }
+    .table-head, .node-row { display: grid; grid-template-columns: minmax(220px, 2.2fr) 1fr 1fr 1fr 112px; gap: 16px; align-items: center; }
+    .table-head { padding: 12px 18px 9px; color: var(--text-tertiary); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+    .node-row { min-height: 82px; padding: 12px 18px; border-top: 1px solid var(--border-dim); transition: background var(--duration-fast); }
+    .node-row:hover, .node-row.selected { background: rgba(31,41,61,.48); }
+    .node-row.selected { box-shadow: inset 2px 0 var(--accent-primary); }
+    .node-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .node-glyph { flex: 0 0 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--border-bright); border-radius: var(--radius-inner); color: var(--accent-primary); background: var(--accent-subtle); }
+    .node-copy { min-width: 0; }
+    .node-title { overflow-wrap: anywhere; color: var(--text-primary); font-weight: 600; }
+    .node-id { overflow-wrap: anywhere; margin-top: 2px; color: var(--text-tertiary); font-size: 10px; }
+    .cell-label { display: none; color: var(--text-tertiary); font-size: 9px; text-transform: uppercase; }
+    .status { display: inline-flex; align-items: center; gap: 7px; color: var(--status-running); }
+    .status.warn { color: var(--status-warning); }
+    .status i { width: 7px; height: 7px; border-radius: var(--radius-pill); background: currentColor; box-shadow: 0 0 8px currentColor; }
+    .bar { height: 4px; min-width: 62px; margin-top: 6px; border-radius: var(--radius-pill); background: var(--border-subtle); overflow: hidden; }
+    .bar b { display: block; height: 100%; border-radius: inherit; background: var(--accent-primary); }
+    .vram { color: var(--text-primary); }
+    .row-actions { display: flex; justify-content: flex-end; gap: 6px; }
+    .row-action { padding: 6px 8px; white-space: nowrap; }
+    .table-footer { display: flex; justify-content: space-between; gap: 12px; padding: 13px 18px; border-top: 1px solid var(--border-dim); color: var(--text-secondary); font-size: 11px; }
+    .empty-state, .error-state { display: none; padding: 58px 24px; text-align: center; }
+    body[data-state="empty"] .node-list, body[data-state="empty"] .table-head, body[data-state="error"] .node-list, body[data-state="error"] .table-head { display: none; }
+    body[data-state="empty"] .empty-state, body[data-state="error"] .error-state { display: block; }
+    .empty-mark, .error-mark { width: 38px; height: 38px; display: grid; place-items: center; margin: 0 auto 14px; border: 1px solid var(--border-bright); border-radius: var(--radius-card); color: var(--text-secondary); }
+    .error-mark { border-color: var(--border-danger); color: var(--status-danger); }
+    .empty-state h2, .error-state h2 { margin: 0 0 5px; font-size: 15px; font-weight: 500; }
+    .empty-state p, .error-state p { margin: 0 auto 17px; color: var(--text-secondary); }
+    .drawer-scrim { position: fixed; inset: 0; z-index: 4; display: none; background: rgba(5,7,10,.66); }
+    .drawer { position: fixed; z-index: 5; top: 0; right: 0; width: min(430px, 100vw); height: 100vh; padding: 26px; border-left: 1px solid var(--border-bright); background: var(--bg-surface); box-shadow: -20px 0 60px rgba(0,0,0,.42); transform: translateX(100%); transition: transform var(--duration-slow) var(--ease-hud); }
+    body.drawer-open .drawer-scrim { display: block; }
+    body.drawer-open .drawer { transform: translateX(0); }
+    .drawer-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 22px; border-bottom: 1px solid var(--border-dim); }
+    .drawer-kicker { color: var(--accent-primary); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+    .drawer h2 { margin: 7px 0 0; font-size: 19px; letter-spacing: -.03em; }
+    .close { width: 30px; height: 30px; border: 1px solid var(--border-subtle); border-radius: var(--radius-btn); background: transparent; cursor: pointer; }
+    .context { padding: 20px 0; }
+    .context-id { padding: 10px; overflow-wrap: anywhere; border: 1px solid var(--border-dim); border-radius: var(--radius-inner); background: var(--bg-base); color: var(--text-secondary); font-size: 11px; }
+    .form-row { display: flex; justify-content: space-between; gap: 15px; padding: 13px 0; border-bottom: 1px solid var(--border-dim); }
+    .form-row span:first-child { color: var(--text-secondary); }
+    .form-row strong { text-align: right; font-weight: 500; }
+    .drawer-note { margin: 20px 0; padding: 11px 12px; border-left: 2px solid var(--status-warning); background: rgba(234,179,8,.07); color: var(--text-secondary); font-size: 11px; }
+    .drawer-actions { display: flex; gap: 9px; margin-top: 24px; }
+    .drawer-actions button { flex: 1; padding: 11px 12px; }
+    .toast { position: fixed; z-index: 7; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 11px; max-width: min(390px, calc(100vw - 32px)); padding: 13px 16px; border: 1px solid rgba(34,197,94,.4); border-radius: var(--radius-card); background: var(--bg-surface-raised); box-shadow: 0 10px 30px rgba(0,0,0,.35); color: var(--text-primary); transform: translateY(140%); transition: transform var(--duration-normal) var(--ease-hud); }
+    .toast.show { transform: translateY(0); }
+    .toast i { width: 8px; height: 8px; flex: 0 0 auto; border-radius: var(--radius-pill); background: var(--status-running); box-shadow: 0 0 8px var(--status-running); }
+    .shortcut { color: var(--text-tertiary); font-size: 10px; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 66px minmax(0, 1fr); } .rail { padding-inline: 10px; } .rail-label, .nav-item span:not(.nav-icon) { display: none; } .nav-item { justify-content: center; } .table-head, .node-row { grid-template-columns: minmax(190px, 2fr) 1fr 1fr 102px; } .table-head div:nth-child(3), .node-row > :nth-child(3) { display: none; } }
+    @media (max-width: 620px) { .topbar { gap: 12px; padding: 0 16px; } .breadcrumb { display: none; } .top-actions { gap: 9px; } .main { padding: 26px 12px 40px; } .metrics { grid-template-columns: repeat(2, 1fr); margin: 23px 0 20px; } .metric { padding: 12px; } .metric-value { font-size: 20px; } .toolbar { flex-wrap: wrap; } .search { order: 3; width: 100%; margin-left: 0; } .table-head { display: none; } .node-row { grid-template-columns: 1fr auto; gap: 10px; padding: 14px 12px; } .node-row > :nth-child(2), .node-row > :nth-child(3), .node-row > :nth-child(4) { grid-column: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; } .node-row > :nth-child(2) { grid-row: 2; } .node-row > :nth-child(3) { grid-row: 3; } .node-row > :nth-child(4) { grid-row: 4; } .cell-label { display: inline; } .row-actions { grid-column: 2; grid-row: 1 / span 4; align-self: center; flex-direction: column; } .table-footer { padding-inline: 12px; } .drawer { padding: 22px 18px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
   </style>
 </head>
-<body>
-  <main class="shell" id="app">
+<body data-state="ideal">
+  <div class="shell">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>FORGE / CONSOLE</span></div>
-      <div class="top-actions"><span class="live"><span class="live-dot" aria-hidden="true"></span>fabric live</span><span class="shortcut"><span class="key">J</span><span class="key">K</span> cycle nodes</span><span class="shortcut"><span class="key">P</span> primary action</span></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>AXIOM / OPS</span></div>
+      <div class="breadcrumb"><span class="slash">/</span><span>Infrastructure</span><span class="slash">/</span><strong>GPU Nodes</strong></div>
+      <div class="top-actions"><span class="live"><i></i>LIVE · 2s</span><span class="avatar" aria-label="Operator profile">OP</span></div>
     </header>
-
-    <section class="hero" aria-labelledby="page-title">
-      <div>
-        <div class="eyebrow">Cluster control / us-west-2 / 09:41:28 UTC</div>
-        <h1 id="page-title">Keep the work moving.<br><span style="color:var(--cyan)">Anchor the fabric.</span></h1>
-        <p class="hero-copy">A calm command surface for the moments when GPU capacity turns volatile. Inspect the node, preserve the workload, then make the smallest safe intervention.</p>
-        <div class="hero-meta"><span class="chip"><strong>32</strong> nodes online</span><span class="chip"><strong>99.98%</strong> fabric health</span><span class="chip"><strong>14.2 TB</strong> HBM3 reserved</span></div>
-      </div>
-      <aside class="hero-anchor" aria-label="Cluster anchor status">
-        <div class="anchor-label">Current anchor / fabric headroom</div>
-        <div class="anchor-number">18.4<span style="font-size:17px; letter-spacing:0"> GB</span></div>
-        <div class="anchor-sub"><b>stable</b> · last rebalance 04:12 ago</div>
+    <div class="layout">
+      <aside class="rail" aria-label="Primary navigation">
+        <div class="rail-label">Control plane</div>
+        <button class="nav-item active" type="button"><span class="nav-icon">▦</span><span>GPU Nodes</span></button>
+        <button class="nav-item" type="button"><span class="nav-icon">◈</span><span>Allocations</span></button>
+        <button class="nav-item" type="button"><span class="nav-icon">⌁</span><span>Telemetry</span></button>
+        <button class="nav-item" type="button"><span class="nav-icon">⚙</span><span>Policies</span></button>
       </aside>
-    </section>
-
-    <section class="dashboard" aria-label="Cluster inspection workspace">
-      <div>
-        <article class="panel topology" aria-labelledby="topology-title">
-          <div class="panel-head"><span class="panel-title" id="topology-title">Node topology</span><span class="panel-note" id="selection-note">selected / gpu-07</span></div>
-          <div class="topology-body">
-            <div class="cluster-row"><div class="cluster-node">C1</div><div class="cluster-text"><b>Atlas training cluster</b><span>NVLink fabric · 8 × H100 SXM</span></div><div class="fabric-line"></div><div class="fabric-state">connected</div></div>
-            <div class="node-grid" id="node-grid" aria-label="GPU nodes">
-              <button class="node card-entity selected" data-node="gpu-04" type="button" aria-label="Select gpu-04"><span class="node-top"><span>gpu-04</span><span class="node-status">healthy</span></span><div class="node-id">H100</div><div class="node-gpu">SXM / 80 GB</div><div class="node-metrics"><div><div class="metric-label">HBM3</div><div class="metric-value">62.4 <small>GB</small></div></div><div><div class="metric-label">p95</div><div class="metric-value">248 <small>μs</small></div></div></div></button>
-              <button class="node card-entity" data-node="gpu-05" type="button" aria-label="Select gpu-05"><span class="node-top"><span>gpu-05</span><span class="node-status">healthy</span></span><div class="node-id">H100</div><div class="node-gpu">SXM / 80 GB</div><div class="node-metrics"><div><div class="metric-label">HBM3</div><div class="metric-value">66.8 <small>GB</small></div></div><div><div class="metric-label">p95</div><div class="metric-value">271 <small>μs</small></div></div></div></button>
-              <button class="node card-entity" data-node="gpu-06" type="button" aria-label="Select gpu-06"><span class="node-top"><span>gpu-06</span><span class="node-status warn">warn</span></span><div class="node-id">H100</div><div class="node-gpu">SXM / 80 GB</div><div class="node-metrics"><div><div class="metric-label">HBM3</div><div class="metric-value">77.2 <small>GB</small></div></div><div><div class="metric-label">p95</div><div class="metric-value">392 <small>μs</small></div></div></div></button>
-              <button class="node card-entity" data-node="gpu-07" type="button" aria-label="Select gpu-07"><span class="node-top"><span>gpu-07</span><span class="node-status">healthy</span></span><div class="node-id">H100</div><div class="node-gpu">SXM / 80 GB</div><div class="node-metrics"><div><div class="metric-label">HBM3</div><div class="metric-value">71.0 <small>GB</small></div></div><div><div class="metric-label">p95</div><div class="metric-value">286 <small>μs</small></div></div></div></button>
-            </div>
-            <div class="operator-confirm" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding:11px 13px;border:1px solid rgba(239,118,122,.24);border-radius:10px;background:rgba(239,118,122,.05)"><span style="color:var(--muted);font-size:10px">Drain GPU Node <b style="display:block;color:var(--ink);font-weight:500;margin-top:2px">Operator confirmation required</b></span><button class="secondary" data-action="drain-node" type="button" style="min-height:32px;color:var(--red);border-color:rgba(239,118,122,.42)" onclick="document.getElementById('drain-node').click()">Confirm Drain</button></div>
-            <div class="empty-state" id="empty-state"><strong>Zero-item view</strong>No nodes match this inspection state.</div>
+      <main class="main">
+        <section class="hero" aria-labelledby="page-title">
+          <div class="eyebrow">Operator console · cluster west-02</div>
+          <h1 id="page-title">GPU Node Fleet</h1>
+          <p class="subhead">Inspect live capacity, preserve allocation context, and take decisive action without leaving the control plane.</p>
+          <div class="metrics" aria-label="Fleet metrics">
+            <div class="metric"><div class="metric-label">Fleet health</div><div class="metric-row"><span class="metric-value">98.4</span><span class="metric-unit">%</span><svg class="spark" viewBox="0 0 58 18" aria-hidden="true"><polyline points="0,14 8,12 14,13 22,7 30,10 37,5 44,7 51,3 58,5"></polyline></svg></div></div>
+            <div class="metric"><div class="metric-label">Active nodes</div><div class="metric-row"><span class="metric-value">24</span><span class="metric-unit">/ 26</span><svg class="spark" viewBox="0 0 58 18" aria-hidden="true"><polyline points="0,13 8,13 15,9 22,11 29,7 37,8 44,4 51,6 58,2"></polyline></svg></div></div>
+            <div class="metric"><div class="metric-label">VRAM allocated</div><div class="metric-row"><span class="metric-value">71.8</span><span class="metric-unit">TB</span><svg class="spark" viewBox="0 0 58 18" aria-hidden="true"><polyline points="0,15 8,14 15,11 22,12 29,8 37,10 44,6 51,7 58,4"></polyline></svg></div></div>
+            <div class="metric"><div class="metric-label">Queue depth</div><div class="metric-row"><span class="metric-value">07</span><span class="metric-unit">jobs</span><svg class="spark" viewBox="0 0 58 18" aria-hidden="true"><polyline points="0,4 8,7 15,5 22,10 29,8 37,12 44,10 51,14 58,13"></polyline></svg></div></div>
           </div>
-        </article>
-        <div class="lower-grid">
-          <article class="panel" aria-labelledby="memory-title">
-            <div class="panel-head"><span class="panel-title" id="memory-title">HBM3 pressure</span><span class="panel-note">gpu-07 / 60 min</span></div>
-            <div class="chart-wrap">
-              <div class="chart-legend"><span><i class="legend-mark"></i>allocation</span><span><i class="legend-mark amber"></i>80 GB HBM3 limit</span></div>
-              <svg viewBox="0 0 600 190" role="img" aria-label="HBM3 allocation over 60 minutes with a labeled 80 GB threshold">
-                <line class="gridline" x1="42" y1="20" x2="580" y2="20"></line><line class="gridline" x1="42" y1="66" x2="580" y2="66"></line><line class="gridline" x1="42" y1="112" x2="580" y2="112"></line><line class="gridline" x1="42" y1="158" x2="580" y2="158"></line>
-                <line class="threshold" x1="42" y1="43" x2="580" y2="43"></line><text class="axis" x="46" y="38">80 GB HBM3 LIMIT</text>
-                <text class="axis" x="9" y="23">96</text><text class="axis" x="9" y="69">64</text><text class="axis" x="15" y="115">32</text><text class="axis" x="24" y="161">0</text><text class="axis" x="38" y="180">-60m</text><text class="axis" x="300" y="180">-30m</text><text class="axis" x="555" y="180">now</text>
-                <polyline class="trace" points="42,132 86,126 130,128 174,104 218,109 262,91 306,97 350,72 394,77 438,56 482,63 526,51 580,54"></polyline>
-                <circle cx="580" cy="54" r="3.5" fill="var(--cyan)"></circle><text class="axis" x="535" y="49" fill="var(--cyan)">71 GB</text>
-              </svg>
+          <section class="workbench" aria-label="Node fleet inspection">
+            <div class="workbench-inner">
+              <div class="toolbar">
+                <div class="tabs" role="tablist" aria-label="Node views"><button class="tab active" role="tab" aria-selected="true" type="button">All nodes</button><button class="tab" role="tab" aria-selected="false" type="button">Attention</button></div>
+                <input id="node-filter" class="search" type="search" placeholder="Filter node ID…" aria-label="Filter node ID">
+                <button class="filter-btn" type="button">Filters <span class="shortcut">[2]</span></button>
+              </div>
+              <div class="table-head" aria-hidden="true"><div>Node / identity</div><div>Status</div><div>VRAM load</div><div>GPU temp</div><div>Actions</div></div>
+              <div class="node-list" id="node-list">
+                <article class="node-row selected" data-node="gpu-w02-a17" tabindex="0" aria-label="gpu-w02-a17 selected">
+                  <div class="node-name"><span class="node-glyph">◇</span><div class="node-copy"><div class="node-title">gpu-w02-a17</div><div class="node-id">node-cluster-uuid-00000000-0000-0000-0000-000000000000</div></div></div>
+                  <div><span class="cell-label">Status</span><span class="status"><i></i>Running</span></div>
+                  <div><span class="cell-label">VRAM load</span><span class="vram">78.2 / 80 TB</span><div class="bar"><b style="width:78.2%"></b></div></div>
+                  <div><span class="cell-label">GPU temp</span><span>64°C</span></div>
+                  <div class="row-actions"><button class="danger-btn row-action" type="button" data-action="drain-node" data-node-label="gpu-w02-a17">Drain Node</button></div>
+                </article>
+                <article class="node-row" data-node="gpu-w02-b04" tabindex="0" aria-label="gpu-w02-b04">
+                  <div class="node-name"><span class="node-glyph">◇</span><div class="node-copy"><div class="node-title">gpu-w02-b04</div><div class="node-id">node-cluster-uuid-b04-8a31-4420-9ee7-31d2eac97210</div></div></div>
+                  <div><span class="cell-label">Status</span><span class="status"><i></i>Running</span></div>
+                  <div><span class="cell-label">VRAM load</span><span class="vram">61.5 / 80 TB</span><div class="bar"><b style="width:61.5%"></b></div></div>
+                  <div><span class="cell-label">GPU temp</span><span>58°C</span></div>
+                  <div class="row-actions"><button class="danger-btn row-action" type="button" data-action="drain-node" data-node-label="gpu-w02-b04">Drain Node</button></div>
+                </article>
+                <article class="node-row" data-node="gpu-w02-c12" tabindex="0" aria-label="gpu-w02-c12">
+                  <div class="node-name"><span class="node-glyph">◇</span><div class="node-copy"><div class="node-title">gpu-w02-c12</div><div class="node-id">node-cluster-uuid-c12-1f0d-4c2a-9ec8-a7b55cc11f44</div></div></div>
+                  <div><span class="cell-label">Status</span><span class="status warn"><i></i>Degraded</span></div>
+                  <div><span class="cell-label">VRAM load</span><span class="vram">89.1 / 96 TB</span><div class="bar"><b style="width:89.1%"></b></div></div>
+                  <div><span class="cell-label">GPU temp</span><span>76°C</span></div>
+                  <div class="row-actions"><button class="primary-btn row-action" type="button" data-action="preempt-vram" data-node-label="gpu-w02-c12">Preempt VRAM</button></div>
+                </article>
+              </div>
+              <div class="empty-state" aria-live="polite"><div class="empty-mark">∅</div><h2>No nodes match this filter</h2><p>Filter: 0 results / empty list</p><button class="ghost-btn" id="clear-filter" type="button">Clear filter</button></div>
+              <div class="error-state" aria-live="polite"><div class="error-mark">!</div><h2>Telemetry unavailable</h2><p>Node inventory could not be synchronized. Retry the read without losing your active filter.</p><button class="ghost-btn" id="retry" type="button">Retry sync</button></div>
+              <div class="table-footer"><span id="count-label">Showing 3 of 26 nodes</span><span>Updated 14:32:08 UTC</span></div>
             </div>
-          </article>
-          <article class="panel" aria-labelledby="latency-title">
-            <div class="panel-head"><span class="panel-title" id="latency-title">Fabric latency</span><span class="panel-note">p95 / 60 min</span></div>
-            <div class="chart-wrap">
-              <div class="chart-legend"><span><i class="legend-mark"></i>round trip</span><span><i class="legend-mark amber"></i>alert at 400 μs</span></div>
-              <svg viewBox="0 0 600 190" role="img" aria-label="NVLink fabric latency over 60 minutes with a labeled 400 microsecond alert threshold">
-                <line class="gridline" x1="42" y1="20" x2="580" y2="20"></line><line class="gridline" x1="42" y1="66" x2="580" y2="66"></line><line class="gridline" x1="42" y1="112" x2="580" y2="112"></line><line class="gridline" x1="42" y1="158" x2="580" y2="158"></line>
-                <line class="threshold" x1="42" y1="55" x2="580" y2="55"></line><text class="axis" x="46" y="50">400 μs ALERT</text>
-                <text class="axis" x="9" y="23">600</text><text class="axis" x="9" y="69">400</text><text class="axis" x="9" y="115">200</text><text class="axis" x="24" y="161">0</text><text class="axis" x="38" y="180">-60m</text><text class="axis" x="300" y="180">-30m</text><text class="axis" x="555" y="180">now</text>
-                <polyline class="trace" points="42,121 86,118 130,122 174,109 218,115 262,102 306,105 350,97 394,100 438,84 482,91 526,87 580,92"></polyline>
-                <circle cx="580" cy="92" r="3.5" fill="var(--cyan)"></circle><text class="axis" x="531" y="87" fill="var(--cyan)">286 μs</text>
-              </svg>
-            </div>
-          </article>
-        </div>
-      </div>
-
-      <aside class="panel drawer" id="drawer" aria-labelledby="drawer-title">
-        <div class="panel-head"><span class="panel-title" id="drawer-title">Node inspection</span><button class="secondary" id="close-drawer" type="button" style="min-height:28px;padding:0 9px;text-align:center;font-size:10px" aria-label="Close node inspection">ESC</button></div>
-        <div class="drawer-body">
-          <div class="selected-summary"><div class="gpu-orb" aria-hidden="true"></div><div><b id="detail-id">gpu-07</b><span id="detail-status">● healthy / serving</span></div></div>
-          <div class="detail-list">
-            <div class="detail-line"><span>HBM3 allocation</span><strong id="detail-vram">71.0 / 80.0 GB</strong></div>
-            <div class="detail-line"><span>NVLink p95</span><strong id="detail-latency">286 μs</strong></div>
-            <div class="detail-line"><span>active workload</span><strong id="detail-workload">runway-v42 / step 18402</strong></div>
-            <div class="detail-line"><span>unbreakable string</span><strong id="detail-hash">9f3c2a1e7b44d90c6f8a11e2b7d0c5aa<br>6a20f1e9c4b8d2aa0e57f6c3b1d8a402</strong></div>
-          </div>
-          <div class="drawer-actions">
-            <div class="action-state" id="action-state" aria-live="polite">Ready · primary action available</div>
-            <button class="primary" id="drain-node" type="button"><span>Drain Node</span><span aria-hidden="true">P</span></button>
-            <button class="secondary" id="preempt-vram" type="button">Preempt VRAM · reclaim 8 GB</button>
-            <button class="secondary" id="isolate-nvlink" type="button">Isolate NVLink path</button>
-          </div>
-        </div>
-      </aside>
-    </section>
-    <footer class="footer"><span>CONTROL PLANE / READ-WRITE · operator: a.mercer</span><span class="hash">audit hash / 64-char · 9f3c2a1e7b44d90c6f8a11e2b7d0c5aa6a20f1e9c4b8d2aa0e57f6c3b1d8a402</span></footer>
-  </main>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
+          </section>
+          <div style="height:24px"></div>
+          <div class="shortcut">Keyboard: <strong>Space</strong> / <strong>P</strong> inspect · <strong>Esc</strong> close · <strong>J</strong> / <strong>K</strong> move selection</div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="drawer-scrim" id="drawer-scrim"></div>
+  <aside class="drawer" id="drawer" aria-labelledby="drawer-title" aria-hidden="true">
+    <div class="drawer-top"><div><div class="drawer-kicker">Action inspection</div><h2 id="drawer-title">Drain GPU Node</h2></div><button class="close" id="close-drawer" type="button" aria-label="Close inspector">×</button></div>
+    <div class="context"><div class="context-id" id="drawer-node">gpu-w02-a17</div><div class="form-row"><span>Current status</span><strong class="status"><i></i><span id="drawer-status">Running</span></strong></div><div class="form-row"><span>Active workloads</span><strong id="drawer-workloads">12 jobs</strong></div><div class="form-row"><span>Estimated drain</span><strong>04:30 min</strong></div><div class="drawer-note">New scheduling is paused first. Existing workloads finish on their current allocation before this node leaves the pool.</div><div class="drawer-actions"><button class="ghost-btn" id="cancel-action" type="button">Cancel <span class="shortcut">Esc</span></button><button class="danger-btn" id="commit-action" type="button">Confirm Drain</button></div></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"><i></i><span id="toast-text">Node Drained Successfully</span></div>
   <script>
     (() => {
-      const AppState = {
-        nodes: [
-          { id: 'gpu-04', status: 'healthy', vram: 62.4, latency: 248, workload: 'runway-v42 / step 18402' },
-          { id: 'gpu-05', status: 'healthy', vram: 66.8, latency: 271, workload: 'runway-v42 / step 18402' },
-          { id: 'gpu-06', status: 'warn', vram: 77.2, latency: 392, workload: 'runway-v42 / step 18402' },
-          { id: 'gpu-07', status: 'healthy', vram: 71.0, latency: 286, workload: 'runway-v42 / step 18402' },
-          { id: 'gpu-08', status: 'healthy', vram: 58.6, latency: 239, workload: 'runway-v42 / step 18402' },
-          { id: 'gpu-09', status: 'healthy', vram: 64.1, latency: 265, workload: 'runway-v42 / step 18402' },
-          { id: 'gpu-10', status: 'healthy', vram: 60.9, latency: 251, workload: 'runway-v42 / step 18402' },
-          { id: 'gpu-11', status: 'healthy', vram: 68.3, latency: 278, workload: 'runway-v42 / step 18402' }
-        ],
-        selectedId: 'gpu-07',
-        drawerOpen: true,
-        lifecycle: 'Ready',
-        action: null,
-        lastAction: null
-      };
-
-      const $ = (id) => document.getElementById(id);
-      const nodeGrid = $('node-grid');
-      const actionState = $('action-state');
-      const toast = $('toast');
+      const rows = [...document.querySelectorAll('.node-row')];
+      const drawer = document.getElementById('drawer');
+      const scrim = document.getElementById('drawer-scrim');
+      const commit = document.getElementById('commit-action');
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toast-text');
+      const filter = document.getElementById('node-filter');
+      let selected = 0;
+      let origin = null;
+      let activeAction = 'drain-node';
+      let busy = false;
       let toastTimer;
 
-      function selectedNode() { return AppState.nodes.find((node) => node.id === AppState.selectedId); }
-      function selectNode(id) {
-        if (!AppState.nodes.some((node) => node.id === id)) return;
-        AppState.selectedId = id;
-        AppState.drawerOpen = true;
-        AppState.lifecycle = 'Ready';
-        AppState.action = null;
-        render();
+      function setSelected(index) {
+        selected = (index + rows.length) % rows.length;
+        rows.forEach((row, i) => {
+          const active = i === selected;
+          row.classList.toggle('selected', active);
+          row.setAttribute('aria-label', row.dataset.node + (active ? ' selected' : ''));
+        });
+        rows[selected].focus({ preventScroll: true });
+      }
+      function openDrawer(action, nodeLabel, anchor) {
+        if (busy) return;
+        activeAction = action;
+        origin = anchor || rows[selected];
+        document.getElementById('drawer-title').textContent = action === 'preempt-vram' ? 'Preempt VRAM Allocation' : 'Drain GPU Node';
+        document.getElementById('drawer-node').textContent = nodeLabel;
+        document.getElementById('drawer-status').textContent = action === 'preempt-vram' ? 'Degraded' : 'Running';
+        document.getElementById('drawer-workloads').textContent = action === 'preempt-vram' ? '04 jobs' : '12 jobs';
+        commit.textContent = action === 'preempt-vram' ? 'Execute Preempt' : 'Confirm Drain';
+        drawer.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('drawer-open');
+        window.setTimeout(() => commit.focus(), 190);
       }
       function closeDrawer() {
-        AppState.drawerOpen = false;
-        render();
-        document.querySelector('.node.selected')?.focus();
-      }
-      function preemptVram() {
-        const node = selectedNode();
-        if (!node || AppState.lifecycle === 'In-Progress') return;
-        AppState.action = 'preempt-vram';
-        AppState.lifecycle = 'In-Progress';
-        render();
-        window.setTimeout(() => {
-          node.vram = Math.max(0, node.vram - 8);
-          AppState.lifecycle = 'Completed';
-          AppState.lastAction = 'VRAM reclaimed';
-          render();
-          showToast('VRAM preempted · 8 GB reclaimed');
-        }, 650);
-      }
-      function isolateNvlink() {
-        const node = selectedNode();
-        if (!node || AppState.lifecycle === 'In-Progress') return;
-        AppState.action = 'isolate-nvlink';
-        AppState.lifecycle = 'In-Progress';
-        render();
-        window.setTimeout(() => {
-          node.status = 'isolated';
-          AppState.lifecycle = 'Active Bypass';
-          AppState.lastAction = 'NVLink bypass active';
-          render();
-          showToast('NVLink path isolated · Active Bypass');
-        }, 650);
-      }
-      function drainNode() {
-        const node = selectedNode();
-        if (!node || AppState.lifecycle === 'In-Progress') return;
-        AppState.action = 'drain-node';
-        AppState.lifecycle = 'In-Progress';
-        render();
-        window.setTimeout(() => {
-          node.status = 'drained';
-          node.workload = 'evacuated / no active items';
-          AppState.lifecycle = 'Completed';
-          AppState.lastAction = 'Node drained';
-          render();
-          showToast('Node Drained Successfully');
-        }, 900);
-      }
-      function resetLifecycle() {
-        AppState.lifecycle = 'Ready';
-        AppState.action = null;
-        render();
+        if (busy) return;
+        document.body.classList.remove('drawer-open');
+        drawer.setAttribute('aria-hidden', 'true');
+        if (origin) origin.focus({ preventScroll: true });
       }
       function showToast(message) {
-        toast.textContent = message;
+        toastText.textContent = message;
         toast.classList.add('show');
         clearTimeout(toastTimer);
-        toastTimer = window.setTimeout(() => toast.classList.remove('show'), 2800);
+        toastTimer = window.setTimeout(() => toast.classList.remove('show'), 3200);
       }
-      function statusLabel(status) {
-        return status === 'drained' ? 'drained' : status === 'isolated' ? 'bypass' : status;
+      function commitAction() {
+        if (busy) return;
+        busy = true;
+        commit.disabled = true;
+        commit.textContent = 'Committing…';
+        window.setTimeout(() => {
+          const label = document.getElementById('drawer-node').textContent;
+          const row = rows.find(item => item.dataset.node === label);
+          if (row) {
+            const status = row.querySelector('.status');
+            status.classList.remove('warn');
+            status.innerHTML = '<i></i>' + (activeAction === 'preempt-vram' ? 'Stable' : 'Draining');
+          }
+          document.body.classList.remove('drawer-open');
+          drawer.setAttribute('aria-hidden', 'true');
+          commit.disabled = false;
+          busy = false;
+          showToast(activeAction === 'preempt-vram' ? 'VRAM Eviction Committed' : 'Node Drained Successfully');
+          if (origin) origin.focus({ preventScroll: true });
+        }, 260);
       }
-      function renderNodes() {
-        nodeGrid.innerHTML = AppState.nodes.map((node) => `
-          <button class="node ${node.id === AppState.selectedId ? 'selected' : ''}" data-node="${node.id}" type="button" aria-label="Select ${node.id}" aria-pressed="${node.id === AppState.selectedId}">
-            <span class="node-top"><span>${node.id}</span><span class="node-status ${node.status === 'healthy' ? '' : node.status === 'warn' ? 'warn' : 'drained'}">${statusLabel(node.status)}</span></span>
-            <div class="node-id">H100</div><div class="node-gpu">SXM / 80 GB</div>
-            <div class="node-metrics"><div><div class="metric-label">HBM3</div><div class="metric-value">${node.vram.toFixed(1)} <small>GB</small></div></div><div><div class="metric-label">p95</div><div class="metric-value">${node.latency} <small>μs</small></div></div></div>
-          </button>`).join('');
-        $('empty-state').classList.toggle('visible', AppState.nodes.length === 0);
-        nodeGrid.querySelectorAll('[data-node]').forEach((button) => button.addEventListener('click', () => selectNode(button.dataset.node)));
-      }
-      function renderDetails() {
-        const node = selectedNode();
-        $('drawer').hidden = !AppState.drawerOpen;
-        $('selection-note').textContent = AppState.drawerOpen && node ? `selected / ${node.id}` : 'inspection closed';
-        if (!node) return;
-        $('detail-id').textContent = node.id;
-        $('detail-status').textContent = node.status === 'drained' ? '● drained / evacuated' : node.status === 'isolated' ? '● isolated / bypass active' : '● healthy / serving';
-        $('detail-status').style.color = node.status === 'healthy' ? 'var(--green)' : node.status === 'drained' ? 'var(--red)' : 'var(--cyan)';
-        $('detail-vram').textContent = `${node.vram.toFixed(1)} / 80.0 GB`;
-        $('detail-latency').textContent = `${node.latency} μs`;
-        $('detail-workload').textContent = node.workload;
-        actionState.className = `action-state ${AppState.lifecycle === 'In-Progress' ? 'progress' : AppState.lifecycle === 'Completed' ? 'done' : AppState.lifecycle === 'Active Bypass' ? 'bypass' : ''}`;
-        const suffix = AppState.lifecycle === 'In-Progress' ? ' · working…' : AppState.lastAction ? ` · ${AppState.lastAction}` : ' · primary action available';
-        actionState.textContent = `${AppState.lifecycle}${suffix}`;
-        $('drain-node').disabled = AppState.lifecycle === 'In-Progress' || node.status === 'drained';
-        $('preempt-vram').disabled = AppState.lifecycle === 'In-Progress';
-        $('isolate-nvlink').disabled = AppState.lifecycle === 'In-Progress' || node.status === 'isolated';
-      }
-      function render() { renderNodes(); renderDetails(); }
-      $('close-drawer').addEventListener('click', closeDrawer);
-      $('drain-node').addEventListener('click', drainNode);
-      $('preempt-vram').addEventListener('click', preemptVram);
-      $('isolate-nvlink').addEventListener('click', isolateNvlink);
-      document.addEventListener('keydown', (event) => {
+      rows.forEach((row, index) => {
+        row.addEventListener('click', event => {
+          if (event.target.closest('button')) return;
+          setSelected(index);
+          openDrawer('drain-node', row.dataset.node, row);
+        });
+        row.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDrawer('drain-node', row.dataset.node, row); } });
+        row.querySelector('button').addEventListener('click', event => openDrawer(event.currentTarget.dataset.action, event.currentTarget.dataset.nodeLabel, event.currentTarget));
+      });
+      document.getElementById('close-drawer').addEventListener('click', closeDrawer);
+      document.getElementById('cancel-action').addEventListener('click', closeDrawer);
+      scrim.addEventListener('click', closeDrawer);
+      commit.addEventListener('click', commitAction);
+      document.getElementById('clear-filter').addEventListener('click', () => { filter.value = ''; history.replaceState(null, '', '#state=ideal'); applyState(); filter.focus(); });
+      document.getElementById('retry').addEventListener('click', () => { history.replaceState(null, '', '#state=ideal'); applyState(); showToast('Telemetry sync restored'); });
+      filter.addEventListener('input', () => { if (filter.value.trim()) history.replaceState(null, '', '#state=empty'); else history.replaceState(null, '', '#state=ideal'); applyState(); });
+      document.addEventListener('keydown', event => {
         if (event.key === 'Escape') { closeDrawer(); return; }
         if (event.target.matches('input, textarea, select')) return;
-        const index = AppState.nodes.findIndex((node) => node.id === AppState.selectedId);
-        if (event.key.toLowerCase() === 'j') { selectNode(AppState.nodes[(index + 1) % AppState.nodes.length]?.id); }
-        if (event.key.toLowerCase() === 'k') { selectNode(AppState.nodes[(index - 1 + AppState.nodes.length) % AppState.nodes.length]?.id); }
-        if (event.code === 'Space' || event.key.toLowerCase() === 'p') { event.preventDefault(); drainNode(); }
+        if (event.key === 'j' || event.key === 'J') { setSelected(selected + 1); return; }
+        if (event.key === 'k' || event.key === 'K') { setSelected(selected - 1); return; }
+        if (event.code === 'Space' || event.key === 'p' || event.key === 'P') { event.preventDefault(); const row = rows[selected]; openDrawer('drain-node', row.dataset.node, row); }
       });
-      function applyHashState() {
-        const hash = window.location.hash.replace(/^#/, '');
-        const params = new URLSearchParams(hash);
-        const state = params.get('state') || 'default';
-        document.body.setAttribute('data-state', state);
-        if (state === 'error' || state === 'incident') {
-          selectNode('gpu-03');
-          const n = selectedNode();
-          if (n) { n.status = 'warn'; n.vram = 79.8; }
-        } else if (state === 'empty' || state === 'zero-item') {
-          AppState.nodes = [];
-          AppState.selectedId = null;
-        } else if (state === 'drained') {
-          selectNode('gpu-07');
-          const n = selectedNode();
-          if (n) { n.status = 'drained'; }
-        }
-        render();
+      document.addEventListener('keyup', event => { if (event.code === 'Space') document.body.classList.remove('key-pressed'); });
+      window.addEventListener('hashchange', applyState);
+      function applyState() {
+        const requested = new URLSearchParams(location.hash.replace(/^#/, '')).get('state');
+        const state = ['ideal', 'empty', 'error'].includes(requested) ? requested : 'ideal';
+        document.body.dataset.state = state;
+        if (state === 'empty') document.getElementById('count-label').textContent = 'Showing 0 of 26 nodes';
+        else if (state === 'error') document.getElementById('count-label').textContent = 'Inventory unavailable';
+        else document.getElementById('count-label').textContent = 'Showing 3 of 26 nodes';
       }
-      window.addEventListener('hashchange', applyHashState);
-      applyHashState();
+      applyState();
     })();
   </script>
 </body>

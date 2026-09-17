@@ -93,7 +93,7 @@ def shell_read(command, root):
             require(not output.is_symlink() and output.resolve() == source.resolve().with_suffix('.json'),
                     'Token export belongs beside its source with the same revision name.')
             return
-        permitted = {'node': {'detect-design-assets.mjs', 'resolve-change.mjs', 'preview.mjs'},
+        permitted = {'node': {'detect-design-assets.mjs', 'resolve-change.mjs', 'preview.mjs', 'capture.mjs'},
                      'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'generate_review_portal.py'},
                      'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'generate_review_portal.py'}}
         require(script.parent == SKILL/'scripts' and script.name in permitted[tool],

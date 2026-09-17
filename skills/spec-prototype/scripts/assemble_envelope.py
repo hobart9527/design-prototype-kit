@@ -200,8 +200,24 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     if explicit_turns:
         constraints["maximum_operational_repair_attempts"] = explicit_turns
 
+    spec_rel = paths["specification"].relative_to(root).as_posix()
+    verification_cmd = f"python3 skills/spec-prototype/scripts/verify_prototype_quality.py {target_html} prototype/shared/tokens.css --contract {spec_rel}"
+    capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs {target_html} --output {evidence_scope} --viewports 320,390,768,1280 --states ideal,empty,error"
+
+    state_blueprint = (
+        "// Standard State Machine & Hash Router Blueprint:\n"
+        "function applyState() {\n"
+        "  const state = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('state') || 'ideal';\n"
+        "  document.body.dataset.state = state;\n"
+        "  AppState.nodes = (state === 'empty' || state === 'zero-items') ? [] : AppState.allNodes;\n"
+        "  render();\n"
+        "}\n"
+        "window.addEventListener('hashchange', applyState);\n"
+        "applyState();"
+    )
+
     envelope = {
-        "envelope_version": "1.1",
+        "envelope_version": "1.2",
         "repository_root": str(root.resolve()),
         "skill_root": str(SKILL.resolve()),
         "slice_id": slice_id,
@@ -209,9 +225,23 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "target_html_path": target_html,
         "evidence_output_dir": evidence_scope,
         "token_stylesheet_ref": "../../../shared/tokens.css",
+        "verification_command": verification_cmd,
+        "capture_command": capture_cmd,
+        "required_css_tokens": [
+            "var(--radius-outer)",
+            "var(--radius-inner)",
+            "var(--radius-card)",
+            "var(--radius-btn)",
+            "var(--bg-void)",
+            "var(--bg-surface)",
+            "var(--text-primary)",
+            "var(--accent-primary)",
+            "font-variant-numeric: tabular-nums",
+        ],
+        "state_routing_blueprint": state_blueprint,
         "available_tokens": extract_css_tokens(paths["tokens_css"].read_text(encoding="utf-8")),
         "specification": {
-            "path": paths["specification"].relative_to(root).as_posix(),
+            "path": spec_rel,
             "sha256": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),
         },
         "spec_sources": {

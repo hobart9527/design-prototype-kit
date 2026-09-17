@@ -1,5 +1,5 @@
 {
-  "envelope_version": "1.1",
+  "envelope_version": "1.2",
   "repository_root": "/Users/hobart/Codex/design-prototype-kit",
   "skill_root": "/Users/hobart/Codex/design-prototype-kit/skills/spec-prototype",
   "slice_id": "console",
@@ -7,6 +7,20 @@
   "target_html_path": "prototype/experiments/console/hero-anchor/index.html",
   "evidence_output_dir": "prototype/evidence/probes/console/",
   "token_stylesheet_ref": "../../../shared/tokens.css",
+  "verification_command": "python3 skills/spec-prototype/scripts/verify_prototype_quality.py prototype/experiments/console/hero-anchor/index.html prototype/shared/tokens.css --contract prototype/specifications/console/r1.md",
+  "capture_command": "node skills/spec-prototype/scripts/capture.mjs prototype/experiments/console/hero-anchor/index.html --output prototype/evidence/probes/console/ --viewports 320,390,768,1280 --states ideal,empty,error",
+  "required_css_tokens": [
+    "var(--radius-outer)",
+    "var(--radius-inner)",
+    "var(--radius-card)",
+    "var(--radius-btn)",
+    "var(--bg-void)",
+    "var(--bg-surface)",
+    "var(--text-primary)",
+    "var(--accent-primary)",
+    "font-variant-numeric: tabular-nums"
+  ],
+  "state_routing_blueprint": "// Standard State Machine & Hash Router Blueprint:\nfunction applyState() {\n  const state = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('state') || 'ideal';\n  document.body.dataset.state = state;\n  AppState.nodes = (state === 'empty' || state === 'zero-items') ? [] : AppState.allNodes;\n  render();\n}\nwindow.addEventListener('hashchange', applyState);\napplyState();",
   "available_tokens": {
     "--bg-void": "#05070a",
     "--bg-base": "#0a0d14",
