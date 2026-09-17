@@ -26,60 +26,65 @@ Route design work by declared intent and required evidence. The five stages are 
  Stage 5 (冻): Silent Governance         ──> DTCG tokens.json export, WCAG AAA static audit, SHA-256 asset manifest
 ```
 
-### Stage 1: Tone & Tension Divergence & Spec Formulation (破 - 魂立约)
-- **Primary Goal**: Transition from raw user intent and design dialogue to a **complete, frozen Design Specification (`spec`)**. Before any HTML/JS code is touched, the following 6 durable contract artifacts MUST be materialized:
-  1. `prototype/product.md`: Product thesis, JTBD, user roles, core tension, and reality benchmarks.
-  2. `prototype/contracts/surface-maps/m1.md`: OOUX Entity cardinality and full Surface Topology (Primary, Contextual, Supporting).
-  3. `prototype/contracts/foundation/f1.md`: Approved Design Proposition, Real-World Mapping, Signature Craft, and Atmospheric Calibration.
-  4. `prototype/contracts/tokens/t1.json`, `t1.md` & `prototype/shared/tokens.css`: Formal design tokens generated from the 5-Dial register via `compile_tokens.py`.
-  5. `prototype/contracts/slices/<slice_id>/c1.md`: Slice interaction contract, state machine transitions, and action verb lifecycles.
-  6. `prototype/specifications/<slice_id>/r1.md`: Concrete prototype specification containing layout wireframes and verifiable design assertions.
+### Stage 1: Tone & Tension Divergence & Spec Formulation (破 - 魂立约：双钻四阶共创工法)
+- **Primary Goal**: Transition from user intent to a **complete, frozen Design Specification (`spec`)** through an unescapable **Co-Authored Double Diamond (双钻共创模型)** driven by **Four Interlocking Gear-Chains (四大协同传动齿轮链)**.
+- **Co-Creation Invariant (严禁黑盒代拟契约)**:
+  Zero black-box contract guessing. Every single contract pillar must be co-authored with the human designer through progressive, structured dialogue. Stage 1 must progress through the four interlocking phases; skipping directly to code or auto-generating all 6 pillars without human alignment is strictly forbidden.
 
-- **Domain Spectrum & Reality Benchmark Anchors (四大基准与现实地锚声明)**:
-  - **Dominant Baseline Selection**: Explicitly declare the primary operational baseline from `design-language.md:168` (hybrid allowed with secondary flavor):
-    - `Baseline 1: Dense Data & Engineering Workbench` (Observability, telemetry, trading, high-throughput pipelines)
-    - `Baseline 2: Modern SaaS & Commerce` (Collaboration, project management, business platforms)
+```text
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ 【第一钻：问题域与本体拓扑钻 (Macro Ontology Diamond)】                             │
+│  Phase 1: Discover (深度发散) ──> Gear-Chain 1: 业务本体传动链                    │
+│    破局反转门 ──> 锁定四大基准 ──> 倒逼三大克制舍弃 ──> 落盘 prototype/product.md  │
+│  Phase 2: Define (精准收敛) ────> Gear-Chain 2: 空间拓扑与物理传动链              │
+│    现实世界双地锚 ──> 材质不可跨界 ──> OOUX实体基数 ──> 落盘 surface-maps/m1.md   │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│ 【第二钻：解空间与神经机械钻 (Micro Craft Diamond)】                              │
+│  Phase 3: Develop (方案发散) ──> Gear-Chain 3: 感官能量传动链                    │
+│    具象色彩提案 ──> 16阶物理标高算法 ──> 风格五轴定量 ──> 认知借贷收支账本         │
+│    ──> 落盘 foundation/f1.md 与 tokens.css / t1.json / t1.md                     │
+│  Phase 4: Deliver (终局收敛) ──> Gear-Chain 4: 神经机械传动链                    │
+│    动词生命周期 ──> 决定性交换三帧 ──> 双通道人机工效 ──> 破坏性应力终局          │
+│    ──> 落盘 slices/<slice>/c1.md 与 specs/<slice>/r1.md ──> 门禁签字直通 Stage 2 │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Phase 1: Discover (深度发散 · 业务本体传动链 / Ontology Chain)**:
+  - **破局反转门 (Divergence Gate / 4 Inversions)**: 拒绝平庸惯性思维，深挖业务深水区的内在张力矛盾（如：极致吞吐 vs 误触高危；新手极简 vs 资深极速）。
+  - **四大基准定位 (4 Baselines Selection)**:
+    - `Baseline 1: Dense Data & Engineering Workbench` (Observability, telemetry, trading)
+    - `Baseline 2: Modern SaaS & Commerce` (Collaboration, project management, commerce)
     - `Baseline 3: Editorial & Focused Reading` (Documentation, knowledge bases, long-form reading)
-    - `Baseline 4: Consumer & Mobile Touch-First` (Consumer lifestyle, touch-first social, creative/playful utilities)
-  - **Reality Benchmark Anchors (现实世界双地锚)**:
-    - B-End/Pro systems: Cite 2 concrete reference products (e.g. Linear, Datadog, Figma, Bloomberg) ensuring interaction conventions stay grounded.
-    - C-End/Consumer systems: Cite 2 consumer apps (e.g. Apple Notes, Airbnb, Duolingo) OR concrete physical lifeworld artifacts (e.g. paper notebook, dial knob, vinyl record, measuring tape) rooted in common human somatic habits. No invented alien physics.
-- **OOUX Entity Integrity & Domain Verisimilitude (业务本体纯净与领域真实信度)**:
-  - Core entities (Objects) and operations (Verbs) must strictly use genuine domain terminology in plain language (e.g. `Task`, `Pipeline`, `Cart`, `Checkout`).
-  - **Domain Verisimilitude (专业信度优于防守禁令)**: Rather than retreating into juvenile or trivial layouts out of fear of rules, the primary test is professional authenticity. An experienced domain practitioner (SRE engineer, trader, or mobile user) must perceive the interface as a credible, deeply-considered production environment or lifeworld tool, not a junior student's static mock.
-  - Metaphors are qualitative lenses for texture, motion, and spatial hierarchy, NOT entity disguises.
-- **Business Tension Reframing**: Explicitly declare the central contradiction (e.g. Extreme Developer Density vs Instant Novice Clarity).
-- **Ruthless Omission with Architectural Depth (留白而不阉割核心机制)**:
-  - Author an explicit list of at least 3 capabilities, surfaces, or decorative widgets that are *deliberately excluded or deferred* to protect focus.
-  - **Anti-Shallowness Rule**: Pruning decorative noise (e.g. gratuitous full-screen particles, random glowing orbs) must never become an excuse to strip away core domain depth (e.g. realistic non-linear DAG branching, fan-out/fan-in, telemetry baselines, and status cascades).
-- **Cognitive Budgeting & Energy Return (认知借贷与能量溢价，取代僵化配额)**:
-  - Reject arbitrary percentage quotas (e.g. rigid 90%/10% splits) that produce sterile, lifeless pages.
-  - Design expressiveness, micro-dynamics, and visual craft are welcomed across any surface **when their return on cognitive energy is positive**: delivering immediate situational awareness, spatial orientation, or tactile control confidence that far outweighs the learning effort.
-  - Critical pathways (standard navigation, forms, search, exit branches) remain grounded in intuitive lifeworld or industry patterns with zero friction.
-- **5-Dial Style Register & Vague-Word Firewall (风格五轴寄存器与模糊词防火墙)**:
-  - Classify the target visual and emotional tone across five observable dials backed by evidence:
-    - `Energy`: quiet ↔ loud (saturation budget, rhythmic pulse; *quiet* is submarine sonar stillness—calm deep background with sharp surgical signals, NOT brain-dead static silence)
-    - `Finish`: raw ↔ polished (edge sharpness, alignment strictness)
-    - `Density`: sparse ↔ dense (whitespace rhythm, layering discipline; *dense* is precision aeronautical charting—high signal-to-noise ratio, NOT cramped typography)
-    - `Weight`: light ↔ heavy (font weight scale, shadow depth)
-    - `Seriousness`: playful ↔ solemn (radii scale, motion amplitude)
-  - **Firewall rule**: Vague mood adjectives (*高级感, 精致, 大气, 克制, premium, elegant, sophisticated*) are strictly banned as justifications. Every design impulse must translate into concrete token values, spacing scales, contrast ratios, and kinetic durations.
-- **OOUX Cardinality-to-Layout Anchor (`ia-interaction.md:8`)**: Define spatial container necessity from primary entity relationships before drawing layouts:
-  - `1 : 1` → Focused Document, Inspection Canvas, or Dedicated Cockpit Console.
-  - `1 : N` → Master-Detail, Interactive Table, or Faceted Feed with high-speed scanning.
-  - `N : M` → Node-Link Canvas, Multi-Column Board, or Relational Split View.
-- **Material Honesty & Non-transfer Boundaries (`visual-craft.md:52`)**:
-  - Respect the digital medium. Eliminate faux-skeuomorphic textures, fake metallic grain, or simulated physical noise that merely masquerades as craft.
-  - For every physical or conceptual metaphor, explicitly declare its **non-transfer boundary**: which physical traits transfer (e.g. detent resistance, spatial damping) and which are strictly forbidden (e.g. decorative skeuomorphic chrome).
-- **Aesthetic Direction Candidate Set & Chromatic Pairing Gate (多维审美方案与色彩配方候选提案门禁)**:
-  - Before writing tokens or specifications, the Coordinator MUST formulate and present **2 to 3 materially distinct, high-tension design directions** to the user via `AskUserQuestion`.
-  - To prevent abstract vagueness, each direction MUST explicitly pair:
-    1. *Modern Benchmark Anchor*: A concrete reference system (e.g. Teenage Engineering machined hardware, Linear dark zinc workspace, Apple Pro slate, Analog avionics telemetry).
-    2. *Exact Chromatic Palette Composition*: Explicit hex values for `--accent-primary` (e.g. `#d6f56b` Acid Lime / `#5e6ad2` Cobalt / `#ff9800` Safety Amber), `--bg-void` (e.g. `#080b0b` Warm Graphite / `#08090c` Deep Zinc / `#0d0e10` Slate Titanium), and secondary tones.
-    3. *Spatial & Kinetic Tonality*: Density rhythm (4px vs 8px), radius philosophy (sharp 0-4px vs smooth 8-12px), and transition detents.
-    4. *Core Trade-off*: What this direction maximally amplifies (e.g. cognitive throughput, situational calm) vs what it deliberately omits.
-  - The user's selection or customized palette is recorded directly in `prototype/discussion.md`, where `compile_tokens.py` dynamically extracts the authored colors and mathematically derives the complete 16-token elevation tree.
-- **Gate**: Must obtain explicit user confirmation via `AskUserQuestion` before proceeding.
+    - `Baseline 4: Consumer & Mobile Touch-First` (Consumer lifestyle, touch utilities)
+  - **三大克制舍弃清单 (3 Ruthless Omissions)**: 建立非目标防火墙，斩断无效复杂度（如：禁营销横幅、禁弹窗套娃、禁假拟物粒子）。
+  - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/product.md`。
+
+- **Phase 2: Define (精准收敛 · 空间拓扑与物理传动链 / Physicality & Topology Chain)**:
+  - **现实世界双地锚 (Reality Benchmark Anchors / Reference Benchmarks)**: 选定 2 个高说服力工业级对标（如 Linear 的键盘心流 + Teenage Engineering 机械旋钮）或具象生活物理载体，拒绝凭空臆造。
+  - **材质不可跨界定律 (Material Non-transfer Boundaries)**: 严密界定物理隐喻的 non-transfer boundary 迁移边界（触感阻尼与回弹可迁移；假反光与漂浮阴影严禁跨界）。
+  - **OOUX Cardinality-to-Layout Anchor (实体基数空间映射)**:
+    - `1 : 1` → 集中式控制台 (Focused Cockpit) 或深度检查器；
+    - `1 : N` → 主从分栏 (Master-Detail) 或高密筛选矩阵；
+    - `N : M` → 节点画布 (Node-Link Canvas) 或关系分屏。
+  - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/surface-maps/m1.md`。
+
+- **Phase 3: Develop (方案发散 · 感官能量传动链 / Energy & Chromatics Chain)**:
+  - **具象视觉张力与色彩配方候选集 (Multi-Direction Aesthetic Proposals)**:
+    - 绝不用“高级”、“沉稳”等抽象虚词，设立 5-Dial Style Register 与 Vague-Word Firewall，直接产出 2-3 套包含确切 Hex 色板（`--accent-primary`, `--bg-void`）、5-Dial 五轴刻度与取舍说明的具象提案。
+  - **动态色彩推导引擎 (LLM Dynamic Chromatics)**: 用户选定配方后，`compile_tokens.py` 通过亮度阶差自动推导 16 阶物理标高矩阵（`bg_surface`, `border_dim`, `accent_subtle`）。
+  - **认知借贷收支账本 (Cognitive Budgeting Ledger)**:
+    - 划定「零借贷低熵基座」（常规导航与表格，0 学习成本，0 扰动动画）与「高产出借贷特区」（核心操作区，允许微动效、sparklines 与阻尼脉冲），并确立 180ms 状态沉降机制。
+  - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/foundation/f1.md` 与 `prototype/shared/tokens.css` (`t1.json`, `t1.md`)。
+
+- **Phase 4: Deliver (终局收敛 · 神经机械传动链 / Mechanics & Stress Chain)**:
+  - **动词生命周期 (Action Verb Lifecycle)**: 确立业务动词的「意图触发 (Trigger) $\to$ 上下文 (Context) $\to$ 决定性提交 (Commit) $\to$ 状态沉降 (Feedback)」语义闭环。
+  - **决定性交换三帧推演 (Decisive Exchange 3-Frame Inspection)**:
+    - Frame 1 (Intent): 悬停或快捷键激活，抽屉平滑滑入；
+    - Frame 2 (Detent): 交互产生 `:active scale(0.97)` 机械阻尼，防止重复触发；
+    - Frame 3 (Settled): 数据状态切换，指示器在 180ms 内恢复基座平静。
+  - **双通道人机工效 (Dual-Channel Ergonomics)**: 键盘指令（`Space`, `Esc`, `J`/`K`）与可视化界面控件建立强映射。
+  - **破坏性应力极限 (The Break Protocol Checkpoints)**: 注入长字符截断、0 状态/1000 状态与视口折叠极限检查。
+  - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/slices/<slice_id>/c1.md` 与 `prototype/specifications/<slice_id>/r1.md`。6 柱契约凝固，直通 Stage 2。
 
 ### Stage 2: Core Hero Anchor Prototyping via Lean Builder (立 - 骨肉：四大基准样板分型物化)
 - **Baseline-Aware Anchor Typologies (四类产品基准样板分型物化)**:

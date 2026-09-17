@@ -12,7 +12,11 @@ from typing import Any, List
 
 
 def extract_section_by_patterns(text: str, patterns: list[str]) -> str:
-    """Extract markdown section under headings matching any of the regex patterns."""
+    """Extract markdown field or section matching any of the regex patterns."""
+    for pat in patterns:
+        m_field = re.search(rf"^[-*+]?\s*(?:{pat})\s*[:=]\s*([^\n]+)", text, re.MULTILINE | re.IGNORECASE)
+        if m_field and m_field.group(1).strip():
+            return m_field.group(1).strip()
     for pat in patterns:
         m = re.search(rf"^##+[^\n]*?(?:{pat})[^\n]*\n(.*?)(?=\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
         if m and m.group(1).strip():
@@ -162,14 +166,38 @@ def extract_material_invariants(disc_text: str, prod_text: str) -> list[str]:
     ]
 
 
-def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str]:
+def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "all") -> dict[str, str]:
     disc_path = root / "prototype/discussion.md"
     prod_path = root / "prototype/product.md"
     if not disc_path.is_file():
         raise FileNotFoundError(f"Missing mandatory entry index: {disc_path}")
-    if not prod_path.is_file():
-        raise FileNotFoundError(f"Missing product intent file: {prod_path}")
-    disc_text, prod_text = disc_path.read_text(encoding="utf-8"), prod_path.read_text(encoding="utf-8")
+    disc_text = disc_path.read_text(encoding="utf-8")
+
+    created: dict[str, str] = {}
+
+    # Support Phase 1 synthesis of product.md if missing or requested
+    if not prod_path.is_file() or (force and phase.lower() in ("1", "product")):
+        p_title = extract_section_by_patterns(disc_text, ["Product Title", "Product", "产品名称", "产品"]) or slice_id.replace("-", " ").title()
+        p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or "Baseline 1: Dense Data & Engineering Workbench"
+        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or "Linear, Datadog"
+        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or "Instant Operational Throughput vs Zero-Mistake Safety"
+        omissions = extract_ruthless_omissions(disc_text, "")
+        omissions_md = "\n".join(f"- {o}" for o in omissions)
+        prod_content = f"""# Product Thesis: {p_title}
+
+- Dominant Baseline: {p_baseline}
+- Reality Anchors: {p_anchors}
+- Core Tension: {p_tension}
+- Status: candidate
+
+## 3 Ruthless Omissions (克制舍弃清单)
+{omissions_md}
+"""
+        prod_path.parent.mkdir(parents=True, exist_ok=True)
+        prod_path.write_text(prod_content, encoding="utf-8")
+        created["product"] = str(prod_path)
+
+    prod_text = prod_path.read_text(encoding="utf-8")
     product_title = next((line.lstrip("# ").strip() for line in prod_text.splitlines() if line.startswith("#")), "Product")
     tension = extract_section_by_patterns(prod_text, ["Core Tension", "Tension", "张力", "冲突"]) or \
               extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or \
@@ -183,8 +211,23 @@ def materialize(root: Path, slice_id: str, force: bool = False) -> dict[str, str
         "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
         "specification": root / f"prototype/specifications/{slice_id}/r1.md",
     }
-    created: dict[str, str] = {}
+
+    phase_map = {
+        "1": ["product"],
+        "product": ["product"],
+        "2": ["surface_map"],
+        "surface_map": ["surface_map"],
+        "3": ["foundation"],
+        "foundation": ["foundation"],
+        "4": ["slice_contract", "specification"],
+        "slice": ["slice_contract", "specification"],
+        "all": ["product", "surface_map", "foundation", "slice_contract", "specification"],
+    }
+    active_keys = set(phase_map.get(phase.lower(), phase_map["all"]))
+
     for key, path in targets.items():
+        if key not in active_keys:
+            continue
         if path.is_file() and not force:
             continue
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -314,9 +357,10 @@ def main() -> None:
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--slice", default="console")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--phase", default="all", help="Diamond Phase to materialize: 1 (product), 2 (surface_map), 3 (foundation), 4 (slice), or all")
     args = parser.parse_args()
     try:
-        print(json.dumps({"status": "ok", "slice_id": args.slice, "materialized": materialize(args.root.resolve(), args.slice, args.force)}, indent=2))
+        print(json.dumps({"status": "ok", "slice_id": args.slice, "phase": args.phase, "materialized": materialize(args.root.resolve(), args.slice, args.force, args.phase)}, indent=2))
     except Exception as exc:
         print(json.dumps({"status": "error", "error": str(exc)}), file=sys.stderr)
         raise SystemExit(1)

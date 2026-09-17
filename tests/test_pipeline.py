@@ -948,6 +948,52 @@ def test_operationalized_design_techniques_across_stages(tmp_path: Path):
     assert verify_mod.assert_quality(str(direct_html), str(tokens_css), contract_path=str(r1_path)) is True
 
 
+def test_phased_double_diamond_contract_materialization(tmp_path: Path):
+    """Verify phased Double-Diamond contract materialization (Phase 1 -> 2 -> 3 -> 4)."""
+    mat_mod = _load("materialize_contracts", "materialize_contracts.py")
+
+    proto = tmp_path / "prototype"
+    proto.mkdir(parents=True, exist_ok=True)
+    (proto / "discussion.md").write_text("""# Discussion
+- Product: Audio DSP Cockpit
+- Baseline: Baseline 1: Dense Data & Engineering Workbench
+- Reality Anchors: Teenage Engineering, Ableton
+- Tension: Tactile Immediacy vs Algorithmic Precision
+- palette: warm-graphite-lime
+## 3 Ruthless Omissions
+1. Zero generic marketing cards
+2. Zero nested modal inception
+3. Zero decorative particle physics
+""", encoding="utf-8")
+
+    # Phase 1: Materializes product.md only
+    res_p1 = mat_mod.materialize(tmp_path, "dsp-slice", phase="1")
+    assert "product" in res_p1
+    assert (proto / "product.md").is_file()
+    assert "Audio DSP Cockpit" in (proto / "product.md").read_text(encoding="utf-8")
+    assert not (proto / "contracts/surface-maps/m1.md").is_file()
+
+    # Phase 2: Materializes surface_map m1.md only
+    res_p2 = mat_mod.materialize(tmp_path, "dsp-slice", phase="2")
+    assert "surface_map" in res_p2
+    assert (proto / "contracts/surface-maps/m1.md").is_file()
+    assert not (proto / "contracts/foundation/f1.md").is_file()
+
+    # Phase 3: Materializes foundation f1.md only
+    res_p3 = mat_mod.materialize(tmp_path, "dsp-slice", phase="3")
+    assert "foundation" in res_p3
+    assert (proto / "contracts/foundation/f1.md").is_file()
+    assert not (proto / "contracts/slices/dsp-slice/c1.md").is_file()
+
+    # Phase 4: Materializes slice_contract c1.md & specification r1.md
+    res_p4 = mat_mod.materialize(tmp_path, "dsp-slice", phase="4")
+    assert "slice_contract" in res_p4
+    assert "specification" in res_p4
+    assert (proto / "contracts/slices/dsp-slice/c1.md").is_file()
+    assert (proto / "specifications/dsp-slice/r1.md").is_file()
+
+
+
 
 
 

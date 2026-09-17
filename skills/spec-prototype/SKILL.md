@@ -55,18 +55,13 @@ Evidence lens labels retained for lineage review: **Archetype A: Greenfield 0-to
 Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
 
 ```text
-[Stage 1: 破 - Tone & Tension Divergence & Spec Formulation]
-  │  Gated: AskUserQuestion (Tension reframing, 4 Baselines & Reality Benchmark Anchors, OOUX Anti-Contamination, Hard Cognitive Ledger, 5 Dials register, Vague-Word Firewall)
-  │  Multi-Direction Aesthetic Proposal: Present 2-3 materially distinct design directions pairing concrete product anchors (e.g. Teenage Engineering, Linear, Apple Pro) with explicit chromatic palettes (exact hex swatches) and trade-offs.
-  │  Automated Spec Materialization: python3 skills/spec-prototype/scripts/materialize_contracts.py --slice <slice_id>
-  │  Formal Spec Outputs (when durable contract requested):
-  │    1. prototype/product.md (Product thesis, JTBD & Reality Benchmark Anchors)
-  │    2. prototype/contracts/surface-maps/m1.md (OOUX Entities, Cardinality & Surface Topology)
-  │    3. prototype/contracts/foundation/f1.md (Design Proposition, Reality Mapping, Signature Craft, Atmospheric Calibration)
-  │    4. prototype/contracts/tokens/t1.json & t1.md & shared/tokens.css (W3C DTCG tokens, Markdown spec & physical stylesheet compiled via compile_tokens.py)
-  │    5. prototype/contracts/slices/<slice_id>/c1.md (Slice Contract: state machines & action verb lifecycle)
-  │    6. prototype/specifications/<slice_id>/r1.md (Prototype Spec: layout wireframe, component constraints & verifiable assertions)
-  │  Gate Rule: assemble_envelope.py verifies scope. ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; exploration uses direction briefs).
+[Stage 1: 破 - Tone & Tension Divergence & Spec Formulation (双钻四阶共创工法)]
+  │  Co-Authored Invariant: ZERO black-box contract guessing. Must progress through 4 interlocking Diamond Phases:
+  │  Phase 1 (Discover · Ontology): Tension Reframing + 4 Baselines + 3 Ruthless Omissions ──> AskUserQuestion ──> prototype/product.md
+  │  Phase 2 (Define · Physicality & Topology): Reality Anchors + Material Non-Transfer + OOUX Cardinality ──> AskUserQuestion ──> surface-maps/m1.md
+  │  Phase 3 (Develop · Energy & Chromatics): Multi-Direction Aesthetic Proposals + Dynamic 16-Elevation Tokens + 5 Dials + Cognitive Ledger ──> AskUserQuestion ──> foundation/f1.md & tokens.css (t1.json, t1.md via compile_tokens.py)
+  │  Phase 4 (Deliver · Mechanics & Stress): Action Verb Lifecycle + Decisive 3-Frame + Dual-Channel + Break Protocol ──> AskUserQuestion ──> c1.md & r1.md (via materialize_contracts.py)
+  │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; exploration uses direction briefs).
   ▼
 [Stage 2: 立 - Core Hero Anchor Prototyping via Lean Pre-baked Envelope]
   │  Gated: AskUserQuestion (Single Hero Anchor ONLY, Headless Chrome authentic rendering, Concentric Radii, Tabular Numbers, tokens.css, NO secondary pages until approved)
