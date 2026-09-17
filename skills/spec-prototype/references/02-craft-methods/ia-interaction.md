@@ -132,9 +132,9 @@ mobile transformation and implementation feasibility. Fewer clicks or greater
 novelty alone is not a benefit; name the expected improvement and an observation
 that could refute it.
 
-Use [data and task design](design-methods/data-information.md#design-information-for-decisions-and-repeated-work)
-for comparison/search/filter/batch work, [interaction craft](design-methods/interaction-power.md#develop-an-interaction-model-around-the-users-judgment)
-for operation-model choices, and [inclusive adaptation](design-methods/resilience-trust.md#adapt-the-task-to-people-input-and-language)
+Use [data and task design](data-information.md#design-information-for-decisions-and-repeated-work)
+for comparison/search/filter/batch work, [interaction craft](interaction-power.md#develop-an-interaction-model-around-the-users-judgment)
+for operation-model choices, and [inclusive adaptation](resilience-trust.md#adapt-the-task-to-people-input-and-language)
 for device, input, language and accessibility transformations. Check component
 feasibility with [component implementation](component-implementation.md) before
 freezing a design that depends on a particular primitive.
@@ -165,7 +165,7 @@ at decision time, role/authority boundaries are explicit, and no unresolved
 structural prerequisite forces Builder invention. Low-risk reversible details may
 remain delegated.
 
-Record the result in [the Surface Map](../templates/surface-map.md). Retain a map
+Record the result in [the Surface Map](../../templates/surface-map.md). Retain a map
 snapshot before candidate compilation. A Walking Skeleton may cover one or many
 surfaces according to the task; it is a validation batch, not a page quota. Whole-
 product delivery still accounts for every promised surface and journey.

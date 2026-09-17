@@ -291,7 +291,7 @@ alternative, not only deleting what triggered a warning.
 
 Impeccable's critique/audit and targeted operations inform these interventions;
 invoking a command is optional, while an evidence-backed diagnosis is required.
-Read [external evaluation](../external-evaluation.md) when numerical assessment
+Read [external evaluation](resilience-trust.md) when numerical assessment
 is requested. Keep expert judgment separate from detector findings. A low-level
 scan can reveal drift but cannot establish emotional fit or visual authorship.
 

@@ -42,7 +42,7 @@ Stop when the current recommendation and meaningful alternatives have enough evi
 ## Expression and interaction research
 
 When local design knowledge can resolve a component, platform or pattern gap,
-use [targeted retrieval](design-methods/interaction-power.md#retrieve-knowledge-to-resolve-a-concrete-design-question), including optional
+use [targeted retrieval](../02-craft-methods/interaction-power.md#retrieve-knowledge-to-resolve-a-concrete-design-question), including optional
 UI UX Pro Max. It supplies evidence for the current decision, not a second
 Foundation or token authority.
 

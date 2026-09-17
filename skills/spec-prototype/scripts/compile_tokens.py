@@ -41,9 +41,9 @@ DARK_ATMOSPHERES = {
         "text_primary": "#e6edf3",
         "text_secondary": "#8b949e",
         "text_tertiary": "#484f58",
-        "accent_primary": "#38bdf8",
-        "accent_subtle": "rgba(56, 189, 248, 0.12)",
-        "accent_hover": "#7dd3fc",
+        "accent_primary": "#00f0ff",
+        "accent_subtle": "rgba(0, 240, 255, 0.12)",
+        "accent_hover": "#38bdf8",
         "status_running": "#22c55e",
         "status_warning": "#eab308",
         "status_danger": "#ef4444",
@@ -253,48 +253,137 @@ def generate_css(tokens: Dict[str, Any]) -> str:
 
 
 def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
-    """Render W3C DTCG-compliant JSON token specification."""
+    """Render W3C DTCG-compliant JSON token specification.
+
+    Produces clean, unnested DTCG groups compatible with export-tokens.py
+    and downstream engineering consumption.
+    """
     c = tokens["colors"]
     s = tokens["space"]
     r = tokens["radii"]
+    f = tokens["fonts"]
+
+    color_tokens: Dict[str, Any] = {
+        "primary": {"$value": c["accent_primary"], "$type": "color", "$description": "Primary action and key interactive state"},
+        "primary-hover": {"$value": c["accent_hover"], "$type": "color", "$description": "Hover state of primary"},
+        "surface": {"$value": c["bg_surface"], "$type": "color", "$description": "Card, panel, and workbench base surface"},
+        "surface-raised": {"$value": c["bg_surface_raised"], "$type": "color", "$description": "Elevated modal, sheet, or popover"},
+        "surface-overlay": {"$value": c["bg_overlay"], "$type": "color", "$description": "Top-tier fly-by-wire controls and overlay"},
+        "border": {"$value": c["border_subtle"], "$type": "color", "$description": "Default component boundary"},
+        "border-strong": {"$value": c["border_bright"], "$type": "color", "$description": "Active or emphasized component boundary"},
+        "border-dim": {"$value": c["border_dim"], "$type": "color", "$description": "Subtle hairline divider"},
+        "text-primary": {"$value": c["text_primary"], "$type": "color", "$description": "Primary high-contrast typography"},
+        "text-secondary": {"$value": c["text_secondary"], "$type": "color", "$description": "Supplementary metadata and labels"},
+        "text-tertiary": {"$value": c["text_tertiary"], "$type": "color", "$description": "De-emphasized or disabled controls and copy"},
+        "status-running": {"$value": c["status_running"], "$type": "color", "$description": "Nominal operational state"},
+        "status-warning": {"$value": c["status_warning"], "$type": "color", "$description": "Warning state or capacity threshold"},
+        "status-danger": {"$value": c["status_danger"], "$type": "color", "$description": "Critical failure or thermal alert"},
+        "bg-void": {"$value": c["bg_void"], "$type": "color", "$description": "Deepest atmospheric background"},
+        "bg-base": {"$value": c["bg_base"], "$type": "color", "$description": "App foundation background chassis"},
+    }
+
+    spacing_tokens: Dict[str, Any] = {
+        str(k): {"$value": v, "$type": "dimension", "$description": f"Spacing unit {k}"}
+        for k, v in sorted(s.items())
+    }
+
+    radius_tokens: Dict[str, Any] = {
+        "outer": {"$value": r["outer"], "$type": "dimension", "$description": "Outer container boundary"},
+        "inner": {"$value": r["inner"], "$type": "dimension", "$description": "Concentric inner child boundary"},
+        "card": {"$value": r["card"], "$type": "dimension", "$description": "Card entity radius"},
+        "btn": {"$value": r["btn"], "$type": "dimension", "$description": "Interactive control radius"},
+        "pill": {"$value": r["pill"], "$type": "dimension", "$description": "Status badge pill radius"},
+    }
+
+    typography_tokens: Dict[str, Any] = {
+        "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family"},
+        "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Telemetry and code font family"},
+    }
+
     return {
         "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
         "$description": "Machine-compiled from spec-prototype 5-dial state machine.",
-        "color": {
-            "background": {
-                "void": {"$value": c["bg_void"], "$type": "color"},
-                "base": {"$value": c["bg_base"], "$type": "color"},
-                "surface": {"$value": c["bg_surface"], "$type": "color"},
-                "surfaceRaised": {"$value": c["bg_surface_raised"], "$type": "color"},
-            },
-            "border": {
-                "dim": {"$value": c["border_dim"], "$type": "color"},
-                "subtle": {"$value": c["border_subtle"], "$type": "color"},
-                "bright": {"$value": c["border_bright"], "$type": "color"},
-            },
-            "accent": {
-                "primary": {"$value": c["accent_primary"], "$type": "color"},
-                "subtle": {"$value": c["accent_subtle"], "$type": "color"},
-            },
-            "status": {
-                "running": {"$value": c["status_running"], "$type": "color"},
-                "warning": {"$value": c["status_warning"], "$type": "color"},
-                "danger": {"$value": c["status_danger"], "$type": "color"},
-            }
-        },
-        "dimension": {
-            "spacing": {str(k): {"$value": v, "$type": "dimension"} for k, v in s.items()},
-            "radius": {
-                "outer": {"$value": r["outer"], "$type": "dimension"},
-                "inner": {"$value": r["inner"], "$type": "dimension"},
-                "card": {"$value": r["card"], "$type": "dimension"},
-                "btn": {"$value": r["btn"], "$type": "dimension"},
-            }
-        }
+        "color": color_tokens,
+        "spacing": spacing_tokens,
+        "radius": radius_tokens,
+        "typography": typography_tokens,
     }
 
 
-def compile_tokens(discussion_path: str, output_css_path: str, output_json_path: str | None = None) -> None:
+def generate_markdown(tokens: Dict[str, Any], foundation_rev: str = "f1", tokens_rev: str = "t1") -> str:
+    """Render canonical Markdown token contract matching handoff.py and export-tokens.py specifications."""
+    c = tokens["colors"]
+    s = tokens["space"]
+    r = tokens["radii"]
+    f = tokens["fonts"]
+
+    lines = [
+        "# Design Tokens",
+        "",
+        "## Identity",
+        f"- Foundation revision: {foundation_rev}",
+        f"- Tokens revision: {tokens_rev}",
+        "- Status: frozen",
+        "- Generated at: machine-compiled from 5-dials",
+        "",
+        "## Breakpoints",
+        "| Token | Value | Usage |",
+        "|---|---|---|",
+        "| `--bp-mobile` | 390px | Mobile viewport breakpoint |",
+        "| `--bp-tablet` | 768px | Tablet viewport breakpoint |",
+        "| `--bp-desktop` | 1280px | Desktop workbench default |",
+        "",
+        "## Color",
+        "| Token | Value | Usage |",
+        "|---|---|---|",
+        f"| `--color-bg-void` | {c['bg_void']} | Deepest atmospheric void |",
+        f"| `--color-bg-base` | {c['bg_base']} | App foundation background |",
+        f"| `--color-bg-surface` | {c['bg_surface']} | Card and workbench panel surface |",
+        f"| `--color-bg-surface-raised` | {c['bg_surface_raised']} | Elevated dropdown / popover |",
+        f"| `--color-border-dim` | {c['border_dim']} | Subtle dividing border |",
+        f"| `--color-border-subtle` | {c['border_subtle']} | Standard component boundary |",
+        f"| `--color-border-bright` | {c['border_bright']} | Focused or active boundary |",
+        f"| `--color-text-primary` | {c['text_primary']} | Primary high-contrast typography |",
+        f"| `--color-text-secondary` | {c['text_secondary']} | Secondary context / telemetry label |",
+        f"| `--color-accent-primary` | {c['accent_primary']} | Signature interactive accent |",
+        f"| `--color-status-running` | {c['status_running']} | Active operational state |",
+        f"| `--color-status-warning` | {c['status_warning']} | Warning / capacity threshold |",
+        f"| `--color-status-danger` | {c['status_danger']} | Critical failure / thermal error |",
+        "",
+        "## Spacing",
+        "| Token | Value | Usage |",
+        "|---|---|---|",
+    ]
+    for k, v in sorted(s.items()):
+        lines.append(f"| `--space-{k}` | {v} | Spacing unit {k} |")
+
+    lines.extend([
+        "",
+        "## Radius",
+        "| Token | Value | Usage |",
+        "|---|---|---|",
+        f"| `--radius-outer` | {r['outer']} | Outer container boundary |",
+        f"| `--radius-inner` | {r['inner']} | Concentric inner child boundary |",
+        f"| `--radius-card` | {r['card']} | Card entity radius |",
+        f"| `--radius-btn` | {r['btn']} | Interactive control radius |",
+        f"| `--radius-pill` | {r['pill']} | Status badge pill radius |",
+        "",
+        "## Typography",
+        "| Token | Value | Usage |",
+        "|---|---|---|",
+        f"| `--font-sans` | {f['sans']} | Primary UI font family |",
+        f"| `--font-mono` | {f['mono']} | Telemetry and code font family |",
+        "",
+    ])
+    return "\n".join(lines)
+
+
+def compile_tokens(
+    discussion_path: str,
+    output_css_path: str,
+    output_json_path: str | None = None,
+    output_md_path: str | None = None,
+) -> None:
     disc_p = Path(discussion_path)
     disc_text = disc_p.read_text(encoding="utf-8") if disc_p.is_file() else ""
     dials = parse_5dials(disc_text)
@@ -324,15 +413,23 @@ def compile_tokens(discussion_path: str, output_css_path: str, output_json_path:
         out_json.write_text(json.dumps(dtcg_data, indent=2), encoding="utf-8")
         print(f"[TOKEN COMPILER] Successfully compiled DTCG JSON to {out_json}")
 
+    if output_md_path:
+        out_md = Path(output_md_path)
+        out_md.parent.mkdir(parents=True, exist_ok=True)
+        md_content = generate_markdown(computed)
+        out_md.write_text(md_content, encoding="utf-8")
+        print(f"[TOKEN COMPILER] Successfully compiled Token Markdown contract to {out_md}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Compile DTCG tokens from Stage 1 5-dial state machine.")
     parser.add_argument("--discussion", default="prototype/discussion.md", help="Path to discussion.md")
     parser.add_argument("--output-css", default="prototype/shared/tokens.css", help="Target CSS file")
-    parser.add_argument("--output-json", default=None, help="Target DTCG JSON file")
+    parser.add_argument("--output-json", default="prototype/contracts/tokens/t1.json", help="Target DTCG JSON file")
+    parser.add_argument("--output-md", default="prototype/contracts/tokens/t1.md", help="Target Markdown contract file")
     args = parser.parse_args()
 
-    compile_tokens(args.discussion, args.output_css, args.output_json)
+    compile_tokens(args.discussion, args.output_css, args.output_json, args.output_md)
 
 
 if __name__ == "__main__":

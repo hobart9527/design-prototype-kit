@@ -7,9 +7,9 @@ This reference is also the **canonical owner of detailed recovery focus-continui
 ## Map before composing
 
 For product-specific component composition and consequential states, read the
-[component recipe method](design-methods/interaction-power.md#component-recipes-that-preserve-the-design). When selecting
+[component recipe method](interaction-power.md#component-recipes-that-preserve-the-design). When selecting
 icons, images/entry composition or meaningful motion, read only the relevant
-reference in the [method library](design-methods.md). Apply retained decisions;
+reference in the [method library](../01-foundations/design-methods.md). Apply retained decisions;
 these methods do not authorize a new creative direction inside the Builder.
 
 For a design whose feasibility depends on a complex interaction, inspect relevant existing primitives before freezing that decision. Use an authorized bounded prototype to test the critical behavior when needed; a visual direction probe alone cannot validate interaction. Feed limitations and compatible alternatives back into the current discussion. Routine component selection remains delegated implementation work.
@@ -81,7 +81,7 @@ Official reference entry points (check current compatibility when actually adopt
 ## Verify the intended path, not only its endpoint
 
 For operations that can settle after navigation or other work, use the bounded
-[reachable-path method](design-methods/interaction-power.md#derive-reachable-interruption-paths).
+[reachable-path method](interaction-power.md#derive-reachable-interruption-paths).
 Map the Contract's case IDs to actual lifecycle and rendering owners before
 checking them. Retain observed route/identity/phase and visible continuation in
 the evidence; an assertion on a different executed path cannot close the case.

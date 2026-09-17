@@ -260,8 +260,8 @@ Develop the proposition in representative scenes before extracting tokens:
 - Carry the Signature Relationship into a second, contrasting surface or state.
   If it works only in a hero frame, it is decoration rather than a system.
 
-Use [visual craft](design-methods/visual-craft.md), [content and form](design-methods/form-ergonomics.md),
-[interaction craft](design-methods/interaction-power.md) and [trust and critique](design-methods/resilience-trust.md)
+Use [visual craft](../02-craft-methods/visual-craft.md), [content and form](../02-craft-methods/form-ergonomics.md),
+[interaction craft](../02-craft-methods/interaction-power.md) and [trust and critique](../02-craft-methods/resilience-trust.md)
 according to the uncertainty. Their techniques are options to test, never a
 universal house style.
 
@@ -295,7 +295,7 @@ required evidence. Use the dispatch shape defined by the active host adapter. Ma
 uninspected capabilities unknown and fixtures synthetic. A direction probe does
 not require a frozen Foundation, Contract or Specification and creates no approval.
 
-Review the actual result against [the quality bar](quality-bar.md). The Builder
+Review the actual result against [the quality bar](../03-verification/quality-floor.md). The Builder
 role owns bounded implementation repair; a weak proposition or wrong topology
 returns to the design owner. A missing renderer leaves visible claims unverified
 rather than inviting a text-only quality claim.

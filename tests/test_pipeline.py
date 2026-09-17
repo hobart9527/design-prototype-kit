@@ -226,27 +226,53 @@ def test_canonical_5_stage_active_simulation_and_artifact_standards():
     assert "color" in token_data
     assert token_data["color"]["primary"]["$value"] == "#00f0ff"
 
+    # Stage 5 Compiler Direct Verification: compile_tokens.py generates identical DTCG structure
+    compile_mod = _load("compile_tokens", "compile_tokens.py")
+    dials = {"energy": "quiet", "finish": "machined-industrial", "density": "dense", "weight": "dense-tactile", "seriousness": "solemn"}
+    tokens = compile_mod.compute_tokens(dials, "plasma-cyan")
+    generated_dtcg = compile_mod.generate_dtcg_json(tokens)
+    assert "$schema" in generated_dtcg
+    assert "color" in generated_dtcg
+    assert "primary" in generated_dtcg["color"]
+    assert generated_dtcg["color"]["primary"]["$value"].startswith("#")
+    assert "radius" in generated_dtcg
+    assert "outer" in generated_dtcg["radius"]
+    assert "spacing" in generated_dtcg
+
 
 def test_spec_first_contract_formulation_and_lean_envelope(tmp_path: Path):
-    """Verify that Stage 1 Spec-First contracts are strictly required and envelope compiles."""
+    """Verify that Stage 1 6-Pillar Spec-First contracts are strictly required and envelope compiles."""
     assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
+    compile_mod = _load("compile_tokens", "compile_tokens.py")
+    verify_mod = _load("verify_quality", "verify_prototype_quality.py")
 
     # 1. Reject when contract artifacts are missing
     with pytest.raises(ValueError, match="Stage 1 Spec Contract incomplete"):
         assemble_mod.check_spec_completeness(tmp_path, "test_slice")
 
-    # 2. Populate all 5 Stage 1 contract artifacts in tmp_path
+    # 2. Populate all 6 Stage 1 contract pillars in tmp_path
     product = tmp_path / "prototype/product.md"
     product.parent.mkdir(parents=True, exist_ok=True)
     product.write_text("# Product\n- Core Tension: Speed vs Safety\n", encoding="utf-8")
 
-    tokens_css = tmp_path / "prototype/shared/tokens.css"
-    tokens_css.parent.mkdir(parents=True, exist_ok=True)
-    tokens_css.write_text(":root { --radius-outer: 8px; }\n", encoding="utf-8")
-
     smap = tmp_path / "prototype/contracts/surface-maps/m1.md"
     smap.parent.mkdir(parents=True, exist_ok=True)
     smap.write_text("# Surface Map\n- Scope: test\n", encoding="utf-8")
+
+    foundation = tmp_path / "prototype/contracts/foundation/f1.md"
+    foundation.parent.mkdir(parents=True, exist_ok=True)
+    foundation.write_text("# Foundation\n- Foundation revision: f1\n", encoding="utf-8")
+
+    tokens_css = tmp_path / "prototype/shared/tokens.css"
+    tokens_css.parent.mkdir(parents=True, exist_ok=True)
+    tokens_css.write_text(":root { --radius-outer: 8px; --radius-inner: 4px; }\n", encoding="utf-8")
+
+    tokens_md = tmp_path / "prototype/contracts/tokens/t1.md"
+    tokens_md.parent.mkdir(parents=True, exist_ok=True)
+    tokens_md.write_text("# Tokens\n- Foundation revision: f1\n- Tokens revision: t1\n## Breakpoints\n| Token | Value |\n|---|---|\n| --bp-mobile | 390px |\n", encoding="utf-8")
+
+    tokens_json = tmp_path / "prototype/contracts/tokens/t1.json"
+    tokens_json.write_text("{}", encoding="utf-8")
 
     slice_c = tmp_path / "prototype/contracts/slices/test_slice/c1.md"
     slice_c.parent.mkdir(parents=True, exist_ok=True)
@@ -269,18 +295,164 @@ def test_spec_first_contract_formulation_and_lean_envelope(tmp_path: Path):
     assert env["target_html_path"] == "prototype/experiments/test_slice/hero-anchor/index.html"
     assert env["design_constraints"]["max_tool_turns"] <= 8
     assert "Key shortcut Space triggers action" in env["verifiable_assertions"]
+    assert env["repository_root"] == str(tmp_path.resolve())
+    assert env["spec_sources"]["foundation_digest"] != ""
+    assert env["spec_sources"]["tokens_md_digest"] != ""
 
-    # 4. Verify builder agent contract specifies Lean Pre-baked Envelope Protocol
+    # 4. Verify execution_boundary permits lean-builder-envelope dispatch without rejection
+    discussion = tmp_path / "prototype/discussion.md"
+    discussion.write_text("- Execution boundary: active\n", encoding="utf-8")
+    event = {
+        "cwd": str(tmp_path),
+        "tool_name": "Agent",
+        "tool_input": {
+            "subagent_type": "spec-prototype-builder",
+            "prompt": json.dumps(env),
+        },
+    }
+    # check() should succeed and not raise ValueError or KeyError
+    boundary.check(event)
+
+    # 5. Verify compile_tokens 3-in-1 synchronization
+    disc_text = """## 5-Dial Style Register\n- Energy: 3\n- Finish: 4\n- Density: 4\n- Weight: 3\n- Seriousness: 4\n"""
+    discussion.write_text(disc_text, encoding="utf-8")
+    out_css = tmp_path / "tokens_gen.css"
+    out_json = tmp_path / "tokens_gen.json"
+    out_md = tmp_path / "tokens_gen.md"
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+    assert out_css.is_file() and "--radius-outer" in out_css.read_text(encoding="utf-8")
+    assert out_json.is_file() and "$schema" in out_json.read_text(encoding="utf-8")
+    assert out_md.is_file() and "## Breakpoints" in out_md.read_text(encoding="utf-8")
+
+    # 6. Verify verify_prototype_quality smart path resolution & quality assertion
+    dummy_html = tmp_path / "test.html"
+    dummy_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens_gen.css"></head><body><button style="border-radius: var(--radius-btn); font-variant-numeric: tabular-nums;">42</button></body></html>""", encoding="utf-8")
+    toy_pass = verify_mod.assert_quality(str(dummy_html), str(out_css), check_stale=False)
+    assert toy_pass is False  # Correctly intercepts toy demo lacking AppState and dual-channel shortcuts
+
+    real_hero = REPO / "prototype/experiments/console/hero-anchor/index.html"
+    if real_hero.is_file():
+        real_pass = verify_mod.assert_quality(str(real_hero), str(out_css), check_stale=False)
+        assert real_pass is True
+
+    # 7. Verify builder agent contract specifies Lean Pre-baked Envelope Protocol
     builder_md = (REPO / "agents/spec-prototype-builder.md").read_text(encoding="utf-8")
     assert "Lean Pre-baked Envelope Protocol" in builder_md
     assert "≤ 8 tool turns" in builder_md or "<= 8 tool turns" in builder_md
     assert "Zero Exploratory Hunting" in builder_md
 
-    # 5. Verify SKILL.md and core-workflow.md declare Spec-First invariant
+    # 8. Verify SKILL.md and core-workflow.md declare Spec-First invariant & 6 pillars
     core_wf = (SKILL / "references/core-workflow.md").read_text(encoding="utf-8")
     assert "No Prototype Code without a Frozen Spec Contract" in core_wf
+    assert "foundation/f1.md" in core_wf
     skill_md = (SKILL / "SKILL.md").read_text(encoding="utf-8")
     assert "ZERO Prototype Code without a complete frozen Spec Contract" in skill_md
+    assert "foundation/f1.md" in skill_md
+
+
+def test_zero_broken_markdown_links_in_skill():
+    """Verify zero broken relative markdown links across the entire spec-prototype skill."""
+    import re
+    broken = []
+    for md in SKILL.rglob("*.md"):
+        content = md.read_text(encoding="utf-8")
+        links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
+        base_dir = md.resolve().parent
+        for title, link in links:
+            if link.startswith("http") or link.startswith("#") or link.startswith("mailto:"):
+                continue
+            link_path = link.split("#")[0]
+            if not link_path:
+                continue
+            target = (base_dir / link_path).resolve()
+            if not target.exists():
+                broken.append((str(md.relative_to(SKILL)), title, link))
+
+    assert broken == [], f"Found broken markdown links: {broken}"
+
+
+def test_seven_high_leverage_design_levers_and_template_slots(tmp_path: Path):
+    """Verify that design-methods.md and all contract templates contain the 7 high-leverage levers."""
+    # 1. Verify design-methods.md has 7 levers and Divergence Gate
+    methods_md = (SKILL / "references/01-foundations/design-methods.md").read_text(encoding="utf-8")
+    assert "Reality Anchors & Tension Triad" in methods_md
+    assert "OOUX Cardinality-to-Layout Mapping" in methods_md
+    assert "Action Verb Lifecycle" in methods_md
+    assert "Zero Naked Metrics & Micro Sparklines" in methods_md
+    assert "Decisive 3-Frame & Context Preservation" in methods_md
+    assert "The Craft Physics Triad" in methods_md
+    assert "The Break Protocol" in methods_md
+    assert "Divergence Gate" in methods_md
+    assert "Axis Inversion" in methods_md
+
+    # 2. Verify product.md template has Reality Benchmark Anchors and Ruthless Omissions
+    product_tmpl = (SKILL / "templates/product.md").read_text(encoding="utf-8")
+    assert "Operational Scene & Consequence" in product_tmpl
+    assert "Reality Benchmark Anchors" in product_tmpl
+    assert "Three Ruthless Omissions" in product_tmpl
+    assert "OOUX Entity Cardinality & Relationships" in product_tmpl
+
+    # 3. Verify experience-foundation.md template has 5-Dial Style Register & Craft Physics Triad
+    foundation_tmpl = (SKILL / "templates/experience-foundation.md").read_text(encoding="utf-8")
+    assert "5-Dial Style Register & Vague-Word Translation" in foundation_tmpl
+    assert "Microscopic Craft Physics Triad" in foundation_tmpl
+    assert "Concentric Radii Formula" in foundation_tmpl
+    assert "OOUX Anti-Contamination & Non-Transfer Boundary" in foundation_tmpl
+
+    # 4. Verify slice-contract.md has Action Verb Lifecycle & Decisive 3-Frame
+    slice_tmpl = (SKILL / "templates/slice-contract.md").read_text(encoding="utf-8")
+    assert "Action Verb Lifecycle Table" in slice_tmpl
+    assert "Decisive Exchange 3-Frame Specification" in slice_tmpl
+    assert "Context Preservation Rules" in slice_tmpl
+
+    # 5. Verify prototype-specification.md has Dual-Channel & Break Protocol
+    spec_tmpl = (SKILL / "templates/prototype-specification.md").read_text(encoding="utf-8")
+    assert "Dual-Channel Ergonomics" in spec_tmpl
+    assert "The Break Protocol Stress Checkpoints" in spec_tmpl
+
+    # 6. Verify assemble_envelope extracts verbs, shortcuts, and break checkpoints
+    assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
+    # Setup mock slice
+    (tmp_path / "prototype").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/product.md").write_text("# Product\n- Core Tension: A vs B\n", encoding="utf-8")
+    (tmp_path / "prototype/shared").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/shared/tokens.css").write_text(":root {}\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/tokens").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/tokens/t1.md").write_text("# Tokens\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/surface-maps").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/surface-maps/m1.md").write_text("# Map\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/foundation").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/foundation/f1.md").write_text("# Foundation\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/slices/slice_a").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/slices/slice_a/c1.md").write_text("""# Contract
+## Action Verb Lifecycle Table
+| Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact / Consequence |
+|---|---|---|---|---|---|
+| isolate_node | Isolate | Isolate Compute Node | Isolate Node | Node isolated | Safety isolation |
+""", encoding="utf-8")
+    (tmp_path / "prototype/specifications/slice_a").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/specifications/slice_a/r1.md").write_text("""# Spec
+- Prototype write scope: `prototype/experiments/slice_a/hero-anchor/`
+- Evidence write scope: `prototype/evidence/probes/slice_a/`
+## Dual-Channel Ergonomics
+| Shortcut Key | Target Action | Scope | Focus Restoration Anchor |
+|---|---|---|---|
+| Space | Run | Selection | trigger |
+## The Break Protocol Stress Checkpoints
+| Reality Breaker | Test Vector | Expected Graceful Behavior | Observed |
+|---|---|---|---|
+| Unbreakable String | 64-char hash | Truncate with tooltip | pass |
+## Verifiable Design Assertions
+| Assertion | Expected |
+|---|---|
+| Key shortcut Space triggers action | pass |
+""", encoding="utf-8")
+
+    env = assemble_mod.assemble(tmp_path, "slice_a")
+    constraints = env["design_constraints"]
+    assert any(v["action_id"] == "isolate_node" for v in constraints["action_verb_lifecycle"])
+    assert "Space" in constraints["dual_channel_shortcuts"]
+    assert any("Unbreakable String" in c for c in constraints["break_protocol_checkpoints"])
 
 
 

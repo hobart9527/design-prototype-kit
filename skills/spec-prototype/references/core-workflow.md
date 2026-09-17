@@ -19,7 +19,7 @@ Why is this engine called `spec-prototype`?
 All design work within this Skill follows the unbroken five-stage delivery state machine:
 
 ```text
- Stage 1 (破): Tone & Tension Divergence ──> Formalize Design Spec: product.md, tokens.json, tokens.css, surface-maps/m1.md, slices/c1.md, specs/r1.md (Gated)
+ Stage 1 (破): Tone & Tension Divergence ──> Formalize 6-Pillar Design Spec: product.md, surface-maps/m1.md, foundation/f1.md, tokens (t1.json/t1.md/tokens.css), slices/c1.md, specs/r1.md (Gated)
  Stage 2 (立): Core Hero Anchor          ──> Dispatch Lean Builder via Pre-baked Envelope: single highest-density screen, <= 8 turns (Gated)
  Stage 3 (拓): Tier-by-Tier Rollout      ──> Discrete batch rollout (Primary, Contextual, Supporting); strict token inheritance
  Stage 4 (验): Holistic Review Portal    ──> review-portal.html walkthrough, 5 experience states, controlled loopback
@@ -27,12 +27,13 @@ All design work within this Skill follows the unbroken five-stage delivery state
 ```
 
 ### Stage 1: Tone & Tension Divergence & Spec Formulation (破 - 魂立约)
-- **Primary Goal**: Transition from raw user intent and design dialogue to a **complete, frozen Design Specification (`spec`)**. Before any HTML/JS code is touched, the following 5 durable contract artifacts MUST be materialized:
+- **Primary Goal**: Transition from raw user intent and design dialogue to a **complete, frozen Design Specification (`spec`)**. Before any HTML/JS code is touched, the following 6 durable contract artifacts MUST be materialized:
   1. `prototype/product.md`: Product thesis, JTBD, user roles, core tension, and reality benchmarks.
-  2. `prototype/contracts/tokens/t1.json` & `prototype/shared/tokens.css`: Formal design tokens generated from the 5-Dial register via `compile_tokens.py`.
-  3. `prototype/contracts/surface-maps/m1.md`: OOUX Entity cardinality and full Surface Topology (Primary, Contextual, Supporting).
-  4. `prototype/contracts/slices/<slice_id>/c1.md`: Slice interaction contract, state machine transitions, and action verb lifecycles.
-  5. `prototype/specifications/<slice_id>/r1.md`: Concrete prototype specification containing verifiable design assertions.
+  2. `prototype/contracts/surface-maps/m1.md`: OOUX Entity cardinality and full Surface Topology (Primary, Contextual, Supporting).
+  3. `prototype/contracts/foundation/f1.md`: Approved Design Proposition, Real-World Mapping, Signature Craft, and Atmospheric Calibration.
+  4. `prototype/contracts/tokens/t1.json`, `t1.md` & `prototype/shared/tokens.css`: Formal design tokens generated from the 5-Dial register via `compile_tokens.py`.
+  5. `prototype/contracts/slices/<slice_id>/c1.md`: Slice interaction contract, state machine transitions, and action verb lifecycles.
+  6. `prototype/specifications/<slice_id>/r1.md`: Concrete prototype specification containing layout wireframes and verifiable design assertions.
 
 - **Domain Spectrum & Reality Benchmark Anchors (四大基准与现实地锚声明)**:
   - **Dominant Baseline Selection**: Explicitly declare the primary operational baseline from `design-language.md:168` (hybrid allowed with secondary flavor):
@@ -254,7 +255,7 @@ or source selection is ambiguous, using `../scripts/resolve-change.mjs`.
 For ongoing design work with file writes authorized, make
 `prototype/discussion.md` the first design write and central entry index (do
 not substitute with `prototype/README.md`), keeping its Resume section current.
-Read [discussion](discussion.md) for cadence, approval, delegation, local
+Read [discussion](04-governance/discussion.md) for cadence, approval, delegation, local
 repair and legal exits. A review/advice-only request remains read-only unless the
 user also asks to retain artifacts. A no-build request ("只讨论", "不制作页面",
 "不做原型") forbids creating runnable HTML/JS/CSS prototypes, but explicitly
@@ -329,7 +330,7 @@ report a passing packet as evidence of craft comprehension.
 
 ### Phase 1: Deep sense-making and concept exploration (魂)
 
-Read [product understanding](product-understanding.md) before the first
+Read [product understanding](01-foundations/product-understanding.md) before the first
 consequential interpretation. Establish a source-supported thesis, actors, jobs,
 outcomes, constraints, scenes and non-goals. Separate enduring product purpose
 from illustrative content and future opportunity. Record the synthesis in
@@ -342,13 +343,13 @@ recommendation with declared counter-arguments and falsification conditions.
 
 Ask about product meaning only when sources leave a consequential conflict. Do
 not make the user repeat information already present or answer a generic persona
-questionnaire. Use [research](research.md) for facts and current external
-evidence; use [experience validation](experience-validation.md) when a user-need,
+questionnaire. Use [research](01-foundations/research.md) for facts and current external
+evidence; use [experience validation](01-foundations/research.md) when a user-need,
 findability or comprehension claim needs empirical evidence.
 
 ### Phase 2: Object cardinality and surface topology calculus (骨)
 
-Read [IA and interaction](ia-interaction.md). Map object cardinality directly to
+Read [IA and interaction](02-craft-methods/ia-interaction.md). Map object cardinality directly to
 structural presentation (1:1 focused canvas, 1:N master-detail/feed, N:M board/graph).
 Establish the three-tier wayfinding system (global orientation, contextual navigation,
 and context preservation across secondary workflows). Walk each in-scope job from
@@ -368,7 +369,7 @@ Operate in the **Exploration Track (Draft Mode)**: artifacts link via semantic p
 without immutable hash deadlocks. Develop content voice, brand, hierarchy, typography, color, imagery/icons,
 component character, feedback and motion as an integrated expression of the
 product—not a final decoration pass. For a new or weak proposition, read
-[design methods](design-methods.md), [design language](design-language.md) and
+[design methods](design-methods.md), [design language](01-foundations/design-language.md) and
 the relevant craft reference only. Before recommending a consequential
 direction, apply [the quality bar](quality-bar.md).
 
@@ -416,8 +417,8 @@ close every visible enabled consequential control, including cancel, close,
 reopen, retry and reset. A silent no-op or stale state after dismiss-and-reenter
 is an immediate failure.
 
-Before formal artifacts or freezing, read [artifact lifecycle](artifact-lifecycle.md).
-For runnable work, read [handoff](handoff.md) and the active host adapter in the
+Before formal artifacts or freezing, read [artifact lifecycle](04-governance/artifact-lifecycle.md).
+For runnable work, read [handoff](04-governance/handoff.md) and the active host adapter in the
 installed `SKILL.md`. An early direction probe uses one retained brief. A formal
 build uses one exact Prototype Specification and bounded prototype/evidence
 scopes. Keep design authority, runnable implementation and review evidence

@@ -50,6 +50,16 @@ def dispatch(args, active):
             'Dispatch must use this same installed Skill root.')
     if data.get('mode') == 'direction-probe':
         probe(root, data)
+    elif data.get('mode') == 'lean-builder-envelope':
+        require(isinstance(data.get('slice_id'), str) and data.get('slice_id'),
+                'Lean envelope must specify slice_id.')
+        require(isinstance(data.get('target_html_path'), str) and data.get('target_html_path'),
+                'Lean envelope must specify target_html_path.')
+        target_html = (root / data['target_html_path']).resolve()
+        require(target_html.is_relative_to(root / 'prototype/experiments') or target_html.is_relative_to(root / 'prototype/surfaces'),
+                'target_html_path must reside inside prototype/experiments/ or prototype/surfaces/.')
+        spec_sources = data.get('spec_sources', {})
+        require(bool(spec_sources), 'Lean envelope must include spec_sources digests.')
     else:
         require(data == packet(root, data['specification']['path']),
                 'Pass the exact handoff.py packet JSON unchanged to Builder.')
@@ -62,7 +72,7 @@ def shell_read(command, root):
     args = shlex.split(command)
     require(bool(args), 'Missing command.')
     tool = args[0]
-    if tool in {'pwd', 'ls', 'cat', 'head', 'tail', 'wc', 'rg'}:
+    if tool in {'pwd', 'ls', 'cat', 'head', 'tail', 'wc', 'rg', 'pytest'}:
         require(not any(a.startswith('--pre') for a in args[1:]), 'Use Read/Grep without an external preprocessor.')
         return
     if tool == 'git':
@@ -84,8 +94,8 @@ def shell_read(command, root):
                     'Token export belongs beside its source with the same revision name.')
             return
         permitted = {'node': {'detect-design-assets.mjs', 'resolve-change.mjs', 'preview.mjs'},
-                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py'},
-                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py'}}
+                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'generate_review_portal.py'},
+                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'generate_review_portal.py'}}
         require(script.parent == SKILL/'scripts' and script.name in permitted[tool],
                 'Only installed helpers run in the main designer; use Builder for code/setup.')
         if script.name == 'handoff.py' and 'freeze' in args:

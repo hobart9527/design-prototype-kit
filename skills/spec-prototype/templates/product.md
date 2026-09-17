@@ -1,74 +1,49 @@
-# Product Understanding
+# Product Understanding & Design Tension
 
 > Project-scoped, revisable design synthesis. Cite current product sources; this
 > file never overrides their Requirements, roles, permissions or lifecycle.
 
-## Identity and sources
+## Identity and Sources
 
 - Product / project:
 - Version / date:
 - Scope represented here:
 - Primary product sources and revisions:
-- Evidence status vocabulary: `explicit | observed | derived | hypothesis | unknown`
+- Dominant Baseline: `Baseline 1: Dense Workbench | Baseline 2: Modern SaaS | Baseline 3: Editorial Reading | Baseline 4: Mobile Touch-First`
 
-## Product Thesis
+## Operational Scene & Consequence (使用场景与后果)
 
-- Intended actor and consequential context:
-- Job/progress the product enables:
-- Observable user outcome:
-- Product/business outcome and how it could be observed:
-- Distinctive value or mechanism:
-- Central design tension/risk:
-- Hidden tension addressed: (e.g. speed vs accuracy, control vs delegation, density vs clarity)
-- Primary mental-model metaphor: (Derived from authentic domain artifact, physical phenomenon, or practitioner spatial habits; never select from generic canned tropes)
-- Principal designer conviction & conscious cost: (core stance, strongest counter-argument, and what was sacrificed)
-- Current-release boundary and non-goals:
+- Target practitioner / user and operational setting: (lighting, distraction level, device, stress)
+- Concrete consequence of delay or error: (e.g. monetary loss, compute deadlock, safety incident)
+- Reality Benchmark Anchors: (Cite 2 concrete reference products or physical lifeworld tools)
+  1. *Operational / Data Anchor*:
+  2. *Kinetic / Tactile Anchor*:
 
-## Source-supported jobs and outcomes
+## Core Tension & Three Ruthless Omissions (核心张力与三大舍弃)
 
-| Actor | Trigger/context | Job and first-class object/content | Decision/action | User outcome | Product outcome | Source/evidence status |
-|---|---|---|---|---|---|---|
-| | | | | | | |
+- Central operational contradiction: (e.g. Extreme Throughput vs Complete Liability)
+- Chosen stance & embodying design mechanism:
+- Three Ruthless Omissions: (At least 3 capabilities, surfaces, or widgets deliberately excluded to protect focus)
+  1.
+  2.
+  3.
 
-## Object and Content Model
+## OOUX Entity Cardinality & Relationships (业务本体与基数模型)
 
-| Object/content type | Purpose and key attributes | Relationships/cardinality | Lifecycle | Owner/authority | User actions | Source or unknown |
-|---|---|---|---|---|---|---|
-| | | | | | | |
+| Entity / Object | Purpose & Key Attributes | Cardinality (`1:1 | 1:N | N:M`) | Primary Container (`Canvas | Table | Board`) | User Actions | Authority / Lifecycle |
+|---|---|---|---|---|---|
+| | | | | | |
 
-Use the product's language. Keep unsupported permission, persistence, automation
-or causal relationships `unknown`; do not infer them from interface convention.
+*Anti-Contamination Rule*: Core entities and operations must strictly use genuine domain terminology in plain language. Never rename domain entities to match physical or visual metaphors.
 
-## Actors, roles and service relationships
+## User Jobs & Observable Outcomes
 
-| Actor/system | Goal or responsibility | What they may see/change | Handoff or backstage dependency | Evidence/limit |
-|---|---|---|---|---|
-| | | | | |
+| Actor | Trigger / Job-to-be-Done | First-Class Object | Decisive Action | Observable User Outcome | Measurable Business Outcome |
+|---|---|---|---|---|---|
+| | | | | | |
 
-## Representative contexts
+## Experience Invariants & Non-Goals
 
-| Context | Actor and trigger | Environment/device | Frequency/stakes | Information and emotional need | Outcome/recipient | Evidence status |
-|---|---|---|---|---|---|---|
-| | | | | | | |
-
-Include a contrasting or recovery context only when it can change the design.
-
-## Experience interpretation and opportunity
-
-- Current experience: observed facts versus interpretation:
-- What the person must understand, compare, control or recover:
-- Opportunity and intended experience change:
-- Competing priority or cost:
-- Initial content/interaction/expression hypothesis:
-- Observation that would falsify or reprioritize it:
-
-## Constraints, unknowns and coverage
-
-| Constraint/unknown | Status and source | Decisions affected | Impact if wrong | Owner / next evidence |
-|---|---|---|---|---|
-| | | | | |
-
-- Applicable professional lenses for this scope and why:
-- Inherited lenses/decisions and evidence:
-- Intentionally out-of-scope lenses and reason:
-- Product questions still requiring human authority (link Discussion):
+- Experience invariants to preserve:
+- Non-goals and out-of-scope capabilities:
+- Unresolved questions requiring human decision:

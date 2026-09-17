@@ -117,7 +117,7 @@ adapting to context. A missing analogy is not a quality defect.
 
 ## Criticism that improves the owning decision
 
-Before the first critique, read [the design-audit method](design-methods/resilience-trust.md#criticism-that-changes-the-design).
+Before the first critique, read [the design-audit method](../02-craft-methods/resilience-trust.md#criticism-that-changes-the-design).
 Identify:
 
 - the strongest relationship to preserve;

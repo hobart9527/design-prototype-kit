@@ -133,6 +133,8 @@ async function main() {
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--output" || args[i] === "-o") {
       outputDir = args[++i];
+    } else if (args[i] === "--target" || args[i] === "-t") {
+      url = args[++i];
     } else if (args[i] === "--viewports" || args[i] === "-v") {
       viewports = (args[++i] || "").split(",").map((s) => s.trim()).filter(Boolean);
     } else if (args[i] === "--states" || args[i] === "-s") {

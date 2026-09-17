@@ -98,6 +98,29 @@ uncovered.
 - Forbidden writes: product sources, OpenSpec, Foundation, Surface Map, tokens,
   Contract, Specification, production source, Git or delivery state.
 
+## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)
+
+| Shortcut Key | Target Action / Interaction | Scope | Focus Restoration Anchor |
+|---|---|---|---|
+| `Space` or `P` | Primary action execution | Active node / selection | Retain focus on active row |
+| `Esc` | Dismiss drawer / modal / popover | Global overlay | Restore focus to originating trigger |
+| `J` / `K` or `Up` / `Down` | List / Table item navigation | Active list view | Update active item index |
+
+## The Break Protocol Stress Checkpoints (四维破坏性极限压测)
+
+| Reality Breaker | Concrete Test Vector / Input | Expected Graceful Behavior | Observed Result |
+|---|---|---|---|
+| **Unbreakable String** | 64-char unbroken hash or UUID | CSS ellipsis + title tooltip, zero container blowout | `pending` |
+| **Zero-Item Empty State** | 0 records / empty cluster filter | Actionable empty card with recovery button | `pending` |
+| **Extreme 320px Fold** | 320px viewport width test | Horizontal scroll or vertical reflow, primary action reachable | `pending` |
+| **Rapid Interruption** | Double-click / rapid Space hits | Debounced submission, single idempotency state transition | `pending` |
+
+## Verifiable Design Assertions
+
+| Assertion | Expected | Observed |
+|---|---|---|
+| | pass | |
+
 ## Review context
 
 - Recommendation and professional-design evidence at compilation:

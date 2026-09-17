@@ -92,10 +92,29 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False) 
         return True
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python3 verify_prototype_quality.py <path_to_html> <path_to_tokens_css> [--strict-divergence]")
-        sys.exit(1)
+    import argparse
 
-    strict = "--strict-divergence" in sys.argv
-    success = assert_quality(sys.argv[1], sys.argv[2], check_stale=strict)
+    parser = argparse.ArgumentParser(description="Automated UX/UI Quality Assertion Harness")
+    parser.add_argument("html", help="Path to prototype HTML file")
+    parser.add_argument("tokens", nargs="?", default=None, help="Path to shared tokens.css (optional, auto-resolved if omitted)")
+    parser.add_argument("--tokens", dest="tokens_opt", default=None, help="Explicit path to shared tokens.css")
+    parser.add_argument("--strict-divergence", action="store_true", help="Assert anti-stale and anti-plagiarism template rules")
+
+    args = parser.parse_args()
+    html_path = Path(args.html)
+    tokens_arg = args.tokens_opt or args.tokens
+
+    if not tokens_arg:
+        candidates = [
+            html_path.parent / "../../../shared/tokens.css",
+            html_path.parent / "../../shared/tokens.css",
+            html_path.parent / "tokens.css",
+            Path.cwd() / "prototype/shared/tokens.css",
+        ]
+        resolved = next((c.resolve() for c in candidates if c.is_file()), None)
+        tokens_path = resolved if resolved else Path.cwd() / "prototype/shared/tokens.css"
+    else:
+        tokens_path = Path(tokens_arg).resolve()
+
+    success = assert_quality(str(html_path), str(tokens_path), check_stale=args.strict_divergence)
     sys.exit(0 if success else 1)

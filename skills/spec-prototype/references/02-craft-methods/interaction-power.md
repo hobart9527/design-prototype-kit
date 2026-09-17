@@ -604,7 +604,7 @@ Follow the shared execution/return rules in [the method library](../design-metho
 The craft methods below supply the choices and construction detail for this workflow.
 
 Read when pattern/component/platform uncertainty could change a design or its
-feasibility. [Research](../research.md) owns tool access and evidence handling;
+feasibility. [Research](../01-foundations/research.md) owns tool access and evidence handling;
 [component implementation](../component-implementation.md) owns runtime reuse.
 
 Form a query with **task + friction/state + platform**, adding the actual stack

@@ -1,7 +1,7 @@
 # Spec Interpretation Rules
 
 编写正式体验契约、建立 Spec Packet、锁定语义或解决来源权威冲突时读取。
-产品发现与设计机会使用 [product understanding](product-understanding.md)。
+产品发现与设计机会使用 [product understanding](../01-foundations/product-understanding.md)。
 
 ## 1. Authority
 

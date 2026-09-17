@@ -1,6 +1,6 @@
 # Formal prototype evidence and handoff
 
-For an early visual comparison, use [the direction probe dispatch](design-language.md#direction-probe-dispatch).
+For an early visual comparison, use [the direction probe dispatch](../01-foundations/design-language.md#direction-probe-dispatch).
 This reference is for formal specifications and their implementation.
 
 ## Reference set
@@ -45,7 +45,7 @@ unblocked, retaining total scope, coverage and the concrete next dependency.
 
 ## Builder dispatch
 
-Read [component implementation](component-implementation.md) when preparing a build. In the Specification builder contract, populate the start command, verification commands, page/flow coverage with shared data references, delegated freedoms, and one component-constraint row per applicable surface/interaction; mark uninspected capabilities as unknown. Use dispositions `required | preferred | delegated | unavailable` exactly as the template defines them: reserve `required` for mandatory reuse of a named existing asset with its constraint and verification checkpoint, and keep component choice delegated when nothing is required. Where a component embodies a physical, optical, biomorphic, temporal, or domain-specific mapping, its constraint MUST describe that mapping as a concrete, verifiable, implementable mechanism — never as a literary adjective. A Builder reading the constraint must be able to implement it without guessing the designer's intent. Semantic obligations stay in the Slice Contract and Specification; do not promote implementation preferences into product semantics. Delegate compatible component selection and composition without asking the user to approve an implementation map. Component experience requirements remain in their existing Foundation/Contract owners. Earlier immutable Specifications without this contract fail packet lint with a diagnostic: preserve them unchanged and author a successor revision; do not patch immutable bytes to satisfy the parser.
+Read [component implementation](../02-craft-methods/component-implementation.md) when preparing a build. In the Specification builder contract, populate the start command, verification commands, page/flow coverage with shared data references, delegated freedoms, and one component-constraint row per applicable surface/interaction; mark uninspected capabilities as unknown. Use dispositions `required | preferred | delegated | unavailable` exactly as the template defines them: reserve `required` for mandatory reuse of a named existing asset with its constraint and verification checkpoint, and keep component choice delegated when nothing is required. Where a component embodies a physical, optical, biomorphic, temporal, or domain-specific mapping, its constraint MUST describe that mapping as a concrete, verifiable, implementable mechanism — never as a literary adjective. A Builder reading the constraint must be able to implement it without guessing the designer's intent. Semantic obligations stay in the Slice Contract and Specification; do not promote implementation preferences into product semantics. Delegate compatible component selection and composition without asking the user to approve an implementation map. Component experience requirements remain in their existing Foundation/Contract owners. Earlier immutable Specifications without this contract fail packet lint with a diagnostic: preserve them unchanged and author a successor revision; do not patch immutable bytes to satisfy the parser.
 
 For formal builds, run
 `python3 <skill-home>/scripts/handoff.py packet --root <repository-root> --spec <specification-path>`.
@@ -94,7 +94,7 @@ a Critic is supporting evidence, not a second gate.
 
 Include the resolved skill root so the Builder can read references/templates from the same installation. Accept component-service substitutions that preserve the Specification; send design or interaction conflicts back to the owning decision. Review the Builder's page/state and assertion evidence against the original requested scope, not only the pages it happened to build.
 
-Read [design floor](design-floor.md) for implementation/inspection. Plan checks against agreed assertions and applicable states. Preserve identity and known platform affordances. If the builder finds a structural impossibility, it reports evidence to this skill for a scoped decision rather than silently redesigning.
+Read [design floor](../03-verification/quality-floor.md) for implementation/inspection. Plan checks against agreed assertions and applicable states. Preserve identity and known platform affordances. If the builder finds a structural impossibility, it reports evidence to this skill for a scoped decision rather than silently redesigning.
 
 ## Review, repair and preserve
 
@@ -110,7 +110,7 @@ directory under the exact candidate evidence scope, or use a shared page-state
 filename prefix with viewport suffixes. Unlabelled captures remain unpaired;
 filenames never prove freshness or executed behavior on their own.
 
-Use [Review](../templates/prototype-review.md) to connect actual evidence to the
+Use [Review](../../templates/prototype-review.md) to connect actual evidence to the
 review question and separately report professional design merit, task/experience
 evidence, engineering conformance and human choice. Keep working progress in
 `prototype/surface-map.md` and decision/source pointers in
@@ -128,7 +128,7 @@ stale state often makes a later enabled submit or retry silently fail. An enable
 untested branch remains `unverified`; it cannot be hidden by a passing primary
 path or aggregate check count.
 
-Use the [quality review cycle](quality-bar.md) for design corrections and the
+Use the [quality review cycle](../03-verification/quality-floor.md) for design corrections and the
 Builder's bounded attempts for operational failures. Persistent failures keep
 artifacts and a concrete `prototype_blocked` result; every failed assertion is
 recorded; required failures block implementation verification, while exploratory

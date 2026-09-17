@@ -135,8 +135,8 @@ Before surface planning, hand off these relationships:
   hypotheses;
 - evidence needed for the highest-risk claim.
 
-Use [experience validation](experience-validation.md) when user need,
+Use [experience validation](research.md) when user need,
 comprehension or findability needs empirical investigation. Use
-[interpretation rules](interpretation-rules.md) when compiling a formal contract
-or resolving source authority. Use [discussion](discussion.md) to retain user
+[interpretation rules](../04-governance/interpretation-rules.md) when compiling a formal contract
+or resolving source authority. Use [discussion](../04-governance/discussion.md) to retain user
 corrections, delegation and the next decision.

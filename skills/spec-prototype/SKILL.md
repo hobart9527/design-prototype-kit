@@ -43,13 +43,15 @@ All product design execution follows an unbroken 5-stage state machine:
 ```text
 [Stage 1: 破 - Tone & Tension Divergence & Spec Formulation]
   │  Gated: AskUserQuestion (Tension reframing, 4 Baselines & Reality Benchmark Anchors, OOUX Anti-Contamination, Hard Cognitive Ledger, 5 Dials register, Vague-Word Firewall)
-  │  Mandatory Spec Outputs:
-  │    1. prototype/product.md (Product thesis & jobs-to-be-done)
-  │    2. prototype/contracts/tokens/t1.json & shared/tokens.css (W3C DTCG tokens compiled via compile_tokens.py)
-  │    3. prototype/contracts/surface-maps/m1.md (OOUX Entities, Cardinality & Surface Topology)
-  │    4. prototype/contracts/slices/<slice_id>/c1.md (Slice Contract: state machines & action verb lifecycle)
-  │    5. prototype/specifications/<slice_id>/r1.md (Prototype Spec: layout wireframe & verifiable assertions)
-  │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract!
+  │  Automated Spec Materialization: python3 skills/spec-prototype/scripts/materialize_contracts.py --slice <slice_id>
+  │  Mandatory Spec Outputs (6-Pillar Durable Design Contract):
+  │    1. prototype/product.md (Product thesis, JTBD & Reality Benchmark Anchors)
+  │    2. prototype/contracts/surface-maps/m1.md (OOUX Entities, Cardinality & Surface Topology)
+  │    3. prototype/contracts/foundation/f1.md (Design Proposition, Reality Mapping, Signature Craft, Atmospheric Calibration)
+  │    4. prototype/contracts/tokens/t1.json & t1.md & shared/tokens.css (W3C DTCG tokens, Markdown spec & physical stylesheet compiled via compile_tokens.py)
+  │    5. prototype/contracts/slices/<slice_id>/c1.md (Slice Contract: state machines & action verb lifecycle)
+  │    6. prototype/specifications/<slice_id>/r1.md (Prototype Spec: layout wireframe, component constraints & verifiable assertions)
+  │  Gate Rule: assemble_envelope.py --check-spec MUST pass! ZERO Prototype Code without a complete frozen Spec Contract!
   ▼
 [Stage 2: 立 - Core Hero Anchor Prototyping via Lean Pre-baked Envelope]
   │  Gated: AskUserQuestion (Single Hero Anchor ONLY, Headless Chrome authentic rendering, Concentric Radii, Tabular Numbers, tokens.css, NO secondary pages until approved)
@@ -87,7 +89,7 @@ All product design execution follows an unbroken 5-stage state machine:
 
 ## Native role boundary
 
-Read [the native execution boundary](references/execution-boundary.md) before a
+Read [the native execution boundary](references/04-governance/execution-boundary.md) before a
 write, runnable probe, formal build or independent review. The main designer
 writes Markdown design records. Only `spec-prototype-builder` writes executable
 prototype output, from the exact retained direction brief or handoff packet and

@@ -127,7 +127,7 @@ Elevation rule: use the approved Foundation and platform conventions; explain th
 Motion rule: specify purpose, timing and reduced-motion behavior from the approved Foundation; zero decorative motion is valid.
 
 Spring roles are optional and only for runtimes that configure springs directly;
-the [Motion method](../references/design-methods/interaction-power.md#motion-as-feedback-continuity-and-expression) owns the choice
+the [Motion method](../references/02-craft-methods/interaction-power.md#motion-as-feedback-continuity-and-expression) owns the choice
 and the parameter conventions.
 
 | Token | Value | Usage |
@@ -153,7 +153,7 @@ and the parameter conventions.
 The tables above are the human-readable projection. When a build step, design
 tool or downstream repository needs the same roles, export them to the stack's
 token file in the [W3C Design Tokens format](https://tr.designtokens.org/format/)
-(`$value`/`$type`); follow [artifact lifecycle](../references/artifact-lifecycle.md)
+(`$value`/`$type`); follow [artifact lifecycle](../references/04-governance/artifact-lifecycle.md)
 for the bounded export command, revision paths and preservation rules. Keep one role naming system and
 keep value ownership with the Foundation revision — exporting does not move it.
 

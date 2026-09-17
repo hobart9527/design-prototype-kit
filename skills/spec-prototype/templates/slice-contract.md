@@ -94,6 +94,26 @@ rote; do not omit a supported consequential state merely because it is uncommon.
 - Permitted local adaptation and rationale:
 - Data/API facts, explicitly synthetic fixtures and unknowns:
 
+## Action Verb Lifecycle Table (4-Phase Atomic Terminology)
+
+Every primary and secondary operational action must maintain exact atomic terminology across its entire 4-phase lifecycle.
+
+| Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact / Consequence |
+|---|---|---|---|---|---|
+| | | | | | |
+
+## Decisive Exchange 3-Frame Specification (核心决定性交换三帧推演)
+
+Map the consequential commitment moment where authority or state irreversibly transfers:
+- **Frame 1 (Intent Input)**: Visual affordance, initial parameters, and precondition check.
+- **Frame 2 (Decisive Commit)**: Tactile kinetic resistance, active state feedback (spin/pulse), and debouncing.
+- **Frame 3 (State Settlement & Focus Restoration)**: Resulting state manifestation, toast notification, and deterministic focus recovery to the originating trigger.
+
+## Context Preservation Rules (上下文绝对保持法则)
+
+- **Draft Context**: When closing/dismissing a drawer, popover, or modal without submitting, uncommitted text inputs and parameter adjustments are (preserved / discarded / cached).
+- **Spatial & Filter Context**: Scroll offsets, table pagination, and multi-facet filter criteria MUST remain strictly intact upon returning from any drill-down or overlay.
+
 ## Local transition specification
 
 | Surface/state | Action | Preconditions/source | Immediate feedback | Resulting surface/state | Data/context retained | Back/cancel/recovery | Acceptance check |

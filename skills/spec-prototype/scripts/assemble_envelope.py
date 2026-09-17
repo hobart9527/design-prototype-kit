@@ -16,12 +16,17 @@ import sys
 from typing import Any, Dict, List, Optional
 
 
+SKILL = Path(__file__).resolve().parents[1]
+
+
 def check_spec_completeness(root: Path, slice_id: str) -> Dict[str, Path]:
-    """Verify that all 5 required Stage 1 design contract artifacts exist."""
+    """Verify that all required Stage 1 design contract artifacts exist."""
     required = {
         "product": root / "prototype/product.md",
-        "tokens_css": root / "prototype/shared/tokens.css",
         "surface_map": root / "prototype/contracts/surface-maps/m1.md",
+        "foundation": root / "prototype/contracts/foundation/f1.md",
+        "tokens_css": root / "prototype/shared/tokens.css",
+        "tokens_md": root / "prototype/contracts/tokens/t1.md",
         "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
         "specification": root / f"prototype/specifications/{slice_id}/r1.md",
     }
@@ -29,7 +34,7 @@ def check_spec_completeness(root: Path, slice_id: str) -> Dict[str, Path]:
     if missing:
         raise ValueError(
             f"Stage 1 Spec Contract incomplete. Missing required artifacts: {', '.join(missing)}. "
-            f"All 5 contract files must be materialized before Stage 2 prototype building."
+            f"All 6 contract pillars must be materialized before Stage 2 prototype building."
         )
     return required
 
@@ -58,35 +63,80 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     target_html = write_scope_clean + "index.html"
     evidence_scope = extract_field(spec_content, "Evidence write scope", f"prototype/evidence/probes/{slice_id}/").strip("`'\" ")
 
-    # Extract verifiable assertions
+    # Extract verifiable assertions & Break Protocol
     assertions: List[str] = []
-    in_assertions = False
+    break_checkpoints: List[str] = []
+    shortcuts: List[str] = []
+    verb_lifecycle: List[Dict[str, str]] = []
+
+    # Parse assertions
+    in_section: Optional[str] = None
     for line in spec_content.splitlines():
         if "Verifiable Design Assertions" in line or "Required screenshot checkpoints" in line:
-            in_assertions = True
+            in_section = "assertions"
             continue
-        if in_assertions:
-            if line.startswith("#"):
-                in_assertions = False
+        elif "The Break Protocol Stress Checkpoints" in line:
+            in_section = "break"
+            continue
+        elif "Dual-Channel Ergonomics" in line:
+            in_section = "shortcuts"
+            continue
+        elif line.startswith("#"):
+            in_section = None
+            continue
+
+        if line.strip().startswith("|") and not line.strip().startswith("|---"):
+            parts = [p.strip() for p in line.split("|") if p.strip()]
+            if not parts:
                 continue
-            if line.strip().startswith("|") and not line.strip().startswith("|---"):
-                parts = [p.strip() for p in line.split("|") if p.strip()]
-                if parts and parts[0] not in ("Surface / interaction", "Assertion"):
-                    assertions.append(parts[0])
+            if in_section == "assertions" and parts[0] not in ("Surface / interaction", "Assertion"):
+                assertions.append(parts[0])
+            elif in_section == "break" and parts[0] not in ("Reality Breaker",):
+                break_checkpoints.append(f"{parts[0]}: {parts[1] if len(parts) > 1 else ''}")
+            elif in_section == "shortcuts" and parts[0] not in ("Shortcut Key",):
+                shortcuts.append(parts[0])
+
+    # Parse Action Verb Lifecycle from slice contract
+    in_verbs = False
+    for line in contract_content.splitlines():
+        if "Action Verb Lifecycle Table" in line:
+            in_verbs = True
+            continue
+        elif line.startswith("#"):
+            in_verbs = False
+            continue
+        if in_verbs and line.strip().startswith("|") and not line.strip().startswith("|---"):
+            parts = [p.strip() for p in line.split("|") if p.strip()]
+            if parts and len(parts) >= 4 and parts[0] not in ("Action ID",):
+                verb_lifecycle.append({
+                    "action_id": parts[0],
+                    "trigger_btn": parts[1],
+                    "modal_header": parts[2],
+                    "commit_btn": parts[3],
+                    "toast": parts[4] if len(parts) > 4 else "",
+                })
 
     envelope = {
         "envelope_version": "1.0",
+        "repository_root": str(root.resolve()),
+        "skill_root": str(SKILL.resolve()),
         "slice_id": slice_id,
         "mode": "lean-builder-envelope",
         "target_html_path": target_html,
         "evidence_output_dir": evidence_scope,
         "token_stylesheet_ref": "../../../shared/tokens.css",
+        "specification": {
+            "path": paths["specification"].relative_to(root).as_posix(),
+            "sha256": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),
+        },
         "spec_sources": {
-            "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest()[:16],
-            "tokens_css_digest": hashlib.sha256(paths["tokens_css"].read_bytes()).hexdigest()[:16],
-            "surface_map_digest": hashlib.sha256(paths["surface_map"].read_bytes()).hexdigest()[:16],
-            "contract_digest": hashlib.sha256(paths["slice_contract"].read_bytes()).hexdigest()[:16],
-            "specification_digest": hashlib.sha256(paths["specification"].read_bytes()).hexdigest()[:16],
+            "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest(),
+            "surface_map_digest": hashlib.sha256(paths["surface_map"].read_bytes()).hexdigest(),
+            "foundation_digest": hashlib.sha256(paths["foundation"].read_bytes()).hexdigest(),
+            "tokens_css_digest": hashlib.sha256(paths["tokens_css"].read_bytes()).hexdigest(),
+            "tokens_md_digest": hashlib.sha256(paths["tokens_md"].read_bytes()).hexdigest(),
+            "contract_digest": hashlib.sha256(paths["slice_contract"].read_bytes()).hexdigest(),
+            "specification_digest": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),
         },
         "design_constraints": {
             "max_tool_turns": 8,
@@ -94,7 +144,14 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "zero_naked_metrics": True,
             "concentric_radii": True,
             "tabular_numerics": True,
-            "dual_channel_shortcuts": ["Space", "P", "Esc"],
+            "dual_channel_shortcuts": shortcuts if shortcuts else ["Space", "P", "Esc"],
+            "action_verb_lifecycle": verb_lifecycle,
+            "break_protocol_checkpoints": break_checkpoints if break_checkpoints else [
+                "Unbreakable String: 64-char hash ellipsis test",
+                "Zero-Item Empty State: actionable recovery card",
+                "Extreme 320px Fold: viewport reflow test",
+                "Rapid Interruption: debounced double-click test",
+            ],
         },
         "verifiable_assertions": assertions[:8],
     }

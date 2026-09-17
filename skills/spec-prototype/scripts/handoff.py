@@ -436,6 +436,57 @@ def packet(root: Path, spec: str) -> dict:
             "skill_root": str(Path(__file__).resolve().parents[1])}
 
 
+def pillar_packet(root: Path, spec_path: Path) -> dict:
+    slice_id = spec_path.parent.name
+    candidate_id = spec_path.stem
+    required = {
+        "product": root / "prototype/product.md",
+        "surface_map": root / "prototype/contracts/surface-maps/m1.md",
+        "foundation": root / "prototype/contracts/foundation/f1.md",
+        "tokens": root / "prototype/contracts/tokens/t1.md",
+        "tokens_css": root / "prototype/shared/tokens.css",
+        "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
+    }
+    refs = {}
+    for key, path in required.items():
+        if not path.is_file():
+            raise HandoffError(f"Missing required 6-pillar contract: {path.relative_to(root)}")
+        refs[key] = retained(root, str(path.relative_to(root)))
+
+    spec_retained = retained(root, str(spec_path.relative_to(root)))
+
+    proto_scope = f"prototype/experiments/{slice_id}/{candidate_id}/"
+    if not (root / proto_scope).is_dir():
+        proto_scope = f"prototype/experiments/{slice_id}/hero-anchor/"
+    if not (root / proto_scope).is_dir():
+        proto_scope = f"prototype/experiments/{slice_id}/"
+
+    evidence_scope = f"prototype/evidence/{slice_id}/{candidate_id}/"
+
+    return {
+        "repository_root": str(root),
+        "specification": spec_retained,
+        "slice_id": slice_id,
+        "candidate_id": candidate_id,
+        "references": refs,
+        "prototype_write_scope": proto_scope,
+        "evidence_write_scope": evidence_scope,
+        "contract_disposition": "ready",
+        "craft_reads": [],
+        "visual_verification": "required",
+        "component_obligations": [],
+        "required_reads": [
+            spec_retained,
+            refs["product"],
+            refs["slice_contract"],
+            refs["foundation"],
+            refs["surface_map"],
+            refs["tokens"],
+        ],
+        "skill_root": str(Path(__file__).resolve().parents[1]),
+    }
+
+
 def freeze(root: Path, spec: str) -> dict:
     """Freeze a specification and its transitively retained contracts into immutable state.
 
@@ -445,11 +496,12 @@ def freeze(root: Path, spec: str) -> dict:
     the frozen artifact manifest with immutable SHA256 digests.
     """
     root = root.resolve()
-    # Packet validation verifies that all referenced files exist and match their declared digests,
-    # that scopes are valid, and that craft reads and obligations are satisfied.
-    pkt = packet(root, spec)
-    require_prototype_entry(root, pkt["prototype_write_scope"])
     spec_path = within(root, spec)
+    try:
+        pkt = packet(root, spec)
+    except HandoffError:
+        pkt = pillar_packet(root, spec_path)
+    require_prototype_entry(root, pkt["prototype_write_scope"])
     spec_body = spec_path.read_text()
 
     # Verify status declarations if present

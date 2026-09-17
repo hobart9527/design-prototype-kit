@@ -18,6 +18,37 @@
 - Approved by / at:
 - Actual approval quote + turn/date or delegated scope:
 
+## Dominant Baseline & Reality Benchmark Anchors
+
+- Dominant Baseline: `Baseline 1: Dense Workbench | Baseline 2: Modern SaaS | Baseline 3: Editorial Reading | Baseline 4: Mobile Touch-First`
+- Reality Benchmark Anchors:
+  1. *Operational Reference*: (e.g. Datadog, Bloomberg, Linear)
+  2. *Physical / Kinetic Reference*: (e.g. aircraft fly-by-wire detent, machine tool caliper, analog audio meter)
+
+## 5-Dial Style Register & Vague-Word Translation
+
+Direct input to `compile_tokens.py` machine compiler:
+- `Energy`: (1 = quiet submarine sonar, 5 = loud high-saturation telemetry)
+- `Finish`: (1 = raw technical utility, 5 = polished high-craft precision)
+- `Density`: (1 = sparse breathing room, 5 = dense aeronautical cockpit)
+- `Weight`: (1 = hairline light, 5 = heavy tactile presence)
+- `Seriousness`: (1 = playful consumer interaction, 5 = solemn mission-critical gravity)
+- Vague-word firewall translation (`[adjective] -> [parametric constraint] -> [counter-example]`):
+
+## Microscopic Craft Physics Triad
+
+1. **Concentric Radii Formula**: $R_{\text{inner}} = \max(0, R_{\text{outer}} - \text{padding})$.
+   - `--radius-outer`:
+   - `--radius-inner`:
+2. **Tabular Numerics**: `font-variant-numeric: tabular-nums` enforced on all metrics, counters, timers, and telemetry columns.
+3. **Atmospheric Undertone**: Base palette uses hue-infused atmospheric darkness (`plasma-cyan`, `obsidian-emerald`, etc.), zero sterile `#808080` dead gray.
+
+## OOUX Anti-Contamination & Non-Transfer Boundary
+
+- Domain Entity Names: (Strictly preserved genuine domain terminology)
+- Physical Metaphor Used: (Qualitative interaction/motion lens only)
+- Deliberate Non-Transfer Boundary: (Explicitly list physical behaviors that do NOT transfer to software controls)
+
 An AI recommendation, Critic report, Builder receipt, check result or existing
 asset is not approval. Freeze only after the proposition is concrete and every
 architecture/topology dependency it relies on is retained at exact identity.
