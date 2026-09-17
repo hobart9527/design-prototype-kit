@@ -26,9 +26,9 @@
   --text-tertiary: #484f58;
 
   /* Accent & Telemetry */
-  --accent-primary: #38bdf8;
-  --accent-subtle: rgba(56, 189, 248, 0.12);
-  --accent-hover: #7dd3fc;
+  --accent-primary: #00f0ff;
+  --accent-subtle: rgba(0, 240, 255, 0.12);
+  --accent-hover: #38bdf8;
   --status-running: #22c55e;
   --status-warning: #eab308;
   --status-danger: #ef4444;

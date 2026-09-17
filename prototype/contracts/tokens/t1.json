@@ -1,294 +1,162 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
-  "$description": "Generated from Foundation f1 at 2026-09-17",
+  "$description": "Machine-compiled from spec-prototype 5-dial state machine.",
   "color": {
     "primary": {
       "$value": "#00f0ff",
       "$type": "color",
-      "$description": "Primary actions, key interactive states (Cyan)"
+      "$description": "Primary action and key interactive state"
     },
     "primary-hover": {
-      "$value": "#33f3ff",
+      "$value": "#38bdf8",
       "$type": "color",
       "$description": "Hover state of primary"
     },
-    "secondary": {
-      "$value": "#00e599",
-      "$type": "color",
-      "$description": "Secondary actions, healthy status (Emerald)"
-    },
     "surface": {
-      "$value": "#0a0c10",
+      "$value": "#111622",
       "$type": "color",
-      "$description": "Page/panel background (Atmospheric deep slate)"
+      "$description": "Card, panel, and workbench base surface"
     },
     "surface-raised": {
-      "$value": "#10131a",
+      "$value": "#182030",
       "$type": "color",
-      "$description": "Card, popover, elevated surface"
+      "$description": "Elevated modal, sheet, or popover"
     },
     "surface-overlay": {
-      "$value": "#161b24",
+      "$value": "#1f293d",
       "$type": "color",
-      "$description": "Modal, sheet, drawer background"
+      "$description": "Top-tier fly-by-wire controls and overlay"
     },
     "border": {
-      "$value": "#1e2533",
+      "$value": "#28334a",
       "$type": "color",
-      "$description": "Default border"
+      "$description": "Default component boundary"
     },
     "border-strong": {
-      "$value": "#293245",
+      "$value": "#3b4b6e",
       "$type": "color",
-      "$description": "Emphasis border, divider"
+      "$description": "Active or emphasized component boundary"
+    },
+    "border-dim": {
+      "$value": "#1e2638",
+      "$type": "color",
+      "$description": "Subtle hairline divider"
     },
     "text-primary": {
-      "$value": "#f0f3f8",
+      "$value": "#e6edf3",
       "$type": "color",
-      "$description": "Body text, primary labels"
+      "$description": "Primary high-contrast typography"
     },
     "text-secondary": {
-      "$value": "#8797b0",
+      "$value": "#8b949e",
       "$type": "color",
-      "$description": "Supplementary text, metadata"
+      "$description": "Supplementary metadata and labels"
     },
-    "text-disabled": {
-      "$value": "#4e5d76",
+    "text-tertiary": {
+      "$value": "#484f58",
       "$type": "color",
-      "$description": "Disabled controls and copy"
+      "$description": "De-emphasized or disabled controls and copy"
     },
-    "text-on-primary": {
-      "$value": "#060709",
+    "status-running": {
+      "$value": "#22c55e",
       "$type": "color",
-      "$description": "Text on primary color background"
+      "$description": "Nominal operational state"
     },
-    "error": {
-      "$value": "#ff3366",
+    "status-warning": {
+      "$value": "#eab308",
       "$type": "color",
-      "$description": "Error states, destructive actions (Rose)"
+      "$description": "Warning state or capacity threshold"
     },
-    "success": {
-      "$value": "#00e599",
+    "status-danger": {
+      "$value": "#ef4444",
       "$type": "color",
-      "$description": "Success states, confirmation (Emerald)"
-    },
-    "warning": {
-      "$value": "#ffaa00",
-      "$type": "color",
-      "$description": "Warning states, detent attraction (Amber)"
-    },
-    "focus-ring": {
-      "$value": "#00f0ff",
-      "$type": "color",
-      "$description": "Keyboard focus outline"
+      "$description": "Critical failure or thermal alert"
     },
     "bg-void": {
-      "$value": "#060709",
+      "$value": "#05070a",
       "$type": "color",
-      "$description": "Deepest background abyss"
+      "$description": "Deepest atmospheric background"
     },
     "bg-base": {
-      "$value": "#0a0c10",
+      "$value": "#0a0d14",
       "$type": "color",
-      "$description": "Base chassis layer"
-    },
-    "bg-surface": {
-      "$value": "#10131a",
-      "$type": "color",
-      "$description": "First-tier elevation panels"
-    },
-    "bg-surface-raised": {
-      "$value": "#161b24",
-      "$type": "color",
-      "$description": "Second-tier floating card"
-    },
-    "bg-overlay": {
-      "$value": "#1c222e",
-      "$type": "color",
-      "$description": "Top-tier fly-by-wire controls"
-    },
-    "accent-cyan": {
-      "$value": "#00f0ff",
-      "$type": "color",
-      "$description": "High-frequency instrumentation cyan"
-    },
-    "accent-emerald": {
-      "$value": "#00e599",
-      "$type": "color",
-      "$description": "Nominal cruising state"
-    },
-    "accent-amber": {
-      "$value": "#ffaa00",
-      "$type": "color",
-      "$description": "Detent gravity well warning"
-    },
-    "accent-rose": {
-      "$value": "#ff3366",
-      "$type": "color",
-      "$description": "Pipeline breach / critical risk"
-    }
-  },
-  "typography": {
-    "font-display": {
-      "$value": "\"JetBrains Mono\", Menlo, monospace",
-      "$type": "fontFamily",
-      "$description": "Display headings (h1, hero)"
-    },
-    "font-body": {
-      "$value": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
-      "$type": "fontFamily",
-      "$description": "Body text, UI copy"
-    },
-    "font-mono": {
-      "$value": "\"JetBrains Mono\", Menlo, Consolas, monospace",
-      "$type": "fontFamily",
-      "$description": "Code or telemetry figures"
-    },
-    "text-display": {
-      "$value": "20px / 1.2",
-      "$type": "typography",
-      "$description": "Page-level headings"
-    },
-    "text-heading": {
-      "$value": "14px / 1.3",
-      "$type": "typography",
-      "$description": "Section headings"
-    },
-    "text-subheading": {
-      "$value": "12px / 1.4",
-      "$type": "typography",
-      "$description": "Sub-section, card titles"
-    },
-    "text-body": {
-      "$value": "12px / 1.4",
-      "$type": "typography",
-      "$description": "Default body text"
-    },
-    "text-small": {
-      "$value": "11px / 1.3",
-      "$type": "typography",
-      "$description": "Captions, metadata, labels"
-    },
-    "font-variant-numeric": {
-      "$value": "tabular-nums",
-      "$type": "fontFamily",
-      "$description": "Tabular numbers to prevent layout jitter"
+      "$description": "App foundation background chassis"
     }
   },
   "spacing": {
     "1": {
       "$value": "4px",
-      "$type": "dimension"
+      "$type": "dimension",
+      "$description": "Spacing unit 1"
     },
     "2": {
       "$value": "8px",
-      "$type": "dimension"
+      "$type": "dimension",
+      "$description": "Spacing unit 2"
     },
     "3": {
       "$value": "12px",
-      "$type": "dimension"
+      "$type": "dimension",
+      "$description": "Spacing unit 3"
     },
     "4": {
       "$value": "16px",
-      "$type": "dimension"
+      "$type": "dimension",
+      "$description": "Spacing unit 4"
+    },
+    "5": {
+      "$value": "20px",
+      "$type": "dimension",
+      "$description": "Spacing unit 5"
     },
     "6": {
       "$value": "24px",
-      "$type": "dimension"
+      "$type": "dimension",
+      "$description": "Spacing unit 6"
     },
     "8": {
       "$value": "32px",
-      "$type": "dimension"
+      "$type": "dimension",
+      "$description": "Spacing unit 8"
     }
   },
-  "elevation and radius": {
-    "radius-outer": {
-      "$value": "12px",
-      "$type": "other"
-    },
-    "padding-panel": {
+  "radius": {
+    "outer": {
       "$value": "8px",
-      "$type": "other"
+      "$type": "dimension",
+      "$description": "Outer container boundary"
     },
-    "radius-inner": {
+    "inner": {
       "$value": "4px",
-      "$type": "other"
+      "$type": "dimension",
+      "$description": "Concentric inner child boundary"
     },
-    "radius-sm": {
-      "$value": "2px",
-      "$type": "other"
+    "card": {
+      "$value": "6px",
+      "$type": "dimension",
+      "$description": "Card entity radius"
     },
-    "radius-md": {
+    "btn": {
       "$value": "4px",
-      "$type": "other"
+      "$type": "dimension",
+      "$description": "Interactive control radius"
     },
-    "radius-lg": {
-      "$value": "8px",
-      "$type": "other"
-    },
-    "radius-pill": {
+    "pill": {
       "$value": "9999px",
-      "$type": "other"
-    },
-    "shadow-sm": {
-      "$value": "0 1px 2px rgba(0,0,0,0.4)",
-      "$type": "other"
-    },
-    "shadow-md": {
-      "$value": "0 4px 12px rgba(0,0,0,0.6)",
-      "$type": "other"
-    },
-    "shadow-glow-cyan": {
-      "$value": "0 0 12px rgba(0,240,255,0.25)",
-      "$type": "other"
-    },
-    "shadow-glow-amber": {
-      "$value": "0 0 12px rgba(255,170,0,0.3)",
-      "$type": "other"
+      "$type": "dimension",
+      "$description": "Status badge pill radius"
     }
   },
-  "motion": {
-    "duration-fast": {
-      "$value": "80ms",
-      "$type": "duration"
+  "typography": {
+    "font-sans": {
+      "$value": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
+      "$type": "fontFamily",
+      "$description": "Primary UI font family"
     },
-    "duration-snap": {
-      "$value": "120ms",
-      "$type": "duration"
-    },
-    "duration-normal": {
-      "$value": "200ms",
-      "$type": "duration"
-    },
-    "duration-slow": {
-      "$value": "350ms",
-      "$type": "duration"
-    },
-    "ease-hud": {
-      "$value": "cubic-bezier(0.16, 1, 0.3, 1)",
-      "$type": "cubicBezier"
-    },
-    "ease-out": {
-      "$value": "cubic-bezier(0, 0, 0.2, 1)",
-      "$type": "cubicBezier"
-    }
-  },
-  "breakpoints": {
-    "mobile": {
-      "$value": "390px",
-      "$type": "dimension"
-    },
-    "tablet": {
-      "$value": "768px",
-      "$type": "dimension"
-    },
-    "desktop": {
-      "$value": "1280px",
-      "$type": "dimension"
-    },
-    "ultrawide": {
-      "$value": "1600px",
-      "$type": "dimension"
+    "font-mono": {
+      "$value": "\"SF Mono\", \"Fira Code\", \"Roboto Mono\", Menlo, monospace",
+      "$type": "fontFamily",
+      "$description": "Telemetry and code font family"
     }
   }
 }

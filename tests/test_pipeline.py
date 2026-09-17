@@ -465,5 +465,78 @@ def test_seven_high_leverage_design_levers_and_template_slots(tmp_path: Path):
     assert any("Unbreakable String" in c for c in constraints["break_protocol_checkpoints"])
 
 
+def test_materialize_contracts_high_fidelity_semantic_synthesis(tmp_path: Path):
+    """Verify materialize_contracts compiles Chinese/English discussions into complete 6-pillar contracts."""
+    mat_mod = _load("materialize_contracts", "materialize_contracts.py")
+    assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
+
+    proto_dir = tmp_path / "prototype"
+    proto_dir.mkdir(parents=True, exist_ok=True)
+
+    disc_text = """# Discussion
+### 1. 业务与用户极端张力 (Core Tension)
+- 吞吐 vs 崩溃风险
+
+### 4. 5-Dial 风格寄存器
+- Energy: quiet
+- Finish: machined-industrial
+- Density: dense
+- Weight: dense-tactile
+- Seriousness: solemn
+- Palette: plasma-cyan
+
+### 5. OOUX 实体拓扑与表面分配
+- **主工作区 (Primary)**: `console/hero-anchor`（拓扑总览）
+- **上下文视图 (Contextual)**: `surfaces/incident-replay`（帧回放）
+- **支撑视图 (Supporting)**: `surfaces/capacity-matrix`（矩阵）
+"""
+    (proto_dir / "discussion.md").write_text(disc_text, encoding="utf-8")
+    (proto_dir / "product.md").write_text("# SRE Platform\n## Core Tension\n- 秒级排空 vs 误杀风险\n", encoding="utf-8")
+
+    # Materialize contracts
+    res = mat_mod.materialize(tmp_path, "console", force=True)
+    assert Path(res["surface_map"]).is_file()
+    assert Path(res["foundation"]).is_file()
+    assert Path(res["slice_contract"]).is_file()
+    assert Path(res["specification"]).is_file()
+
+    # 1. Surface map contains Chinese-declared surfaces
+    smap_text = Path(res["surface_map"]).read_text(encoding="utf-8")
+    assert "console/hero-anchor" in smap_text
+    assert "surfaces/incident-replay" in smap_text
+    assert "surfaces/capacity-matrix" in smap_text
+
+    # 2. Slice contract contains Action Verb Lifecycle & Decisive 3-Frame
+    c1_text = Path(res["slice_contract"]).read_text(encoding="utf-8")
+    assert "Action Verb Lifecycle Table" in c1_text
+    assert "Decisive Exchange 3-Frame Specification" in c1_text
+    assert "Context Preservation Rules" in c1_text
+
+    # 3. Specification contains Dual-Channel & Break Protocol & Verifiable Assertions
+    r1_text = Path(res["specification"]).read_text(encoding="utf-8")
+    assert "Dual-Channel Ergonomics" in r1_text
+    assert "The Break Protocol Stress Checkpoints" in r1_text
+    assert "Verifiable Design Assertions" in r1_text
+    assert "Zero Naked Metrics" in r1_text
+    assert "Concentric Radii Formula" in r1_text
+
+    # 4. Generate tokens to satisfy assemble_envelope dependencies
+    tokens_css = tmp_path / "prototype/shared/tokens.css"
+    tokens_css.parent.mkdir(parents=True, exist_ok=True)
+    tokens_css.write_text(":root { --radius-outer: 8px; }\n", encoding="utf-8")
+    tokens_md = tmp_path / "prototype/contracts/tokens/t1.md"
+    tokens_md.parent.mkdir(parents=True, exist_ok=True)
+    tokens_md.write_text("# Tokens\n| Token | Value |\n|---|---|\n| --bp-mobile | 390px |\n", encoding="utf-8")
+
+    # 5. assemble_envelope produces non-empty constraints without semantic loss
+    env = assemble_mod.assemble(tmp_path, "console")
+    constraints = env["design_constraints"]
+    assert len(constraints["dual_channel_shortcuts"]) > 0
+    assert len(constraints["action_verb_lifecycle"]) > 0
+    assert len(constraints["break_protocol_checkpoints"]) > 0
+    assert len(env["verifiable_assertions"]) >= 5
+
+
+
 
 

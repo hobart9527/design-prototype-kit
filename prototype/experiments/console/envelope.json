@@ -1,0 +1,62 @@
+{
+  "envelope_version": "1.0",
+  "repository_root": "/Users/hobart/Codex/design-prototype-kit",
+  "skill_root": "/Users/hobart/Codex/design-prototype-kit/skills/spec-prototype",
+  "slice_id": "console",
+  "mode": "lean-builder-envelope",
+  "target_html_path": "prototype/experiments/console/hero-anchor/index.html",
+  "evidence_output_dir": "prototype/evidence/probes/console/",
+  "token_stylesheet_ref": "../../../shared/tokens.css",
+  "specification": {
+    "path": "prototype/specifications/console/r1.md",
+    "sha256": "404ab1914cb0c691f1a6538b95b3305b1fa5d00632340569e0aa3934c1f9c007"
+  },
+  "spec_sources": {
+    "product_digest": "b47455aa9e607917d4b1bfdcb276cd5693151fd86a2c3bfa0551ab46118fb4f3",
+    "surface_map_digest": "464731adec74a4845fdda475bc7eca5e907d40c2e8b66dfc2cb182fcac89597d",
+    "foundation_digest": "ad19ad9c5e5444556e7a3180402e2d93ac4f26d7cebd7686f33d0f109e5d932d",
+    "tokens_css_digest": "f98ece29421a8924e6d7a76fd00459d663d5f25d0d98f607bcb00dd87c734896",
+    "tokens_md_digest": "752efbd774c80d6f9e66b622dcd0d61f0a2aa953b5d9a5448ccaf1eb57ca20b8",
+    "contract_digest": "8f6c33f59865ac5b9882cdc61a28348e4f6bd06549cef8513a967a3d6d316e3d",
+    "specification_digest": "404ab1914cb0c691f1a6538b95b3305b1fa5d00632340569e0aa3934c1f9c007"
+  },
+  "design_constraints": {
+    "dual_channel_shortcuts": [
+      "`Space` or `P`",
+      "`Esc`",
+      "`J` / `K`"
+    ],
+    "action_verb_lifecycle": [
+      {
+        "action_id": "`drain-node`",
+        "trigger_btn": "`Drain Node`",
+        "modal_header": "`Drain GPU Node`",
+        "commit_btn": "`Confirm Drain`",
+        "toast": "`Node Drained Successfully`"
+      },
+      {
+        "action_id": "`preempt-vram`",
+        "trigger_btn": "`Preempt VRAM`",
+        "modal_header": "`Preempt VRAM Allocation`",
+        "commit_btn": "`Execute Preempt`",
+        "toast": "`VRAM Eviction Committed`"
+      }
+    ],
+    "break_protocol_checkpoints": [
+      "**Unbreakable String**: `node-cluster-uuid-00000000-0000-0000-0000-000000000000`",
+      "**Zero-Item Empty State**: Filter: 0 results / empty list",
+      "**Extreme 320px Fold**: 320px viewport width test",
+      "**Rapid Interruption**: Double-click / rapid Space hits"
+    ]
+  },
+  "verifiable_assertions": [
+    "Declared product intent is represented",
+    "Zero Naked Metrics: every metric has reference baseline or micro sparkline",
+    "Tabular Numerics: font-variant-numeric: tabular-nums on all metrics",
+    "Concentric Radii Formula: outer radius >= inner radius + padding",
+    "Atmospheric undertone: zero sterile neutral gray #808080",
+    "Dual-channel keyboard shortcuts (Space / Esc) operable",
+    "Action Verb Lifecycle closure: trigger -> drawer/modal -> commit -> toast",
+    "The Break Protocol: unbreakable string, empty state, 320px fold"
+  ]
+}
