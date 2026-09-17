@@ -45,8 +45,50 @@ def extract_field(content: str, label: str, default: str = "") -> str:
     return match.group(1).strip() if match else default
 
 
+def _brief_path(root: Path, slice_id: str) -> Optional[Path]:
+    """Find the retained direction brief without treating it as a formal spec."""
+    candidates = (
+        root / f"prototype/briefs/{slice_id}-probe.md",
+        root / f"prototype/briefs/{slice_id}.md",
+    )
+    return next((path for path in candidates if path.is_file()), None)
+
+
+def _brief_scope(value: str, fallback: str) -> str:
+    scope = value.strip("`'\" ") or fallback
+    return scope.rstrip("/") + "/"
+
+
+def assemble_direction(root: Path, slice_id: str, brief: Path) -> Dict[str, Any]:
+    """Assemble a direction-probe envelope from one exploration brief."""
+    content = brief.read_text(encoding="utf-8")
+    probe_id = extract_field(content, "Probe ID", slice_id)
+    target = _brief_scope(extract_field(content, "Probe target path"),
+                          f"prototype/experiments/probes/{probe_id}/")
+    evidence = _brief_scope(extract_field(content, "Evidence write scope"),
+                            f"prototype/evidence/probes/{probe_id}/")
+    return {
+        "envelope_version": "1.0",
+        "repository_root": str(root.resolve()),
+        "skill_root": str(SKILL.resolve()),
+        "slice_id": slice_id,
+        "probe_id": probe_id,
+        "mode": "direction-probe",
+        "target_html_path": target if target.endswith(".html") else target + "index.html",
+        "prototype_write_scope": target.rsplit("/", 1)[0] + "/" if target.endswith(".html") else target,
+        "evidence_write_scope": evidence,
+        "brief": {"path": brief.relative_to(root).as_posix(),
+                  "sha256": hashlib.sha256(brief.read_bytes()).hexdigest()},
+        "constraints": {"thesis": extract_field(content, "Core design thesis")},
+    }
+
+
 def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
-    """Assemble self-contained envelope for lean builder execution."""
+    """Assemble an envelope for either exploration or formal candidate work."""
+    brief = _brief_path(root, slice_id)
+    specification = root / f"prototype/specifications/{slice_id}/r1.md"
+    if brief is not None and not specification.is_file():
+        return assemble_direction(root, slice_id, brief)
     paths = check_spec_completeness(root, slice_id)
 
     product_content = paths["product"].read_text(encoding="utf-8")
@@ -116,6 +158,15 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
                     "toast": parts[4] if len(parts) > 4 else "",
                 })
 
+    constraints = {
+        "dual_channel_shortcuts": shortcuts,
+        "action_verb_lifecycle": verb_lifecycle,
+        "break_protocol_checkpoints": break_checkpoints,
+    }
+    explicit_turns = extract_field(spec_content, "Maximum operational repair attempts")
+    if explicit_turns:
+        constraints["maximum_operational_repair_attempts"] = explicit_turns
+
     envelope = {
         "envelope_version": "1.0",
         "repository_root": str(root.resolve()),
@@ -138,22 +189,9 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "contract_digest": hashlib.sha256(paths["slice_contract"].read_bytes()).hexdigest(),
             "specification_digest": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),
         },
-        "design_constraints": {
-            "max_tool_turns": 8,
-            "target_tool_turns": 5,
-            "zero_naked_metrics": True,
-            "concentric_radii": True,
-            "tabular_numerics": True,
-            "dual_channel_shortcuts": shortcuts if shortcuts else ["Space", "P", "Esc"],
-            "action_verb_lifecycle": verb_lifecycle,
-            "break_protocol_checkpoints": break_checkpoints if break_checkpoints else [
-                "Unbreakable String: 64-char hash ellipsis test",
-                "Zero-Item Empty State: actionable recovery card",
-                "Extreme 320px Fold: viewport reflow test",
-                "Rapid Interruption: debounced double-click test",
-            ],
-        },
-        "verifiable_assertions": assertions[:8],
+        # Only assertions present in the retained specification are constraints.
+        "design_constraints": constraints,
+        "verifiable_assertions": assertions,
     }
 
     return envelope

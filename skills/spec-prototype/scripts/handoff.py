@@ -499,9 +499,16 @@ def freeze(root: Path, spec: str) -> dict:
     spec_path = within(root, spec)
     try:
         pkt = packet(root, spec)
-    except HandoffError:
+    except HandoffError as error:
+        # Direction briefs are exploration input, never formal freeze manifests.
+        if spec_path.parent.name == "briefs" or "direction-probe" in spec_path.read_text(encoding="utf-8"):
+            raise HandoffError("Cannot freeze an exploration brief; formal Specification approval is required") from error
         pkt = pillar_packet(root, spec_path)
     require_prototype_entry(root, pkt["prototype_write_scope"])
+    if spec_path.parent.name == "briefs":
+        raise HandoffError("Cannot freeze an exploration brief; formal Specification approval is required")
+    if not re.search(r"^- Compilation status:\s*`?frozen`?\s*$", spec_body := spec_path.read_text(encoding="utf-8"), re.M):
+        raise HandoffError("Cannot freeze without formal approved Specification (Compilation status: frozen)")
     spec_body = spec_path.read_text()
 
     # Verify status declarations if present
