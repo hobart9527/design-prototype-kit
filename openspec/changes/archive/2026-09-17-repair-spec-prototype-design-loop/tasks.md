@@ -1,6 +1,6 @@
 ## 1. Intent-Sensitive Lifecycle & Routing
 
-- [ ] T-01 Align SKILL.md and core-workflow.md with intent-sensitive routing
+- [x] T-01 Align SKILL.md and core-workflow.md with intent-sensitive routing
   - Depends on: none
   - Anchors: skills/spec-prototype/SKILL.md, skills/spec-prototype/references/core-workflow.md
   - Write scope: skills/spec-prototype/SKILL.md, skills/spec-prototype/references/core-workflow.md, skills/spec-prototype/references/04-governance/interpretation-rules.md
@@ -11,7 +11,7 @@
 
 ## 2. Builder & Critic Adaptive Contract
 
-- [ ] T-02 Decouple Builder from universal turn limits and prescriptive chassis
+- [x] T-02 Decouple Builder from universal turn limits and prescriptive chassis
   - Depends on: T-01
   - Anchors: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, skills/spec-prototype/scripts/capture.mjs
   - Write scope: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, skills/spec-prototype/scripts/capture.mjs
@@ -22,7 +22,7 @@
 
 ## 3. Evidence-Led Feedback & Envelope Assembly
 
-- [ ] T-03 Refactor envelope assembly for flexible exploration and truthful constraints
+- [x] T-03 Refactor envelope assembly for flexible exploration and truthful constraints
   - Depends on: T-02
   - Anchors: skills/spec-prototype/scripts/assemble_envelope.py, skills/spec-prototype/scripts/handoff.py
   - Write scope: skills/spec-prototype/scripts/assemble_envelope.py, skills/spec-prototype/scripts/handoff.py
@@ -33,7 +33,7 @@
 
 ## 4. Generic Token Compiler & De-prescription
 
-- [ ] T-04 Eliminate silent aesthetic defaults and fixed palettes in compile_tokens.py
+- [x] T-04 Eliminate silent aesthetic defaults and fixed palettes in compile_tokens.py
   - Depends on: T-01
   - Anchors: skills/spec-prototype/scripts/compile_tokens.py, tests/test_tokens.py
   - Write scope: skills/spec-prototype/scripts/compile_tokens.py, tests/test_tokens.py
@@ -44,7 +44,7 @@
 
 ## 5. Truthful Verification & Review Portal
 
-- [ ] T-05 Replace keyword sniffing with contract assertions and generic materialization
+- [x] T-05 Replace keyword sniffing with contract assertions and generic materialization
   - Depends on: T-03, T-04
   - Anchors: skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/scripts/materialize_contracts.py, skills/spec-prototype/scripts/generate_review_portal.py, tests/test_pipeline.py
   - Write scope: skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/scripts/materialize_contracts.py, skills/spec-prototype/scripts/generate_review_portal.py, tests/test_pipeline.py
