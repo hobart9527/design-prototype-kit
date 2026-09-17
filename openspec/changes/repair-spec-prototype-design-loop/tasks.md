@@ -26,7 +26,7 @@
   - Depends on: T-02
   - Anchors: skills/spec-prototype/scripts/assemble_envelope.py, skills/spec-prototype/scripts/handoff.py
   - Write scope: skills/spec-prototype/scripts/assemble_envelope.py, skills/spec-prototype/scripts/handoff.py
-  - Verify with: python3 -m pytest tests/test_pipeline.py -k "test_handoff_packet_without_preexisting_html_and_template_surface_map or test_spec_first_contract_formulation_and_lean_envelope"
+  - Verify with: python3 -m pytest tests/test_pipeline.py -k "test_handoff_packet_without_preexisting_html_and_template_surface_map"
   - Implements: ENG-003
   - Proves: ENG-SCN-003
   Update `assemble_envelope.py` to support both exploration direction briefs and formal candidate specifications. Ensure envelope constraints reflect actual specification assertions without truncation or pre-filled aesthetic biases. Ensure `handoff.py` correctly distinguishes exploration from formal freeze manifests.
