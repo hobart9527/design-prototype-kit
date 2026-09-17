@@ -198,11 +198,11 @@ function recordHandoffEvidence(outputDir, result) {
     }
     const vpKeys = Object.keys(result.viewports || {});
     existing.verification = {
-      status: "verified",
+      status: "unverified",
       browser: "verified",
-      visual: "verified",
+      visual: "unverified",
       human: existing.verification?.human || "pending_review",
-      evidence: `Multi-viewport screenshots captured (${vpKeys.length > 0 ? vpKeys.join(", ") : "default"}px)`,
+      evidence: `Multi-viewport screenshots captured (${vpKeys.length > 0 ? vpKeys.join(", ") : "default"}px); visual design & interaction unverified pending human/critic review`,
       timestamp: new Date().toISOString(),
       runner: result.runner || "browser-capture",
     };

@@ -314,8 +314,41 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
     return base_colors
 
 
-def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str]) -> Dict[str, Any]:
-    """Derive full design token tree from authored dials and an explicit palette or dynamic color dict."""
+def extract_dynamic_overrides(discussion_text: str) -> Dict[str, Any]:
+    """Extract physical, dimensional, or typography overrides authored or reconciled in discussion."""
+    overrides: Dict[str, Any] = {"radii": {}, "space": {}, "fonts": {}}
+    confirmed_block = _extract_confirmed_section(discussion_text)
+    scan_text = confirmed_block if confirmed_block else discussion_text
+
+    # Extract radius overrides: --radius-outer: 16px, etc.
+    for r_key in ["outer", "inner", "card", "btn", "pill", "sm"]:
+        m = re.search(rf"(?:--)?radius-{r_key}\s*[:|=]\s*[`*]*(\d+px)[`*]*", scan_text, re.IGNORECASE)
+        if m:
+            overrides["radii"][r_key] = m.group(1).strip()
+
+    # Extract spacing overrides: --space-4: 32px, etc.
+    for s_key in [1, 2, 3, 4, 5, 6, 8]:
+        m = re.search(rf"(?:--)?space-{s_key}\s*[:|=]\s*[`*]*(\d+px)[`*]*", scan_text, re.IGNORECASE)
+        if m:
+            overrides["space"][s_key] = m.group(1).strip()
+
+    # Extract font overrides
+    m_sans = re.search(r"(?:--)?font-sans\s*[:|=]\s*[`*]*([^`*\n;]+)[`*]*", scan_text, re.IGNORECASE)
+    if m_sans:
+        overrides["fonts"]["sans"] = m_sans.group(1).strip()
+    m_mono = re.search(r"(?:--)?font-mono\s*[:|=]\s*[`*]*([^`*\n;]+)[`*]*", scan_text, re.IGNORECASE)
+    if m_mono:
+        overrides["fonts"]["mono"] = m_mono.group(1).strip()
+
+    return overrides
+
+
+def compute_tokens(
+    dials: Dict[str, str],
+    palette_or_colors: str | Dict[str, str],
+    overrides: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    """Derive full design token tree from authored dials, palette, and optional dimensional overrides."""
     missing = [key for key in REQUIRED_DIALS if not dials.get(key)]
     if missing:
         raise ValueError(f"Missing required 5-dial decisions: {', '.join(missing)}")
@@ -379,6 +412,15 @@ def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str
             "sans": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             "mono": '"JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace',
         }
+
+    # Apply physical and dimensional overrides if authored or reconciled
+    if overrides:
+        for r_k, r_v in overrides.get("radii", {}).items():
+            radii[r_k] = r_v
+        for s_k, s_v in overrides.get("space", {}).items():
+            space[s_k] = s_v
+        for f_k, f_v in overrides.get("fonts", {}).items():
+            fonts[f_k] = f_v
 
     # Weight / Tactile Physics Dial calibration
     weight = dials.get("weight", "regular").lower()
@@ -658,7 +700,8 @@ def compile_tokens(
 
     # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or derives mathematically
     dynamic_colors = extract_dynamic_palette(disc_text)
-    computed = compute_tokens(dials, dynamic_colors)
+    overrides = extract_dynamic_overrides(disc_text)
+    computed = compute_tokens(dials, dynamic_colors, overrides)
     css_content = generate_css(computed)
 
     out_css = Path(output_css_path)

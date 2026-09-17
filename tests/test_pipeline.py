@@ -1280,6 +1280,67 @@ def test_reconcile_review_tokens_back_to_contracts(tmp_path: Path):
     assert updated_json["color"]["primary"]["$value"] == "#38bdf8"
 
 
+def test_capture_does_not_fake_visual_or_human_signoff(tmp_path: Path):
+    """Verify that capturing screenshots registers browser evidence but does NOT falsely claim visual/status verified."""
+    manifest_path = tmp_path / "prototype/evidence/handoff-manifest.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps({
+        "verification": {
+            "status": "unverified",
+            "browser": "verified",
+            "visual": "unverified",
+            "human": "pending_review",
+            "evidence": "Multi-viewport screenshots captured"
+        }
+    }), encoding="utf-8")
+
+    verify_mod = _load("verify_prototype_quality", "verify_prototype_quality.py")
+    states = verify_mod._evidence_state(manifest_path.parent / "dummy.html")
+    assert states.get("browser") == "verified"
+    assert states.get("visual") == "unverified"
+    assert states.get("human") == "pending_review"
+
+
+def test_multi_token_reconciliation_fidelity(tmp_path: Path):
+    """Verify reconcile_tokens_from_css captures multiple token types (colors, radii, spacing, typography) from review edits."""
+    compile_mod = _load("compile_tokens", "compile_tokens.py")
+
+    discussion = tmp_path / "discussion.md"
+    discussion.write_text("""# Discussion
+- Energy: 3
+- Finish: 3
+- Density: 3
+- Weight: 3
+- Seriousness: 3
+- palette: warm-graphite-lime
+""", encoding="utf-8")
+
+    out_css = tmp_path / "tokens.css"
+    out_json = tmp_path / "t1.json"
+    out_md = tmp_path / "t1.md"
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+
+    css_content = out_css.read_text(encoding="utf-8")
+    # Reviewer adjusts multiple dimensions: accent, border, radius, and typography
+    css_content = re.sub(r"--accent-primary:\s*#[0-9a-fA-F]+;", "--accent-primary: #ec4899;", css_content)
+    css_content = re.sub(r"--radius-outer:\s*\d+px;", "--radius-outer: 16px;", css_content)
+    css_content = re.sub(r"--space-4:\s*\d+px;", "--space-4: 32px;", css_content)
+    out_css.write_text(css_content, encoding="utf-8")
+
+    compile_mod.reconcile_tokens_from_css(str(out_css), str(discussion), str(out_json), str(out_md))
+
+    updated_disc = discussion.read_text(encoding="utf-8")
+    assert "--accent-primary: #ec4899" in updated_disc
+    assert "--radius-outer: 16px" in updated_disc
+    assert "--space-4: 32px" in updated_disc
+
+    updated_json = json.loads(out_json.read_text(encoding="utf-8"))
+    assert updated_json["color"]["primary"]["$value"] == "#ec4899"
+    assert updated_json["radius"]["outer"]["$value"] == "16px"
+    assert updated_json["spacing"]["4"]["$value"] == "32px"
+
+
+
 
 
 
