@@ -15,18 +15,64 @@ from typing import Iterable
 
 
 def _contract_items(path: Path | None) -> list[str]:
+    """Extract verifiable entity names, action IDs, or button labels from contract markdown."""
     if not path or not path.is_file():
         return []
-    text = path.read_text(encoding="utf-8")
     items: list[str] = []
-    for line in text.splitlines():
-        if not line.startswith("|"):
-            continue
-        cells = [c.strip().strip("`") for c in line.strip().strip("|").split("|")]
-        if len(cells) >= 2 and cells[0].lower() not in {"assertion", "expected", "reality breaker", "---"}:
-            if cells[0] and not set(cells[0]) <= {"-", ":"}:
+    in_actions = False
+    in_assertions = False
+    in_shortcuts = False
+    text = path.read_text(encoding="utf-8")
+
+    # If this is a specification r1.md, also inspect paired slice contract c1.md if present
+    sources_to_scan = [text]
+    try:
+        paired_c1 = path.parents[2] / "contracts/slices" / path.parent.name / "c1.md"
+        if paired_c1.is_file():
+            sources_to_scan.append(paired_c1.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+
+    for src in sources_to_scan:
+        for line in src.splitlines():
+            if "Action Verb Lifecycle" in line:
+                in_actions = True
+                in_assertions = False
+                in_shortcuts = False
+                continue
+            elif "Verifiable Design Assertions" in line or "Break Protocol" in line:
+                in_actions = False
+                in_assertions = True
+                in_shortcuts = False
+                continue
+            elif "Dual-Channel Ergonomics" in line or "Keyboard Shortcuts" in line:
+                in_actions = False
+                in_assertions = False
+                in_shortcuts = True
+                continue
+            elif line.startswith("##"):
+                in_actions = False
+                in_assertions = False
+                in_shortcuts = False
+
+            if not line.strip().startswith("|"):
+                continue
+            cells = [re.sub(r"[*`]", "", c).strip() for c in line.strip().strip("|").split("|")]
+            if not cells or not cells[0]:
+                continue
+            first_lower = cells[0].lower()
+            if first_lower in {"action id", "assertion", "reality breaker", "shortcut key", "token", "surface", "---"}:
+                continue
+            if set(cells[0]) <= {"-", ":"}:
+                continue
+
+            if in_actions:
                 items.append(cells[0])
-    return items
+                if len(cells) > 1 and cells[1]:
+                    items.append(cells[1])
+            elif not in_assertions and not in_shortcuts:
+                items.append(cells[0])
+    return [it for it in items if it]
 
 
 def _find_contract(html: Path, explicit: str | None) -> Path | None:
@@ -76,16 +122,30 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if missing:
         failures.append("contract assertion: declared items absent from DOM: " + ", ".join(missing[:5]))
 
-    # Tokens are checked only for declared, generic accessibility/typography hooks.
-    if "font-variant-numeric" in token_source and "font-variant-numeric" not in source and "var(--" not in source:
-        failures.append("token assertion: numeric presentation token is not consumed")
-    if "--radius-" in token_source and "var(--radius" not in source and "var(--" not in source:
-        failures.append("token assertion: radius tokens are not consumed (use var(--radius-*))")
+    # Tokens are checked strictly for declared, generic accessibility/typography hooks.
+    if "font-variant-numeric" in token_source:
+        if "font-variant-numeric" not in source and "tabular-nums" not in source:
+            failures.append("token assertion: numeric presentation token is not consumed (use font-variant-numeric: tabular-nums or .tabular-nums)")
+    if "--radius-" in token_source:
+        if "var(--radius-" not in source and "var(--radius" not in source:
+            failures.append("token assertion: radius tokens are not consumed (use var(--radius-*))")
 
     # Hard floor: reject raw inline hex colors in style attributes (enforces token inheritance)
     raw_style_hex = re.findall(r'style=["\'][^"\']*#[0-9a-fA-F]{3,8}[^"\']*["\']', source)
     if raw_style_hex:
         failures.append(f"craft assertion: raw inline hex colors in style attributes ({len(raw_style_hex)} found; use CSS custom properties / var(--...))")
+
+    # Dual-channel keyboard ergonomics check: when declared in contract, ensure event listener exists
+    if contract_path and Path(contract_path).is_file():
+        contract_text = Path(contract_path).read_text(encoding="utf-8")
+        if "Dual-Channel Ergonomics" in contract_text or "Shortcut Key" in contract_text:
+            if not re.search(r"addEventListener\s*\(\s*['\"]key(?:down|up)['\"]|\bonkey(?:down|up)\s*=", source, re.IGNORECASE):
+                failures.append("ergonomics assertion: declared dual-channel keyboard shortcuts not bound (missing keydown/keyup listener)")
+
+        # Dynamic state machine check: when multi-state or Break Protocol stress checkpoints are declared
+        if "The Break Protocol Stress Checkpoints" in contract_text or "Zero-Item Empty State" in contract_text:
+            if not re.search(r"hashchange|location\.hash|data-state", source, re.IGNORECASE):
+                failures.append("state-machine assertion: stress checkpoints declared but no state-switching hook detected (use hashchange / location.hash / data-state)")
 
     if check_stale:
         if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", source, re.IGNORECASE):

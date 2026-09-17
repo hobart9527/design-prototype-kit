@@ -534,7 +534,67 @@ def test_materialize_contracts_high_fidelity_semantic_synthesis(tmp_path: Path):
     assert len(constraints["dual_channel_shortcuts"]) > 0
     assert len(constraints["action_verb_lifecycle"]) > 0
     assert len(constraints["break_protocol_checkpoints"]) > 0
+    assert len(constraints["decisive_exchange_frames"]) > 0
+    assert len(constraints["context_preservation_rules"]) > 0
     assert len(env["verifiable_assertions"]) >= 5
+    assert len(env["available_tokens"]) > 0
+    assert "--radius-outer" in env["available_tokens"]
+
+
+def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path):
+    """Verify verify_prototype_quality strictly catches missing radius tokens, shortcuts, and hash states."""
+    verify_mod = _load("verify_quality", "verify_prototype_quality.py")
+
+    tokens_css = tmp_path / "tokens.css"
+    tokens_css.write_text(":root {\n  --radius-outer: 8px;\n  --radius-inner: 4px;\n  --bg-void: #05070a;\n  --font-variant-numeric: tabular-nums;\n}\n", encoding="utf-8")
+
+    spec_md = tmp_path / "r1.md"
+    spec_md.write_text("""# Spec
+## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)
+| Shortcut Key | Target Action |
+|---|---|
+| `Space` | Inspect active node |
+
+## The Break Protocol Stress Checkpoints
+| Reality Breaker | Vector |
+|---|---|
+| **Zero-Item Empty State** | Filter 0 |
+""", encoding="utf-8")
+
+    # 1. HTML uses var(--bg-void) but lacks var(--radius-) and font-variant-numeric
+    bad_html = tmp_path / "bad.html"
+    bad_html.write_text("""<!DOCTYPE html><html><body>
+<main id="app" class="panel">
+  <button id="btn-action" onclick="void(0)" style="color: var(--bg-void);">Run</button>
+</main>
+</body></html>""", encoding="utf-8")
+
+    # Fails because radius and numeric presentation tokens are not consumed, despite presence of var(--bg-void)
+    assert verify_mod.assert_quality(str(bad_html), str(tokens_css), contract_path=str(spec_md)) is False
+
+    # 2. HTML adds var(--radius-outer) and tabular-nums, but still lacks keyboard listener and hashchange
+    semi_html = tmp_path / "semi.html"
+    semi_html.write_text("""<!DOCTYPE html><html><body>
+<main id="app" class="panel" style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;">
+  <button id="btn-action" onclick="void(0)">Run</button>
+</main>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(semi_html), str(tokens_css), contract_path=str(spec_md)) is False
+
+    # 3. HTML adds keydown listener and hashchange state machine hook -> passes
+    good_html = tmp_path / "good.html"
+    good_html.write_text("""<!DOCTYPE html><html><body>
+<main id="app" class="panel" style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;">
+  <button id="btn-action" onclick="void(0)">Run</button>
+</main>
+<script>
+  window.addEventListener('keydown', (e) => {});
+  window.addEventListener('hashchange', () => {});
+  document.body.setAttribute('data-state', 'default');
+</script>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(good_html), str(tokens_css), contract_path=str(spec_md)) is True
+
 
 
 

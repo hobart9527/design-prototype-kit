@@ -20,9 +20,11 @@
       --amber: #f3b567;
       --red: #ef767a;
       --green: #9fe3ae;
-      --r-outer: 20px;
-      --r-padding: 2px;
-      --r-inner: max(0px, calc(var(--r-outer) - var(--r-padding)));
+      --r-outer: var(--radius-outer, 8px);
+      --r-padding: var(--padding-panel, 4px);
+      --r-inner: var(--radius-inner, 4px);
+      --r-card: var(--radius-card, 6px);
+      --r-btn: var(--radius-btn, 4px);
       --ease: cubic-bezier(.16, 1, .3, 1);
     }
     * { box-sizing: border-box; }
@@ -38,7 +40,7 @@
       letter-spacing: .01em;
       font-variant-numeric: tabular-nums;
     }
-    button, input { font: inherit; }
+    button, input { font: inherit; border-radius: var(--radius-btn); }
     button { color: inherit; }
     button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
     button:active { transform: scale(.97); }
@@ -372,8 +374,27 @@
         if (event.key.toLowerCase() === 'k') { selectNode(AppState.nodes[(index - 1 + AppState.nodes.length) % AppState.nodes.length]?.id); }
         if (event.code === 'Space' || event.key.toLowerCase() === 'p') { event.preventDefault(); drainNode(); }
       });
-      $('action-state').addEventListener('dblclick', resetLifecycle);
-      render();
+      function applyHashState() {
+        const hash = window.location.hash.replace(/^#/, '');
+        const params = new URLSearchParams(hash);
+        const state = params.get('state') || 'default';
+        document.body.setAttribute('data-state', state);
+        if (state === 'error' || state === 'incident') {
+          selectNode('gpu-03');
+          const n = selectedNode();
+          if (n) { n.status = 'warn'; n.vram = 79.8; }
+        } else if (state === 'empty' || state === 'zero-item') {
+          AppState.nodes = [];
+          AppState.selectedId = null;
+        } else if (state === 'drained') {
+          selectNode('gpu-07');
+          const n = selectedNode();
+          if (n) { n.status = 'drained'; }
+        }
+        render();
+      }
+      window.addEventListener('hashchange', applyHashState);
+      applyHashState();
     })();
   </script>
 </body>

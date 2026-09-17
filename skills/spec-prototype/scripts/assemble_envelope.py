@@ -83,6 +83,14 @@ def assemble_direction(root: Path, slice_id: str, brief: Path) -> Dict[str, Any]
     }
 
 
+def extract_css_tokens(css_text: str) -> Dict[str, str]:
+    """Parse flat CSS custom property dictionary from tokens.css."""
+    tokens: Dict[str, str] = {}
+    for m in re.finditer(r"(--[a-zA-Z0-9_-]+)\s*:\s*([^;]+);", css_text):
+        tokens[m.group(1).strip()] = m.group(2).strip()
+    return tokens
+
+
 def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     """Assemble an envelope for either exploration or formal candidate work."""
     brief = _brief_path(root, slice_id)
@@ -110,6 +118,8 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     break_checkpoints: List[str] = []
     shortcuts: List[str] = []
     verb_lifecycle: List[Dict[str, str]] = []
+    decisive_frames: List[str] = []
+    context_rules: List[str] = []
 
     # Parse assertions
     in_section: Optional[str] = None
@@ -138,15 +148,32 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             elif in_section == "shortcuts" and parts[0] not in ("Shortcut Key",):
                 shortcuts.append(parts[0])
 
-    # Parse Action Verb Lifecycle from slice contract
+    # Parse Action Verb Lifecycle and Frame deduction from slice contract
     in_verbs = False
+    in_frames = False
+    in_rules = False
     for line in contract_content.splitlines():
         if "Action Verb Lifecycle Table" in line:
             in_verbs = True
+            in_frames = False
+            in_rules = False
             continue
-        elif line.startswith("#"):
+        elif "Decisive Exchange 3-Frame" in line:
             in_verbs = False
+            in_frames = True
+            in_rules = False
             continue
+        elif "Context Preservation Rules" in line:
+            in_verbs = False
+            in_frames = False
+            in_rules = True
+            continue
+        elif line.startswith("##"):
+            in_verbs = False
+            in_frames = False
+            in_rules = False
+            continue
+
         if in_verbs and line.strip().startswith("|") and not line.strip().startswith("|---"):
             parts = [p.strip() for p in line.split("|") if p.strip()]
             if parts and len(parts) >= 4 and parts[0] not in ("Action ID",):
@@ -157,18 +184,24 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
                     "commit_btn": parts[3],
                     "toast": parts[4] if len(parts) > 4 else "",
                 })
+        elif in_frames and line.strip().startswith("- "):
+            decisive_frames.append(line.strip()[2:].strip())
+        elif in_rules and line.strip().startswith("- "):
+            context_rules.append(line.strip()[2:].strip())
 
     constraints = {
         "dual_channel_shortcuts": shortcuts,
         "action_verb_lifecycle": verb_lifecycle,
         "break_protocol_checkpoints": break_checkpoints,
+        "decisive_exchange_frames": decisive_frames,
+        "context_preservation_rules": context_rules,
     }
     explicit_turns = extract_field(spec_content, "Maximum operational repair attempts")
     if explicit_turns:
         constraints["maximum_operational_repair_attempts"] = explicit_turns
 
     envelope = {
-        "envelope_version": "1.0",
+        "envelope_version": "1.1",
         "repository_root": str(root.resolve()),
         "skill_root": str(SKILL.resolve()),
         "slice_id": slice_id,
@@ -176,6 +209,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "target_html_path": target_html,
         "evidence_output_dir": evidence_scope,
         "token_stylesheet_ref": "../../../shared/tokens.css",
+        "available_tokens": extract_css_tokens(paths["tokens_css"].read_text(encoding="utf-8")),
         "specification": {
             "path": paths["specification"].relative_to(root).as_posix(),
             "sha256": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),

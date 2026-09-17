@@ -116,11 +116,10 @@ Coordinator dispatches `spec-prototype-builder` via standard `Agent` tool call w
 2. Read the resulting JSON file.
 3. Call `Agent(subagent_type="spec-prototype-builder", prompt=envelope_json_string)`. The `prompt` parameter must be the raw JSON string without conversational prose, matching the PreToolUse hook parser.
 
-Use `spec-prototype-critic` for an independent professional review at a
-consequential checkpoint. Builder and Critic calls use the current project
-workspace and omit worktree isolation, model overrides and parallel fallback
-calls. A denial or timeout is `prototype_blocked` or `unverified`; preserve the
-limitation rather than weakening the route.
+Coordinator dispatches `spec-prototype-critic` for independent review at Stage 4 (验):
+1. Execute multi-viewport captures: `node skills/spec-prototype/scripts/capture.mjs <target_url> --output prototype/evidence/probes/<slice_id>/ --viewports 320,390,1280 --states default,error`
+2. Run static verification: `python3 skills/spec-prototype/scripts/verify_prototype_quality.py <target_html> prototype/shared/tokens.css --contract prototype/specifications/<slice_id>/r1.md`
+3. Call `Agent(subagent_type="spec-prototype-critic", prompt=...)` supplying the target HTML path, specification path, static check output, and explicit paths to captured `.png` screenshots. Critic must inspect the actual rendered visual images using the `Read` tool before issuing judgments.
 
 The native Hook enforces tool shape and write ownership only while the nearest
 `prototype/discussion.md` records `Execution boundary: active`. It does not own

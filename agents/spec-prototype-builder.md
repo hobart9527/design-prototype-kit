@@ -36,11 +36,19 @@ required check or capture failed.
 ## 3. Specification-faithful implementation
 
 Implement the exact interaction model, states, content, controls, responsive behavior
-and visual rules supplied by the envelope. Preserve semantic and keyboard accessibility,
-visible feedback, focus recovery, and truthful error handling wherever the specification
-requires them. Do not impose a universal state-machine name, chart treatment, radius
-formula, typography rule, animation curve, shortcut set, action lifecycle, palette or
-single-page chassis; those belong to the supplied specification and may differ by target.
+and visual rules supplied by the envelope.
+
+- **Design Token Invariance**: Consume exact CSS custom properties provided in `available_tokens`
+  (e.g. `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`). Never use raw inline
+  hex codes in `style="..."` attributes. Enforce `font-variant-numeric: tabular-nums` across all metrics.
+- **Dynamic State Machine & Hash Routing**: Implement `window.addEventListener("hashchange", ...)`
+  and parse initial `window.location.hash` (e.g. `#state=error`, `#state=empty`, `#state=drained`).
+  Bind states to root attributes (e.g. `document.body.dataset.state`) so multi-state headless capture
+  via `capture.mjs --states ideal,error,skeleton` renders truthful, distinct UI frames.
+- **Dual-Channel Ergonomics**: Implement keyboard listeners (`keydown`/`keyup`) for declared shortcuts
+  (such as `Space`/`Esc`/`J`/`K`) with deterministic focus management and restoration.
+- **The Break Protocol Resilience**: Ensure graceful layout under the 4 stress checkpoints
+  (unbreakable strings, zero-item empty states, extreme 320px fold, and rapid click debouncing).
 If the envelope omits a behavior, choose the smallest native, accessible implementation
 that keeps the prototype runnable and state truthful.
 

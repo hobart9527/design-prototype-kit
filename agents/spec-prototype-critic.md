@@ -32,11 +32,13 @@ name the coverage requiring recheck.
 
 ## Inspect before explanation
 
-Inspect the actual-size composition before reading its rationale. A retained image
-is usable only when bound to the current target revision, specimen, viewport/state
-and capture provenance; otherwise recapture or mark it unverified. For a runnable
-target, use an available browser and inspect the real runner before promising
-evidence. Screenshots establish appearance only; interactive claims require a task
+Inspect the actual-size composition before reading its rationale. Use the `Read` tool
+on the supplied `.png` viewport screenshot images (`1280.png`, `390.png`, `320.png`, and state captures)
+to directly inspect the visual layout, typography, contrast, hierarchy, and token application.
+A retained image is usable only when bound to the current target revision, specimen, viewport/state
+and capture provenance; otherwise mark it unverified. Do not perform code-only textual speculation
+when visual evidence exists. For a runnable target, inspect the real runner before promising
+evidence. Screenshots establish appearance and responsive fold; interactive claims require a task
 trace. A storyboard is not runtime evidence.
 
 Attempt the requested task from visible cues. Exercise the applicable dense,
