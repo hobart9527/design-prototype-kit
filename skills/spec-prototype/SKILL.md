@@ -42,18 +42,18 @@ All product design execution follows an unbroken 5-stage state machine:
 
 ```text
 [Stage 1: 破 - Tone & Tension Divergence]
-  │  Gated: AskUserQuestion (Tension reframing, 3+ omissions, Cognitive Budgeting, 5 Dials register, Vague-Word Firewall, OOUX cardinality, 2 metaphors + non-transfer boundaries)
+  │  Gated: AskUserQuestion (Tension reframing, 4 Baselines & Reality Benchmark Anchors, OOUX Anti-Contamination, Hard Cognitive Ledger, 5 Dials register, Vague-Word Firewall)
   ▼
 [Stage 2: 立 - Core Hero Anchor Prototyping]
-  │  Gated: AskUserQuestion (Highest-density anchor, Concentric Radii, Optical Alignment, Tabular Numbers, Atmospheric Undertone, Tactile Kinetics, shared/tokens.css, native-first boundary)
+  │  Gated: AskUserQuestion (Single Hero Anchor ONLY, Headless Chrome authentic rendering, Concentric Radii, Tabular Numbers, tokens.css, NO secondary pages until approved)
   ▼
-[Stage 3: 拓 - Tier-by-Tier Rollout]
-  │  Dispatched in discrete batches: Tier 0 (Strategic), Tier 1 (Tactical), Tier 2 (Governance)
-  │  Strict: Compression & Release rhythm, Reference benchmarks (zero naked metrics), Action verb lifecycle closure, <link href="../../shared/tokens.css">, zero inline hex
+[Stage 3: 拓 - Full IA Surface Rollout]
+  │  Rollout derived strictly from genuine Surface Topology (Primary, Contextual, Supporting; unbind from rigid Tier 0/1/2)
+  │  Strict: Compression & Release, Reference benchmarks (zero naked metrics), Action verb lifecycle closure, <link href="../../shared/tokens.css">, zero inline hex
   ▼
-[Stage 4: 验 - Holistic Review & In-Place Tuning]
-  │  Harness: review-portal.html (multi-view walkthrough, decisive exchange 3-frame check, The Break Protocol stress limits, 5 operational states with Contextual Agency)
-  │  Controlled Loopback: Stage 3/4 -> Stage 2 (Anchor revision only)
+[Stage 4: 验 - Holistic Review & Feedback Loop]
+  │  Gated: AskUserQuestion (review-portal.html walkthrough, Dual-Floor Reality Gate, The Break Protocol stress limits, 5 operational states)
+  │  Controlled Feedback Absorption Loop: Granular user critique absorbed via tokens.css / HTML slices -> Re-verification -> Human signoff
   ▼
 [Stage 5: 冻 - Silent Packaging & Headless Governance]
      Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (AAA), handoff.py (SHA-256)

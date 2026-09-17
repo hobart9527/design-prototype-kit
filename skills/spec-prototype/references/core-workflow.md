@@ -67,18 +67,23 @@ All design work within this Skill follows the unbroken five-stage delivery state
   - Micro-snap: `120ms` detent transitions.
 - **Physical Token Entity**: Materialize `prototype/shared/tokens.css` with fundamental colors, typography, elevations, and motion curves.
 - **Prototype Component Discipline (Native-First vs Production Handoff)**: Prototypes must remain frictionless, zero-build, and immediately runnable. Use native HTML5 semantic tags (`<dialog>`, `<details>`, `<form>`) and CSS token recipes. Formal UI framework componentization (React/Vue/shadcn, prop interfaces, complex state machines) is strictly deferred to downstream Loom Entry 2 engineering delivery.
-- **Gate**: Review the Anchor screen and token definitions via `AskUserQuestion` before expanding.
+- **Stage 2 Anchor Approval Gate (严禁跳步：样板未定，骨架不展)**:
+  - Materialize ONLY the single Core Hero Anchor screen (`experiments/.../hero-anchor/index.html`) and `prototype/shared/tokens.css`.
+  - Capture authentic visual evidence via Headless Chrome (1280px desktop and/or 390px mobile).
+  - Explicitly present the rendered visual evidence to the human user via `AskUserQuestion`.
+  - **Hard Barrier**: Strictly forbidden to generate secondary pages or proceed to Stage 3 until the user has explicitly evaluated and confirmed the Anchor screen's visual tone and token recipes.
 
-### Stage 3: Tier-by-Tier Rollout (拓 - 骨)
+### Stage 3: Full IA Surface Rollout (拓 - 骨：依据信息架构全量展开)
+- **Derived Surface Topology Rollout (源自真实架构拓扑，解绑僵化命名)**:
+  - Generate secondary surfaces strictly derived from the **Surface Topology** defined in Stage 1/2 (rather than forcing rigid Tier 0/1/2 labels):
+    - *Primary Operational Surface* (Hero/Core Workspace, Task Flow)
+    - *Secondary Contextual Surfaces* (Detail Views, Filtered Streams, Drawer Inspectors, Checkout/Forms)
+    - *Supporting & Administrative Surfaces* (Settings, System Status, History/Audit Logs)
 - **Compression & Release (破除均质网格套路)**:
   - Reject monotonous uniform card grids.
   - Couple high-density operational telemetry clusters tightly, paired with deliberate expansive negative space in contemplative zones to establish visual rhythm.
-- **Discrete Batching**: Dispatch in phased tiers rather than a single monolithic generation:
-  - **Tier 0: Strategic Orbit** (Dashboard / Bird's Eye Telemetry / Situation Awareness)
-  - **Tier 1: Tactical Station** (Workbenches / Flow Automation / Detent Control)
-  - **Tier 2: Governance Bridge** (Audit Logs / Security Gateways / Token Registry)
-- **Data Floor & Reference Benchmarks (`data-information.md:40`)**: Forbid naked metrics. Operational telemetry, sparklines, and status badges must include contextual reference anchors (scales, thresholds, normal bounds, or event markers) so numbers carry immediate operational meaning.
-- **Content Mechanics & Action Verb Lifecycle (`ia-interaction.md:56`)**: Verbs must maintain exact semantic continuity across the user lifecycle: trigger action verb (e.g. `Quarantine`), modal heading (`Quarantine Worker`), primary commit button (`Quarantine`), and post-completion toast must share identical vocabulary.
+- **Data Floor & Reference Benchmarks (`02-craft-methods/data-information.md:40`)**: Forbid naked metrics. Operational telemetry, sparklines, and status badges must include contextual reference anchors (scales, thresholds, normal bounds, or event markers) so numbers carry immediate operational meaning.
+- **Content Mechanics & Action Verb Lifecycle (`02-craft-methods/ia-interaction.md:56`)**: Verbs must maintain exact semantic continuity across the user lifecycle: trigger action verb (e.g. `Quarantine`), modal heading (`Quarantine Worker`), primary commit button (`Quarantine`), and post-completion toast must share identical vocabulary.
 - **Strict Token Inheritance**:
   - Every secondary screen must link: `<link rel="stylesheet" href="../../shared/tokens.css">`.
   - Zero tolerance for inline Hex colors (`#ffffff`, `#000`) or hardcoded pixel margins.
@@ -102,9 +107,14 @@ All design work within this Skill follows the unbroken five-stage delivery state
 - **Contextual Agency in States (在场感状态设计)**:
   - Empty state is not a void: provide actionable first-step creation bait.
   - Error state is not a dead end: provide in-place diagnostic telemetry and direct one-click repair/retry paths.
-- **Controlled Loopback (FSM Re-entry)**:
-  - State reversals are strictly restricted: `Stage 3/4 -> Stage 2` (Anchor Revision).
-  - Prevents evasive concept pivots while permitting necessary token and layout refactorings.
+- **Controlled Feedback Absorption Loop (全景评审与微调吸收循环)**:
+  - Deliver `prototype/review-portal.html` to the human user with responsive frames (390px / 768px / 1280px / 100%) and authentic Headless Chrome screenshots.
+  - Ask for granular feedback via `AskUserQuestion` (e.g. spacing, typography, motion curves, contrast, component sizing).
+  - **Single Source of Truth Refactoring**:
+    - Global visual/rhythm adjustments MUST be absorbed directly into `prototype/shared/tokens.css` (e.g. adjust `--space-*`, `--radius-*`, font scales, or colors).
+    - Page-specific structural deltas are updated directly in the corresponding HTML slices.
+  - **Re-walkthrough Verification**: Re-render the Review Portal and verify that all feedback points are resolved without breaking existing Dual-Floor invariants.
+  - **Stage 5 Progression Gate**: Explicit human approval of the Review Portal walkthrough is mandatory before entering Stage 5 silent compilation.
 
 ### Stage 5: Silent Governance Compilation (冻 - 根)
 - **Headless Pipeline**:
