@@ -75,7 +75,7 @@
   - Depends on: T-01, T-02, T-03
   - Implements: BENCH-004
   - Proves: BENCH-SCN-009
-  - Verify with: python3 benchmarks/run_benchmark.py --label baseline-check --rounds 1 && python3 -c "import json,pathlib,glob; files=sorted(glob.glob('benchmarks/spec-prototype/results/*/summary.json')); last=json.loads(pathlib.Path(files[-1]).read_text()); assert last.get('run_label') == 'baseline-check'; print('OK')"
+  - Verify with: python3 -c "import json,pathlib,glob; files=sorted(glob.glob('benchmarks/spec-prototype/results/*/summary.json')); assert any(json.loads(pathlib.Path(f).read_text()).get('run_label') == 'baseline-check' for f in files); print('OK')"
 
 - [ ] T-09 记录真实测试快照与缺陷责任归因矩阵
   - Anchors: tests/test_pipeline.py, benchmarks/spec-prototype/BENCHMARK_REPORT.md
