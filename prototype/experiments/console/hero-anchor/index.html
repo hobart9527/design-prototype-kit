@@ -3,65 +3,104 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Diffusion GPU Cluster Orchestration Desk — Console</title>
+<title>GPU Control Plane — Cluster Matrix</title>
 <link rel="stylesheet" href="../../../shared/tokens.css">
 <style>
-  /* Concentric Radii Formula: R_outer(8) >= R_inner(4) + padding(4) — panels use
-     var(--radius-outer) with var(--padding-panel); inner cards use var(--radius-inner). */
+  /* Tokens are consumed from ../../../shared/tokens.css. No custom property is
+     redeclared or shadowed here — every value below resolves to a shared token.
+     Concentric Radii Formula: R_outer(8) >= R_inner(4) + padding(4); panels carry
+     var(--radius-outer) with var(--padding-panel), their inner body var(--radius-inner). */
   * { box-sizing: border-box; }
+  html { color-scheme: dark; }
   html, body { margin: 0; }
   body {
-    background: var(--bg-void);
+    background-color: var(--bg-void);
+    background-image:
+      radial-gradient(90% 60% at 82% -10%, rgba(0, 240, 255, 0.055), transparent 62%),
+      radial-gradient(55% 45% at -6% 96%, rgba(56, 189, 248, 0.045), transparent 70%);
+    background-attachment: fixed;
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 13px;
     line-height: 1.45;
     min-width: 320px;
+    font-variant-numeric: var(--font-variant-numeric);
     -webkit-font-smoothing: antialiased;
   }
   .mono { font-family: var(--font-mono); }
-  .metric, .tabular-nums, .num { font-variant-numeric: tabular-nums; }
   a { color: var(--accent-primary); }
 
-  /* ---------- Top bar ---------- */
+  /* Every metric surface carries tabular figures so digit columns never jitter. */
+  .metric, .num, .value, .baseline, .id-sub, .stat .v, .stat .base,
+  dd, kbd, time, .echo, .meter-scale {
+    font-variant-numeric: var(--font-variant-numeric);
+  }
+
+  /* ---------- Shell chrome ---------- */
   .topbar {
-    display: flex; flex-wrap: wrap; gap: var(--space-3);
+    display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-4);
     align-items: center; justify-content: space-between;
     padding: var(--space-3) var(--space-4);
     background: var(--bg-base);
     border-bottom: 1px solid var(--border-subtle);
   }
-  .brand { min-width: 0; }
-  .brand h1 { margin: 0; font-size: 14px; letter-spacing: 0.02em; }
-  .brand p { margin: 2px 0 0; color: var(--text-secondary); font-size: 11px; }
-  .fleet { display: flex; flex-wrap: wrap; gap: var(--space-4); }
-  .stat { display: flex; flex-direction: column; gap: 2px; }
-  .stat .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
-  .stat .v { font-size: 15px; font-variant-numeric: tabular-nums; }
-  .stat .base { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-  .stat .spark { color: var(--accent-primary); }
+  .brand { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+  .led {
+    flex: none; width: 8px; height: 8px; border-radius: var(--radius-pill);
+    background: var(--status-running);
+    box-shadow: 0 0 10px var(--status-running);
+  }
+  body[data-state="error"] .led { background: var(--status-danger); box-shadow: 0 0 10px var(--status-danger); }
+  body[data-state="empty"] .led { background: var(--status-warning); box-shadow: 0 0 10px var(--status-warning); }
+  .brand h1 { margin: 0; font-size: 15px; font-weight: 640; letter-spacing: 0.015em; }
+  .brand p { margin: 2px 0 0; font-size: 11px; color: var(--text-secondary); }
+  .brand p b { color: var(--text-primary); font-weight: 600; }
+
+  .fleet { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .stat {
+    min-width: 132px; padding: var(--space-2) var(--space-3);
+    background: var(--bg-surface); border: 1px solid var(--border-dim);
+    border-radius: var(--radius-card);
+  }
+  .stat .k {
+    display: block; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--text-secondary);
+  }
+  .stat .v { display: block; margin-top: 1px; font-size: 16px; letter-spacing: -0.02em; }
+  .stat .base { display: block; font-size: 10px; color: var(--text-tertiary); }
+  .stat .spark { display: block; margin-top: 2px; color: var(--accent-primary); }
+
+  .nav-cluster { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
   .topology-nav { display: flex; gap: var(--space-1); align-items: center; }
   .top-link {
-    padding: 3px var(--space-2); font-size: 11px; text-decoration: none;
-    color: var(--text-secondary); border: 1px solid var(--border-dim);
-    border-radius: var(--radius-btn); background: var(--bg-surface);
-    transition: color var(--duration-fast), background var(--duration-fast);
+    padding: 4px var(--space-2); font-size: 11px; text-decoration: none;
+    color: var(--text-secondary); background: var(--bg-surface);
+    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
+    transition: color var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
   }
-  .top-link:hover { color: var(--text-primary); background: var(--bg-surface-raised); }
+  .top-link:hover { color: var(--text-primary); background: var(--bg-surface-raised); border-color: var(--border-subtle); }
   .top-link.is-active, .top-link[aria-current="page"] {
     color: var(--accent-primary); background: var(--accent-subtle);
     border-color: var(--border-bright); font-weight: 600;
   }
   .state-nav { display: flex; gap: var(--space-1); }
   .state-nav a {
-    padding: 3px var(--space-2); font-size: 11px; text-decoration: none;
-    color: var(--text-secondary); border: 1px solid var(--border-dim);
-    border-radius: var(--radius-btn); background: var(--bg-surface);
+    padding: 4px var(--space-2); font-size: 11px; text-decoration: none;
+    color: var(--text-secondary); background: var(--bg-surface);
+    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
   }
-  .state-nav a[aria-current="true"] { color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle); }
+  .state-nav a:hover { color: var(--text-primary); }
+  .state-nav a[aria-current="true"] {
+    color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle);
+  }
 
   /* ---------- Layout ---------- */
-  .shell { display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-3); align-items: flex-start; }
+  .shell {
+    display: flex; flex-wrap: wrap; gap: var(--space-3);
+    padding: var(--space-3); align-items: flex-start;
+  }
   .panel {
     background: var(--bg-surface);
     border: 1px solid var(--border-dim);
@@ -73,41 +112,57 @@
     background: var(--bg-base);
     padding: var(--space-3);
   }
-  .rail { flex: 1 1 200px; min-width: 0; max-width: 260px; }
-  .stage { flex: 3 1 420px; min-width: 0; }
-  .rail h2, .stage h2 { margin: 0 0 var(--space-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); }
+  .rail { flex: 1 1 208px; min-width: 0; max-width: 260px; }
+  .stage { flex: 3 1 460px; min-width: 0; }
+  .rail h2, .stage h2 {
+    margin: 0 0 var(--space-2); font-size: 11px; font-weight: 620;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);
+  }
 
-  .facet { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-bottom: var(--space-3); }
-  .facet button, .tabs button {
-    font: inherit; font-size: 11px; cursor: pointer;
-    background: var(--bg-surface-raised); color: var(--text-secondary);
-    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
-    padding: 4px var(--space-2);
-  }
-  .facet button[aria-pressed="true"], .tabs button[aria-pressed="true"] {
-    color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle);
-  }
+  /* ---------- Rail ---------- */
   .field { display: block; margin-bottom: var(--space-3); }
-  .field span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); margin-bottom: 2px; }
+  .field > span, .field > label > span {
+    display: block; margin-bottom: 3px; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary);
+  }
   .field select {
-    width: 100%; font: inherit; font-size: 12px; padding: 4px;
+    width: 100%; font: inherit; font-size: 12px; padding: 4px var(--space-1);
     background: var(--bg-surface-raised); color: var(--text-primary);
     border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
   }
-  .tabs { display: flex; gap: var(--space-1); margin-bottom: var(--space-2); }
+  .facet { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .facet button, .tabs button {
+    font: inherit; font-size: 11px; cursor: pointer;
+    padding: 4px var(--space-2); color: var(--text-secondary);
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
+    transition: color var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+  }
+  .facet button:hover, .tabs button:hover { color: var(--text-primary); }
+  .facet button[aria-pressed="true"], .tabs button[aria-pressed="true"] {
+    color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle);
+  }
+  .echo {
+    margin: var(--space-2) 0 0; padding-top: var(--space-2);
+    border-top: 1px solid var(--border-dim);
+    font-size: 10px; color: var(--text-tertiary); overflow-wrap: anywhere;
+  }
+  .rail-note { margin: var(--space-3) 0 0; font-size: 10px; line-height: 1.5; color: var(--text-tertiary); }
 
   /* ---------- Matrix ---------- */
+  .tabs { display: flex; gap: var(--space-1); margin-bottom: var(--space-2); }
+  .matrix-scroll { overflow-x: auto; overscroll-behavior-x: contain; max-width: 100%; }
   .matrix-head, .row {
     display: grid;
-    grid-template-columns: minmax(0, 2.2fr) 1fr 1fr 1fr 1.3fr auto;
+    grid-template-columns: minmax(0, 2.2fr) 0.9fr 0.9fr 0.8fr 1.5fr auto;
     gap: var(--space-3); align-items: center;
-    min-width: 760px;
+    min-width: 780px;
   }
-  .matrix-scroll { overflow-x: auto; overscroll-behavior-x: contain; }
   .matrix-head {
+    padding: var(--space-1) var(--space-2) var(--space-2);
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--text-secondary); padding: var(--space-2) var(--space-2);
-    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle);
   }
   .row {
     padding: var(--space-2);
@@ -115,108 +170,180 @@
     border-radius: var(--radius-inner);
     outline: none;
   }
-  .row:focus-visible, .row.is-active { background: var(--bg-surface-raised); box-shadow: inset 2px 0 0 var(--accent-primary); }
+  .row:hover { background: var(--bg-surface); }
+  .row.is-active, .row:focus-visible {
+    background: var(--bg-surface-raised);
+    box-shadow: inset 2px 0 0 var(--accent-primary);
+  }
+  .cell { min-width: 0; }
   .id-text {
     display: block; max-width: 100%;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     font-size: 11px; color: var(--text-primary);
   }
-  .id-sub { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-  .cell { min-width: 0; }
-  .value { font-variant-numeric: tabular-nums; font-size: 13px; }
-  .baseline { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-  .inline-spark { color: var(--accent-primary); display: block; }
+  .id-sub { display: block; font-size: 10px; color: var(--text-tertiary); }
+  .value { display: block; font-size: 13px; letter-spacing: -0.01em; }
+  .baseline { display: block; font-size: 10px; color: var(--text-tertiary); }
+  .spark { display: block; margin-top: 2px; color: var(--accent-primary); }
+  body[data-state="error"] .spark { color: var(--text-tertiary); }
+
+  /* Reference baseline rendered as a tick over the utilisation track. */
+  .meter {
+    position: relative; display: block; height: 3px; margin-top: 5px;
+    background: var(--bg-surface-raised);
+    border-radius: var(--radius-sm); overflow: hidden;
+  }
+  .meter-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent-primary); }
+  .meter-tick {
+    position: absolute; top: -1px; bottom: -1px; width: 1px;
+    background: var(--text-secondary);
+  }
+  .cell[data-tone="warn"] .meter-fill { background: var(--status-warning); }
+  .cell[data-tone="danger"] .meter-fill { background: var(--status-danger); }
+  body[data-state="error"] .meter-fill { background: var(--text-tertiary); }
 
   .badge {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 2px var(--space-2); border-radius: var(--radius-pill);
-    border: 1px solid var(--border-subtle); color: var(--text-secondary);
+    padding: 2px var(--space-2); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-secondary);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-pill);
   }
-  .badge::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: currentColor; }
-  .badge[data-status="running"] { color: var(--status-running); border-color: var(--border-subtle); }
+  .badge::before {
+    content: ""; width: 6px; height: 6px;
+    border-radius: var(--radius-pill); background: currentColor;
+  }
+  .badge[data-status="running"] { color: var(--status-running); }
   .badge[data-status="warning"] { color: var(--status-warning); border-color: var(--border-warning); }
   .badge[data-status="critical"] { color: var(--status-danger); border-color: var(--border-danger); }
   .badge[data-status="drained"] { color: var(--text-tertiary); }
+  .badge[data-status="vram-released"] { color: var(--accent-primary); border-color: var(--border-bright); }
 
   .btn {
     font: inherit; font-size: 11px; cursor: pointer;
     padding: 4px var(--space-3); border-radius: var(--radius-btn);
-    background: var(--bg-surface-raised); color: var(--text-primary);
+    color: var(--text-primary); background: var(--bg-surface-raised);
     border: 1px solid var(--border-bright);
+    transition: background var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
   }
+  .btn:hover { background: var(--bg-overlay); }
   .btn-danger { color: var(--status-danger); border-color: var(--border-danger); }
+  .btn-danger:hover { background: var(--bg-overlay); }
   .btn-primary { color: var(--bg-void); background: var(--accent-primary); border-color: var(--accent-primary); }
-  .btn-tactile:active, .btn:active { transform: scale(0.97); transition: transform var(--duration-fast) var(--ease-hud); }
-  .btn[disabled] { opacity: 0.55; cursor: progress; }
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-primary[disabled], .btn[disabled] { opacity: 0.55; cursor: progress; }
+  .btn-tactile:active, .btn:active, button:active { transform: scale(0.97); }
 
-  /* ---------- Empty / error ---------- */
-  .empty-card {
-    border: 1px dashed var(--border-bright); border-radius: var(--radius-outer);
-    padding: var(--space-6); text-align: center; background: var(--bg-surface-raised);
-  }
-  .empty-card h3 { margin: 0 0 var(--space-2); font-size: 13px; }
-  .empty-card p { margin: 0 0 var(--space-4); color: var(--text-secondary); font-size: 12px; }
+  /* ---------- Fault / empty ---------- */
   .fault-banner {
-    display: none; gap: var(--space-3); align-items: center; flex-wrap: wrap;
-    border: 1px solid var(--border-danger); background: var(--bg-surface-raised);
-    border-radius: var(--radius-outer); padding: var(--space-3); margin-bottom: var(--space-3);
+    display: none; flex-wrap: wrap; gap: var(--space-3); align-items: center;
+    margin-bottom: var(--space-3); padding: var(--space-3);
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-danger); border-radius: var(--radius-outer);
   }
   body[data-state="error"] .fault-banner { display: flex; }
-  body[data-state="error"] .row .value { color: var(--text-tertiary); }
+  body[data-state="error"] .value { color: var(--text-tertiary); }
+  .fault-banner p { margin: 0; flex: 1 1 240px; font-size: 11px; color: var(--text-secondary); }
 
-  /* ---------- Drawer & modal ---------- */
-  .scrim { position: fixed; inset: 0; background: var(--bg-void); opacity: 0.62; display: none; }
+  .empty-card {
+    padding: var(--space-6); text-align: center;
+    background: var(--bg-surface-raised);
+    border: 1px dashed var(--border-bright); border-radius: var(--radius-outer);
+  }
+  .empty-card h3 { margin: 0 0 var(--space-2); font-size: 13px; }
+  .empty-card p { margin: 0 auto var(--space-4); max-width: 44ch; font-size: 12px; color: var(--text-secondary); }
+
+  /* ---------- Overlays ---------- */
+  .scrim { position: fixed; inset: 0; z-index: 10; background: var(--bg-void); opacity: 0.62; display: none; }
   .scrim.is-open { display: block; }
+
   .drawer {
-    position: fixed; top: 0; right: 0; height: 100%; width: min(360px, 92vw);
+    position: fixed; top: 0; right: 0; z-index: 20;
+    width: min(380px, 92vw); height: 100%; padding: var(--space-4);
     background: var(--bg-surface); border-left: 1px solid var(--border-bright);
-    padding: var(--space-4); overflow-y: auto;
-    transform: translateX(102%); transition: transform var(--duration-normal) var(--ease-hud);
-    z-index: 20;
+    overflow-y: auto; transform: translateX(102%);
+    transition: transform var(--duration-normal) var(--ease-hud);
   }
   .drawer.is-open { transform: translateX(0); }
-  .drawer h2 { margin: 0 0 var(--space-1); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); }
-  .kv { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); margin: var(--space-3) 0; font-size: 12px; }
+  .drawer-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+  .drawer h2 {
+    margin: 0; font-size: 12px; font-weight: 620;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);
+  }
+  .frame-tag {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-tertiary); white-space: nowrap;
+  }
+  .uuid {
+    margin: var(--space-3) 0 0; font-size: 11px; line-height: 1.5;
+    color: var(--text-primary); overflow-wrap: anywhere;
+  }
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); margin: var(--space-4) 0 0; font-size: 12px; }
   .kv dt { color: var(--text-secondary); }
-  .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
-  .drawer-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+  .kv dd { margin: 0; text-align: right; }
+  .kv dd small { display: block; font-size: 10px; color: var(--text-tertiary); }
+  .drawer-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border-dim); }
+  .drawer-note { margin: var(--space-3) 0 0; font-size: 10px; line-height: 1.5; color: var(--text-tertiary); }
 
   .modal {
-    position: fixed; z-index: 30; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0.98);
-    width: min(420px, 92vw); background: var(--bg-overlay);
-    border: 1px solid var(--border-bright); border-radius: var(--radius-outer);
-    padding: var(--space-5); display: none;
+    position: fixed; z-index: 30; top: 50%; left: 50%;
+    display: none; width: min(430px, 92vw); padding: var(--space-5);
+    background: var(--bg-overlay); border: 1px solid var(--border-bright);
+    border-radius: var(--radius-outer);
+    transform: translate(-50%, -50%) scale(0.98);
   }
   .modal.is-open { display: block; transform: translate(-50%, -50%) scale(1); }
-  .modal h2 { margin: 0 0 var(--space-2); font-size: 14px; }
-  .modal p { margin: 0 0 var(--space-4); color: var(--text-secondary); font-size: 12px; }
+  .modal h2 { margin: var(--space-1) 0 var(--space-2); font-size: 14px; }
+  .modal p { margin: 0 0 var(--space-4); font-size: 12px; color: var(--text-secondary); }
   .modal-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
 
   .toast {
-    position: fixed; left: var(--space-4); bottom: var(--space-4); z-index: 40;
-    background: var(--bg-surface-raised); color: var(--text-primary);
+    position: fixed; z-index: 40; left: var(--space-4); bottom: var(--space-4);
+    display: flex; align-items: center; gap: var(--space-2);
+    max-width: calc(100vw - var(--space-8));
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-surface-raised);
     border: 1px solid var(--accent-primary); border-radius: var(--radius-btn);
-    padding: var(--space-2) var(--space-4); font-size: 12px;
-    opacity: 0; transform: translateY(6px); transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
-    pointer-events: none; max-width: calc(100vw - var(--space-8));
+    font-size: 12px; opacity: 0; pointer-events: none;
+    transform: translateY(6px);
+    transition: opacity var(--duration-fast) var(--ease-out),
+                transform var(--duration-fast) var(--ease-out);
   }
   .toast.is-open { opacity: 1; transform: translateY(0); }
 
   .kbdbar {
     display: flex; flex-wrap: wrap; gap: var(--space-3);
-    padding: var(--space-2) var(--space-4); border-top: 1px solid var(--border-subtle);
-    color: var(--text-secondary); font-size: 11px; background: var(--bg-base);
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-base); border-top: 1px solid var(--border-subtle);
+    font-size: 11px; color: var(--text-secondary);
   }
   kbd {
-    font-family: var(--font-mono); font-size: 10px; color: var(--text-primary);
+    padding: 1px 4px; font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-primary); background: var(--bg-surface-raised);
     border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
-    padding: 1px 4px; background: var(--bg-surface-raised);
   }
-  @media (max-width: 480px) {
-    .rail { max-width: none; }
-    .fleet { gap: var(--space-3); }
+
+  :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+  @media (max-width: 900px) {
+    .rail { max-width: none; flex-basis: 100%; }
+    .stage { flex-basis: 100%; }
+  }
+  @media (max-width: 640px) {
     .topbar, .shell { padding: var(--space-2); }
+    .fleet { width: 100%; }
+    .stat { flex: 1 1 132px; }
+    .nav-cluster { width: 100%; justify-content: space-between; }
+  }
+  @media (max-width: 380px) {
+    .brand h1 { font-size: 13px; }
+    .stat { min-width: 0; flex-basis: calc(50% - var(--space-1)); }
+    .topology-nav, .state-nav { width: 100%; flex-wrap: wrap; }
+    .top-link, .state-nav a { flex: 1 1 auto; text-align: center; }
+    .empty-card { padding: var(--space-4); }
+    .modal { padding: var(--space-4); }
+    .toast { right: var(--space-2); left: var(--space-2); }
   }
 </style>
 </head>
@@ -224,44 +351,52 @@
 
 <header class="topbar">
   <div class="brand">
-    <h1>Diffusion GPU Cluster Orchestration Desk</h1>
-    <p>4,096 × H100 SXM5 · DCGM telemetry + Slurm batch controller · priority: deterministic drain</p>
+    <span class="led" aria-hidden="true"></span>
+    <div>
+      <h1>GPU Control Plane</h1>
+      <p><b>4,096</b> × H100 SXM5 · 256 nodes / 5 regions · DCGM telemetry + Slurm batch controller · priority: deterministic drain</p>
+    </div>
   </div>
-  <div class="fleet" id="fleetStats">
+
+  <div class="fleet" aria-label="Fleet telemetry">
     <div class="stat">
       <span class="k">Tensor streams</span>
-      <span class="v metric">1,284</span>
+      <span class="v metric" id="fleetStreams">1,284</span>
       <span class="base">P95 baseline 1,410</span>
     </div>
     <div class="stat">
       <span class="k">Median VRAM</span>
       <span class="v metric">88.4%</span>
-      <span class="base">P95 96.2%</span>
+      <span class="base">pool P95 96.2%</span>
     </div>
     <div class="stat">
       <span class="k">Drain RTT</span>
       <span class="v metric">1.9s</span>
       <span class="base">target ≤ 3.0s</span>
-      <span class="spark" id="drainSpark" aria-hidden="true"></span>
+      <span class="spark" id="fleetDrainSpark" aria-hidden="true"></span>
     </div>
   </div>
-  <nav class="topology-nav" aria-label="Surface Topology Navigation">
-    <a href="index.html" class="top-link is-active" aria-current="page">Cluster Matrix</a>
-    <a href="../../../surfaces/incident-replay/index.html" class="top-link">Incident Replay</a>
-    <a href="../../../surfaces/capacity-matrix/index.html" class="top-link">Capacity &amp; Quota</a>
-  </nav>
-  <nav class="state-nav" aria-label="Prototype state">
-    <a href="#state=ideal" data-state-link="ideal" aria-current="true">ideal</a>
-    <a href="#state=empty" data-state-link="empty">empty</a>
-    <a href="#state=error" data-state-link="error">error</a>
-  </nav>
+
+  <div class="nav-cluster">
+    <nav class="topology-nav" aria-label="Surface topology">
+      <a href="index.html" class="top-link is-active" aria-current="page" title="主工作区 (Primary)">Cluster Matrix</a>
+      <a href="../../../surfaces/incident-replay/index.html" class="top-link" title="上下文视图 (Contextual)">Incident Replay</a>
+      <a href="../../../surfaces/capacity-matrix/index.html" class="top-link" title="支撑视图 (Supporting)">Capacity &amp; Quota</a>
+    </nav>
+    <nav class="state-nav" aria-label="Prototype state">
+      <a href="#state=ideal" data-state-link="ideal" aria-current="true">ideal</a>
+      <a href="#state=empty" data-state-link="empty">empty</a>
+      <a href="#state=error" data-state-link="error">error</a>
+    </nav>
+  </div>
 </header>
 
 <div class="shell">
   <aside class="rail panel" aria-label="Facet filters">
     <div class="inner">
       <h2>Facets</h2>
-      <label class="field" for="region">Region
+      <label class="field" for="region">
+        <span>Region</span>
         <select id="region">
           <option value="all">All regions (5)</option>
           <option value="us-east">us-east (3)</option>
@@ -270,22 +405,23 @@
         </select>
       </label>
       <div class="field">
-        <span>Status</span>
-        <div class="facet" role="group" aria-label="Status facet">
+        <span id="statusFacetLabel">Status</span>
+        <div class="facet" role="group" aria-labelledby="statusFacetLabel">
           <button type="button" data-facet="status" data-value="all" aria-pressed="true">All</button>
           <button type="button" data-facet="status" data-value="running" aria-pressed="false">Running</button>
           <button type="button" data-facet="status" data-value="critical" aria-pressed="false">Critical</button>
         </div>
       </div>
       <div class="field">
-        <span>Workload</span>
-        <div class="facet" role="group" aria-label="Workload facet">
+        <span id="workloadFacetLabel">Workload</span>
+        <div class="facet" role="group" aria-labelledby="workloadFacetLabel">
           <button type="button" data-facet="workload" data-value="all" aria-pressed="true">All</button>
           <button type="button" data-facet="workload" data-value="sd3-xl-batch" aria-pressed="false">sd3-xl-batch</button>
           <button type="button" data-facet="workload" data-value="flux-dev" aria-pressed="false">flux-dev</button>
         </div>
       </div>
-      <p class="baseline" id="filterEcho">Facets: region=all · status=all · workload=all</p>
+      <p class="echo" id="filterEcho">region=all · status=all · workload=all</p>
+      <p class="rail-note">Filters, active tab, row selection and scroll offset survive every drawer dismissal. Nothing is submitted until the commit step.</p>
     </div>
   </aside>
 
@@ -299,8 +435,8 @@
 
       <div class="fault-banner" role="alert">
         <span class="badge" data-status="critical">Telemetry lost</span>
-        <span id="faultText">DCGM uplink dropped for this rack — last frame 00:41 ago. Actions remain queued and idempotent.</span>
-        <button type="button" class="btn" id="retryUplink">Retry Uplink</button>
+        <p id="faultText">DCGM uplink dropped for rack-07 — last frame 00:41 ago. Readings below are stale; actions stay queued and idempotent.</p>
+        <button type="button" class="btn btn-tactile" id="retryUplink">Retry Uplink</button>
       </div>
 
       <div class="matrix-scroll" id="matrixScroll">
@@ -317,8 +453,8 @@
 
       <div class="empty-card" id="emptyCard" hidden>
         <h3>0 nodes match this filter</h3>
-        <p id="emptyDetail">Nothing in ap-south · status=all · workload=all. The control plane is healthy; the facet simply selects no hardware.</p>
-        <button type="button" class="btn btn-primary" id="resetFilters">Reset Filters</button>
+        <p id="emptyDetail">The control plane is healthy — the facet simply selects no hardware.</p>
+        <button type="button" class="btn btn-primary btn-tactile" id="resetFilters">Reset Filters</button>
       </div>
     </div>
   </main>
@@ -328,16 +464,19 @@
   <span><kbd>Space</kbd> / <kbd>P</kbd> inspect active node</span>
   <span><kbd>Esc</kbd> dismiss drawer / modal</span>
   <span><kbd>J</kbd> / <kbd>K</kbd> navigate rows</span>
-  <span id="selectionEcho">active: row 1</span>
+  <span class="echo" id="selectionEcho">active: row 1 of 5</span>
 </footer>
 
 <div class="scrim" id="scrim"></div>
 
 <aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-labelledby="drawerTitle" aria-hidden="true">
-  <h2 id="drawerTitle">Node Inspector</h2>
-  <p class="mono id-text" id="drawerNodeId" title="">—</p>
+  <div class="drawer-head">
+    <h2 id="drawerTitle">Node Inspector</h2>
+    <span class="frame-tag">Frame 1 · Intent Input</span>
+  </div>
+  <p class="uuid mono" id="drawerNodeId" title=""></p>
   <dl class="kv" id="drawerParams"></dl>
-  <p class="baseline">All figures carry reference baselines; VRAM shown against pool P95 96.2%.</p>
+  <p class="drawer-note">Every reading carries its reference baseline. Dismissing this drawer without committing preserves filters, tab and scroll offset.</p>
   <div class="drawer-actions">
     <button type="button" class="btn btn-danger btn-tactile" id="triggerDrain" data-action-id="drain-node">Drain Node</button>
     <button type="button" class="btn btn-tactile" id="triggerPreempt" data-action-id="preempt-vram">Preempt VRAM</button>
@@ -345,47 +484,60 @@
 </aside>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalBody" aria-hidden="true">
+  <span class="frame-tag">Frame 2 · Decisive Commit</span>
   <h2 id="modalTitle">Drain GPU Node</h2>
   <p id="modalBody">Evicts the active batch job and halts the tensor stream on this node.</p>
   <div class="modal-actions">
     <button type="button" class="btn" id="cancelCommit">Cancel</button>
-    <button type="button" class="btn btn-primary btn-tactile" id="commitBtn">Confirm Drain</button>
+    <button type="button" class="btn btn-primary btn-tactile" id="commitBtn" data-action-id="drain-node">Confirm Drain</button>
   </div>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="frame-tag">Frame 3 · Settled</span>
+  <span id="toastText"></span>
+</div>
 
 <script>
 (function () {
   "use strict";
 
   var STATES = ["ideal", "empty", "error"];
+
   var NODES = [
     { id: "node-cluster-uuid-00000000-0000-0000-0000-000000000000", short: "hgx-a01", region: "us-east",
-      util: 94, vram: 91, temp: 71, job: "sd3-xl-batch-7742", status: "critical",
-      spark: [72, 78, 74, 88, 91, 86, 94, 94] },
+      rack: "rack-07", util: 94, utilP95: 97, vram: 91, vramP95: 96.2, temp: 71, job: "sd3-xl-batch-7742",
+      status: "critical", spark: [72, 78, 74, 88, 91, 86, 94, 94] },
     { id: "hgx-a02.us-east.cluster-07", short: "hgx-a02", region: "us-east",
-      util: 88, vram: 84, temp: 66, job: "flux-dev-1180", status: "running",
-      spark: [80, 83, 79, 85, 88, 86, 87, 88] },
+      rack: "rack-07", util: 88, utilP95: 94, vram: 84, vramP95: 96.2, temp: 66, job: "flux-dev-1180",
+      status: "running", spark: [80, 83, 79, 85, 88, 86, 87, 88] },
     { id: "hgx-a03.us-east.cluster-07", short: "hgx-a03", region: "us-east",
-      util: 61, vram: 58, temp: 54, job: "sd3-xl-batch-7739", status: "running",
-      spark: [55, 58, 62, 60, 57, 59, 60, 61] },
+      rack: "rack-08", util: 61, utilP95: 72, vram: 58, vramP95: 96.2, temp: 54, job: "sd3-xl-batch-7739",
+      status: "running", spark: [55, 58, 62, 60, 57, 59, 60, 61] },
     { id: "hgx-b01.us-west.cluster-11", short: "hgx-b01", region: "us-west",
-      util: 97, vram: 96, temp: 78, job: "sd3-xl-batch-7751", status: "critical",
-      spark: [84, 88, 92, 95, 93, 96, 97, 97] },
+      rack: "rack-11", util: 97, utilP95: 97, vram: 96, vramP95: 96.2, temp: 78, job: "sd3-xl-batch-7751",
+      status: "critical", spark: [84, 88, 92, 95, 93, 96, 97, 97] },
     { id: "hgx-b02.us-west.cluster-11", short: "hgx-b02", region: "us-west",
-      util: 43, vram: 39, temp: 48, job: "flux-dev-1177", status: "running",
-      spark: [40, 44, 46, 42, 41, 43, 42, 43] }
+      rack: "rack-12", util: 43, utilP95: 66, vram: 39, vramP95: 96.2, temp: 48, job: "flux-dev-1177",
+      status: "running", spark: [40, 44, 46, 42, 41, 43, 42, 43] }
   ];
+
+  /* One lifecycle table, four phases: trigger -> drawer header -> commit -> toast. */
   var ACTIONS = {
-    drain: { trigger: "Drain Node", header: "Drain GPU Node", commit: "Confirm Drain",
-             toast: "Node Drained Successfully",
-             body: "Evicts the active batch job and halts the tensor stream on this node.",
-             settle: "drained" },
-    preempt: { trigger: "Preempt VRAM", header: "Preempt VRAM Allocation", commit: "Execute Preempt",
-               toast: "VRAM Eviction Committed",
-               body: "Releases this node's VRAM pool back to the shared cluster.",
-               settle: "vram-released" }
+    drain: {
+      header: "Drain GPU Node",
+      commit: "Confirm Drain",
+      toast: "Node Drained Successfully",
+      settle: "drained",
+      body: "Evicts the active batch job and halts the tensor stream on this node."
+    },
+    preempt: {
+      header: "Preempt VRAM Allocation",
+      commit: "Execute Preempt",
+      toast: "VRAM Eviction Committed",
+      settle: "vram-released",
+      body: "Releases this node's VRAM pool back to the shared cluster."
+    }
   };
 
   var el = {
@@ -399,7 +551,6 @@
     tabNodes: document.getElementById("tabNodes"),
     tabVram: document.getElementById("tabVram"),
     drawer: document.getElementById("drawer"),
-    drawerTitle: document.getElementById("drawerTitle"),
     drawerNodeId: document.getElementById("drawerNodeId"),
     drawerParams: document.getElementById("drawerParams"),
     triggerDrain: document.getElementById("triggerDrain"),
@@ -411,28 +562,31 @@
     cancelCommit: document.getElementById("cancelCommit"),
     scrim: document.getElementById("scrim"),
     toast: document.getElementById("toast"),
+    toastText: document.getElementById("toastText"),
     selectionEcho: document.getElementById("selectionEcho"),
-    drainSpark: document.getElementById("drainSpark"),
     resetFilters: document.getElementById("resetFilters"),
-    retryUplink: document.getElementById("retryUplink")
+    retryUplink: document.getElementById("retryUplink"),
+    drainSpark: document.getElementById("fleetDrainSpark")
   };
 
-  // Context preservation: filters, tab, selection and scroll offset survive every dismissal.
-  var ctx = { state: "ideal", region: "all", status: "all", workload: "all", tab: "nodes",
-              active: 0, savedScroll: 0 };
-  var openTarget = null;   // element to receive focus when the overlay closes
+  /* Draft context lives here and only here: dismissal never clears it. */
+  var ctx = {
+    state: "ideal", region: "all", status: "all", workload: "all",
+    tab: "nodes", active: 0, scroll: 0, pageY: 0
+  };
+  var returnFocus = null;  // anchor that must regain focus when an overlay closes
   var actionKey = null;    // action awaiting commit
   var locked = false;      // idempotency guard: one settlement per commit burst
+  var toastTimer = null;
 
-  function sparkline(values) {
+  function sparkline(values, width, height) {
     var max = Math.max.apply(null, values), min = Math.min.apply(null, values);
-    var span = (max - min) || 1, w = 72, h = 16;
+    var span = (max - min) || 1;
     var pts = values.map(function (v, i) {
-      var x = (i / (values.length - 1)) * w;
-      var y = h - ((v - min) / span) * h;
-      return x.toFixed(1) + "," + y.toFixed(1);
+      return ((i / (values.length - 1)) * width).toFixed(1) + "," +
+             (height - ((v - min) / span) * height).toFixed(1);
     }).join(" ");
-    return '<svg class="inline-spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h +
+    return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + " " + height +
            '" aria-hidden="true"><polyline points="' + pts + '" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
   }
 
@@ -445,155 +599,184 @@
     });
   }
 
-  function badgeFor(n) {
-    if (n.settleState === "drained") return "drained";
-    if (n.settleState === "vram-released") return "vram-released";
-    return n.status;
+  function toneFor(value, baseline) {
+    if (value >= 95) return "danger";
+    if (value >= baseline) return "warn";
+    return "ok";
+  }
+
+  function cell(value, unit, baselineLabel, tone, tick) {
+    return '<div class="cell" role="gridcell" data-tone="' + tone + '">' +
+             '<span class="value metric">' + value + unit + "</span>" +
+             '<span class="baseline">' + baselineLabel + "</span>" +
+             '<span class="meter" aria-hidden="true">' +
+               '<i class="meter-fill" style="width:' + Math.min(100, value) + '%"></i>' +
+               '<i class="meter-tick" style="left:' + Math.min(99, tick) + '%"></i>' +
+             "</span>" +
+           "</div>";
   }
 
   function render() {
-    var list = filtered();
-    el.rows.innerHTML = list.map(function (n, i) {
+    var list = (ctx.state === "empty") ? [] : filtered();
+    var settled = {};
+
+    el.rows.innerHTML = list.map(function (n) {
       var local = NODES.indexOf(n);
-      var base = badgeFor(n);
-      return '' +
-      '<div class="row' + (local === ctx.active ? " is-active" : "") + '" role="row" data-item="node" ' +
-        'data-index="' + local + '" id="row-' + local + '" tabindex="' + (local === ctx.active ? "0" : "-1") + '" ' +
-        'aria-selected="' + (local === ctx.active) + '">' +
+      var badge = n.settleState || n.status;
+      return '<div class="row' + (local === ctx.active ? " is-active" : "") + '" role="row" data-item="node" ' +
+               'data-index="' + local + '" id="row-' + local + '" ' +
+               'tabindex="' + (local === ctx.active ? "0" : "-1") + '" ' +
+               'aria-selected="' + (local === ctx.active) + '">' +
         '<div class="cell" role="gridcell">' +
-          '<span class="mono id-text" title="' + n.id + '">' + n.id + '</span>' +
-          '<span class="id-sub">' + n.short + " · " + n.region + '</span>' +
-        '</div>' +
-        '<div class="cell" role="gridcell"><span class="value metric">' + n.util + '%</span>' +
-          '<span class="baseline">P95 97%</span>' + sparkline(n.spark) + '</div>' +
-        '<div class="cell" role="gridcell"><span class="value metric">' + n.vram + '%</span>' +
-          '<span class="baseline">pool P95 96.2%</span></div>' +
-        '<div class="cell" role="gridcell"><span class="value metric">' + n.temp + '°C</span>' +
-          '<span class="baseline">throttle 83°C</span></div>' +
-        '<div class="cell" role="gridcell"><span class="mono id-text">' + n.job + '</span>' +
-          '<span class="badge" data-status="' + base + '">' + base + '</span></div>' +
-        '<div class="cell" role="gridcell"><button type="button" class="btn btn-tactile" data-inspect="' + local +
-          '" data-anchor="inspect-' + local + '">Inspect</button></div>' +
-      '</div>';
+          '<span class="mono id-text" title="' + n.id + '">' + n.id + "</span>" +
+          '<span class="id-sub">' + n.short + " · " + n.region + " · " + n.rack + "</span>" +
+          '<span class="spark">' + sparkline(n.spark, 64, 14) + "</span>" +
+        "</div>" +
+        cell(n.util, "%", "P95 " + n.utilP95 + "% · 8h", toneFor(n.util, n.utilP95), n.utilP95) +
+        cell(n.vram, "%", "pool P95 " + n.vramP95 + "%", toneFor(n.vram, n.vramP95), n.vramP95) +
+        cell(n.temp, "°C", "throttle 83°C", n.temp >= 75 ? "warn" : "ok", 83) +
+        '<div class="cell" role="gridcell">' +
+          '<span class="mono id-text" title="' + n.job + '">' + n.job + "</span>" +
+          '<span class="badge" data-status="' + badge + '">' + badge + "</span>" +
+        "</div>" +
+        '<div class="cell" role="gridcell">' +
+          '<button type="button" class="btn btn-tactile" data-inspect="' + local + '" ' +
+            'data-anchor="inspect-' + local + '">Inspect</button>' +
+        "</div>" +
+      "</div>";
     }).join("");
 
     var isEmpty = ctx.state === "empty" || list.length === 0;
     el.empty.hidden = !isEmpty;
     el.scroll.hidden = isEmpty;
-    el.emptyDetail.textContent = isEmpty
-      ? "Nothing in " + ctx.region + " · status=" + ctx.status + " · workload=" + ctx.workload +
-        ". The control plane is healthy; the facet simply selects no hardware."
-      : "";
-    el.filterEcho.textContent = "Facets: region=" + ctx.region + " · status=" + ctx.status + " · workload=" + ctx.workload;
-    el.selectionEcho.textContent = "active: " + (list.length ? "row " + (ctx.active + 1) : "none");
+    if (isEmpty) {
+      el.emptyDetail.textContent = "Nothing in " + ctx.region + " · status=" + ctx.status +
+        " · workload=" + ctx.workload + " matches. The control plane is healthy — the facet simply selects no hardware.";
+    }
+    el.filterEcho.textContent = "region=" + ctx.region + " · status=" + ctx.status + " · workload=" + ctx.workload;
+    el.selectionEcho.textContent = "active: " + (list.length ? "row " + (ctx.active + 1) + " of " + list.length : "none");
     el.stageTitle.textContent = ctx.tab === "nodes" ? "Node Matrix" : "VRAM Pool";
+    el.rows.setAttribute("aria-rowcount", String(list.length));
   }
 
   function setActive(index, focus) {
-    var list = filtered();
-    if (!list.length) return;
+    if (!filtered().length) return;
     ctx.active = Math.max(0, Math.min(NODES.length - 1, index));
     render();
     var row = document.getElementById("row-" + ctx.active);
     if (row) {
       row.setAttribute("tabindex", "0");
-      if (focus) row.focus({ preventScroll: false });
+      if (focus) row.focus();
     }
   }
 
-  function openDrawer(nodeIndex) {
-    if (el.drawer.classList.contains("is-open")) return;   // rapid Space hits stay idempotent
-    var n = NODES[nodeIndex];
-    ctx.savedScroll = el.scroll.scrollTop;
-    ctx.active = nodeIndex;
+  function markReturnFocus(node) {
+    returnFocus = node;
+  }
+
+  function restoreFocus() {
+    if (returnFocus && document.contains(returnFocus)) returnFocus.focus({ preventScroll: true });
+    returnFocus = null;
+    window.scrollTo(0, ctx.pageY);   // spatial context stays pinned
+  }
+
+  /* Frame 1 — Intent Input. Repeated Space hits are absorbed, never queued. */
+  function openDrawer(index) {
+    if (el.drawer.classList.contains("is-open") || el.modal.classList.contains("is-open")) return;
+    var n = NODES[index];
+    if (!n) return;
+    ctx.scroll = el.scroll.scrollLeft;
+    ctx.pageY = window.scrollY;
+    ctx.active = index;
     render();
-    el.drawerTitle.textContent = "Node Inspector";
     el.drawerNodeId.textContent = n.id;
     el.drawerNodeId.title = n.id;
     el.drawerParams.innerHTML =
       "<dt>Batch job</dt><dd class='mono'>" + n.job + "</dd>" +
-      "<dt>Tensor util</dt><dd>" + n.util + "% (P95 97%)</dd>" +
-      "<dt>VRAM</dt><dd>" + n.vram + "% (pool P95 96.2%)</dd>" +
-      "<dt>Temp</dt><dd>" + n.temp + "°C (throttle 83°C)</dd>" +
-      "<dt>Region</dt><dd>" + n.region + "</dd>";
-    openTarget = document.querySelector('[data-inspect="' + nodeIndex + '"]');
+      "<dt>Tensor util</dt><dd>" + n.util + "%<small>P95 " + n.utilP95 + "%</small></dd>" +
+      "<dt>VRAM</dt><dd>" + n.vram + "%<small>pool P95 " + n.vramP95 + "%</small></dd>" +
+      "<dt>Temp</dt><dd>" + n.temp + "°C<small>throttle 83°C</small></dd>" +
+      "<dt>Region</dt><dd>" + n.region + "<small>" + n.rack + "</small></dd>";
     el.drawer.classList.add("is-open");
     el.drawer.setAttribute("aria-hidden", "false");
     el.scrim.classList.add("is-open");
-    el.drawer.querySelector(".drawer-actions .btn").focus();
+    el.drawer.querySelector(".drawer-actions .btn").focus({ preventScroll: true });
+    window.scrollTo(0, ctx.pageY);
+    el.scroll.scrollLeft = ctx.scroll;
   }
 
   function closeDrawer() {
     if (!el.drawer.classList.contains("is-open")) return;
     el.drawer.classList.remove("is-open");
     el.drawer.setAttribute("aria-hidden", "true");
-    el.scrim.classList.remove("is-open");
-    el.scroll.scrollTop = ctx.savedScroll;   // spatial context stays pinned
-    if (openTarget && document.contains(openTarget)) openTarget.focus();
-    openTarget = null;
+    if (!el.modal.classList.contains("is-open")) el.scrim.classList.remove("is-open");
+    restoreFocus();
   }
 
+  /* Frame 2 — Decisive Commit. */
   function openModal(key) {
     if (el.modal.classList.contains("is-open") || locked) return;
-    actionKey = key;
     var a = ACTIONS[key];
-    ctx.savedScroll = el.scroll.scrollTop;
+    actionKey = key;
+    ctx.pageY = window.scrollY;
     el.modalTitle.textContent = a.header;
     el.modalBody.textContent = a.body;
     el.commitBtn.textContent = a.commit;
+    el.commitBtn.setAttribute("data-action-id", key === "drain" ? "drain-node" : "preempt-vram");
     el.commitBtn.disabled = false;
     el.commitBtn.removeAttribute("aria-busy");
+    markReturnFocus(document.getElementById(key === "drain" ? "triggerDrain" : "triggerPreempt"));
     el.modal.classList.add("is-open");
     el.modal.setAttribute("aria-hidden", "false");
     el.scrim.classList.add("is-open");
-    el.commitBtn.focus();
+    el.commitBtn.focus({ preventScroll: true });
+    window.scrollTo(0, ctx.pageY);
   }
 
   function closeModal() {
     if (!el.modal.classList.contains("is-open")) return;
     el.modal.classList.remove("is-open");
     el.modal.setAttribute("aria-hidden", "true");
-    el.scrim.classList.remove("is-open");
-    el.scroll.scrollTop = ctx.savedScroll;
-    var back = document.getElementById("trigger" + (actionKey === "drain" ? "Drain" : "Preempt"));
-    (back || el.drawer).focus();
+    if (!el.drawer.classList.contains("is-open")) el.scrim.classList.remove("is-open");
     actionKey = null;
+    restoreFocus();
   }
 
+  /* Frame 3 — State Settlement & Focus Restoration. */
   function settle() {
-    if (locked) return;              // double click / rapid Space: single transition
+    if (locked || !actionKey) return;      // double-click / rapid Space: single transition
     locked = true;
     var a = ACTIONS[actionKey];
+    var key = actionKey;
     var node = NODES[ctx.active];
     el.commitBtn.disabled = true;
     el.commitBtn.setAttribute("aria-busy", "true");
     window.setTimeout(function () {
-      node.settleState = a.settle;
+      if (node) node.settleState = a.settle;
       el.modal.classList.remove("is-open");
       el.modal.setAttribute("aria-hidden", "true");
-      el.scrim.classList.remove("is-open");
-      el.scroll.scrollTop = ctx.savedScroll;
+      if (!el.drawer.classList.contains("is-open")) el.scrim.classList.remove("is-open");
       render();
       showToast(a.toast);
-      var back = document.getElementById("trigger" + (actionKey === "drain" ? "Drain" : "Preempt"));
-      (back || document.getElementById("row-" + ctx.active) || document.body).focus();
       actionKey = null;
       locked = false;
+      var back = document.getElementById(key === "drain" ? "triggerDrain" : "triggerPreempt");
+      markReturnFocus(back);
+      restoreFocus();
     }, 220);
   }
 
-  var toastTimer = null;
   function showToast(text) {
-    el.toast.textContent = text;
+    el.toastText.textContent = text;
     el.toast.classList.add("is-open");
     if (toastTimer) window.clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(function () { el.toast.classList.remove("is-open"); }, 2600);
+    toastTimer = window.setTimeout(function () { el.toast.classList.remove("is-open"); }, 2800);
   }
 
-  /* ---- hash state machine ---- */
+  /* ---- Hash state router: #state=ideal | empty | error ---- */
   function applyState() {
-    var m = /state=([a-z]+)/.exec(window.location.hash || "");
-    ctx.state = STATES.indexOf(m && m[1]) !== -1 ? m[1] : "ideal";
+    var m = /state=([a-z-]+)/.exec(window.location.hash || "");
+    ctx.state = (m && STATES.indexOf(m[1]) !== -1) ? m[1] : "ideal";
     document.body.dataset.state = ctx.state;
     [].forEach.call(document.querySelectorAll("[data-state-link]"), function (a) {
       a.setAttribute("aria-current", String(a.getAttribute("data-state-link") === ctx.state));
@@ -604,7 +787,7 @@
   }
   window.addEventListener("hashchange", applyState);
 
-  /* ---- dual-channel ergonomics ---- */
+  /* ---- Dual-channel ergonomics: pointer and keyboard reach every action ---- */
   document.addEventListener("keydown", function (e) {
     var tag = (e.target && e.target.tagName) || "";
     if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
@@ -621,23 +804,27 @@
       else openDrawer(ctx.active);
       return;
     }
-    if (e.key === "j" || e.key === "J") { e.preventDefault(); setActive(ctx.active + 1, true); }
+    if (e.key === "j" || e.key === "J") { e.preventDefault(); setActive(ctx.active + 1, true); return; }
     if (e.key === "k" || e.key === "K") { e.preventDefault(); setActive(ctx.active - 1, true); }
   });
   document.addEventListener("keyup", function (e) {
-    if (e.key === "Space" || e.key === "p" || e.key === "P" || e.key === "Escape") {
+    if (e.key === " " || e.key === "Escape" || e.key === "j" || e.key === "k") {
       document.body.dataset.lastKey = e.key;
     }
   });
 
-  /* ---- wiring ---- */
+  /* ---- Wiring ---- */
   el.rows.addEventListener("click", function (e) {
     var inspect = e.target.closest("[data-inspect]");
-    if (inspect) { openDrawer(Number(inspect.getAttribute("data-inspect"))); return; }
+    if (inspect) { markReturnFocus(inspect); openDrawer(Number(inspect.getAttribute("data-inspect"))); return; }
     var row = e.target.closest("[data-item='node']");
     if (row) setActive(Number(row.getAttribute("data-index")), false);
   });
-  el.region.addEventListener("change", function () { ctx.region = el.region.value; ctx.active = 0; render(); });
+
+  el.region.addEventListener("change", function () {
+    ctx.region = el.region.value; ctx.active = 0; render();
+  });
+
   [].forEach.call(document.querySelectorAll("[data-facet]"), function (b) {
     b.addEventListener("click", function () {
       var f = b.getAttribute("data-facet");
@@ -649,6 +836,7 @@
       render();
     });
   });
+
   function setTab(tab) {
     ctx.tab = tab;
     el.tabNodes.setAttribute("aria-pressed", String(tab === "nodes"));
@@ -657,6 +845,7 @@
   }
   el.tabNodes.addEventListener("click", function () { setTab("nodes"); });
   el.tabVram.addEventListener("click", function () { setTab("vram"); });
+
   el.resetFilters.addEventListener("click", function () {
     ctx.region = "all"; ctx.status = "all"; ctx.workload = "all"; ctx.active = 0;
     el.region.value = "all";
@@ -667,22 +856,19 @@
     render();
     showToast("Filters Reset — 5 nodes restored");
   });
+
   el.retryUplink.addEventListener("click", function () {
     window.location.hash = "#state=ideal";
     showToast("Uplink Restored — live telemetry");
   });
+
   el.triggerDrain.addEventListener("click", function () { openModal("drain"); });
   el.triggerPreempt.addEventListener("click", function () { openModal("preempt"); });
   el.commitBtn.addEventListener("click", settle);
   el.cancelCommit.addEventListener("click", closeModal);
   el.scrim.addEventListener("click", function () { closeModal(); closeDrawer(); });
-  document.addEventListener("click", function (e) {
-    if (e.target.closest("[data-inspect]") || e.target.closest(".drawer") || e.target.closest(".modal") ||
-        e.target.closest(".row") || e.target.closest(".rail")) return;
-    closeDrawer();
-  });
 
-  el.drainSpark.innerHTML = sparkline([2.6, 2.3, 2.1, 2.4, 2.0, 1.9, 2.2, 1.9]);
+  el.drainSpark.innerHTML = sparkline([2.6, 2.3, 2.1, 2.4, 2.0, 1.9, 2.2, 1.9], 72, 16);
   applyState();
 })();
 </script>
