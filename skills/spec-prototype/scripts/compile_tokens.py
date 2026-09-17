@@ -394,7 +394,7 @@ def compile_tokens(
     dials = parse_5dials(disc_text)
 
     palette_match = re.search(
-        r"(?:palette|color\s+palette)\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*",
+        r"[`*]*(?:palette|color\s+palette)[`*]*\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*",
         disc_text,
         re.IGNORECASE,
     )
