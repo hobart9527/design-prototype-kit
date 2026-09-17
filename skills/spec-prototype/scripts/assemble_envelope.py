@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import sys
@@ -201,45 +202,87 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         constraints["maximum_operational_repair_attempts"] = explicit_turns
 
     spec_rel = paths["specification"].relative_to(root).as_posix()
-    verification_cmd = f"python3 skills/spec-prototype/scripts/verify_prototype_quality.py {target_html} prototype/shared/tokens.css --contract {spec_rel}"
-    capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs {target_html} --output {evidence_scope} --viewports 320,390,768,1280 --states ideal,empty,error"
+    target_dir = (root / target_html).parent
+    token_rel_href = os.path.relpath(paths["tokens_css"], target_dir)
+    token_link_tag = f'<link rel="stylesheet" href="{token_rel_href}">'
 
-    state_blueprint = (
-        "// Standard State Machine & Hash Router Blueprint:\n"
-        "function applyState() {\n"
-        "  const state = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('state') || 'ideal';\n"
-        "  document.body.dataset.state = state;\n"
-        "  AppState.nodes = (state === 'empty' || state === 'zero-items') ? [] : AppState.allNodes;\n"
-        "  render();\n"
-        "}\n"
-        "window.addEventListener('hashchange', applyState);\n"
-        "applyState();"
-    )
+    # Parse shared topology navigation from surface map
+    nav_links = []
+    current_role = "primary"
+    for line in smap_content.splitlines():
+        m = re.search(r"\*\*(.+?)\*\*\s*:\s*`([^`]+)`", line)
+        if m:
+            role_label, path_raw = m.group(1).strip(), m.group(2).strip()
+            if "hero-anchor" in path_raw:
+                surf_path = root / f"prototype/experiments/{path_raw}/index.html"
+                sid = path_raw.split("/")[0]
+            elif path_raw.startswith("surfaces/"):
+                surf_path = root / f"prototype/{path_raw}/index.html"
+                sid = path_raw.replace("surfaces/", "")
+            else:
+                surf_path = root / f"prototype/{path_raw}/index.html"
+                sid = path_raw
+
+            is_active = (sid == slice_id or path_raw == slice_id)
+            if is_active:
+                if "Primary" in role_label or "主工作区" in role_label:
+                    current_role = "primary"
+                elif "Contextual" in role_label or "上下文" in role_label:
+                    current_role = "contextual"
+                else:
+                    current_role = "supporting"
+
+            rel_href = os.path.relpath(surf_path, target_dir)
+            label = "Cluster Matrix" if "console" in sid else ("Incident Replay" if "incident" in sid else ("Capacity & Quota" if "capacity" in sid else sid.replace("-", " ").title()))
+            nav_links.append({
+                "slice_id": sid,
+                "label": label,
+                "role": role_label,
+                "href": rel_href,
+                "active": is_active
+            })
+
+    verification_cmd = f"python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice {slice_id}"
+    capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
+
+    interaction_spec = {
+        "state_machine": {
+            "type": "hash_state",
+            "query_param": "state",
+            "supported_states": ["ideal", "empty", "error"],
+            "dom_hook": "document.body.dataset.state"
+        },
+        "dual_channel_shortcuts": shortcuts,
+        "action_verb_lifecycle": verb_lifecycle,
+        "decisive_exchange_frames": decisive_frames,
+        "context_preservation_rules": context_rules,
+        "break_protocol_checkpoints": break_checkpoints
+    }
 
     envelope = {
-        "envelope_version": "1.2",
+        "envelope_version": "2.0",
         "repository_root": str(root.resolve()),
         "skill_root": str(SKILL.resolve()),
         "slice_id": slice_id,
         "mode": "lean-builder-envelope",
         "target_html_path": target_html,
         "evidence_output_dir": evidence_scope,
-        "token_stylesheet_ref": "../../../shared/tokens.css",
+        "token_stylesheet_ref": token_rel_href,
+        "token_link_tag": token_link_tag,
+        "topology_context": {
+            "current_slice": slice_id,
+            "surface_role": current_role,
+            "shared_shell": {
+                "brand_title": "GPU Control Plane",
+                "navigation_links": nav_links
+            }
+        },
         "verification_command": verification_cmd,
         "capture_command": capture_cmd,
-        "required_css_tokens": [
-            "var(--radius-outer)",
-            "var(--radius-inner)",
-            "var(--radius-card)",
-            "var(--radius-btn)",
-            "var(--bg-void)",
-            "var(--bg-surface)",
-            "var(--text-primary)",
-            "var(--accent-primary)",
-            "font-variant-numeric: tabular-nums",
-        ],
-        "state_routing_blueprint": state_blueprint,
         "available_tokens": extract_css_tokens(paths["tokens_css"].read_text(encoding="utf-8")),
+        "interaction_spec": interaction_spec,
+        "design_constraints": constraints,
+        "verifiable_assertions": assertions,
         "specification": {
             "path": spec_rel,
             "sha256": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),
@@ -252,10 +295,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "tokens_md_digest": hashlib.sha256(paths["tokens_md"].read_bytes()).hexdigest(),
             "contract_digest": hashlib.sha256(paths["slice_contract"].read_bytes()).hexdigest(),
             "specification_digest": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),
-        },
-        # Only assertions present in the retained specification are constraints.
-        "design_constraints": constraints,
-        "verifiable_assertions": assertions,
+        }
     }
 
     return envelope

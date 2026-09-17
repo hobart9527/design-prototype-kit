@@ -147,6 +147,31 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             if not re.search(r"hashchange|location\.hash|data-state", source, re.IGNORECASE):
                 failures.append("state-machine assertion: stress checkpoints declared but no state-switching hook detected (use hashchange / location.hash / data-state)")
 
+        # Multi-surface topology navigation check: when surface map m1.md declares sibling surfaces
+        smap_candidates = []
+        for p in [Path(contract_path).resolve(), html.resolve()]:
+            for parent in p.parents:
+                smap_candidates.extend([
+                    parent / "contracts/surface-maps/m1.md",
+                    parent / "prototype/contracts/surface-maps/m1.md"
+                ])
+        smap_file = next((p for p in smap_candidates if p.is_file()), None)
+        if smap_file:
+            smap_text = smap_file.read_text(encoding="utf-8")
+            declared_surfaces = []
+            for line in smap_text.splitlines():
+                m = re.search(r"\*\*(.+?)\*\*\s*:\s*`([^`]+)`", line)
+                if m:
+                    p_raw = m.group(2).strip()
+                    sid = p_raw.split("/")[0] if "hero-anchor" in p_raw else p_raw.replace("surfaces/", "")
+                    declared_surfaces.append(sid)
+            current_id = html.parent.parent.name if html.parent.name == "hero-anchor" else html.parent.name
+            siblings = [sid for sid in declared_surfaces if sid != current_id]
+            if siblings:
+                has_sibling_link = any(re.search(rf"href=[\"'][^\"']*{re.escape(sid)}[^\"']*[\"']", source) for sid in siblings)
+                if not has_sibling_link:
+                    failures.append(f"topology assertion: multi-surface navigation links missing for sibling surfaces ({', '.join(siblings)})")
+
     if check_stale:
         if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", source, re.IGNORECASE):
             failures.append("stale-template assertion: unconsidered placeholder content detected")
@@ -165,14 +190,32 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Contract-driven prototype quality assertions")
-    parser.add_argument("html")
-    parser.add_argument("tokens", nargs="?", default=None)
+    parser.add_argument("html", nargs="?", default=None, help="Target HTML file")
+    parser.add_argument("tokens", nargs="?", default=None, help="Shared tokens stylesheet")
+    parser.add_argument("--slice", dest="slice_id", help="Slice ID for convention-over-configuration auto-resolution")
     parser.add_argument("--tokens", dest="tokens_opt")
     parser.add_argument("--contract", dest="contract")
     parser.add_argument("--strict-divergence", action="store_true")
     args = parser.parse_args()
+
+    root = Path.cwd()
+    if args.slice_id:
+        slice_id = args.slice_id
+        candidates = [
+            root / f"prototype/experiments/{slice_id}/hero-anchor/index.html",
+            root / f"prototype/surfaces/{slice_id}/index.html",
+        ]
+        html_path = next((p for p in candidates if p.is_file()), candidates[0])
+        token_path = root / "prototype/shared/tokens.css"
+        spec_path = root / f"prototype/specifications/{slice_id}/r1.md"
+        contract_path = str(spec_path) if spec_path.is_file() else (args.contract or "")
+        sys.exit(0 if assert_quality(str(html_path), str(token_path), args.strict_divergence, contract_path) else 1)
+
+    if not args.html:
+        parser.error("Must provide HTML path or --slice <id>")
+
     html = Path(args.html)
     token_arg = args.tokens_opt or args.tokens
     if not token_arg:
-        token_arg = next((str(p) for p in (html.parent / "tokens.css", Path.cwd() / "prototype/shared/tokens.css") if p.is_file()), "prototype/shared/tokens.css")
+        token_arg = next((str(p) for p in (html.parent / "tokens.css", root / "prototype/shared/tokens.css") if p.is_file()), "prototype/shared/tokens.css")
     sys.exit(0 if assert_quality(str(html), token_arg, args.strict_divergence, args.contract) else 1)

@@ -200,7 +200,19 @@ async function main() {
   let states = ["default"];
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--output" || args[i] === "-o") {
+    if (args[i] === "--slice") {
+      const sliceId = args[++i];
+      const repoRoot = path.resolve(__dirname, "../../..");
+      const candidatePaths = [
+        path.join(repoRoot, `prototype/experiments/${sliceId}/hero-anchor/index.html`),
+        path.join(repoRoot, `prototype/surfaces/${sliceId}/index.html`),
+      ];
+      const matched = candidatePaths.find((p) => fs.existsSync(p)) || candidatePaths[0];
+      url = `file://${matched}`;
+      outputDir = path.join(repoRoot, `prototype/evidence/probes/${sliceId}/`);
+      states = ["ideal", "empty", "error"];
+      viewports = ["320", "390", "768", "1280"];
+    } else if (args[i] === "--output" || args[i] === "-o") {
       outputDir = args[++i];
     } else if (args[i] === "--target" || args[i] === "-t") {
       url = args[++i];

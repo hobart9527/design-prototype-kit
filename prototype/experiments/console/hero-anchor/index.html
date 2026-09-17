@@ -1,348 +1,690 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GPU Control Plane — Node Console</title>
-  <link rel="stylesheet" href="../../../shared/tokens.css">
-  <style>
-    :root {
-      --bg-void: #05070a;
-      --bg-base: #0a0d14;
-      --bg-surface: #111622;
-      --bg-surface-raised: #182030;
-      --bg-overlay: #1f293d;
-      --border-dim: #1e2638;
-      --border-subtle: #28334a;
-      --border-bright: #3b4b6e;
-      --border-danger: rgba(239, 68, 68, 0.4);
-      --border-warning: rgba(234, 179, 8, 0.4);
-      --font-variant-numeric: tabular-nums;
-      --text-primary: #e6edf3;
-      --text-secondary: #8b949e;
-      --text-tertiary: #484f58;
-      --accent-primary: #00f0ff;
-      --accent-subtle: rgba(0, 240, 255, 0.12);
-      --accent-hover: #38bdf8;
-      --status-running: #22c55e;
-      --status-warning: #eab308;
-      --status-danger: #ef4444;
-      --space-1: 4px;
-      --space-2: 8px;
-      --space-3: 12px;
-      --space-4: 16px;
-      --space-5: 20px;
-      --space-6: 24px;
-      --space-8: 32px;
-      --radius-outer: 8px;
-      --padding-panel: 4px;
-      --radius-inner: 4px;
-      --radius-card: 6px;
-      --radius-btn: 4px;
-      --radius-sm: 2px;
-      --radius-pill: 9999px;
-      --duration-fast: 80ms;
-      --duration-normal: 180ms;
-      --duration-slow: 320ms;
-      --ease-hud: cubic-bezier(0.16, 1, 0.3, 1);
-      --ease-out: cubic-bezier(0, 0, 0.2, 1);
-    }
-    * { box-sizing: border-box; }
-    html { background: var(--bg-void); }
-    body {
-      margin: 0;
-      min-width: 320px;
-      color: var(--text-primary);
-      background: var(--bg-void);
-      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: .01em;
-    }
-    button, input { font: inherit; font-variant-numeric: tabular-nums; }
-    button { color: inherit; }
-    :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
-    .shell { min-height: 100vh; background: radial-gradient(circle at 80% -10%, rgba(0,240,255,.07), transparent 34rem), var(--bg-void); }
-    .topbar {
-      height: 58px; display: flex; align-items: center; gap: 24px; padding: 0 28px;
-      border-bottom: 1px solid var(--border-dim); background: rgba(10,13,20,.9);
-    }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .11em; white-space: nowrap; }
-    .brand-mark { width: 20px; height: 20px; border: 2px solid var(--accent-primary); border-radius: var(--radius-sm); box-shadow: 0 0 15px rgba(0,240,255,.32); position: relative; }
-    .brand-mark::after { content: ""; width: 6px; height: 6px; background: var(--accent-primary); position: absolute; top: 5px; left: 5px; }
-    .breadcrumb { color: var(--text-secondary); display: flex; gap: 10px; align-items: center; min-width: 0; }
-    .breadcrumb strong { color: var(--text-primary); font-weight: 500; }
-    .slash { color: var(--text-tertiary); }
-    .top-actions { margin-left: auto; display: flex; align-items: center; gap: 14px; color: var(--text-secondary); }
-    .live { display: inline-flex; align-items: center; gap: 7px; color: var(--status-running); }
-    .live i { width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--status-running); box-shadow: 0 0 9px var(--status-running); }
-    .avatar { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--border-bright); border-radius: var(--radius-pill); color: var(--accent-primary); background: var(--bg-surface-raised); font-size: 11px; }
-    .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100vh - 58px); }
-    .rail { padding: 28px 14px; border-right: 1px solid var(--border-dim); background: rgba(10,13,20,.6); }
-    .rail-label { padding: 0 12px 10px; color: var(--text-tertiary); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-    .nav-item { width: 100%; display: flex; align-items: center; gap: 11px; padding: 11px 12px; margin: 2px 0; border: 0; border-radius: var(--radius-inner); background: transparent; color: var(--text-secondary); text-align: left; cursor: pointer; }
-    .nav-item:hover { color: var(--text-primary); background: var(--bg-surface); }
-    .nav-item.active { color: var(--accent-primary); background: var(--accent-subtle); box-shadow: inset 2px 0 var(--accent-primary); }
-    .nav-icon { width: 15px; text-align: center; color: currentColor; }
-    .main { min-width: 0; padding: 36px clamp(20px, 4vw, 58px) 56px; }
-    .hero { max-width: 1140px; margin: 0 auto; }
-    .eyebrow { display: flex; align-items: center; gap: 9px; color: var(--accent-primary); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
-    .eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--accent-primary); }
-    h1 { margin: 12px 0 8px; font-size: clamp(25px, 3vw, 38px); line-height: 1.1; letter-spacing: -.04em; font-weight: 650; }
-    .subhead { max-width: 630px; margin: 0; color: var(--text-secondary); }
-    .metrics { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 10px; margin: 30px 0 28px; }
-    .metric { min-width: 0; padding: 14px 16px; border: 1px solid var(--border-dim); border-radius: var(--radius-card); background: linear-gradient(145deg, var(--bg-surface-raised), var(--bg-surface)); }
-    .metric-label { color: var(--text-secondary); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
-    .metric-row { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
-    .metric-value { font-size: 24px; letter-spacing: -.06em; }
-    .metric-unit { color: var(--text-secondary); font-size: 11px; }
-    .spark { height: 18px; width: 58px; margin-left: auto; color: var(--accent-primary); overflow: visible; }
-    .spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
-    .workbench { border: 1px solid var(--border-subtle); border-radius: var(--radius-outer); background: var(--bg-surface); padding: var(--padding-panel); box-shadow: 0 18px 55px rgba(0,0,0,.2); }
-    .workbench-inner { border-radius: var(--radius-inner); overflow: hidden; }
-    .toolbar { min-height: 58px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border-dim); background: var(--bg-surface-raised); }
-    .tabs { display: flex; gap: 4px; }
-    .tab { border: 0; border-radius: var(--radius-btn); padding: 8px 11px; background: transparent; color: var(--text-secondary); cursor: pointer; }
-    .tab.active { color: var(--text-primary); background: var(--bg-overlay); }
-    .search { min-width: 150px; width: min(270px, 30vw); margin-left: auto; padding: 8px 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-btn); outline: 0; background: var(--bg-base); color: var(--text-primary); }
-    .search::placeholder { color: var(--text-tertiary); }
-    .filter-btn, .primary-btn, .danger-btn, .ghost-btn { border: 1px solid var(--border-subtle); border-radius: var(--radius-btn); padding: 8px 12px; background: var(--bg-base); color: var(--text-secondary); cursor: pointer; transition: transform var(--duration-fast) var(--ease-out), border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast); }
-    .filter-btn:hover, .ghost-btn:hover { border-color: var(--border-bright); color: var(--text-primary); }
-    .primary-btn { border-color: rgba(0,240,255,.38); background: var(--accent-subtle); color: var(--accent-primary); }
-    .danger-btn { border-color: var(--border-danger); background: rgba(239,68,68,.1); color: #ff8d8d; }
-    .primary-btn:hover { background: rgba(0,240,255,.2); }
-    .danger-btn:hover { background: rgba(239,68,68,.18); }
-    .filter-btn:active, .primary-btn:active, .danger-btn:active, .ghost-btn:active { transform: scale(.97); }
-    .table-head, .node-row { display: grid; grid-template-columns: minmax(220px, 2.2fr) 1fr 1fr 1fr 112px; gap: 16px; align-items: center; }
-    .table-head { padding: 12px 18px 9px; color: var(--text-tertiary); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
-    .node-row { min-height: 82px; padding: 12px 18px; border-top: 1px solid var(--border-dim); transition: background var(--duration-fast); }
-    .node-row:hover, .node-row.selected { background: rgba(31,41,61,.48); }
-    .node-row.selected { box-shadow: inset 2px 0 var(--accent-primary); }
-    .node-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .node-glyph { flex: 0 0 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--border-bright); border-radius: var(--radius-inner); color: var(--accent-primary); background: var(--accent-subtle); }
-    .node-copy { min-width: 0; }
-    .node-title { overflow-wrap: anywhere; color: var(--text-primary); font-weight: 600; }
-    .node-id { overflow-wrap: anywhere; margin-top: 2px; color: var(--text-tertiary); font-size: 10px; }
-    .cell-label { display: none; color: var(--text-tertiary); font-size: 9px; text-transform: uppercase; }
-    .status { display: inline-flex; align-items: center; gap: 7px; color: var(--status-running); }
-    .status.warn { color: var(--status-warning); }
-    .status i { width: 7px; height: 7px; border-radius: var(--radius-pill); background: currentColor; box-shadow: 0 0 8px currentColor; }
-    .bar { height: 4px; min-width: 62px; margin-top: 6px; border-radius: var(--radius-pill); background: var(--border-subtle); overflow: hidden; }
-    .bar b { display: block; height: 100%; border-radius: inherit; background: var(--accent-primary); }
-    .vram { color: var(--text-primary); }
-    .row-actions { display: flex; justify-content: flex-end; gap: 6px; }
-    .row-action { padding: 6px 8px; white-space: nowrap; }
-    .table-footer { display: flex; justify-content: space-between; gap: 12px; padding: 13px 18px; border-top: 1px solid var(--border-dim); color: var(--text-secondary); font-size: 11px; }
-    .empty-state, .error-state { display: none; padding: 58px 24px; text-align: center; }
-    body[data-state="empty"] .node-list, body[data-state="empty"] .table-head, body[data-state="error"] .node-list, body[data-state="error"] .table-head { display: none; }
-    body[data-state="empty"] .empty-state, body[data-state="error"] .error-state { display: block; }
-    .empty-mark, .error-mark { width: 38px; height: 38px; display: grid; place-items: center; margin: 0 auto 14px; border: 1px solid var(--border-bright); border-radius: var(--radius-card); color: var(--text-secondary); }
-    .error-mark { border-color: var(--border-danger); color: var(--status-danger); }
-    .empty-state h2, .error-state h2 { margin: 0 0 5px; font-size: 15px; font-weight: 500; }
-    .empty-state p, .error-state p { margin: 0 auto 17px; color: var(--text-secondary); }
-    .drawer-scrim { position: fixed; inset: 0; z-index: 4; display: none; background: rgba(5,7,10,.66); }
-    .drawer { position: fixed; z-index: 5; top: 0; right: 0; width: min(430px, 100vw); height: 100vh; padding: 26px; border-left: 1px solid var(--border-bright); background: var(--bg-surface); box-shadow: -20px 0 60px rgba(0,0,0,.42); transform: translateX(100%); transition: transform var(--duration-slow) var(--ease-hud); }
-    body.drawer-open .drawer-scrim { display: block; }
-    body.drawer-open .drawer { transform: translateX(0); }
-    .drawer-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 22px; border-bottom: 1px solid var(--border-dim); }
-    .drawer-kicker { color: var(--accent-primary); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
-    .drawer h2 { margin: 7px 0 0; font-size: 19px; letter-spacing: -.03em; }
-    .close { width: 30px; height: 30px; border: 1px solid var(--border-subtle); border-radius: var(--radius-btn); background: transparent; cursor: pointer; }
-    .context { padding: 20px 0; }
-    .context-id { padding: 10px; overflow-wrap: anywhere; border: 1px solid var(--border-dim); border-radius: var(--radius-inner); background: var(--bg-base); color: var(--text-secondary); font-size: 11px; }
-    .form-row { display: flex; justify-content: space-between; gap: 15px; padding: 13px 0; border-bottom: 1px solid var(--border-dim); }
-    .form-row span:first-child { color: var(--text-secondary); }
-    .form-row strong { text-align: right; font-weight: 500; }
-    .drawer-note { margin: 20px 0; padding: 11px 12px; border-left: 2px solid var(--status-warning); background: rgba(234,179,8,.07); color: var(--text-secondary); font-size: 11px; }
-    .drawer-actions { display: flex; gap: 9px; margin-top: 24px; }
-    .drawer-actions button { flex: 1; padding: 11px 12px; }
-    .toast { position: fixed; z-index: 7; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 11px; max-width: min(390px, calc(100vw - 32px)); padding: 13px 16px; border: 1px solid rgba(34,197,94,.4); border-radius: var(--radius-card); background: var(--bg-surface-raised); box-shadow: 0 10px 30px rgba(0,0,0,.35); color: var(--text-primary); transform: translateY(140%); transition: transform var(--duration-normal) var(--ease-hud); }
-    .toast.show { transform: translateY(0); }
-    .toast i { width: 8px; height: 8px; flex: 0 0 auto; border-radius: var(--radius-pill); background: var(--status-running); box-shadow: 0 0 8px var(--status-running); }
-    .shortcut { color: var(--text-tertiary); font-size: 10px; }
-    @media (max-width: 900px) { .layout { grid-template-columns: 66px minmax(0, 1fr); } .rail { padding-inline: 10px; } .rail-label, .nav-item span:not(.nav-icon) { display: none; } .nav-item { justify-content: center; } .table-head, .node-row { grid-template-columns: minmax(190px, 2fr) 1fr 1fr 102px; } .table-head div:nth-child(3), .node-row > :nth-child(3) { display: none; } }
-    @media (max-width: 620px) { .topbar { gap: 12px; padding: 0 16px; } .breadcrumb { display: none; } .top-actions { gap: 9px; } .main { padding: 26px 12px 40px; } .metrics { grid-template-columns: repeat(2, 1fr); margin: 23px 0 20px; } .metric { padding: 12px; } .metric-value { font-size: 20px; } .toolbar { flex-wrap: wrap; } .search { order: 3; width: 100%; margin-left: 0; } .table-head { display: none; } .node-row { grid-template-columns: 1fr auto; gap: 10px; padding: 14px 12px; } .node-row > :nth-child(2), .node-row > :nth-child(3), .node-row > :nth-child(4) { grid-column: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; } .node-row > :nth-child(2) { grid-row: 2; } .node-row > :nth-child(3) { grid-row: 3; } .node-row > :nth-child(4) { grid-row: 4; } .cell-label { display: inline; } .row-actions { grid-column: 2; grid-row: 1 / span 4; align-self: center; flex-direction: column; } .table-footer { padding-inline: 12px; } .drawer { padding: 22px 18px; } }
-    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diffusion GPU Cluster Orchestration Desk — Console</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  /* Concentric Radii Formula: R_outer(8) >= R_inner(4) + padding(4) — panels use
+     var(--radius-outer) with var(--padding-panel); inner cards use var(--radius-inner). */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.45;
+    min-width: 320px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: var(--font-mono); }
+  .metric, .tabular-nums, .num { font-variant-numeric: tabular-nums; }
+  a { color: var(--accent-primary); }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    display: flex; flex-wrap: wrap; gap: var(--space-3);
+    align-items: center; justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .brand { min-width: 0; }
+  .brand h1 { margin: 0; font-size: 14px; letter-spacing: 0.02em; }
+  .brand p { margin: 2px 0 0; color: var(--text-secondary); font-size: 11px; }
+  .fleet { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
+  .stat .v { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .stat .base { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+  .stat .spark { color: var(--accent-primary); }
+  .topology-nav { display: flex; gap: var(--space-1); align-items: center; }
+  .top-link {
+    padding: 3px var(--space-2); font-size: 11px; text-decoration: none;
+    color: var(--text-secondary); border: 1px solid var(--border-dim);
+    border-radius: var(--radius-btn); background: var(--bg-surface);
+    transition: color var(--duration-fast), background var(--duration-fast);
+  }
+  .top-link:hover { color: var(--text-primary); background: var(--bg-surface-raised); }
+  .top-link.is-active, .top-link[aria-current="page"] {
+    color: var(--accent-primary); background: var(--accent-subtle);
+    border-color: var(--border-bright); font-weight: 600;
+  }
+  .state-nav { display: flex; gap: var(--space-1); }
+  .state-nav a {
+    padding: 3px var(--space-2); font-size: 11px; text-decoration: none;
+    color: var(--text-secondary); border: 1px solid var(--border-dim);
+    border-radius: var(--radius-btn); background: var(--bg-surface);
+  }
+  .state-nav a[aria-current="true"] { color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle); }
+
+  /* ---------- Layout ---------- */
+  .shell { display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-3); align-items: flex-start; }
+  .panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+  }
+  .panel > .inner {
+    border-radius: var(--radius-inner);
+    background: var(--bg-base);
+    padding: var(--space-3);
+  }
+  .rail { flex: 1 1 200px; min-width: 0; max-width: 260px; }
+  .stage { flex: 3 1 420px; min-width: 0; }
+  .rail h2, .stage h2 { margin: 0 0 var(--space-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); }
+
+  .facet { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-bottom: var(--space-3); }
+  .facet button, .tabs button {
+    font: inherit; font-size: 11px; cursor: pointer;
+    background: var(--bg-surface-raised); color: var(--text-secondary);
+    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
+    padding: 4px var(--space-2);
+  }
+  .facet button[aria-pressed="true"], .tabs button[aria-pressed="true"] {
+    color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle);
+  }
+  .field { display: block; margin-bottom: var(--space-3); }
+  .field span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); margin-bottom: 2px; }
+  .field select {
+    width: 100%; font: inherit; font-size: 12px; padding: 4px;
+    background: var(--bg-surface-raised); color: var(--text-primary);
+    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
+  }
+  .tabs { display: flex; gap: var(--space-1); margin-bottom: var(--space-2); }
+
+  /* ---------- Matrix ---------- */
+  .matrix-head, .row {
+    display: grid;
+    grid-template-columns: minmax(0, 2.2fr) 1fr 1fr 1fr 1.3fr auto;
+    gap: var(--space-3); align-items: center;
+    min-width: 760px;
+  }
+  .matrix-scroll { overflow-x: auto; overscroll-behavior-x: contain; }
+  .matrix-head {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-secondary); padding: var(--space-2) var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .row {
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    outline: none;
+  }
+  .row:focus-visible, .row.is-active { background: var(--bg-surface-raised); box-shadow: inset 2px 0 0 var(--accent-primary); }
+  .id-text {
+    display: block; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 11px; color: var(--text-primary);
+  }
+  .id-sub { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+  .cell { min-width: 0; }
+  .value { font-variant-numeric: tabular-nums; font-size: 13px; }
+  .baseline { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+  .inline-spark { color: var(--accent-primary); display: block; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px var(--space-2); border-radius: var(--radius-pill);
+    border: 1px solid var(--border-subtle); color: var(--text-secondary);
+  }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: currentColor; }
+  .badge[data-status="running"] { color: var(--status-running); border-color: var(--border-subtle); }
+  .badge[data-status="warning"] { color: var(--status-warning); border-color: var(--border-warning); }
+  .badge[data-status="critical"] { color: var(--status-danger); border-color: var(--border-danger); }
+  .badge[data-status="drained"] { color: var(--text-tertiary); }
+
+  .btn {
+    font: inherit; font-size: 11px; cursor: pointer;
+    padding: 4px var(--space-3); border-radius: var(--radius-btn);
+    background: var(--bg-surface-raised); color: var(--text-primary);
+    border: 1px solid var(--border-bright);
+  }
+  .btn-danger { color: var(--status-danger); border-color: var(--border-danger); }
+  .btn-primary { color: var(--bg-void); background: var(--accent-primary); border-color: var(--accent-primary); }
+  .btn-tactile:active, .btn:active { transform: scale(0.97); transition: transform var(--duration-fast) var(--ease-hud); }
+  .btn[disabled] { opacity: 0.55; cursor: progress; }
+
+  /* ---------- Empty / error ---------- */
+  .empty-card {
+    border: 1px dashed var(--border-bright); border-radius: var(--radius-outer);
+    padding: var(--space-6); text-align: center; background: var(--bg-surface-raised);
+  }
+  .empty-card h3 { margin: 0 0 var(--space-2); font-size: 13px; }
+  .empty-card p { margin: 0 0 var(--space-4); color: var(--text-secondary); font-size: 12px; }
+  .fault-banner {
+    display: none; gap: var(--space-3); align-items: center; flex-wrap: wrap;
+    border: 1px solid var(--border-danger); background: var(--bg-surface-raised);
+    border-radius: var(--radius-outer); padding: var(--space-3); margin-bottom: var(--space-3);
+  }
+  body[data-state="error"] .fault-banner { display: flex; }
+  body[data-state="error"] .row .value { color: var(--text-tertiary); }
+
+  /* ---------- Drawer & modal ---------- */
+  .scrim { position: fixed; inset: 0; background: var(--bg-void); opacity: 0.62; display: none; }
+  .scrim.is-open { display: block; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(360px, 92vw);
+    background: var(--bg-surface); border-left: 1px solid var(--border-bright);
+    padding: var(--space-4); overflow-y: auto;
+    transform: translateX(102%); transition: transform var(--duration-normal) var(--ease-hud);
+    z-index: 20;
+  }
+  .drawer.is-open { transform: translateX(0); }
+  .drawer h2 { margin: 0 0 var(--space-1); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); }
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); margin: var(--space-3) 0; font-size: 12px; }
+  .kv dt { color: var(--text-secondary); }
+  .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .drawer-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  .modal {
+    position: fixed; z-index: 30; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0.98);
+    width: min(420px, 92vw); background: var(--bg-overlay);
+    border: 1px solid var(--border-bright); border-radius: var(--radius-outer);
+    padding: var(--space-5); display: none;
+  }
+  .modal.is-open { display: block; transform: translate(-50%, -50%) scale(1); }
+  .modal h2 { margin: 0 0 var(--space-2); font-size: 14px; }
+  .modal p { margin: 0 0 var(--space-4); color: var(--text-secondary); font-size: 12px; }
+  .modal-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
+
+  .toast {
+    position: fixed; left: var(--space-4); bottom: var(--space-4); z-index: 40;
+    background: var(--bg-surface-raised); color: var(--text-primary);
+    border: 1px solid var(--accent-primary); border-radius: var(--radius-btn);
+    padding: var(--space-2) var(--space-4); font-size: 12px;
+    opacity: 0; transform: translateY(6px); transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+    pointer-events: none; max-width: calc(100vw - var(--space-8));
+  }
+  .toast.is-open { opacity: 1; transform: translateY(0); }
+
+  .kbdbar {
+    display: flex; flex-wrap: wrap; gap: var(--space-3);
+    padding: var(--space-2) var(--space-4); border-top: 1px solid var(--border-subtle);
+    color: var(--text-secondary); font-size: 11px; background: var(--bg-base);
+  }
+  kbd {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-primary);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+    padding: 1px 4px; background: var(--bg-surface-raised);
+  }
+  @media (max-width: 480px) {
+    .rail { max-width: none; }
+    .fleet { gap: var(--space-3); }
+    .topbar, .shell { padding: var(--space-2); }
+  }
+</style>
 </head>
 <body data-state="ideal">
-  <div class="shell">
-    <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>AXIOM / OPS</span></div>
-      <div class="breadcrumb"><span class="slash">/</span><span>Infrastructure</span><span class="slash">/</span><strong>GPU Nodes</strong></div>
-      <div class="top-actions"><span class="live"><i></i>LIVE · 2s</span><span class="avatar" aria-label="Operator profile">OP</span></div>
-    </header>
-    <div class="layout">
-      <aside class="rail" aria-label="Primary navigation">
-        <div class="rail-label">Control plane</div>
-        <button class="nav-item active" type="button"><span class="nav-icon">▦</span><span>GPU Nodes</span></button>
-        <button class="nav-item" type="button"><span class="nav-icon">◈</span><span>Allocations</span></button>
-        <button class="nav-item" type="button"><span class="nav-icon">⌁</span><span>Telemetry</span></button>
-        <button class="nav-item" type="button"><span class="nav-icon">⚙</span><span>Policies</span></button>
-      </aside>
-      <main class="main">
-        <section class="hero" aria-labelledby="page-title">
-          <div class="eyebrow">Operator console · cluster west-02</div>
-          <h1 id="page-title">GPU Node Fleet</h1>
-          <p class="subhead">Inspect live capacity, preserve allocation context, and take decisive action without leaving the control plane.</p>
-          <div class="metrics" aria-label="Fleet metrics">
-            <div class="metric"><div class="metric-label">Fleet health</div><div class="metric-row"><span class="metric-value">98.4</span><span class="metric-unit">%</span><svg class="spark" viewBox="0 0 58 18" aria-hidden="true"><polyline points="0,14 8,12 14,13 22,7 30,10 37,5 44,7 51,3 58,5"></polyline></svg></div></div>
-            <div class="metric"><div class="metric-label">Active nodes</div><div class="metric-row"><span class="metric-value">24</span><span class="metric-unit">/ 26</span><svg class="spark" viewBox="0 0 58 18" aria-hidden="true"><polyline points="0,13 8,13 15,9 22,11 29,7 37,8 44,4 51,6 58,2"></polyline></svg></div></div>
-            <div class="metric"><div class="metric-label">VRAM allocated</div><div class="metric-row"><span class="metric-value">71.8</span><span class="metric-unit">TB</span><svg class="spark" viewBox="0 0 58 18" aria-hidden="true"><polyline points="0,15 8,14 15,11 22,12 29,8 37,10 44,6 51,7 58,4"></polyline></svg></div></div>
-            <div class="metric"><div class="metric-label">Queue depth</div><div class="metric-row"><span class="metric-value">07</span><span class="metric-unit">jobs</span><svg class="spark" viewBox="0 0 58 18" aria-hidden="true"><polyline points="0,4 8,7 15,5 22,10 29,8 37,12 44,10 51,14 58,13"></polyline></svg></div></div>
-          </div>
-          <section class="workbench" aria-label="Node fleet inspection">
-            <div class="workbench-inner">
-              <div class="toolbar">
-                <div class="tabs" role="tablist" aria-label="Node views"><button class="tab active" role="tab" aria-selected="true" type="button">All nodes</button><button class="tab" role="tab" aria-selected="false" type="button">Attention</button></div>
-                <input id="node-filter" class="search" type="search" placeholder="Filter node ID…" aria-label="Filter node ID">
-                <button class="filter-btn" type="button">Filters <span class="shortcut">[2]</span></button>
-              </div>
-              <div class="table-head" aria-hidden="true"><div>Node / identity</div><div>Status</div><div>VRAM load</div><div>GPU temp</div><div>Actions</div></div>
-              <div class="node-list" id="node-list">
-                <article class="node-row selected" data-node="gpu-w02-a17" tabindex="0" aria-label="gpu-w02-a17 selected">
-                  <div class="node-name"><span class="node-glyph">◇</span><div class="node-copy"><div class="node-title">gpu-w02-a17</div><div class="node-id">node-cluster-uuid-00000000-0000-0000-0000-000000000000</div></div></div>
-                  <div><span class="cell-label">Status</span><span class="status"><i></i>Running</span></div>
-                  <div><span class="cell-label">VRAM load</span><span class="vram">78.2 / 80 TB</span><div class="bar"><b style="width:78.2%"></b></div></div>
-                  <div><span class="cell-label">GPU temp</span><span>64°C</span></div>
-                  <div class="row-actions"><button class="danger-btn row-action" type="button" data-action="drain-node" data-node-label="gpu-w02-a17">Drain Node</button></div>
-                </article>
-                <article class="node-row" data-node="gpu-w02-b04" tabindex="0" aria-label="gpu-w02-b04">
-                  <div class="node-name"><span class="node-glyph">◇</span><div class="node-copy"><div class="node-title">gpu-w02-b04</div><div class="node-id">node-cluster-uuid-b04-8a31-4420-9ee7-31d2eac97210</div></div></div>
-                  <div><span class="cell-label">Status</span><span class="status"><i></i>Running</span></div>
-                  <div><span class="cell-label">VRAM load</span><span class="vram">61.5 / 80 TB</span><div class="bar"><b style="width:61.5%"></b></div></div>
-                  <div><span class="cell-label">GPU temp</span><span>58°C</span></div>
-                  <div class="row-actions"><button class="danger-btn row-action" type="button" data-action="drain-node" data-node-label="gpu-w02-b04">Drain Node</button></div>
-                </article>
-                <article class="node-row" data-node="gpu-w02-c12" tabindex="0" aria-label="gpu-w02-c12">
-                  <div class="node-name"><span class="node-glyph">◇</span><div class="node-copy"><div class="node-title">gpu-w02-c12</div><div class="node-id">node-cluster-uuid-c12-1f0d-4c2a-9ec8-a7b55cc11f44</div></div></div>
-                  <div><span class="cell-label">Status</span><span class="status warn"><i></i>Degraded</span></div>
-                  <div><span class="cell-label">VRAM load</span><span class="vram">89.1 / 96 TB</span><div class="bar"><b style="width:89.1%"></b></div></div>
-                  <div><span class="cell-label">GPU temp</span><span>76°C</span></div>
-                  <div class="row-actions"><button class="primary-btn row-action" type="button" data-action="preempt-vram" data-node-label="gpu-w02-c12">Preempt VRAM</button></div>
-                </article>
-              </div>
-              <div class="empty-state" aria-live="polite"><div class="empty-mark">∅</div><h2>No nodes match this filter</h2><p>Filter: 0 results / empty list</p><button class="ghost-btn" id="clear-filter" type="button">Clear filter</button></div>
-              <div class="error-state" aria-live="polite"><div class="error-mark">!</div><h2>Telemetry unavailable</h2><p>Node inventory could not be synchronized. Retry the read without losing your active filter.</p><button class="ghost-btn" id="retry" type="button">Retry sync</button></div>
-              <div class="table-footer"><span id="count-label">Showing 3 of 26 nodes</span><span>Updated 14:32:08 UTC</span></div>
-            </div>
-          </section>
-          <div style="height:24px"></div>
-          <div class="shortcut">Keyboard: <strong>Space</strong> / <strong>P</strong> inspect · <strong>Esc</strong> close · <strong>J</strong> / <strong>K</strong> move selection</div>
-        </section>
-      </main>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>Diffusion GPU Cluster Orchestration Desk</h1>
+    <p>4,096 × H100 SXM5 · DCGM telemetry + Slurm batch controller · priority: deterministic drain</p>
+  </div>
+  <div class="fleet" id="fleetStats">
+    <div class="stat">
+      <span class="k">Tensor streams</span>
+      <span class="v metric">1,284</span>
+      <span class="base">P95 baseline 1,410</span>
+    </div>
+    <div class="stat">
+      <span class="k">Median VRAM</span>
+      <span class="v metric">88.4%</span>
+      <span class="base">P95 96.2%</span>
+    </div>
+    <div class="stat">
+      <span class="k">Drain RTT</span>
+      <span class="v metric">1.9s</span>
+      <span class="base">target ≤ 3.0s</span>
+      <span class="spark" id="drainSpark" aria-hidden="true"></span>
     </div>
   </div>
-  <div class="drawer-scrim" id="drawer-scrim"></div>
-  <aside class="drawer" id="drawer" aria-labelledby="drawer-title" aria-hidden="true">
-    <div class="drawer-top"><div><div class="drawer-kicker">Action inspection</div><h2 id="drawer-title">Drain GPU Node</h2></div><button class="close" id="close-drawer" type="button" aria-label="Close inspector">×</button></div>
-    <div class="context"><div class="context-id" id="drawer-node">gpu-w02-a17</div><div class="form-row"><span>Current status</span><strong class="status"><i></i><span id="drawer-status">Running</span></strong></div><div class="form-row"><span>Active workloads</span><strong id="drawer-workloads">12 jobs</strong></div><div class="form-row"><span>Estimated drain</span><strong>04:30 min</strong></div><div class="drawer-note">New scheduling is paused first. Existing workloads finish on their current allocation before this node leaves the pool.</div><div class="drawer-actions"><button class="ghost-btn" id="cancel-action" type="button">Cancel <span class="shortcut">Esc</span></button><button class="danger-btn" id="commit-action" type="button">Confirm Drain</button></div></div>
-  </aside>
-  <div class="toast" id="toast" role="status" aria-live="polite"><i></i><span id="toast-text">Node Drained Successfully</span></div>
-  <script>
-    (() => {
-      const rows = [...document.querySelectorAll('.node-row')];
-      const drawer = document.getElementById('drawer');
-      const scrim = document.getElementById('drawer-scrim');
-      const commit = document.getElementById('commit-action');
-      const toast = document.getElementById('toast');
-      const toastText = document.getElementById('toast-text');
-      const filter = document.getElementById('node-filter');
-      let selected = 0;
-      let origin = null;
-      let activeAction = 'drain-node';
-      let busy = false;
-      let toastTimer;
+  <nav class="topology-nav" aria-label="Surface Topology Navigation">
+    <a href="index.html" class="top-link is-active" aria-current="page">Cluster Matrix</a>
+    <a href="../../../surfaces/incident-replay/index.html" class="top-link">Incident Replay</a>
+    <a href="../../../surfaces/capacity-matrix/index.html" class="top-link">Capacity &amp; Quota</a>
+  </nav>
+  <nav class="state-nav" aria-label="Prototype state">
+    <a href="#state=ideal" data-state-link="ideal" aria-current="true">ideal</a>
+    <a href="#state=empty" data-state-link="empty">empty</a>
+    <a href="#state=error" data-state-link="error">error</a>
+  </nav>
+</header>
 
-      function setSelected(index) {
-        selected = (index + rows.length) % rows.length;
-        rows.forEach((row, i) => {
-          const active = i === selected;
-          row.classList.toggle('selected', active);
-          row.setAttribute('aria-label', row.dataset.node + (active ? ' selected' : ''));
-        });
-        rows[selected].focus({ preventScroll: true });
-      }
-      function openDrawer(action, nodeLabel, anchor) {
-        if (busy) return;
-        activeAction = action;
-        origin = anchor || rows[selected];
-        document.getElementById('drawer-title').textContent = action === 'preempt-vram' ? 'Preempt VRAM Allocation' : 'Drain GPU Node';
-        document.getElementById('drawer-node').textContent = nodeLabel;
-        document.getElementById('drawer-status').textContent = action === 'preempt-vram' ? 'Degraded' : 'Running';
-        document.getElementById('drawer-workloads').textContent = action === 'preempt-vram' ? '04 jobs' : '12 jobs';
-        commit.textContent = action === 'preempt-vram' ? 'Execute Preempt' : 'Confirm Drain';
-        drawer.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('drawer-open');
-        window.setTimeout(() => commit.focus(), 190);
-      }
-      function closeDrawer() {
-        if (busy) return;
-        document.body.classList.remove('drawer-open');
-        drawer.setAttribute('aria-hidden', 'true');
-        if (origin) origin.focus({ preventScroll: true });
-      }
-      function showToast(message) {
-        toastText.textContent = message;
-        toast.classList.add('show');
-        clearTimeout(toastTimer);
-        toastTimer = window.setTimeout(() => toast.classList.remove('show'), 3200);
-      }
-      function commitAction() {
-        if (busy) return;
-        busy = true;
-        commit.disabled = true;
-        commit.textContent = 'Committing…';
-        window.setTimeout(() => {
-          const label = document.getElementById('drawer-node').textContent;
-          const row = rows.find(item => item.dataset.node === label);
-          if (row) {
-            const status = row.querySelector('.status');
-            status.classList.remove('warn');
-            status.innerHTML = '<i></i>' + (activeAction === 'preempt-vram' ? 'Stable' : 'Draining');
-          }
-          document.body.classList.remove('drawer-open');
-          drawer.setAttribute('aria-hidden', 'true');
-          commit.disabled = false;
-          busy = false;
-          showToast(activeAction === 'preempt-vram' ? 'VRAM Eviction Committed' : 'Node Drained Successfully');
-          if (origin) origin.focus({ preventScroll: true });
-        }, 260);
-      }
-      rows.forEach((row, index) => {
-        row.addEventListener('click', event => {
-          if (event.target.closest('button')) return;
-          setSelected(index);
-          openDrawer('drain-node', row.dataset.node, row);
-        });
-        row.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDrawer('drain-node', row.dataset.node, row); } });
-        row.querySelector('button').addEventListener('click', event => openDrawer(event.currentTarget.dataset.action, event.currentTarget.dataset.nodeLabel, event.currentTarget));
+<div class="shell">
+  <aside class="rail panel" aria-label="Facet filters">
+    <div class="inner">
+      <h2>Facets</h2>
+      <label class="field" for="region">Region
+        <select id="region">
+          <option value="all">All regions (5)</option>
+          <option value="us-east">us-east (3)</option>
+          <option value="us-west">us-west (2)</option>
+          <option value="ap-south">ap-south (0)</option>
+        </select>
+      </label>
+      <div class="field">
+        <span>Status</span>
+        <div class="facet" role="group" aria-label="Status facet">
+          <button type="button" data-facet="status" data-value="all" aria-pressed="true">All</button>
+          <button type="button" data-facet="status" data-value="running" aria-pressed="false">Running</button>
+          <button type="button" data-facet="status" data-value="critical" aria-pressed="false">Critical</button>
+        </div>
+      </div>
+      <div class="field">
+        <span>Workload</span>
+        <div class="facet" role="group" aria-label="Workload facet">
+          <button type="button" data-facet="workload" data-value="all" aria-pressed="true">All</button>
+          <button type="button" data-facet="workload" data-value="sd3-xl-batch" aria-pressed="false">sd3-xl-batch</button>
+          <button type="button" data-facet="workload" data-value="flux-dev" aria-pressed="false">flux-dev</button>
+        </div>
+      </div>
+      <p class="baseline" id="filterEcho">Facets: region=all · status=all · workload=all</p>
+    </div>
+  </aside>
+
+  <main class="stage panel">
+    <div class="inner">
+      <h2 id="stageTitle">Node Matrix</h2>
+      <div class="tabs" role="tablist" aria-label="Matrix view">
+        <button type="button" role="tab" id="tabNodes" aria-pressed="true">Node Matrix</button>
+        <button type="button" role="tab" id="tabVram" aria-pressed="false">VRAM Pool</button>
+      </div>
+
+      <div class="fault-banner" role="alert">
+        <span class="badge" data-status="critical">Telemetry lost</span>
+        <span id="faultText">DCGM uplink dropped for this rack — last frame 00:41 ago. Actions remain queued and idempotent.</span>
+        <button type="button" class="btn" id="retryUplink">Retry Uplink</button>
+      </div>
+
+      <div class="matrix-scroll" id="matrixScroll">
+        <div class="matrix-head" role="row">
+          <span role="columnheader">Node / cluster UUID</span>
+          <span role="columnheader">Tensor util</span>
+          <span role="columnheader">VRAM</span>
+          <span role="columnheader">Temp</span>
+          <span role="columnheader">Batch / state</span>
+          <span role="columnheader">Action</span>
+        </div>
+        <div id="rows" role="grid" aria-label="Cluster nodes" aria-rowcount="5"></div>
+      </div>
+
+      <div class="empty-card" id="emptyCard" hidden>
+        <h3>0 nodes match this filter</h3>
+        <p id="emptyDetail">Nothing in ap-south · status=all · workload=all. The control plane is healthy; the facet simply selects no hardware.</p>
+        <button type="button" class="btn btn-primary" id="resetFilters">Reset Filters</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="kbdbar">
+  <span><kbd>Space</kbd> / <kbd>P</kbd> inspect active node</span>
+  <span><kbd>Esc</kbd> dismiss drawer / modal</span>
+  <span><kbd>J</kbd> / <kbd>K</kbd> navigate rows</span>
+  <span id="selectionEcho">active: row 1</span>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-labelledby="drawerTitle" aria-hidden="true">
+  <h2 id="drawerTitle">Node Inspector</h2>
+  <p class="mono id-text" id="drawerNodeId" title="">—</p>
+  <dl class="kv" id="drawerParams"></dl>
+  <p class="baseline">All figures carry reference baselines; VRAM shown against pool P95 96.2%.</p>
+  <div class="drawer-actions">
+    <button type="button" class="btn btn-danger btn-tactile" id="triggerDrain" data-action-id="drain-node">Drain Node</button>
+    <button type="button" class="btn btn-tactile" id="triggerPreempt" data-action-id="preempt-vram">Preempt VRAM</button>
+  </div>
+</aside>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalBody" aria-hidden="true">
+  <h2 id="modalTitle">Drain GPU Node</h2>
+  <p id="modalBody">Evicts the active batch job and halts the tensor stream on this node.</p>
+  <div class="modal-actions">
+    <button type="button" class="btn" id="cancelCommit">Cancel</button>
+    <button type="button" class="btn btn-primary btn-tactile" id="commitBtn">Confirm Drain</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STATES = ["ideal", "empty", "error"];
+  var NODES = [
+    { id: "node-cluster-uuid-00000000-0000-0000-0000-000000000000", short: "hgx-a01", region: "us-east",
+      util: 94, vram: 91, temp: 71, job: "sd3-xl-batch-7742", status: "critical",
+      spark: [72, 78, 74, 88, 91, 86, 94, 94] },
+    { id: "hgx-a02.us-east.cluster-07", short: "hgx-a02", region: "us-east",
+      util: 88, vram: 84, temp: 66, job: "flux-dev-1180", status: "running",
+      spark: [80, 83, 79, 85, 88, 86, 87, 88] },
+    { id: "hgx-a03.us-east.cluster-07", short: "hgx-a03", region: "us-east",
+      util: 61, vram: 58, temp: 54, job: "sd3-xl-batch-7739", status: "running",
+      spark: [55, 58, 62, 60, 57, 59, 60, 61] },
+    { id: "hgx-b01.us-west.cluster-11", short: "hgx-b01", region: "us-west",
+      util: 97, vram: 96, temp: 78, job: "sd3-xl-batch-7751", status: "critical",
+      spark: [84, 88, 92, 95, 93, 96, 97, 97] },
+    { id: "hgx-b02.us-west.cluster-11", short: "hgx-b02", region: "us-west",
+      util: 43, vram: 39, temp: 48, job: "flux-dev-1177", status: "running",
+      spark: [40, 44, 46, 42, 41, 43, 42, 43] }
+  ];
+  var ACTIONS = {
+    drain: { trigger: "Drain Node", header: "Drain GPU Node", commit: "Confirm Drain",
+             toast: "Node Drained Successfully",
+             body: "Evicts the active batch job and halts the tensor stream on this node.",
+             settle: "drained" },
+    preempt: { trigger: "Preempt VRAM", header: "Preempt VRAM Allocation", commit: "Execute Preempt",
+               toast: "VRAM Eviction Committed",
+               body: "Releases this node's VRAM pool back to the shared cluster.",
+               settle: "vram-released" }
+  };
+
+  var el = {
+    rows: document.getElementById("rows"),
+    scroll: document.getElementById("matrixScroll"),
+    empty: document.getElementById("emptyCard"),
+    emptyDetail: document.getElementById("emptyDetail"),
+    region: document.getElementById("region"),
+    filterEcho: document.getElementById("filterEcho"),
+    stageTitle: document.getElementById("stageTitle"),
+    tabNodes: document.getElementById("tabNodes"),
+    tabVram: document.getElementById("tabVram"),
+    drawer: document.getElementById("drawer"),
+    drawerTitle: document.getElementById("drawerTitle"),
+    drawerNodeId: document.getElementById("drawerNodeId"),
+    drawerParams: document.getElementById("drawerParams"),
+    triggerDrain: document.getElementById("triggerDrain"),
+    triggerPreempt: document.getElementById("triggerPreempt"),
+    modal: document.getElementById("modal"),
+    modalTitle: document.getElementById("modalTitle"),
+    modalBody: document.getElementById("modalBody"),
+    commitBtn: document.getElementById("commitBtn"),
+    cancelCommit: document.getElementById("cancelCommit"),
+    scrim: document.getElementById("scrim"),
+    toast: document.getElementById("toast"),
+    selectionEcho: document.getElementById("selectionEcho"),
+    drainSpark: document.getElementById("drainSpark"),
+    resetFilters: document.getElementById("resetFilters"),
+    retryUplink: document.getElementById("retryUplink")
+  };
+
+  // Context preservation: filters, tab, selection and scroll offset survive every dismissal.
+  var ctx = { state: "ideal", region: "all", status: "all", workload: "all", tab: "nodes",
+              active: 0, savedScroll: 0 };
+  var openTarget = null;   // element to receive focus when the overlay closes
+  var actionKey = null;    // action awaiting commit
+  var locked = false;      // idempotency guard: one settlement per commit burst
+
+  function sparkline(values) {
+    var max = Math.max.apply(null, values), min = Math.min.apply(null, values);
+    var span = (max - min) || 1, w = 72, h = 16;
+    var pts = values.map(function (v, i) {
+      var x = (i / (values.length - 1)) * w;
+      var y = h - ((v - min) / span) * h;
+      return x.toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
+    return '<svg class="inline-spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h +
+           '" aria-hidden="true"><polyline points="' + pts + '" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+  }
+
+  function filtered() {
+    return NODES.filter(function (n) {
+      if (ctx.region !== "all" && n.region !== ctx.region) return false;
+      if (ctx.status !== "all" && n.status !== ctx.status) return false;
+      if (ctx.workload !== "all" && n.job.indexOf(ctx.workload) !== 0) return false;
+      return true;
+    });
+  }
+
+  function badgeFor(n) {
+    if (n.settleState === "drained") return "drained";
+    if (n.settleState === "vram-released") return "vram-released";
+    return n.status;
+  }
+
+  function render() {
+    var list = filtered();
+    el.rows.innerHTML = list.map(function (n, i) {
+      var local = NODES.indexOf(n);
+      var base = badgeFor(n);
+      return '' +
+      '<div class="row' + (local === ctx.active ? " is-active" : "") + '" role="row" data-item="node" ' +
+        'data-index="' + local + '" id="row-' + local + '" tabindex="' + (local === ctx.active ? "0" : "-1") + '" ' +
+        'aria-selected="' + (local === ctx.active) + '">' +
+        '<div class="cell" role="gridcell">' +
+          '<span class="mono id-text" title="' + n.id + '">' + n.id + '</span>' +
+          '<span class="id-sub">' + n.short + " · " + n.region + '</span>' +
+        '</div>' +
+        '<div class="cell" role="gridcell"><span class="value metric">' + n.util + '%</span>' +
+          '<span class="baseline">P95 97%</span>' + sparkline(n.spark) + '</div>' +
+        '<div class="cell" role="gridcell"><span class="value metric">' + n.vram + '%</span>' +
+          '<span class="baseline">pool P95 96.2%</span></div>' +
+        '<div class="cell" role="gridcell"><span class="value metric">' + n.temp + '°C</span>' +
+          '<span class="baseline">throttle 83°C</span></div>' +
+        '<div class="cell" role="gridcell"><span class="mono id-text">' + n.job + '</span>' +
+          '<span class="badge" data-status="' + base + '">' + base + '</span></div>' +
+        '<div class="cell" role="gridcell"><button type="button" class="btn btn-tactile" data-inspect="' + local +
+          '" data-anchor="inspect-' + local + '">Inspect</button></div>' +
+      '</div>';
+    }).join("");
+
+    var isEmpty = ctx.state === "empty" || list.length === 0;
+    el.empty.hidden = !isEmpty;
+    el.scroll.hidden = isEmpty;
+    el.emptyDetail.textContent = isEmpty
+      ? "Nothing in " + ctx.region + " · status=" + ctx.status + " · workload=" + ctx.workload +
+        ". The control plane is healthy; the facet simply selects no hardware."
+      : "";
+    el.filterEcho.textContent = "Facets: region=" + ctx.region + " · status=" + ctx.status + " · workload=" + ctx.workload;
+    el.selectionEcho.textContent = "active: " + (list.length ? "row " + (ctx.active + 1) : "none");
+    el.stageTitle.textContent = ctx.tab === "nodes" ? "Node Matrix" : "VRAM Pool";
+  }
+
+  function setActive(index, focus) {
+    var list = filtered();
+    if (!list.length) return;
+    ctx.active = Math.max(0, Math.min(NODES.length - 1, index));
+    render();
+    var row = document.getElementById("row-" + ctx.active);
+    if (row) {
+      row.setAttribute("tabindex", "0");
+      if (focus) row.focus({ preventScroll: false });
+    }
+  }
+
+  function openDrawer(nodeIndex) {
+    if (el.drawer.classList.contains("is-open")) return;   // rapid Space hits stay idempotent
+    var n = NODES[nodeIndex];
+    ctx.savedScroll = el.scroll.scrollTop;
+    ctx.active = nodeIndex;
+    render();
+    el.drawerTitle.textContent = "Node Inspector";
+    el.drawerNodeId.textContent = n.id;
+    el.drawerNodeId.title = n.id;
+    el.drawerParams.innerHTML =
+      "<dt>Batch job</dt><dd class='mono'>" + n.job + "</dd>" +
+      "<dt>Tensor util</dt><dd>" + n.util + "% (P95 97%)</dd>" +
+      "<dt>VRAM</dt><dd>" + n.vram + "% (pool P95 96.2%)</dd>" +
+      "<dt>Temp</dt><dd>" + n.temp + "°C (throttle 83°C)</dd>" +
+      "<dt>Region</dt><dd>" + n.region + "</dd>";
+    openTarget = document.querySelector('[data-inspect="' + nodeIndex + '"]');
+    el.drawer.classList.add("is-open");
+    el.drawer.setAttribute("aria-hidden", "false");
+    el.scrim.classList.add("is-open");
+    el.drawer.querySelector(".drawer-actions .btn").focus();
+  }
+
+  function closeDrawer() {
+    if (!el.drawer.classList.contains("is-open")) return;
+    el.drawer.classList.remove("is-open");
+    el.drawer.setAttribute("aria-hidden", "true");
+    el.scrim.classList.remove("is-open");
+    el.scroll.scrollTop = ctx.savedScroll;   // spatial context stays pinned
+    if (openTarget && document.contains(openTarget)) openTarget.focus();
+    openTarget = null;
+  }
+
+  function openModal(key) {
+    if (el.modal.classList.contains("is-open") || locked) return;
+    actionKey = key;
+    var a = ACTIONS[key];
+    ctx.savedScroll = el.scroll.scrollTop;
+    el.modalTitle.textContent = a.header;
+    el.modalBody.textContent = a.body;
+    el.commitBtn.textContent = a.commit;
+    el.commitBtn.disabled = false;
+    el.commitBtn.removeAttribute("aria-busy");
+    el.modal.classList.add("is-open");
+    el.modal.setAttribute("aria-hidden", "false");
+    el.scrim.classList.add("is-open");
+    el.commitBtn.focus();
+  }
+
+  function closeModal() {
+    if (!el.modal.classList.contains("is-open")) return;
+    el.modal.classList.remove("is-open");
+    el.modal.setAttribute("aria-hidden", "true");
+    el.scrim.classList.remove("is-open");
+    el.scroll.scrollTop = ctx.savedScroll;
+    var back = document.getElementById("trigger" + (actionKey === "drain" ? "Drain" : "Preempt"));
+    (back || el.drawer).focus();
+    actionKey = null;
+  }
+
+  function settle() {
+    if (locked) return;              // double click / rapid Space: single transition
+    locked = true;
+    var a = ACTIONS[actionKey];
+    var node = NODES[ctx.active];
+    el.commitBtn.disabled = true;
+    el.commitBtn.setAttribute("aria-busy", "true");
+    window.setTimeout(function () {
+      node.settleState = a.settle;
+      el.modal.classList.remove("is-open");
+      el.modal.setAttribute("aria-hidden", "true");
+      el.scrim.classList.remove("is-open");
+      el.scroll.scrollTop = ctx.savedScroll;
+      render();
+      showToast(a.toast);
+      var back = document.getElementById("trigger" + (actionKey === "drain" ? "Drain" : "Preempt"));
+      (back || document.getElementById("row-" + ctx.active) || document.body).focus();
+      actionKey = null;
+      locked = false;
+    }, 220);
+  }
+
+  var toastTimer = null;
+  function showToast(text) {
+    el.toast.textContent = text;
+    el.toast.classList.add("is-open");
+    if (toastTimer) window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(function () { el.toast.classList.remove("is-open"); }, 2600);
+  }
+
+  /* ---- hash state machine ---- */
+  function applyState() {
+    var m = /state=([a-z]+)/.exec(window.location.hash || "");
+    ctx.state = STATES.indexOf(m && m[1]) !== -1 ? m[1] : "ideal";
+    document.body.dataset.state = ctx.state;
+    [].forEach.call(document.querySelectorAll("[data-state-link]"), function (a) {
+      a.setAttribute("aria-current", String(a.getAttribute("data-state-link") === ctx.state));
+    });
+    closeModal();
+    closeDrawer();
+    render();
+  }
+  window.addEventListener("hashchange", applyState);
+
+  /* ---- dual-channel ergonomics ---- */
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) || "";
+    if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      if (el.modal.classList.contains("is-open")) closeModal();
+      else closeDrawer();
+      return;
+    }
+    if (el.modal.classList.contains("is-open")) return;
+    if (e.code === "Space" || e.key === " " || e.key === "p" || e.key === "P") {
+      e.preventDefault();
+      if (el.drawer.classList.contains("is-open")) closeDrawer();
+      else openDrawer(ctx.active);
+      return;
+    }
+    if (e.key === "j" || e.key === "J") { e.preventDefault(); setActive(ctx.active + 1, true); }
+    if (e.key === "k" || e.key === "K") { e.preventDefault(); setActive(ctx.active - 1, true); }
+  });
+  document.addEventListener("keyup", function (e) {
+    if (e.key === "Space" || e.key === "p" || e.key === "P" || e.key === "Escape") {
+      document.body.dataset.lastKey = e.key;
+    }
+  });
+
+  /* ---- wiring ---- */
+  el.rows.addEventListener("click", function (e) {
+    var inspect = e.target.closest("[data-inspect]");
+    if (inspect) { openDrawer(Number(inspect.getAttribute("data-inspect"))); return; }
+    var row = e.target.closest("[data-item='node']");
+    if (row) setActive(Number(row.getAttribute("data-index")), false);
+  });
+  el.region.addEventListener("change", function () { ctx.region = el.region.value; ctx.active = 0; render(); });
+  [].forEach.call(document.querySelectorAll("[data-facet]"), function (b) {
+    b.addEventListener("click", function () {
+      var f = b.getAttribute("data-facet");
+      ctx[f] = b.getAttribute("data-value");
+      [].forEach.call(document.querySelectorAll('[data-facet="' + f + '"]'), function (x) {
+        x.setAttribute("aria-pressed", String(x === b));
       });
-      document.getElementById('close-drawer').addEventListener('click', closeDrawer);
-      document.getElementById('cancel-action').addEventListener('click', closeDrawer);
-      scrim.addEventListener('click', closeDrawer);
-      commit.addEventListener('click', commitAction);
-      document.getElementById('clear-filter').addEventListener('click', () => { filter.value = ''; history.replaceState(null, '', '#state=ideal'); applyState(); filter.focus(); });
-      document.getElementById('retry').addEventListener('click', () => { history.replaceState(null, '', '#state=ideal'); applyState(); showToast('Telemetry sync restored'); });
-      filter.addEventListener('input', () => { if (filter.value.trim()) history.replaceState(null, '', '#state=empty'); else history.replaceState(null, '', '#state=ideal'); applyState(); });
-      document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') { closeDrawer(); return; }
-        if (event.target.matches('input, textarea, select')) return;
-        if (event.key === 'j' || event.key === 'J') { setSelected(selected + 1); return; }
-        if (event.key === 'k' || event.key === 'K') { setSelected(selected - 1); return; }
-        if (event.code === 'Space' || event.key === 'p' || event.key === 'P') { event.preventDefault(); const row = rows[selected]; openDrawer('drain-node', row.dataset.node, row); }
-      });
-      document.addEventListener('keyup', event => { if (event.code === 'Space') document.body.classList.remove('key-pressed'); });
-      window.addEventListener('hashchange', applyState);
-      function applyState() {
-        const requested = new URLSearchParams(location.hash.replace(/^#/, '')).get('state');
-        const state = ['ideal', 'empty', 'error'].includes(requested) ? requested : 'ideal';
-        document.body.dataset.state = state;
-        if (state === 'empty') document.getElementById('count-label').textContent = 'Showing 0 of 26 nodes';
-        else if (state === 'error') document.getElementById('count-label').textContent = 'Inventory unavailable';
-        else document.getElementById('count-label').textContent = 'Showing 3 of 26 nodes';
-      }
-      applyState();
-    })();
-  </script>
+      ctx.active = 0;
+      render();
+    });
+  });
+  function setTab(tab) {
+    ctx.tab = tab;
+    el.tabNodes.setAttribute("aria-pressed", String(tab === "nodes"));
+    el.tabVram.setAttribute("aria-pressed", String(tab === "vram"));
+    render();
+  }
+  el.tabNodes.addEventListener("click", function () { setTab("nodes"); });
+  el.tabVram.addEventListener("click", function () { setTab("vram"); });
+  el.resetFilters.addEventListener("click", function () {
+    ctx.region = "all"; ctx.status = "all"; ctx.workload = "all"; ctx.active = 0;
+    el.region.value = "all";
+    [].forEach.call(document.querySelectorAll("[data-facet]"), function (x) {
+      x.setAttribute("aria-pressed", String(x.getAttribute("data-value") === "all"));
+    });
+    if (ctx.state === "empty") window.location.hash = "#state=ideal";
+    render();
+    showToast("Filters Reset — 5 nodes restored");
+  });
+  el.retryUplink.addEventListener("click", function () {
+    window.location.hash = "#state=ideal";
+    showToast("Uplink Restored — live telemetry");
+  });
+  el.triggerDrain.addEventListener("click", function () { openModal("drain"); });
+  el.triggerPreempt.addEventListener("click", function () { openModal("preempt"); });
+  el.commitBtn.addEventListener("click", settle);
+  el.cancelCommit.addEventListener("click", closeModal);
+  el.scrim.addEventListener("click", function () { closeModal(); closeDrawer(); });
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-inspect]") || e.target.closest(".drawer") || e.target.closest(".modal") ||
+        e.target.closest(".row") || e.target.closest(".rail")) return;
+    closeDrawer();
+  });
+
+  el.drainSpark.innerHTML = sparkline([2.6, 2.3, 2.1, 2.4, 2.0, 1.9, 2.2, 1.9]);
+  applyState();
+})();
+</script>
 </body>
 </html>

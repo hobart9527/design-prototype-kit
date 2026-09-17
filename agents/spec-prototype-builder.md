@@ -36,14 +36,17 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
 
 ## 3. Specification-Faithful Implementation Rules
 
-- **Design Token Invariance & Stylesheet Link**:
-  Always link the shared tokens stylesheet in `<head>` via `<link rel="stylesheet" href="../../../shared/tokens.css">` (or relative path per `token_stylesheet_ref`).
-  Consume exact CSS custom properties provided in `available_tokens` and ensure all `required_css_tokens` (e.g. `var(--radius-outer)`, `var(--radius-inner)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`) are present.
-  Never use raw un-tokenized inline hex codes in `style="..."` attributes.
+- **Design Token Invariance & Shared Stylesheet**:
+  Link the shared tokens stylesheet in `<head>` using the exact `token_link_tag` (or `token_stylesheet_ref`) from the envelope.
+  Do NOT redeclare or shadow `:root { ... }` custom properties in `<style>`! Consume standard tokens (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`, `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--space-*)`, etc.) directly from the linked stylesheet.
+  Never use raw inline hex codes in `style="..."` attributes.
   Enforce `font-variant-numeric: tabular-nums` across all numeric metrics.
-- **Hash State Machine Routing**: Incorporate the `state_routing_blueprint` verbatim:
+- **Shared Shell & Multi-Surface Topology Navigation**:
+  Render the shared top navigation bar using `topology_context.shared_shell`. Include the brand title and render all `navigation_links` with their exact relative `href` and `active` status. This guarantees that all prototype surfaces form an interconnected product topology rather than disconnected silos.
+- **Declarative State Machine & Hash Routing**:
+  Implement dynamic state machine based on `interaction_spec.state_machine`:
   Listen to `window.addEventListener("hashchange", applyState)` and read `location.hash` (`#state=ideal`, `#state=empty`, `#state=error`).
-  Mutate `document.body.dataset.state` and update DOM views accordingly so `capture.mjs` captures distinct, truthful multi-state visual evidence.
+  Mutate `document.body.dataset.state` and render distinct data/views for `ideal` (normal list), `empty` (zero results with recovery action), and `error` (telemetry alert) so headless capture records authentic multi-state visual evidence.
 - **Dual-Channel Ergonomics**: Implement keyboard listeners (`keydown`/`keyup`) for declared shortcuts
   (such as `Space`/`Esc`/`J`/`K`) with deterministic focus management and visual feedback.
 - **The Break Protocol Resilience**: Ensure graceful layout under the 4 stress checkpoints

@@ -596,6 +596,89 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
     assert verify_mod.assert_quality(str(good_html), str(tokens_css), contract_path=str(spec_md)) is True
 
 
+def test_topology_context_and_convention_cli(tmp_path: Path):
+    """Verify envelope compiles multi-surface topology links and convention-based CLI."""
+    assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
+
+    product = tmp_path / "prototype/product.md"
+    product.parent.mkdir(parents=True, exist_ok=True)
+    product.write_text("# Product\n- Core Tension: Speed vs Safety\n", encoding="utf-8")
+
+    smap = tmp_path / "prototype/contracts/surface-maps/m1.md"
+    smap.parent.mkdir(parents=True, exist_ok=True)
+    smap.write_text("""# Surface Map
+- **主工作区 (Primary)**: `console/hero-anchor`（GPU 拓扑）
+- **上下文视图 (Contextual)**: `surfaces/incident-replay`（帧回放）
+- **支撑视图 (Supporting)**: `surfaces/capacity-matrix`（算力配额）
+""", encoding="utf-8")
+
+    foundation = tmp_path / "prototype/contracts/foundation/f1.md"
+    foundation.parent.mkdir(parents=True, exist_ok=True)
+    foundation.write_text("# Foundation\n- Foundation revision: f1\n", encoding="utf-8")
+
+    tokens_css = tmp_path / "prototype/shared/tokens.css"
+    tokens_css.parent.mkdir(parents=True, exist_ok=True)
+    tokens_css.write_text(":root { --radius-outer: 8px; }\n", encoding="utf-8")
+
+    tokens_md = tmp_path / "prototype/contracts/tokens/t1.md"
+    tokens_md.parent.mkdir(parents=True, exist_ok=True)
+    tokens_md.write_text("# Tokens\n| Token | Value |\n|---|---|\n| --bp-mobile | 390px |\n", encoding="utf-8")
+
+    tokens_json = tmp_path / "prototype/contracts/tokens/t1.json"
+    tokens_json.write_text("{}", encoding="utf-8")
+
+    slice_c = tmp_path / "prototype/contracts/slices/console/c1.md"
+    slice_c.parent.mkdir(parents=True, exist_ok=True)
+    slice_c.write_text("# Contract\n- Slice ID: console\n", encoding="utf-8")
+
+    spec = tmp_path / "prototype/specifications/console/r1.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text("""# Spec
+- Prototype write scope: `prototype/experiments/console/hero-anchor/`
+- Evidence write scope: `prototype/evidence/probes/console/`
+## Verifiable Design Assertions
+| Assertion | Expected |
+|---|---|
+| Space shortcut | pass |
+""", encoding="utf-8")
+
+    env = assemble_mod.assemble(tmp_path, "console")
+    assert env["envelope_version"] == "2.0"
+    assert "token_link_tag" in env
+    assert "shared/tokens.css" in env["token_link_tag"]
+    assert env["verification_command"] == "python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice console"
+    assert env["capture_command"] == "node skills/spec-prototype/scripts/capture.mjs --slice console"
+
+    topology = env["topology_context"]
+    assert topology["current_slice"] == "console"
+    assert topology["surface_role"] == "primary"
+    links = topology["shared_shell"]["navigation_links"]
+    assert len(links) == 3
+    assert any(link["slice_id"] == "console" and link["active"] for link in links)
+    assert any(link["slice_id"] == "incident-replay" and not link["active"] for link in links)
+    assert any(link["slice_id"] == "capacity-matrix" and not link["active"] for link in links)
+
+    # 6. Verify verify_prototype_quality enforces topology navigation when m1.md is present
+    verify_mod = _load("verify_quality", "verify_prototype_quality.py")
+    test_html = tmp_path / "prototype/experiments/console/hero-anchor/index.html"
+    test_html.parent.mkdir(parents=True, exist_ok=True)
+    # Page without sibling links fails topology assertion
+    test_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="../../../shared/tokens.css"></head><body>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;"><button>Go</button></main>
+<script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is False
+
+    # Page with sibling link passes topology assertion
+    test_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="../../../shared/tokens.css"></head><body>
+<nav><a href="../../../surfaces/incident-replay/index.html">Incident</a></nav>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;"><button>Go</button></main>
+<script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is True
+
+
+
 
 
 
