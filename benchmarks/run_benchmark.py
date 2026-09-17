@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Automated Benchmark Suite for spec-prototype design skill.
 
-Runs benchmark cases, measures execution time, contract fidelity,
-verification pass rate, and collects structured results for blind evaluation.
+Runs the mechanism layer only: materialize/compile/validate scripts per case,
+measuring execution time and contract fidelity. It does NOT run a Builder, a
+browser task, or any human design review, so it produces no evidence of full
+Skill delivery, page interaction, or design quality (BENCH-001).
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -28,13 +29,31 @@ class CaseBenchmarkResult:
     case_name: str
     run_id: int
     duration_seconds: float
+    # Evidence layer tag. "mechanism" means only the mechanism scripts ran;
+    # it is NOT evidence of Skill delivery, browser task behavior, or design
+    # quality. See BENCH-001 / BENCH-SCN-001.
+    layer: str
     contract_materialized: bool
     envelope_assembled: bool
     tokens_compiled: bool
-    verification_passed: bool
+    # pipeline_exit_ok: the three mechanism scripts exited 0. Mechanism-layer
+    # success only; delivery and interaction remain untested.
+    pipeline_exit_ok: bool
+    # wcag_aaa_contrast: contrast ratio (>= 7.0) between exactly two token
+    # keys, color.surface and color.text-primary. Single key-pair check only;
+    # it does NOT represent full-page WCAG AAA compliance.
     wcag_aaa_contrast: bool
+    failed_step: str | None = None
+    exit_code: int | None = None
+    error_context: str = ""
     error: str | None = None
     metrics: Dict[str, Any] = None
+
+
+def _step_context(proc: subprocess.CompletedProcess) -> str:
+    """Preserve the failing step's exit code and stderr/stdout tail."""
+    tail = (proc.stderr or proc.stdout or "").strip()
+    return tail[-500:]
 
 
 def run_single_case(case_name: str, run_id: int, output_dir: Path) -> CaseBenchmarkResult:
@@ -44,18 +63,23 @@ def run_single_case(case_name: str, run_id: int, output_dir: Path) -> CaseBenchm
             case_name=case_name,
             run_id=run_id,
             duration_seconds=0.0,
+            layer="mechanism",
             contract_materialized=False,
             envelope_assembled=False,
             tokens_compiled=False,
-            verification_passed=False,
+            pipeline_exit_ok=False,
             wcag_aaa_contrast=False,
+            failed_step="locate_case",
+            error_context=f"Case directory {case_name} not found",
             error=f"Case directory {case_name} not found",
         )
 
     t0 = time.time()
-    work_dir = output_dir / f"{case_name}_run{run_id}"
-    if work_dir.exists():
-        shutil.rmtree(work_dir)
+    # Timestamped, collision-safe run directory. A prior run is never silently
+    # deleted; its evidence is preserved alongside this one (BENCH-SCN-002).
+    work_dir = output_dir / f"{case_name}_run{run_id}_{int(t0)}"
+    while work_dir.exists():
+        work_dir = work_dir.parent / f"{work_dir.name}_b"
     work_dir.mkdir(parents=True, exist_ok=True)
 
     proto_dir = work_dir / "prototype"
@@ -117,7 +141,8 @@ def run_single_case(case_name: str, run_id: int, output_dir: Path) -> CaseBenchm
     ], capture_output=True, text=True)
     env_ok = res_env.returncode == 0 and env_json.is_file()
 
-    # 5. Check WCAG contrast of derived tokens
+    # 5. Single key-pair contrast check: color.surface vs color.text-primary.
+    # This is NOT a full-page WCAG AAA compliance check.
     wcag_aaa = False
     if tok_ok:
         try:
@@ -140,15 +165,37 @@ def run_single_case(case_name: str, run_id: int, output_dir: Path) -> CaseBenchm
 
     duration = time.time() - t0
 
+    pipeline_exit_ok = mat_ok and env_ok and tok_ok
+
+    # Preserve the first failing step, its exit code, and its error context.
+    failed_step = None
+    exit_code = None
+    error_context = ""
+    if not pipeline_exit_ok:
+        for step, ok, proc in (
+            ("materialize_contracts", mat_ok, res_mat),
+            ("compile_tokens", tok_ok, res_tok),
+            ("assemble_envelope", env_ok, res_env),
+        ):
+            if not ok:
+                failed_step = step
+                exit_code = proc.returncode
+                error_context = _step_context(proc)
+                break
+
     return CaseBenchmarkResult(
         case_name=case_name,
         run_id=run_id,
         duration_seconds=round(duration, 3),
+        layer="mechanism",
         contract_materialized=mat_ok,
         envelope_assembled=env_ok,
         tokens_compiled=tok_ok,
-        verification_passed=mat_ok and env_ok and tok_ok,
+        pipeline_exit_ok=pipeline_exit_ok,
         wcag_aaa_contrast=wcag_aaa,
+        failed_step=failed_step,
+        exit_code=exit_code,
+        error_context=error_context,
         metrics={
             "output_dir": str(work_dir),
             "envelope_size_bytes": env_json.stat().st_size if env_json.is_file() else 0,
@@ -179,15 +226,32 @@ def run_all_benchmarks(repetitions: int = 3) -> Dict[str, Any]:
         for r in range(1, repetitions + 1):
             res = run_single_case(case, r, run_dir)
             results.append(res)
-            status = "PASS" if res.verification_passed and res.wcag_aaa_contrast else "WARN"
-            print(f"  Round {r}: {res.duration_seconds}s | Mat={res.contract_materialized} Env={res.envelope_assembled} Tok={res.tokens_compiled} WCAG={res.wcag_aaa_contrast} -> [{status}]")
+            status = "MECHANISM_OK" if res.pipeline_exit_ok and res.wcag_aaa_contrast else "WARN"
+            line = f"  Round {r}: {res.duration_seconds}s | Mat={res.contract_materialized} Env={res.envelope_assembled} Tok={res.tokens_compiled} WCAG={res.wcag_aaa_contrast} -> [{status}]"
+            if not res.pipeline_exit_ok:
+                line += f" | failed_step={res.failed_step} exit={res.exit_code}: {res.error_context}"
+            print(line)
 
     summary_file = run_dir / "summary.json"
     summary_data = {
         "timestamp": timestamp,
         "repetitions": repetitions,
+        # Mechanism-layer run only; delivery, interaction, and design quality
+        # are untested here (BENCH-001 / BENCH-SCN-001).
+        "layer": "mechanism",
         "total_runs": len(results),
-        "pass_count": sum(1 for r in results if r.verification_passed and r.wcag_aaa_contrast),
+        "mechanism_pass_count": sum(1 for r in results if r.pipeline_exit_ok and r.wcag_aaa_contrast),
+        "failed_steps": [
+            {
+                "case_name": r.case_name,
+                "run_id": r.run_id,
+                "failed_step": r.failed_step,
+                "exit_code": r.exit_code,
+                "error_context": r.error_context,
+            }
+            for r in results
+            if not r.pipeline_exit_ok
+        ],
         "results": [asdict(r) for r in results],
     }
     summary_file.write_text(json.dumps(summary_data, indent=2, ensure_ascii=False), encoding="utf-8")
