@@ -1,120 +1,109 @@
 #!/usr/bin/env python3
-"""Automated UX/UI Quality Assertion Harness for spec-prototype.
+"""Truthful, contract-driven checks for a prototype artifact.
 
-Asserts:
-1. Multi-entity interactive inspectability (HTML contains inspectable nodes with dynamic selection handlers).
-2. Stateful Micro-App Architecture (Presence of AppState / state store and event listeners).
-3. Visual Craft & Spatial Depth (Layered backgrounds, CSS variables, concentric radii, tabular nums).
-4. Multi-branch action lifecycle (Action buttons, status changes, bypass/reversion pathways).
-5. Code Plagiarism & Stale Template Firewall (Detects verbatim reuse of past template strings).
+Static checks inspect source only. Browser, visual, and human evidence are
+reported as unverified unless an evidence manifest explicitly records them.
 """
-import sys
-import os
+from __future__ import annotations
+
+import argparse
+import json
 import re
-import hashlib
+import sys
 from pathlib import Path
+from typing import Iterable
 
-# Known stale template signatures that indicate execution evasion or rote copy-paste
-STALE_SIGNATURES = [
-    ("MAS-ORCHESTRATOR", "Stale Archetype: Copied MAS-ORCHESTRATOR template verbatim"),
-    ("DAG-FANOUT-04", "Stale Topology: Copied static 4-node DAG-FANOUT-04 topology"),
-    ("Sentiment Agent", "Stale Domain Object: Copied sentiment sub-graph mock verbatim"),
-    ("Order Settlement", "Stale Domain Object: Copied order settlement mock verbatim"),
-]
 
-def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False) -> bool:
-    print(f"[HARNESS] Running Automated UX/UI Quality Assertions on: {html_path}")
+def _contract_items(path: Path | None) -> list[str]:
+    if not path or not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    items: list[str] = []
+    for line in text.splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip().strip("`") for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 2 and cells[0].lower() not in {"assertion", "expected", "reality breaker", "---"}:
+            if cells[0] and not set(cells[0]) <= {"-", ":"}:
+                items.append(cells[0])
+    return items
 
-    html_file = Path(html_path)
-    tokens_file = Path(tokens_path)
 
-    if not html_file.is_file():
-        print(f"FAILED: Target HTML not found: {html_path}")
+def _find_contract(html: Path, explicit: str | None) -> Path | None:
+    if explicit:
+        return Path(explicit)
+    for parent in [html.parent, *html.parents]:
+        candidates = list((parent / "prototype/contracts").glob("**/*.md"))
+        if candidates:
+            return candidates[0]
+    return None
+
+
+def _evidence_state(html: Path) -> dict[str, str]:
+    for parent in [html.parent, *html.parents]:
+        manifest = parent / "prototype/evidence/handoff-manifest.json"
+        if manifest.is_file():
+            try:
+                data = json.loads(manifest.read_text(encoding="utf-8"))
+                return {str(k): str(v) for k, v in data.get("verification", {}).items()}
+            except (json.JSONDecodeError, OSError):
+                return {}
+    return {}
+
+
+def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
+                   contract_path: str | None = None) -> bool:
+    html = Path(html_path)
+    tokens = Path(tokens_path)
+    if not html.is_file() or not tokens.is_file():
+        print(f"FAILED: required artifact missing (html={html}, tokens={tokens})")
         return False
-    if not tokens_file.is_file():
-        print(f"FAILED: Shared tokens.css not found: {tokens_path}")
-        return False
+    source = html.read_text(encoding="utf-8")
+    token_source = tokens.read_text(encoding="utf-8")
+    failures: list[str] = []
 
-    html_content = html_file.read_text(encoding="utf-8")
-    tokens_content = tokens_file.read_text(encoding="utf-8")
+    # DOM and interaction assertions use semantic hooks, never domain names.
+    entities = re.findall(r"(?:data-(?:entity|contract|item)|id|class)=[\"'][^\"']+[\"']", source)
+    if len(entities) < 3 and not re.search(r"<button\b|<a\b|role=[\"\']button", source):
+        failures.append("DOM assertion: no inspectable semantic elements")
+    if not re.search(r"addEventListener\s*\(|\bon(?:click|keydown|submit)\s*=|onclick=", source):
+        failures.append("interaction assertion: no declarative or imperative event binding")
+    if not re.search(r"<button\b|<a\b[^>]*href=|role=[\"']button", source):
+        failures.append("interaction assertion: no reachable control")
 
-    failures = []
+    declared = _contract_items(Path(contract_path) if contract_path else None)
+    missing = [item for item in declared if len(item) > 2 and item not in source]
+    if missing:
+        failures.append("contract assertion: declared items absent from DOM: " + ", ".join(missing[:5]))
 
-    # 0. Anti-Stagnation / Stale Template Firewall (Optional flag or strict mode)
+    # Tokens are checked only for declared, generic accessibility/typography hooks.
+    if "font-variant-numeric" in token_source and "font-variant-numeric" not in source and "var(--" not in source:
+        failures.append("token assertion: numeric presentation token is not consumed")
     if check_stale:
-        for sig, msg in STALE_SIGNATURES:
-            if sig in html_content:
-                failures.append(f"Anti-Stagnation Violation: {msg}. Design must originate from new divergence reasoning.")
+        failures.append("stale-template check: unverified (provide a contract/evidence rule instead)")
 
-    # 1. Inspectability & Multi-Entity Depth
-    node_matches = re.findall(r'class=["\'][^"\']*(?:dag-node|card-entity|table-row|stream-node|cluster-node)[^"\']*["\']', html_content)
-    if len(node_matches) < 3:
-        failures.append(f"Entity Depth Deficit: Expected at least 3 operable entities/nodes, found {len(node_matches)}.")
-
-    # Check for entity selection mechanism
-    if not ("selectNode" in html_content or "selectEntity" in html_content or "addEventListener('click'" in html_content or 'onclick="select' in html_content):
-        failures.append("Toy-Demo Flaw: Missing universal entity selection/inspection click handler.")
-
-    # 2. Stateful Micro-App Architecture
-    has_state_store = any(term in html_content for term in ["AppState", "state =", "const state", "let state", "nodesData", "ClusterState"])
-    if not has_state_store:
-        failures.append("Static Mockup Flaw: Missing centralized AppState / reactive data store.")
-
-    # 3. Multi-branch action lifecycle
-    has_dual_channel = any(term in html_content for term in ["addEventListener('keydown'", "e.code", "e.key", "Space"])
-    if not has_dual_channel:
-        failures.append("Affordance Flaw: Missing dual-channel interaction (keyboard shortcut binding).")
-
-    has_action_button = any(term in html_content for term in ["btn-action", "btn-isolate", "btn-tactile", "btn-rebalance", "onclick="])
-    if not has_action_button:
-        failures.append("Closure Flaw: Missing actionable operator intervention button.")
-
-    # 4. Token Integration & Craft
-    if "tabular-nums" not in tokens_content and "tabular-nums" not in html_content:
-        failures.append("Craft Flaw: Missing font-variant-numeric: tabular-nums for telemetry metrics.")
-
-    if "scale(0.9" not in tokens_content and "scale(0.9" not in html_content:
-        failures.append("Tactile Flaw: Missing mechanical detent (:active scale micro-motion).")
-
-    # 5. Visual Hierarchy & Sparklines
-    has_sparkline = "<svg" in html_content and ("<path" in html_content or "<polyline" in html_content or "<line" in html_content)
-    if not has_sparkline:
-        failures.append("Naked Metrics Flaw: Missing SVG sparkline / baseline trend context.")
-
+    states = _evidence_state(html)
+    print("STATIC: " + ("pass" if not failures else "fail"))
+    print("BROWSER: " + states.get("browser", "unverified"))
+    print("VISUAL: " + states.get("visual", "unverified"))
+    print("HUMAN: " + states.get("human", "unverified"))
     if failures:
-        print("\n❌ AUTOMATED UX/UI QUALITY ASSERTION FAILED:")
-        for idx, err in enumerate(failures, 1):
-            print(f"  [{idx}] {err}")
-        print("\nRefactoring required before user presentation.")
+        for i, failure in enumerate(failures, 1):
+            print(f"  [{i}] {failure}")
         return False
-    else:
-        print("\n✅ ALL UX/UI QUALITY ASSERTIONS PASSED (Entity Depth, AppState Store, Dual-Channel, Craft Rigor).")
-        return True
+    return True
+
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Automated UX/UI Quality Assertion Harness")
-    parser.add_argument("html", help="Path to prototype HTML file")
-    parser.add_argument("tokens", nargs="?", default=None, help="Path to shared tokens.css (optional, auto-resolved if omitted)")
-    parser.add_argument("--tokens", dest="tokens_opt", default=None, help="Explicit path to shared tokens.css")
-    parser.add_argument("--strict-divergence", action="store_true", help="Assert anti-stale and anti-plagiarism template rules")
-
+    parser = argparse.ArgumentParser(description="Contract-driven prototype quality assertions")
+    parser.add_argument("html")
+    parser.add_argument("tokens", nargs="?", default=None)
+    parser.add_argument("--tokens", dest="tokens_opt")
+    parser.add_argument("--contract", dest="contract")
+    parser.add_argument("--strict-divergence", action="store_true")
     args = parser.parse_args()
-    html_path = Path(args.html)
-    tokens_arg = args.tokens_opt or args.tokens
-
-    if not tokens_arg:
-        candidates = [
-            html_path.parent / "../../../shared/tokens.css",
-            html_path.parent / "../../shared/tokens.css",
-            html_path.parent / "tokens.css",
-            Path.cwd() / "prototype/shared/tokens.css",
-        ]
-        resolved = next((c.resolve() for c in candidates if c.is_file()), None)
-        tokens_path = resolved if resolved else Path.cwd() / "prototype/shared/tokens.css"
-    else:
-        tokens_path = Path(tokens_arg).resolve()
-
-    success = assert_quality(str(html_path), str(tokens_path), check_stale=args.strict_divergence)
-    sys.exit(0 if success else 1)
+    html = Path(args.html)
+    token_arg = args.tokens_opt or args.tokens
+    if not token_arg:
+        token_arg = next((str(p) for p in (html.parent / "tokens.css", Path.cwd() / "prototype/shared/tokens.css") if p.is_file()), "prototype/shared/tokens.css")
+    sys.exit(0 if assert_quality(str(html), token_arg, args.strict_divergence, args.contract) else 1)

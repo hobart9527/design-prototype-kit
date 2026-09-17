@@ -11,6 +11,20 @@ from pathlib import Path
 import re
 import sys
 from typing import Dict, List, Tuple
+import json
+
+
+def _read_verification(root: Path) -> Dict[str, str]:
+    manifest = root / "prototype/evidence/handoff-manifest.json"
+    if not manifest.is_file():
+        return {}
+    try:
+        return json.loads(manifest.read_text(encoding="utf-8")).get("verification", {})
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def discover_surfaces(root: Path) -> List[Dict[str, str]]:
 
 
 def discover_surfaces(root: Path) -> List[Dict[str, str]]:
@@ -65,8 +79,12 @@ def discover_surfaces(root: Path) -> List[Dict[str, str]]:
     return surfaces
 
 
-def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Diffusion GPU Cluster Orchestration Desk") -> str:
+def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Review Portal", verification: Dict[str, str] | None = None) -> str:
     default_url = surfaces[0]["url"] if surfaces else "about:blank"
+    verification = verification or {}
+    verified = verification.get("status", "unverified").lower() == "verified"
+    status_label = "VERIFIED" if verified else "UNVERIFIED"
+    evidence_label = verification.get("evidence", "no evidence manifest")
 
     btn_html_list = []
     for i, s in enumerate(surfaces):
@@ -222,7 +240,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Diffusion GP
   <div class="portal-status-bar">
     <div class="status-item">
       <div class="indicator-green"></div>
-      <span>QUALITY HARNESS: VERIFIED [DECISIVE 3-FRAME]</span>
+      <span>QUALITY HARNESS: {status_label} · {evidence_label}</span>
     </div>
     <div class="status-item">
       <span>SHORTCUTS: [SPACE/P: DRAIN] [ESC: CLOSE] [J/K: SELECT]</span>
@@ -261,7 +279,14 @@ def main():
     if not surfaces:
         print("Warning: No surfaces discovered under prototype/experiments or prototype/surfaces")
 
-    html = build_portal_html(surfaces)
+    verification = {}
+    manifest = root / "prototype/evidence/handoff-manifest.json"
+    if manifest.is_file():
+        try:
+            verification = json.loads(manifest.read_text(encoding="utf-8")).get("verification", {})
+        except (json.JSONDecodeError, OSError):
+            verification = {}
+    html = build_portal_html(surfaces, verification=verification)
     out_path = root / args.output
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
