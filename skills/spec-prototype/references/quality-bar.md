@@ -17,6 +17,11 @@ An experience fails the Floor if any of the following occurs:
 - Inline hex colors or hardcoded styling bypassing `shared/tokens.css` inheritance.
 - False claims of verification without actual browser execution traces or without a verified `review-portal.html` multi-view walkthrough harness.
 - Physical or natural metaphor masquerade: claiming a domain tool, optical phenomenon, or biomorphic mapping while delivering purely cosmetic styling with no corresponding observable behavior or interaction.
+- Entity contamination: renaming or disguising core business objects into physics or sci-fi metaphors (e.g. calling tasks particles, calling risk controls detent rods).
+- Ergonomic Reality Gate failures:
+  - For B-Pro systems: An unbriefed operator cannot determine overall system health and the location of anomalies within 5 seconds.
+  - For C-Consumer systems: Core user loops cannot be completed through intuitive lifeworld somatic habits without reading explanatory prose.
+  - Missing Dual-Channel Affordance: Critical keyboard shortcuts or gestural interactions lack visible, accessible GUI buttons or controls.
 - Generated-slop fingerprints confirmed below (see *Generated-output fingerprint check*).
 
 **Non-dilution rule**: a confirmed Floor violation is a failure on sight — never

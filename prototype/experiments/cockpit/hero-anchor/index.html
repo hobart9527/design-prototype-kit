@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synchrotron Lattice // Topological DAG Reactor</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    user-select: none;
+  }
+
+  body.detent-freeze::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0, 240, 255, 0.04) 0px, rgba(0, 240, 255, 0.04) 1px, transparent 2px, transparent 4px);
+    z-index: 999;
+  }
+
+  /* Machined Reactor Top Bar */
+  header.reactor-bar {
+    height: 48px;
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-4);
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+    z-index: 20;
+  }
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .synchro-core-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--text-primary);
+  }
+
+  .core-ring-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-cyan);
+    border-top-color: transparent;
+    animation: spin-ring 1.8s linear infinite;
+  }
+
+  @keyframes spin-ring {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .reactor-telemetry-cluster {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .tele-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .tele-label {
+    color: var(--text-secondary);
+    font-size: 10px;
+  }
+
+  .tele-value {
+    color: var(--accent-cyan);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tele-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-dim);
+    padding: 3px 8px;
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+  }
+
+  .pulsing-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-emerald);
+    box-shadow: 0 0 8px var(--accent-emerald);
+  }
+  .pulsing-dot.active-detent {
+    background: var(--accent-amber);
+    box-shadow: 0 0 10px var(--accent-amber);
+    animation: detent-pulse 0.8s ease-in-out infinite alternate;
+  }
+
+  @keyframes detent-pulse {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    100% { transform: scale(1.3); opacity: 1; }
+  }
+
+  /* Central Collider Viewport */
+  main.collider-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Topology Lattice Canvas Arena */
+  .canvas-chassis {
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .canvas-inner {
+    flex: 1;
+    background: var(--bg-void);
+    border-radius: var(--radius-inner);
+    border: 1px solid var(--border-dim);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* SVG Topological Synchrotron Grid */
+  .lattice-svg-viewport {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+  }
+
+  .mesh-beam-line {
+    stroke: var(--border-bright);
+    stroke-width: 1.5;
+    fill: none;
+  }
+
+  .mesh-beam-active {
+    stroke: var(--accent-cyan);
+    stroke-width: 2.5;
+    stroke-dasharray: 8 6;
+    animation: beam-flow 1.2s linear infinite;
+  }
+
+  .mesh-beam-divergent {
+    stroke: var(--accent-amber);
+    stroke-width: 2.5;
+    stroke-dasharray: 6 4;
+    animation: beam-flow 0.8s linear infinite;
+  }
+
+  @keyframes beam-flow {
+    to { stroke-dashoffset: -28; }
+  }
+
+  /* Detent Gravity Well on Canvas */
+  .detent-well-overlay {
+    position: absolute;
+    top: 52%;
+    left: 48%;
+    transform: translate(-50%, -50%);
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 1px dashed var(--accent-amber);
+    box-shadow: 0 0 24px rgba(255, 170, 0, 0.15);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--duration-normal) var(--ease-hud);
+  }
+
+  .detent-well-overlay.locked {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 36px rgba(0, 240, 255, 0.35);
+    background: radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, transparent 70%);
+  }
+
+  .detent-crosshair {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--accent-amber);
+    border-radius: 50%;
+  }
+
+  /* HUD Tactical Overlay Controls */
+  .canvas-hud-banner {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    right: var(--space-3);
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .hud-pill-tag {
+    background: rgba(10, 12, 16, 0.85);
+    border: 1px solid var(--border-bright);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  /* Interactive Hotkey Dock */
+  .hotkey-dock {
+    position: absolute;
+    bottom: var(--space-3);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 12, 16, 0.92);
+    border: 1px solid var(--border-bright);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-pill);
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    z-index: 10;
+    box-shadow: var(--shadow-md);
+  }
+
+  .key-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .kbd-key {
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-dim);
+    color: var(--accent-cyan);
+    padding: 2px 7px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    box-shadow: 0 2px 0 var(--border-strong);
+  }
+
+  /* Right Phase-Space & Waveform Sidebar */
+  .phase-chassis {
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    overflow-y: auto;
+  }
+
+  .phase-inner {
+    background: var(--bg-surface);
+    border-radius: var(--radius-inner);
+    border: 1px solid var(--border-dim);
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-dim);
+    padding-bottom: 6px;
+  }
+
+  /* Oscilloscope Graph Mock */
+  .oscilloscope-box {
+    height: 100px;
+    background: var(--bg-void);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wave-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Quantitative Zero-Naked-Metrics Block */
+  .metric-gauge-card {
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .metric-row-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .metric-progress-track {
+    height: 6px;
+    background: var(--bg-surface-raised);
+    border-radius: var(--radius-pill);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .metric-progress-fill {
+    height: 100%;
+    width: 74.2%;
+    background: var(--accent-cyan);
+    border-radius: var(--radius-pill);
+    transition: width var(--duration-normal) var(--ease-hud);
+  }
+  .metric-progress-fill.warning {
+    background: var(--accent-amber);
+    width: 88.5%;
+  }
+
+  .metric-benchmark-legend {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-disabled);
+    margin-top: 4px;
+  }
+
+  /* Tactile Buttons */
+  button.reactor-btn {
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-bright);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: var(--radius-inner);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    transition: background var(--duration-fast), transform var(--duration-fast) var(--ease-hud);
+  }
+
+  button.reactor-btn:hover {
+    background: var(--bg-overlay);
+    border-color: var(--accent-cyan);
+  }
+
+  button.reactor-btn:active {
+    transform: scale(0.97);
+  }
+
+  button.reactor-btn.primary {
+    background: var(--accent-cyan);
+    color: var(--bg-void);
+    border: none;
+    font-weight: 700;
+  }
+  button.reactor-btn.primary:hover {
+    background: var(--accent-cyan-hover);
+  }
+
+  button.reactor-btn.destructive {
+    background: rgba(255, 51, 102, 0.15);
+    border: 1px solid var(--accent-rose);
+    color: var(--accent-rose);
+  }
+  button.reactor-btn.destructive:hover {
+    background: var(--accent-rose);
+    color: var(--bg-void);
+  }
+</style>
+</head>
+<body>
+
+<!-- High-Intensity Reactor Navigation -->
+<header class="reactor-bar">
+  <div class="brand-group">
+    <div class="synchro-core-badge">
+      <div class="core-ring-indicator"></div>
+      <span>SYNCHROTRON LATTICE // TOPOLOGICAL REACTOR</span>
+    </div>
+    <span style="font-family: var(--font-mono); font-size: 10px; background: rgba(0,240,255,0.12); color: var(--accent-cyan); padding: 2px 6px; border-radius: var(--radius-sm);">
+      STAGE 2 (立 · HERO ANCHOR)
+    </span>
+  </div>
+
+  <div class="reactor-telemetry-cluster">
+    <div class="tele-item">
+      <span class="tele-label">BEAM ENERGY</span>
+      <span class="tele-value" id="tele-energy">14.82 TeV</span>
+    </div>
+    <div class="tele-item">
+      <span class="tele-label">QUANTUM COHERENCE</span>
+      <span class="tele-value" id="tele-coherence" style="color: var(--accent-emerald);">99.82%</span>
+    </div>
+    <div class="tele-item">
+      <span class="tele-label">ACTIVE AGENTS</span>
+      <span class="tele-value" id="tele-agents">8,420</span>
+    </div>
+    <div class="tele-status-pill">
+      <div class="pulsing-dot" id="reactor-status-dot"></div>
+      <span id="reactor-status-text">NOMINAL CRUISE</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Collider Chamber -->
+<main class="collider-stage">
+  <!-- Left Topology Canvas Chassis -->
+  <div class="canvas-chassis">
+    <div class="canvas-inner" id="canvas-inner-board">
+
+      <!-- Tactical HUD Overlay -->
+      <div class="canvas-hud-banner">
+        <div class="hud-pill-tag">
+          <span style="color: var(--text-secondary);">TOPOLOGICAL ORBIT:</span>
+          <span style="color: var(--accent-cyan); font-weight: 700;">ALPHA-RING-7</span>
+        </div>
+        <div class="hud-pill-tag">
+          <span style="color: var(--text-secondary);">GRAVITY WELL FLUX:</span>
+          <span class="tabular" style="color: var(--accent-amber); font-weight: 700;" id="detent-flux-val">0.00 G</span>
+        </div>
+      </div>
+
+      <!-- Topological SVG Particle Lattice -->
+      <svg class="lattice-svg-viewport" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <radialGradient id="grad-core-halo" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(0, 240, 255, 0.3)" />
+            <stop offset="100%" stop-color="rgba(0, 240, 255, 0)" />
+          </radialGradient>
+        </defs>
+
+        <!-- Coordinate Grid Substrate -->
+        <g stroke="rgba(30, 37, 51, 0.4)" stroke-width="0.5">
+          <line x1="100" y1="0" x2="100" y2="600" />
+          <line x1="250" y1="0" x2="250" y2="600" />
+          <line x1="400" y1="0" x2="400" y2="600" />
+          <line x1="550" y1="0" x2="550" y2="600" />
+          <line x1="700" y1="0" x2="700" y2="600" />
+          <line x1="0" y1="150" x2="800" y2="150" />
+          <line x1="0" y1="300" x2="800" y2="300" />
+          <line x1="0" y1="450" x2="800" y2="450" />
+        </g>
+
+        <!-- Synchrotron Primary Rings -->
+        <ellipse cx="400" cy="300" rx="340" ry="210" class="mesh-beam-line" />
+        <ellipse cx="400" cy="300" rx="340" ry="210" class="mesh-beam-active" id="primary-beam-ring" />
+
+        <!-- Divergent Bifurcation Channel -->
+        <path d="M 220 300 C 300 240, 320 200, 400 200 C 480 200, 520 250, 580 300" class="mesh-beam-line" />
+        <path d="M 220 300 C 300 240, 320 200, 400 200 C 480 200, 520 250, 580 300" class="mesh-beam-divergent" id="fork-beam-channel" style="opacity: 0.3;" />
+
+        <!-- Quantum Core Hub Center -->
+        <circle cx="400" cy="300" r="48" fill="url(#grad-core-halo)" />
+        <circle cx="400" cy="300" r="28" fill="var(--bg-surface-raised)" stroke="var(--accent-cyan)" stroke-width="1.5" />
+        <text x="400" y="304" fill="var(--accent-cyan)" font-family="var(--font-mono)" font-size="10" font-weight="700" text-anchor="middle">CORE-HUB</text>
+
+        <!-- Dynamic Quantum Agent Nodes -->
+        <!-- Ingestion Node -->
+        <g transform="translate(160, 240)">
+          <circle cx="0" cy="0" r="16" fill="var(--bg-surface)" stroke="var(--border-bright)" stroke-width="1" />
+          <circle cx="0" cy="0" r="6" fill="var(--accent-emerald)" />
+          <text x="0" y="26" fill="var(--text-secondary)" font-family="var(--font-mono)" font-size="9" text-anchor="middle">N01:INGEST</text>
+        </g>
+
+        <!-- Detent Fork Node (Critical Interaction Anchor) -->
+        <g transform="translate(380, 200)" id="svg-detent-node" style="cursor: pointer;">
+          <circle cx="0" cy="0" r="22" fill="var(--bg-surface-raised)" stroke="var(--accent-amber)" stroke-width="2" />
+          <circle cx="0" cy="0" r="10" fill="var(--accent-amber)" id="svg-detent-core" />
+          <text x="0" y="-28" fill="var(--accent-amber)" font-family="var(--font-mono)" font-size="10" font-weight="700" text-anchor="middle">DETENT BIFURCATION</text>
+          <text x="0" y="34" fill="var(--text-secondary)" font-family="var(--font-mono)" font-size="9" text-anchor="middle">Δ=4.5% SLIPPAGE</text>
+        </g>
+
+        <!-- Verification Collider Node -->
+        <g transform="translate(620, 260)">
+          <circle cx="0" cy="0" r="18" fill="var(--bg-surface)" stroke="var(--border-bright)" stroke-width="1" />
+          <circle cx="0" cy="0" r="7" fill="var(--accent-cyan)" />
+          <text x="0" y="28" fill="var(--text-secondary)" font-family="var(--font-mono)" font-size="9" text-anchor="middle">N03:COLLIDER</text>
+        </g>
+
+        <!-- Settlement Ingress Node -->
+        <g transform="translate(480, 480)">
+          <circle cx="0" cy="0" r="16" fill="var(--bg-surface)" stroke="var(--border-bright)" stroke-width="1" />
+          <circle cx="0" cy="0" r="6" fill="var(--accent-emerald)" />
+          <text x="0" y="26" fill="var(--text-secondary)" font-family="var(--font-mono)" font-size="9" text-anchor="middle">N04:SETTLE</text>
+        </g>
+      </svg>
+
+      <!-- Magnetic Detent Gravity Well Visualizer -->
+      <div class="detent-well-overlay" id="detent-well-hud">
+        <div class="detent-crosshair"></div>
+      </div>
+
+      <!-- Docked Shortcut Command Guide -->
+      <div class="hotkey-dock">
+        <div class="key-action">
+          <span class="kbd-key">SPACE</span>
+          <span>MAGNETIC DETENT LOCK</span>
+        </div>
+        <div class="key-action">
+          <span class="kbd-key">D</span>
+          <span>DEFLECT TO BYPASS FORK</span>
+        </div>
+        <div class="key-action">
+          <span class="kbd-key">R</span>
+          <span>QUARANTINE BEAM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Phase-Space & Causality Drift Chassis -->
+  <aside class="phase-chassis">
+    <!-- Phase-Space Oscilloscope Section -->
+    <div class="phase-inner">
+      <div class="section-title">
+        <span>PHASE-SPACE OSCILLOSCOPE</span>
+        <span style="color: var(--accent-cyan);" class="tabular">120 Hz REFRESH</span>
+      </div>
+      <div class="oscilloscope-box">
+        <canvas id="wave-canvas" class="wave-canvas" width="340" height="100"></canvas>
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+        <span>COHERENCE JITTER: <span class="tabular" style="color: var(--accent-emerald);">±0.04 ms</span></span>
+        <span>DRIFT RATIO: <span class="tabular" style="color: var(--accent-amber);" id="drift-ratio-txt">0.12%</span></span>
+      </div>
+    </div>
+
+    <!-- Zero-Naked-Metrics Floor Gauges -->
+    <div class="phase-inner">
+      <div class="section-title">
+        <span>CRITICAL BOUNDARY TELEMETRY</span>
+        <span style="font-size: 9px; color: var(--accent-emerald);">ZERO NAKED METRICS</span>
+      </div>
+
+      <!-- Metric 1: Beamline Throughput -->
+      <div class="metric-gauge-card">
+        <div class="metric-row-header">
+          <span>THROUGHPUT FLUX</span>
+          <span class="tabular" style="color: var(--accent-cyan); font-weight: 700;" id="metric-throughput-num">12,450 RPS</span>
+        </div>
+        <div class="metric-progress-track">
+          <div class="metric-progress-fill" id="metric-throughput-bar" style="width: 78%;"></div>
+        </div>
+        <div class="metric-benchmark-legend">
+          <span>BASELINE: 8,000 RPS</span>
+          <span>THRESHOLD: 14,000 RPS</span>
+          <span>CEILING: 16,000</span>
+        </div>
+      </div>
+
+      <!-- Metric 2: Detent Magnetic Absorption -->
+      <div class="metric-gauge-card">
+        <div class="metric-row-header">
+          <span>MAGNETIC ABSORPTION LOAD</span>
+          <span class="tabular" style="color: var(--accent-amber); font-weight: 700;" id="metric-absorption-num">88.5%</span>
+        </div>
+        <div class="metric-progress-track">
+          <div class="metric-progress-fill warning" id="metric-absorption-bar" style="width: 88.5%;"></div>
+        </div>
+        <div class="metric-benchmark-legend">
+          <span>BASELINE: 40.0%</span>
+          <span>THRESHOLD: 85.0%</span>
+          <span>COLLAPSE: 95.0%</span>
+        </div>
+      </div>
+
+      <!-- Metric 3: Causal Settlement Latency -->
+      <div class="metric-gauge-card">
+        <div class="metric-row-header">
+          <span>CAUSAL AUDIT LAG</span>
+          <span class="tabular" style="color: var(--accent-emerald); font-weight: 700;">18.4 ms</span>
+        </div>
+        <div class="metric-progress-track">
+          <div class="metric-progress-fill" style="width: 32%; background: var(--accent-emerald);"></div>
+        </div>
+        <div class="metric-benchmark-legend">
+          <span>FLOOR: 10.0 ms</span>
+          <span>TARGET: 25.0 ms</span>
+          <span>SLA BREACH: 100.0 ms</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Intervention Deck -->
+    <div class="phase-inner">
+      <div class="section-title">
+        <span>INTERVENTION PROTOCOL</span>
+        <span style="color: var(--text-disabled);">TACTILE CONTROLS</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+        <button class="reactor-btn primary" id="btn-lock-detent" onclick="toggleDetentLock()">
+          <span>ENGAGE MAGNETIC DETENT ROD</span>
+          <span style="font-size: 10px; opacity: 0.8;">[SPACE]</span>
+        </button>
+
+        <button class="reactor-btn" id="btn-deflect-fork" onclick="triggerForkDeflection()">
+          <span>STEER BEAM TO BYPASS LOOP</span>
+          <span style="font-size: 10px; opacity: 0.8;">[D]</span>
+        </button>
+
+        <button class="reactor-btn destructive" id="btn-quarantine" onclick="triggerQuarantine()">
+          <span>EMERGENCY BEAM QUARANTINE</span>
+          <span style="font-size: 10px; opacity: 0.8;">[R]</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script>
+  let isDetentLocked = false;
+  let isDeflected = false;
+  let isQuarantined = false;
+
+  const wellHud = document.getElementById('detent-well-hud');
+  const statusDot = document.getElementById('reactor-status-dot');
+  const statusText = document.getElementById('reactor-status-text');
+  const fluxVal = document.getElementById('detent-flux-val');
+  const forkBeam = document.getElementById('fork-beam-channel');
+
+  function toggleDetentLock() {
+    isDetentLocked = !isDetentLocked;
+    document.body.classList.toggle('detent-freeze', isDetentLocked);
+    wellHud.classList.toggle('locked', isDetentLocked);
+
+    if (isDetentLocked) {
+      statusDot.className = 'pulsing-dot active-detent';
+      statusText.textContent = 'DETENT GRAVITY LOCK [ACTIVE]';
+      statusText.style.color = 'var(--accent-amber)';
+      fluxVal.textContent = '8.45 G [TRAPPED]';
+      forkBeam.style.opacity = '0.9';
+    } else {
+      statusDot.className = 'pulsing-dot';
+      statusText.textContent = 'NOMINAL CRUISE';
+      statusText.style.color = 'var(--text-primary)';
+      fluxVal.textContent = '0.00 G';
+      forkBeam.style.opacity = '0.3';
+    }
+  }
+
+  function triggerForkDeflection() {
+    isDeflected = !isDeflected;
+    if (isDeflected) {
+      statusText.textContent = 'BEAM DEFLECTED -> BYPASS LOOP';
+      statusText.style.color = 'var(--accent-cyan)';
+      forkBeam.style.stroke = 'var(--accent-cyan)';
+      forkBeam.style.opacity = '1';
+    } else {
+      statusText.textContent = 'NOMINAL CRUISE';
+      statusText.style.color = 'var(--text-primary)';
+      forkBeam.style.stroke = 'var(--accent-amber)';
+      forkBeam.style.opacity = '0.3';
+    }
+  }
+
+  function triggerQuarantine() {
+    isQuarantined = !isQuarantined;
+    if (isQuarantined) {
+      statusDot.className = 'pulsing-dot';
+      statusDot.style.background = 'var(--accent-rose)';
+      statusDot.style.boxShadow = '0 0 10px var(--accent-rose)';
+      statusText.textContent = 'QUARANTINE EXECUTED // BEAM CLAMPED';
+      statusText.style.color = 'var(--accent-rose)';
+      document.getElementById('primary-beam-ring').style.stroke = 'var(--accent-rose)';
+    } else {
+      statusDot.style.background = 'var(--accent-emerald)';
+      statusDot.style.boxShadow = '0 0 8px var(--accent-emerald)';
+      statusText.textContent = 'NOMINAL CRUISE';
+      statusText.style.color = 'var(--text-primary)';
+      document.getElementById('primary-beam-ring').style.stroke = 'var(--accent-cyan)';
+    }
+  }
+
+  // Keyboard Shortcuts
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      toggleDetentLock();
+    } else if (e.key === 'd' || e.key === 'D') {
+      triggerForkDeflection();
+    } else if (e.key === 'r' || e.key === 'R') {
+      triggerQuarantine();
+    }
+  });
+
+  // Oscilloscope Simulated Waveform Rendering
+  const canvas = document.getElementById('wave-canvas');
+  const ctx = canvas.getContext('2d');
+  let wavePhase = 0;
+
+  function renderWaveform() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = isDetentLocked ? '#ffaa00' : '#00f0ff';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+
+    const midY = canvas.height / 2;
+    for (let x = 0; x < canvas.width; x++) {
+      const freq = isDetentLocked ? 0.08 : 0.04;
+      const amp = isDetentLocked ? 24 : 14;
+      const y = midY + Math.sin(x * freq + wavePhase) * amp + (Math.random() - 0.5) * 3;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    wavePhase += isDetentLocked ? 0.05 : 0.15;
+    requestAnimationFrame(renderWaveform);
+  }
+  renderWaveform();
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Detent Cockpit // Tier 2 Governance Bridge</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  body {
+    padding: var(--space-4);
+    background: var(--bg-void);
+    min-height: 100vh;
+  }
+
+  .bridge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border-dim);
+    padding-bottom: var(--space-3);
+  }
+
+  .audit-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+    margin-bottom: var(--space-3);
+  }
+  .audit-inner {
+    background: var(--bg-surface-raised);
+    border-radius: var(--radius-inner);
+    padding: var(--space-3);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  th {
+    background: var(--bg-base);
+    color: var(--text-secondary);
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border-dim);
+    font-weight: 600;
+  }
+  td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border-dim);
+    color: var(--text-primary);
+  }
+  tr:hover td {
+    background: var(--bg-overlay);
+  }
+</style>
+</head>
+<body>
+
+<div class="bridge-header">
+  <div style="font-family: var(--font-mono);">
+    <h1 style="font-size: 16px; color: var(--text-primary);">GOVERNANCE BRIDGE // IMMUTABLE AUDIT TRAIL</h1>
+    <span style="font-size: 11px; color: var(--text-secondary);">CHAIN-VERIFIED INTERVENTION HASHES & COMPLIANCE LOGS</span>
+  </div>
+  <a href="../hero-anchor/index.html" style="color: var(--accent-cyan); font-family: var(--font-mono); text-decoration: none; font-size: 12px;">
+    ← RETURN TO COCKPIT HERO
+  </a>
+</div>
+
+<div class="audit-card">
+  <div class="audit-inner">
+    <table>
+      <thead>
+        <tr>
+          <th>TIMESTAMP</th>
+          <th>ACTOR</th>
+          <th>TARGET RUNWAY</th>
+          <th>INTERVENTION TYPE</th>
+          <th>DELTA APPLIED</th>
+          <th>HASH DIGEST</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tabular">14:22:01.104</td>
+          <td>PILOT_01 (RiskLead)</td>
+          <td>#RUN-07</td>
+          <td>FBW_SLIPPAGE_OVERRIDE</td>
+          <td class="tabular" style="color: var(--accent-cyan);">+0.04%</td>
+          <td style="color: var(--text-muted);">sha256:7f3a9b...</td>
+        </tr>
+        <tr>
+          <td class="tabular">14:18:45.892</td>
+          <td>SYSTEM_DETENT</td>
+          <td>#RUN-07</td>
+          <td>MAGNETIC_GRAVITY_LOCK</td>
+          <td class="tabular" style="color: var(--accent-amber);">ATTR_RADIUS: 4.5%</td>
+          <td style="color: var(--text-muted);">sha256:1a82c4...</td>
+        </tr>
+        <tr>
+          <td class="tabular">13:55:12.330</td>
+          <td>PILOT_02 (Quant)</td>
+          <td>#RUN-03</td>
+          <td>EMERGENCY_QUARANTINE</td>
+          <td class="tabular" style="color: var(--accent-rose);">HALT_STEP_08</td>
+          <td style="color: var(--text-muted);">sha256:d4e901...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

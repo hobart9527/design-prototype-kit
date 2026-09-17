@@ -18,12 +18,23 @@ All design work within this Skill follows the unbroken five-stage delivery state
 ```
 
 ### Stage 1: Tone & Tension Divergence (破 - 魂)
+- **Domain Spectrum & Reality Benchmark Anchors (四大基准与现实地锚声明)**:
+  - **Dominant Baseline Selection**: Explicitly declare the primary operational baseline from `design-language.md:168` (hybrid allowed with secondary flavor):
+    - `Baseline 1: Dense Data & Engineering Workbench` (Observability, telemetry, trading, high-throughput pipelines)
+    - `Baseline 2: Modern SaaS & Commerce` (Collaboration, project management, business platforms)
+    - `Baseline 3: Editorial & Focused Reading` (Documentation, knowledge bases, long-form reading)
+    - `Baseline 4: Consumer & Mobile Touch-First` (Consumer lifestyle, touch-first social, creative/playful utilities)
+  - **Reality Benchmark Anchors (现实世界双地锚)**:
+    - B-End/Pro systems: Cite 2 concrete reference products (e.g. Linear, Datadog, Figma, Bloomberg) ensuring interaction conventions stay grounded.
+    - C-End/Consumer systems: Cite 2 consumer apps (e.g. Apple Notes, Airbnb, Duolingo) OR concrete physical lifeworld artifacts (e.g. paper notebook, dial knob, vinyl record, measuring tape) rooted in common human somatic habits. No invented alien physics.
+- **OOUX Entity Integrity & Anti-Contamination (业务本体严防隐喻污染)**:
+  - Core entities (Objects) and operations (Verbs) must strictly use genuine domain terminology in plain language (e.g. `Task`, `Pipeline`, `Cart`, `Checkout`).
+  - Metaphor is a perceptual lens, NOT an entity replacement: metaphors may never rename or disguise business entities (e.g. a Task cannot be called a "Particle", a Settlement cannot be called "Fusion").
 - **Business Tension Reframing**: Explicitly declare the central contradiction (e.g. Extreme Developer Density vs Instant Novice Clarity).
 - **Ruthless Omission (决绝断舍离)**: Author an explicit list of at least 3 capabilities, surfaces, or decorative widgets that are *deliberately excluded or deferred* to protect focus.
-- **Cognitive Budgeting & Context-Driven Allocation (认知借贷法则，因境设度)**:
-  - **Abolish dogmatic percentage quotas**: Do not mechanically fix innovation at 10% or 90%. Categorize by task context:
-    - *Routine & Muscle Memory*: Standard navigation, login, settings, pagination, and cancel branches must strictly adhere to proven industry conventions with zero learning tax.
-    - *Decisive Value Moments*: Where user judgment, core speed, or sensory mastery occurs, deliberately borrow cognitive attention to craft novel, expressive mechanics.
+- **Cognitive Budgeting & Hard Cognitive Ledger (认知借贷硬账本，因境设度)**:
+  - **Zero-Toll Zone (0 借贷保留地 - 90% 表面)**: Standard navigation, search, login, settings, lists, tables, pagination, and exit/cancel branches must strictly follow industry/lifeworld conventions with zero learning tax.
+  - **Borrowed High-Value Moment (借贷特区 - 唯一高光点)**: Allocate novelty exclusively to the single decisive value moment (B-End: complex divergence handling/triage; C-End: core sensory accomplishment/celebratory feedback). Must declare: What is borrowed, how it repays 5x efficiency/delight, and what explicit fallback exists.
 - **5-Dial Style Register & Vague-Word Firewall (风格五轴寄存器与模糊词防火墙)**:
   - Classify the target visual and emotional tone across five observable dials backed by evidence:
     - `Energy`: quiet ↔ loud (saturation budget, element collision)
@@ -78,6 +89,13 @@ All design work within this Skill follows the unbroken five-stage delivery state
   - `Intent`: Clear signifiers on hover/focus before commitment.
   - `Detent`: Visible physical resistance/damping during execution (`:active scale(0.97)`).
   - `Settled`: Deterministic feedback, focus restoration, and reversible exit.
+- **Dual-Floor Reality Verification (双轨红线验收门)**:
+  - **Track A: Machine & Geometry Code Floor**: Concentric radii formula verification (`R_in = max(0, R_out - P)`), zero raw inline hex colors, 100% token inheritance, WCAG AAA static contrast, and zero layout breakage under unhyphenated string stress.
+  - **Track B: Ergonomic & Cognitive Reality Floor**:
+    - *B-Pro 5-Second Test*: Can an unbriefed engineer identify current system health and locate the primary anomaly within 5 seconds?
+    - *C-Consumer Somatic Test*: Can a user complete the core loop purely through lifeworld somatic intuition (tap, swipe, clear signifiers) without reading instructional text?
+    - *Dual-Channel Affordance*: Every keybinding or gestural shortcut MUST have a visible, accessible GUI control (button/link). No hidden magical operations.
+    - *Zero Metaphor Contamination*: Core entities must be named in authentic domain terms. Metaphors masquerading as business entities are an instant Floor failure.
 - **The Break Protocol & Stress Verification (破坏性应力走查)**:
   - Subject layout to extreme content limits: long unhyphenated strings, 0 items (first-run bait), 1 item, and 1000 items (scroll containment).
   - Inspect numerical jitter during rapid value mutations.

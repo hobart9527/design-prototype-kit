@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synchrotron Lattice // Tier 1 Tactical Detent Station</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  body {
+    padding: var(--space-4);
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+  }
+
+  .station-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border-dim);
+    padding-bottom: var(--space-3);
+  }
+
+  .station-container {
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+  }
+
+  .station-inner {
+    background: var(--bg-surface);
+    border-radius: var(--radius-inner);
+    border: 1px solid var(--border-dim);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .step-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3);
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .step-action-btn {
+    background: rgba(255, 51, 102, 0.15);
+    border: 1px solid var(--accent-rose);
+    color: var(--accent-rose);
+    padding: 6px 12px;
+    border-radius: var(--radius-inner);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--duration-fast);
+  }
+
+  .step-action-btn:active {
+    transform: scale(0.97);
+  }
+
+  .step-action-btn.quarantined {
+    background: var(--bg-surface);
+    border-color: var(--border-bright);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+
+<div class="station-header">
+  <div style="font-family: var(--font-mono);">
+    <h1 style="font-size: 16px; margin: 0; color: var(--text-primary);">TACTICAL DETENT STATION // DRIFT ISOLATION</h1>
+    <span style="font-size: 11px; color: var(--text-secondary);">ACTION VERB LIFECYCLE: QUARANTINE STEP → QUARANTINED</span>
+  </div>
+  <a href="../hero-anchor/index.html" style="color: var(--accent-cyan); font-family: var(--font-mono); text-decoration: none; font-size: 12px;">
+    ← RETURN TO REACTOR HERO
+  </a>
+</div>
+
+<div class="station-container">
+  <div class="station-inner">
+    <!-- Step 1 -->
+    <div class="step-row">
+      <div>
+        <div style="font-weight: 700;">RUNWAY 07 // STEP 04: HYPER-EXPANSION FORK</div>
+        <div style="color: var(--text-secondary); font-size: 10px;">SLIPPAGE ATTRACTION: <span class="tabular" style="color: var(--accent-amber);">+4.52%</span></div>
+      </div>
+      <button class="step-action-btn" id="btn-q-step-1" onclick="quarantineStep(1)">
+        QUARANTINE STEP
+      </button>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-row">
+      <div>
+        <div style="font-weight: 700;">RUNWAY 07 // STEP 05: COLLATERAL SETTLEMENT</div>
+        <div style="color: var(--text-secondary); font-size: 10px;">NOMINAL STREAM</div>
+      </div>
+      <button class="step-action-btn" id="btn-q-step-2" onclick="quarantineStep(2)">
+        QUARANTINE STEP
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function quarantineStep(id) {
+    const btn = document.getElementById('btn-q-step-' + id);
+    btn.textContent = 'QUARANTINED';
+    btn.classList.add('quarantined');
+    btn.disabled = true;
+  }
+</script>
+</body>
+</html>
