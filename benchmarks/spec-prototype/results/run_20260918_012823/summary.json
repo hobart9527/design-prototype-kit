@@ -1,0 +1,259 @@
+{
+  "timestamp": "20260918_012823",
+  "run_label": "baseline-check",
+  "repetitions": 1,
+  "layer": "mechanism",
+  "total_runs": 6,
+  "mechanism_pass_count": 6,
+  "l2_builder_runs": "blocked",
+  "l3_skill_runs": "blocked",
+  "failed_steps": [],
+  "results": [
+    {
+      "case_name": "incident-commander",
+      "run_id": 1,
+      "duration_seconds": 0.162,
+      "layer": "mechanism",
+      "contract_materialized": true,
+      "envelope_assembled": true,
+      "tokens_compiled": true,
+      "pipeline_exit_ok": true,
+      "wcag_aaa_contrast": true,
+      "failed_step": null,
+      "exit_code": null,
+      "error_context": "",
+      "error": null,
+      "metrics": {
+        "output_dir": "/Users/hobart/.claude/runtime-data/repositories/db986d582b0160739ef1f735cf50892990f29c07885a3350953de4830a154bfd/worktrees/change-d249c784594b27292609b7d806f0991e0a1b4c78dee8eb31563cbb827050811e-generation-4-4-T-08-1-457274515b23f301/benchmarks/spec-prototype/results/run_20260918_012823/incident-commander_run1_1789666103",
+        "envelope_size_bytes": 10624,
+        "tokens_size_bytes": 2612
+      },
+      "run_meta": {
+        "layer": "mechanism",
+        "script_versions": {
+          "materialize_contracts": {
+            "file": "materialize_contracts.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "compile_tokens": {
+            "file": "compile_tokens.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "assemble_envelope": {
+            "file": "assemble_envelope.py",
+            "mtime": "2026-09-18T01:28:04"
+          }
+        },
+        "conditions": {
+          "human_intervened": false,
+          "env_blocked": false
+        }
+      }
+    },
+    {
+      "case_name": "project-workspace",
+      "run_id": 1,
+      "duration_seconds": 0.162,
+      "layer": "mechanism",
+      "contract_materialized": true,
+      "envelope_assembled": true,
+      "tokens_compiled": true,
+      "pipeline_exit_ok": true,
+      "wcag_aaa_contrast": true,
+      "failed_step": null,
+      "exit_code": null,
+      "error_context": "",
+      "error": null,
+      "metrics": {
+        "output_dir": "/Users/hobart/.claude/runtime-data/repositories/db986d582b0160739ef1f735cf50892990f29c07885a3350953de4830a154bfd/worktrees/change-d249c784594b27292609b7d806f0991e0a1b4c78dee8eb31563cbb827050811e-generation-4-4-T-08-1-457274515b23f301/benchmarks/spec-prototype/results/run_20260918_012823/project-workspace_run1_1789666103",
+        "envelope_size_bytes": 10455,
+        "tokens_size_bytes": 2617
+      },
+      "run_meta": {
+        "layer": "mechanism",
+        "script_versions": {
+          "materialize_contracts": {
+            "file": "materialize_contracts.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "compile_tokens": {
+            "file": "compile_tokens.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "assemble_envelope": {
+            "file": "assemble_envelope.py",
+            "mtime": "2026-09-18T01:28:04"
+          }
+        },
+        "conditions": {
+          "human_intervened": false,
+          "env_blocked": false
+        }
+      }
+    },
+    {
+      "case_name": "editorial-reader",
+      "run_id": 1,
+      "duration_seconds": 0.161,
+      "layer": "mechanism",
+      "contract_materialized": true,
+      "envelope_assembled": true,
+      "tokens_compiled": true,
+      "pipeline_exit_ok": true,
+      "wcag_aaa_contrast": true,
+      "failed_step": null,
+      "exit_code": null,
+      "error_context": "",
+      "error": null,
+      "metrics": {
+        "output_dir": "/Users/hobart/.claude/runtime-data/repositories/db986d582b0160739ef1f735cf50892990f29c07885a3350953de4830a154bfd/worktrees/change-d249c784594b27292609b7d806f0991e0a1b4c78dee8eb31563cbb827050811e-generation-4-4-T-08-1-457274515b23f301/benchmarks/spec-prototype/results/run_20260918_012823/editorial-reader_run1_1789666103",
+        "envelope_size_bytes": 10403,
+        "tokens_size_bytes": 2596
+      },
+      "run_meta": {
+        "layer": "mechanism",
+        "script_versions": {
+          "materialize_contracts": {
+            "file": "materialize_contracts.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "compile_tokens": {
+            "file": "compile_tokens.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "assemble_envelope": {
+            "file": "assemble_envelope.py",
+            "mtime": "2026-09-18T01:28:04"
+          }
+        },
+        "conditions": {
+          "human_intervened": false,
+          "env_blocked": false
+        }
+      }
+    },
+    {
+      "case_name": "mobile-booking",
+      "run_id": 1,
+      "duration_seconds": 0.163,
+      "layer": "mechanism",
+      "contract_materialized": true,
+      "envelope_assembled": true,
+      "tokens_compiled": true,
+      "pipeline_exit_ok": true,
+      "wcag_aaa_contrast": true,
+      "failed_step": null,
+      "exit_code": null,
+      "error_context": "",
+      "error": null,
+      "metrics": {
+        "output_dir": "/Users/hobart/.claude/runtime-data/repositories/db986d582b0160739ef1f735cf50892990f29c07885a3350953de4830a154bfd/worktrees/change-d249c784594b27292609b7d806f0991e0a1b4c78dee8eb31563cbb827050811e-generation-4-4-T-08-1-457274515b23f301/benchmarks/spec-prototype/results/run_20260918_012823/mobile-booking_run1_1789666103",
+        "envelope_size_bytes": 10310,
+        "tokens_size_bytes": 2603
+      },
+      "run_meta": {
+        "layer": "mechanism",
+        "script_versions": {
+          "materialize_contracts": {
+            "file": "materialize_contracts.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "compile_tokens": {
+            "file": "compile_tokens.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "assemble_envelope": {
+            "file": "assemble_envelope.py",
+            "mtime": "2026-09-18T01:28:04"
+          }
+        },
+        "conditions": {
+          "human_intervened": false,
+          "env_blocked": false
+        }
+      }
+    },
+    {
+      "case_name": "product-marketing",
+      "run_id": 1,
+      "duration_seconds": 0.157,
+      "layer": "mechanism",
+      "contract_materialized": true,
+      "envelope_assembled": true,
+      "tokens_compiled": true,
+      "pipeline_exit_ok": true,
+      "wcag_aaa_contrast": true,
+      "failed_step": null,
+      "exit_code": null,
+      "error_context": "",
+      "error": null,
+      "metrics": {
+        "output_dir": "/Users/hobart/.claude/runtime-data/repositories/db986d582b0160739ef1f735cf50892990f29c07885a3350953de4830a154bfd/worktrees/change-d249c784594b27292609b7d806f0991e0a1b4c78dee8eb31563cbb827050811e-generation-4-4-T-08-1-457274515b23f301/benchmarks/spec-prototype/results/run_20260918_012823/product-marketing_run1_1789666103",
+        "envelope_size_bytes": 10455,
+        "tokens_size_bytes": 2617
+      },
+      "run_meta": {
+        "layer": "mechanism",
+        "script_versions": {
+          "materialize_contracts": {
+            "file": "materialize_contracts.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "compile_tokens": {
+            "file": "compile_tokens.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "assemble_envelope": {
+            "file": "assemble_envelope.py",
+            "mtime": "2026-09-18T01:28:04"
+          }
+        },
+        "conditions": {
+          "human_intervened": false,
+          "env_blocked": false
+        }
+      }
+    },
+    {
+      "case_name": "ai-writer-workspace",
+      "run_id": 1,
+      "duration_seconds": 0.157,
+      "layer": "mechanism",
+      "contract_materialized": true,
+      "envelope_assembled": true,
+      "tokens_compiled": true,
+      "pipeline_exit_ok": true,
+      "wcag_aaa_contrast": true,
+      "failed_step": null,
+      "exit_code": null,
+      "error_context": "",
+      "error": null,
+      "metrics": {
+        "output_dir": "/Users/hobart/.claude/runtime-data/repositories/db986d582b0160739ef1f735cf50892990f29c07885a3350953de4830a154bfd/worktrees/change-d249c784594b27292609b7d806f0991e0a1b4c78dee8eb31563cbb827050811e-generation-4-4-T-08-1-457274515b23f301/benchmarks/spec-prototype/results/run_20260918_012823/ai-writer-workspace_run1_1789666103",
+        "envelope_size_bytes": 10495,
+        "tokens_size_bytes": 2617
+      },
+      "run_meta": {
+        "layer": "mechanism",
+        "script_versions": {
+          "materialize_contracts": {
+            "file": "materialize_contracts.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "compile_tokens": {
+            "file": "compile_tokens.py",
+            "mtime": "2026-09-18T01:28:04"
+          },
+          "assemble_envelope": {
+            "file": "assemble_envelope.py",
+            "mtime": "2026-09-18T01:28:04"
+          }
+        },
+        "conditions": {
+          "human_intervened": false,
+          "env_blocked": false
+        }
+      }
+    }
+  ]
+}
