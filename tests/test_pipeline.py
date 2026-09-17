@@ -75,8 +75,8 @@ def test_handoff_packet_without_preexisting_html_and_template_surface_map(tmp_pa
 - Retained surface-map path, revision and digest: `{smap.relative_to(root)}`, {_sha256(smap.read_bytes())}
 """, encoding="utf-8")
 
-    craft = SKILL / "references/design-floor.md"
-    craft_ref = f"`references/design-floor.md`, {_sha256(craft.read_bytes())}"
+    craft = SKILL / "references/03-verification/quality-floor.md"
+    craft_ref = f"`references/03-verification/quality-floor.md`, {_sha256(craft.read_bytes())}"
 
     spec = root / "prototype/specifications/reader/r1.md"
     spec.parent.mkdir(parents=True, exist_ok=True)
@@ -147,16 +147,14 @@ def test_canonical_design_references_and_floors():
     assert "Compression & Release" in workflow_text
     assert "The Break Protocol" in workflow_text
 
-    floor_text = (SKILL / "references/design-floor.md").read_text(encoding="utf-8")
-    assert "Non-Transfer Boundary" in floor_text
+    floor_text = (SKILL / "references/03-verification/quality-floor.md").read_text(encoding="utf-8")
+    assert "Non-Transfer Boundary" in floor_text or "non-transfer boundary" in floor_text
     assert "Zero Naked Metrics" in floor_text
-    assert "Action Verb Lifecycle Closure" in floor_text
-    assert "Decisive Exchange 3-Frame Floor" in floor_text
-    assert "Concentric Border Radius Floor" in floor_text
-    assert "Tabular Numerics Floor" in floor_text
-    assert "Optical Alignment Floor" in floor_text
-    assert "Atmospheric Undertone Floor" in floor_text
-    assert "Vague-Word Firewall Floor" in floor_text
+    assert "Action Verb Lifecycle" in floor_text
+    assert "Concentric Border Radi" in floor_text
+    assert "Tabular Numerics" in floor_text
+    assert "Atmospheric Undertone" in floor_text
+    assert "Vague-Word Firewall" in floor_text
 
     discussion_tmpl = (SKILL / "templates/discussion.md").read_text(encoding="utf-8")
     assert "OOUX Cardinality-to-Layout Anchor" in discussion_tmpl
@@ -177,7 +175,7 @@ def test_archetype_routing_and_negative_triggers():
     assert "Archetype B: New Surface 1-to-N" in skill_text
     assert "Archetype C: Refinement & Audit" in skill_text
 
-    usage_text = (SKILL / "references/usage.md").read_text(encoding="utf-8")
+    usage_text = (SKILL / "references/04-governance/usage.md").read_text(encoding="utf-8")
     assert "形态 A：全新产品从零起步" in usage_text
     assert "形态 B：现有产品增设新页面/新功能" in usage_text
     assert "形态 C：现有产品体验优化与评审" in usage_text

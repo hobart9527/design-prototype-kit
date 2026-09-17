@@ -277,3 +277,17 @@ redundant finding — report the cheaper fix instead.
 | A detector fingerprint reported without confirming the rendered output | Confirm against the running prototype, or drop it |
 | Register judged only for under-expression | Check both directions: loud-reverted-to-polished and quiet-forced-to-gritty |
 | A remediation that adds code where deletion or platform behavior suffices | Replace it with the cheapest rung that solves the defect |
+
+---
+
+# Integrated Design Floor Standards (Consolidated from design-floor)
+
+## Geometric and Visual Anti-Toy Discipline
+- Concentric Border Radii Rule: R_inner = max(0, R_outer - Padding). Any visual collision or concentric distortion is an instant Floor failure.
+- Tabular Numerics: font-variant-numeric: tabular-nums on all high-frequency telemetry, timestamps, and currency values.
+- Zero Naked Metrics: Every metric must display a baseline, threshold, or floor/ceiling benchmark.
+- Atmospheric Undertone: Surfaces must derive from contextual dark/light undertones, eliminating flat dead neutral greys.
+- Tactile Kinetics: Active states must provide tactile feedback (:active { transform: scale(0.97); }) with damped cubic-bezier transitions.
+- Action Verb Lifecycle: Interactive buttons must reflect full lifecycle state transitions (e.g. QUARANTINE STEP -> QUARANTINED).
+- Non-Transfer Boundary: Every physical or conceptual metaphor must explicitly define and enforce its non-transfer boundary.
+- Vague-Word Firewall: Reject any aesthetic justification relying on vague adjectives without concrete token, contrast, and spacing bounds.
