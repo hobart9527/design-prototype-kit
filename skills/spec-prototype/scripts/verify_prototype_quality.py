@@ -79,8 +79,17 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     # Tokens are checked only for declared, generic accessibility/typography hooks.
     if "font-variant-numeric" in token_source and "font-variant-numeric" not in source and "var(--" not in source:
         failures.append("token assertion: numeric presentation token is not consumed")
+    if "--radius-" in token_source and "var(--radius" not in source and "var(--" not in source:
+        failures.append("token assertion: radius tokens are not consumed (use var(--radius-*))")
+
+    # Hard floor: reject raw inline hex colors in style attributes (enforces token inheritance)
+    raw_style_hex = re.findall(r'style=["\'][^"\']*#[0-9a-fA-F]{3,8}[^"\']*["\']', source)
+    if raw_style_hex:
+        failures.append(f"craft assertion: raw inline hex colors in style attributes ({len(raw_style_hex)} found; use CSS custom properties / var(--...))")
+
     if check_stale:
-        failures.append("stale-template check: unverified (provide a contract/evidence rule instead)")
+        if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", source, re.IGNORECASE):
+            failures.append("stale-template assertion: unconsidered placeholder content detected")
 
     states = _evidence_state(html)
     print("STATIC: " + ("pass" if not failures else "fail"))

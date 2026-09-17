@@ -69,7 +69,8 @@ Execute the stages matching declared intent and required evidence. The stages re
   ▼
 [Stage 2: 立 - Core Hero Anchor Prototyping via Lean Pre-baked Envelope]
   │  Gated: AskUserQuestion (Single Hero Anchor ONLY, Headless Chrome authentic rendering, Concentric Radii, Tabular Numbers, tokens.css, NO secondary pages until approved)
-  │  Dispatched via Pre-baked Envelope: Builder receives self-contained envelope (paths, tokens, layout, states, assertions)
+  │  Envelope Assembly: python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json
+  │  Dispatched via Pre-baked Envelope: Builder receives self-contained envelope JSON string as prompt
   │  Execution Safety: Bounded budget with evidence-led repair; no exploratory wandering.
   ▼
 [Stage 3: 拓 - Full IA Surface Rollout]
@@ -77,6 +78,7 @@ Execute the stages matching declared intent and required evidence. The stages re
   │  Strict: Compression & Release, Reference benchmarks (zero naked metrics), Action verb lifecycle closure, <link href="../../shared/tokens.css">, zero inline hex
   ▼
 [Stage 4: 验 - Holistic Review & Feedback Loop]
+  │  Automated Portal Generation: python3 skills/spec-prototype/scripts/generate_review_portal.py
   │  Gated: AskUserQuestion (review-portal.html walkthrough, Dual-Floor Reality Gate, The Break Protocol stress limits, 5 operational states)
   │  Controlled Feedback Absorption Loop: Granular user critique absorbed via tokens.css / HTML slices -> Re-verification -> Human signoff
   ▼
@@ -108,6 +110,11 @@ write, runnable probe, formal build or independent review. The main designer
 writes Markdown design records. Only `spec-prototype-builder` writes executable
 prototype output, from the exact retained direction brief or handoff packet and
 within its bounded prototype/evidence scopes.
+
+Coordinator dispatches `spec-prototype-builder` via standard `Agent` tool call with the exact envelope JSON string:
+1. Synthesize envelope: `python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json`
+2. Read the resulting JSON file.
+3. Call `Agent(subagent_type="spec-prototype-builder", prompt=envelope_json_string)`. The `prompt` parameter must be the raw JSON string without conversational prose, matching the PreToolUse hook parser.
 
 Use `spec-prototype-critic` for an independent professional review at a
 consequential checkpoint. Builder and Critic calls use the current project

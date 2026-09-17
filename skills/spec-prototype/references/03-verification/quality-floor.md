@@ -22,7 +22,7 @@ An experience fails the Floor if any of the following occurs:
   - For C-Consumer systems: Core user loops cannot be completed through intuitive lifeworld somatic habits without reading explanatory prose.
   - Missing Dual-Channel Affordance: Critical keyboard shortcuts or gestural interactions lack visible, accessible GUI buttons or controls.
 - Technical shallowness & toy-demo collapse: Presenting a trivially linear, toy mockup that strips away essential domain mechanics (e.g. non-linear branching in DAG workflows, temporal baselines in telemetry) under the pretext of omission.
-- Stale Template Plagiarism & Execution Evasion: Rote copy-pasting of prior design mockups, stale entity names, or hardcoded topologies without fresh Stage 1 divergence reasoning. Verification harness must enforce `--strict-divergence` against known stale signatures.
+- Stale Template Plagiarism & Execution Evasion: Rote copy-pasting of prior design mockups, stale entity names, or hardcoded topologies without fresh Stage 1 divergence reasoning. Verification harness enforces anti-stagnation rules against placeholder content.
 
 **Non-dilution rule**: a confirmed Floor violation is a failure on sight — never
 averaged down because the overall craft is strong, the surface is minor, or the

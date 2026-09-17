@@ -92,12 +92,12 @@ Route design work by declared intent and required evidence. The five stages are 
   - **Concentric Border Radius**: Nested container corners must obey $R_{inner} = \max(0, R_{outer} - padding)$ to eliminate visual pinching and distortion.
   - **Optical Alignment (视错觉补偿)**: Asymmetric controls (e.g. play triangles, disclosure chevrons, search icons) must be manually nudged 1-2px from geometric center for perceived equilibrium.
   - **Tabular Numerics**: Enforce `font-variant-numeric: tabular-nums` across all counters, telemetry readings, financial tables, and timers to prevent horizontal layout jitter.
-- **Execution Trace & Prompt Ledger (全链路提示词与执行存证)**:
-  - Every prototype generation run MUST record its full execution context and actual prompt inputs to `prototype/evidence/trace/`:
-    - `prompt-ledger.jsonl`: Logs the exact prompt texts dispatched to the builder subagent or internal generator, including system instructions, user constraints, and target specifications.
-    - `context-snapshot.json`: Records the active product thesis, 5-dials register, surface topology, and reality anchors passed into generation.
-    - `mutation-events.log`: Records every in-place refactoring delta, tool error, self-repair cycle, and verification output with timestamps.
-  - This trace ledger ensures complete audibility, eliminating intent evasion and invisible prompt degradation.
+- **Execution Trace & Authentic Evidence (全链路实证存证体系)**:
+  - Every prototype generation run must produce inspectable, verifiable physical evidence:
+    - Headless Chrome viewport captures (`prototype/evidence/probes/<slice_id>/1280.png`, `390.png`).
+    - Responsive Multi-View Review Portal (`prototype/review-portal.html` generated via `generate_review_portal.py`).
+    - Quality gate verification results logged to discussion records and Builder receipts.
+  - Authentic visual evidence and verifiable assertions eliminate intent evasion and ungrounded design claims.
 
 - **Atmospheric Undertone (底色气韵)**:
   - Ban sterile dead neutral gray (`#808080`, unconsidered `gray-500` washes).
@@ -130,7 +130,7 @@ Route design work by declared intent and required evidence. The five stages are 
   - Zero tolerance for inline Hex colors (`#ffffff`, `#000`) or hardcoded pixel margins.
 
 ### Stage 4: Holistic Review & In-Place Tuning (验 - 鉴)
-- **Unified Review Portal (`review-portal.html`)**: Single responsive multi-view harness embedding an iframe for all screens, viewport switches (390px, 768px, 1280px, 1600px), and state triggers.
+- **Unified Review Portal (`review-portal.html`)**: Single responsive multi-view harness generated via `python3 skills/spec-prototype/scripts/generate_review_portal.py`, embedding an iframe for all screens, viewport switches (390px, 768px, 1280px, 1600px), and state triggers.
 - **Decisive Exchange 3-Frame Inspection (`interaction-power.md:64`)**: Visually inspect the primary decisive interaction across its three continuous phases:
   - `Intent`: Clear signifiers on hover/focus before commitment.
   - `Detent`: Visible physical resistance/damping during execution (`:active scale(0.97)`).

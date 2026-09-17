@@ -330,6 +330,16 @@ def test_spec_first_contract_formulation_and_lean_envelope(tmp_path: Path):
     toy_pass = verify_mod.assert_quality(str(dummy_html), str(out_css), check_stale=False)
     assert toy_pass is False  # Minimal artifact has no complete interaction contract
 
+    # 6a. Reject raw inline hex in style attributes
+    hex_html = tmp_path / "hex_test.html"
+    hex_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens_gen.css"></head><body><button id="b1" onclick="void(0)" style="color: #ff0000; border-radius: var(--radius-btn);">Submit</button></body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(hex_html), str(out_css), check_stale=False) is False
+
+    # 6b. Reject placeholder copy under check_stale
+    stale_html = tmp_path / "stale_test.html"
+    stale_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens_gen.css"></head><body><button id="b1" onclick="void(0)" style="color: var(--primary); border-radius: var(--radius-btn);">Lorem ipsum</button></body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(stale_html), str(out_css), check_stale=True) is False
+
     real_hero = REPO / "prototype/experiments/console/hero-anchor/index.html"
     if real_hero.is_file():
         real_pass = verify_mod.assert_quality(str(real_hero), str(out_css), check_stale=False, contract_path="")
