@@ -56,11 +56,11 @@ Execute the stages matching declared intent and required evidence. The stages re
 
 ```text
 [Stage 1: 破 - Tone & Tension Divergence & Spec Formulation (双钻四阶共创工法)]
-  │  Co-Authored Invariant: ZERO black-box contract guessing. Must progress through 4 interlocking Diamond Phases:
-  │  Phase 1 (Discover · Ontology): Tension Reframing + 4 Baselines + 3 Ruthless Omissions ──> AskUserQuestion ──> prototype/product.md
-  │  Phase 2 (Define · Physicality & Topology): Reality Anchors + Material Non-Transfer + OOUX Cardinality ──> AskUserQuestion ──> surface-maps/m1.md
+  │  Co-Authored Invariant: ZERO black-box contract guessing. Progressive alignment through 4 interlocking Diamond Phases:
+  │  Phase 1 (Discover · Ontology): Tension Reframing + 4 Baseline References + Ruthless Omissions ──> AskUserQuestion ──> prototype/product.md
+  │  Phase 2 (Define · Physicality & Topology): Reality Anchors + Material Boundaries + OOUX Heuristics ──> AskUserQuestion ──> surface-maps/m1.md
   │  Phase 3 (Develop · Energy & Chromatics): Multi-Direction Aesthetic Proposals + Dynamic 16-Elevation Tokens + 5 Dials + Cognitive Ledger ──> AskUserQuestion ──> foundation/f1.md & tokens.css (t1.json, t1.md via compile_tokens.py)
-  │  Phase 4 (Deliver · Mechanics & Stress): Action Verb Lifecycle + Decisive 3-Frame + Dual-Channel + Break Protocol ──> AskUserQuestion ──> c1.md & r1.md (via materialize_contracts.py)
+  │  Phase 4 (Deliver · Mechanics & Stress): Action Verb Lifecycle + Decisive 3-Frame + Ergonomics + Break Protocol ──> AskUserQuestion ──> c1.md & r1.md (via materialize_contracts.py)
   │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; exploration uses direction briefs).
   ▼
 [Stage 2: 立 - Core Hero Anchor Prototyping via Lean Pre-baked Envelope]

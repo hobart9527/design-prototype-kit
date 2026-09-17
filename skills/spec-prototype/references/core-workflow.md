@@ -51,21 +51,22 @@ Route design work by declared intent and required evidence. The five stages are 
 
 - **Phase 1: Discover (深度发散 · 业务本体传动链 / Ontology Chain)**:
   - **破局反转门 (Divergence Gate / 4 Inversions)**: 拒绝平庸惯性思维，深挖业务深水区的内在张力矛盾（如：极致吞吐 vs 误触高危；新手极简 vs 资深极速）。
-  - **四大基准定位 (4 Baselines Selection)**:
+  - **产品基准参考域 (4 Baselines Selection)**: 作为可组合演进的参考范式，根据实际场景自如适配或融合，非排他性割裂：
     - `Baseline 1: Dense Data & Engineering Workbench` (Observability, telemetry, trading)
     - `Baseline 2: Modern SaaS & Commerce` (Collaboration, project management, commerce)
     - `Baseline 3: Editorial & Focused Reading` (Documentation, knowledge bases, long-form reading)
     - `Baseline 4: Consumer & Mobile Touch-First` (Consumer lifestyle, touch utilities)
-  - **三大克制舍弃清单 (3 Ruthless Omissions)**: 建立非目标防火墙，斩断无效复杂度（如：禁营销横幅、禁弹窗套娃、禁假拟物粒子）。
+  - **克制舍弃与非目标定义 (3 Ruthless Omissions / Non-goals Heuristics)**: 建立非目标防火墙，斩断无效复杂度（如剔除不合时宜的无序弹窗、脱离语境的营销横幅或空洞粒子），数量依产品边界弹性定夺。
   - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/product.md`。
 
 - **Phase 2: Define (精准收敛 · 空间拓扑与物理传动链 / Physicality & Topology Chain)**:
-  - **现实世界双地锚 (Reality Benchmark Anchors / Reference Benchmarks)**: 选定 2 个高说服力工业级对标（如 Linear 的键盘心流 + Teenage Engineering 机械旋钮）或具象生活物理载体，拒绝凭空臆造。
-  - **材质不可跨界定律 (Material Non-transfer Boundaries)**: 严密界定物理隐喻的 non-transfer boundary 迁移边界（触感阻尼与回弹可迁移；假反光与漂浮阴影严禁跨界）。
-  - **OOUX Cardinality-to-Layout Anchor (实体基数空间映射)**:
+  - **现实世界双地锚 (Reality Benchmark Anchors / Reference Benchmarks)**: 选定高说服力的工业级对标（如 Linear 的键盘心流、Teenage Engineering 机械旋钮、或特定消费级/实体器物交互），作为共识支点拒绝凭空臆造。
+  - **材质不可跨界定律 (Material Non-transfer Boundaries)**: 严密界定物理隐喻的 non-transfer boundary 迁移边界（触感阻尼与清晰反馈可迁移；脱离数字介质特性的伪质感严禁滥用），尊重数字媒介与产品特定语境。
+  - **OOUX Cardinality-to-Layout Anchor (实体基数空间映射启发式)**:
+    - 基数关系为空间布局提供结构性启发，需结合任务频次、视线重心与设备特征综合裁量：
     - `1 : 1` → 集中式控制台 (Focused Cockpit) 或深度检查器；
-    - `1 : N` → 主从分栏 (Master-Detail) 或高密筛选矩阵；
-    - `N : M` → 节点画布 (Node-Link Canvas) 或关系分屏。
+    - `1 : N` → 主从分栏 (Master-Detail)、流式看板或高密筛选矩阵；
+    - `N : M` → 节点画布 (Node-Link Canvas)、关系分屏或矩阵网格。
   - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/surface-maps/m1.md`。
 
 - **Phase 3: Develop (方案发散 · 感官能量传动链 / Energy & Chromatics Chain)**:
@@ -73,16 +74,16 @@ Route design work by declared intent and required evidence. The five stages are 
     - 绝不用“高级”、“沉稳”等抽象虚词，设立 5-Dial Style Register 与 Vague-Word Firewall，直接产出 2-3 套包含确切 Hex 色板（`--accent-primary`, `--bg-void`）、5-Dial 五轴刻度与取舍说明的具象提案。
   - **动态色彩推导引擎 (LLM Dynamic Chromatics)**: 用户选定配方后，`compile_tokens.py` 通过亮度阶差自动推导 16 阶物理标高矩阵（`bg_surface`, `border_dim`, `accent_subtle`）。
   - **认知借贷收支账本 (Cognitive Budgeting Ledger)**:
-    - 划定「零借贷低熵基座」（常规导航与表格，0 学习成本，0 扰动动画）与「高产出借贷特区」（核心操作区，允许微动效、sparklines 与阻尼脉冲），并确立 180ms 状态沉降机制。
+    - 划定「零借贷低熵基座」（常规导航与表格，0 学习成本，0 扰动动画）与「高产出借贷特区」（核心操作区，允许微动效、sparklines 与阻尼脉冲），并确立状态快速沉降恢复机制（如 ~180ms 沉降）。
   - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/foundation/f1.md` 与 `prototype/shared/tokens.css` (`t1.json`, `t1.md`)。
 
 - **Phase 4: Deliver (终局收敛 · 神经机械传动链 / Mechanics & Stress Chain)**:
   - **动词生命周期 (Action Verb Lifecycle)**: 确立业务动词的「意图触发 (Trigger) $\to$ 上下文 (Context) $\to$ 决定性提交 (Commit) $\to$ 状态沉降 (Feedback)」语义闭环。
   - **决定性交换三帧推演 (Decisive Exchange 3-Frame Inspection)**:
-    - Frame 1 (Intent): 悬停或快捷键激活，抽屉平滑滑入；
-    - Frame 2 (Detent): 交互产生 `:active scale(0.97)` 机械阻尼，防止重复触发；
-    - Frame 3 (Settled): 数据状态切换，指示器在 180ms 内恢复基座平静。
-  - **双通道人机工效 (Dual-Channel Ergonomics)**: 键盘指令（`Space`, `Esc`, `J`/`K`）与可视化界面控件建立强映射。
+    - Frame 1 (Intent): 悬停或快捷键激活，反馈容器平滑呼出；
+    - Frame 2 (Detent): 交互产生机械触感阻尼（如 `:active scale(0.97)`、按压沉降或滤镜回弹），防止重复触发；
+    - Frame 3 (Settled): 数据状态切换，指示器在瞬时周期内恢复基座平静。
+  - **双通道人机工效 (Dual-Channel Ergonomics)**: 键盘指令（如 `Space`, `Esc`, `J`/`K` 或手势）与可视化界面控件建立清晰对应。
   - **破坏性应力极限 (The Break Protocol Checkpoints)**: 注入长字符截断、0 状态/1000 状态与视口折叠极限检查。
   - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/slices/<slice_id>/c1.md` 与 `prototype/specifications/<slice_id>/r1.md`。6 柱契约凝固，直通 Stage 2。
 
@@ -106,7 +107,8 @@ Route design work by declared intent and required evidence. The five stages are 
     - Step 3: Headless browser visual capture (`capture.mjs`).
     - Step 4: Return receipt.
     Builder is strictly forbidden from open-ended filesystem discovery or micro-editing CSS in a ping-pong loop.
-- **Highest-Density Anchor**: Do not spray out multiple pages. Build the single most consequential, highest-density screen first (the Hero Anchor).
+- **Core Value & Signature Interaction Anchor (核心价值与关键交互承载面)**:
+  - Do not spray out multiple pages prematurely. Build the single most consequential screen first—the screen carrying the core job-to-be-done, the primary visual tone, or the highest interaction risk (the Hero Anchor), regardless of whether it is high-density workbench or minimalist consumer flow.
 - **Design Engineering Floor (微观几何与字排工法)**:
   - **Concentric Border Radius**: Nested container corners must obey $R_{inner} = \max(0, R_{outer} - padding)$ to eliminate visual pinching and distortion.
   - **Optical Alignment (视错觉补偿)**: Asymmetric controls (e.g. play triangles, disclosure chevrons, search icons) must be manually nudged 1-2px from geometric center for perceived equilibrium.

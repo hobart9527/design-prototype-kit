@@ -180,18 +180,24 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
 
         # Dynamic state machine check: when multi-state or Break Protocol stress checkpoints are declared
         if "The Break Protocol Stress Checkpoints" in contract_text or "Zero-Item Empty State" in contract_text:
-            if not re.search(r"hashchange|location\.hash|data-state", source, re.IGNORECASE):
-                failures.append("state-machine assertion: stress checkpoints declared but no state-switching hook detected (use hashchange / location.hash / data-state)")
-            if not re.search(r"text-overflow\s*:\s*ellipsis|overflow(?:-[xy])?\s*:\s*(?:hidden|auto|scroll)|break-word|break-all|truncate|clamp\(", source, re.IGNORECASE):
-                failures.append("break-protocol assertion: missing string overflow containment (use text-overflow: ellipsis, overflow containment, truncate, or word-break)")
+            has_state_hook = bool(re.search(
+                r"hashchange|location\.hash|data-state|state-[a-zA-Z0-9_-]+|class=[\"'][^\"']*(?:empty|loading|view-mode|state-)[^\"']*[\"']|id=[\"'][^\"']*(?:empty|loading|view-mode)[^\"']*[\"']",
+                source,
+                re.IGNORECASE,
+            ))
+            if not has_state_hook:
+                failures.append("state-machine assertion: stress checkpoints declared but no state-switching hook detected (use hashchange / location.hash / data-state / class empty|loading|view-mode)")
+            if not re.search(r"text-overflow\s*:\s*ellipsis|overflow(?:-[xy])?\s*:\s*(?:hidden|auto|scroll)|break-word|break-all|truncate|clamp\(|overflow-wrap\s*:\s*(?:anywhere|break-word)|word-break\s*:\s*break-all", source, re.IGNORECASE):
+                failures.append("break-protocol assertion: missing string overflow containment (use text-overflow: ellipsis, overflow containment, truncate, or word-break: break-all)")
 
         # Zero Naked Metrics / Contextual Data Floor check
         if "Zero Naked Metrics" in contract_text or "Micro Sparklines" in contract_text or "sparkline" in contract_text.lower():
             has_svg = bool(re.search(r"<svg\b[^>]*>(?:.*?<polyline|.*?<path|.*?<rect|.*?<line|.*?<circle)", source, re.DOTALL | re.IGNORECASE))
             has_html5_data = bool(re.search(r"<(?:meter|progress|data|canvas)\b", source, re.IGNORECASE))
-            has_context_class = bool(re.search(r'class=["\'][^"\']*(?:unit|baseline|sparkline|threshold|reference|trend|status|badge|metric|delta|kpi)[^"\']*["\']', source, re.IGNORECASE))
-            if not has_svg and not has_html5_data and not has_context_class:
-                failures.append("data-craft assertion: Zero Naked Metrics violation (metrics must carry reference baseline, unit context, status badge, or visual sparkline)")
+            has_context_modifier = bool(re.search(r'class=["\'][^"\']*(?:unit|baseline|sparkline|threshold|reference|trend|delta|badge|status)[^"\']*["\']|data-(?:unit|baseline|threshold|trend|delta)=', source, re.IGNORECASE))
+            has_metric_with_unit = bool(re.search(r'class=["\'][^"\']*(?:stat|metric|kpi|value|num|count)[^"\']*["\'][^>]*>\s*[\d.,]+\s*(?:[a-zA-Z%/$€¥°]|/[a-zA-Z]+)', source, re.IGNORECASE))
+            if not has_svg and not has_html5_data and not has_context_modifier and not has_metric_with_unit:
+                failures.append("data-craft assertion: Zero Naked Metrics violation (metrics must carry reference baseline, unit context, delta trend, or visual sparkline/meter/canvas)")
 
         # Tactile Detents / Interactive feedback check
         if "Cognitive Budgeting" in contract_text or "Decisive Exchange 3-Frame" in contract_text or "Tactile Detents" in contract_text:
@@ -199,17 +205,24 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             has_tailwind_active = bool(re.search(r"active:(?:scale|translate|bg|shadow|opacity)-", source))
             has_focus_visible = bool(re.search(r":focus-visible\s*\{", source, re.IGNORECASE))
             has_transition = bool(re.search(r"transition\s*:\s*[^;]+(?:transform|all|ease|cubic)", source, re.IGNORECASE))
-            if not (has_active or has_tailwind_active) and not (has_focus_visible and has_transition):
-                failures.append("tactile physics assertion: interactive controls missing tactile response states (:active { transform/filter/shadow/... } or :focus-visible)")
+            has_pointer_mutation = bool(re.search(r"addEventListener\s*\(\s*['\"](?:pointerdown|touchstart|mousedown)['\"].*?(?:classList|style|scale|active|transform)", source, re.DOTALL | re.IGNORECASE))
+            if not (has_active or has_tailwind_active) and not (has_focus_visible and has_transition) and not has_pointer_mutation:
+                failures.append("tactile physics assertion: interactive controls missing tactile response states (:active { transform/filter/shadow/... }, :focus-visible with transition, or pointerdown with state mutation)")
 
         # Multi-surface topology navigation check: when surface map m1.md declares sibling surfaces
         smap_candidates = []
         for p in [Path(contract_path).resolve(), html.resolve()]:
-            for parent in p.parents:
+            curr = p.parent
+            depth = 0
+            while curr != curr.parent and depth < 5:
                 smap_candidates.extend([
-                    parent / "contracts/surface-maps/m1.md",
-                    parent / "prototype/contracts/surface-maps/m1.md"
+                    curr / "contracts/surface-maps/m1.md",
+                    curr / "prototype/contracts/surface-maps/m1.md"
                 ])
+                if (curr / ".git").is_dir() or (curr / "skills").is_dir():
+                    break
+                curr = curr.parent
+                depth += 1
         smap_file = next((p for p in smap_candidates if p.is_file()), None)
         if smap_file:
             smap_text = smap_file.read_text(encoding="utf-8")

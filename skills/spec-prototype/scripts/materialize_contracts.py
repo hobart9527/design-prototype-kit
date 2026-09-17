@@ -63,11 +63,12 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                         "impact": parts[5] if len(parts) > 5 else "Executes action",
                     })
     if not extracted:
-        # Check domain-specific verbs dynamically based on discussion semantic content
+        # Check domain-specific action intents explicitly mentioned in discussion text
         has_drain = bool(re.search(r"排空|\b(?:drain)\b", disc_text, re.IGNORECASE))
         has_preempt = bool(re.search(r"抢占|\b(?:preempt)\b", disc_text, re.IGNORECASE))
         has_order = bool(re.search(r"订单|支付|结账|\b(?:order|checkout|cart)\b", disc_text, re.IGNORECASE))
         has_publish = bool(re.search(r"发布|草稿|文章|\b(?:publish|draft|article)\b", disc_text, re.IGNORECASE))
+        has_touch = bool(re.search(r"收藏|喜欢|关注|书签|\b(?:bookmark|favorite|like|save|swipe)\b", disc_text, re.IGNORECASE))
 
         if has_drain or has_preempt:
             if has_drain:
@@ -106,14 +107,24 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                 "toast": "Document Published to Feed",
                 "impact": "Makes draft publicly accessible across channels",
             })
+        elif has_touch:
+            extracted.append({
+                "action_id": "bookmark-story",
+                "trigger_btn": "Bookmark Story",
+                "modal_header": "Save Bookmark",
+                "commit_btn": "Confirm Save",
+                "toast": "Story Saved to Reading List",
+                "impact": "Stores story locally and queues for offline reading",
+            })
         else:
+            clean_slice = slice_id.replace("-", " ").title()
             action_id = f"execute-{slice_id}"
             extracted.append({
                 "action_id": action_id,
-                "trigger_btn": f"Commit {slice_id.capitalize()}",
-                "modal_header": f"Confirm {slice_id.capitalize()} Action",
+                "trigger_btn": f"Commit {clean_slice}",
+                "modal_header": f"Confirm {clean_slice} Action",
                 "commit_btn": "Confirm",
-                "toast": f"{slice_id.capitalize()} Action Completed",
+                "toast": f"{clean_slice} Action Completed",
                 "impact": f"Executes decisive operational change for {slice_id}",
             })
     return extracted
@@ -137,13 +148,32 @@ def extract_cognitive_ledger(disc_text: str, slice_id: str) -> dict[str, str]:
 
 
 def extract_ruthless_omissions(disc_text: str, prod_text: str) -> list[str]:
-    """Extract or synthesize the 3 Ruthless Omissions."""
+    """Extract or synthesize domain-aware Ruthless Omissions."""
     combined = disc_text + "\n" + prod_text
     m = re.search(r"(?:Ruthless Omission|Deliberately Excluded|Omission|舍弃|排除|非目标)[^\n]*\n((?:[ \t]*[-*0-9.]+[^\n]+\n?)+)", combined, re.IGNORECASE)
     if m:
         items = [re.sub(r"^[ \t]*[-*0-9.]+\s*", "", line).strip() for line in m.group(1).splitlines() if line.strip()]
-        if len(items) >= 2:
+        if len(items) >= 1:
             return items[:5]
+
+    if re.search(r"Baseline 3|Editorial|阅读|文章|知识库", combined, re.IGNORECASE):
+        return [
+            "Zero distracting kinetic telemetry, flashing badges, or noisy decorative sidebars.",
+            "Zero multi-level modal dialogs that disrupt continuous reading and comprehension flow.",
+            "Zero unconsidered low-contrast gray text washes that compromise typographic legibility."
+        ]
+    elif re.search(r"Baseline 4|Touch|Consumer|消费|移动|社交", combined, re.IGNORECASE):
+        return [
+            "Zero dense multi-column tables requiring desktop cursor precision.",
+            "Zero sub-44px touch targets or microscopic navigation links in primary thumb zones.",
+            "Zero intrusive unskippable onboarding carousels that block immediate interaction."
+        ]
+    elif re.search(r"Baseline 2|SaaS|Commerce|电商|订单|交易", combined, re.IGNORECASE):
+        return [
+            "Zero multi-window fragmentations or detached popup windows.",
+            "Zero dead-end error notifications without actionable recovery paths.",
+            "Zero gratuitous animation or ungrounded decorative graphics that slow transaction flow."
+        ]
     return [
         "Zero generic marketing cards, promotional hero banners, or superficial carousel widgets.",
         "Zero nested modal inception or multi-step wizard deadlocks; interactions stay in-canvas or single contextual drawer.",
@@ -152,16 +182,29 @@ def extract_ruthless_omissions(disc_text: str, prod_text: str) -> list[str]:
 
 
 def extract_material_invariants(disc_text: str, prod_text: str) -> list[str]:
-    """Extract or synthesize Material Non-Transfer Boundaries."""
+    """Extract or synthesize domain-aware Material Non-Transfer Boundaries."""
     combined = disc_text + "\n" + prod_text
     m = re.search(r"(?:Material Non-Transfer|Material Invariant|材质不可跨界|材质边界|物理映射)[^\n]*\n((?:[ \t]*[-*0-9.]+[^\n]+\n?)+)", combined, re.IGNORECASE)
     if m:
         items = [re.sub(r"^[ \t]*[-*0-9.]+\s*", "", line).strip() for line in m.group(1).splitlines() if line.strip()]
-        if len(items) >= 2:
+        if len(items) >= 1:
             return items[:5]
+
+    if re.search(r"Baseline 3|Editorial|阅读|文章|知识库", combined, re.IGNORECASE):
+        return [
+            "Typographic Ink & Paper Tone: Contrast mimics calibrated ink on high-grade paper; never harsh blinding raw #ffffff with unpadded margins.",
+            "Calm Micro-detents: Subtle chapter transitions and bookmark toggles; never bouncy arcade elastic animations.",
+            "Structural Marginalia: Footnotes and annotations live alongside reading flow; never popover stacks."
+        ]
+    elif re.search(r"Baseline 4|Touch|Consumer|消费|移动|社交", combined, re.IGNORECASE):
+        return [
+            "Fluid Touch Springs: Gestures feature natural deceleration and thumb-zone compliance; never mechanical desktop snaps.",
+            "Tactile Haptic Emulation: Visual compression (:active press) gives immediate feedback without sluggish delays.",
+            "Direct Card Physics: Surfaces elevate with contextual drop-shadows; never fake heavy skeuomorphic textures."
+        ]
     return [
         "Digital Glass & Surface Layering: Semi-transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
-        "Machined Tactile Detents: Interactive controls possess mechanical micro-press (:active scale(0.97)) resistance; never frictionless float.",
+        "Machined Tactile Detents: Interactive controls possess mechanical micro-press (:active feedback) resistance; never frictionless float.",
         "Precision Telemetry Emissives: Status indicators simulate calibrated hardware LEDs with subtle ambient bloom; never raw flat neon washes."
     ]
 
@@ -254,7 +297,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Core tension: {tension}
 - Status: candidate
 
-## Decisions
+## Product Context & Alignment
 {prod_text.strip()}
 
 ## 3 Ruthless Omissions (克制舍弃清单)

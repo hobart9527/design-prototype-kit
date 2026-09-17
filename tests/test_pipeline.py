@@ -2,6 +2,7 @@ from pathlib import Path
 import hashlib
 import importlib.util
 import json
+import re
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
@@ -991,6 +992,294 @@ def test_phased_double_diamond_contract_materialization(tmp_path: Path):
     assert "specification" in res_p4
     assert (proto / "contracts/slices/dsp-slice/c1.md").is_file()
     assert (proto / "specifications/dsp-slice/r1.md").is_file()
+
+
+def test_multi_archetype_adaptation_and_flexible_verification(tmp_path: Path):
+    """Verify non-B-end archetypes (Editorial Reading & Consumer Touch) materialize and pass verification."""
+    mat_mod = _load("materialize_contracts", "materialize_contracts.py")
+    env_mod = _load("assemble_envelope", "assemble_envelope.py")
+    tok_mod = _load("compile_tokens", "compile_tokens.py")
+    verify_mod = _load("verify_prototype_quality", "verify_prototype_quality.py")
+
+    proto = tmp_path / "prototype"
+    proto.mkdir(parents=True, exist_ok=True)
+    (proto / "discussion.md").write_text("""# Discussion
+- Product: Dispatch Longform Reader
+- Baseline: Baseline 3: Editorial & Focused Reading
+- Reality Anchors: Substack, Medium, iA Writer
+- Tension: Deep Focus vs Serendipitous Discovery
+- palette: warm-graphite-lime
+- energy: quiet
+- finish: polished
+- density: sparse
+- weight: light
+- seriousness: solemn
+## Declared Surfaces
+- Primary: story-reader
+- Contextual: marginalia-notes
+## Action Verbs
+| Action ID | Trigger Button Label | Modal Header | Commit Action Button | Completion Feedback Toast | Impact |
+| bookmark-story | Bookmark Story | Save Bookmark | Confirm Save | Story Saved to Reading List | Saves story |
+""", encoding="utf-8")
+
+    # Materialize contracts and compile tokens for editorial slice
+    mat_mod.materialize(tmp_path, "story-reader")
+    tokens_css = proto / "shared/tokens.css"
+    tokens_json = proto / "contracts/tokens/t1.json"
+    tokens_md = proto / "contracts/tokens/t1.md"
+    tokens_css.parent.mkdir(parents=True, exist_ok=True)
+    tokens_json.parent.mkdir(parents=True, exist_ok=True)
+    tok_mod.compile_tokens(str(proto / "discussion.md"), str(tokens_css), str(tokens_json), str(tokens_md))
+
+    assert (proto / "contracts/foundation/f1.md").is_file()
+    f1_text = (proto / "contracts/foundation/f1.md").read_text(encoding="utf-8")
+    assert "reading" in f1_text.lower() or "editorial" in f1_text.lower() or "omissions" in f1_text.lower()
+
+    # Assemble envelope: must select editorial-reading layout profile
+    env = env_mod.assemble(tmp_path, "story-reader")
+    assert env["layout_profile"] == "editorial-reading"
+    assert env["app_shell_contract"]["profile"] == "editorial-reading"
+    assert env["topology_context"]["shared_shell"]["brand_title"] == "Dispatch Longform Reader"
+
+    # Verify that a minimalist editorial prototype passes quality checks
+    tokens_css = proto / "shared/tokens.css"
+    edit_html = tmp_path / "prototype/experiments/story-reader/anchor/index.html"
+    edit_html.parent.mkdir(parents=True, exist_ok=True)
+    edit_html.write_text("""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="../../../shared/tokens.css">
+  <style>
+    body { background: var(--bg-surface); color: var(--text-main); font-family: serif; max-width: 68ch; margin: auto; }
+    .story-card { border-radius: var(--radius-md); padding: 16px; overflow: hidden; text-overflow: ellipsis; }
+    button:active { opacity: 0.75; transform: translateY(1px); }
+    .reading-stat { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body data-state="reading">
+  <main class="story-card">
+    <h1>Dispatch Longform</h1>
+    <span class="reading-stat">12 min read</span>
+    <button id="bookmark-story">Bookmark Story</button>
+    <div id="toast">Story Saved to Reading List</div>
+  </main>
+  <script>
+    window.addEventListener('hashchange', () => {});
+    window.addEventListener('keydown', (e) => { if(e.key === 'Escape') {} });
+  </script>
+</body>
+</html>""", encoding="utf-8")
+
+    r1_path = proto / "specifications/story-reader/r1.md"
+    assert verify_mod.assert_quality(str(edit_html), str(tokens_css), contract_path=str(r1_path)) is True
+
+
+def test_confirmed_option_priority_in_token_extraction(tmp_path: Path):
+    """Verify compile_tokens selects confirmed decisions over earlier rejected candidates."""
+    compile_mod = _load("compile_tokens", "compile_tokens.py")
+    discussion = tmp_path / "discussion.md"
+    discussion.write_text("""# Stage 1 Discussion: Multi-Direction Proposals
+### Option A: Emerald Kinetic
+- accent-primary: #10b981
+- bg-void: #052e16
+
+### Option B: Amber Mission (Selected)
+- accent-primary: #f59e0b
+- bg-void: #1c1917
+
+## Confirmed Decisions
+- accent-primary: #f59e0b
+- bg-void: #1c1917
+- Energy: 4
+- Finish: 3
+- Density: 4
+- Weight: 3
+- Seriousness: 4
+""", encoding="utf-8")
+
+    out_css = tmp_path / "tokens.css"
+    out_json = tmp_path / "t1.json"
+    out_md = tmp_path / "t1.md"
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+
+    css_content = out_css.read_text(encoding="utf-8")
+    assert "#f59e0b" in css_content, "Confirmed accent #f59e0b must be compiled"
+    assert "#10b981" not in css_content, "Rejected Option A accent #10b981 must not be selected"
+
+
+def test_light_mode_palette_derivation_and_wcag_contrast(tmp_path: Path):
+    """Verify light-mode backgrounds synthesize dark high-contrast typography satisfying WCAG AAA."""
+    compile_mod = _load("compile_tokens", "compile_tokens.py")
+    discussion = tmp_path / "discussion.md"
+    discussion.write_text("""# Discussion: Light Editorial Reading
+## Confirmed Decisions
+- bg-void: #faf8f3
+- accent-primary: #0284c7
+- Energy: 2
+- Finish: editorial-paper
+- Density: 3
+- Weight: regular
+- Seriousness: 3
+""", encoding="utf-8")
+
+    out_css = tmp_path / "tokens.css"
+    out_json = tmp_path / "t1.json"
+    out_md = tmp_path / "t1.md"
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+
+    css_content = out_css.read_text(encoding="utf-8")
+    # Verify dark text is generated, not light off-white
+    assert "--text-primary: #18181b" in css_content or "--text-primary: #0" in css_content
+
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    bg_surface = data["color"]["surface"]["$value"]
+    text_primary = data["color"]["text-primary"]["$value"]
+
+    # Compute WCAG contrast ratio
+    def _rel_lum(h: str) -> float:
+        c = h.lstrip("#")
+        rgb = [int(c[i:i+2], 16) / 255.0 for i in (0, 2, 4)]
+        lin = [v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4 for v in rgb]
+        return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+    l1 = _rel_lum(bg_surface)
+    l2 = _rel_lum(text_primary)
+    ratio = (max(l1, l2) + 0.05) / (min(l1, l2) + 0.05)
+    assert ratio >= 7.0, f"Light mode contrast ratio must exceed WCAG AAA 7:1 (got {ratio:.2f}:1)"
+
+
+def test_dominant_baseline_preserved_against_casual_keyword_mentions(tmp_path: Path):
+    """Verify assemble_envelope strictly respects declared Dominant Baseline even if touch/mobile appear in text."""
+    assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
+
+    proto = tmp_path / "prototype"
+    proto.mkdir(parents=True, exist_ok=True)
+    (proto / "product.md").write_text("""# Product
+- Dominant Baseline: Baseline 1 (Dense Operational Console)
+- Omissions: Touch gestures and consumer mobile carousels are strictly omitted.
+""", encoding="utf-8")
+    (proto / "shared").mkdir(parents=True, exist_ok=True)
+    (proto / "shared/tokens.css").write_text(":root {}\n", encoding="utf-8")
+    (proto / "contracts/tokens").mkdir(parents=True, exist_ok=True)
+    (proto / "contracts/tokens/t1.md").write_text("# Tokens\n", encoding="utf-8")
+    (proto / "contracts/surface-maps").mkdir(parents=True, exist_ok=True)
+    (proto / "contracts/surface-maps/m1.md").write_text("# Map\n", encoding="utf-8")
+    (proto / "contracts/foundation").mkdir(parents=True, exist_ok=True)
+    (proto / "contracts/foundation/f1.md").write_text("# Foundation\n", encoding="utf-8")
+    (proto / "contracts/slices/slice_console").mkdir(parents=True, exist_ok=True)
+    (proto / "contracts/slices/slice_console/c1.md").write_text("# Contract\n", encoding="utf-8")
+    (proto / "specifications/slice_console").mkdir(parents=True, exist_ok=True)
+    (proto / "specifications/slice_console/r1.md").write_text("""# Spec
+- Prototype write scope: `prototype/experiments/slice_console/hero-anchor/`
+- Evidence write scope: `prototype/evidence/probes/slice_console/`
+Note: Avoid touch controls and consumer mobile paradigms.
+""", encoding="utf-8")
+
+    env = assemble_mod.assemble(tmp_path, "slice_console")
+    assert env["app_shell_blueprint"]["profile"] == "dense-console", "Profile must remain dense-console despite 'touch'/'mobile' mentions in omissions"
+
+
+def test_verify_quality_negative_checks_block_goodhart_loopholes(tmp_path: Path):
+    """Verify verify_prototype_quality fails fake implementations with empty listeners, naked metrics, or comment states."""
+    verify_mod = _load("verify_prototype_quality", "verify_prototype_quality.py")
+
+    tokens_css = tmp_path / "tokens.css"
+    tokens_css.write_text(":root { --radius-btn: 4px; }\n", encoding="utf-8")
+
+    spec_path = tmp_path / "r1.md"
+    spec_path.write_text("""# Spec
+## Action Verb Lifecycle Table
+| Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact |
+|---|---|---|---|---|---|
+| reboot | Reboot | Confirm Reboot | Reboot Now | Done | Impact |
+## The Break Protocol Stress Checkpoints
+| Reality Breaker | Test Vector | Expected | Observed |
+|---|---|---|---|
+| Overflow | Hash | Truncate | pass |
+## Zero Naked Metrics
+| Metric | Unit | Baseline |
+|---|---|---|
+| Latency | ms | 50ms |
+## Cognitive Budgeting
+| Zone | Weight |
+|---|---|
+| Primary | Heavy |
+""", encoding="utf-8")
+
+    # 1. Fake tactile physics: empty pointerdown listener without CSS :active or mutation
+    fake_tactile = tmp_path / "fake_tactile.html"
+    fake_tactile.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css"></head>
+<body data-state="ready">
+  <button id="reboot" style="border-radius: var(--radius-btn); text-overflow: ellipsis; overflow: hidden;">Reboot</button>
+  <dialog><h3>Confirm Reboot</h3><button>Reboot Now</button></dialog>
+  <div>Done</div>
+  <div class="stat"><span class="unit">100 ms</span></div>
+  <script>
+    document.addEventListener('pointerdown', () => {}); // Empty handler without style/class mutation
+  </script>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(fake_tactile), str(tokens_css), contract_path=str(spec_path)) is False
+
+    # 2. Fake naked metric: class="stat" without any unit or sparkline
+    fake_metric = tmp_path / "fake_metric.html"
+    fake_metric.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css"><style>button:active{transform:scale(0.97);}</style></head>
+<body data-state="ready">
+  <button id="reboot" style="border-radius: var(--radius-btn); text-overflow: ellipsis; overflow: hidden;">Reboot</button>
+  <dialog><h3>Confirm Reboot</h3><button>Reboot Now</button></dialog>
+  <div>Done</div>
+  <span class="stat">42</span> <!-- Naked metric without unit or sparkline -->
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(fake_metric), str(tokens_css), contract_path=str(spec_path)) is False
+
+    # 3. Fake state machine: HTML comment <!-- loading --> without actual state hook
+    fake_state = tmp_path / "fake_state.html"
+    fake_state.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css"><style>button:active{transform:scale(0.97);}</style></head>
+<body>
+  <!-- loading state comment -->
+  <button id="reboot" style="border-radius: var(--radius-btn); text-overflow: ellipsis; overflow: hidden;">Reboot</button>
+  <dialog><h3>Confirm Reboot</h3><button>Reboot Now</button></dialog>
+  <div>Done</div>
+  <span class="unit">42 ms</span>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(fake_state), str(tokens_css), contract_path=str(spec_path)) is False
+
+
+def test_reconcile_review_tokens_back_to_contracts(tmp_path: Path):
+    """Verify reconcile_tokens_from_css captures human review edits in tokens.css and updates discussion & t1.json."""
+    compile_mod = _load("compile_tokens", "compile_tokens.py")
+
+    discussion = tmp_path / "discussion.md"
+    discussion.write_text("""# Discussion
+- Energy: 3
+- Finish: 3
+- Density: 3
+- Weight: 3
+- Seriousness: 3
+- palette: warm-graphite-lime
+""", encoding="utf-8")
+
+    out_css = tmp_path / "tokens.css"
+    out_json = tmp_path / "t1.json"
+    out_md = tmp_path / "t1.md"
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+
+    # Reviewer changes accent-primary in tokens.css
+    css_content = out_css.read_text(encoding="utf-8")
+    modified_css = re.sub(r"--accent-primary:\s*#[0-9a-fA-F]+;", "--accent-primary: #38bdf8;", css_content)
+    out_css.write_text(modified_css, encoding="utf-8")
+
+    # Reconcile back into discussion and contracts
+    compile_mod.reconcile_tokens_from_css(str(out_css), str(discussion), str(out_json), str(out_md))
+
+    # Verify discussion and t1.json received the review edit
+    updated_disc = discussion.read_text(encoding="utf-8")
+    assert "--accent-primary: #38bdf8" in updated_disc
+
+    updated_json = json.loads(out_json.read_text(encoding="utf-8"))
+    assert updated_json["color"]["primary"]["$value"] == "#38bdf8"
+
+
 
 
 

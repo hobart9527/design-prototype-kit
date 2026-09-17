@@ -330,16 +330,29 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "break_protocol_checkpoints": break_checkpoints
     }
 
-    # Determine layout profile and app shell contract from baseline
-    all_spec_text = product_content + " " + spec_content
-    if re.search(r"Baseline 4|Consumer|Mobile|Touch", all_spec_text, re.IGNORECASE):
+    # Determine layout profile and app shell contract strictly from declared baseline
+    baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
+    declared_baseline = baseline_match.group(1).strip() if baseline_match else ""
+
+    if re.search(r"Baseline 4|Consumer|Mobile|Touch|消费|移动|触控", declared_baseline, re.IGNORECASE):
         layout_profile = "somatic-touchflow"
-    elif re.search(r"Baseline 3|Editorial|Reading", all_spec_text, re.IGNORECASE):
+    elif re.search(r"Baseline 3|Editorial|Reading|阅读|文章|出版", declared_baseline, re.IGNORECASE):
         layout_profile = "editorial-reading"
-    elif re.search(r"Baseline 2|SaaS|Commerce|Project", all_spec_text, re.IGNORECASE):
+    elif re.search(r"Baseline 2|SaaS|Commerce|Project|画布|业务|交易", declared_baseline, re.IGNORECASE):
         layout_profile = "operational-canvas"
-    else:
+    elif re.search(r"Baseline 1|Console|Control|工作台|控制台|运维", declared_baseline, re.IGNORECASE):
         layout_profile = "dense-console"
+    else:
+        # Fallback to general scan only if no explicit dominant baseline was declared in product.md
+        all_spec_text = product_content + " " + spec_content
+        if re.search(r"\bBaseline 4\b", all_spec_text, re.IGNORECASE):
+            layout_profile = "somatic-touchflow"
+        elif re.search(r"\bBaseline 3\b", all_spec_text, re.IGNORECASE):
+            layout_profile = "editorial-reading"
+        elif re.search(r"\bBaseline 2\b", all_spec_text, re.IGNORECASE):
+            layout_profile = "operational-canvas"
+        else:
+            layout_profile = "dense-console"
 
     app_shell_blueprints = {
         "dense-console": {
@@ -368,6 +381,40 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         }
     }
 
+    product_title_raw = next((line.lstrip("# ").strip() for line in product_content.splitlines() if line.startswith("#")), "Product")
+    brand_title = re.sub(r"^Product(?:\s+Thesis)?\s*[:\-]\s*", "", product_title_raw, flags=re.IGNORECASE).strip() or "Product Console"
+
+    app_shell_contracts = {
+        "dense-console": {
+            "profile": "dense-console",
+            "header": "Top bar containing system title, active slice indicator, and topology navigation",
+            "main_viewport": "Primary operational slot matching declared entity cardinality",
+            "context_drawer": "Contextual parameter inspection drawer or modal",
+            "status_bar": "Footer telemetry and shortcuts guide"
+        },
+        "operational-canvas": {
+            "profile": "operational-canvas",
+            "header": "Workspace header with breadcrumb navigation and primary actions",
+            "main_viewport": "Fluid canvas or master-detail interactive work area",
+            "context_drawer": "Contextual parameter inspector panel or drawer",
+            "status_bar": "Canvas view controls and operational status indicator"
+        },
+        "editorial-reading": {
+            "profile": "editorial-reading",
+            "header": "Minimalist header with publication title, reading progress, and index toggle",
+            "main_viewport": "Focused typography-driven reading column (68ch max width)",
+            "context_drawer": "Asymmetrical marginalia for annotations, outline, or related links",
+            "status_bar": "Calm reading footer with chapter navigation and font controls"
+        },
+        "somatic-touchflow": {
+            "profile": "somatic-touchflow",
+            "header": "Compact mobile header with contextual title and back action",
+            "main_viewport": "Touch-friendly card feed with thumb-zone ergonomics and gesture hints",
+            "context_drawer": "Bottom sheet or modal action tray for quick modifications",
+            "status_bar": "Persistent bottom thumb navigation bar"
+        }
+    }
+
     envelope = {
         "envelope_version": "2.0",
         "repository_root": str(root.resolve()),
@@ -376,13 +423,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "mode": "lean-builder-envelope",
         "layout_profile": layout_profile,
         "app_shell_blueprint": app_shell_blueprints.get(layout_profile, app_shell_blueprints["dense-console"]),
-        "app_shell_contract": {
-            "profile": layout_profile,
-            "header": "Top bar containing system title, active slice indicator, and topology navigation",
-            "main_viewport": "Primary operational slot matching declared entity cardinality",
-            "context_drawer": "Contextual parameter inspection drawer or modal",
-            "status_bar": "Footer telemetry and shortcuts guide"
-        },
+        "app_shell_contract": app_shell_contracts.get(layout_profile, app_shell_contracts["dense-console"]),
         "target_html_path": target_html,
         "evidence_output_dir": evidence_scope,
         "token_stylesheet_ref": token_rel_href,
@@ -391,7 +432,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "current_slice": slice_id,
             "surface_role": current_role,
             "shared_shell": {
-                "brand_title": "GPU Control Plane",
+                "brand_title": brand_title,
                 "navigation_links": nav_links
             }
         },

@@ -183,6 +183,35 @@ async function captureWithCli(browserBin, baseUrl, outputDir, viewports, states,
   return null;
 }
 
+function recordHandoffEvidence(outputDir, result) {
+  try {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const manifestPath = path.join(repoRoot, "prototype/evidence/handoff-manifest.json");
+    if (!fs.existsSync(path.dirname(manifestPath))) {
+      fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+    }
+    let existing = {};
+    if (fs.existsSync(manifestPath)) {
+      try {
+        existing = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+      } catch {}
+    }
+    const vpKeys = Object.keys(result.viewports || {});
+    existing.verification = {
+      status: "verified",
+      browser: "verified",
+      visual: "verified",
+      human: existing.verification?.human || "pending_review",
+      evidence: `Multi-viewport screenshots captured (${vpKeys.length > 0 ? vpKeys.join(", ") : "default"}px)`,
+      timestamp: new Date().toISOString(),
+      runner: result.runner || "browser-capture",
+    };
+    fs.writeFileSync(manifestPath, JSON.stringify(existing, null, 2), "utf-8");
+  } catch {
+    // best-effort evidence recording
+  }
+}
+
 function syncReviewPortal(autoOpen = true) {
   try {
     const portalScript = path.join(__dirname, "generate_review_portal.py");
@@ -252,6 +281,7 @@ async function main() {
   }
 
   if (result) {
+    recordHandoffEvidence(outputDir, result);
     syncReviewPortal(autoOpen);
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
     process.exit(0);

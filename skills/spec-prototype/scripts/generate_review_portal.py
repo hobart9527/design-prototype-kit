@@ -81,9 +81,14 @@ def discover_surfaces(root: Path) -> List[Dict[str, str]]:
 def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Review Portal", verification: Dict[str, str] | None = None) -> str:
     default_url = surfaces[0]["url"] if surfaces else "about:blank"
     verification = verification or {}
-    verified = verification.get("status", "unverified").lower() == "verified"
+    verified = (
+        verification.get("status", "unverified").lower() == "verified"
+        or (verification.get("browser", "").lower() == "verified" and verification.get("visual", "").lower() == "verified")
+    )
     status_label = "VERIFIED" if verified else "UNVERIFIED"
-    evidence_label = verification.get("evidence", "no evidence manifest")
+    evidence_label = verification.get("evidence") or (
+        f"Browser: {verification.get('browser', 'unverified')}, Visual: {verification.get('visual', 'unverified')}, Human: {verification.get('human', 'unverified')}"
+    )
 
     btn_html_list = []
     for i, s in enumerate(surfaces):

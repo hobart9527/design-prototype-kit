@@ -181,8 +181,35 @@ def _rgb_to_hex(r: int, g: int, b: int) -> str:
     return f"#{max(0, min(255, r)):02x}{max(0, min(255, g)):02x}{max(0, min(255, b)):02x}"
 
 
+def _is_light_color(hex_code: str) -> bool:
+    try:
+        r, g, b = _hex_to_rgb(hex_code)
+        # Perceived brightness according to ITU-R BT.601
+        return (r * 299 + g * 587 + b * 114) / 1000 > 160
+    except Exception:
+        return False
+
+
+def _extract_confirmed_section(text: str) -> str:
+    """Extract confirmed decisions or active selected option block if present."""
+    # 1. Explicit confirmed decisions heading
+    m_conf = re.search(r"^##+[^\n]*?(?:Confirmed|Selected|Decision|Final|已确认|已选定|决策)[^\n]*\n(.*?)(?=\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+    if m_conf and m_conf.group(1).strip():
+        return m_conf.group(1).strip()
+
+    # 2. Option marked as selected, e.g. Option B (Selected) or [x] Option B
+    m_opt = re.search(r"^###+[^\n]*?(?:Option|方案|方向)[^\n]*?(?:Selected|Confirmed|Chosen|已选|✓|\[x\])[^\n]*\n(.*?)(?=\n###+|\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+    if m_opt and m_opt.group(1).strip():
+        return m_opt.group(1).strip()
+
+    return ""
+
+
 def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-graphite-lime") -> Dict[str, str]:
-    """Dynamically extract authored chromatic tokens from Stage 1 discussion or synthesize mathematically."""
+    """Dynamically extract authored chromatic tokens from Stage 1 discussion or synthesize mathematically.
+
+    Prioritizes confirmed/selected decision sections over rejected candidate options.
+    """
     token_keys = {
         "accent_primary": ["accent-primary", "accent_primary", "primary-accent", "accent"],
         "accent_hover": ["accent-hover", "accent_hover"],
@@ -202,13 +229,29 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
         "status_danger": ["status-danger", "status_danger"],
     }
 
+    confirmed_block = _extract_confirmed_section(discussion_text)
     extracted: Dict[str, str] = {}
+
     for canon_key, aliases in token_keys.items():
+        # First priority: check confirmed / selected block
+        if confirmed_block:
+            found_in_confirmed = False
+            for alias in aliases:
+                pattern = rf"(?:--)?(?:color-)?{alias}\s*[:|=]\s*[`*]*([#0-9a-fA-F]{{3,8}}|rgba?\([^)]+\))[`*]*"
+                matches = list(re.finditer(pattern, confirmed_block, re.IGNORECASE))
+                if matches:
+                    extracted[canon_key] = matches[-1].group(1).strip()
+                    found_in_confirmed = True
+                    break
+            if found_in_confirmed:
+                continue
+
+        # Second priority: search full text, taking the LAST authored match (so latest choice overrides earlier drafts)
         for alias in aliases:
             pattern = rf"(?:--)?(?:color-)?{alias}\s*[:|=]\s*[`*]*([#0-9a-fA-F]{{3,8}}|rgba?\([^)]+\))[`*]*"
-            m = re.search(pattern, discussion_text, re.IGNORECASE)
-            if m:
-                extracted[canon_key] = m.group(1).strip()
+            matches = list(re.finditer(pattern, discussion_text, re.IGNORECASE))
+            if matches:
+                extracted[canon_key] = matches[-1].group(1).strip()
                 break
 
     pal_match = re.search(
@@ -223,18 +266,35 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
 
     base_colors = dict(DARK_ATMOSPHERES[resolved_base])
 
-    # If custom background was authored, synthesize physical elevation hierarchy
+    # If custom background was authored, synthesize physical elevation hierarchy with contrast fidelity
     if "bg_void" in extracted and extracted["bg_void"].startswith("#"):
         try:
             vr, vg, vb = _hex_to_rgb(extracted["bg_void"])
+            is_light = _is_light_color(extracted["bg_void"])
             base_colors["bg_void"] = extracted["bg_void"]
-            base_colors["bg_base"] = extracted.get("bg_base", _rgb_to_hex(vr + 8, vg + 9, vb + 9))
-            base_colors["bg_surface"] = extracted.get("bg_surface", _rgb_to_hex(vr + 16, vg + 18, vb + 18))
-            base_colors["bg_surface_raised"] = extracted.get("bg_surface_raised", _rgb_to_hex(vr + 26, vg + 29, vb + 29))
-            base_colors["bg_overlay"] = extracted.get("bg_overlay", _rgb_to_hex(vr + 36, vg + 40, vb + 40))
-            base_colors["border_dim"] = extracted.get("border_dim", _rgb_to_hex(vr + 24, vg + 27, vb + 27))
-            base_colors["border_subtle"] = extracted.get("border_subtle", _rgb_to_hex(vr + 36, vg + 41, vb + 41))
-            base_colors["border_bright"] = extracted.get("border_bright", _rgb_to_hex(vr + 56, vg + 64, vb + 64))
+
+            if is_light:
+                # Light mode: clean, luminous surfaces with dark high-contrast typography (WCAG AAA compliant)
+                base_colors["bg_base"] = extracted.get("bg_base", "#ffffff")
+                base_colors["bg_surface"] = extracted.get("bg_surface", "#ffffff")
+                base_colors["bg_surface_raised"] = extracted.get("bg_surface_raised", "#ffffff")
+                base_colors["bg_overlay"] = extracted.get("bg_overlay", "#ffffff")
+                base_colors["border_dim"] = extracted.get("border_dim", _rgb_to_hex(max(0, vr - 15), max(0, vg - 15), max(0, vb - 15)))
+                base_colors["border_subtle"] = extracted.get("border_subtle", _rgb_to_hex(max(0, vr - 28), max(0, vg - 28), max(0, vb - 28)))
+                base_colors["border_bright"] = extracted.get("border_bright", _rgb_to_hex(max(0, vr - 50), max(0, vg - 50), max(0, vb - 50)))
+                # Default dark typography for light background
+                base_colors["text_primary"] = extracted.get("text_primary", "#18181b")
+                base_colors["text_secondary"] = extracted.get("text_secondary", "#52525b")
+                base_colors["text_tertiary"] = extracted.get("text_tertiary", "#71717a")
+            else:
+                # Dark mode: layered atmospheric step-ups
+                base_colors["bg_base"] = extracted.get("bg_base", _rgb_to_hex(vr + 8, vg + 9, vb + 9))
+                base_colors["bg_surface"] = extracted.get("bg_surface", _rgb_to_hex(vr + 16, vg + 18, vb + 18))
+                base_colors["bg_surface_raised"] = extracted.get("bg_surface_raised", _rgb_to_hex(vr + 26, vg + 29, vb + 29))
+                base_colors["bg_overlay"] = extracted.get("bg_overlay", _rgb_to_hex(vr + 36, vg + 40, vb + 40))
+                base_colors["border_dim"] = extracted.get("border_dim", _rgb_to_hex(vr + 24, vg + 27, vb + 27))
+                base_colors["border_subtle"] = extracted.get("border_subtle", _rgb_to_hex(vr + 36, vg + 41, vb + 41))
+                base_colors["border_bright"] = extracted.get("border_bright", _rgb_to_hex(vr + 56, vg + 64, vb + 64))
         except Exception:
             pass
 
@@ -299,23 +359,56 @@ def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str
         "padding_panel": f"{padding_val}px",
     }
 
-    # Typography & Finish
-    finish = dials.get("finish", "machined-industrial")
-    fonts = {
-        "sans": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        "mono": '"SF Mono", "Fira Code", "Roboto Mono", Menlo, monospace',
-    }
+    # Typography & Finish Dial calibration
+    finish = dials.get("finish", "machined-industrial").lower()
+    if any(k in finish for k in ("editorial", "paper", "reading")):
+        fonts = {
+            "sans": 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
+            "mono": '"SF Mono", "Fira Code", Menlo, monospace',
+        }
+    elif any(k in finish for k in ("somatic", "touch", "mobile")):
+        fonts = {
+            "sans": '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif',
+            "mono": '"SF Mono", "Fira Code", monospace',
+        }
+        # Touch profiles favor slightly larger card radii and ergonomic buttons
+        radii["card"] = f"{r_card_val + 2}px"
+        radii["btn"] = "9999px"
+    else:
+        fonts = {
+            "sans": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            "mono": '"JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace',
+        }
 
-    # Motion & Tactile Physics
-    tactile_scale = "0.97" if dials.get("weight") in ("dense-tactile", "heavy") else "0.98"
-    motion = {
-        "duration_fast": "80ms",
-        "duration_normal": "180ms",
-        "duration_slow": "320ms",
-        "ease_hud": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "ease_out": "cubic-bezier(0, 0, 0.2, 1)",
-        "active_scale": tactile_scale,
-    }
+    # Weight / Tactile Physics Dial calibration
+    weight = dials.get("weight", "regular").lower()
+    if any(k in weight for k in ("dense-tactile", "heavy", "dense")):
+        tactile_scale = "0.96"
+    elif any(k in weight for k in ("light", "subtle", "airy")):
+        tactile_scale = "0.99"
+    else:
+        tactile_scale = "0.98"
+
+    # Energy Dial calibration (temporal physics & rhythm)
+    energy = dials.get("energy", "kinetic").lower()
+    if any(k in energy for k in ("calm", "serene", "quiet")):
+        motion = {
+            "duration_fast": "120ms",
+            "duration_normal": "240ms",
+            "duration_slow": "400ms",
+            "ease_hud": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+            "ease_out": "cubic-bezier(0, 0, 0.2, 1)",
+            "active_scale": tactile_scale,
+        }
+    else:
+        motion = {
+            "duration_fast": "80ms",
+            "duration_normal": "180ms",
+            "duration_slow": "320ms",
+            "ease_hud": "cubic-bezier(0.16, 1, 0.3, 1)",
+            "ease_out": "cubic-bezier(0, 0, 0.2, 1)",
+            "active_scale": tactile_scale,
+        }
 
     return {
         "dials": dials,
@@ -588,13 +681,68 @@ def compile_tokens(
         print(f"[TOKEN COMPILER] Successfully compiled Token Markdown contract to {out_md}")
 
 
+def reconcile_tokens_from_css(
+    css_path: str,
+    discussion_path: str,
+    json_path: str | None = None,
+    md_path: str | None = None,
+) -> None:
+    """Read review modifications from tokens.css and reconcile back into discussion.md and t1 contracts."""
+    css_p = Path(css_path)
+    disc_p = Path(discussion_path)
+    if not css_p.is_file():
+        print(f"[RECONCILE] Error: CSS file not found: {css_path}")
+        return
+    if not disc_p.is_file():
+        print(f"[RECONCILE] Error: Discussion file not found: {discussion_path}")
+        return
+
+    css_text = css_p.read_text(encoding="utf-8")
+    var_matches = re.findall(r"(--[a-zA-Z0-9_-]+)\s*:\s*([^;]+);", css_text)
+    if not var_matches:
+        print("[RECONCILE] No CSS variables found to reconcile.")
+        return
+
+    reconciled_vars = {k.strip(): v.strip() for k, v in var_matches}
+    disc_text = disc_p.read_text(encoding="utf-8")
+
+    reconcile_lines = [
+        "\n\n## Confirmed Decisions (Reconciled from Review tokens.css)",
+        f"- Reconciled from: `{css_path}`",
+    ]
+    for k, v in sorted(reconciled_vars.items()):
+        if any(c in k for c in ("color", "accent", "bg-", "border-", "text-", "status-", "radius-", "font-", "motion-", "space-")):
+            reconcile_lines.append(f"- {k}: {v}")
+
+    reconcile_block = "\n".join(reconcile_lines) + "\n"
+    if "## Confirmed Decisions (Reconciled from Review tokens.css)" in disc_text:
+        disc_text = re.sub(
+            r"## Confirmed Decisions \(Reconciled from Review tokens\.css\).*?(?=\n## |\Z)",
+            reconcile_block.strip() + "\n",
+            disc_text,
+            flags=re.DOTALL,
+        )
+    else:
+        disc_text = disc_text.rstrip() + reconcile_block
+
+    disc_p.write_text(disc_text, encoding="utf-8")
+    print(f"[RECONCILE] Successfully synced review tokens back into {disc_p}")
+
+    compile_tokens(str(disc_p), str(css_p), json_path, md_path)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Compile DTCG tokens from Stage 1 5-dial state machine.")
     parser.add_argument("--discussion", default="prototype/discussion.md", help="Path to discussion.md")
     parser.add_argument("--output-css", default="prototype/shared/tokens.css", help="Target CSS file")
     parser.add_argument("--output-json", default="prototype/contracts/tokens/t1.json", help="Target DTCG JSON file")
     parser.add_argument("--output-md", default="prototype/contracts/tokens/t1.md", help="Target Markdown contract file")
+    parser.add_argument("--reconcile-from-css", help="Reconcile human review edits from tokens.css back into discussion.md and contracts")
     args = parser.parse_args()
+
+    if args.reconcile_from_css:
+        reconcile_tokens_from_css(args.reconcile_from_css, args.discussion, args.output_json, args.output_md)
+        return
 
     compile_tokens(args.discussion, args.output_css, args.output_json, args.output_md)
 
