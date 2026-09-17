@@ -27,7 +27,7 @@ import sys
 from typing import Any, Dict
 
 
-# Atmospheric color undertone palettes (Hue-infused, zero dead grays)
+# Legacy named palettes remain available only for callers that explicitly opt in.
 DARK_ATMOSPHERES = {
     "plasma-cyan": {
         "bg_void": "#05070a",
@@ -74,28 +74,33 @@ DARK_ATMOSPHERES = {
 }
 
 
+REQUIRED_DIALS = ("energy", "finish", "density", "weight", "seriousness")
+
+
 def parse_5dials(discussion_text: str) -> Dict[str, str]:
-    """Extract 5-dial configuration from discussion.md or fallback to defaults."""
-    dials = {
-        "energy": "quiet",
-        "finish": "machined-industrial",
-        "density": "dense",
-        "weight": "dense-tactile",
-        "seriousness": "solemn",
-    }
-    for key in dials.keys():
+    """Extract the complete 5-dial register; missing decisions must be authored."""
+    dials: Dict[str, str] = {}
+    for key in REQUIRED_DIALS:
         match = re.search(rf"[`*]*{key}[`*]*\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*", discussion_text, re.IGNORECASE)
         if match:
             dials[key] = match.group(1).lower()
+    missing = [key for key in REQUIRED_DIALS if key not in dials]
+    if missing:
+        raise ValueError(f"Missing required 5-dial decisions: {', '.join(missing)}")
     return dials
 
 
-def compute_tokens(dials: Dict[str, str], palette_name: str = "plasma-cyan") -> Dict[str, Any]:
-    """Derive full design token tree based on 5 dials and concentric geometry."""
-    colors = DARK_ATMOSPHERES.get(palette_name, DARK_ATMOSPHERES["plasma-cyan"])
+def compute_tokens(dials: Dict[str, str], palette_name: str) -> Dict[str, Any]:
+    """Derive full design token tree from authored dials and an explicit palette."""
+    missing = [key for key in REQUIRED_DIALS if not dials.get(key)]
+    if missing:
+        raise ValueError(f"Missing required 5-dial decisions: {', '.join(missing)}")
+    if palette_name not in DARK_ATMOSPHERES:
+        raise ValueError(f"Unknown explicit palette: {palette_name}")
+    colors = DARK_ATMOSPHERES[palette_name]
 
     # Density calibration
-    density = dials.get("density", "dense")
+    density = dials["density"]
     if density == "dense":
         space = {1: "4px", 2: "8px", 3: "12px", 4: "16px", 5: "20px", 6: "24px", 8: "32px"}
         r_outer_val = 8
@@ -388,17 +393,14 @@ def compile_tokens(
     disc_text = disc_p.read_text(encoding="utf-8") if disc_p.is_file() else ""
     dials = parse_5dials(disc_text)
 
-    # Determine palette based on energy line & explicit color keywords
-    energy_match = re.search(r"Energy[^\n]+", disc_text, re.IGNORECASE)
-    energy_line = energy_match.group(0).lower() if energy_match else ""
-
-    palette = "plasma-cyan"
-    if any(k in energy_line for k in ["emerald", "green"]):
-        palette = "obsidian-emerald"
-    elif any(k in energy_line for k in ["cyan", "plasma", "blue"]):
-        palette = "plasma-cyan"
-
-    computed = compute_tokens(dials, palette)
+    palette_match = re.search(
+        r"(?:palette|color\s+palette)\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*",
+        disc_text,
+        re.IGNORECASE,
+    )
+    if not palette_match:
+        raise ValueError("Missing explicit palette decision")
+    computed = compute_tokens(dials, palette_match.group(1).lower())
     css_content = generate_css(computed)
 
     out_css = Path(output_css_path)
