@@ -565,6 +565,10 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --ink-primary: {c.get('ink_primary', c['text_primary'])};",
         f"  --ink-secondary: {c.get('ink_secondary', c['text_secondary'])};",
         f"  --reading-measure-max: 68ch;",
+        "  --line-height-body: 1.5;",
+        "  --line-height-heading: 1.2;",
+        "  --min-touch-target: 44px;",
+        "  --safe-area-inset-bottom: env(safe-area-inset-bottom, 16px);",
         "",
         "  /* Spacing Hierarchy */",
     ]
@@ -617,6 +621,16 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         "}",
         "::-webkit-scrollbar-thumb:hover {",
         "  background: var(--border-bright);",
+        "}",
+        "",
+        "/* Reduced Motion A11y Resilience */",
+        "@media (prefers-reduced-motion: reduce) {",
+        "  *, ::before, ::after {",
+        "    animation-duration: 0.01ms !important;",
+        "    animation-iteration-count: 1 !important;",
+        "    transition-duration: 0.01ms !important;",
+        "    scroll-behavior: auto !important;",
+        "  }",
         "}",
     ])
     return "\n".join(lines) + "\n"

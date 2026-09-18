@@ -52,7 +52,7 @@ def _contract_items(path: Path | None) -> list[str]:
                 in_shortcuts = False
                 in_ledger = False
                 continue
-            elif "Dual-Channel Ergonomics" in line or "Keyboard Shortcuts" in line:
+            elif "Dual-Channel Ergonomics" in line or "Keyboard Shortcuts" in line or "Touch-First Ergonomics" in line:
                 in_actions = False
                 in_assertions = False
                 in_shortcuts = True

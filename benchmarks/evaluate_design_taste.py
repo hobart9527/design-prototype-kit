@@ -64,8 +64,17 @@ def evaluate_design_taste(proto_dir: Path, slice_id: str) -> Dict[str, Any]:
             typo_score -= 25.0
         if "--reading-measure-max" in css or "68ch" in css:
             details["typographic"].append("Ergonomic reading measure bounded to 68ch (+25)")
+        else:
+            typo_score -= 20.0
+        if "--line-height-body" in css or "--line-height-heading" in css:
+            details["typographic"].append("Golden ratio line-height rhythm declared (+25)")
+        else:
+            typo_score -= 15.0
+            details["typographic"].append("Missing explicit golden ratio line-height token (-15)")
         if "--font-sans" in css and "--font-mono" in css:
             details["typographic"].append("Dual-font system defined (+25)")
+        else:
+            typo_score -= 20.0
     scores["typographic_rhythm"] = max(0.0, typo_score)
 
     # 3. Spatial Tension & Geometric Equilibrium (0 - 100)

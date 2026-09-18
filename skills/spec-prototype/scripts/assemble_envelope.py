@@ -493,25 +493,25 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "profile": "dense-console",
             "spatial_roles": ["global_nav", "operational_viewport", "context_inspector", "status_telemetry"],
             "density_rules": "4px micro-grid, 11-13px tabular-nums telemetry, multi-pane instrument rack, zero promotional banner",
-            "composition_guidance": "Pin viewport height (100vh); enable independent scrolling within operational matrix and contextual inspector; no page-level runaway scroll."
+            "composition_guidance": "Pin viewport height (100vh); enable independent scrolling within operational matrix and contextual inspector; no page-level runaway scroll; enforce @media (prefers-reduced-motion: reduce) resilience."
         },
         "operational-canvas": {
             "profile": "operational-canvas",
             "spatial_roles": ["workspace_header", "entity_rail", "operational_canvas", "context_panel"],
             "density_rules": "8px grid rhythm, progressive visual elevation, master-detail hierarchy",
-            "composition_guidance": "Support fluid zoom/pan or split-view master-detail; contextual inspectors should overlay or dock non-destructively."
+            "composition_guidance": "Support fluid zoom/pan or split-view master-detail; contextual inspectors should overlay or dock non-destructively; enforce @media (prefers-reduced-motion: reduce) resilience."
         },
         "editorial-reading": {
             "profile": "editorial-reading",
             "spatial_roles": ["reading_header", "marginalia_nav", "reading_measure"],
             "density_rules": "68ch line-length measure, paper-contrast foundation, quiet marginalia",
-            "composition_guidance": "Prioritize typographic rhythm, asymmetrical marginalia for citations/telemetry, and distraction-free central column."
+            "composition_guidance": "Prioritize typographic rhythm, asymmetrical marginalia for citations/telemetry, and distraction-free central column; enforce @media (prefers-reduced-motion: reduce) resilience."
         },
         "somatic-touchflow": {
             "profile": "somatic-touchflow",
             "spatial_roles": ["touch_header", "touch_surface", "thumb_zone_nav"],
             "density_rules": "44px thumb-zone touch targets, fluid spring curves, high-contrast expressive surfaces",
-            "composition_guidance": "Anchor primary decisive actions to bottom thumb-reach reach zone; implement spring physics and gesture signifiers."
+            "composition_guidance": "Anchor primary decisive actions to bottom thumb-reach reach zone; implement spring physics and gesture signifiers; enforce @media (prefers-reduced-motion: reduce) resilience."
         }
     }
 
@@ -585,7 +585,11 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         },
         "data_stress_boundaries": {
             "overflow_protection": "text-overflow: ellipsis, overflow-wrap: anywhere, or word-break: break-all required on dynamic labels",
-            "empty_state_guidance": "Explicit guidance message required; provide action button if state is user-correctable",
+            "empty_state_guidance": (
+                f"Actionable guidance: render meaningful empty illustration/icon paired with '{verb_lifecycle[0]['trigger_btn']}' primary recovery button"
+                if verb_lifecycle else
+                "Explicit guidance message required; provide action button if state is user-correctable"
+            ),
             "tabular_numbers_required": True
         },
         "app_shell_blueprint": app_shell_blueprints.get(layout_profile, app_shell_blueprints["dense-console"]),
