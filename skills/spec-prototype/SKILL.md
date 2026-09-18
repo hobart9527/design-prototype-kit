@@ -64,14 +64,14 @@ The system unifies all design operations into four orthogonal layers and one tra
 Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
 
 ```text
-[Stage 1: 破 - Understand & Frame (问题澄清与契约基准)]
-  │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, establish Surface Topology & initial design tokens.
+[Stage 1: 破 - Understand & Frame (问题空间与设计契约定义)]
+  │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, derive Surface Topology, calibrate Five-Axis register & initial tokens, and freeze Spec Contracts.
   │  Alignment Cadence: Coalesce inquiries when intent or delegation is clear. AskUserQuestion only when genuine forks exist (e.g. Direction A vs B or unresolved core tension).
-  │  Frozen Spec Artifacts: prototype/product.md, surface-maps/m1.md, foundation/f1.md & tokens.css (via compile_tokens.py).
+  │  Frozen Spec Artifacts: prototype/product.md, surface-maps/m1.md, foundation/f1.md, tokens.css (via compile_tokens.py), slices/<slice_id>/c1.md, specifications/<slice_id>/r1.md.
   │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; exploration uses direction briefs).
   ▼
-[Stage 2: 立 - Proposition & High-Risk Probe (设计主张与探针验证)]
-  │  Core Objective: Formulate Design Proposition, select Five-Axis register, build bounded representative Probe to validate highest-risk interaction relationship.
+[Stage 2: 立 - Proposition & High-Risk Probe (解空间主干物化与探针验证)]
+  │  Core Objective: Materialize the single highest-risk Hero Anchor screen or direction probe via bounded Builder dispatch under the frozen Stage 1 Spec contracts.
   │  Envelope Assembly: python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json
   │  Dispatched via Lean Envelope: Builder receives bounded constraints (Constraint Envelope) while retaining layout composition agency (Creative Envelope).
   │  Execution Safety: Single hero anchor / signature relationship only; headless browser verification; no exploratory runaway code.
@@ -91,7 +91,7 @@ Execute the stages matching declared intent and required evidence. The stages re
   │  Controlled Absorption Loop: Critique absorbed into tokens.css / HTML slices -> Re-verify.
   ▼
 [Stage 5: 冻 - Silent Packaging & Headless Governance (静默封版与工件交付)]
-     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (AAA), handoff.py (SHA-256 integrity manifest).
+     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (WCAG 2.2 AA floor / AAA static tokens), handoff.py (SHA-256 integrity manifest).
 ```
 
 ## Dual-Engine Architecture: Sharp Exploration vs Silent Governance

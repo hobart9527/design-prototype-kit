@@ -8,25 +8,28 @@
 - Route basis (`visual-first | IA-first | IA-only | visual-only | spec-only | review-only | continuation | local-repair`), with source:
 - Requested scope and stopping point:
 - Product source revisions / last checked:
-- Product Experience Model status and exact artifact references:
+- Canonical Design Model status and exact artifact references:
 - Current topology/prototype coverage and evidence links:
 - Pending prerequisite (`none | needs_decision | needs_evidence | blocked`), impact and owner:
 - Next action and its prerequisite:
 
 “Active track” is retained for checker compatibility and means the current
 uncertainty, not a mandatory Track A/Track B sequence. The route contract in
-`references/discussion.md` owns permitted stopping and exit.
+`references/04-governance/discussion.md` owns permitted stopping and exit.
 
-## Working understanding
+## Working understanding (Nine Pillars Canonical Ontology)
 
-| Area | Current statement | Evidence status (`explicit | derived | unknown`) | Source / impact / owner |
-|---|---|---|---|
-| Product thesis and outcome | | | |
-| Actors, jobs and service relationships | | | |
-| Objects, content, lifecycle and authority | | | |
-| Journey, states and continuity | | | |
-| Derived Surface Topology and total coverage | | | |
-| Integrated expression / design tone | | | |
+| Pillar | Focus | Current statement | Evidence status (`explicit | observed | derived | hypothesis | unknown`) | Source / impact / owner |
+|---|---|---|---|---|---|
+| **Value** | Product thesis & outcome | | | | |
+| **Research** | Empirical context & constraints | | | | |
+| **Object** | Entities, content & authority | | | | |
+| **Journey** | Tasks, states & continuity | | | | |
+| **Topology** | Derived surface architecture | | | | |
+| **Attention** | Visual hierarchy & cognitive budgeting | | | | |
+| **Expression** | Five-Axis sensory calibration | | | | |
+| **Interaction** | Decisive exchange & action lifecycle | | | | |
+| **Resilience** | Stress limits & error recovery | | | | |
 
 Ask only about unknowns that could materially change a consequential decision.
 Proceed on sourced, delegated or reversible details and label assumptions.
@@ -58,58 +61,65 @@ not a competing rule.
 
 ## Canonical 5-Stage Design Engine Record
 
-### Stage 1: Tone & Tension Divergence (破)
-- **Business Tension**:
-- **Ruthless Omissions (at least 3 explicit exclusions)**:
-  1.
-  2.
-  3.
-- **Cognitive Budgeting Allocation**:
-  - *Routine Conventions (Zero-learning)*:
-  - *Decisive Innovation (Borrowed focus)*:
-- **5-Dial Style Register & Vague-Word Firewall**:
-  - `Energy`: (quiet ↔ loud)
-  - `Finish`: (raw ↔ polished)
-  - `Density`: (sparse ↔ dense)
-  - `Weight`: (light ↔ heavy)
-  - `Seriousness`: (playful ↔ solemn)
-  - Vague words translated to parameters:
-- **OOUX Cardinality-to-Layout Anchor (`1:1` Canvas | `1:N` Master-Detail | `N:M` Relational Graph)**:
-- **Contrasting Metaphors & Non-Transfer Boundaries**:
-  - *Option A*:
-    - Transfer:
-    - Non-transfer:
-  - *Option B*:
-    - Transfer:
-    - Non-transfer:
-- **User Gate Verdict (`AskUserQuestion`)**:
+### Stage 1: Understand & Frame (破 - 双钻与契约定义)
+- **Problem Space (Discover & Define · Value, Research, Object, Journey, Topology)**:
+  - *Core Tension & Inversions*:
+  - *Ruthless Omissions (explicit non-goals)*:
+  - *OOUX Cardinality-to-Layout Anchor (`1:1` Canvas | `1:N` Master-Detail | `N:M` Relational Graph)*:
+  - *Reference Benchmarks*:
+  - *Material Non-transfer Boundaries*:
+    - Option A: (Transfer: ... / Non-transfer: ...)
+    - Option B: (Transfer: ... / Non-transfer: ...)
+  - *Materialized Spec Artifacts*: `prototype/product.md`, `prototype/contracts/surface-maps/m1.md`
+- **Solution Space (Develop & Deliver · Attention, Expression, Interaction, Resilience)**:
+  - *Cognitive Budgeting Allocation*:
+    - Zero-learning baseline:
+    - High-yield borrowing:
+  - *5-Dial Style Register & Vague-Word Firewall*:
+    - Density: (sparse ↔ dense)
+    - Energy: (quiet ↔ loud)
+    - Materiality: (raw ↔ polished)
+    - Rhythm: (calm ↔ dynamic)
+    - Character: (neutral ↔ opinionated)
+    - Vague-word translations:
+  - *Action Verb Lifecycle*:
+    - Trigger action verb:
+    - Modal / drawer context:
+    - Commit button label:
+    - Post-completion toast:
+  - *Materialized Spec Artifacts*: `prototype/contracts/foundation/f1.md`, `prototype/shared/tokens.css` (`t1.json`, `t1.md`), `prototype/contracts/slices/<slice_id>/c1.md`, `prototype/specifications/<slice_id>/r1.md`
+- **Gate Status (`confirmed` | `delegated`)**:
 
-### Stage 2: Core Hero Anchor & Token Materialization (立)
-- **Hero Screen Anchor Target**:
-- **Design Engineering Invariants**:
+### Stage 2: Proposition & Probe (立 - 核心主交互物化)
+- **Hero Screen Anchor Target**: `prototype/experiments/<slice_id>/anchor/index.html` (or probe path)
+- **Craft Library & Geometric Invariants**:
   - Concentric Radius check ($R_{inner} = \max(0, R_{outer} - padding)$):
-  - Optical Alignment nudge applied:
-  - Tabular Numbers (`font-variant-numeric: tabular-nums`):
+  - Optical Alignment applied (1-2px asymmetric nudge):
+  - Tabular Numerics (`font-variant-numeric: tabular-nums` for counters/metrics):
 - **Atmospheric Undertone (Anti-sterile gray bias)**:
-- **Tactile Physics & Perceptible Feedback** (instant tactile press/shift, `cubic-bezier(0.16, 1, 0.3, 1)`, calibrated duration):
+- **Tactile Physics & Micro-dynamics** (perceptible feedback, `cubic-bezier(0.16, 1, 0.3, 1)`, calibrated settled state):
 - **Physical Token Entity (`prototype/shared/tokens.css`)**:
-- **Component Boundary**: Native HTML5 (`<dialog>`, `<details>`, `<form>`) + token utility classes (no heavy JS UI frameworks)
-- **User Gate Verdict (`AskUserQuestion`)**:
+- **Component Boundary**: Native-First HTML5 (`<dialog>`, `<details>`, `<form>`) + token recipes (zero heavy JS framework)
+- **Rendered Physical Evidence**: `prototype/evidence/probes/<slice_id>/1280.png`, `390.png`
+- **Gate Status (`confirmed` | `delegated`)**:
 
-### Stage 3: Tier-by-Tier Rollout (拓)
+### Stage 3: Full IA Surface Rollout (拓 - 信息架构全量展开)
+- **Derived Surface Topology Structure**:
+  - Primary Operational Surfaces:
+  - Secondary Contextual Surfaces:
+  - Supporting Administrative Surfaces:
 - **Rhythm: Compression & Release (anti-uniform-grid)**:
-- **Tier 0: Strategic Orbit** (Dashboard / Telemetry with Reference Benchmarks):
-- **Tier 1: Tactical Station** (Workbenches / Detent Flow / Action Verb Lifecycle):
-- **Tier 2: Governance Bridge** (Audit / Gateways):
-- **Reference Benchmarks & Action Verb Lifecycle**:
-- **Token Inheritance Verification** (`<link href="../../shared/tokens.css">`, zero inline hex):
+- **Data Floor: Reference Benchmarks & Zero Naked Metrics**:
+- **Action Verb Semantic Continuity Check**:
+- **Strict Token Inheritance** (`<link rel="stylesheet" href="../../shared/tokens.css">`, zero inline hex):
 
-### Stage 4: Review Portal Walkthrough & Tuning (验)
+### Stage 4: Four-Dimensional Audit & Review Portal (验 - 全息走查与吸收)
 - **Review Portal Harness (`prototype/review-portal.html`)**:
-- **Decisive Exchange 3-Frame Verification** (`Intent` → `Detent (:active scale 0.97)` → `Settled`):
-- **The Break Protocol (Stress & Limit Verification)**:
+- **Decisive Exchange 3-Frame Verification / Inspection** (`Intent` → `Detent` → `Settled`):
+- **The Break Protocol Stress Checkpoints**:
   - [ ] Unbroken long string overflow & wrap
   - [ ] 0 items (Contextual agency & creation bait)
+  - [ ] 1 item (Minimum layout containment)
   - [ ] 1000 items (Scroll containment & viewport stability)
 - **Five Operational States**:
   - [ ] Loading (Skeleton)
@@ -117,12 +127,15 @@ not a competing rule.
   - [ ] Partial (Degraded)
   - [ ] Error (In-place diagnostic & one-click retry)
   - [ ] Overflow (Extreme length wrapping)
-- **Controlled Loopback (if triggered: Stage 4 -> Stage 2)**:
+- **Track A & Track B Verification**:
+  - Track A (Machine Floor): Zero raw hex, 100% token inheritance, WCAG AA / AAA static pass, zero console errors
+  - Track B (Ergonomic Reality Floor): 5-second test or somatic intuition, dual-channel affordance, zero metaphor contamination
+- **Controlled Absorption Loop (Feedback $\to$ `tokens.css` / slices $\to$ Re-verify)**:
 
-### Stage 5: Silent Governance Compilation (冻)
+### Stage 5: Silent Governance Compilation (冻 - 静默封版与工件交付)
 - **DTCG Export (`prototype/dist/tokens.json`)**:
-- **WCAG AAA Static Audit**:
-- **Handoff Manifest (`prototype/dist/manifest.json`)**:
+- **WCAG Static Contrast Audit**:
+- **Handoff Manifest (`prototype/dist/manifest.json` / SHA-256 integrity)**:
 
 ## Evidence and changes
 

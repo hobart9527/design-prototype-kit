@@ -18,9 +18,8 @@ An experience fails the Floor if any of the following occurs:
 - False claims of verification without actual browser execution traces or without a verified `review-portal.html` multi-view walkthrough harness.
 - Metaphor entity disguise: renaming or disguising core business objects into physics or sci-fi metaphors (e.g. calling tasks particles, calling risk controls detent rods).
 - Ergonomic Reality Gate failures:
-  - For B-Pro systems: An unbriefed operator cannot determine overall system health and the location of anomalies within 5 seconds.
-  - For C-Consumer systems: Core user loops cannot be completed through intuitive lifeworld somatic habits without reading explanatory prose.
   - Missing Dual-Channel Affordance: Critical keyboard shortcuts or gestural interactions lack visible, accessible GUI buttons or controls.
+  - Basic Ergonomic Breakdown: An operator cannot locate primary system status or complete the main loop without reading manual prose. Domain-specific heuristics (e.g. B-Pro 5-second anomaly triage, C-Consumer somatic lifeworld habits) are evaluated under [Craft Guidelines](#2-quality-criteria-craft-conviction-and-resonance) and domain context rather than rigid global floors.
 - Technical shallowness & toy-demo collapse: Presenting a trivially linear, toy mockup that strips away essential domain mechanics (e.g. non-linear branching in DAG workflows, temporal baselines in telemetry) under the pretext of omission.
 - Stale Template Plagiarism & Execution Evasion: Rote copy-pasting of prior design mockups, stale entity names, or hardcoded topologies without fresh Stage 1 divergence reasoning. Verification harness enforces anti-stagnation rules against placeholder content.
 

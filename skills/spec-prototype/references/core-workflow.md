@@ -44,13 +44,14 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
 
 ```text
 ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 【第一钻：问题空间 (Problem Space)】                                                                              │
-│  Stage 1 (破): Understand & Frame       ──> Reality Anchors, OOUX, Journey, Surface Topology & Spec Contracts     │
-│                                             (product.md, surface-maps/m1.md, foundation/f1.md, tokens.css)        │
+│ 【第一钻：问题空间与方案契约 (Problem & Solution Spec)】                                                          │
+│  Stage 1 (破): Understand & Frame       ──> Reality Anchors, OOUX, Surface Topology, Five Axes & Spec Contracts    │
+│                                             (product.md, surface-maps/m1.md, foundation/f1.md, tokens.css,         │
+│                                              slices/<slice_id>/c1.md, specifications/<slice_id>/r1.md)            │
 ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 【第二钻：解空间 (Solution Space)】                                                                              │
-│  Stage 2 (立): Proposition & Hero Probe  ──> Five Axes, Dynamic Tokens, Dual Envelope, Bounded Anchor Probe       │
-│                                             (c1.md, envelope.json, experiments/.../hero-anchor/index.html)        │
+│ 【第二钻：解空间实证物化 (Solution Materialization & Proof)】                                                     │
+│  Stage 2 (立): Proposition & Hero Probe  ──> Materialize Hero Anchor Chassis under Spec Contract via Dual Envelope│
+│                                             (envelope.json, experiments/.../hero-anchor/index.html, evidence/...)  │
 │  Stage 3 (拓): Walking Skeleton Rollout ──> Full IA Surface Expansion, Compression & Release, Action Continuity    │
 │  Stage 4 (验): Four-Dimensional Audit   ──> Decoupled review: Engineering DOM, Interaction, Renderer, Human       │
 │                                             (review-portal.html, verify_prototype_quality.py, capture.mjs)        │
@@ -58,11 +59,11 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Stage 1: Understand & Frame (破 - 魂立约：业务本体与现实地锚)
-- **Primary Goal**: Transition from user intent to a **complete, frozen Design Specification (`spec`)** through Problem Space divergence and convergence.
+### Stage 1: Understand & Frame (破 - 魂立约：双钻收敛与全套契约冻结)
+- **Primary Goal**: Transition from user intent to a **complete, frozen Design Specification (`spec`)** spanning problem ontology, topology, visual register, and interaction contracts.
 - **Cadence Principle**:
   Zero black-box guessing, but zero manufactured friction. Coalesce inquiries when intent or delegation is clear; invoke `AskUserQuestion` only when genuine forks exist (e.g. Direction A vs B or unresolved core value tensions).
-- **Macro Double Diamond Alignment (Problem Space)**:
+- **Macro Double Diamond Alignment**:
   - **Discover (深度发散 · Pillars: Value, Research)**:
     - **现实世界参考锚点 (Reference Benchmarks)**: 选定高说服力的行业标杆（如 Linear、Datadog、iA Writer、Stripe）或实体器物交互作为共识支点，拒绝凭空臆造。
     - **破局反转门 (Tension Triad & Inversions)**: 拒绝平庸惯性思维，深挖业务深水区的内在张力矛盾（如：极致吞吐 vs 误触高危；新手极简 vs 资深极速）。
@@ -77,16 +78,29 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
     - **材质不可跨界定律 (Material Non-transfer Boundaries)**: 严密界定物理隐喻的迁移边界（触感阻尼、层级光感与清晰反馈可迁移；脱离数字介质特性的伪质感严禁滥用），尊重数字媒介与产品特定语境。
     - **衍生空间拓扑 (Derived Surface Topology)**: 划定主工作区 (Primary)、上下文从属区 (Contextual) 与支撑管理区 (Supporting)，严格避免页面数量通胀。
     - **Gated Output**: 经由人机确认后，物化 `prototype/contracts/surface-maps/m1.md`。
-- **Automated Contract Materialization**:
-  运行 `python3 skills/spec-prototype/scripts/materialize_contracts.py` 编译提取结构化契约，物化 `prototype/contracts/foundation/f1.md` 与 `prototype/contracts/slices/<slice_id>/c1.md`。推导回退项显式标记为 `hypothesis`。契约凝固，直通 Stage 2。
+  - **Develop (表达发散 · Pillars: Attention, Expression / Five Axes)**:
+    - **5-Dial Style Register (Five Axes)**:
+      在 Expression 柱下，设立 Density、Energy、Materiality、Rhythm、Character 五轴标尺，配合 Vague-Word Firewall（禁用“高级”、“现代”等抽象空话），直接产出包含确切 Hex 色板（`--accent-primary`, `--bg-void`）、五轴取向与取舍说明的具象提案。
+    - **动态色彩推导引擎 (LLM Dynamic Chromatics)**: 用户选定提案后，`compile_tokens.py` 通过亮度阶差自动推导 16 阶物理标高矩阵，生成 `prototype/shared/tokens.css`（同时准备 `prototype/contracts/tokens/t1.json`）。
+    - **认知借贷收支账本 (Cognitive Budgeting)**: 划定「零借贷低熵基座」（常规导航与内容，0 学习成本，0 扰动动画）与「高产出借贷特区」（核心操作区，允许有目的的微动效与反馈），确立快速沉降机制。
+    - **Gated Output**: 经由人机确认后，物化 `prototype/contracts/foundation/f1.md` 与 `prototype/shared/tokens.css`。
+  - **Deliver (交互收敛 · Pillars: Interaction, Resilience)**:
+    - **动词全生命周期 (Action Verb Lifecycle)**: 确立业务动词的「意图触发 (Trigger) $\to$ 模态上下文 (Context) $\to$ 决定性提交 (Commit) $\to$ 状态沉降 (Feedback)」语义闭环。
+    - **破坏性应力极限 (The Break Protocol)**: 预定义长字符截断、0/1/1000 状态与视口折叠极限检查。
+    - **自动化契约物化 (Automated Contract Materialization)**:
+      运行 `python3 skills/spec-prototype/scripts/materialize_contracts.py` 编译提取结构化契约，物化 `prototype/contracts/slices/<slice_id>/c1.md` 与 `prototype/specifications/<slice_id>/r1.md`。
+- **Stage 1 全套契约冻结 (Artifact Ownership Closure)**:
+  Stage 1 结束时，必须完整物化并冻结 6 大契约工件：`product.md`、`surface-maps/m1.md`、`foundation/f1.md`、`tokens.css`、`slices/<slice_id>/c1.md` 与 `specifications/<slice_id>/r1.md`。至此设计契约凝固，直通 Stage 2，杜绝在 Stage 2 随意篡改业务语义。
 
 ### Stage 2: Core Hero Anchor Prototyping via Dual Envelope (核心主交互原型物化)
-- **Primary Goal**: In Solution Space, formulate the Design Proposition, calibrate the Five Axes, and dispatch a bounded Builder envelope to materialize the single highest-risk Hero Anchor screen and design tokens.
-- **Sensory Calibration & Token Compilation (Pillars: Expression, Attention)**:
-  - **5-Dial Style Register (Five Axes)**:
-    在 Expression 柱下，设立 Density、Energy、Materiality、Rhythm、Character 五轴标尺，配合 Vague-Word Firewall（禁用“高级”、“现代”等抽象空话），直接产出包含确切 Hex 色板（`--accent-primary`, `--bg-void`）、五轴取向与取舍说明的具象提案。
-  - **动态色彩推导引擎 (LLM Dynamic Chromatics)**: 用户选定提案后，`compile_tokens.py` 通过亮度阶差自动推导 16 阶物理标高矩阵，生成 `prototype/shared/tokens.css`（同时准备 `prototype/contracts/tokens/t1.json`）。
-  - **认知借贷收支账本 (Cognitive Budgeting)**: 划定「零借贷低熵基座」（常规导航与内容，0 学习成本，0 扰动动画）与「高产出借贷特区」（核心操作区，允许有目的的微动效与反馈），确立快速沉降机制。
+- **Primary Goal**: Materialize the single highest-risk Hero Anchor screen or direction probe via bounded Builder dispatch under the frozen Stage 1 Spec contracts.
+- **Adaptive Hero Anchor Chassis (自适应主交互骨架)**:
+  Stage 2 拒绝单一模板化教条。核心原型根据 Stage 1 识别的产品语境自适应构建架构底盘：
+  1. *Dense Workbench Pattern*: 高密数据台 — 4px 微网格、多窗格仪表、等宽数值排布。
+  2. *Operational Canvas Pattern*: 业务看板 — 8px 律动、主从分级、渐进式信息展开。
+  3. *Editorial Reading Pattern*: 文本沉浸 — 字符度量控制、宁静边距、纸质对比度。
+  4. *Somatic Touchflow Pattern*: 移动触控 — 44px 拇指区触控热区、流体曲线与高响应性。
+  5. *Adaptive Workspace Pattern*: 自适应工作区 — 根据独特业务模型编排空间。
 - **Dual Envelope Protocol (双信封构建协议)**:
   为了消除探索损耗与盲目试错，Coordinator 在派发 `spec-prototype-builder` 前运行 `python3 skills/spec-prototype/scripts/assemble_envelope.py` 组装自闭环的 **Dual Execution Envelope** (`envelope.json`)：
   1. *Constraint Envelope (MUST)*: 领域真理、状态机（ideal, empty, error 等）、声明动作、Token 绑定与 WCAG 2.2 AA 底线。
@@ -142,10 +156,13 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
   - **Track C: Renderer Capture Status**:
     通过 `capture.mjs` 存证真实渲染视口。明确解耦存证与核准：`renderer: captured` 绝不自动等同于 `visual: verified`。
   - **Track D: Ergonomic & Human Verification**:
-    - *B-Pro 5-Second Test*: 领域工程师能否在 5 秒内识别当前系统健康度并定位核心异常？
-    - *C-Consumer Somatic Test*: 普通用户能否单凭肉身体感直觉顺畅完成核心链路，而无需阅读冗长说明？
-    - *Dual-Channel Affordance*: 每一个快捷键或手势操作必须存在对应的可见 GUI 控件。
-    - *Zero Metaphor Contamination*: 核心实体必须使用真实业务语汇，严禁拟物隐喻反客为主。
+    - *Dual-Channel Affordance (Floor)*: 每一个快捷键或手势操作必须存在对应的可见 GUI 控件。
+    - *Zero Metaphor Contamination (Floor)*: 核心实体必须使用真实业务语汇，严禁拟物隐喻反客为主。
+    - *Domain-Specific Craft Heuristics (Craft Guidelines)*:
+      - *B-Pro 5-Second Test*: 专业工控/运维场景，走查无简介操作员能否在 5 秒内识别当前系统健康度并定位核心异常（参见 `visual-craft.md`）。
+      - *C-Consumer Somatic Test*: 消费级与触控场景，走查体感习惯能否单凭直觉顺畅完成核心链路。
+    - *Human Gate & Delegation-Aware Protocol*:
+      人类审查环节具备授权感知（Delegation-Aware）。当用户在会话中已授予设计全权委托（`delegated`）或预先约定验收标准时，系统依据测试断言和已捕获的视口证据自动推进，无需无谓停顿打扰；仅当遇到不可逆分歧、严重体验倒退（Floor failure）或全新业务分叉时，方暂停请求用户裁决。
 - **Controlled Feedback Absorption Loop (单向吸收流)**:
   - 全局视觉与节奏反馈必须回流至 `prototype/contracts/foundation/f1.md` / `discussion.md`，并通过 `compile_tokens.py` 重新编译更新 `prototype/shared/tokens.css`，杜绝孤岛覆写；
   - 页面局部结构缺陷直接就地修正对应 HTML 切片；
@@ -154,9 +171,9 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
 ### Stage 5: Silent Governance Compilation (冻 - 根：静默封版与工件交付)
 - **Primary Goal**: Headless compilation of durable specifications, design tokens, and verifiable asset digests for downstream engineering handoff.
 - **Headless Pipeline Execution**:
-  1. `python3 skills/spec-prototype/scripts/export-tokens.py`: 将 `shared/tokens.css` 编译为 W3C DTCG 标准 `tokens.json`。
-  2. `node skills/spec-prototype/scripts/wcag-check.js`: Headless 静态无障碍审计，保障符合 **WCAG 2.2 AA** 标准底线。
-  3. `python3 skills/spec-prototype/scripts/handoff.py freeze`: 计算并冻结所有 HTML/CSS 资产的 SHA-256 指纹，输出不可变交付清册 (`prototype/evidence/handoff-manifest.json`)。
+  1. `python3 skills/spec-prototype/scripts/export-tokens.py prototype/shared/tokens.css --output prototype/contracts/tokens/t1.json`: 将 `shared/tokens.css` 编译为 W3C DTCG 标准 `tokens.json`。
+  2. `node skills/spec-prototype/scripts/wcag-check.js prototype/contracts/tokens/t1.json --level AA`: 静态色彩对比度预检，保障关键文字与图素符合 **WCAG 2.2 AA (4.5:1)** 标准底线；长期阅读与关键数据文字推荐追求 **WCAG AAA (7:1)** 静态对比度。注意此脚本仅为静态对比度预检（Static Contrast Preflight），不替代运行时的完整无障碍审查（键盘焦点管理、屏幕阅读器 Landmark、可达触控热区等）。
+  3. `python3 skills/spec-prototype/scripts/handoff.py freeze --root prototype --spec prototype/product.md`: 计算并冻结所有 HTML/CSS 资产的 SHA-256 指纹，输出不可变交付清册 (`prototype/evidence/handoff-manifest.json`)。
 
 ---
 
