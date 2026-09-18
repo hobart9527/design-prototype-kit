@@ -135,8 +135,8 @@ def extract_cognitive_ledger(disc_text: str, slice_id: str) -> dict[str, str]:
     repayment_m = re.search(r"(?:Repayment|Settlement|偿还机制|状态沉降)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
 
     zero_base = routine_m.group(1).strip() if routine_m else "Standard top navigation, breadcrumbs, and filter facets strictly follow established conventions with zero learning curve and zero distracting motion."
-    borrow_zone = decisive_m.group(1).strip() if decisive_m else f"Primary operational {slice_id} workspace is allocated high visual tension: kinetic detents, inline sparklines, and micro-flow telemetry."
-    repayment = repayment_m.group(1).strip() if repayment_m else "Upon commit action completion or inspector dismissal, focus and state settle back into calm equilibrium within 180ms."
+    borrow_zone = decisive_m.group(1).strip() if decisive_m else f"Primary operational {slice_id} workspace is allocated focused attention: tactile feedback and clear state transitions."
+    repayment = repayment_m.group(1).strip() if repayment_m else "Upon action completion or contextual panel dismissal, focus and transient indicators settle smoothly into calm baseline equilibrium."
 
     return {
         "zero_borrow_base": zero_base,

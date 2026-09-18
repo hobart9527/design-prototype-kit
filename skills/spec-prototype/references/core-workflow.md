@@ -50,63 +50,63 @@ Route design work by declared intent and required evidence. The five stages are 
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Phase 1: Discover (深度发散 · 业务本体传动链 / Ontology Chain)**:
-  - **破局反转门 (Divergence Gate / 4 Inversions)**: 拒绝平庸惯性思维，深挖业务深水区的内在张力矛盾（如：极致吞吐 vs 误触高危；新手极简 vs 资深极速）。
-  - **产品基准参考域 (4 Baselines Selection)**: 作为可组合演进的参考范式，根据实际场景自如适配或融合，非排他性割裂：
-    - `Baseline 1: Dense Data & Engineering Workbench` (Observability, telemetry, trading)
-    - `Baseline 2: Modern SaaS & Commerce` (Collaboration, project management, commerce)
-    - `Baseline 3: Editorial & Focused Reading` (Documentation, knowledge bases, long-form reading)
-    - `Baseline 4: Consumer & Mobile Touch-First` (Consumer lifestyle, touch utilities)
-  - **克制舍弃与非目标定义 (3 Ruthless Omissions / Non-goals Heuristics)**: 建立非目标防火墙，斩断无效复杂度（如剔除不合时宜的无序弹窗、脱离语境的营销横幅或空洞粒子），数量依产品边界弹性定夺。
+- **Phase 1: Discover (深度发散 · Nine Pillars: Value, Research, Object)**:
+  - **破局反转门 (Divergence Gate / Inversions)**: 拒绝平庸惯性思维，深挖业务深水区的内在张力矛盾（如：极致吞吐 vs 误触高危；新手极简 vs 资深极速）。
+  - **参考范式知识库 (Craft Library: Reference Patterns)**: 作为可组合演进的参考蓝图库，根据实际场景自如适配或组合，绝非互斥的单一硬分类器：
+    - `Dense Data & Engineering Pattern` (Observability, telemetry, trading)
+    - `Modern SaaS & Commerce Pattern` (Collaboration, project management, commerce)
+    - `Editorial & Focused Reading Pattern` (Documentation, knowledge bases, long-form reading)
+    - `Consumer & Mobile Touch-First Pattern` (Consumer lifestyle, touch utilities)
+  - **克制舍弃与非目标定义 (Ruthless Omissions & Non-goals)**: 建立非目标防火墙，斩断无效复杂度（如剔除不合时宜的无序弹窗、脱离语境的营销横幅或空洞粒子），数量依产品边界弹性定夺。
   - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/product.md`。
 
-- **Phase 2: Define (精准收敛 · 空间拓扑与物理传动链 / Physicality & Topology Chain)**:
-  - **现实世界双地锚 (Reality Benchmark Anchors / Reference Benchmarks)**: 选定高说服力的工业级对标（如 Linear 的键盘心流、Teenage Engineering 机械旋钮、或特定消费级/实体器物交互），作为共识支点拒绝凭空臆造。
-  - **材质不可跨界定律 (Material Non-transfer Boundaries)**: 严密界定物理隐喻的 non-transfer boundary 迁移边界（触感阻尼与清晰反馈可迁移；脱离数字介质特性的伪质感严禁滥用），尊重数字媒介与产品特定语境。
-  - **OOUX Cardinality-to-Layout Anchor (实体基数空间映射启发式)**:
-    - 基数关系为空间布局提供结构性启发，需结合任务频次、视线重心与设备特征综合裁量：
-    - `1 : 1` → 集中式控制台 (Focused Cockpit) 或深度检查器；
-    - `1 : N` → 主从分栏 (Master-Detail)、流式看板或高密筛选矩阵；
-    - `N : M` → 节点画布 (Node-Link Canvas)、关系分屏或矩阵网格。
+- **Phase 2: Define (精准收敛 · Nine Pillars: Journey, Topology)**:
+  - **现实世界参考锚点 (Reference Benchmarks)**: 选定高说服力的行业标杆或实体器物交互作为共识支点，拒绝凭空臆造。
+  - **材质不可跨界定律 (Material Non-transfer Boundaries)**: 严密界定物理隐喻的迁移边界（触感阻尼与清晰反馈可迁移；脱离数字介质特性的伪质感严禁滥用），尊重数字媒介与产品特定语境。
+  - **OOUX Cardinality-to-Layout Anchor (自适应空间拓扑启发式)**:
+    - 实体基数（Cardinality）仅约束候选形态空间，由任务频次、视线重心、设备特征与上下文保真度决定最终布局：
+    - 聚焦型交互 (Focused Canvas / Reader) → 深度专注，无分栏干扰；
+    - 流式/渐进展开 (Progressive Flow / Stream) → 顺次导航，按需展开；
+    - 主从分栏 (Master-Detail) → 高频比对与即时检视；
+    - 关联矩阵 (Relational Matrix / Canvas) → 节点网络或多维筛选。
   - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/surface-maps/m1.md`。
 
-- **Phase 3: Develop (方案发散 · 感官能量传动链 / Energy & Chromatics Chain)**:
+- **Phase 3: Develop (方案发散 · Nine Pillars: Attention, Expression / Five Axes)**:
   - **具象视觉张力与色彩配方候选集 (Multi-Direction Aesthetic Proposals)**:
-    - 绝不用“高级”、“沉稳”等抽象虚词，设立 5-Dial Style Register 与 Vague-Word Firewall，直接产出 2-3 套包含确切 Hex 色板（`--accent-primary`, `--bg-void`）、5-Dial 五轴刻度与取舍说明的具象提案。
+    - 绝不用“高级”、“沉稳”等抽象虚词，设立 5-Dial Style Register (Five Axes) 与 Vague-Word Firewall，直接产出 2-3 套包含确切 Hex 色板（`--accent-primary`, `--bg-void`）、五轴取向与取舍说明的具象提案。
   - **动态色彩推导引擎 (LLM Dynamic Chromatics)**: 用户选定配方后，`compile_tokens.py` 通过亮度阶差自动推导 16 阶物理标高矩阵（`bg_surface`, `border_dim`, `accent_subtle`）。
   - **认知借贷收支账本 (Cognitive Budgeting Ledger)**:
-    - 划定「零借贷低熵基座」（常规导航与表格，0 学习成本，0 扰动动画）与「高产出借贷特区」（核心操作区，允许微动效、sparklines 与阻尼脉冲），并确立状态快速沉降恢复机制（如 ~180ms 沉降）。
+    - 划定「零借贷低熵基座」（常规导航与内容，0 学习成本，0 扰动动画）与「高产出借贷特区」（核心操作区，允许有目的的微动效与反馈），并确立快速沉降机制。
   - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/foundation/f1.md` 与 `prototype/shared/tokens.css` (`t1.json`, `t1.md`)。
 
-- **Phase 4: Deliver (终局收敛 · 神经机械传动链 / Mechanics & Stress Chain)**:
-  - **动词生命周期 (Action Verb Lifecycle)**: 确立业务动词的「意图触发 (Trigger) $\to$ 上下文 (Context) $\to$ 决定性提交 (Commit) $\to$ 状态沉降 (Feedback)」语义闭环。
-  - **决定性交换三帧推演 (Decisive Exchange 3-Frame Inspection)**:
-    - Frame 1 (Intent): 悬停或快捷键激活，反馈容器平滑呼出；
-    - Frame 2 (Detent): 交互产生机械触感阻尼（如 `:active scale(0.97)`、按压沉降或滤镜回弹），防止重复触发；
-    - Frame 3 (Settled): 数据状态切换，指示器在瞬时周期内恢复基座平静。
-  - **双通道人机工效 (Dual-Channel Ergonomics)**: 键盘指令（如 `Space`, `Esc`, `J`/`K` 或手势）与可视化界面控件建立清晰对应。
-  - **破坏性应力极限 (The Break Protocol Checkpoints)**: 注入长字符截断、0 状态/1000 状态与视口折叠极限检查。
-  - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/slices/<slice_id>/c1.md` 与 `prototype/specifications/<slice_id>/r1.md`。6 柱契约凝固，直通 Stage 2。
+- **Phase 4: Deliver (终局收敛 · Nine Pillars: Interaction, Resilience)**:
+  - **动词生命周期契约 (Action Verb Lifecycle Invariants)**: 确立业务动词的「意图触发 (Trigger) $\to$ 上下文 (Context) $\to$ 决定性提交 (Commit) $\to$ 状态沉降 (Feedback)」语义闭环。
+  - **Decisive Exchange 3-Frame Inspection (决定性交换三帧推演)**:
+    - 意图感知：悬停或焦点激活，反馈元素平滑呼出；
+    - 操作阻尼与可感知反馈：交互产生即时机械或物理反馈，避免重复触发；
+    - 状态沉降：数据状态切换，指示器在瞬时周期内恢复基底平静。
+  - **双通道人机工效 (Dual-Channel Ergonomics)**: 键盘指令（如快捷键、手势）与可视化界面控件建立清晰对应。
+  - **破坏性应力极限 (The Break Protocol Checkpoints)**: 注入长字符截断、0 状态/极限数据状态与视口折叠极限检查。
+  - **Gated Output**: 经由 `AskUserQuestion` 确认后，立即物化 `prototype/contracts/slices/<slice_id>/c1.md` 与 `prototype/specifications/<slice_id>/r1.md`。契约凝固，直通 Stage 2。
 
-### Stage 2: Core Hero Anchor Prototyping via Lean Builder (立 - 骨肉：四大基准样板分型物化)
-- **Baseline-Aware Anchor Typologies (四类产品基准样板分型物化)**:
-  Stage 2 rejects single-template dogmatism. The Core Hero Anchor adapts its structural chassis to the primary operational baseline selected in Stage 1:
-  1. *Baseline 1 (Dense Data Workbench)*: **Workspace Console** — 4px micro-grid, multi-pane instrument rack, 11-13px tabular telemetry, zero promotional fluff.
-  2. *Baseline 2 (Modern SaaS & Commerce)*: **Operational Canvas** — 8px grid, master-detail hierarchy, progressive elevation, contextual drawers.
-  3. *Baseline 3 (Editorial & Reading)*: **Immersive Document** — 68ch measure, asymmetrical marginalia, paper-contrast foundation, zero ambient noise.
-  4. *Baseline 4 (Consumer & Touch-First)*: **Somatic Touchflow** — 44px thumb-zone touch targets, fluid spring curves, high-contrast expressive surfaces.
-- **Lean Pre-baked Envelope Protocol (工单直投极简构建协议)**:
-  - To eliminate exploratory overhead and endless token-hunting, the Coordinator synthesizes a **Self-Contained Execution Envelope** before dispatching `spec-prototype-builder`:
-    1. *Exact Output Path*: e.g. `prototype/experiments/<slice_id>/anchor/index.html` (or `hero-anchor/index.html`).
-    2. *Exact Token CSS Reference*: `<link rel="stylesheet" href="../../../shared/tokens.css">`.
-    3. *AppShell Component & DOM Hierarchy*: Topbar navigation, primary operational slot, contextual drawer, bottom telemetry status.
-    4. *State Machine Specification*: Concrete state object (`ideal`, `empty`, `error`), mutation handlers, and deterministic transitions.
-    5. *Verifiable Design Assertions*: Explicit keyboard shortcuts (`Space`, `Esc`), DOM element IDs, and life-cycle status tags.
-  - **Bounded Builder Envelope**: Builder scope, verification, and stop conditions come from the task-specific envelope. Do not impose a universal tool-turn quota or a fixed chassis; exploration may require a different bounded sequence:
-    - Step 1: Write self-contained single-page HTML/CSS/JS conforming to the envelope.
-    - Step 2: Run syntax & quality gate assertions (`verify_prototype_quality.py`).
-    - Step 3: Headless browser visual capture (`capture.mjs`).
-    - Step 4: Return receipt.
+### Stage 2: Core Hero Anchor Prototyping via Dual Envelope (核心主交互原型物化)
+- **自适应主交互骨架 (Adaptive Hero Anchor Chassis)**:
+  Stage 2 拒绝单一模板化教条。核心原型根据 Stage 1 识别的产品语境自适应构建架构底盘：
+  1. *Dense Workbench Pattern*: 高密数据台 — 4px 微网格、多窗格仪表、等宽数值排布。
+  2. *Operational Canvas Pattern*: 业务看板 — 8px 律动、主从分级、渐进式信息展开。
+  3. *Editorial Reading Pattern*: 文本沉浸 — 字符度量控制、宁静边距、纸质对比度。
+  4. *Somatic Touchflow Pattern*: 移动触控 — 44px 拇指区触控热区、流体曲线与高响应性。
+  5. *Adaptive Workspace Pattern*: 自适应工作区 — 根据独特业务模型编排空间。
+- **Dual Envelope Protocol (双信封构建协议)**:
+  - 为了消除探索损耗与盲目试错，Coordinator 在派发 `spec-prototype-builder` 前组装自闭环的 **Dual Execution Envelope**：
+    1. *Constraint Envelope (MUST)*: 领域真理、状态机（ideal, empty, error 等）、声明动作、Token 绑定与无障碍底线。
+    2. *Creative Envelope (DESIGN SPACE)*: 空间构成、视觉层级、注意力流转与交互呈现。
+    3. *Reference Patterns (SUGGESTIONS)*: 场景参考蓝图，可组合取用。
+  - **Bounded Builder Envelope**: Builder 的执行范围、验证与退出条件完全受信封规约：
+    - Step 1: 编写符合双信封规约的单页自闭环 HTML/CSS/JS。
+    - Step 2: 运行语法与质量断言 (`verify_prototype_quality.py`)。
+    - Step 3: Headless 浏览器真实视口抓取 (`capture.mjs`)。
+    - Step 4: 返回交付收据。
     Builder is strictly forbidden from open-ended filesystem discovery or micro-editing CSS in a ping-pong loop.
 - **Core Value & Signature Interaction Anchor (核心价值与关键交互承载面)**:
   - Do not spray out multiple pages prematurely. Build the single most consequential screen first—the screen carrying the core job-to-be-done, the primary visual tone, or the highest interaction risk (the Hero Anchor), regardless of whether it is high-density workbench or minimalist consumer flow.

@@ -372,8 +372,8 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
 
     # Extract OOUX Cardinality & Spatial Mapping from surface map or profile defaults
-    ooux_cardinality = "1:N"
-    ooux_layout_mode = "split-master-detail"
+    # v10.1: Cardinality constrains candidate structures; task/device/context determine layout mode.
+    # Default is adaptive rather than forced master-detail.
     cardinality_match = re.search(r"(?:Cardinality|OOUX|实体基数|基数映射)[^\n]*[:=]?\s*(1:1|1:N|N:M)", smap_content + " " + spec_content, re.IGNORECASE)
     if cardinality_match:
         ooux_cardinality = cardinality_match.group(1).upper()
@@ -383,8 +383,10 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             ooux_layout_mode = "split-master-detail"
         elif ooux_cardinality == "N:M":
             ooux_layout_mode = "node-link-canvas"
+        else:
+            ooux_layout_mode = "adaptive"
     else:
-        # Profile-driven default
+        # Context/Profile-driven heuristics without forcing master-detail on unknown profiles
         if layout_profile == "dense-console":
             ooux_cardinality = "1:N"
             ooux_layout_mode = "split-master-detail"
@@ -397,6 +399,10 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         elif layout_profile == "somatic-touchflow":
             ooux_cardinality = "1:N"
             ooux_layout_mode = "card-stream"
+        else:
+            # v10.1: adaptive topology for unknown products
+            ooux_cardinality = "adaptive"
+            ooux_layout_mode = "adaptive-flow"
 
     ooux_topology = {
         "cardinality": ooux_cardinality,
@@ -407,6 +413,8 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "1:N Master-Detail: High-density stream or list paired with sticky contextual parameter inspection."
             if ooux_cardinality == "1:N" else
             "N:M Relational Matrix / Canvas: Multi-node interconnected graph or multi-facet filtering grid."
+            if ooux_cardinality == "N:M" else
+            "Adaptive Flow: Spatial topology tailored to task context and primary object without forced split."
         )
     }
 
@@ -584,15 +592,38 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         }
     }
 
+    # Attention routing calibrated to product context, not rigid console prior
+    if layout_profile == "editorial-reading":
+        l1_scan = "Document title, reading progress, and primary reading actions"
+        l2_inspect = "In-line annotations, footnotes, or chapter table-of-contents"
+        l3_diag = "Bibliography, revision history, or document metadata"
+    elif layout_profile == "somatic-touchflow":
+        l1_scan = "Current step or primary entity status and decisive thumb-zone CTA"
+        l2_inspect = "Contextual configuration sheet or secondary parameters"
+        l3_diag = "Confirmation receipt, order/booking history, or terms"
+    elif layout_profile == "operational-canvas":
+        l1_scan = "Workspace title, active project state, and primary creation action"
+        l2_inspect = "Selected entity properties, inline comments, or activity stream"
+        l3_diag = "Version history, dependency matrix, or integration settings"
+    elif layout_profile == "dense-console":
+        l1_scan = "Persistent core identity, key system health/progress metrics, and primary action trigger"
+        l2_inspect = "In-place details, expandable drawer, or docked inspection panel"
+        l3_diag = "Full event logs, raw payload inspector, and historical audit trail"
+    else:
+        # adaptive-workspace
+        l1_scan = f"Primary {slice_id} workspace status and primary decisive action trigger"
+        l2_inspect = "Contextual entity inspection, inline details, or adaptive drawer"
+        l3_diag = "Complete entity audit, auxiliary parameters, or secondary flow"
+
     creative_envelope = {
         "layout_profile": layout_profile,
         "spatial_composition_agency": "Builder owns layout rhythm, panel proportions, and responsive flow. No pre-baked rigid HTML scaffolding mandated.",
         "attention_routing": {
             "primary_visual_anchor": f"Primary {slice_id} focal workspace & status indicator",
             "disclosure_levels": {
-                "l1_ambient_scan": "Persistent core identity, key health/progress metrics, and primary action trigger",
-                "l2_contextual_inspection": "In-place details, expandable drawer, or docked inspection panel",
-                "l3_deep_diagnostics": "Full event logs, raw payload inspector, and historical audit trail"
+                "l1_ambient_scan": l1_scan,
+                "l2_contextual_inspection": l2_inspect,
+                "l3_deep_diagnostics": l3_diag
             },
             "noise_budget": {
                 "max_simultaneous_emissive_alerts": 3,

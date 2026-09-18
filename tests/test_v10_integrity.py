@@ -229,6 +229,56 @@ def test_v10_1_five_axes_optionality_and_composable_envelope():
         env = assemble_mod.assemble(root, "read")
         assert env["layout_profile"] == "adaptive-workspace"
         assert env["creative_envelope"]["layout_profile"] == "adaptive-workspace"
+        # Verify ooux_topology does not force 1:N / master-detail on unknown/adaptive profile
+        assert env["ooux_topology"]["cardinality"] == "adaptive"
+        assert env["ooux_topology"]["layout_mode"] == "adaptive-flow"
+
+
+def test_stale_digest_guard_blocks_modified_contract(tmp_path: Path):
+    """P1-3 Stale Digest Guard: execution_boundary must reject dispatch if spec files changed after envelope compilation."""
+    assemble_mod = _load("assemble_envelope", SCRIPTS / "assemble_envelope.py")
+    boundary_mod = _load("execution_boundary", SCRIPTS / "execution_boundary.py")
+
+    # 1. Populate spec files
+    (tmp_path / "prototype").mkdir(parents=True, exist_ok=True)
+    prod = tmp_path / "prototype/product.md"
+    prod.write_text("# Product\n- Core Tension: Speed vs Safety\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/surface-maps").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/surface-maps/m1.md").write_text("# Surface Map\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/foundation").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/foundation/f1.md").write_text("# Foundation\n", encoding="utf-8")
+    (tmp_path / "prototype/shared").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/shared/tokens.css").write_text(":root { --bg-void: #000; }\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/tokens").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/tokens/t1.md").write_text("# Tokens\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/tokens/t1.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "prototype/contracts/slices/s1").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/contracts/slices/s1/c1.md").write_text("# Contract\n", encoding="utf-8")
+    (tmp_path / "prototype/specifications/s1").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/specifications/s1/r1.md").write_text("# Spec\n", encoding="utf-8")
+    disc = tmp_path / "prototype/discussion.md"
+    disc.write_text("- Execution boundary: active\n", encoding="utf-8")
+
+    # 2. Assemble initial fresh envelope
+    env = assemble_mod.assemble(tmp_path, "s1")
+    event = {
+        "cwd": str(tmp_path),
+        "tool_name": "Agent",
+        "tool_input": {
+            "subagent_type": "spec-prototype-builder",
+            "prompt": json.dumps(env),
+        },
+    }
+    # Fresh envelope passes execution boundary check
+    boundary_mod.check(event)
+
+    # 3. Tamper with product.md after envelope was compiled
+    prod.write_text("# Product\n- Core Tension: CHANGED AFTER ENVELOPE SEAL\n", encoding="utf-8")
+
+    # 4. Same envelope must now be strictly blocked by Stale Digest Guard
+    with pytest.raises(ValueError, match="Stale contract: product.md changed"):
+        boundary_mod.check(event)
+
 
 
 

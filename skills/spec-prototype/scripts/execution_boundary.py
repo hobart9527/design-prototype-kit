@@ -60,6 +60,24 @@ def dispatch(args, active):
                 'target_html_path must reside inside prototype/experiments/ or prototype/surfaces/.')
         spec_sources = data.get('spec_sources', {})
         require(bool(spec_sources), 'Lean envelope must include spec_sources digests.')
+        # P1-3: Stale Digest Guard - re-calculate current SHA256 of spec sources to ensure freshness
+        slice_id = data['slice_id']
+        file_map = {
+            'product_digest': root / 'prototype/product.md',
+            'surface_map_digest': root / 'prototype/contracts/surface-maps/m1.md',
+            'foundation_digest': root / 'prototype/contracts/foundation/f1.md',
+            'tokens_css_digest': root / 'prototype/shared/tokens.css',
+            'tokens_md_digest': root / 'prototype/contracts/tokens/t1.md',
+            'tokens_json_digest': root / 'prototype/contracts/tokens/t1.json',
+            'contract_digest': root / f'prototype/contracts/slices/{slice_id}/c1.md',
+            'specification_digest': root / f'prototype/specifications/{slice_id}/r1.md',
+        }
+        for digest_key, file_path in file_map.items():
+            expected = spec_sources.get(digest_key)
+            if expected and file_path.is_file():
+                actual = hashlib.sha256(file_path.read_bytes()).hexdigest()
+                require(actual == expected,
+                        f'Stale contract: {file_path.name} changed since envelope was compiled ({actual[:8]} != {expected[:8]}). Re-assemble envelope before dispatch.')
     else:
         require(data == packet(root, data['specification']['path']),
                 'Pass the exact handoff.py packet JSON unchanged to Builder.')

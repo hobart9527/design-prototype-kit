@@ -507,26 +507,48 @@ def compute_tokens(dials: Dict[str, str] | None = None, palette_or_colors: str |
         tactile_scale = "0.98"
 
     # Energy & Rhythm Axis calibration (temporal physics & rhythm)
-    energy = dials.get("energy", dials.get("rhythm", "kinetic")).lower()
+    # v10.1: Rhythm and Energy are distinct; rhythm affects pacing scale, energy affects duration speed
+    rhythm = dials.get("rhythm", "steady").lower()
     energy = dials.get("energy", "kinetic").lower()
+
     if any(k in energy for k in ("calm", "serene", "quiet")):
-        motion = {
-            "duration_fast": "120ms",
-            "duration_normal": "240ms",
-            "duration_slow": "400ms",
-            "ease_hud": "cubic-bezier(0.2, 0.8, 0.2, 1)",
-            "ease_out": "cubic-bezier(0, 0, 0.2, 1)",
-            "active_scale": tactile_scale,
-        }
+        base_fast, base_norm, base_slow = 120, 240, 400
+        ease_hud = "cubic-bezier(0.2, 0.8, 0.2, 1)"
     else:
-        motion = {
-            "duration_fast": "80ms",
-            "duration_normal": "180ms",
-            "duration_slow": "320ms",
-            "ease_hud": "cubic-bezier(0.16, 1, 0.3, 1)",
-            "ease_out": "cubic-bezier(0, 0, 0.2, 1)",
-            "active_scale": tactile_scale,
-        }
+        base_fast, base_norm, base_slow = 80, 180, 320
+        ease_hud = "cubic-bezier(0.16, 1, 0.3, 1)"
+
+    # Rhythm modifier: measured/stately lengthens transitions slightly; rapid/brisk tightens
+    if any(k in rhythm for k in ("measured", "stately", "deliberate", "relaxed")):
+        base_fast = int(base_fast * 1.25)
+        base_norm = int(base_norm * 1.25)
+        base_slow = int(base_slow * 1.25)
+    elif any(k in rhythm for k in ("rapid", "brisk", "instant", "snappy")):
+        base_fast = max(50, int(base_fast * 0.75))
+        base_norm = max(100, int(base_norm * 0.75))
+        base_slow = max(200, int(base_slow * 0.75))
+
+    motion = {
+        "duration_fast": f"{base_fast}ms",
+        "duration_normal": f"{base_norm}ms",
+        "duration_slow": f"{base_slow}ms",
+        "ease_hud": ease_hud,
+        "ease_out": "cubic-bezier(0, 0, 0.2, 1)",
+        "active_scale": tactile_scale,
+    }
+
+    # Character Axis calibration (affects typography tone, density feel, and feedback prominence)
+    character = dials.get("character", dials.get("seriousness", "utilitarian")).lower()
+    if any(k in character for k in ("scholarly", "editorial", "academic")):
+        line_height_body = "1.6"
+        line_height_heading = "1.25"
+    elif any(k in character for k in ("playful", "expressive", "friendly")):
+        line_height_body = "1.55"
+        line_height_heading = "1.2"
+        radii["card"] = f"{int(r_outer_val * 1.2)}px"
+    else:
+        line_height_body = "1.5"
+        line_height_heading = "1.2"
 
     # 3-Tier Semantic & Component Hierarchy (Rich Contract, Lean Engine)
     is_light = _is_light_color(colors.get("bg_void", "#080b0b"))
