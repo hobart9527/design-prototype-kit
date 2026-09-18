@@ -176,3 +176,59 @@ def test_three_tier_semantic_tokens_and_dtcg_authority():
         assert dtcg_confirmed["primitives"]["color"]["primary"]["authority"] == "explicit_human"
 
 
+def test_v10_1_five_axes_optionality_and_composable_envelope():
+    """Verify v10.1: Five Axes are completely optional, undeclared dials do not crash compiler."""
+    compile_mod = _load("compile_tokens", SCRIPTS / "compile_tokens.py")
+    assemble_mod = _load("assemble_envelope", SCRIPTS / "assemble_envelope.py")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        # 1. Empty discussion without any explicit dials/axes must compile cleanly
+        empty_disc = root / "empty_disc.md"
+        empty_disc.write_text("# Pure Product Thesis\n- Just core value, zero dials.\n", encoding="utf-8")
+        out_css = root / "out.css"
+        out_json = root / "out.json"
+        out_md = root / "out.md"
+
+        compile_mod.compile_tokens(str(empty_disc), str(out_css), str(out_json), str(out_md))
+        assert out_css.is_file()
+        assert "--bg-void:" in out_css.read_text(encoding="utf-8")
+
+        # 2. Verify parse_five_axes extracts canonical axes
+        disc_with_axes = (
+            "- Density: compact\n"
+            "- Energy: calm\n"
+            "- Materiality: paper\n"
+            "- Rhythm: measured\n"
+            "- Character: scholarly\n"
+        )
+        axes = compile_mod.parse_five_axes(disc_with_axes)
+        assert axes["density"] == "compact"
+        assert axes["energy"] == "calm"
+        assert axes["materiality"] == "paper"
+        assert axes["rhythm"] == "measured"
+        assert axes["character"] == "scholarly"
+
+        # 3. Verify assemble_envelope fallback produces adaptive-workspace rather than dense-console
+        (root / "prototype").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/product.md").write_text("# Product\n- Core: Reading & Thought\n", encoding="utf-8")
+        (root / "prototype/contracts/surface-maps").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/contracts/surface-maps/m1.md").write_text("# Map\n", encoding="utf-8")
+        (root / "prototype/contracts/foundation").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/contracts/foundation/f1.md").write_text("# F1\n", encoding="utf-8")
+        (root / "prototype/shared").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/shared/tokens.css").write_text(":root { --bg-void: #000; }\n", encoding="utf-8")
+        (root / "prototype/contracts/tokens").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/contracts/tokens/t1.md").write_text("# Tokens\n", encoding="utf-8")
+        (root / "prototype/contracts/tokens/t1.json").write_text("{}", encoding="utf-8")
+        (root / "prototype/contracts/slices/read").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/contracts/slices/read/c1.md").write_text("# Contract\n", encoding="utf-8")
+        (root / "prototype/specifications/read").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/specifications/read/r1.md").write_text("# Spec\n", encoding="utf-8")
+
+        env = assemble_mod.assemble(root, "read")
+        assert env["layout_profile"] == "adaptive-workspace"
+        assert env["creative_envelope"]["layout_profile"] == "adaptive-workspace"
+
+
+

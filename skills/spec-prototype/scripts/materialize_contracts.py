@@ -63,16 +63,16 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                         "impact": parts[5] if len(parts) > 5 else "Executes action",
                     })
     if not extracted:
-        # 2. Extract action mentions from text (e.g. "node drain operations", "Drain Node", "checkout", etc.)
+        # 2. Extract action mentions from text — candidate verbs must be marked as hypothesis unless explicitly authored
         action_verb_patterns = [
-            (r"(?:node\s+)?drain(?:\s+operations|\s+node)?", "drain-node", "Drain Node", "Drain GPU Node", "Confirm Drain", "Node Drained Successfully", "Evicts active batch workload from node"),
-            (r"preempt(?:\s+vram)?", "preempt-vram", "Preempt VRAM", "Preempt VRAM Allocation", "Execute Preempt", "VRAM Eviction Committed", "Releases VRAM pool back to shared cluster"),
-            (r"isolate(?:\s+cluster|\s+region)?", "isolate-cluster", "Isolate Cluster", "Emergency Region Isolation", "Authorize Isolation", "Region Traffic Rerouted", "Isolates failing region to contain blast radius"),
-            (r"bookmark(?:\s+story|\s+article)?", "bookmark-story", "Bookmark Story", "Save Bookmark", "Confirm Save", "Story Saved to Reading List", "Stores story locally and queues for offline reading"),
-            (r"checkout|order", "checkout-order", "Proceed to Checkout", "Confirm Order Payment", "Authorize Payment", "Order Placed Successfully", "Charges account and initiates order fulfillment"),
-            (r"publish(?:\s+document)?", "publish-document", "Publish Document", "Confirm Publication", "Publish Now", "Document Published to Feed", "Makes draft publicly accessible across channels"),
-            (r"accept(?:\s+ai|\s+diff)?", "accept-ai-diff", "Accept AI Revision", "Review AI Inline Revision", "Accept & Merge", "Paragraph Revised Successfully", "Merges AI generated rewrite into author draft"),
-            (r"(?:confirm\s+)?booking|reservation", "confirm-reservation-slot", "Confirm Time Slot", "Review Booking Details", "Confirm & Reserve", "Appointment Slot Confirmed", "Locks appointment window and syncs with calendar"),
+            (r"(?:node\s+)?drain(?:\s+operations|\s+node)?", "drain-node", "Drain Node", "Drain GPU Node", "Confirm Drain", "Node Drained Successfully", "[Hypothesis] Evicts active batch workload from node; requires empirical validation"),
+            (r"preempt(?:\s+vram)?", "preempt-vram", "Preempt VRAM", "Preempt VRAM Allocation", "Execute Preempt", "VRAM Eviction Committed", "[Hypothesis] Releases VRAM pool back to shared cluster; requires empirical validation"),
+            (r"isolate(?:\s+cluster|\s+region)?", "isolate-cluster", "Isolate Cluster", "Emergency Region Isolation", "Authorize Isolation", "Region Traffic Rerouted", "[Hypothesis] Isolates failing region to contain blast radius; requires empirical validation"),
+            (r"bookmark(?:\s+story|\s+article)?", "bookmark-story", "Bookmark Story", "Save Bookmark", "Confirm Save", "Story Saved to Reading List", "[Hypothesis] Stores story to reading list; requires empirical validation"),
+            (r"checkout|order", "checkout-order", "Proceed to Checkout", "Confirm Order Payment", "Authorize Payment", "Order Placed Successfully", "[Hypothesis] Initiates checkout and order confirmation; requires empirical validation"),
+            (r"publish(?:\s+document)?", "publish-document", "Publish Document", "Confirm Publication", "Publish Now", "Document Published to Feed", "[Hypothesis] Publishes document across designated channels; requires empirical validation"),
+            (r"accept(?:\s+ai|\s+diff)?", "accept-ai-diff", "Accept AI Revision", "Review AI Inline Revision", "Accept & Merge", "Paragraph Revised Successfully", "[Hypothesis] Merges AI revision into draft; requires empirical validation"),
+            (r"(?:confirm\s+)?booking|reservation", "confirm-reservation-slot", "Confirm Time Slot", "Review Booking Details", "Confirm & Reserve", "Appointment Slot Confirmed", "[Hypothesis] Confirms appointment booking; requires empirical validation"),
         ]
         for pattern, act_id, trig, modal, commit, toast, imp in action_verb_patterns:
             if re.search(pattern, disc_text, re.IGNORECASE):
@@ -259,7 +259,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | Document canvas clarity: distraction-free focus, content-first typography | present | unverified |
 | Inline state preservation: seamless revision and diff review flow | present | unverified |
 | Tabular Numerics: font-variant-numeric: tabular-nums on document metrics | present | unverified |
-| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
+| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
 | Keyboard ergonomics: operable shortcuts (e.g. Esc, Space) | present | unverified |
 | Action Verb Lifecycle closure: trigger -> review/diff -> commit -> toast | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
@@ -269,8 +269,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | Declared product intent is represented | present | unverified |
 | Focused typography column: max-width constrained (65-75ch) | present | unverified |
 | Reading metric units present (e.g. min read, words) | present | unverified |
-| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
-| High text-to-background contrast (> 7:1) | present | unverified |
+| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
 | Quiet feedback: non-blocking inline state updates, no intrusive modals | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
     elif is_marketing:
@@ -278,7 +277,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 |---|---|---|
 | Declared product intent is represented | present | unverified |
 | Hero visual anchor: clear value proposition and primary call-to-action | present | unverified |
-| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
+| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
 | Action verb progression: clear engagement path | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
     elif is_mobile:
@@ -287,8 +286,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | Declared product intent is represented | present | unverified |
 | Touch Target Floor: minimum 44x44px interactive tap zones | present | unverified |
 | Gesture Detents: pull-to-refresh or bottom sheet swipe dismissal | present | unverified |
-| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
-| High text-to-background contrast (> 7:1) | present | unverified |
+| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
 | Tactile Active State: active scale tap feedback | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
     else:
@@ -298,7 +296,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | Zero Naked Metrics: every metric has reference baseline or micro sparkline | present | unverified |
 | Tabular Numerics: font-variant-numeric: tabular-nums on all metrics | present | unverified |
 | Concentric Radii Formula: outer radius >= inner radius + padding | present | unverified |
-| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
+| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
 | Dual-channel keyboard shortcuts (Space / Esc) operable | present | unverified |
 | Action Verb Lifecycle closure: trigger -> drawer/modal -> commit -> toast | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""

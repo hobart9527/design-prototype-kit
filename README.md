@@ -1,24 +1,31 @@
-# Design Prototype Kit
+# Design Prototype Kit (v10.1)
 
-工业级体验设计系统与交互原型套件（Design & Prototype Engine）。
+高质感产品体验设计决策与原型验证线束（Design Decision & Evidence Harness）。
 
-## 核心定位
+## 核心架构 (Canonical Design Operating Model)
 
-解耦基础设施配置，专注于高质感 UI/UE/UX/UR 全链路设计决策与动态原型交付。
+系统由 **1 主模型 + 3 辅助模型 + 1 条横向 Evidence Protocol** 构成，彻底解耦规范契约与原型验证：
 
-## 四大工业级场景基线 (Design System Baselines)
+- **主模型 · Nine Pillars (WHAT WE DESIGN)**: Value, Research, Object, Journey, Topology, Attention, Expression, Interaction, Resilience.
+- **辅助模型 1 · Double Diamond (HOW WE DECIDE)**: Discover, Define, Develop, Deliver 结构化发散与收敛决策。
+- **辅助模型 2 · Five Axes (HOW IT FEELS)**: Density, Energy, Materiality, Rhythm, Character 具象感官标定。
+- **辅助模型 3 · Craft Library (HOW WE CRAFT)**: Invariants（跨产品通用品质底线）与 Candidate Techniques（上下文激活的技法库）严格解耦。
+- **横向治理 · Evidence Protocol**: 全流程标记 Source, Authority (`explicit` / `derived` / `hypothesis`), Verification 状态，杜绝业务臆造与虚假闭环。
 
-1. **Dense Workbench (高密数据工作台)**: `4px` 基准网格，Tabular Mono 字符对齐，紧凑边距与高信息密度。
-2. **Immersive Web (流体 SaaS / 商业 Web)**: `8px` 网格系统，丰富排版阶梯与渐进式层级。
-3. **Editorial Reading (阅读沉浸 / 文档编辑)**: 固定字符宽度（`68ch`），舒缓行高（1.65），零杂讯干扰。
-4. **Touch-First Mobile (纯 C 端触控沉浸)**: 移动端拇指热区，`44x44px` 最小触控目标，自然弹簧阻尼曲线（`cubic-bezier(0.16, 1, 0.3, 1)`），弹性吸附与拉取刷新交互。
+## 适用场景与参考模式 (Composable Reference Patterns)
 
-## 交互与状态能力
+系统提供可自由组合演进的参考范式，拒绝互斥单一分类器：
 
-- **五大关键体验状态 (Experience States)**: Loading (骨架屏), Empty (引导 CTA), Partial (降级/弱网), Error (局部容错与重试), Overflow (极端字符与分页)。
-- **物理世界微交互 (Kinetics)**: 弹性按压反馈（`:active { transform: scale(0.97); }`）、减速阻尼与持久化暂态。
-- **A/B 架构权衡决策 (Trade-off Thinking)**: 显式推演 Option A (极致效率) vs Option B (渐进引导) 的取舍成本。
-- **真实 UR 验收底线**: 严禁伪造用户访谈与合成虚假评分，坚持启发式走查与任务漏斗证伪。
+- **Dense Workbench Pattern**: 高密数据与运维仪表盘，紧凑微网格与数值对齐。
+- **Operational Canvas Pattern**: 现代 SaaS 与协作看板，主从分栏与渐进式层级展开。
+- **Editorial Reading Pattern**: 文本沉浸与阅读排版，舒缓字符度量与无干扰视觉基底。
+- **Somatic Touchflow Pattern**: 移动与触控优先，拇指热区与高响应性触控交互。
+
+## 交互、韧性与验证
+
+- **Spec as Durable Contract / Prototype as Disposable Proof**: 规约持久化，原型作为证伪假设的低成本实验。
+- **Dual Envelope Protocol**: Builder 显式区分 `constraint_envelope` (MUST 业务与状态契约) 与 `creative_envelope` (DESIGN SPACE 构图与视觉节律)。
+- **真实证据闭环**: 严格区分机器静态 Linter 覆盖度与视觉/交互人工审核，拒绝虚假综合评分。
 
 ## 目录结构
 

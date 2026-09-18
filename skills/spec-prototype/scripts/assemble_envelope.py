@@ -115,28 +115,32 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     target_html = write_scope_clean + "index.html"
     evidence_scope = extract_field(spec_content, "Evidence write scope", f"prototype/evidence/probes/{slice_id}/").strip("`'\" ")
 
-    # Determine layout profile EARLY — drives interaction_spec and constraints
-    baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
+    # Determine layout profile & composable context
+    # v10.1: Reference patterns are composable guides; default is adaptive composite rather than forced dense-console
+    baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线|Reference\s+Pattern)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
     declared_baseline = baseline_match.group(1).strip() if baseline_match else ""
 
-    if re.search(r"Baseline 4|Consumer|Mobile|Touch|消费|移动|触控", declared_baseline, re.IGNORECASE):
+    if re.search(r"Baseline 4|Consumer|Mobile|Touch|消费|移动|触控|somatic", declared_baseline, re.IGNORECASE):
         layout_profile = "somatic-touchflow"
-    elif re.search(r"Baseline 3|Editorial|Reading|阅读|文章|出版", declared_baseline, re.IGNORECASE):
+    elif re.search(r"Baseline 3|Editorial|Reading|阅读|文章|出版|editorial", declared_baseline, re.IGNORECASE):
         layout_profile = "editorial-reading"
-    elif re.search(r"Baseline 2|SaaS|Commerce|Project|画布|业务|交易", declared_baseline, re.IGNORECASE):
+    elif re.search(r"Baseline 2|SaaS|Commerce|Project|画布|业务|交易|canvas", declared_baseline, re.IGNORECASE):
         layout_profile = "operational-canvas"
-    elif re.search(r"Baseline 1|Console|Control|工作台|控制台|运维", declared_baseline, re.IGNORECASE):
+    elif re.search(r"Baseline 1|Console|Control|工作台|控制台|运维|telemetry", declared_baseline, re.IGNORECASE):
         layout_profile = "dense-console"
     else:
         all_spec_text = product_content + " " + spec_content
-        if re.search(r"\bBaseline 4\b", all_spec_text, re.IGNORECASE):
+        if re.search(r"\bBaseline 4\b|mobile-first|touch-friendly", all_spec_text, re.IGNORECASE):
             layout_profile = "somatic-touchflow"
-        elif re.search(r"\bBaseline 3\b", all_spec_text, re.IGNORECASE):
+        elif re.search(r"\bBaseline 3\b|editorial-reading|long-form", all_spec_text, re.IGNORECASE):
             layout_profile = "editorial-reading"
-        elif re.search(r"\bBaseline 2\b", all_spec_text, re.IGNORECASE):
+        elif re.search(r"\bBaseline 2\b|operational-canvas|master-detail", all_spec_text, re.IGNORECASE):
             layout_profile = "operational-canvas"
-        else:
+        elif re.search(r"\bBaseline 1\b|dense-console|telemetry-grid", all_spec_text, re.IGNORECASE):
             layout_profile = "dense-console"
+        else:
+            # v10.1: Composable adaptive workspace instead of rigid dense-console fallback
+            layout_profile = "adaptive-workspace"
 
     # Extract verifiable assertions & Break Protocol
     assertions: List[str] = []
@@ -458,13 +462,23 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         }
         interaction_spec["context_preservation_rules"] = context_rules
     else:
-        # operational-canvas fallback
+        # adaptive-workspace / custom-composite
+        interaction_spec["profile_notes"] = (
+            "adaptive-workspace: composable layout guided by product context and task requirements. "
+            "Implement responsive hierarchy, clear state transitions, and accessible semantic interactions."
+        )
         interaction_spec["dual_channel_shortcuts"] = shortcuts
         interaction_spec["action_verb_lifecycle"] = verb_lifecycle
         interaction_spec["decisive_exchange_frames"] = decisive_frames
         interaction_spec["context_preservation_rules"] = context_rules
 
     app_shell_blueprints = {
+        "adaptive-workspace": {
+            "profile": "adaptive-workspace",
+            "spatial_roles": ["header_navigation", "primary_workspace", "contextual_inspector"],
+            "density_rules": "fluid responsive layout, semantic spacing scale, zero rigid pixel clamping",
+            "composition_guidance": "Design shell adapted to product thesis; structure surfaces for cognitive clarity and task continuity; enforce @media (prefers-reduced-motion: reduce) resilience."
+        },
         "dense-console": {
             "profile": "dense-console",
             "spatial_roles": ["global_nav", "operational_viewport", "context_inspector", "status_telemetry"],
@@ -495,6 +509,13 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     brand_title = re.sub(r"^Product(?:\s+Thesis)?\s*[:\-]\s*", "", product_title_raw, flags=re.IGNORECASE).strip() or "Product Console"
 
     app_shell_contracts = {
+        "adaptive-workspace": {
+            "profile": "adaptive-workspace",
+            "header": "Responsive header adapted to product thesis with navigation and primary state indicator",
+            "main_viewport": "Primary content/workspace slot structured according to OOUX entity topology",
+            "context_drawer": "Contextual inspection panel, drawer, or modal invoked on demand",
+            "status_bar": "Calm status/metadata bar providing contextual grounding and feedback"
+        },
         "dense-console": {
             "profile": "dense-console",
             "header": "Top bar containing system title, active slice indicator, and topology navigation",
@@ -564,6 +585,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     }
 
     creative_envelope = {
+        "layout_profile": layout_profile,
         "spatial_composition_agency": "Builder owns layout rhythm, panel proportions, and responsive flow. No pre-baked rigid HTML scaffolding mandated.",
         "attention_routing": {
             "primary_visual_anchor": f"Primary {slice_id} focal workspace & status indicator",
@@ -578,8 +600,8 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             }
         },
         "cognitive_ledger": cognitive_ledger,
-        "suggested_blueprints": app_shell_blueprints.get(layout_profile, app_shell_blueprints["dense-console"]),
-        "reference_pattern_guidance": app_shell_contracts.get(layout_profile, app_shell_contracts["dense-console"])
+        "suggested_blueprints": app_shell_blueprints.get(layout_profile, app_shell_blueprints["adaptive-workspace"]),
+        "reference_pattern_guidance": app_shell_contracts.get(layout_profile, app_shell_contracts["adaptive-workspace"])
     }
 
     envelope = {

@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 /**
- * Zero-dependency WCAG 2.1 AA/AAA contrast calculator.
+ * contrast-preflight.js (Zero-dependency contrast ratio preflight calculator).
+ *
+ * NOTE: This is a static contrast preflight tool, NOT a complete automated WCAG audit.
+ * Complete accessibility verification requires full semantic audit, keyboard operability,
+ * screen reader landmark inspection, focus management, and touch target tests.
+ *
  * Usage:
- *   node wcag-check.js "#ffffff" "#000000"
- *   node wcag-check.js tokens.json [--level AAA]
+ *   node contrast-preflight.js "#ffffff" "#000000"
+ *   node contrast-preflight.js tokens.json [--level AAA]
  */
 const fs = require('fs');
 

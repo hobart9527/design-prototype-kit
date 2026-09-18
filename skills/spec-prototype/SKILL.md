@@ -4,7 +4,7 @@ description: "Canonical 5-Stage Design Delivery Engine for UI/UX experience desi
 license: MIT
 metadata:
   author: design-prototype-kit
-  version: "9.0.0"
+  version: "10.1.0"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit|MultiEdit|NotebookEdit|Bash|Agent|Task"

@@ -56,20 +56,20 @@ def run_5_iterations():
                 ], capture_output=True, text=True)
                 try:
                     res_taste = json.loads(eval_proc.stdout)
-                    case_scores[c] = res_taste["overall_taste_score"]
+                    case_scores[c] = res_taste.get("signal_coverage_pct", 0.0)
                 except Exception:
                     case_scores[c] = 0.0
 
-        avg_taste = sum(case_scores.values()) / len(case_scores) if case_scores else 0.0
-        print(f"  Cycle {cycle} complete in {dur}s | Choice: Option {choice} | Avg Design Taste Score: {avg_taste:.1f} / 100")
+        avg_coverage = sum(case_scores.values()) / len(case_scores) if case_scores else 0.0
+        print(f"  Cycle {cycle} complete in {dur}s | Choice: Option {choice} | Avg Signal Coverage: {avg_coverage:.1f}%")
         for c, s in case_scores.items():
-            print(f"    - {c:22}: Taste Score = {s:.1f}")
+            print(f"    - {c:22}: Signal Coverage = {s:.1f}%")
 
         cycle_reports.append({
             "cycle": cycle,
             "choice": choice,
             "duration_s": dur,
-            "avg_taste_score": avg_taste,
+            "avg_signal_coverage_pct": avg_coverage,
             "case_scores": case_scores,
             "results_dir": str(latest_dir)
         })

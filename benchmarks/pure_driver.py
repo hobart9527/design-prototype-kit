@@ -164,10 +164,10 @@ def run_clean_slate_case(case_name: str, choice: str, output_base: Path) -> Dict
     ], capture_output=True, text=True)
     try:
         taste_data = json.loads(taste_proc.stdout)
-        taste_score = taste_data["overall_taste_score"]
-        taste_dims = taste_data["dimensions"]
+        signal_coverage = taste_data.get("signal_coverage_pct", 0.0)
+        taste_dims = taste_data.get("dimensions", {})
     except Exception:
-        taste_score = 0.0
+        signal_coverage = 0.0
         taste_dims = {}
 
     return {
@@ -175,7 +175,7 @@ def run_clean_slate_case(case_name: str, choice: str, output_base: Path) -> Dict
         "choice": choice,
         "duration_s": dur,
         "pipeline_ok": pipeline_ok,
-        "taste_score": taste_score,
+        "signal_coverage_pct": signal_coverage,
         "taste_dimensions": taste_dims,
         "artifacts": {
             "product_md": (proto_dir / "product.md").is_file(),

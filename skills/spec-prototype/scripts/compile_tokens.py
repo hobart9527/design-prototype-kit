@@ -269,20 +269,41 @@ PALETTE_ALIASES = {
 }
 
 
-REQUIRED_DIALS = ("energy", "finish", "density", "weight", "seriousness")
+# Canonical v10 Five Axes (Optional & Composable)
+CANONICAL_FIVE_AXES = ("density", "energy", "materiality", "rhythm", "character")
+# Legacy dial aliases for backwards compatibility
+LEGACY_DIAL_MAP = {
+    "finish": "materiality",
+    "weight": "materiality",
+    "seriousness": "character",
+}
+
+
+def parse_five_axes(discussion_text: str) -> Dict[str, str]:
+    """Extract optional Five Axes decisions from discussion; returns empty/partial dict if undeclared.
+
+    Never fails if axes are omitted. Maps legacy 5-dial terms into canonical axes where appropriate.
+    """
+    axes: Dict[str, str] = {}
+    # 1. Search canonical axes
+    for key in CANONICAL_FIVE_AXES:
+        match = re.search(rf"[`*]*{key}[`*]*\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*", discussion_text, re.IGNORECASE)
+        if match:
+            axes[key] = match.group(1).lower()
+
+    # 2. Check legacy dial keys if canonical axes were not declared
+    for legacy_key, target_axis in LEGACY_DIAL_MAP.items():
+        if target_axis not in axes:
+            match = re.search(rf"[`*]*{legacy_key}[`*]*\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*", discussion_text, re.IGNORECASE)
+            if match:
+                axes[target_axis] = match.group(1).lower()
+
+    return axes
 
 
 def parse_5dials(discussion_text: str) -> Dict[str, str]:
-    """Extract the complete 5-dial register; missing decisions must be authored."""
-    dials: Dict[str, str] = {}
-    for key in REQUIRED_DIALS:
-        match = re.search(rf"[`*]*{key}[`*]*\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*", discussion_text, re.IGNORECASE)
-        if match:
-            dials[key] = match.group(1).lower()
-    missing = [key for key in REQUIRED_DIALS if key not in dials]
-    if missing:
-        raise ValueError(f"Missing required 5-dial decisions: {', '.join(missing)}")
-    return dials
+    """Backwards-compatible alias for parse_five_axes."""
+    return parse_five_axes(discussion_text)
 
 
 def _hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
@@ -407,11 +428,13 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
     return base_colors
 
 
-def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str]) -> Dict[str, Any]:
-    """Derive full design token tree from authored dials and an explicit palette or dynamic color dict."""
-    missing = [key for key in REQUIRED_DIALS if not dials.get(key)]
-    if missing:
-        raise ValueError(f"Missing required 5-dial decisions: {', '.join(missing)}")
+def compute_tokens(dials: Dict[str, str] | None = None, palette_or_colors: str | Dict[str, str] = "warm-graphite-lime") -> Dict[str, Any]:
+    """Derive full design token tree from optional Five Axes / dials and an explicit palette or dynamic color dict.
+
+    All axes are optional. Undeclared axes fall back gracefully to balanced defaults.
+    """
+    if dials is None:
+        dials = {}
 
     if isinstance(palette_or_colors, dict):
         colors = palette_or_colors
@@ -422,17 +445,18 @@ def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str
             resolved_palette = "warm-graphite-lime"
         colors = DARK_ATMOSPHERES[resolved_palette]
 
-    # Density calibration
-    density = dials["density"]
-    if density == "dense":
+    # Density calibration (Density Axis)
+    density = dials.get("density", "balanced").lower()
+    if density in ("dense", "compact", "high"):
         space = {1: "4px", 2: "8px", 3: "12px", 4: "16px", 5: "20px", 6: "24px", 8: "32px"}
         r_outer_val = 8
         padding_val = 4
-    elif density == "sparse":
+    elif density in ("sparse", "relaxed", "low", "airy"):
         space = {1: "8px", 2: "16px", 3: "24px", 4: "32px", 5: "40px", 6: "48px", 8: "64px"}
         r_outer_val = 16
         padding_val = 8
     else:
+        # Balanced default
         space = {1: "6px", 2: "12px", 3: "18px", 4: "24px", 5: "30px", 6: "36px", 8: "48px"}
         r_outer_val = 12
         padding_val = 6
@@ -452,14 +476,14 @@ def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str
         "padding_panel": f"{padding_val}px",
     }
 
-    # Typography & Finish Dial calibration
-    finish = dials.get("finish", "machined-industrial").lower()
-    if any(k in finish for k in ("editorial", "paper", "reading")):
+    # Materiality / Finish Axis calibration
+    materiality = dials.get("materiality", dials.get("finish", "machined-industrial")).lower()
+    if any(k in materiality for k in ("editorial", "paper", "reading")):
         fonts = {
             "sans": 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
             "mono": '"SF Mono", "Fira Code", Menlo, monospace',
         }
-    elif any(k in finish for k in ("somatic", "touch", "mobile")):
+    elif any(k in materiality for k in ("somatic", "touch", "mobile", "glass", "organic")):
         fonts = {
             "sans": '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif',
             "mono": '"SF Mono", "Fira Code", monospace',
@@ -473,8 +497,8 @@ def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str
             "mono": '"JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace',
         }
 
-    # Weight / Tactile Physics Dial calibration
-    weight = dials.get("weight", "regular").lower()
+    # Weight / Tactile Physics Axis calibration
+    weight = dials.get("weight", dials.get("materiality", "regular")).lower()
     if any(k in weight for k in ("dense-tactile", "heavy", "dense")):
         tactile_scale = "0.96"
     elif any(k in weight for k in ("light", "subtle", "airy")):
@@ -482,7 +506,8 @@ def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str
     else:
         tactile_scale = "0.98"
 
-    # Energy Dial calibration (temporal physics & rhythm)
+    # Energy & Rhythm Axis calibration (temporal physics & rhythm)
+    energy = dials.get("energy", dials.get("rhythm", "kinetic")).lower()
     energy = dials.get("energy", "kinetic").lower()
     if any(k in energy for k in ("calm", "serene", "quiet")):
         motion = {
@@ -564,10 +589,15 @@ def generate_css(tokens: Dict[str, Any]) -> str:
     f = tokens["fonts"]
     m = tokens["motion"]
 
+    d = tokens.get("dials", {})
+    energy_desc = d.get("energy", "balanced")
+    materiality_desc = d.get("materiality", d.get("finish", "machined-industrial"))
+    density_desc = d.get("density", "balanced")
+
     lines = [
         "/* ==========================================================================",
-        "   DTCG Design Tokens - Machine-Derived from Stage 1 5-Dial State Machine",
-        f"   Energy: {tokens['dials']['energy']} | Finish: {tokens['dials']['finish']} | Density: {tokens['dials']['density']}",
+        "   DTCG Design Tokens - Derived from v10 Five Axes / Experience Foundation",
+        f"   Energy: {energy_desc} | Materiality: {materiality_desc} | Density: {density_desc}",
         "   ========================================================================== */",
         ":root {",
         "  /* Atmospheric Undertone Palette (Non-sterile chromatic surfaces) */",

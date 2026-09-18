@@ -164,11 +164,6 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if raw_style_hex:
         failures.append(f"craft assertion: raw inline hex colors in style attributes ({len(raw_style_hex)} found; use CSS custom properties / var(--...))")
 
-    # Hard floor: reject dead neutral gray (#808080 / sterile washes) in style attributes and embedded <style>
-    dead_grays = re.findall(r'(?:style=["\'][^"\']*|color\s*:\s*|background(?:-color)?\s*:\s*)#(?:808080|777777|888888|999999)\b', source, re.IGNORECASE)
-    if dead_grays:
-        failures.append(f"craft assertion: atmospheric undertone violation: sterile neutral gray found ({dead_grays[0]}; infuse chromatic tone into surface/text tokens)")
-
     # Accessibility floor: conditional prefers-reduced-motion when animations or transitions are present
     has_motion = bool(re.search(r'(?:transition|animation)\s*:\s*(?!none\b)[^;}{]+', source, re.IGNORECASE))
     if has_motion:
