@@ -113,17 +113,17 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                 if len(extracted) >= 3:
                     break
 
-    # Tertiary Fallback: Candidate hypothesis derived from slice_id — never fabricated as frozen fact
+    # Tertiary Fallback: Unresolved candidate hypothesis — explicitly marked as unvalidated hypothesis, never forged as frozen operational fact
     if not extracted:
         clean_slice = slice_id.replace("-", " ").title()
-        action_id = f"execute-{slice_id}"
+        action_id = f"explore-{slice_id}"
         extracted.append({
             "action_id": action_id,
-            "trigger_btn": f"Commit {clean_slice}",
-            "modal_header": f"Confirm {clean_slice} Action",
-            "commit_btn": "Confirm",
-            "toast": f"{clean_slice} Action Completed",
-            "impact": f"[Hypothesis] Candidate operational flow for {slice_id}; unresolved pending empirical validation in Stage 2/4",
+            "trigger_btn": f"[Hypothesis] View {clean_slice}",
+            "modal_header": f"[Hypothesis] Contextual Detail: {clean_slice}",
+            "commit_btn": "Acknowledge",
+            "toast": f"{clean_slice} Exploration Settled",
+            "impact": f"[Hypothesis] Passive exploration view for {slice_id}; no authoritative state mutations authored. Requires explicit user specification before formal candidate build.",
         })
     return extracted
 

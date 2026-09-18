@@ -110,10 +110,10 @@ Route design work by declared intent and required evidence. The five stages are 
     Builder is strictly forbidden from open-ended filesystem discovery or micro-editing CSS in a ping-pong loop.
 - **Core Value & Signature Interaction Anchor (核心价值与关键交互承载面)**:
   - Do not spray out multiple pages prematurely. Build the single most consequential screen first—the screen carrying the core job-to-be-done, the primary visual tone, or the highest interaction risk (the Hero Anchor), regardless of whether it is high-density workbench or minimalist consumer flow.
-- **Design Engineering Floor (微观几何与字排工法)**:
-  - **Concentric Border Radius**: Nested container corners must obey $R_{inner} = \max(0, R_{outer} - padding)$ to eliminate visual pinching and distortion.
-  - **Optical Alignment (视错觉补偿)**: Asymmetric controls (e.g. play triangles, disclosure chevrons, search icons) must be manually nudged 1-2px from geometric center for perceived equilibrium.
-  - **Tabular Numerics**: Enforce `font-variant-numeric: tabular-nums` across all counters, telemetry readings, financial tables, and timers to prevent horizontal layout jitter.
+- **Design Engineering Floor & Craft Recommendations (微观几何与字排工法)**:
+  - **Concentric Border Radius**: Nested container corners recommended to obey $R_{inner} = \max(0, R_{outer} - padding)$ to eliminate visual pinching and distortion when rounded corners are adopted.
+  - **Optical Alignment (视错觉补偿)**: Asymmetric controls (e.g. play triangles, disclosure chevrons, search icons) recommended to be manually nudged 1-2px from geometric center for perceived equilibrium.
+  - **Tabular Numerics**: Use `font-variant-numeric: tabular-nums` or fixed-width columns across counters, telemetry readings, financial tables, and timers to prevent horizontal layout jitter.
 - **Execution Trace & Authentic Evidence (全链路实证存证体系)**:
   - Every prototype generation run must produce inspectable, verifiable physical evidence:
     - Headless Chrome viewport captures (`prototype/evidence/probes/<slice_id>/1280.png`, `390.png`).
@@ -158,7 +158,7 @@ Route design work by declared intent and required evidence. The five stages are 
   - `Detent`: Visible physical resistance/damping or immediate perceptible feedback during execution.
   - `Settled`: Deterministic feedback, focus restoration, and reversible exit.
 - **Dual-Floor Reality Verification (双轨红线验收门)**:
-  - **Track A: Machine & Geometry Code Floor**: Concentric radii formula verification (`R_in = max(0, R_out - P)`), zero raw inline hex colors, 100% token inheritance, WCAG AAA static contrast, and zero layout breakage under unhyphenated string stress.
+  - **Track A: Machine & Invariant Code Floor**: Zero raw inline hex colors, 100% token inheritance, WCAG AAA static contrast where required, clear non-destructive recovery, and zero layout breakage under unhyphenated string stress. Micro-geometry formulas (concentric radii, tabular nums) serve as verified craft quality indicators.
   - **Track B: Ergonomic & Cognitive Reality Floor**:
     - *B-Pro 5-Second Test*: Can an unbriefed engineer identify current system health and locate the primary anomaly within 5 seconds?
     - *C-Consumer Somatic Test*: Can a user complete the core loop purely through lifeworld somatic intuition (tap, swipe, clear signifiers) without reading instructional text?

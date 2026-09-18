@@ -1,6 +1,7 @@
 # Direction Probe Brief: AI 自动编排流协同决策台 (Agent Detent Cockpit)
 
 - Mode: `direction-probe`
+- Probe ID: `cockpit-p1`
 - Repository root: `/Users/hobart/Codex/design-prototype-kit`
 - Probe target path: `prototype/experiments/probes/cockpit-p1/index.html`
 - Core design thesis: 为高危金融/风控 Agent 编排流提供亚秒级电传接管中控。以“自动巡航操纵杆（Fly-by-wire Detent）”为核心隐喻，摒弃全局阻塞弹窗，以时间轴磁吸阻尼与原位瞬时冻结重构人机协同手感。

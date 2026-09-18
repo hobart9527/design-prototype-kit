@@ -591,6 +591,11 @@ def compute_tokens(dials: Dict[str, str] | None = None, palette_or_colors: str |
         "modal_border": colors["border_bright"],
     }
 
+    typography = {
+        "line_height_body": line_height_body,
+        "line_height_heading": line_height_heading,
+    }
+
     return {
         "dials": dials,
         "colors": colors,
@@ -598,6 +603,7 @@ def compute_tokens(dials: Dict[str, str] | None = None, palette_or_colors: str |
         "radii": radii,
         "fonts": fonts,
         "motion": motion,
+        "typography": typography,
         "semantics": semantics,
         "components": components,
     }

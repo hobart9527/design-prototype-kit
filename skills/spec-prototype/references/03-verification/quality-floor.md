@@ -281,12 +281,12 @@ redundant finding — report the cheaper fix instead.
 
 ---
 
-# Integrated Design Floor Standards (Consolidated from design-floor)
+# Integrated Design Invariant Standards (Consolidated from design-floor)
 
-## Geometric and Visual Anti-Toy Discipline
-- Concentric Border Radii Rule: R_inner = max(0, R_outer - Padding). Any visual collision or concentric distortion is an instant Floor failure.
-- Tabular Numerics: font-variant-numeric: tabular-nums on all high-frequency telemetry, timestamps, and currency values.
-- Zero Naked Metrics: Every metric must display a baseline, threshold, or floor/ceiling benchmark.
+## Geometric and Visual Craft Guidelines
+- Concentric Border Radii Rule: R_inner = max(0, R_outer - Padding). Eliminates visual collision or concentric distortion when rounded containers are nested.
+- Tabular Numerics: font-variant-numeric: tabular-nums on high-frequency telemetry, timestamps, and currency values to prevent scan jitter.
+- Zero Naked Metrics: Every metric must display a baseline, threshold, or floor/ceiling benchmark to convey operational meaning.
 - Atmospheric Undertone: Surfaces must derive from contextual dark/light undertones, eliminating flat dead neutral greys.
 - Perceptible Action Feedback: Active states must provide immediate, perceptible feedback (e.g. tactile scale, elevation shift, or luminance pulse) with stable layout integrity.
 - Action Verb Lifecycle: Interactive buttons must reflect full lifecycle state transitions (e.g. QUARANTINE STEP -> QUARANTINED).

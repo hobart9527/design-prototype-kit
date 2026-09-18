@@ -63,9 +63,19 @@ def _brief_scope(value: str, fallback: str) -> str:
 def assemble_direction(root: Path, slice_id: str, brief: Path) -> Dict[str, Any]:
     """Assemble a direction-probe envelope from one exploration brief."""
     content = brief.read_text(encoding="utf-8")
-    probe_id = extract_field(content, "Probe ID", slice_id)
-    target = _brief_scope(extract_field(content, "Probe target path"),
-                          f"prototype/experiments/probes/{probe_id}/")
+    probe_id = extract_field(content, "Probe ID", slice_id).strip("`'\" ")
+    raw_target = extract_field(content, "Probe target path", "")
+    target_clean = raw_target.strip("`'\" ")
+    if target_clean.endswith(".html"):
+        target_html = target_clean
+        proto_scope = target_clean.rsplit("/", 1)[0] + "/"
+    elif target_clean:
+        proto_scope = target_clean.rstrip("/") + "/"
+        target_html = proto_scope + "index.html"
+    else:
+        proto_scope = f"prototype/experiments/probes/{probe_id}/"
+        target_html = proto_scope + "index.html"
+
     evidence = _brief_scope(extract_field(content, "Evidence write scope"),
                             f"prototype/evidence/probes/{probe_id}/")
     return {
@@ -75,8 +85,8 @@ def assemble_direction(root: Path, slice_id: str, brief: Path) -> Dict[str, Any]
         "slice_id": slice_id,
         "probe_id": probe_id,
         "mode": "direction-probe",
-        "target_html_path": target if target.endswith(".html") else target + "index.html",
-        "prototype_write_scope": target.rsplit("/", 1)[0] + "/" if target.endswith(".html") else target,
+        "target_html_path": target_html,
+        "prototype_write_scope": proto_scope,
         "evidence_write_scope": evidence,
         "brief": {"path": brief.relative_to(root).as_posix(),
                   "sha256": hashlib.sha256(brief.read_bytes()).hexdigest()},
