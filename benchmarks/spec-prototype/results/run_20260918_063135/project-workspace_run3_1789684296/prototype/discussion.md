@@ -1,0 +1,9 @@
+# Discussion: project-workspace
+- Energy: 3
+- Finish: machined-industrial
+- Density: sparse
+- Weight: regular
+- Seriousness: 3
+## Confirmed Decisions
+- bg-void: #0f172a
+- accent-primary: #10b981

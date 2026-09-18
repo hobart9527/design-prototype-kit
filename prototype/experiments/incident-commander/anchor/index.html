@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>incident-commander · operational console</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.45;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .mono, .metric-value, .metric-baseline, .badge, .cell-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- global nav ---------- */
+  .topbar {
+    display: flex; align-items: center; gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .brand { font-size: 13px; font-weight: 650; letter-spacing: .02em; color: var(--text-primary); white-space: nowrap; }
+  .brand .brand-mark { color: var(--accent-primary); }
+  .slice-chip {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: 2px var(--space-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-btn);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 11px;
+  }
+  .nav-links { display: flex; gap: var(--space-3); margin-left: auto; align-items: center; }
+  .nav-links a {
+    color: var(--text-secondary); text-decoration: none; font-size: 12px;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-btn);
+    transition: color var(--duration-fast) var(--ease-hud), background var(--duration-fast) var(--ease-hud);
+  }
+  .nav-links a:hover, .nav-links a:focus-visible { color: var(--text-primary); background: var(--bg-surface-raised); }
+  .nav-links a[aria-current="page"] { color: var(--accent-primary); background: var(--accent-subtle); }
+
+  /* ---------- status rail ---------- */
+  .statusrail {
+    display: flex; align-items: stretch; gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-void);
+    border-bottom: 1px solid var(--border-dim);
+    overflow-x: auto;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: var(--space-1);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    border: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+  .badge-p0 { color: var(--status-danger); border-color: var(--border-danger); background: rgba(255, 77, 77, .12); }
+  .badge-p1 { color: var(--accent-primary); border-color: var(--border-warning); background: var(--accent-subtle); }
+  .badge-ok { color: var(--status-running); border-color: var(--border-subtle); background: var(--bg-surface); }
+  .badge-mut { color: var(--text-secondary); }
+  .led { width: 6px; height: 6px; border-radius: var(--radius-pill); background: currentColor; box-shadow: 0 0 6px currentColor; flex: none; }
+  .led-pulse { animation: pulse 1.6s var(--ease-hud) infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+  /* ---------- telemetry rack ---------- */
+  .rack { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-2); }
+  .metric {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: var(--space-2) var(--space-3);
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 0;
+  }
+  .metric-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .metric-value { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+  .metric-value .unit { font-size: 11px; color: var(--text-secondary); margin-left: 2px; }
+  .metric-baseline { font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .metric-baseline .delta-up { color: var(--status-danger); }
+  .metric-baseline .delta-flat { color: var(--status-running); }
+  .sparkline { width: 100%; height: 18px; display: block; color: var(--accent-primary); }
+  .sparkline.spark-ok { color: var(--status-running); }
+  .sparkline.spark-bad { color: var(--status-danger); }
+
+  /* ---------- body grid ---------- */
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    min-height: 0;
+    background: var(--bg-void);
+  }
+  .panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .panel + .panel { border-left: 1px solid var(--border-dim); }
+  .panel-head {
+    display: flex; align-items: center; gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--border-dim);
+    background: var(--bg-base);
+    flex: none;
+  }
+  .panel-title { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-secondary); white-space: nowrap; }
+  .panel-body { overflow: auto; padding: var(--space-3) var(--space-4); min-height: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .panel-body.inspector { padding: var(--space-3); gap: var(--space-3); }
+
+  .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-tertiary); }
+
+  /* ---------- incident matrix ---------- */
+  table.matrix { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+  .matrix th {
+    text-align: left; font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-tertiary); padding: var(--space-2) var(--space-2);
+    border-bottom: 1px solid var(--border-subtle); position: sticky; top: 0; background: var(--bg-base); z-index: 1;
+  }
+  .matrix td { padding: var(--space-2); border-bottom: 1px solid var(--border-dim); vertical-align: middle; }
+  .matrix tbody tr { cursor: pointer; transition: background var(--duration-fast) var(--ease-hud); }
+  .matrix tbody tr:hover { background: var(--bg-surface); }
+  .matrix tbody tr.is-selected { background: var(--bg-surface-raised); box-shadow: inset 2px 0 0 var(--accent-primary); }
+  .matrix tbody tr:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: -2px; }
+  .cell-entity { font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); }
+  .cell-num { text-align: right; color: var(--text-secondary); }
+  .col-svc { width: 34%; } .col-sev { width: 9%; } .col-age { width: 13%; } .col-imp { width: 12%; }
+
+  /* ---------- service list ---------- */
+  .svc-list { display: flex; flex-direction: column; gap: var(--space-1); }
+  .svc-row {
+    display: grid; grid-template-columns: 12px minmax(0, 1fr) auto;
+    align-items: center; gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+  }
+  .svc-name { font-family: var(--font-mono); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .svc-meta { font-size: 10px; color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* ---------- buttons ---------- */
+  button, [role="button"] { font-family: inherit; }
+  .btn-tactile {
+    appearance: none; cursor: pointer;
+    background: var(--bg-surface-raised);
+    color: var(--text-primary);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-btn);
+    padding: var(--space-2) var(--space-3);
+    font-size: 12px; font-weight: 550;
+    transition: transform var(--duration-fast) var(--ease-hud), background var(--duration-fast) var(--ease-hud), border-color var(--duration-fast) var(--ease-hud);
+  }
+  .btn-tactile:hover { background: var(--bg-overlay); border-color: var(--text-tertiary); }
+  .btn-tactile:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+  .btn-tactile:active { transform: scale(0.97); }
+  .btn-tactile[disabled] { opacity: .5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent-subtle); border-color: var(--border-warning); color: var(--accent-hover); }
+  .btn-primary:hover { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--bg-void); }
+  .btn-danger { background: rgba(255, 77, 77, .12); border-color: var(--border-danger); color: var(--status-danger); }
+  .btn-danger:hover { background: var(--status-danger); border-color: var(--status-danger); color: var(--bg-void); }
+  .btn-wide { width: 100%; justify-content: center; }
+
+  /* ---------- inspector fields ---------- */
+  .kv { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-1) var(--space-2); font-size: 11px; }
+  .kv dt { color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+  .kv dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cardish { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-card); padding: var(--space-3); }
+
+  /* ---------- state surfaces ---------- */
+  .state-panel { display: none; }
+  body[data-state="empty"] .state-panel[data-for="empty"],
+  body[data-state="error"] .state-panel[data-for="error"] { display: block; }
+  body[data-state="empty"] .hide-on-empty,
+  body[data-state="error"] .hide-on-empty { display: none; }
+  .alert {
+    border: 1px solid var(--border-danger); background: rgba(255, 77, 77, .1);
+    border-radius: var(--radius-card); padding: var(--space-3);
+    display: flex; flex-direction: column; gap: var(--space-1);
+  }
+  .alert-title { color: var(--status-danger); font-size: 11px; text-transform: uppercase; letter-spacing: .09em; }
+  .alert-body { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); overflow-wrap: anywhere; }
+
+  /* ---------- footer ---------- */
+  .statusbar {
+    display: flex; align-items: center; gap: var(--space-4);
+    padding: var(--space-1) var(--space-4);
+    background: var(--bg-base);
+    border-top: 1px solid var(--border-subtle);
+    font-size: 10.5px; color: var(--text-secondary);
+    overflow-x: auto; white-space: nowrap;
+  }
+  kbd {
+    font-family: var(--font-mono); font-size: 10px;
+    background: var(--bg-surface-raised); border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm); padding: 1px var(--space-1); color: var(--text-primary);
+  }
+
+  /* ---------- overlay ---------- */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, .72);
+    display: none; align-items: center; justify-content: center; padding: var(--space-4); z-index: 40;
+  }
+  body[data-overlay="open"] .scrim { display: flex; }
+  .modal {
+    width: min(460px, 100%); max-height: 86vh; overflow: auto;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-outer);
+    padding: var(--space-2);
+    animation: lift var(--duration-normal) var(--ease-hud);
+  }
+  @keyframes lift { from { opacity: 0; transform: translateY(6px) scale(.99); } to { opacity: 1; transform: none; } }
+  .modal-inner {
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner);
+    padding: var(--space-4);
+    display: flex; flex-direction: column; gap: var(--space-3);
+  }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+  .modal-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .modal-actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
+
+  .toast {
+    position: fixed; right: var(--space-4); bottom: 44px; z-index: 50;
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-bright);
+    border-left: 3px solid var(--status-running);
+    border-radius: var(--radius-card);
+    padding: var(--space-2) var(--space-3);
+    display: none; align-items: center; gap: var(--space-2);
+    font-size: 12px;
+    box-shadow: 0 6px 24px rgba(15, 23, 42, .55);
+  }
+  body[data-toast="visible"] .toast { display: flex; animation: lift var(--duration-normal) var(--ease-hud); }
+
+  @media (max-width: 880px) {
+    .workspace { grid-template-columns: minmax(0, 1fr); }
+    .panel + .panel { border-left: 0; border-top: 1px solid var(--border-dim); }
+  }
+  @media (max-width: 360px) {
+    body { font-size: 12px; }
+    .topbar, .statusrail, .panel-head, .panel-body, .statusbar { padding-left: var(--space-2); padding-right: var(--space-2); }
+    .col-age, .col-imp { display: none; }
+    .toast { left: var(--space-2); right: var(--space-2); bottom: var(--space-2); }
+    .kv { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+</style>
+</head>
+<body data-state="ideal" data-overlay="closed" data-toast="hidden">
+
+<header class="topbar">
+  <span class="brand"><span class="brand-mark">◆</span> incident-commander</span>
+  <span class="slice-chip" data-slice="incident-commander">
+    <span class="led led-pulse" aria-hidden="true"></span> slice: incident-commander
+  </span>
+  <span class="badge badge-p0" id="global-severity"><span class="led" aria-hidden="true"></span> P0 active</span>
+  <nav class="nav-links" aria-label="Topology">
+    <a href="index.html" aria-current="page">console</a>
+  </nav>
+</header>
+
+<section class="statusrail" aria-label="System status">
+  <span class="badge badge-p0" data-sev="P0">P0 · SEV-1</span>
+  <span class="badge badge-p1" data-sev="P1">P1 · degraded</span>
+  <span class="badge badge-ok"><span class="led" aria-hidden="true"></span> control plane nominal</span>
+  <span class="badge badge-mut">on-call · sre-primary</span>
+  <span class="badge badge-mut mono" id="clock">--:--:-- UTC</span>
+</section>
+
+<main class="workspace">
+  <section class="panel" aria-label="Operational viewport">
+    <div class="panel-head">
+      <span class="panel-title">Telemetry rack</span>
+      <span class="badge badge-mut mono">window 15m</span>
+    </div>
+    <div class="panel-body">
+      <div class="rack">
+        <div class="metric" data-metric="p99-latency">
+          <span class="metric-label">p99 latency</span>
+          <span class="metric-value">142<span class="unit">ms</span></span>
+          <span class="metric-baseline">vs baseline 18ms · <span class="delta-up">+689%</span></span>
+          <svg class="sparkline spark-bad" viewBox="0 0 100 18" preserveAspectRatio="none" role="img" aria-label="p99 latency trend rising">
+            <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="0,15 12,14 24,13 36,11 48,9 60,6 72,4 84,3 100,1"></polyline>
+          </svg>
+        </div>
+        <div class="metric" data-metric="error-rate">
+          <span class="metric-label">5xx error rate</span>
+          <span class="metric-value">4.7<span class="unit">%</span></span>
+          <span class="metric-baseline">vs baseline 0.20% · <span class="delta-up">+23.5x</span></span>
+          <svg class="sparkline spark-bad" viewBox="0 0 100 18" preserveAspectRatio="none" role="img" aria-label="error rate trend rising">
+            <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="0,16 12,16 24,15 36,14 48,12 60,10 72,7 84,5 100,2"></polyline>
+          </svg>
+        </div>
+        <div class="metric" data-metric="throughput">
+          <span class="metric-label">throughput</span>
+          <span class="metric-value">8.4<span class="unit">k rps</span></span>
+          <span class="metric-baseline">vs baseline 12.1k rps · <span class="delta-up">-31%</span></span>
+          <svg class="sparkline spark-bad" viewBox="0 0 100 18" preserveAspectRatio="none" role="img" aria-label="throughput trend falling">
+            <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="0,3 12,4 24,5 36,7 48,9 60,11 72,12 84,14 100,17"></polyline>
+          </svg>
+        </div>
+        <div class="metric" data-metric="queue-depth">
+          <span class="metric-label">queue depth</span>
+          <span class="metric-value">18.2<span class="unit">k msg</span></span>
+          <span class="metric-baseline">vs baseline 1.4k msg · <span class="delta-up">+1200%</span></span>
+          <svg class="sparkline spark-bad" viewBox="0 0 100 18" preserveAspectRatio="none" role="img" aria-label="queue depth trend rising">
+            <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="0,16 12,15 24,13 36,12 48,10 60,7 72,5 84,3 100,1"></polyline>
+          </svg>
+        </div>
+        <div class="metric" data-metric="node-saturation">
+          <span class="metric-label">node saturation</span>
+          <span class="metric-value">91<span class="unit">%</span></span>
+          <span class="metric-baseline">vs baseline 43% · <span class="delta-up">+48pt</span></span>
+          <svg class="sparkline" viewBox="0 0 100 18" preserveAspectRatio="none" role="img" aria-label="node saturation trend rising">
+            <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="0,14 12,13 24,12 36,10 48,9 60,7 72,5 84,4 100,2"></polyline>
+          </svg>
+        </div>
+        <div class="metric" data-metric="replica-health">
+          <span class="metric-label">replica health</span>
+          <span class="metric-value">17<span class="unit">/24 ready</span></span>
+          <span class="metric-baseline">vs baseline 24/24 · <span class="delta-up">-7 replicas</span></span>
+          <svg class="sparkline spark-bad" viewBox="0 0 100 18" preserveAspectRatio="none" role="img" aria-label="replica health falling">
+            <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="0,2 12,3 24,3 36,6 48,8 60,10 72,12 84,14 100,16"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <div class="state-panel cardish" data-for="error" role="alert">
+        <div class="alert">
+          <span class="alert-title">telemetry ingest degraded</span>
+          <span class="alert-body">scrape endpoint us-east-1b unreachable · unbreakable-entity-hash-00000000-0000-0000-0000-000000000000</span>
+          <span class="alert-body">last good sample 47s ago · values above may be stale</span>
+        </div>
+      </div>
+
+      <div class="panel-head">
+        <span class="panel-title">Affected services</span>
+        <span class="badge badge-mut mono">6 tracked</span>
+      </div>
+
+      <div class="hide-on-empty">
+        <table class="matrix" data-collection="affected-services">
+          <thead>
+            <tr>
+              <th class="col-svc">service</th>
+              <th class="col-sev">sev</th>
+              <th class="col-age">age</th>
+              <th class="col-imp">impact</th>
+            </tr>
+          </thead>
+          <tbody id="svc-rows">
+            <tr tabindex="0" data-entity="api-gateway" data-sev="P0" class="is-selected" aria-selected="true">
+              <td class="cell-entity" title="api-gateway">api-gateway</td>
+              <td><span class="badge badge-p0">P0</span></td>
+              <td class="cell-num">00:14:52</td>
+              <td class="cell-num">4.7% 5xx</td>
+            </tr>
+            <tr tabindex="0" data-entity="payments-orchestrator" data-sev="P0" aria-selected="false">
+              <td class="cell-entity" title="payments-orchestrator">payments-orchestrator</td>
+              <td><span class="badge badge-p0">P0</span></td>
+              <td class="cell-num">00:12:03</td>
+              <td class="cell-num">142ms p99</td>
+            </tr>
+            <tr tabindex="0" data-entity="ledger-writer" data-sev="P1" aria-selected="false">
+              <td class="cell-entity" title="ledger-writer">ledger-writer</td>
+              <td><span class="badge badge-p1">P1</span></td>
+              <td class="cell-num">00:09:41</td>
+              <td class="cell-num">18.2k lag</td>
+            </tr>
+            <tr tabindex="0" data-entity="auth-token-service" data-sev="P1" aria-selected="false">
+              <td class="cell-entity" title="auth-token-service">auth-token-service</td>
+              <td><span class="badge badge-p1">P1</span></td>
+              <td class="cell-num">00:06:18</td>
+              <td class="cell-num">91% sat</td>
+            </tr>
+            <tr tabindex="0" data-entity="cart-state-store" data-sev="P1" aria-selected="false">
+              <td class="cell-entity" title="cart-state-store">cart-state-store</td>
+              <td><span class="badge badge-p1">P1</span></td>
+              <td class="cell-num">00:04:55</td>
+              <td class="cell-num">7 replicas</td>
+            </tr>
+            <tr tabindex="0" data-entity="unbreakable-entity-hash-00000000-0000-0000-0000-000000000000" data-sev="P1" aria-selected="false">
+              <td class="cell-entity" title="unbreakable-entity-hash-00000000-0000-0000-0000-000000000000">unbreakable-entity-hash-00000000-0000-0000-0000-000000000000</td>
+              <td><span class="badge badge-p1">P1</span></td>
+              <td class="cell-num">00:02:10</td>
+              <td class="cell-num">no signal</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="state-panel cardish" data-for="empty">
+        <span class="section-label">filter · 0 results</span>
+        <p class="metric-baseline">No incidents match facet <span class="mono">sev:P0 status:open region:eu-west-1</span>. Draft filters are preserved.</p>
+        <button class="btn-tactile" id="reset-filters" type="button">Reset filters</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel" aria-label="Context inspector">
+    <div class="panel-head">
+      <span class="panel-title">Inspector</span>
+      <span class="badge badge-mut mono" id="inspector-scope">api-gateway</span>
+    </div>
+    <div class="panel-body inspector">
+      <div class="cardish">
+        <span class="section-label">Selection</span>
+        <dl class="kv">
+          <dt>entity</dt><dd id="ins-entity" title="api-gateway">api-gateway</dd>
+          <dt>severity</dt><dd id="ins-sev">P0</dd>
+          <dt>age</dt><dd id="ins-age">00:14:52</dd>
+          <dt>region</dt><dd>us-east-1b</dd>
+        </dl>
+      </div>
+      <div class="cardish">
+        <span class="section-label">Service status</span>
+        <div class="svc-list">
+          <div class="svc-row">
+            <span class="led" aria-hidden="true"></span>
+            <span class="svc-name" title="api-gateway">api-gateway</span>
+            <span class="svc-meta">unhealthy</span>
+          </div>
+          <div class="svc-row">
+            <span class="led" aria-hidden="true"></span>
+            <span class="svc-name" title="payments-orchestrator">payments-orchestrator</span>
+            <span class="svc-meta">unhealthy</span>
+          </div>
+          <div class="svc-row">
+            <span class="led" aria-hidden="true"></span>
+            <span class="svc-name" title="ledger-writer">ledger-writer</span>
+            <span class="svc-meta">degraded</span>
+          </div>
+          <div class="svc-row">
+            <span class="led" aria-hidden="true"></span>
+            <span class="svc-name" title="auth-token-service">auth-token-service</span>
+            <span class="svc-meta">degraded</span>
+          </div>
+          <div class="svc-row">
+            <span class="led" aria-hidden="true"></span>
+            <span class="svc-name" title="cart-state-store">cart-state-store</span>
+            <span class="svc-meta">degraded</span>
+          </div>
+        </div>
+      </div>
+      <div class="cardish">
+        <span class="section-label">Operational parameters</span>
+        <dl class="kv">
+          <dt>action id</dt><dd>execute-incident-commander</dd>
+          <dt>blast radius</dt><dd>us-east-1b · 3 nodes</dd>
+          <dt>drain grace</dt><dd>120s</dd>
+          <dt>rollback</dt><dd>automatic on 5xx</dd>
+        </dl>
+      </div>
+      <button class="btn-tactile btn-danger btn-wide" id="trigger-action" type="button"
+              aria-haspopup="dialog" aria-controls="action-modal">
+        Commit Incident Commander
+      </button>
+      <p class="metric-baseline">Space or P opens the confirmation inspector for the active selection.</p>
+    </div>
+  </aside>
+</main>
+
+<footer class="statusbar">
+  <span><kbd>Space</kbd>/<kbd>P</kbd> activate</span>
+  <span><kbd>Esc</kbd> dismiss</span>
+  <span><kbd>J</kbd>/<kbd>K</kbd> navigate</span>
+  <span class="mono" id="state-readout">state=ideal</span>
+  <span class="mono">focus=<span id="focus-readout">api-gateway</span></span>
+</footer>
+
+<div class="scrim" id="action-modal" role="dialog" aria-modal="true" aria-labelledby="action-modal-title">
+  <div class="modal">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <span class="modal-title" id="action-modal-title">Confirm Incident Commander Action</span>
+        <span class="badge badge-p0">P0</span>
+      </div>
+      <div class="alert">
+        <span class="alert-title">irreversible in-flight operation</span>
+        <span class="alert-body">target: <span id="modal-target">api-gateway</span> · node drain with 120s grace, automatic rollback on 5xx.</span>
+      </div>
+      <dl class="kv">
+        <dt>action id</dt><dd>execute-incident-commander</dd>
+        <dt>scope</dt><dd>us-east-1b</dd>
+        <dt>effect</dt><dd>drain 3 nodes</dd>
+      </dl>
+      <div class="modal-actions">
+        <button class="btn-tactile" id="cancel-action" type="button">Cancel</button>
+        <button class="btn-tactile btn-primary" id="commit-action" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="led" aria-hidden="true"></span>
+  <span id="toast-text">Incident Commander Action Completed</span>
+</div>
+
+<script>
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#svc-rows tr'));
+  var body = document.body;
+  var modal = document.getElementById('action-modal');
+  var trigger = document.getElementById('trigger-action');
+  var cancel = document.getElementById('cancel-action');
+  var commit = document.getElementById('commit-action');
+  var lastTrigger = null;
+  var cursor = 0;
+  var locked = false;
+  var committed = false;
+  var filters = { severity: 'P0', region: 'eu-west-1' }; // preserved across drawer dismissal
+
+  function readState() {
+    var m = /state=([a-z]+)/.exec(location.hash || '');
+    var s = m ? m[1] : 'ideal';
+    return ['ideal', 'empty', 'error'].indexOf(s) >= 0 ? s : 'ideal';
+  }
+
+  function applyState() {
+    var s = readState();
+    body.dataset.state = s;
+    document.getElementById('state-readout').textContent = 'state=' + s;
+  }
+
+  function select(index) {
+    if (!rows.length) return;
+    cursor = Math.max(0, Math.min(rows.length - 1, index));
+    rows.forEach(function (r, i) {
+      var on = i === cursor;
+      r.classList.toggle('is-selected', on);
+      r.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    var row = rows[cursor];
+    var name = row.dataset.entity;
+    document.getElementById('ins-entity').textContent = name;
+    document.getElementById('ins-entity').title = name;
+    document.getElementById('inspector-scope').textContent = name;
+    document.getElementById('ins-sev').textContent = row.dataset.sev;
+    document.getElementById('ins-age').textContent = row.querySelector('.cell-num').textContent;
+    document.getElementById('modal-target').textContent = name;
+    document.getElementById('focus-readout').textContent = name;
+    document.getElementById('global-severity').className = 'badge badge-' + row.dataset.sev.toLowerCase();
+    document.getElementById('global-severity').lastChild.textContent = ' ' + row.dataset.sev + ' active';
+  }
+
+  function openDrawer(origin) {
+    if (body.dataset.overlay === 'open') return;
+    lastTrigger = origin || trigger;
+    body.dataset.overlay = 'open';
+    commit.disabled = false;
+    commit.focus();
+  }
+
+  function closeDrawer(restore) {
+    if (body.dataset.overlay !== 'open') return;
+    body.dataset.overlay = 'closed';
+    if (restore && lastTrigger) lastTrigger.focus();
+  }
+
+  function showToast() {
+    body.dataset.toast = 'visible';
+    clearTimeout(showToast.t);
+    showToast.t = setTimeout(function () { body.dataset.toast = 'hidden'; }, 3200);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    var key = e.key;
+    if (key === 'Escape') {
+      closeDrawer(true);
+      return;
+    }
+    if (body.dataset.overlay === 'open') return;
+    if (key === 'j' || key === 'J') {
+      e.preventDefault();
+      select(cursor + 1);
+      rows[cursor].focus();
+    } else if (key === 'k' || key === 'K') {
+      e.preventDefault();
+      select(cursor - 1);
+      rows[cursor].focus();
+    } else if (key === ' ' || key === 'p' || key === 'P') {
+      e.preventDefault();
+      openDrawer(rows[cursor]);
+    }
+  });
+
+  rows.forEach(function (row, i) {
+    row.addEventListener('click', function () { select(i); });
+    row.addEventListener('focus', function () { select(i); });
+  });
+
+  trigger.addEventListener('click', function () { openDrawer(trigger); });
+  cancel.addEventListener('click', function () { closeDrawer(true); });
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeDrawer(true); });
+
+  commit.addEventListener('click', function () {
+    if (locked) return;                // debounced: rapid clicks/Space collapse to one transition
+    locked = true;
+    commit.disabled = true;
+    commit.textContent = 'Committing...';
+    setTimeout(function () {
+      commit.textContent = 'Confirm';
+      locked = false;
+      showToast();
+      closeDrawer(true);
+    }, 180);
+  });
+
+  document.getElementById('reset-filters').addEventListener('click', function () {
+    filters = {};
+    location.hash = '#state=ideal';
+  });
+
+  window.addEventListener('hashchange', applyState);
+  applyState();
+  select(0);
+})();
+</script>
+</body>
+</html>

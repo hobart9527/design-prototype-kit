@@ -1,0 +1,218 @@
+{
+  "envelope_version": "2.0",
+  "repository_root": "/Users/hobart/Codex/design-prototype-kit/benchmarks/spec-prototype/results/run_20260918_080136/incident-commander_run3_1789689697",
+  "skill_root": "/Users/hobart/Codex/design-prototype-kit/skills/spec-prototype",
+  "slice_id": "incident-commander",
+  "mode": "lean-builder-envelope",
+  "layout_profile": "dense-console",
+  "domain_thesis": {
+    "title": "incident-commander",
+    "product_thesis": "incident-commander",
+    "core_tension": "Operational Efficiency vs Cognitive Ergonomics"
+  },
+  "ooux_topology": {
+    "cardinality": "1:N",
+    "layout_mode": "split-master-detail",
+    "spatial_rule": "1:N Master-Detail: High-density stream or list paired with sticky contextual parameter inspection."
+  },
+  "app_shell_blueprint": {
+    "profile": "dense-console",
+    "spatial_roles": [
+      "global_nav",
+      "operational_viewport",
+      "context_inspector",
+      "status_telemetry"
+    ],
+    "density_rules": "4px micro-grid, 11-13px tabular-nums telemetry, multi-pane instrument rack, zero promotional banner",
+    "composition_guidance": "Pin viewport height (100vh); enable independent scrolling within operational matrix and contextual inspector; no page-level runaway scroll."
+  },
+  "app_shell_contract": {
+    "profile": "dense-console",
+    "header": "Top bar containing system title, active slice indicator, and topology navigation",
+    "main_viewport": "Primary operational slot matching declared entity cardinality",
+    "context_drawer": "Contextual parameter inspection drawer or modal",
+    "status_bar": "Footer telemetry and shortcuts guide"
+  },
+  "target_html_path": "prototype/experiments/incident-commander/anchor/index.html",
+  "evidence_output_dir": "prototype/evidence/probes/incident-commander/",
+  "token_stylesheet_ref": "../../../shared/tokens.css",
+  "token_link_tag": "<link rel=\"stylesheet\" href=\"../../../shared/tokens.css\">",
+  "topology_context": {
+    "current_slice": "incident-commander",
+    "surface_role": "primary",
+    "shared_shell": {
+      "brand_title": "incident-commander",
+      "navigation_links": []
+    }
+  },
+  "verification_command": "python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice incident-commander",
+  "capture_command": "node skills/spec-prototype/scripts/capture.mjs --slice incident-commander",
+  "cognitive_ledger": {
+    "zero_borrow_base": "Standard top navigation, breadcrumbs, and filter facets strictly follow established conventions with zero learning curve and zero distracting motion.",
+    "high_yield_borrow_zone": "Primary operational incident-commander workspace is allocated high visual tension: kinetic detents, inline sparklines, and micro-flow telemetry.",
+    "repayment_settlement": "Upon commit action completion or inspector dismissal, focus and state settle back into calm equilibrium within 180ms."
+  },
+  "available_tokens": {
+    "--bg-void": "#0a0c10",
+    "--bg-base": "#121519",
+    "--bg-surface": "#1a1e22",
+    "--bg-surface-raised": "#24292d",
+    "--bg-overlay": "#2e3438",
+    "--border-dim": "#22272b",
+    "--border-subtle": "#2e3539",
+    "--border-bright": "#424c50",
+    "--border-danger": "rgba(255, 77, 77, 0.4)",
+    "--border-warning": "rgba(245, 158, 11, 0.4)",
+    "--font-sans": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
+    "--font-mono": "\"JetBrains Mono\", \"SF Mono\", \"Fira Code\", Menlo, monospace",
+    "--font-variant-numeric": "tabular-nums",
+    "--text-primary": "#f4f5f1",
+    "--text-secondary": "#9aa49e",
+    "--text-tertiary": "#55615a",
+    "--accent-primary": "#f59e0b",
+    "--accent-subtle": "rgba(245, 158, 11, 0.14)",
+    "--accent-hover": "#ffb50c",
+    "--status-running": "#d6f56b",
+    "--status-warning": "#f59e0b",
+    "--status-danger": "#ff4d4d",
+    "--status-p0": "#ff4d4d",
+    "--status-p1": "#f59e0b",
+    "--status-ok": "#d6f56b",
+    "--paper-bg": "#1a1e22",
+    "--ink-primary": "#f4f5f1",
+    "--ink-secondary": "#9aa49e",
+    "--reading-measure-max": "68ch",
+    "--space-1": "4px",
+    "--space-2": "8px",
+    "--space-3": "12px",
+    "--space-4": "16px",
+    "--space-5": "20px",
+    "--space-6": "24px",
+    "--space-8": "32px",
+    "--radius-outer": "8px",
+    "--padding-panel": "4px",
+    "--radius-inner": "4px",
+    "--radius-card": "6px",
+    "--radius-btn": "4px",
+    "--radius-sm": "2px",
+    "--radius-pill": "9999px",
+    "--duration-fast": "80ms",
+    "--duration-normal": "180ms",
+    "--duration-slow": "320ms",
+    "--ease-hud": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "--ease-out": "cubic-bezier(0, 0, 0.2, 1)"
+  },
+  "interaction_spec": {
+    "state_machine": {
+      "type": "hash_state",
+      "query_param": "state",
+      "supported_states": [
+        "ideal",
+        "empty",
+        "error"
+      ],
+      "dom_hook": "document.body.dataset.state"
+    },
+    "break_protocol_checkpoints": [
+      "**Unbreakable String**: `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000`",
+      "**Zero-Item Empty State**: Filter: 0 results / empty list",
+      "**Extreme 320px Fold**: 320px viewport width test",
+      "**Rapid Interruption**: Double-click / rapid Space hits"
+    ],
+    "dual_channel_shortcuts": [
+      "`Space` or `P`",
+      "`Esc`",
+      "`J` / `K`"
+    ],
+    "action_verb_lifecycle": [
+      {
+        "action_id": "drain-node",
+        "trigger_btn": "Drain Node",
+        "modal_header": "Drain GPU Node",
+        "commit_btn": "Confirm Drain",
+        "toast": "Node Drained Successfully"
+      }
+    ],
+    "decisive_exchange_frames": [
+      "**Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.",
+      "**Frame 2 (Decisive Commit)**: Operator hits commit action; trigger undergoes tactile `:active scale(0.97)` mechanical response; inline state locks to prevent duplicate submissions.",
+      "**Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; feedback toast displays completion; focus deterministically restores to originating anchor."
+    ],
+    "context_preservation_rules": [
+      "**Draft Context**: Dismissing inspector or drawer without submitting preserves filter parameters and active tab.",
+      "**Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return."
+    ],
+    "profile_notes": "dense-console: implement full Action Verb Lifecycle (trigger→drawer/modal→commit→toast), Space/Esc dual-channel shortcuts, tabular-nums telemetry, SVG micro-sparklines."
+  },
+  "design_constraints": {
+    "dual_channel_shortcuts": [
+      "`Space` or `P`",
+      "`Esc`",
+      "`J` / `K`"
+    ],
+    "action_verb_lifecycle": [
+      {
+        "action_id": "drain-node",
+        "trigger_btn": "Drain Node",
+        "modal_header": "Drain GPU Node",
+        "commit_btn": "Confirm Drain",
+        "toast": "Node Drained Successfully"
+      }
+    ],
+    "break_protocol_checkpoints": [
+      "**Unbreakable String**: `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000`",
+      "**Zero-Item Empty State**: Filter: 0 results / empty list",
+      "**Extreme 320px Fold**: 320px viewport width test",
+      "**Rapid Interruption**: Double-click / rapid Space hits"
+    ],
+    "decisive_exchange_frames": [
+      "**Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.",
+      "**Frame 2 (Decisive Commit)**: Operator hits commit action; trigger undergoes tactile `:active scale(0.97)` mechanical response; inline state locks to prevent duplicate submissions.",
+      "**Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; feedback toast displays completion; focus deterministically restores to originating anchor."
+    ],
+    "context_preservation_rules": [
+      "**Draft Context**: Dismissing inspector or drawer without submitting preserves filter parameters and active tab.",
+      "**Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return."
+    ],
+    "ruthless_omissions": [
+      "Zero generic marketing cards, promotional hero banners, or superficial carousel widgets.",
+      "Zero nested modal inception or multi-step wizard deadlocks; interactions stay in-canvas or single contextual drawer.",
+      "Zero ungrounded alien physics, gratuitous full-screen particles, or unconsidered neutral gray #808080 washes."
+    ],
+    "material_non_transfer_boundaries": [
+      "严禁使用任何宣传型营销卡片、浮夸 Banner 或轮播图。",
+      "严禁无参照基线的纯裸数字（所有吞吐、延时与容量必须附带单位、趋势差值或基准 Sparkline）。",
+      "破坏性操作（如节点排空 `Drain Node`、流量切断）必须具备明确的阶段确认与可撤销/紧急终止机制。"
+    ]
+  },
+  "verifiable_assertions": [
+    "Declared product intent is represented",
+    "Focused typography column: max-width constrained (65-75ch)",
+    "Reading metric units present (e.g. min read, words)",
+    "Atmospheric undertone: zero sterile neutral gray #808080",
+    "High text-to-background contrast (> 7:1)",
+    "Quiet feedback: non-blocking inline state updates, no intrusive modals",
+    "The Break Protocol: unbreakable string, empty state, 320px fold"
+  ],
+  "specification": {
+    "path": "prototype/specifications/incident-commander/r1.md",
+    "sha256": "e03648a16daa54106780a0336ecc999052e40e06917cf86218fb782fcec25547"
+  },
+  "spec_references": {
+    "product_thesis": "prototype/product.md",
+    "surface_topology": "prototype/contracts/surface-maps/m1.md",
+    "foundation_craft": "prototype/contracts/foundation/f1.md",
+    "slice_contract": "prototype/contracts/slices/incident-commander/c1.md",
+    "specification": "prototype/specifications/incident-commander/r1.md",
+    "tokens_stylesheet": "prototype/shared/tokens.css"
+  },
+  "spec_sources": {
+    "product_digest": "2feff4d03e255243254f63ed20ead15c66cf271bcbc6e509199372cd01836e19",
+    "surface_map_digest": "9f4f56b99e846057ab85dfcf985ff90fa0cbf1f28d498144d6bad44cd1b75923",
+    "foundation_digest": "b1b655c5907bf0b7304aa58afb83fc72c4ed50d2b9154ac0395b16379ed790eb",
+    "tokens_css_digest": "4f5172296fe27a64e611f524802ebcd8cfce79e60945cba75e9ebdef69e0529f",
+    "tokens_md_digest": "5695a6a42871d14a4ce0a27e01fb0b0f2eaa0a1ca5e4a134d71a0c4c1f27a223",
+    "contract_digest": "21ae27ad754fb898b8e0b7764e6df400bb28b8bc009164ea2494b88a5592f3cf",
+    "specification_digest": "e03648a16daa54106780a0336ecc999052e40e06917cf86218fb782fcec25547"
+  }
+}

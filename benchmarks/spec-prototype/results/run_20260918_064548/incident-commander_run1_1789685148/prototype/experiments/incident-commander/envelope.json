@@ -1,0 +1,214 @@
+{
+  "envelope_version": "2.0",
+  "repository_root": "/Users/hobart/Codex/design-prototype-kit/benchmarks/spec-prototype/results/run_20260918_064548/incident-commander_run1_1789685148",
+  "skill_root": "/Users/hobart/Codex/design-prototype-kit/skills/spec-prototype",
+  "slice_id": "incident-commander",
+  "mode": "lean-builder-envelope",
+  "layout_profile": "dense-console",
+  "ooux_topology": {
+    "cardinality": "1:N",
+    "layout_mode": "split-master-detail",
+    "spatial_rule": "1:N Master-Detail: High-density stream or list paired with sticky contextual parameter inspection."
+  },
+  "app_shell_blueprint": {
+    "profile": "dense-console",
+    "spatial_roles": [
+      "global_nav",
+      "operational_viewport",
+      "context_inspector",
+      "status_telemetry"
+    ],
+    "density_rules": "4px micro-grid, 11-13px tabular-nums telemetry, multi-pane instrument rack, zero promotional banner",
+    "composition_guidance": "Pin viewport height (100vh); enable independent scrolling within operational matrix and contextual inspector; no page-level runaway scroll."
+  },
+  "app_shell_contract": {
+    "profile": "dense-console",
+    "header": "Top bar containing system title, active slice indicator, and topology navigation",
+    "main_viewport": "Primary operational slot matching declared entity cardinality",
+    "context_drawer": "Contextual parameter inspection drawer or modal",
+    "status_bar": "Footer telemetry and shortcuts guide"
+  },
+  "target_html_path": "prototype/experiments/incident-commander/anchor/index.html",
+  "evidence_output_dir": "prototype/evidence/probes/incident-commander/",
+  "token_stylesheet_ref": "../../../shared/tokens.css",
+  "token_link_tag": "<link rel=\"stylesheet\" href=\"../../../shared/tokens.css\">",
+  "topology_context": {
+    "current_slice": "incident-commander",
+    "surface_role": "primary",
+    "shared_shell": {
+      "brand_title": "incident-commander",
+      "navigation_links": []
+    }
+  },
+  "verification_command": "python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice incident-commander",
+  "capture_command": "node skills/spec-prototype/scripts/capture.mjs --slice incident-commander",
+  "cognitive_ledger": {
+    "zero_borrow_base": "Standard top navigation, breadcrumbs, and filter facets strictly follow established conventions with zero learning curve and zero distracting motion.",
+    "high_yield_borrow_zone": "Primary operational incident-commander workspace is allocated high visual tension: kinetic detents, inline sparklines, and micro-flow telemetry.",
+    "repayment_settlement": "Upon commit action completion or inspector dismissal, focus and state settle back into calm equilibrium within 180ms."
+  },
+  "available_tokens": {
+    "--bg-void": "#0f172a",
+    "--bg-base": "#172033",
+    "--bg-surface": "#1f293c",
+    "--bg-surface-raised": "#293447",
+    "--bg-overlay": "#333f52",
+    "--border-dim": "#273245",
+    "--border-subtle": "#334053",
+    "--border-bright": "#47576a",
+    "--border-danger": "rgba(255, 77, 77, 0.4)",
+    "--border-warning": "rgba(245, 158, 11, 0.4)",
+    "--font-sans": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
+    "--font-mono": "\"JetBrains Mono\", \"SF Mono\", \"Fira Code\", Menlo, monospace",
+    "--font-variant-numeric": "tabular-nums",
+    "--text-primary": "#f4f5f1",
+    "--text-secondary": "#9aa49e",
+    "--text-tertiary": "#55615a",
+    "--accent-primary": "#f59e0b",
+    "--accent-subtle": "rgba(245, 158, 11, 0.14)",
+    "--accent-hover": "#ffb50c",
+    "--status-running": "#d6f56b",
+    "--status-warning": "#f59e0b",
+    "--status-danger": "#ff4d4d",
+    "--status-p0": "#ff4d4d",
+    "--status-p1": "#f59e0b",
+    "--status-ok": "#d6f56b",
+    "--paper-bg": "#1f293c",
+    "--ink-primary": "#f4f5f1",
+    "--ink-secondary": "#9aa49e",
+    "--reading-measure-max": "68ch",
+    "--space-1": "4px",
+    "--space-2": "8px",
+    "--space-3": "12px",
+    "--space-4": "16px",
+    "--space-5": "20px",
+    "--space-6": "24px",
+    "--space-8": "32px",
+    "--radius-outer": "8px",
+    "--padding-panel": "4px",
+    "--radius-inner": "4px",
+    "--radius-card": "6px",
+    "--radius-btn": "4px",
+    "--radius-sm": "2px",
+    "--radius-pill": "9999px",
+    "--duration-fast": "80ms",
+    "--duration-normal": "180ms",
+    "--duration-slow": "320ms",
+    "--ease-hud": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "--ease-out": "cubic-bezier(0, 0, 0.2, 1)"
+  },
+  "interaction_spec": {
+    "state_machine": {
+      "type": "hash_state",
+      "query_param": "state",
+      "supported_states": [
+        "ideal",
+        "empty",
+        "error"
+      ],
+      "dom_hook": "document.body.dataset.state"
+    },
+    "break_protocol_checkpoints": [
+      "**Unbreakable String**: `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000`",
+      "**Zero-Item Empty State**: Filter: 0 results / empty list",
+      "**Extreme 320px Fold**: 320px viewport width test",
+      "**Rapid Interruption**: Double-click / rapid Space hits"
+    ],
+    "dual_channel_shortcuts": [
+      "`Space` or `P`",
+      "`Esc`",
+      "`J` / `K`"
+    ],
+    "action_verb_lifecycle": [
+      {
+        "action_id": "execute-incident-commander",
+        "trigger_btn": "Commit Incident Commander",
+        "modal_header": "Confirm Incident Commander Action",
+        "commit_btn": "Confirm",
+        "toast": "Incident Commander Action Completed"
+      }
+    ],
+    "decisive_exchange_frames": [
+      "**Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.",
+      "**Frame 2 (Decisive Commit)**: Operator hits commit action; trigger undergoes tactile `:active scale(0.97)` mechanical response; inline state locks to prevent duplicate submissions.",
+      "**Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; feedback toast displays completion; focus deterministically restores to originating anchor."
+    ],
+    "context_preservation_rules": [
+      "**Draft Context**: Dismissing inspector or drawer without submitting preserves filter parameters and active tab.",
+      "**Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return."
+    ],
+    "profile_notes": "dense-console: implement full Action Verb Lifecycle (trigger→drawer/modal→commit→toast), Space/Esc dual-channel shortcuts, tabular-nums telemetry, SVG micro-sparklines."
+  },
+  "design_constraints": {
+    "dual_channel_shortcuts": [
+      "`Space` or `P`",
+      "`Esc`",
+      "`J` / `K`"
+    ],
+    "action_verb_lifecycle": [
+      {
+        "action_id": "execute-incident-commander",
+        "trigger_btn": "Commit Incident Commander",
+        "modal_header": "Confirm Incident Commander Action",
+        "commit_btn": "Confirm",
+        "toast": "Incident Commander Action Completed"
+      }
+    ],
+    "break_protocol_checkpoints": [
+      "**Unbreakable String**: `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000`",
+      "**Zero-Item Empty State**: Filter: 0 results / empty list",
+      "**Extreme 320px Fold**: 320px viewport width test",
+      "**Rapid Interruption**: Double-click / rapid Space hits"
+    ],
+    "decisive_exchange_frames": [
+      "**Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.",
+      "**Frame 2 (Decisive Commit)**: Operator hits commit action; trigger undergoes tactile `:active scale(0.97)` mechanical response; inline state locks to prevent duplicate submissions.",
+      "**Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; feedback toast displays completion; focus deterministically restores to originating anchor."
+    ],
+    "context_preservation_rules": [
+      "**Draft Context**: Dismissing inspector or drawer without submitting preserves filter parameters and active tab.",
+      "**Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return."
+    ],
+    "ruthless_omissions": [
+      "Zero generic marketing cards, promotional hero banners, or superficial carousel widgets.",
+      "Zero nested modal inception or multi-step wizard deadlocks; interactions stay in-canvas or single contextual drawer.",
+      "Zero ungrounded alien physics, gratuitous full-screen particles, or unconsidered neutral gray #808080 washes."
+    ],
+    "material_non_transfer_boundaries": [
+      "Digital Glass & Surface Layering: Semi-transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
+      "Machined Tactile Detents: Interactive controls possess mechanical micro-press (:active feedback) resistance; never frictionless float.",
+      "Precision Telemetry Emissives: Status indicators simulate calibrated hardware LEDs with subtle ambient bloom; never raw flat neon washes."
+    ]
+  },
+  "verifiable_assertions": [
+    "Declared product intent is represented",
+    "Zero Naked Metrics: every metric has reference baseline or micro sparkline",
+    "Tabular Numerics: font-variant-numeric: tabular-nums on all metrics",
+    "Concentric Radii Formula: outer radius >= inner radius + padding",
+    "Atmospheric undertone: zero sterile neutral gray #808080",
+    "Dual-channel keyboard shortcuts (Space / Esc) operable",
+    "Action Verb Lifecycle closure: trigger -> drawer/modal -> commit -> toast",
+    "The Break Protocol: unbreakable string, empty state, 320px fold"
+  ],
+  "specification": {
+    "path": "prototype/specifications/incident-commander/r1.md",
+    "sha256": "9eaf231833c7e1dd561bcd6755a05d9d17ba4127450f249d88edf4c427f056bb"
+  },
+  "spec_references": {
+    "product_thesis": "prototype/product.md",
+    "surface_topology": "prototype/contracts/surface-maps/m1.md",
+    "foundation_craft": "prototype/contracts/foundation/f1.md",
+    "slice_contract": "prototype/contracts/slices/incident-commander/c1.md",
+    "specification": "prototype/specifications/incident-commander/r1.md",
+    "tokens_stylesheet": "prototype/shared/tokens.css"
+  },
+  "spec_sources": {
+    "product_digest": "7cd1ba5639eaa8ddc0a9a217433796ab667f5608a2f86ed855821edf6e064d08",
+    "surface_map_digest": "632af73272d23add395c74ea93000a3139d52d1bbc38399b924724b552e9392a",
+    "foundation_digest": "c8b053a2d624bca6a3018c2a963811c50359bf745472224005d97e47cb0ca6a5",
+    "tokens_css_digest": "dd4af9d9a553ed67eb2b0453d8a424c573b2eab1dcc9e4b5e771b68e7b822618",
+    "tokens_md_digest": "af4d5810c149a00cf8cd527e50e9b650af9adcb66c6b337516c1b081b053f2ac",
+    "contract_digest": "da7e6aa486f7348650925757b9f2583182c199d8b6fcc62f9298a6a505d42804",
+    "specification_digest": "9eaf231833c7e1dd561bcd6755a05d9d17ba4127450f249d88edf4c427f056bb"
+  }
+}

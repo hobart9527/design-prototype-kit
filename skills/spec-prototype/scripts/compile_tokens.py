@@ -464,6 +464,15 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --status-warning: {c['status_warning']};",
         f"  --status-danger: {c['status_danger']};",
         "",
+        "  /* Domain-Specific Semantic Extension Variables */",
+        f"  --status-p0: {c.get('status_p0', c['status_danger'])};",
+        f"  --status-p1: {c.get('status_p1', c['status_warning'])};",
+        f"  --status-ok: {c.get('status_ok', c['status_running'])};",
+        f"  --paper-bg: {c.get('paper_bg', c['bg_surface'])};",
+        f"  --ink-primary: {c.get('ink_primary', c['text_primary'])};",
+        f"  --ink-secondary: {c.get('ink_secondary', c['text_secondary'])};",
+        f"  --reading-measure-max: 68ch;",
+        "",
         "  /* Spacing Hierarchy */",
     ]
     for k, v in sorted(s.items()):

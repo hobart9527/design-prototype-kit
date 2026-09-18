@@ -304,7 +304,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
                     current_role = "supporting"
 
             rel_href = os.path.relpath(surf_path, target_dir)
-            label = "Cluster Matrix" if "console" in sid else ("Incident Replay" if "incident" in sid else ("Capacity & Quota" if "capacity" in sid else sid.replace("-", " ").title()))
+            label = sid.replace("-", " ").title()
             nav_links.append({
                 "slice_id": sid,
                 "label": label,
@@ -316,21 +316,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     verification_cmd = f"python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice {slice_id}"
     capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
 
-    interaction_spec = {
-        "state_machine": {
-            "type": "hash_state",
-            "query_param": "state",
-            "supported_states": ["ideal", "empty", "error"],
-            "dom_hook": "document.body.dataset.state"
-        },
-        "dual_channel_shortcuts": shortcuts,
-        "action_verb_lifecycle": verb_lifecycle,
-        "decisive_exchange_frames": decisive_frames,
-        "context_preservation_rules": context_rules,
-        "break_protocol_checkpoints": break_checkpoints
-    }
-
-    # Determine layout profile and app shell contract strictly from declared baseline
+    # Determine layout profile FIRST — drives interaction_spec trimming below
     baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
     declared_baseline = baseline_match.group(1).strip() if baseline_match else ""
 
@@ -353,6 +339,103 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             layout_profile = "operational-canvas"
         else:
             layout_profile = "dense-console"
+
+    # Extract OOUX Cardinality & Spatial Mapping from surface map or profile defaults
+    ooux_cardinality = "1:N"
+    ooux_layout_mode = "split-master-detail"
+    cardinality_match = re.search(r"(?:Cardinality|OOUX|实体基数|基数映射)[^\n]*[:=]?\s*(1:1|1:N|N:M)", smap_content + " " + spec_content, re.IGNORECASE)
+    if cardinality_match:
+        ooux_cardinality = cardinality_match.group(1).upper()
+        if ooux_cardinality == "1:1":
+            ooux_layout_mode = "focused-cockpit"
+        elif ooux_cardinality == "1:N":
+            ooux_layout_mode = "split-master-detail"
+        elif ooux_cardinality == "N:M":
+            ooux_layout_mode = "node-link-canvas"
+    else:
+        # Profile-driven default
+        if layout_profile == "dense-console":
+            ooux_cardinality = "1:N"
+            ooux_layout_mode = "split-master-detail"
+        elif layout_profile == "editorial-reading":
+            ooux_cardinality = "1:1"
+            ooux_layout_mode = "focused-column"
+        elif layout_profile == "operational-canvas":
+            ooux_cardinality = "N:M"
+            ooux_layout_mode = "interactive-workspace"
+        elif layout_profile == "somatic-touchflow":
+            ooux_cardinality = "1:N"
+            ooux_layout_mode = "card-stream"
+
+    ooux_topology = {
+        "cardinality": ooux_cardinality,
+        "layout_mode": ooux_layout_mode,
+        "spatial_rule": (
+            "1:1 Focused Cockpit: Single focal instrument or deep reading column; zero split distraction."
+            if ooux_cardinality == "1:1" else
+            "1:N Master-Detail: High-density stream or list paired with sticky contextual parameter inspection."
+            if ooux_cardinality == "1:N" else
+            "N:M Relational Matrix / Canvas: Multi-node interconnected graph or multi-facet filtering grid."
+        )
+    }
+
+    # Profile-aware interaction_spec: only emit what the Builder must actually implement.
+    # dense-console / operational-canvas: full lifecycle, shortcuts, sparklines.
+    # editorial-reading: focus on typography reading experience; strip heavy action modals.
+    # somatic-touchflow: strip desktop shortcuts; keep thumb-zone state machine only.
+    _is_dense = layout_profile in ("dense-console", "operational-canvas")
+    _is_editorial = layout_profile == "editorial-reading"
+    _is_touch = layout_profile == "somatic-touchflow"
+
+    interaction_spec: Dict[str, Any] = {
+        "state_machine": {
+            "type": "hash_state",
+            "query_param": "state",
+            "supported_states": ["ideal", "empty", "error"],
+            "dom_hook": "document.body.dataset.state"
+        },
+        "break_protocol_checkpoints": break_checkpoints,
+    }
+    if _is_dense:
+        # Full rich interaction contract for workbench/console profiles
+        interaction_spec["dual_channel_shortcuts"] = shortcuts
+        interaction_spec["action_verb_lifecycle"] = verb_lifecycle
+        interaction_spec["decisive_exchange_frames"] = decisive_frames
+        interaction_spec["context_preservation_rules"] = context_rules
+        interaction_spec["profile_notes"] = (
+            "dense-console: implement full Action Verb Lifecycle (trigger→drawer/modal→commit→toast), "
+            "Space/Esc dual-channel shortcuts, tabular-nums telemetry, SVG micro-sparklines."
+        )
+    elif _is_editorial:
+        # Reading profile: quiet interactions, no intrusive modals
+        interaction_spec["profile_notes"] = (
+            "editorial-reading: prioritize focused typography (max-width 68ch), paper-contrast palette, "
+            "quiet inline feedback. Do NOT implement modal dialogs, action drawers, or telemetry sparklines. "
+            "Reading metric labels (e.g. '8 min read') are sufficient interactive feedback."
+        )
+        interaction_spec["reading_ergonomics"] = {
+            "measure_max": "68ch",
+            "contrast_floor": ">7:1 text-to-background",
+            "feedback_style": "inline non-blocking state labels only",
+        }
+    elif _is_touch:
+        # Touch/mobile: thumb-zone ergonomics, spring physics
+        interaction_spec["profile_notes"] = (
+            "somatic-touchflow: implement 44px thumb-zone touch targets, spring physics gesture hints, "
+            "bottom-sheet action trays. Desktop keyboard shortcuts are NOT required."
+        )
+        interaction_spec["touch_ergonomics"] = {
+            "min_touch_target": "44px",
+            "action_tray": "bottom-sheet",
+            "gesture_hints": True,
+        }
+        interaction_spec["context_preservation_rules"] = context_rules
+    else:
+        # operational-canvas fallback
+        interaction_spec["dual_channel_shortcuts"] = shortcuts
+        interaction_spec["action_verb_lifecycle"] = verb_lifecycle
+        interaction_spec["decisive_exchange_frames"] = decisive_frames
+        interaction_spec["context_preservation_rules"] = context_rules
 
     app_shell_blueprints = {
         "dense-console": {
@@ -415,6 +498,15 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         }
     }
 
+    # Extract product thesis, core tension and reality anchors
+    prod_thesis_raw = ""
+    prod_tension_raw = ""
+    for line in product_content.splitlines():
+        if "Core Tension:" in line or "Tension:" in line:
+            prod_tension_raw = line.split(":", 1)[1].strip()
+        elif line.startswith("# Product Thesis:"):
+            prod_thesis_raw = line.split(":", 1)[1].strip()
+
     envelope = {
         "envelope_version": "2.0",
         "repository_root": str(root.resolve()),
@@ -422,6 +514,12 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "slice_id": slice_id,
         "mode": "lean-builder-envelope",
         "layout_profile": layout_profile,
+        "domain_thesis": {
+            "title": brand_title,
+            "product_thesis": prod_thesis_raw or brand_title,
+            "core_tension": prod_tension_raw or "Operational Efficiency vs Cognitive Ergonomics",
+        },
+        "ooux_topology": ooux_topology,
         "app_shell_blueprint": app_shell_blueprints.get(layout_profile, app_shell_blueprints["dense-console"]),
         "app_shell_contract": app_shell_contracts.get(layout_profile, app_shell_contracts["dense-console"]),
         "target_html_path": target_html,

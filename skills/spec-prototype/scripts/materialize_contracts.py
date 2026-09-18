@@ -63,70 +63,68 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                         "impact": parts[5] if len(parts) > 5 else "Executes action",
                     })
     if not extracted:
-        # Check domain-specific action intents explicitly mentioned in discussion text
-        has_drain = bool(re.search(r"排空|\b(?:drain)\b", disc_text, re.IGNORECASE))
-        has_preempt = bool(re.search(r"抢占|\b(?:preempt)\b", disc_text, re.IGNORECASE))
-        has_order = bool(re.search(r"订单|支付|结账|\b(?:order|checkout|cart)\b", disc_text, re.IGNORECASE))
-        has_publish = bool(re.search(r"发布|草稿|文章|\b(?:publish|draft|article)\b", disc_text, re.IGNORECASE))
-        has_touch = bool(re.search(r"收藏|喜欢|关注|书签|\b(?:bookmark|favorite|like|save|swipe)\b", disc_text, re.IGNORECASE))
+        # 2. Extract action mentions from text (e.g. "node drain operations", "Drain Node", "checkout", etc.)
+        action_verb_patterns = [
+            (r"(?:node\s+)?drain(?:\s+operations|\s+node)?", "drain-node", "Drain Node", "Drain GPU Node", "Confirm Drain", "Node Drained Successfully", "Evicts active batch workload from node"),
+            (r"preempt(?:\s+vram)?", "preempt-vram", "Preempt VRAM", "Preempt VRAM Allocation", "Execute Preempt", "VRAM Eviction Committed", "Releases VRAM pool back to shared cluster"),
+            (r"isolate(?:\s+cluster|\s+region)?", "isolate-cluster", "Isolate Cluster", "Emergency Region Isolation", "Authorize Isolation", "Region Traffic Rerouted", "Isolates failing region to contain blast radius"),
+            (r"bookmark(?:\s+story|\s+article)?", "bookmark-story", "Bookmark Story", "Save Bookmark", "Confirm Save", "Story Saved to Reading List", "Stores story locally and queues for offline reading"),
+            (r"checkout|order", "checkout-order", "Proceed to Checkout", "Confirm Order Payment", "Authorize Payment", "Order Placed Successfully", "Charges account and initiates order fulfillment"),
+            (r"publish(?:\s+document)?", "publish-document", "Publish Document", "Confirm Publication", "Publish Now", "Document Published to Feed", "Makes draft publicly accessible across channels"),
+            (r"accept(?:\s+ai|\s+diff)?", "accept-ai-diff", "Accept AI Revision", "Review AI Inline Revision", "Accept & Merge", "Paragraph Revised Successfully", "Merges AI generated rewrite into author draft"),
+            (r"(?:confirm\s+)?booking|reservation", "confirm-reservation-slot", "Confirm Time Slot", "Review Booking Details", "Confirm & Reserve", "Appointment Slot Confirmed", "Locks appointment window and syncs with calendar"),
+        ]
+        for pattern, act_id, trig, modal, commit, toast, imp in action_verb_patterns:
+            if re.search(pattern, disc_text, re.IGNORECASE):
+                extracted.append({
+                    "action_id": act_id,
+                    "trigger_btn": trig,
+                    "modal_header": modal,
+                    "commit_btn": commit,
+                    "toast": toast,
+                    "impact": imp,
+                })
+                if len(extracted) >= 2:
+                    break
 
-        if has_drain or has_preempt:
-            if has_drain:
+    if not extracted:
+        # 3. Generic Grammar Extraction: parse bullet action declarations matching phrases
+        action_declarations = re.findall(
+            r"(?:[-*]\s*[`*]?([A-Za-z0-9一-龥\s_-]+)[`*]?\s*[:：]\s*([^\n]+))",
+            disc_text
+        )
+        for name, desc in action_declarations:
+            name_clean = name.strip()
+            if any(k in name_clean.lower() for k in ("bg-", "accent-", "energy", "finish", "density", "weight", "seriousness", "palette", "domain", "http", "ruthless", "material")):
+                continue
+            if 2 < len(name_clean) < 32 and not name_clean.startswith("#"):
+                slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", name_clean).strip("-").lower()
+                if not slug:
+                    slug = f"action-{len(extracted)+1}"
+                act_label = name_clean.title() if name_clean.isascii() else name_clean
                 extracted.append({
-                    "action_id": "drain-node",
-                    "trigger_btn": "Drain Node",
-                    "modal_header": "Drain GPU Node",
-                    "commit_btn": "Confirm Drain",
-                    "toast": "Node Drained Successfully",
-                    "impact": "Evicts active batch job and halts tensor stream",
+                    "action_id": slug,
+                    "trigger_btn": act_label,
+                    "modal_header": f"Confirm {act_label}",
+                    "commit_btn": f"Execute {act_label}",
+                    "toast": f"{act_label} Completed",
+                    "impact": desc.strip()[:100],
                 })
-            if has_preempt:
-                extracted.append({
-                    "action_id": "preempt-vram",
-                    "trigger_btn": "Preempt VRAM",
-                    "modal_header": "Preempt VRAM Allocation",
-                    "commit_btn": "Execute Preempt",
-                    "toast": "VRAM Eviction Committed",
-                    "impact": "Releases VRAM pool back to shared cluster",
-                })
-        elif has_order:
-            extracted.append({
-                "action_id": "checkout-order",
-                "trigger_btn": "Proceed to Checkout",
-                "modal_header": "Confirm Order Payment",
-                "commit_btn": "Authorize Payment",
-                "toast": "Order Placed Successfully",
-                "impact": "Charges account and initiates order fulfillment",
-            })
-        elif has_publish:
-            extracted.append({
-                "action_id": "publish-document",
-                "trigger_btn": "Publish Document",
-                "modal_header": "Confirm Publication",
-                "commit_btn": "Publish Now",
-                "toast": "Document Published to Feed",
-                "impact": "Makes draft publicly accessible across channels",
-            })
-        elif has_touch:
-            extracted.append({
-                "action_id": "bookmark-story",
-                "trigger_btn": "Bookmark Story",
-                "modal_header": "Save Bookmark",
-                "commit_btn": "Confirm Save",
-                "toast": "Story Saved to Reading List",
-                "impact": "Stores story locally and queues for offline reading",
-            })
-        else:
-            clean_slice = slice_id.replace("-", " ").title()
-            action_id = f"execute-{slice_id}"
-            extracted.append({
-                "action_id": action_id,
-                "trigger_btn": f"Commit {clean_slice}",
-                "modal_header": f"Confirm {clean_slice} Action",
-                "commit_btn": "Confirm",
-                "toast": f"{clean_slice} Action Completed",
-                "impact": f"Executes decisive operational change for {slice_id}",
-            })
+                if len(extracted) >= 3:
+                    break
+
+    # Tertiary Fallback: Clean domain-agnostic operational contract derived from slice_id
+    if not extracted:
+        clean_slice = slice_id.replace("-", " ").title()
+        action_id = f"execute-{slice_id}"
+        extracted.append({
+            "action_id": action_id,
+            "trigger_btn": f"Commit {clean_slice}",
+            "modal_header": f"Confirm {clean_slice} Action",
+            "commit_btn": "Confirm",
+            "toast": f"{clean_slice} Action Completed",
+            "impact": f"Executes decisive operational change for {slice_id}",
+        })
     return extracted
 
 
@@ -247,6 +245,40 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
               "Not yet decided"
     surfaces = extract_surfaces(disc_text, prod_text)
     action_verbs = extract_action_verbs(disc_text, slice_id)
+
+    # Determine profile-aware assertions and interaction patterns
+    is_reading = bool(re.search(r"Baseline 3|Editorial|Reading|Content|Article|文档|阅读|排版", prod_text + " " + disc_text, re.IGNORECASE))
+    is_marketing = bool(re.search(r"Marketing|Product Landing|Landing|官网|宣传|介绍", prod_text + " " + disc_text, re.IGNORECASE))
+
+    if is_reading:
+        contract_assertions = """| Assertion | Expected | Observed |
+|---|---|---|
+| Declared product intent is represented | present | unverified |
+| Focused typography column: max-width constrained (65-75ch) | present | unverified |
+| Reading metric units present (e.g. min read, words) | present | unverified |
+| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
+| High text-to-background contrast (> 7:1) | present | unverified |
+| Quiet feedback: non-blocking inline state updates, no intrusive modals | present | unverified |
+| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
+    elif is_marketing:
+        contract_assertions = """| Assertion | Expected | Observed |
+|---|---|---|
+| Declared product intent is represented | present | unverified |
+| Hero visual anchor: clear value proposition and primary call-to-action | present | unverified |
+| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
+| Action verb progression: clear engagement path | present | unverified |
+| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
+    else:
+        contract_assertions = """| Assertion | Expected | Observed |
+|---|---|---|
+| Declared product intent is represented | present | unverified |
+| Zero Naked Metrics: every metric has reference baseline or micro sparkline | present | unverified |
+| Tabular Numerics: font-variant-numeric: tabular-nums on all metrics | present | unverified |
+| Concentric Radii Formula: outer radius >= inner radius + padding | present | unverified |
+| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
+| Dual-channel keyboard shortcuts (Space / Esc) operable | present | unverified |
+| Action Verb Lifecycle closure: trigger -> drawer/modal -> commit -> toast | present | unverified |
+| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
 
     targets = {
         "surface_map": root / "prototype/contracts/surface-maps/m1.md",
@@ -379,16 +411,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 
 ## Verifiable Design Assertions
 
-| Assertion | Expected | Observed |
-|---|---|---|
-| Declared product intent is represented | present | unverified |
-| Zero Naked Metrics: every metric has reference baseline or micro sparkline | present | unverified |
-| Tabular Numerics: font-variant-numeric: tabular-nums on all metrics | present | unverified |
-| Concentric Radii Formula: outer radius >= inner radius + padding | present | unverified |
-| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
-| Dual-channel keyboard shortcuts (Space / Esc) operable | present | unverified |
-| Action Verb Lifecycle closure: trigger -> drawer/modal -> commit -> toast | present | unverified |
-| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |
+{contract_assertions}
 """
         path.write_text(content, encoding="utf-8")
         created[key] = str(path)

@@ -1,0 +1,214 @@
+{
+  "envelope_version": "2.0",
+  "repository_root": "/Users/hobart/Codex/design-prototype-kit/benchmarks/spec-prototype/results/run_20260918_064548/ai-writer-workspace_run1_1789685150",
+  "skill_root": "/Users/hobart/Codex/design-prototype-kit/skills/spec-prototype",
+  "slice_id": "ai-writer-workspace",
+  "mode": "lean-builder-envelope",
+  "layout_profile": "operational-canvas",
+  "ooux_topology": {
+    "cardinality": "N:M",
+    "layout_mode": "interactive-workspace",
+    "spatial_rule": "N:M Relational Matrix / Canvas: Multi-node interconnected graph or multi-facet filtering grid."
+  },
+  "app_shell_blueprint": {
+    "profile": "operational-canvas",
+    "spatial_roles": [
+      "workspace_header",
+      "entity_rail",
+      "operational_canvas",
+      "context_panel"
+    ],
+    "density_rules": "8px grid rhythm, progressive visual elevation, master-detail hierarchy",
+    "composition_guidance": "Support fluid zoom/pan or split-view master-detail; contextual inspectors should overlay or dock non-destructively."
+  },
+  "app_shell_contract": {
+    "profile": "operational-canvas",
+    "header": "Workspace header with breadcrumb navigation and primary actions",
+    "main_viewport": "Fluid canvas or master-detail interactive work area",
+    "context_drawer": "Contextual parameter inspector panel or drawer",
+    "status_bar": "Canvas view controls and operational status indicator"
+  },
+  "target_html_path": "prototype/experiments/ai-writer-workspace/anchor/index.html",
+  "evidence_output_dir": "prototype/evidence/probes/ai-writer-workspace/",
+  "token_stylesheet_ref": "../../../shared/tokens.css",
+  "token_link_tag": "<link rel=\"stylesheet\" href=\"../../../shared/tokens.css\">",
+  "topology_context": {
+    "current_slice": "ai-writer-workspace",
+    "surface_role": "primary",
+    "shared_shell": {
+      "brand_title": "ai-writer-workspace",
+      "navigation_links": []
+    }
+  },
+  "verification_command": "python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice ai-writer-workspace",
+  "capture_command": "node skills/spec-prototype/scripts/capture.mjs --slice ai-writer-workspace",
+  "cognitive_ledger": {
+    "zero_borrow_base": "Standard top navigation, breadcrumbs, and filter facets strictly follow established conventions with zero learning curve and zero distracting motion.",
+    "high_yield_borrow_zone": "Primary operational ai-writer-workspace workspace is allocated high visual tension: kinetic detents, inline sparklines, and micro-flow telemetry.",
+    "repayment_settlement": "Upon commit action completion or inspector dismissal, focus and state settle back into calm equilibrium within 180ms."
+  },
+  "available_tokens": {
+    "--bg-void": "#0f172a",
+    "--bg-base": "#172033",
+    "--bg-surface": "#1f293c",
+    "--bg-surface-raised": "#293447",
+    "--bg-overlay": "#333f52",
+    "--border-dim": "#273245",
+    "--border-subtle": "#334053",
+    "--border-bright": "#47576a",
+    "--border-danger": "rgba(255, 77, 77, 0.4)",
+    "--border-warning": "rgba(245, 158, 11, 0.4)",
+    "--font-sans": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
+    "--font-mono": "\"JetBrains Mono\", \"SF Mono\", \"Fira Code\", Menlo, monospace",
+    "--font-variant-numeric": "tabular-nums",
+    "--text-primary": "#f4f5f1",
+    "--text-secondary": "#9aa49e",
+    "--text-tertiary": "#55615a",
+    "--accent-primary": "#10b981",
+    "--accent-subtle": "rgba(16, 185, 129, 0.14)",
+    "--accent-hover": "#12d494",
+    "--status-running": "#d6f56b",
+    "--status-warning": "#f59e0b",
+    "--status-danger": "#ff4d4d",
+    "--status-p0": "#ff4d4d",
+    "--status-p1": "#f59e0b",
+    "--status-ok": "#d6f56b",
+    "--paper-bg": "#1f293c",
+    "--ink-primary": "#f4f5f1",
+    "--ink-secondary": "#9aa49e",
+    "--reading-measure-max": "68ch",
+    "--space-1": "8px",
+    "--space-2": "16px",
+    "--space-3": "24px",
+    "--space-4": "32px",
+    "--space-5": "40px",
+    "--space-6": "48px",
+    "--space-8": "64px",
+    "--radius-outer": "16px",
+    "--padding-panel": "8px",
+    "--radius-inner": "8px",
+    "--radius-card": "14px",
+    "--radius-btn": "12px",
+    "--radius-sm": "2px",
+    "--radius-pill": "9999px",
+    "--duration-fast": "80ms",
+    "--duration-normal": "180ms",
+    "--duration-slow": "320ms",
+    "--ease-hud": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "--ease-out": "cubic-bezier(0, 0, 0.2, 1)"
+  },
+  "interaction_spec": {
+    "state_machine": {
+      "type": "hash_state",
+      "query_param": "state",
+      "supported_states": [
+        "ideal",
+        "empty",
+        "error"
+      ],
+      "dom_hook": "document.body.dataset.state"
+    },
+    "break_protocol_checkpoints": [
+      "**Unbreakable String**: `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000`",
+      "**Zero-Item Empty State**: Filter: 0 results / empty list",
+      "**Extreme 320px Fold**: 320px viewport width test",
+      "**Rapid Interruption**: Double-click / rapid Space hits"
+    ],
+    "dual_channel_shortcuts": [
+      "`Space` or `P`",
+      "`Esc`",
+      "`J` / `K`"
+    ],
+    "action_verb_lifecycle": [
+      {
+        "action_id": "execute-ai-writer-workspace",
+        "trigger_btn": "Commit Ai Writer Workspace",
+        "modal_header": "Confirm Ai Writer Workspace Action",
+        "commit_btn": "Confirm",
+        "toast": "Ai Writer Workspace Action Completed"
+      }
+    ],
+    "decisive_exchange_frames": [
+      "**Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.",
+      "**Frame 2 (Decisive Commit)**: Operator hits commit action; trigger undergoes tactile `:active scale(0.97)` mechanical response; inline state locks to prevent duplicate submissions.",
+      "**Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; feedback toast displays completion; focus deterministically restores to originating anchor."
+    ],
+    "context_preservation_rules": [
+      "**Draft Context**: Dismissing inspector or drawer without submitting preserves filter parameters and active tab.",
+      "**Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return."
+    ],
+    "profile_notes": "dense-console: implement full Action Verb Lifecycle (trigger→drawer/modal→commit→toast), Space/Esc dual-channel shortcuts, tabular-nums telemetry, SVG micro-sparklines."
+  },
+  "design_constraints": {
+    "dual_channel_shortcuts": [
+      "`Space` or `P`",
+      "`Esc`",
+      "`J` / `K`"
+    ],
+    "action_verb_lifecycle": [
+      {
+        "action_id": "execute-ai-writer-workspace",
+        "trigger_btn": "Commit Ai Writer Workspace",
+        "modal_header": "Confirm Ai Writer Workspace Action",
+        "commit_btn": "Confirm",
+        "toast": "Ai Writer Workspace Action Completed"
+      }
+    ],
+    "break_protocol_checkpoints": [
+      "**Unbreakable String**: `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000`",
+      "**Zero-Item Empty State**: Filter: 0 results / empty list",
+      "**Extreme 320px Fold**: 320px viewport width test",
+      "**Rapid Interruption**: Double-click / rapid Space hits"
+    ],
+    "decisive_exchange_frames": [
+      "**Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.",
+      "**Frame 2 (Decisive Commit)**: Operator hits commit action; trigger undergoes tactile `:active scale(0.97)` mechanical response; inline state locks to prevent duplicate submissions.",
+      "**Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; feedback toast displays completion; focus deterministically restores to originating anchor."
+    ],
+    "context_preservation_rules": [
+      "**Draft Context**: Dismissing inspector or drawer without submitting preserves filter parameters and active tab.",
+      "**Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return."
+    ],
+    "ruthless_omissions": [
+      "Zero multi-window fragmentations or detached popup windows.",
+      "Zero dead-end error notifications without actionable recovery paths.",
+      "Zero gratuitous animation or ungrounded decorative graphics that slow transaction flow."
+    ],
+    "material_non_transfer_boundaries": [
+      "Digital Glass & Surface Layering: Semi-transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
+      "Machined Tactile Detents: Interactive controls possess mechanical micro-press (:active feedback) resistance; never frictionless float.",
+      "Precision Telemetry Emissives: Status indicators simulate calibrated hardware LEDs with subtle ambient bloom; never raw flat neon washes."
+    ]
+  },
+  "verifiable_assertions": [
+    "Declared product intent is represented",
+    "Zero Naked Metrics: every metric has reference baseline or micro sparkline",
+    "Tabular Numerics: font-variant-numeric: tabular-nums on all metrics",
+    "Concentric Radii Formula: outer radius >= inner radius + padding",
+    "Atmospheric undertone: zero sterile neutral gray #808080",
+    "Dual-channel keyboard shortcuts (Space / Esc) operable",
+    "Action Verb Lifecycle closure: trigger -> drawer/modal -> commit -> toast",
+    "The Break Protocol: unbreakable string, empty state, 320px fold"
+  ],
+  "specification": {
+    "path": "prototype/specifications/ai-writer-workspace/r1.md",
+    "sha256": "8206b064fe178a6590e3e96f4673002af1926ea4d4af7f7722a49d6291d11eb4"
+  },
+  "spec_references": {
+    "product_thesis": "prototype/product.md",
+    "surface_topology": "prototype/contracts/surface-maps/m1.md",
+    "foundation_craft": "prototype/contracts/foundation/f1.md",
+    "slice_contract": "prototype/contracts/slices/ai-writer-workspace/c1.md",
+    "specification": "prototype/specifications/ai-writer-workspace/r1.md",
+    "tokens_stylesheet": "prototype/shared/tokens.css"
+  },
+  "spec_sources": {
+    "product_digest": "6df2edf1806879dd7bfcf1a5436b2e637f2f67cc1e2fe49423ed687c08c6e22b",
+    "surface_map_digest": "46278d94c77c4289b41c6708227240e1a7c544ea2d3850e1a7d0f340838a1c1a",
+    "foundation_digest": "d531dddc8fd88319435d6e4d1383e0f307a5c162d8ff60dbf2f7550466f51364",
+    "tokens_css_digest": "a193d35bb1835f7c1c48d4cf219889548b49f528c486319953e9aa5015f8bfe8",
+    "tokens_md_digest": "4b5fbecccd6c42490f4590253a5321b63fdfd470374e8f388311becee2f7ce0b",
+    "contract_digest": "6d49c5498b684d02a854199b304b90c6639fdb96734d21dfb2de9f7c4be3dc4b",
+    "specification_digest": "8206b064fe178a6590e3e96f4673002af1926ea4d4af7f7722a49d6291d11eb4"
+  }
+}

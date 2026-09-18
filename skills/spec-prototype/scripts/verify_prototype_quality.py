@@ -164,6 +164,17 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if raw_style_hex:
         failures.append(f"craft assertion: raw inline hex colors in style attributes ({len(raw_style_hex)} found; use CSS custom properties / var(--...))")
 
+    # Hard floor: reject dead neutral gray (#808080 / sterile washes) in style attributes and embedded <style>
+    dead_grays = re.findall(r'(?:style=["\'][^"\']*|color\s*:\s*|background(?:-color)?\s*:\s*)#(?:808080|777777|888888|999999)\b', source, re.IGNORECASE)
+    if dead_grays:
+        failures.append(f"craft assertion: atmospheric undertone violation: sterile neutral gray found ({dead_grays[0]}; infuse chromatic tone into surface/text tokens)")
+
+    # Accessibility floor: conditional prefers-reduced-motion when animations or transitions are present
+    has_motion = bool(re.search(r'(?:transition|animation)\s*:\s*(?!none\b)[^;}{]+', source, re.IGNORECASE))
+    if has_motion:
+        if not re.search(r'@media\s*\(\s*prefers-reduced-motion', source, re.IGNORECASE):
+            failures.append("a11y assertion: dynamic transitions/animations declared without @media (prefers-reduced-motion: reduce) override")
+
     # Hard floor: reject rogue :root color property redeclarations in <style>
     style_blocks = re.findall(r"<style\b[^>]*>(.*?)</style>", source, re.DOTALL | re.IGNORECASE)
     for sb in style_blocks:
@@ -189,6 +200,13 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 failures.append("state-machine assertion: stress checkpoints declared but no state-switching hook detected (use hashchange / location.hash / data-state / class empty|loading|view-mode)")
             if not re.search(r"text-overflow\s*:\s*ellipsis|overflow(?:-[xy])?\s*:\s*(?:hidden|auto|scroll)|break-word|break-all|truncate|clamp\(|overflow-wrap\s*:\s*(?:anywhere|break-word)|word-break\s*:\s*break-all", source, re.IGNORECASE):
                 failures.append("break-protocol assertion: missing string overflow containment (use text-overflow: ellipsis, overflow containment, truncate, or word-break: break-all)")
+
+            # Actionable empty-state floor: empty-state presentation surface must provide an actionable trigger (button or link bait)
+            empty_containers = re.findall(r'(<(?:div|section|aside|main)\b[^>]*(?:data-(?:for|state)=[\'"][^\'"]*empty[^\'"]*[\'"]|class=[\'"][^\'"]*\b(?:empty-state|state-empty|is-empty)\b[^\'"]*[\'"])[^>]*>.*?</(?:div|section|aside|main)>)', source, re.DOTALL | re.IGNORECASE)
+            for ec in empty_containers:
+                if not re.search(r'<button\b|<a\b[^>]*href=|role=[\'"]button[\'"]', ec, re.IGNORECASE):
+                    failures.append("contextual agency assertion: empty state container lacks actionable trigger (<button> or <a href>)")
+                    break
 
         # Zero Naked Metrics / Contextual Data Floor check
         if "Zero Naked Metrics" in contract_text or "Micro Sparklines" in contract_text or "sparkline" in contract_text.lower():
@@ -234,11 +252,13 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                     sid = p_raw.split("/")[0] if ("hero-anchor" in p_raw or "anchor" in p_raw) else p_raw.replace("surfaces/", "")
                     declared_surfaces.append(sid)
             current_id = html.parent.parent.name if html.parent.name in ("hero-anchor", "anchor") else html.parent.name
-            siblings = [sid for sid in declared_surfaces if sid != current_id]
-            if siblings:
-                has_sibling_link = any(re.search(rf"href=[\"'][^\"']*{re.escape(sid)}[^\"']*[\"']", source) for sid in siblings)
-                if not has_sibling_link:
-                    failures.append(f"topology assertion: multi-surface navigation links missing for sibling surfaces ({', '.join(siblings)})")
+            # Only enforce topology sibling navigation if current_id is an actual declared member of this surface map
+            if current_id in declared_surfaces:
+                siblings = [sid for sid in declared_surfaces if sid != current_id]
+                if siblings:
+                    has_sibling_link = any(re.search(rf"href=[\"'][^\"']*{re.escape(sid)}[^\"']*[\"']", source) for sid in siblings)
+                    if not has_sibling_link:
+                        failures.append(f"topology assertion: multi-surface navigation links missing for sibling surfaces ({', '.join(siblings)})")
 
     if check_stale:
         if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", source, re.IGNORECASE):

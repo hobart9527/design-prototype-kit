@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>editorial-reader — The Measure of a Line</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-variant-numeric: var(--font-variant-numeric);
+    font-size: 17px;
+    line-height: 1.7;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--accent-subtle); }
+
+  .skip-link {
+    position: absolute;
+    left: var(--space-2);
+    top: calc(var(--space-2) * -4);
+    z-index: 40;
+    padding: var(--space-1) var(--space-2);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-btn);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: top var(--duration-normal) var(--ease-out);
+  }
+  .skip-link:focus { top: var(--space-2); }
+
+  /* ---------- Publication shell ---------- */
+  .pub-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--bg-void);
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .pub-header-inner {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: var(--space-2) var(--space-3);
+  }
+  .brand {
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .brand:hover { color: var(--accent-primary); }
+
+  .header-tools {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .metric-readout {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .metric-readout .metric-value { color: var(--text-primary); }
+  .metric-readout .metric-unit { color: var(--text-secondary); }
+
+  .ghost-btn {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-btn);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out),
+                transform var(--duration-fast) var(--ease-hud);
+  }
+  .ghost-btn:hover { background: var(--accent-subtle); border-color: var(--border-bright); }
+  .ghost-btn:active { transform: scale(0.97); }
+  .ghost-btn:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+
+  .progress-track {
+    height: 2px;
+    background: var(--border-dim);
+    overflow: hidden;
+  }
+  .progress-fill {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--accent-primary);
+    transition: width var(--duration-normal) var(--ease-out);
+  }
+
+  /* ---------- Outline (quiet index) ---------- */
+  .outline {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: var(--space-2) var(--space-3) 0;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .outline[hidden] { display: none; }
+  .outline ol {
+    list-style: none;
+    margin: 0 0 var(--space-2);
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .outline a {
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+  .outline a:hover { color: var(--accent-primary); }
+
+  /* ---------- Reading topology ---------- */
+  .reading-shell {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 68ch) minmax(0, 200px) 1fr;
+    column-gap: var(--space-4);
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-3) var(--space-8);
+    align-items: start;
+  }
+  .reading-column {
+    grid-column: 2;
+    min-width: 0;
+    font-size: var(--reading-size, 19px);
+    line-height: 1.72;
+  }
+  .marginalia {
+    grid-column: 3;
+    min-width: 0;
+    position: sticky;
+    top: 88px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+  .margin-note {
+    border-top: 1px solid var(--border-dim);
+    padding: var(--space-2) 0 var(--space-3);
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .margin-note strong {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    margin-bottom: var(--space-1);
+  }
+
+  @media (max-width: 1080px) {
+    .reading-shell { grid-template-columns: 1fr minmax(0, 68ch) 1fr; }
+    .marginalia { display: none; }
+  }
+  @media (max-width: 560px) {
+    .reading-shell { display: block; padding: var(--space-4) var(--space-2) var(--space-6); }
+    .reading-column { font-size: 18px; }
+  }
+
+  /* ---------- Article typography ---------- */
+  .article-kicker {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-primary);
+    margin: 0 0 var(--space-2);
+  }
+  h1 {
+    font-size: clamp(30px, 6vw, 44px);
+    line-height: 1.14;
+    letter-spacing: -0.015em;
+    font-weight: 600;
+    margin: 0 0 var(--space-3);
+    overflow-wrap: break-word;
+  }
+  .dek {
+    font-size: 1.12em;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-3);
+    max-width: 58ch;
+  }
+  .byline {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin: 0;
+  }
+
+  .article-rule {
+    border: 0;
+    border-top: 1px solid var(--border-subtle);
+    margin: var(--space-3) 0;
+  }
+
+  /* Reading telemetry strip — one quiet sparkline, no dashboard */
+  .pace-panel {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding: var(--space-2) 0 0;
+  }
+  .pace-figure { margin: 0; }
+  .pace-caption {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+  .reading-sparkline { display: block; width: 148px; height: 26px; }
+  .reading-sparkline polyline { fill: none; stroke: var(--accent-primary); stroke-width: 1.5; }
+  .reading-sparkline line { stroke: var(--border-subtle); stroke-width: 1; }
+
+  .metric-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .metric {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .metric .metric-value { color: var(--text-primary); }
+  .metric .metric-unit { color: var(--text-secondary); }
+  .metric .metric-baseline { color: var(--text-tertiary); }
+  .metric progress { width: 84px; height: 4px; vertical-align: middle; accent-color: var(--accent-primary); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    transition: color var(--duration-normal) var(--ease-out),
+                border-color var(--duration-normal) var(--ease-out),
+                background-color var(--duration-normal) var(--ease-out);
+  }
+  .badge .status-dot {
+    width: 6px; height: 6px; border-radius: var(--radius-pill);
+    background: var(--border-bright);
+    transition: background-color var(--duration-normal) var(--ease-out);
+  }
+  .badge[data-baseline="saved"] { color: var(--accent-primary); border-color: var(--accent-primary); background: var(--accent-subtle); }
+  .badge[data-baseline="saved"] .status-dot { background: var(--accent-primary); }
+  .badge[data-baseline="committed"] { color: var(--text-primary); border-color: var(--border-bright); background: var(--bg-surface); }
+  .badge[data-baseline="committed"] .status-dot { background: var(--status-running); }
+
+  .article-body h2 {
+    font-size: 1.34em;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin: var(--space-6) 0 var(--space-2);
+    scroll-margin-top: 96px;
+  }
+  .article-body h2:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 6px;
+    border-radius: var(--radius-sm);
+  }
+  .article-body p { margin: 0 0 var(--space-3); }
+  .article-body p:first-of-type::first-letter {
+    float: left;
+    font-size: 3.1em;
+    line-height: 0.86;
+    padding: 0.06em 0.08em 0 0;
+    color: var(--accent-primary);
+  }
+  .article-body blockquote {
+    margin: var(--space-4) 0;
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--border-bright);
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+  .article-body code,
+  .entity-hash {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-sm);
+    padding: 1px 5px;
+  }
+  .entity-hash {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    overflow-wrap: break-word;
+  }
+  .footnote {
+    font-size: 0.86em;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border-dim);
+    padding-top: var(--space-2);
+    margin-top: var(--space-5);
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* ---------- Action bar / decisive exchange ---------- */
+  .action-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-top: var(--space-5);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .primary-btn {
+    appearance: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--accent-primary);
+    background: var(--accent-primary);
+    color: var(--bg-base);
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out),
+                transform var(--duration-fast) var(--ease-hud),
+                opacity var(--duration-normal) var(--ease-out);
+  }
+  .primary-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .primary-btn:active { transform: scale(0.97); }
+  .primary-btn:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; }
+  .primary-btn[disabled] { opacity: 0.55; cursor: progress; }
+
+  .save-btn {
+    appearance: none;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 7px 13px;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color var(--duration-normal) var(--ease-out),
+                border-color var(--duration-normal) var(--ease-out),
+                color var(--duration-normal) var(--ease-out),
+                transform var(--duration-fast) var(--ease-hud);
+  }
+  .save-btn:hover { border-color: var(--border-bright); }
+  .save-btn:active { transform: scale(0.97); }
+  .save-btn:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+  .save-btn[aria-pressed="true"] {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    background: var(--accent-subtle);
+  }
+
+  .inline-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-primary);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity var(--duration-normal) var(--ease-out),
+                transform var(--duration-normal) var(--ease-hud);
+  }
+  .inline-badge.is-visible { opacity: 1; transform: translateX(0); }
+
+  /* ---------- Inspector drawer (quiet, inline, no modal stack) ---------- */
+  .inspector {
+    max-width: 1180px;
+    margin: 0 auto var(--space-6);
+    padding: 0 var(--space-3);
+  }
+  .inspector[hidden] { display: none; }
+  .inspector-panel {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-outer);
+    padding: var(--space-3);
+    background: var(--bg-surface);
+    display: grid;
+    gap: var(--space-2);
+    animation: settle-in var(--duration-normal) var(--ease-hud);
+  }
+  @keyframes settle-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .inspector-panel h2 { margin: 0; font-size: 17px; }
+  .inspector-copy { margin: 0; font-size: 14px; color: var(--text-secondary); }
+  .param-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    list-style: none;
+    padding: 0;
+  }
+  .param-list b { color: var(--text-primary); font-weight: 500; }
+  .inspector-actions { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: var(--space-3);
+    transform: translate(-50%, 12px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 9px 16px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-normal) var(--ease-out),
+                transform var(--duration-normal) var(--ease-hud);
+  }
+  .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+  .toast .status-dot {
+    width: 6px; height: 6px; border-radius: var(--radius-pill);
+    background: var(--status-running);
+  }
+
+  /* ---------- State views ---------- */
+  .state-view { display: none; }
+  body[data-state="empty"] .reading-column .article-body,
+  body[data-state="error"] .reading-column .article-body,
+  body[data-state="empty"] .reading-column .action-bar,
+  body[data-state="error"] .reading-column .action-bar,
+  body[data-state="empty"] .marginalia,
+  body[data-state="error"] .marginalia { display: none; }
+  body[data-state="empty"] #view-empty { display: block; }
+  body[data-state="error"] #view-error { display: block; }
+
+  .state-card {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-outer);
+    background: var(--bg-surface);
+    padding: var(--space-4) var(--space-3);
+    text-align: left;
+  }
+  .state-card h2 { margin: 0 0 var(--space-1); font-size: 20px; }
+  .state-card p { margin: 0 0 var(--space-2); color: var(--text-secondary); font-size: 15px; }
+  .state-card .telemetry {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    border-left: 2px solid var(--status-warning);
+    padding-left: var(--space-2);
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .state-card .entity-hash { margin-top: var(--space-1); }
+
+  /* ---------- Reading footer ---------- */
+  .reading-footer {
+    border-top: 1px solid var(--border-dim);
+    background: var(--bg-void);
+  }
+  .reading-footer-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: var(--space-3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .font-controls { display: flex; align-items: center; gap: var(--space-1); }
+  .font-controls .value-readout { color: var(--text-primary); min-width: 3.4em; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+  }
+</style>
+</head>
+<body data-state="ideal">
+<a class="skip-link" href="#reading-column">Skip to article</a>
+
+<header class="pub-header">
+  <div class="pub-header-inner">
+    <a class="brand" href="#state=ideal">editorial-reader</a>
+    <div class="header-tools">
+      <span class="metric-readout">
+        <span class="metric-unit">reading</span>
+        <span class="metric-value">8 min</span>
+        <span class="metric-unit">·</span>
+        <span class="metric-value">2,400 words</span>
+      </span>
+      <button id="index-toggle" class="ghost-btn" type="button" aria-expanded="false" aria-controls="outline">Index</button>
+    </div>
+  </div>
+  <div class="progress-track" id="progress-bar" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <span class="progress-fill" id="progress-fill"></span>
+  </div>
+</header>
+
+<nav id="outline" class="outline" aria-label="Article index" hidden>
+  <ol>
+    <li><a href="#sec-measure">01 — The Measure</a></li>
+    <li><a href="#sec-ink">02 — Ink and Paper</a></li>
+    <li><a href="#sec-marginalia">03 — Marginalia</a></li>
+    <li><a href="#sec-quiet">04 — The Quiet Interface</a></li>
+  </ol>
+</nav>
+
+<main class="reading-shell">
+  <div class="reading-column" id="reading-column">
+
+    <article class="article-body" id="article" aria-labelledby="article-title">
+      <p class="article-kicker">Design Systems Desk</p>
+      <h1 id="article-title">The Measure of a Line</h1>
+      <p class="dek">Sixty-six characters is not superstition. It is the point where the eye stops hunting for the next line and starts reading instead.</p>
+      <p class="byline">Marguerite Oyelaran · 18 September 2026 · Revision r1</p>
+
+      <hr class="article-rule">
+
+      <div class="pace-panel">
+        <figure class="pace-figure">
+          <div class="pace-caption">session pace · last 7 days</div>
+          <svg class="reading-sparkline" viewBox="0 0 148 26" role="img" aria-label="Reading pace over the last seven days, trending upward">
+            <line x1="0" y1="21" x2="148" y2="21"></line>
+            <polyline points="2,19 25,17 48,18 71,12 94,13 117,7 144,4"></polyline>
+            <circle cx="144" cy="4" r="2.2"></circle>
+          </svg>
+        </figure>
+        <ul class="metric-row">
+          <li class="metric"><span class="metric-value">8</span> <span class="metric-unit">min read</span> <span class="metric-baseline">@ 300 wpm</span></li>
+          <li class="metric"><span class="metric-value">2,400</span> <span class="metric-unit">words</span></li>
+          <li class="metric">
+            <span class="metric-value">42</span><span class="metric-unit">% read</span>
+            <progress class="progress-meter" max="100" value="42" aria-label="Article progress: 42 percent"></progress>
+          </li>
+          <li class="metric">
+            <span class="badge" id="impact-badge" data-baseline="draft"><span class="status-dot"></span><span id="badge-label">State: Draft</span></span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="action-bar">
+        <button id="commit-trigger" class="primary-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="inspector">Commit Editorial Reader</button>
+        <button id="save-btn" class="save-btn" type="button" aria-pressed="false">Save to Read Later</button>
+        <span id="save-note" class="inline-badge" role="status" aria-live="polite">In your reading list</span>
+      </div>
+
+      <h2 id="sec-measure" tabindex="-1">01 — The Measure</h2>
+      <p>A line of prose is a machine for moving the eye. Set it too wide and the return sweep loses its place; set it too narrow and the rhythm breaks into a stutter of hyphens. The comfortable band sits between sixty and seventy-five characters, and nearly every reading system rediscovering typography arrives there by measurement rather than by taste.</p>
+      <p>What matters is not the number itself but the discipline it enforces. A fixed measure makes line height accountable, makes paragraph spacing predictable, and makes the second column of a comparison table mean the same thing as the first. The measure is the unit of trust in a reading surface.</p>
+
+      <h2 id="sec-ink">02 — Ink and Paper</h2>
+      <p>Contrast is a legibility floor, not a stylistic preference. Ink on paper settles around sixteen to one; screens that fall below seven to one begin to cost the reader effort they never consciously notice. This surface holds primary text well above that floor against a warm paper ground rather than a sterile white.</p>
+      <blockquote>“A reader who has to work at seeing the words cannot work at understanding them.”</blockquote>
+      <p>Warmth is doing structural work here. A faint chromatic undertone in the background keeps long sessions from feeling clinical, while the neutral grays used for borders stay deliberately below the threshold of attention.</p>
+
+      <h2 id="sec-marginalia">03 — Marginalia</h2>
+      <p>Notes belong beside the sentence they annotate, not on top of it. The margin is a parallel channel: it carries citation, provenance, and the occasional correction without ever interrupting the forward motion of the paragraph.<sup>1</sup></p>
+      <p>When the viewport cannot hold a margin, the notes fold away rather than stacking into a drawer the reader must manage. Reference material that requires management has already failed as reference material.</p>
+
+      <h2 id="sec-quiet">04 — The Quiet Interface</h2>
+      <p>A reading surface should acknowledge an action and then get out of the way. Saving an article changes a button, not the world. Committing a change confirms once, briefly, and returns focus to where the reader left it.</p>
+      <p>Every acknowledgement on this page settles within one hundred and eighty milliseconds and never blocks the column.</p>
+
+      <p class="footnote"><sup>1</sup> Provenance for this revision is pinned to entity <span class="entity-hash" title="unbreakable-entity-hash-00000000-0000-0000-0000-000000000000">unbreakable-entity-hash-00000000-0000-0000-0000-000000000000</span> and verified against the contract digest at publication time.</p>
+    </article>
+
+    <section id="view-empty" class="state-view state-card" aria-labelledby="empty-title">
+      <h2 id="empty-title">No articles match this filter</h2>
+      <p>Filter: 0 results in the current reading list. Adjust the filter or reset it to return to the full index.</p>
+      <ul class="param-list">
+        <li>filter: <b>unread · annotated</b></li>
+        <li>results: <b>0</b></li>
+        <li>baseline: <b>128 total</b></li>
+      </ul>
+      <div class="inspector-actions" style="margin-top:var(--space-2)">
+        <button id="reset-filter" class="primary-btn" type="button">Reset filter</button>
+      </div>
+    </section>
+
+    <section id="view-error" class="state-view state-card" aria-labelledby="error-title">
+      <h2 id="error-title">Reading telemetry unavailable</h2>
+      <p>Progress could not be synchronized. The article text below remains readable from cache; only the metrics are stale.</p>
+      <p class="telemetry">upstream: reader-telemetry · status: 503 · retry in 12s · last good sync 00:04:11 ago · correlation unbreakable-entity-hash-00000000-0000-0000-0000-000000000000</p>
+      <div class="inspector-actions" style="margin-top:var(--space-2)">
+        <button id="retry-sync" class="ghost-btn" type="button">Retry sync</button>
+        <button id="dismiss-error" class="ghost-btn" type="button">Continue reading offline</button>
+      </div>
+    </section>
+  </div>
+
+  <aside class="marginalia" aria-label="Marginalia">
+    <div class="margin-note">
+      <strong>Provenance</strong>
+      Revision r1, contract c1. Digest verified at 18 Sep 2026.
+    </div>
+    <div class="margin-note">
+      <strong>Measure</strong>
+      68ch column, 1.72 line height, 19px base. Falls to 320px without horizontal scroll.
+    </div>
+    <div class="margin-note">
+      <strong>Shortcuts</strong>
+      <code>Space</code> / <code>P</code> inspector<br>
+      <code>Esc</code> dismiss<br>
+      <code>J</code> / <code>K</code> next / previous section
+    </div>
+  </aside>
+</main>
+
+<section id="inspector" class="inspector" role="dialog" aria-modal="false" aria-labelledby="inspector-title" hidden>
+  <div class="inspector-panel">
+    <h2 id="inspector-title">Confirm Editorial Reader Action</h2>
+    <p class="inspector-copy">Committing publishes the current revision of this article to the reading index. Draft context and scroll position are preserved.</p>
+    <ul class="param-list">
+      <li>action: <b>execute-editorial-reader</b></li>
+      <li>target: <b>The Measure of a Line</b></li>
+      <li>revision: <b>r1</b></li>
+    </ul>
+    <div class="inspector-actions">
+      <button id="confirm-commit" class="primary-btn" type="button">Confirm</button>
+      <button id="dismiss-inspector" class="ghost-btn" type="button">Dismiss</button>
+    </div>
+  </div>
+</section>
+
+<footer class="reading-footer">
+  <div class="reading-footer-inner">
+    <span>Chapter 04 of 04 · <span class="metric-value">2,400</span> <span class="metric-unit">words</span> total</span>
+    <div class="font-controls" role="group" aria-label="Text size">
+      <button id="font-dec" class="ghost-btn" type="button" aria-label="Decrease text size">A−</button>
+      <span class="value-readout" id="font-readout">19px</span>
+      <button id="font-inc" class="ghost-btn" type="button" aria-label="Increase text size">A+</button>
+    </div>
+  </div>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"><span class="status-dot"></span><span id="toast-text"></span></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SUPPORTED = ["ideal", "empty", "error"];
+  var readingSize = 19;
+  var committing = false;
+
+  var body = document.body;
+  var article = document.getElementById("article");
+  var progressFill = document.getElementById("progress-fill");
+  var progressBar = document.getElementById("progress-bar");
+  var inspector = document.getElementById("inspector");
+  var trigger = document.getElementById("commit-trigger");
+  var confirmBtn = document.getElementById("confirm-commit");
+  var dismissBtn = document.getElementById("dismiss-inspector");
+  var saveBtn = document.getElementById("save-btn");
+  var saveNote = document.getElementById("save-note");
+  var badge = document.getElementById("impact-badge");
+  var badgeLabel = document.getElementById("badge-label");
+  var toast = document.getElementById("toast");
+  var toastText = document.getElementById("toast-text");
+  var outline = document.getElementById("outline");
+  var indexToggle = document.getElementById("index-toggle");
+  var sections = Array.prototype.slice.call(article.querySelectorAll("h2[id]"));
+  var activeSection = 0;
+  var toastTimer = null;
+
+  /* -------- hash state machine -------- */
+  function applyState() {
+    var match = /state=([a-z-]+)/.exec(window.location.hash || "");
+    var state = match && SUPPORTED.indexOf(match[1]) !== -1 ? match[1] : "ideal";
+    body.dataset.state = state;
+    if (state !== "ideal") { closeInspector(false); }
+  }
+  window.addEventListener("hashchange", applyState);
+  applyState();
+
+  /* -------- quiet toast -------- */
+  function showToast(message) {
+    toastText.textContent = message;
+    toast.classList.add("is-visible");
+    if (toastTimer) { window.clearTimeout(toastTimer); }
+    toastTimer = window.setTimeout(function () {
+      toast.classList.remove("is-visible");
+    }, 2400);
+  }
+
+  /* -------- reading progress -------- */
+  function updateProgress() {
+    var doc = document.documentElement;
+    var scrollable = doc.scrollHeight - window.innerHeight;
+    var ratio = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 1;
+    var pct = Math.round(ratio * 100);
+    progressFill.style.width = pct + "%";
+    progressBar.setAttribute("aria-valuenow", String(pct));
+  }
+  window.addEventListener("scroll", updateProgress, { passive: true });
+  window.addEventListener("resize", updateProgress);
+  updateProgress();
+
+  /* -------- index toggle -------- */
+  indexToggle.addEventListener("click", function () {
+    var open = outline.hasAttribute("hidden");
+    if (open) { outline.removeAttribute("hidden"); } else { outline.setAttribute("hidden", ""); }
+    indexToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+
+  /* -------- bookmark (quiet, non-blocking) -------- */
+  saveBtn.addEventListener("click", function () {
+    var saved = saveBtn.getAttribute("aria-pressed") === "true";
+    var next = !saved;
+    saveBtn.setAttribute("aria-pressed", next ? "true" : "false");
+    saveBtn.textContent = next ? "Saved to Read Later" : "Save to Read Later";
+    saveNote.classList.toggle("is-visible", next);
+  });
+
+  /* -------- decisive exchange: trigger -> inspector -> commit -> toast -------- */
+  function openInspector() {
+    inspector.removeAttribute("hidden");
+    trigger.setAttribute("aria-expanded", "true");
+    window.requestAnimationFrame(function () { confirmBtn.focus(); });
+  }
+  function closeInspector(restoreFocus) {
+    if (inspector.hasAttribute("hidden")) { return; }
+    inspector.setAttribute("hidden", "");
+    trigger.setAttribute("aria-expanded", "false");
+    if (restoreFocus !== false) { trigger.focus(); }
+  }
+  function toggleInspector() {
+    if (inspector.hasAttribute("hidden")) { openInspector(); } else { closeInspector(true); }
+  }
+  function commit() {
+    if (committing) { return; }
+    committing = true;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Committing…";
+    window.setTimeout(function () {
+      badge.dataset.baseline = "committed";
+      badgeLabel.textContent = "State: Committed";
+      closeInspector(false);
+      showToast("Editorial Reader Action Completed");
+      committing = false;
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Confirm";
+      trigger.focus();
+    }, 180);
+  }
+
+  trigger.addEventListener("click", openInspector);
+  confirmBtn.addEventListener("click", commit);
+  dismissBtn.addEventListener("click", function () { closeInspector(true); });
+
+  /* -------- dual-channel keyboard ergonomics -------- */
+  function focusSection(index) {
+    activeSection = Math.min(sections.length - 1, Math.max(0, index));
+    var el = sections[activeSection];
+    el.focus({ preventScroll: true });
+    el.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
+  window.addEventListener("keydown", function (event) {
+    var tag = (event.target && event.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") { return; }
+    if (event.key === "Escape") { closeInspector(true); return; }
+    if (event.key === " " || event.key === "p" || event.key === "P") {
+      event.preventDefault();
+      toggleInspector();
+      return;
+    }
+    if (event.key === "j" || event.key === "J") { focusSection(activeSection + 1); }
+    if (event.key === "k" || event.key === "K") { focusSection(activeSection - 1); }
+  });
+  window.addEventListener("keyup", function (event) {
+    if (event.key === " ") { event.preventDefault(); }
+  });
+
+  /* -------- font controls -------- */
+  var fontReadout = document.getElementById("font-readout");
+  function setReadingSize(next) {
+    readingSize = Math.min(23, Math.max(16, next));
+    document.documentElement.style.setProperty("--reading-size", readingSize + "px");
+    fontReadout.textContent = readingSize + "px";
+  }
+  document.getElementById("font-dec").addEventListener("click", function () { setReadingSize(readingSize - 1); });
+  document.getElementById("font-inc").addEventListener("click", function () { setReadingSize(readingSize + 1); });
+
+  /* -------- state view recovery actions -------- */
+  document.getElementById("reset-filter").addEventListener("click", function () {
+    window.location.hash = "#state=ideal";
+  });
+  document.getElementById("retry-sync").addEventListener("click", function () {
+    showToast("Editorial Reader Action Completed");
+  });
+  document.getElementById("dismiss-error").addEventListener("click", function () {
+    window.location.hash = "#state=ideal";
+  });
+})();
+</script>
+</body>
+</html>

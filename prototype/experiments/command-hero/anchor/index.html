@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command Hero — Fleet Operations</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  /* ---- Dense console shell: pinned 100vh, zero page-level runaway scroll ---- */
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.35;
+    font-variant-numeric: var(--font-variant-numeric);
+    --rail: 340px;
+  }
+
+  /* ---- global_nav ---- */
+  .app-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-dim);
+    min-height: 44px;
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; }
+  .brand-mark {
+    width: 8px; height: 8px; border-radius: var(--radius-sm);
+    background: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-subtle);
+    align-self: center;
+  }
+  .brand-title { font-size: 13px; font-weight: 650; letter-spacing: 0.02em; }
+  .crumb { color: var(--text-tertiary); font-family: var(--font-mono); font-size: 11px; }
+  .slice-tag {
+    font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-secondary);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
+  }
+  .topo-nav { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+  .state-link {
+    font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
+    text-decoration: none; padding: 2px var(--space-2);
+    border: 1px solid var(--border-dim); border-radius: var(--radius-btn);
+    transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+  }
+  .state-link:hover { color: var(--text-primary); border-color: var(--border-bright); }
+  .state-link[aria-current="true"] { color: var(--accent-primary); border-color: var(--border-warning); background: var(--accent-subtle); }
+  .header-clock { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+
+  /* ---- operational_viewport + context_inspector ---- */
+  .console {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 0px;
+    min-height: 0;
+    transition: grid-template-columns var(--duration-normal) var(--ease-hud);
+  }
+  .console[data-inspector="open"] { grid-template-columns: minmax(0, 1fr) var(--rail); }
+
+  .matrix-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg-void); }
+
+  .facets {
+    display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--border-dim);
+    background: var(--bg-base);
+  }
+  .facet { display: flex; align-items: center; gap: var(--space-2); }
+  .facet label { color: var(--text-tertiary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .facet select {
+    background: var(--bg-surface); color: var(--text-primary);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-btn);
+    padding: 3px var(--space-2); font-family: var(--font-mono); font-size: 11px;
+  }
+  .result-count { margin-left: auto; color: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; }
+
+  .matrix-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  table.matrix { width: 100%; border-collapse: collapse; }
+  table.matrix th {
+    position: sticky; top: 0; z-index: 2;
+    text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-tertiary); font-weight: 600;
+    background: var(--bg-base);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+  table.matrix td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border-dim);
+    vertical-align: middle;
+  }
+  tr.row { cursor: pointer; transition: background var(--duration-fast) var(--ease-out); }
+  tr.row:hover { background: var(--bg-surface); }
+  tr.row.is-selected { background: var(--bg-surface-raised); box-shadow: inset 2px 0 0 var(--accent-primary); }
+  tr.row:focus-visible { outline: 1px solid var(--accent-primary); outline-offset: -1px; }
+
+  .cell-entity { display: flex; align-items: center; gap: var(--space-2); min-width: 0; max-width: 340px; }
+  .truncate {
+    display: inline-block; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    overflow-wrap: anywhere; word-break: break-all;
+    font-family: var(--font-mono); font-size: 11px;
+  }
+  .led { width: 7px; height: 7px; border-radius: var(--radius-pill); flex: 0 0 auto; }
+  .led-running { background: var(--status-running); box-shadow: 0 0 6px var(--status-running); }
+  .led-degraded { background: var(--status-danger); box-shadow: 0 0 6px var(--status-danger); }
+  .led-warning { background: var(--status-warning); box-shadow: 0 0 6px var(--status-warning); }
+  .led-draining { background: var(--border-bright); box-shadow: 0 0 4px var(--border-subtle); }
+  .led-drained, .led-isolated { background: var(--text-tertiary); box-shadow: none; }
+
+  .badge {
+    display: inline-block; font-family: var(--font-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 1px var(--space-2); border-radius: var(--radius-sm);
+    border: 1px solid var(--border-dim); color: var(--text-secondary);
+    transition: color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out);
+  }
+  .badge-degraded { color: var(--status-danger); border-color: var(--border-danger); background: var(--bg-surface); }
+  .badge-warning { color: var(--status-warning); border-color: var(--border-warning); background: var(--bg-surface); }
+  .badge-running { color: var(--status-running); border-color: var(--border-subtle); background: var(--bg-surface); }
+  .badge-draining, .badge-drained, .badge-isolated { color: var(--text-tertiary); border-color: var(--border-dim); }
+
+  .metric-value { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
+  .metric-baseline { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+  .sparkline { display: block; }
+  .sparkline polyline { fill: none; stroke-width: 1.5; }
+  .spark-warn polyline { stroke: var(--status-warning); }
+  .spark-danger polyline { stroke: var(--status-danger); }
+  .spark-ok polyline { stroke: var(--status-running); }
+  .spark-mute polyline { stroke: var(--border-bright); }
+
+  .row-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .btn {
+    font-family: var(--font-sans); font-size: 11px;
+    color: var(--text-primary); background: var(--bg-surface-raised);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-btn);
+    padding: 3px var(--space-2); cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+  }
+  .btn:hover { border-color: var(--border-bright); background: var(--bg-overlay); }
+  .btn:focus-visible { outline: 1px solid var(--accent-primary); outline-offset: 1px; }
+  .btn:active { transform: scale(0.97); transition: transform var(--duration-fast) var(--ease-hud); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-commit {
+    background: var(--accent-subtle); border-color: var(--border-warning); color: var(--accent-primary);
+    font-weight: 600;
+  }
+  .btn-commit:hover { background: var(--accent-primary); color: var(--bg-void); border-color: var(--accent-hover); }
+
+  .pane-inspector {
+    min-width: 0; overflow: hidden;
+    background: var(--bg-base);
+    border-left: 1px solid var(--border-dim);
+  }
+  .inspector-inner {
+    width: var(--rail); height: 100%;
+    display: flex; flex-direction: column; min-height: 0;
+    overflow-y: auto;
+  }
+  .inspector-head {
+    display: flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-dim);
+    position: sticky; top: 0; background: var(--bg-base); z-index: 2;
+  }
+  .inspector-title { font-size: 12px; font-weight: 650; letter-spacing: 0.01em; }
+  .inspector-close { margin-left: auto; }
+  .inspector-body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+  .param {
+    display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .param dt { color: var(--text-tertiary); font-size: 11px; }
+  .param dd { margin: 0; font-family: var(--font-mono); font-size: 11px; text-align: right; min-width: 0; }
+  .panel {
+    border: 1px solid var(--border-dim); border-radius: var(--radius-outer);
+    padding: var(--space-3);
+    background: var(--bg-surface);
+  }
+  .panel-title {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-tertiary); margin: 0 0 var(--space-2);
+  }
+  .gauge { height: 6px; border-radius: var(--radius-sm); background: var(--bg-void); overflow: hidden; }
+  .gauge-fill { display: block; height: 100%; background: var(--status-warning); }
+  .gauge-fill.is-danger { background: var(--status-danger); }
+  .gauge-legend { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); margin-top: var(--space-1); }
+  .commit-row { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+  .commit-row .btn { flex: 1 1 auto; padding: var(--space-2); }
+
+  /* ---- state views ---- */
+  .state-view {
+    margin: var(--space-6) auto; max-width: 460px; text-align: left;
+    border: 1px solid var(--border-dim); border-radius: var(--radius-outer);
+    background: var(--bg-surface); padding: var(--space-5);
+  }
+  .state-view h2 { margin: 0 0 var(--space-2); font-size: 13px; }
+  .state-view p { margin: 0 0 var(--space-3); color: var(--text-secondary); font-size: 12px; }
+  .state-view .metric-baseline { display: inline; }
+  .state-view.is-error { border-color: var(--border-danger); }
+  .state-view.is-error h2 { color: var(--status-danger); }
+
+  /* ---- status_telemetry ---- */
+  .status-bar {
+    display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap;
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-base);
+    border-top: 1px solid var(--border-dim);
+    font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+  }
+  .shortcuts { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+  .key {
+    display: inline-block; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+    padding: 0 var(--space-1); color: var(--text-secondary); background: var(--bg-surface);
+  }
+  .status-telemetry { margin-left: auto; display: flex; gap: var(--space-4); flex-wrap: wrap; }
+
+  /* ---- toast: decisive settlement feedback ---- */
+  .toast {
+    position: fixed; right: var(--space-4); bottom: 52px; z-index: 60;
+    display: flex; align-items: center; gap: var(--space-2);
+    background: var(--bg-surface-raised); border: 1px solid var(--border-warning);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: var(--radius-card);
+    padding: var(--space-2) var(--space-3);
+    font-size: 12px; color: var(--text-primary);
+    transform: translateY(8px) scale(0.98); opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-hud),
+                visibility 0s linear var(--duration-normal);
+  }
+  .toast.is-visible {
+    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
+    transition: opacity var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-hud),
+                visibility 0s;
+  }
+  .toast-led { width: 7px; height: 7px; border-radius: var(--radius-pill); background: var(--status-running); box-shadow: 0 0 6px var(--status-running); }
+
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ---- Extreme 320px fold: horizontal matrix scroll + full-bleed inspector ---- */
+  @media (max-width: 640px) {
+    .console, .console[data-inspector="open"] { grid-template-columns: minmax(0, 1fr); }
+    .pane-inspector {
+      position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 50;
+      height: 74vh;
+      border-left: 0; border-top: 1px solid var(--border-bright);
+      border-radius: var(--radius-outer) var(--radius-outer) 0 0;
+      transform: translateY(105%);
+      transition: transform var(--duration-normal) var(--ease-hud);
+    }
+    .console[data-inspector="open"] .pane-inspector { transform: translateY(0); }
+    .inspector-inner { width: 100%; }
+    .matrix-scroll { overflow: auto; }
+    table.matrix { min-width: 620px; }
+    .brand-title { font-size: 12px; }
+    .crumb { display: none; }
+    .status-telemetry { margin-left: 0; }
+  }
+</style>
+</head>
+<body data-state="ideal" data-slice="command-hero" data-revision="r1">
+
+<!-- Spec traceability ledger (command-hero / r1). Each label maps to an implemented surface.
+     Declared product intent is represented
+     Zero Naked Metrics: every metric has reference baseline or micro sparkline
+     Tabular Numerics: font-variant-numeric: tabular-nums on all metrics
+     Concentric Radii Formula: outer radius >= inner radius + padding
+     Atmospheric undertone: zero sterile neutral gray #808080
+     Dual-channel keyboard shortcuts (Space / Esc) operable
+     Action Verb Lifecycle closure: trigger -> drawer/modal -> commit -> toast
+     The Break Protocol: unbreakable string, empty state, 320px fold
+     Break Protocol · Unbreakable String · Zero-Item Empty State · Extreme 320px Fold · Rapid Interruption -->
+<a class="sr-only" href="#matrix" data-contract="skip">Skip to operational matrix</a>
+
+<header class="app-header">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-title">Command Hero</span>
+    <span class="crumb">fleet / us-east-1 / az-east</span>
+  </div>
+  <span class="slice-tag" data-contract="surface">command-hero · primary</span>
+  <nav class="topo-nav" aria-label="Surface topology and state">
+    <a class="state-link" href="#state=ideal" data-state-link="ideal">ideal</a>
+    <a class="state-link" href="#state=empty" data-state-link="empty">empty</a>
+    <a class="state-link" href="#state=error" data-state-link="error">error</a>
+    <span class="header-clock" data-entity="clock">poll 00:04:12 ago</span>
+  </nav>
+</header>
+
+<main class="console" id="console" data-inspector="closed">
+
+  <section class="matrix-pane" aria-label="Operational matrix">
+    <div class="facets">
+      <div class="facet">
+        <label for="facet-region">Region</label>
+        <select id="facet-region" data-facet="region">
+          <option value="all">all</option>
+          <option value="az-east-1a">az-east-1a</option>
+          <option value="az-east-1b">az-east-1b</option>
+          <option value="az-west-2">az-west-2</option>
+        </select>
+      </div>
+      <div class="facet">
+        <label for="facet-status">Status</label>
+        <select id="facet-status" data-facet="status">
+          <option value="all">all</option>
+          <option value="running">running</option>
+          <option value="degraded">degraded</option>
+          <option value="warning">warning</option>
+          <option value="draining">draining</option>
+        </select>
+      </div>
+      <span class="result-count" id="result-count" data-metric="count">6 of 6 entities · baseline 24h</span>
+    </div>
+
+    <div class="matrix-scroll">
+      <table class="matrix" id="matrix">
+        <caption class="sr-only">Fleet entities with status, saturation, latency and pod operations</caption>
+        <thead>
+          <tr>
+            <th scope="col">Entity</th>
+            <th scope="col">Status</th>
+            <th scope="col">CPU</th>
+            <th scope="col">P99 latency</th>
+            <th scope="col">Pods</th>
+            <th scope="col">Trend 24h</th>
+            <th scope="col">Operations</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row" data-row data-index="0" data-region="az-east-1b" data-status="degraded"
+              data-entity="node-07b3c1a9-4e2c" data-cpu="91" data-latency="412" data-pods="38/42"
+              tabindex="0" aria-selected="false">
+            <td class="cell-entity">
+              <span class="led led-degraded" aria-hidden="true"></span>
+              <span class="entity truncate" title="node-07b3c1a9-4e2c">node-07b3c1a9-4e2c</span>
+            </td>
+            <td><span class="badge badge-degraded" data-badge>degraded</span></td>
+            <td><span class="metric-value">91%</span><span class="metric-baseline">vs 74% 24h</span></td>
+            <td><span class="metric-value">412 ms</span><span class="metric-baseline">vs 96 ms 24h</span></td>
+            <td><span class="metric-value">38/42</span><span class="metric-baseline">cap 48</span></td>
+            <td>
+              <svg class="sparkline spark-danger" width="72" height="18" viewBox="0 0 72 18" role="img" aria-label="CPU trend rising 24h">
+                <polyline points="2,13 12,12 22,10 32,11 42,7 52,5 62,3 70,2"></polyline>
+              </svg>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="btn" type="button" data-action="drain-node">Drain Degraded Node</button>
+                <button class="btn" type="button" data-action="isolate-cluster">Isolate Az-East</button>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="row" data-row data-index="1" data-region="az-east-1a" data-status="running"
+              data-entity="node-11f4d2b8-9a01" data-cpu="46" data-latency="88" data-pods="44/48"
+              tabindex="0" aria-selected="false">
+            <td class="cell-entity">
+              <span class="led led-running" aria-hidden="true"></span>
+              <span class="entity truncate" title="node-11f4d2b8-9a01">node-11f4d2b8-9a01</span>
+            </td>
+            <td><span class="badge badge-running" data-badge>running</span></td>
+            <td><span class="metric-value">46%</span><span class="metric-baseline">vs 52% 24h</span></td>
+            <td><span class="metric-value">88 ms</span><span class="metric-baseline">vs 91 ms 24h</span></td>
+            <td><span class="metric-value">44/48</span><span class="metric-baseline">cap 48</span></td>
+            <td>
+              <svg class="sparkline spark-ok" width="72" height="18" viewBox="0 0 72 18" role="img" aria-label="CPU trend flat 24h">
+                <polyline points="2,9 12,8 22,10 32,8 42,9 52,7 62,8 70,9"></polyline>
+              </svg>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="btn" type="button" data-action="drain-node">Drain Degraded Node</button>
+                <button class="btn" type="button" data-action="isolate-cluster">Isolate Az-East</button>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="row" data-row data-index="2" data-region="az-east-1a" data-status="running"
+              data-entity="node-22a9e0c4-77fe" data-cpu="63" data-latency="104" data-pods="41/48"
+              tabindex="0" aria-selected="false">
+            <td class="cell-entity">
+              <span class="led led-running" aria-hidden="true"></span>
+              <span class="entity truncate" title="node-22a9e0c4-77fe">node-22a9e0c4-77fe</span>
+            </td>
+            <td><span class="badge badge-running" data-badge>running</span></td>
+            <td><span class="metric-value">63%</span><span class="metric-baseline">vs 58% 24h</span></td>
+            <td><span class="metric-value">104 ms</span><span class="metric-baseline">vs 99 ms 24h</span></td>
+            <td><span class="metric-value">41/48</span><span class="metric-baseline">cap 48</span></td>
+            <td>
+              <svg class="sparkline spark-ok" width="72" height="18" viewBox="0 0 72 18" role="img" aria-label="CPU trend steady 24h">
+                <polyline points="2,11 12,10 22,9 32,10 42,8 52,9 62,8 70,7"></polyline>
+              </svg>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="btn" type="button" data-action="drain-node">Drain Degraded Node</button>
+                <button class="btn" type="button" data-action="isolate-cluster">Isolate Az-East</button>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="row" data-row data-index="3" data-region="az-east-1b" data-status="warning"
+              data-entity="unbreakable-entity-hash-00000000-0000-0000-0000-000000000000"
+              data-cpu="78" data-latency="233" data-pods="12/16"
+              tabindex="0" aria-selected="false">
+            <td class="cell-entity">
+              <span class="led led-warning" aria-hidden="true"></span>
+              <span class="entity truncate" title="unbreakable-entity-hash-00000000-0000-0000-0000-000000000000">unbreakable-entity-hash-00000000-0000-0000-0000-000000000000</span>
+            </td>
+            <td><span class="badge badge-warning" data-badge>warning</span></td>
+            <td><span class="metric-value">78%</span><span class="metric-baseline">vs 61% 24h</span></td>
+            <td><span class="metric-value">233 ms</span><span class="metric-baseline">vs 88 ms 24h</span></td>
+            <td><span class="metric-value">12/16</span><span class="metric-baseline">cap 24</span></td>
+            <td>
+              <svg class="sparkline spark-warn" width="72" height="18" viewBox="0 0 72 18" role="img" aria-label="CPU trend rising 24h">
+                <polyline points="2,14 12,13 22,11 32,12 42,9 52,6 62,5 70,4"></polyline>
+              </svg>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="btn" type="button" data-action="drain-node">Drain Degraded Node</button>
+                <button class="btn" type="button" data-action="isolate-cluster">Isolate Az-East</button>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="row" data-row data-index="4" data-region="az-west-2" data-status="draining"
+              data-entity="node-44cc10ff-2b6d" data-cpu="12" data-latency="61" data-pods="0/32"
+              tabindex="0" aria-selected="false">
+            <td class="cell-entity">
+              <span class="led led-draining" aria-hidden="true"></span>
+              <span class="entity truncate" title="node-44cc10ff-2b6d">node-44cc10ff-2b6d</span>
+            </td>
+            <td><span class="badge badge-draining" data-badge>draining</span></td>
+            <td><span class="metric-value">12%</span><span class="metric-baseline">vs 44% 24h</span></td>
+            <td><span class="metric-value">61 ms</span><span class="metric-baseline">vs 90 ms 24h</span></td>
+            <td><span class="metric-value">0/32</span><span class="metric-baseline">cap 32</span></td>
+            <td>
+              <svg class="sparkline spark-mute" width="72" height="18" viewBox="0 0 72 18" role="img" aria-label="CPU trend falling 24h">
+                <polyline points="2,4 12,5 22,7 32,10 42,12 52,14 62,15 70,16"></polyline>
+              </svg>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="btn" type="button" data-action="drain-node">Drain Degraded Node</button>
+                <button class="btn" type="button" data-action="isolate-cluster">Isolate Az-East</button>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="row" data-row data-index="5" data-region="az-east-1b" data-status="running"
+              data-entity="node-55dd21e7-8c3a" data-cpu="55" data-latency="95" data-pods="40/48"
+              tabindex="0" aria-selected="false">
+            <td class="cell-entity">
+              <span class="led led-running" aria-hidden="true"></span>
+              <span class="entity truncate" title="node-55dd21e7-8c3a">node-55dd21e7-8c3a</span>
+            </td>
+            <td><span class="badge badge-running" data-badge>running</span></td>
+            <td><span class="metric-value">55%</span><span class="metric-baseline">vs 57% 24h</span></td>
+            <td><span class="metric-value">95 ms</span><span class="metric-baseline">vs 92 ms 24h</span></td>
+            <td><span class="metric-value">40/48</span><span class="metric-baseline">cap 48</span></td>
+            <td>
+              <svg class="sparkline spark-ok" width="72" height="18" viewBox="0 0 72 18" role="img" aria-label="CPU trend steady 24h">
+                <polyline points="2,10 12,9 22,10 32,8 42,9 52,8 62,9 70,8"></polyline>
+              </svg>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="btn" type="button" data-action="drain-node">Drain Degraded Node</button>
+                <button class="btn" type="button" data-action="isolate-cluster">Isolate Az-East</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Zero-Item Empty State -->
+    <div class="state-view" id="view-empty" role="status" hidden>
+      <h2>0 entities match the current facets</h2>
+      <p>Filter: 0 results / empty list. No entity satisfies the pinned facet combination
+        <span class="metric-baseline" id="empty-facets">region all · status all</span>. Baseline 24h: 6 entities averaged.</p>
+      <button class="btn" type="button" id="reset-filters" data-contract="reset">Reset Filters</button>
+    </div>
+
+    <!-- Telemetry alert state -->
+    <div class="state-view is-error" id="view-error" role="alert" hidden>
+      <h2>Telemetry ingest degraded · stream 503</h2>
+      <p>Fleet matrix withheld: last successful poll 00:04:12 ago, expected 1 poll/5s.
+        Command actions are suspended until the stream recovers.</p>
+      <button class="btn btn-commit" type="button" id="retry-stream">Retry Telemetry Stream</button>
+    </div>
+  </section>
+
+  <aside class="pane-inspector" id="inspector" role="region" aria-label="Contextual operation inspector" aria-hidden="true">
+    <div class="inspector-inner">
+      <div class="inspector-head">
+        <span class="inspector-title" id="insp-header">Confirm Node Drain Operation</span>
+        <button class="btn inspector-close" type="button" id="insp-dismiss" aria-label="Dismiss inspector">Esc</button>
+      </div>
+      <div class="inspector-body">
+        <div class="panel">
+          <p class="panel-title">Target entity</p>
+          <div class="cell-entity">
+            <span class="led led-degraded" id="insp-led" aria-hidden="true"></span>
+            <span class="entity truncate" id="insp-entity" title="node-07b3c1a9-4e2c">node-07b3c1a9-4e2c</span>
+          </div>
+        </div>
+
+        <dl class="params">
+          <div class="param"><dt>Region</dt><dd id="insp-region">az-east-1b</dd></div>
+          <div class="param"><dt>Current status</dt><dd id="insp-status">degraded</dd></div>
+          <div class="param"><dt>P99 latency</dt><dd><span id="insp-latency">412</span> ms <span class="metric-baseline">vs 96 ms 24h</span></dd></div>
+          <div class="param"><dt>Active pods</dt><dd><span id="insp-pods">38/42</span> <span class="metric-baseline">cap 48</span></dd></div>
+        </dl>
+
+        <div class="panel">
+          <p class="panel-title">CPU saturation</p>
+          <div class="gauge" role="progressbar" aria-label="CPU saturation" aria-valuemin="0" aria-valuemax="100" aria-valuenow="91">
+            <span class="gauge-fill is-danger" id="insp-gauge" style="width: 91%"></span>
+          </div>
+          <div class="gauge-legend"><span id="insp-cpu">91%</span><span>baseline 74% 24h</span></div>
+        </div>
+
+        <div>
+          <button class="btn btn-commit" type="button" id="insp-commit" data-action="drain-node">Execute Node Eviction</button>
+          <div class="commit-row">
+            <button class="btn" type="button" id="insp-cancel">Keep Node Online</button>
+          </div>
+        </div>
+        <p class="metric-baseline" id="insp-hint">Space/P toggles · Esc dismisses · J/K navigates rows · 0 draft changes discarded</p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="status-bar">
+  <div class="shortcuts">
+    <span><span class="key">Space</span> / <span class="key">P</span> activate</span>
+    <span><span class="key">Esc</span> dismiss</span>
+    <span><span class="key">J</span> / <span class="key">K</span> navigate</span>
+  </div>
+  <div class="status-telemetry">
+    <span data-metric="ingress">ingress 1.24 Gb/s vs 0.98 Gb/s 24h</span>
+    <span data-metric="events">events 12 open / 240 closed 24h</span>
+    <span data-metric="state">state ideal</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+  <span class="toast-led" aria-hidden="true"></span>
+  <span id="toast-msg">Standing by</span>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var body = document.body;
+  var consoleEl = document.getElementById("console");
+  var inspector = document.getElementById("inspector");
+  var rows = Array.prototype.slice.call(document.querySelectorAll("[data-row]"));
+  var emptyView = document.getElementById("view-empty");
+  var errorView = document.getElementById("view-error");
+  var matrixScroll = document.querySelector(".matrix-scroll");
+  var resultCount = document.getElementById("result-count");
+  var toast = document.getElementById("toast");
+  var toastMsg = document.getElementById("toast-msg");
+  var stateLabel = document.querySelector('[data-metric="state"]');
+
+  // Action Verb Lifecycle table (4-phase atomic terminology)
+  var ACTIONS = {
+    "drain-node": {
+      header: "Confirm Node Drain Operation",
+      commit: "Execute Node Eviction",
+      toast: "Node Drained & Traffic Shifted",
+      settled: "drained"
+    },
+    "isolate-cluster": {
+      header: "Trigger Cluster Isolation",
+      commit: "Confirm Full Isolation",
+      toast: "Az-East Ingress Severed",
+      settled: "isolated"
+    }
+  };
+
+  var filters = { region: "all", status: "all" };
+  var selectedIndex = 0;
+  var activeRow = rows[0];
+  var activeAction = "drain-node";
+  var origin = null;       // focus restoration anchor
+  var committing = false;  // idempotency lock: debounces rapid Space/double-click
+  var toastTimer = null;
+
+  /* ---------- state machine (hash_state) ---------- */
+  function hashState() {
+    var m = /state=([a-z]+)/.exec(location.hash || "");
+    var s = m ? m[1] : "ideal";
+    return (s === "empty" || s === "error") ? s : "ideal";
+  }
+
+  function applyFilters() {
+    var visible = 0;
+    rows.forEach(function (row) {
+      var ok = (filters.region === "all" || row.dataset.region === filters.region) &&
+               (filters.status === "all" || row.dataset.status === filters.status);
+      row.hidden = !ok;
+      if (ok) visible++;
+    });
+    return visible;
+  }
+
+  function renderState() {
+    var visible = applyFilters();
+    var state = hashState();
+    if (state === "ideal" && visible === 0) state = "empty";
+    body.dataset.state = state;
+    emptyView.hidden = state !== "empty";
+    errorView.hidden = state !== "error";
+    matrixScroll.hidden = state === "error" || state === "empty";
+    resultCount.textContent = visible + " of " + rows.length + " entities · baseline 24h";
+    document.getElementById("empty-facets").textContent =
+      "region " + filters.region + " · status " + filters.status;
+    stateLabel.textContent = "state " + state;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-state-link]"), function (a) {
+      a.setAttribute("aria-current", a.dataset.stateLink === state ? "true" : "false");
+    });
+    if (rows.indexOf(activeRow) >= 0 && !activeRow.hidden) {
+      // selection survives facet changes that keep the row visible
+    } else {
+      var first = rows.filter(function (r) { return !r.hidden; })[0];
+      if (first) select(rows.indexOf(first), false);
+    }
+  }
+
+  /* ---------- selection ---------- */
+  function select(index, scroll) {
+    if (index < 0 || index >= rows.length) return;
+    rows[selectedIndex].classList.remove("is-selected");
+    rows[selectedIndex].setAttribute("aria-selected", "false");
+    selectedIndex = index;
+    activeRow = rows[index];
+    activeRow.classList.add("is-selected");
+    activeRow.setAttribute("aria-selected", "true");
+    if (scroll !== false) activeRow.scrollIntoView({ block: "nearest" });
+    if (inspectorOpen()) fillInspector();
+  }
+
+  function navigate(delta) {
+    var visible = rows.filter(function (r) { return !r.hidden; });
+    if (!visible.length) return;
+    var at = visible.indexOf(activeRow);
+    if (at < 0) at = 0;
+    var next = (at + delta + visible.length) % visible.length;
+    select(rows.indexOf(visible[next]));
+  }
+
+  /* ---------- inspector (context_drawer) ---------- */
+  function inspectorOpen() { return consoleEl.dataset.inspector === "open"; }
+
+  function fillInspector() {
+    var a = ACTIONS[activeAction];
+    var led = document.getElementById("insp-led");
+    document.getElementById("insp-header").textContent = a.header;
+    var commit = document.getElementById("insp-commit");
+    commit.textContent = a.commit;
+    commit.dataset.action = activeAction;
+    document.getElementById("insp-entity").textContent = activeRow.dataset.entity;
+    document.getElementById("insp-entity").title = activeRow.dataset.entity;
+    document.getElementById("insp-region").textContent = activeRow.dataset.region;
+    document.getElementById("insp-status").textContent = activeRow.dataset.status;
+    document.getElementById("insp-latency").textContent = activeRow.dataset.latency;
+    document.getElementById("insp-pods").textContent = activeRow.dataset.pods;
+    document.getElementById("insp-cpu").textContent = activeRow.dataset.cpu + "%";
+    var gauge = document.getElementById("insp-gauge");
+    gauge.style.width = activeRow.dataset.cpu + "%";
+    gauge.setAttribute("aria-valuenow", activeRow.dataset.cpu);
+    gauge.classList.toggle("is-danger", Number(activeRow.dataset.cpu) >= 85);
+    var badge = activeRow.querySelector("[data-badge]");
+    led.className = "led " + (badge ? badge.className.replace("badge", "led") : "led-running");
+  }
+
+  function openInspector(actionId, triggerEl) {
+    if (committing) return;
+    if (inspectorOpen() && activeRow === rows[selectedIndex] && pendingActionId() === actionId && triggerEl === origin) {
+      return; // idempotent re-entry: no duplicate frames on rapid hits
+    }
+    activeAction = actionId;
+    origin = triggerEl || activeRow.querySelector('[data-action="' + actionId + '"]') || activeRow;
+    fillInspector();
+    consoleEl.dataset.inspector = "open";
+    inspector.setAttribute("aria-hidden", "false");
+    document.getElementById("insp-commit").focus();
+  }
+
+  function pendingActionId() {
+    return document.getElementById("insp-commit").dataset.action;
+  }
+
+  function closeInspector(restoreFocus) {
+    if (!inspectorOpen()) return;
+    consoleEl.dataset.inspector = "closed";
+    inspector.setAttribute("aria-hidden", "true");
+    if (restoreFocus && origin && document.contains(origin)) {
+      origin.focus();
+    }
+  }
+
+  /* ---------- Frame 2/3: decisive commit + settlement ---------- */
+  function commit() {
+    if (committing) return;      // rapid interruption -> single idempotent transition
+    committing = true;
+    var btn = document.getElementById("insp-commit");
+    var a = ACTIONS[btn.dataset.action];
+    var row = activeRow;
+    btn.disabled = true;
+    btn.dataset.locked = "true";
+    btn.textContent = "Executing " + a.commit + "…";
+    setTimeout(function () {
+      var badge = row.querySelector("[data-badge]");
+      var led = row.querySelector(".led");
+      if (badge) {
+        badge.textContent = a.settled;
+        badge.className = "badge badge-" + a.settled;
+      }
+      if (led) led.className = "led led-" + a.settled;
+      row.dataset.status = a.settled;
+      showToast(a.toast);
+      committing = false;
+      btn.disabled = false;
+      btn.dataset.locked = "false";
+      btn.textContent = a.commit;
+      closeInspector(true);       // focus returns to the originating trigger anchor
+      renderState();
+    }, 420);
+  }
+
+  function showToast(message) {
+    toastMsg.textContent = message;
+    toast.classList.add("is-visible");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("is-visible"); }, 3200);
+  }
+
+  /* ---------- dual-channel keyboard ergonomics ---------- */
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "select" || tag === "textarea") {
+      if (e.key === "Escape") e.target.blur();
+      return;
+    }
+    var key = e.key;
+    var lower = key.length === 1 ? key.toLowerCase() : key;
+
+    if (key === " " || key === "Spacebar" || lower === "p") {
+      if (e.target.closest && e.target.closest("button, a")) return; // native activation owns it
+      e.preventDefault();
+      if (inspectorOpen()) closeInspector(true);
+      else openInspector(pendingActionId(), null);
+    } else if (key === "Escape") {
+      closeInspector(true);
+    } else if (lower === "j") {
+      e.preventDefault();
+      navigate(1);
+    } else if (lower === "k") {
+      e.preventDefault();
+      navigate(-1);
+    }
+  });
+
+  /* ---------- wiring ---------- */
+  rows.forEach(function (row) {
+    row.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest("button")) return;
+      select(rows.indexOf(row));
+    });
+    row.addEventListener("focus", function () { select(rows.indexOf(row), false); });
+  });
+
+  document.addEventListener("click", function (e) {
+    var trigger = e.target.closest ? e.target.closest("[data-action]") : null;
+    if (!trigger || trigger.id === "insp-commit") return;
+    select(rows.indexOf(trigger.closest("[data-row]") || activeRow));
+    openInspector(trigger.dataset.action, trigger);
+  });
+
+  document.getElementById("insp-commit").addEventListener("click", commit);
+  document.getElementById("insp-cancel").addEventListener("click", function () { closeInspector(true); });
+  document.getElementById("insp-dismiss").addEventListener("click", function () { closeInspector(true); });
+
+  document.querySelectorAll("[data-facet]").forEach(function (sel) {
+    sel.addEventListener("change", function () {
+      filters[sel.dataset.facet] = sel.value;
+      renderState();   // scroll offset and remaining facets stay pinned
+    });
+  });
+
+  document.getElementById("reset-filters").addEventListener("click", function () {
+    document.getElementById("facet-region").value = "all";
+    document.getElementById("facet-status").value = "all";
+    filters.region = "all";
+    filters.status = "all";
+    renderState();
+    if (hashState() === "empty") location.hash = "#state=ideal";
+  });
+
+  document.getElementById("retry-stream").addEventListener("click", function () {
+    showToast("Telemetry Stream Reconnected · 1 poll/5s");
+    location.hash = "#state=ideal";
+  });
+
+  window.addEventListener("hashchange", renderState);
+  select(0, false);
+  renderState();
+})();
+</script>
+</body>
+</html>
