@@ -68,16 +68,16 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                         "impact": parts[5] if len(parts) > 5 else "Executes action",
                     })
     if not extracted:
-        # 2. Extract action mentions from text — candidate verbs must be marked as hypothesis unless explicitly authored
+        # 2. Extract action mentions from text — candidate verbs explicitly marked as derived from authored context
         action_verb_patterns = [
-            (r"(?:node\s+)?drain(?:\s+operations|\s+node)?", "drain-node", "Drain Node", "Drain GPU Node", "Confirm Drain", "Node Drained Successfully", "[Hypothesis] Evicts active batch workload from node; requires empirical validation"),
-            (r"preempt(?:\s+vram)?", "preempt-vram", "Preempt VRAM", "Preempt VRAM Allocation", "Execute Preempt", "VRAM Eviction Committed", "[Hypothesis] Releases VRAM pool back to shared cluster; requires empirical validation"),
-            (r"isolate(?:\s+cluster|\s+region)?", "isolate-cluster", "Isolate Cluster", "Emergency Region Isolation", "Authorize Isolation", "Region Traffic Rerouted", "[Hypothesis] Isolates failing region to contain blast radius; requires empirical validation"),
-            (r"bookmark(?:\s+story|\s+article)?", "bookmark-story", "Bookmark Story", "Save Bookmark", "Confirm Save", "Story Saved to Reading List", "[Hypothesis] Stores story to reading list; requires empirical validation"),
-            (r"checkout|order", "checkout-order", "Proceed to Checkout", "Confirm Order Payment", "Authorize Payment", "Order Placed Successfully", "[Hypothesis] Initiates checkout and order confirmation; requires empirical validation"),
-            (r"publish(?:\s+document)?", "publish-document", "Publish Document", "Confirm Publication", "Publish Now", "Document Published to Feed", "[Hypothesis] Publishes document across designated channels; requires empirical validation"),
-            (r"accept(?:\s+ai|\s+diff)?", "accept-ai-diff", "Accept AI Revision", "Review AI Inline Revision", "Accept & Merge", "Paragraph Revised Successfully", "[Hypothesis] Merges AI revision into draft; requires empirical validation"),
-            (r"(?:confirm\s+)?booking|reservation", "confirm-reservation-slot", "Confirm Time Slot", "Review Booking Details", "Confirm & Reserve", "Appointment Slot Confirmed", "[Hypothesis] Confirms appointment booking; requires empirical validation"),
+            (r"(?:node\s+)?drain(?:\s+operations|\s+node)?", "drain-node", "Drain Node", "Drain GPU Node", "Confirm Drain", "Node Drained Successfully", "[Derived] Evicts active batch workload from node"),
+            (r"preempt(?:\s+vram)?", "preempt-vram", "Preempt VRAM", "Preempt VRAM Allocation", "Execute Preempt", "VRAM Eviction Committed", "[Derived] Releases VRAM pool back to shared cluster"),
+            (r"isolate(?:\s+cluster|\s+region)?", "isolate-cluster", "Isolate Cluster", "Emergency Region Isolation", "Authorize Isolation", "Region Traffic Rerouted", "[Derived] Isolates failing region to contain blast radius"),
+            (r"bookmark(?:\s+story|\s+article)?", "bookmark-story", "Bookmark Story", "Save Bookmark", "Confirm Save", "Story Saved to Reading List", "[Derived] Stores story to reading list"),
+            (r"checkout|order", "checkout-order", "Proceed to Checkout", "Confirm Order Payment", "Authorize Payment", "Order Placed Successfully", "[Derived] Initiates checkout and order confirmation"),
+            (r"publish(?:\s+document)?", "publish-document", "Publish Document", "Confirm Publication", "Publish Now", "Document Published to Feed", "[Derived] Publishes document across designated channels"),
+            (r"accept(?:\s+ai|\s+diff)?", "accept-ai-diff", "Accept AI Revision", "Review AI Inline Revision", "Accept & Merge", "Paragraph Revised Successfully", "[Derived] Merges AI revision into draft"),
+            (r"(?:confirm\s+)?booking|reservation", "confirm-reservation-slot", "Confirm Time Slot", "Review Booking Details", "Confirm & Reserve", "Appointment Slot Confirmed", "[Derived] Confirms appointment booking"),
         ]
         for pattern, act_id, trig, modal, commit, toast, imp in action_verb_patterns:
             if re.search(pattern, disc_text, re.IGNORECASE):
@@ -93,7 +93,7 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                     break
 
     if not extracted:
-        # 3. Generic Grammar Extraction: parse bullet action declarations matching phrases
+        # Generic Grammar Extraction: parse bullet action declarations matching phrases
         action_declarations = re.findall(
             r"(?:[-*]\s*[`*]?([A-Za-z0-9一-龥\s_-]+)[`*]?\s*[:：]\s*([^\n]+))",
             disc_text
@@ -151,65 +151,25 @@ def extract_cognitive_ledger(disc_text: str, slice_id: str) -> dict[str, str]:
 
 
 def extract_ruthless_omissions(disc_text: str, prod_text: str) -> list[str]:
-    """Extract or synthesize domain-aware Ruthless Omissions."""
+    """Extract domain-aware Ruthless Omissions from authored source truth only. Never inject hardcoded recipes."""
     combined = disc_text + "\n" + prod_text
     m = re.search(r"(?:Ruthless Omission|Deliberately Excluded|Omission|舍弃|排除|非目标)[^\n]*\n((?:[ \t]*[-*0-9.]+[^\n]+\n?)+)", combined, re.IGNORECASE)
     if m:
         items = [re.sub(r"^[ \t]*[-*0-9.]+\s*", "", line).strip() for line in m.group(1).splitlines() if line.strip()]
         if len(items) >= 1:
             return items[:5]
-
-    if re.search(r"Baseline 3|Editorial|阅读|文章|知识库", combined, re.IGNORECASE):
-        return [
-            "Zero distracting kinetic telemetry, flashing badges, or noisy decorative sidebars.",
-            "Zero multi-level modal dialogs that disrupt continuous reading and comprehension flow.",
-            "Zero unconsidered low-contrast gray text washes that compromise typographic legibility."
-        ]
-    elif re.search(r"Baseline 4|Touch|Consumer|消费|移动|社交", combined, re.IGNORECASE):
-        return [
-            "Zero dense multi-column tables requiring desktop cursor precision.",
-            "Zero sub-44px touch targets or microscopic navigation links in primary thumb zones.",
-            "Zero intrusive unskippable onboarding carousels that block immediate interaction."
-        ]
-    elif re.search(r"Baseline 2|SaaS|Commerce|电商|订单|交易", combined, re.IGNORECASE):
-        return [
-            "Zero multi-window fragmentations or detached popup windows.",
-            "Zero dead-end error notifications without actionable recovery paths.",
-            "Zero gratuitous animation or ungrounded decorative graphics that slow transaction flow."
-        ]
-    return [
-        "Zero generic marketing cards, promotional hero banners, or superficial carousel widgets.",
-        "Zero nested modal inception or multi-step wizard deadlocks; interactions stay in-canvas or single contextual drawer.",
-        "Zero ungrounded alien physics, gratuitous full-screen particles, or unconsidered neutral gray #808080 washes."
-    ]
+    return []
 
 
 def extract_material_invariants(disc_text: str, prod_text: str) -> list[str]:
-    """Extract or synthesize domain-aware Material Non-Transfer Boundaries."""
+    """Extract Material Non-Transfer Boundaries from authored source truth only. Never inject hardcoded recipes."""
     combined = disc_text + "\n" + prod_text
     m = re.search(r"(?:Material Non-Transfer|Material Invariant|材质不可跨界|材质边界|物理映射)[^\n]*\n((?:[ \t]*[-*0-9.]+[^\n]+\n?)+)", combined, re.IGNORECASE)
     if m:
         items = [re.sub(r"^[ \t]*[-*0-9.]+\s*", "", line).strip() for line in m.group(1).splitlines() if line.strip()]
         if len(items) >= 1:
             return items[:5]
-
-    if re.search(r"Baseline 3|Editorial|阅读|文章|知识库", combined, re.IGNORECASE):
-        return [
-            "Typographic Ink & Paper Tone: Contrast mimics calibrated ink on high-grade paper; never harsh blinding raw #ffffff with unpadded margins.",
-            "Calm Micro-detents: Subtle chapter transitions and bookmark toggles; never bouncy arcade elastic animations.",
-            "Structural Marginalia: Footnotes and annotations live alongside reading flow; never popover stacks."
-        ]
-    elif re.search(r"Baseline 4|Touch|Consumer|消费|移动|社交", combined, re.IGNORECASE):
-        return [
-            "Fluid Touch Springs: Gestures feature natural deceleration and thumb-zone compliance; never mechanical desktop snaps.",
-            "Tactile Haptic Emulation: Visual compression (:active press) gives immediate feedback without sluggish delays.",
-            "Direct Card Physics: Surfaces elevate with contextual drop-shadows; never fake heavy skeuomorphic textures."
-        ]
-    return [
-        "Digital Glass & Surface Layering: Semi-transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
-        "Machined Tactile Detents: Interactive controls possess mechanical micro-press (:active feedback) resistance; never frictionless float.",
-        "Precision Telemetry Emissives: Status indicators simulate calibrated hardware LEDs with subtle ambient bloom; never raw flat neon washes."
-    ]
+    return []
 
 
 def build_frontend_contract(
@@ -218,68 +178,126 @@ def build_frontend_contract(
     tension: str,
     surfaces: list[str],
     action_verbs: list[dict[str, str]],
-    is_mobile: bool,
-    is_writer_canvas: bool,
-    is_reading: bool,
-    is_marketing: bool,
+    disc_text: str,
+    prod_text: str,
     disc_digest: str,
     prod_digest: str,
 ) -> str:
-    """Generate machine-readable frontend contract specification (frontend-contract.yaml)."""
-    if is_mobile:
-        layout_mode = "touch-first-stack"
-        drawer_behavior = "swipe-down-sheet"
-    elif is_writer_canvas:
-        layout_mode = "focused-canvas"
-        drawer_behavior = "inline-revision-drawer"
-    elif is_reading:
-        layout_mode = "editorial-column"
-        drawer_behavior = "contextual-footnote-rail"
-    elif is_marketing:
-        layout_mode = "hero-storyboard"
-        drawer_behavior = "modal-overlay"
-    else:
-        layout_mode = "split-rack"
-        drawer_behavior = "persistent-rail"
+    """Project machine-readable frontend contract from approved design truth without inventing unauthored behavior."""
+    combined = disc_text + "\n" + prod_text
 
+    # 1. Structure / Surface Regions: Project declared surface topology only
+    surface_regions = []
+    if surfaces:
+        for s in surfaces:
+            clean_name = re.sub(r"[`*]", "", s).strip()
+            slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", clean_name.lower()).strip("-")
+            role = "main" if any(k in clean_name.lower() for k in ("primary", "主工作区", "hero-anchor")) else \
+                   "complementary" if any(k in clean_name.lower() for k in ("contextual", "上下文", "drawer", "inspector")) else \
+                   "region"
+            surface_regions.append({
+                "id": slug or "surface-region",
+                "role": role,
+                "declared_surface": clean_name,
+            })
+
+    # 2. Responsive Rules: Project authored responsive decisions; mark unspecified if absent
+    responsive_section = extract_section_by_patterns(combined, ["Responsive", "响应式", "Breakpoints", "视口", "Touch-First Ergonomics", "Dual-Channel Ergonomics"])
+    responsive_rules: dict[str, Any] = {}
+    if responsive_section:
+        m_desktop = re.search(r"(?:desktop|1280|桌面)[`*:]*\s*([^\n]+)", responsive_section, re.IGNORECASE)
+        m_mobile = re.search(r"(?:mobile|390|320|移动|触控)[`*:]*\s*([^\n]+)", responsive_section, re.IGNORECASE)
+        if m_desktop:
+            responsive_rules["desktop"] = m_desktop.group(1).strip()
+        if m_mobile:
+            responsive_rules["mobile"] = m_mobile.group(1).strip()
+        if not responsive_rules:
+            summary_lines = [line.strip() for line in responsive_section.splitlines() if line.strip().startswith(("-", "*", "|"))]
+            if summary_lines:
+                responsive_rules["declared_summary"] = summary_lines[:4]
+    if not responsive_rules:
+        responsive_rules = {
+            "status": "unspecified",
+            "note": "No explicit responsive layout rules declared in approved design spec"
+        }
+
+    # 3. Finite State Machine: Project authored states; mark unspecified if absent
+    state_section = extract_section_by_patterns(combined, ["State Machine", "状态机", "States", "状态流转", "State Matrix"])
+    state_machine: dict[str, Any] = {}
+    if state_section:
+        declared_states = re.findall(r"[-*]\s*[`*]?([a-zA-Z0-9_-]+)[`*]?\s*[:：]\s*([^\n]+)", state_section)
+        if declared_states:
+            states_dict = {}
+            for s_name, s_desc in declared_states:
+                states_dict[s_name.lower()] = {"description": s_desc.strip()}
+            state_machine = {
+                "initial": list(states_dict.keys())[0] if states_dict else "unspecified",
+                "states": states_dict,
+            }
+        else:
+            summary_lines = [line.strip() for line in state_section.splitlines() if line.strip()]
+            state_machine = {
+                "status": "authored_summary",
+                "raw": summary_lines[:5]
+            }
+    else:
+        state_machine = {
+            "status": "unspecified",
+            "note": "No explicit finite state machine authored in approved design spec"
+        }
+
+    # 4. Interaction Verbs: Direct projection from authored Action Verb Lifecycle table
     actions_dict: dict[str, Any] = {}
     for v in action_verbs:
         act_id = v["action_id"]
-        is_hazard = any(h in act_id.lower() for h in ("drain", "preempt", "isolate", "delete", "remove", "drop", "terminate"))
-        actions_dict[act_id] = {
-            "trigger_control": f"button[data-action='{act_id}']",
+        entry: dict[str, Any] = {
             "trigger_label": v["trigger_btn"],
             "modal_header": v["modal_header"],
-            "commit_control": f"button#confirm-{act_id}",
             "commit_label": v["commit_btn"],
             "feedback_toast": v["toast"],
             "consequence": v["impact"],
-            "hazard_level": "high" if is_hazard else "low" if "bookmark" in act_id or "filter" in act_id else "medium",
-            "haptic_detent": "deliberate_confirm" if is_hazard else "subtle_press",
         }
+        # Copy authored hazard / reversibility without guessing from arbitrary keywords
+        imp_lower = v["impact"].lower()
+        if any(h in imp_lower for h in ("irreversible", "destructive", "high-hazard", "high hazard", "high reversibility cost")):
+            entry["hazard_level"] = "high"
+        elif any(h in imp_lower for h in ("reversible", "low-hazard", "low hazard", "passive")):
+            entry["hazard_level"] = "low"
+        actions_dict[act_id] = entry
 
-    surface_regions = []
-    if surfaces:
-        for s in surfaces[:3]:
-            slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", s.lower()).strip("-")
-            surface_regions.append({
-                "id": slug or "surface-region",
-                "role": "region",
-                "aria_label": s,
-            })
-    if not surface_regions:
-        surface_regions = [
-            {"id": "primary-stage", "role": "main", "aria_label": f"{prod_title} Primary Stage", "layout_mode": layout_mode},
-            {"id": "contextual-drawer", "role": "complementary", "aria_label": "Contextual Parameters & Inspection", "drawer_behavior": drawer_behavior},
-            {"id": "status-telemetry", "role": "region", "aria_label": "System Telemetry & Action Feedback"},
-        ]
+    # 5. Experience Invariants: Project authored invariants
+    invariants = []
+    cp_section = extract_section_by_patterns(disc_text, ["Context Preservation", "上下文保持", "上下文连续"])
+    if cp_section:
+        for b in _bullets(cp_section):
+            invariants.append(f"context_preservation: {b}")
+    ft_section = extract_section_by_patterns(disc_text, ["Fault Tolerance", "容错与撤销", "The Break Protocol", "破坏性极限"])
+    if ft_section:
+        for b in _bullets(ft_section):
+            invariants.append(f"resilience: {b}")
+
+    # 6. Accessibility: Base standard + authored shortcuts
+    a11y_contract: dict[str, Any] = {
+        "wcag_level": "WCAG 2.2 AA",
+        "min_contrast_ratio": 4.5,
+    }
+    dual_channel = extract_section_by_patterns(disc_text, ["Dual-Channel", "双通道", "Keyboard Shortcuts", "快捷键"])
+    if dual_channel:
+        shortcuts = []
+        for line in dual_channel.splitlines():
+            if line.strip().startswith("|") and not line.strip().startswith("|---"):
+                parts = [p.strip() for p in line.split("|") if p.strip()]
+                if len(parts) >= 2 and parts[0].lower() not in ("shortcut", "shortcut key", "key"):
+                    shortcuts.append({"key": parts[0], "action": parts[1]})
+        if shortcuts:
+            a11y_contract["keyboard_shortcuts"] = shortcuts
 
     contract_data: dict[str, Any] = {
         "contract_version": "1.0",
         "slice_id": slice_id,
         "provenance": {
             "product_title": prod_title,
-            "core_tension": tension,
+            "core_tension": tension if tension else "unspecified",
             "spec_ref": f"prototype/specifications/{slice_id}/r1.md",
             "slice_contract_ref": f"prototype/contracts/slices/{slice_id}/c1.md",
             "tokens_json_ref": "prototype/contracts/tokens/t1.json",
@@ -289,87 +307,13 @@ def build_frontend_contract(
         },
         "structure": {
             "root_element": f"main#{slice_id}-surface",
-            "regions": surface_regions,
+            "regions": surface_regions if surface_regions else [{"id": "unspecified", "role": "main"}],
         },
-        "responsive_rules": {
-            "desktop_1280": {
-                "layout": layout_mode,
-                "drawer_behavior": "persistent-rail" if not is_mobile else "swipe-down-sheet",
-            },
-            "mobile_390": {
-                "layout": "vertical-stack",
-                "drawer_behavior": "swipe-down-sheet",
-                "touch_target_floor_px": 44,
-            },
-        },
-        "state_machine": {
-            "initial": "ready",
-            "states": {
-                "loading": {
-                    "on": {
-                        "DATA_READY": "ready",
-                        "FETCH_ERROR": "error",
-                    }
-                },
-                "ready": {
-                    "on": {
-                        "TRIGGER_ACTION": "confirming",
-                        "SELECT_ITEM": "inspecting",
-                    }
-                },
-                "inspecting": {
-                    "on": {
-                        "CLOSE_INSPECTOR": "ready",
-                        "TRIGGER_ACTION": "confirming",
-                    }
-                },
-                "confirming": {
-                    "invariants": [
-                        "modal_must_trap_keyboard_focus",
-                        "background_context_must_survive",
-                    ],
-                    "on": {
-                        "CANCEL": "ready",
-                        "COMMIT": "processing",
-                    }
-                },
-                "processing": {
-                    "on": {
-                        "SUCCESS": "settled",
-                        "FAILURE": "error",
-                    }
-                },
-                "settled": {
-                    "on": {
-                        "TIMEOUT": "ready",
-                        "RESET": "ready",
-                    }
-                },
-                "error": {
-                    "on": {
-                        "RETRY": "processing",
-                        "DISMISS": "ready",
-                    }
-                },
-            },
-        },
+        "responsive_rules": responsive_rules,
+        "state_machine": state_machine,
         "interaction_verbs": actions_dict,
-        "experience_invariants": [
-            "context_preservation: dismissing modal or drawer must preserve unsaved user input state",
-            "destructive_safety: high-hazard operations require deliberate confirmation detents",
-            "zero_silent_noop: all operable triggers must produce perceptible immediate state feedback",
-            "focus_restoration: overlay dismissal must deterministically restore focus to originating trigger",
-        ],
-        "accessibility_contract": {
-            "wcag_level": "WCAG 2.2 AA",
-            "min_contrast_ratio": 4.5,
-            "focus_visible_ring": "var(--accent-primary, #3b82f6)",
-            "focus_restore_target": "originating_trigger",
-            "keyboard_shortcuts": [
-                {"key": "Esc", "action": "Dismiss active modal/drawer and restore focus"},
-                {"key": "Space" if not is_mobile else "Tap", "action": "Activate primary operational trigger"},
-            ],
-        },
+        "experience_invariants": invariants,
+        "accessibility_contract": a11y_contract,
         "tokens_binding": {
             "stylesheet": "prototype/shared/tokens.css",
             "json_spec": "prototype/contracts/tokens/t1.json",
@@ -516,9 +460,9 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 """
         elif key == "foundation":
             omissions = extract_ruthless_omissions(disc_text, prod_text)
-            omissions_md = "\n".join(f"- {o}" for o in omissions)
+            omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else "- Unspecified (no explicit omissions authored; preserve standard convention boundaries)"
             invariants = extract_material_invariants(disc_text, prod_text)
-            invariants_md = "\n".join(f"- {inv}" for inv in invariants)
+            invariants_md = "\n".join(f"- {inv}" for inv in invariants) if invariants else "- Unspecified (maintain semantic neutrality without forced material metaphors)"
             content = f"""# Project Experience Foundation: f1
 
 - Product: {product_title}
@@ -592,10 +536,8 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
                 tension=tension,
                 surfaces=surfaces,
                 action_verbs=action_verbs,
-                is_mobile=is_mobile,
-                is_writer_canvas=is_writer_canvas,
-                is_reading=is_reading,
-                is_marketing=is_marketing,
+                disc_text=disc_text,
+                prod_text=prod_text,
                 disc_digest=_digest(disc_path),
                 prod_digest=_digest(prod_path),
             )

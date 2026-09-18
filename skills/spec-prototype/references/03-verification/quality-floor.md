@@ -280,9 +280,9 @@ redundant finding — report the cheaper fix instead.
 
 ---
 
-# Integrated Design Invariant Standards (Consolidated from design-floor)
+# Contextual Craft Guidelines & Heuristics (Consolidated from design-floor)
 
-## Geometric and Visual Craft Guidelines
+## Geometric and Visual Craft Guidelines (Candidate Techniques)
 - Concentric Border Radii Rule: R_inner = max(0, R_outer - Padding). Eliminates visual collision or concentric distortion when rounded containers are nested.
 - Tabular Numerics: font-variant-numeric: tabular-nums on high-frequency telemetry, timestamps, and currency values to prevent scan jitter.
 - Zero Naked Metrics: Every metric must display a baseline, threshold, or floor/ceiling benchmark to convey operational meaning.

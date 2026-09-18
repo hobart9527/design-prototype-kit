@@ -57,16 +57,16 @@ def generate_blind_comparison_manifest(case_name: str, out_dir: Path) -> Dict[st
         "evaluation_protocol": {
             "dimensions": [
                 {
-                    "name": "Product Truth & Authenticity",
-                    "anchor": "Real domain terminology, authentic operational tension, zero fake telemetry."
+                    "name": "Product Fit & Domain Authenticity",
+                    "anchor": "Real domain terminology, authentic operational tension, truthful state representations, zero fake telemetry."
                 },
                 {
-                    "name": "Spatial Composition & Typographic Discipline",
-                    "anchor": "Concentric radii, tabular numerics, purposeful compression/release rhythm."
+                    "name": "Spatial Hierarchy, Rhythm & Visual Restraint",
+                    "anchor": "Clear visual hierarchy, stable numeric alignment, purposeful compression/release rhythm, product-specific signature without decorative noise."
                 },
                 {
-                    "name": "Action Ergonomics & Fault Recovery",
-                    "anchor": "Closed action verb lifecycles, clear confirmation gates, 1-click empty recovery."
+                    "name": "Action Continuity, Ergonomics & Fault Resilience",
+                    "anchor": "Consistent action lifecycle terminology, perceptible state transitions, robust error recovery, and strict context preservation."
                 }
             ],
             "adjudication": "pairwise_preference"

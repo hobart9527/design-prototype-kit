@@ -11,8 +11,14 @@ Why is this engine called `spec-prototype`?
    Design discussions and exploratory divergence exist to distill a **stable, unambiguous, and reusable design specification (Spec)**. This Spec includes W3C DTCG design tokens, OOUX entity relationship models, surface topology, state machines, and action verb lifecycles. Downstream engineering teams (and Loom delivery) can directly consume and implement this Spec without ambiguity.
 2. **Prototype (原型样板 - Disposable Empirical Proof)**:
    The prototype is NOT an unguided art project or a throwaway toy. It is the rapid, inspectable, physical falsification tool that proves the Spec is ergonomic, viable, and aesthetically cohesive.
-3. **Execution Invariant**:
-   **No Prototype Code without a Frozen Spec Contract (Formal Delivery).** Bypassing Stage 1 discussion and spec formulation to write code is strictly prohibited for formal candidate delivery. Exploration proceeds from a revisable direction brief; formal candidates require frozen specification evidence. The Spec/Brief directs the Prototype; the Prototype validates and refines the Spec.
+3. **Execution Invariant & Authority Lifecycle (权威状态跃迁体系)**:
+   - **Authority States**: `Draft → Provisional (Stage 1) → Validated (Stage 4) → Frozen / Approved (Stage 5)`.
+     - *Draft*: 需求拆解与讨论初期的动态草案；
+     - *Provisional (Stage 1)*: 第一钻双收敛后确立的**暂行基线契约**。明确其为待探针证伪之假设总成，严禁在未探针物化前提前宣布不可推翻；
+     - *Validated (Stage 4)*: 经由 Stage 2 Hero Probe 与 Stage 3 Walking Skeleton 在真实多视口渲染与 Critic 走查证伪后，证明成立的设计契约；
+     - *Frozen / Approved (Stage 5)*: 终审封版，不可篡改，交付下游前端工程与机器投影消费。
+   - **Execution Invariant**:
+     **No Prototype Code without a Frozen Spec Contract (Formal Delivery).** Bypassing Stage 1 discussion and spec formulation to write code is strictly prohibited for formal candidate delivery. Exploration proceeds from a revisable direction brief; formal candidates require frozen specification evidence (`provisional baseline`). The Spec/Brief directs the Prototype; the Prototype validates and refines the Spec before Stage 5 final freeze.
 
 ---
 
@@ -184,7 +190,8 @@ Before entering Stage 1 or reopening design work, classify the requested change 
     Critic 在报告缺陷时必须输出明确的修复边界（Targeted Repair Envelope）：
     ```yaml
     finding:
-      pillar: Attention | Interaction | Visual | Resilience
+      pillar: Attention | Interaction | Expression | Resilience
+      layer: visual_hierarchy | visual_composition | typography | state_transition
       scope: screen.slice_id.component_target
       severity: major | minor | preference
       classification: VIOLATION | DEFECT | DESIGN JUDGMENT

@@ -65,10 +65,10 @@ Execute the stages matching declared intent and required evidence. The stages re
 
 ```text
 [Stage 1: 破 - Understand & Frame (问题空间与设计契约定义)]
-  │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, derive Surface Topology, calibrate Five-Axis register & initial tokens, and freeze Spec Contracts.
+  │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, derive Surface Topology, calibrate Five-Axis register & initial tokens, and establish provisional baseline Spec Contracts.
   │  Alignment Cadence: Coalesce inquiries when intent or delegation is clear. AskUserQuestion only when genuine forks exist (e.g. Direction A vs B or unresolved core tension).
-  │  Frozen Spec Artifacts: prototype/product.md, surface-maps/m1.md, foundation/f1.md, tokens.css (via compile_tokens.py), slices/<slice_id>/c1.md, specifications/<slice_id>/r1.md.
-  │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; exploration uses direction briefs).
+  │  Frozen Spec Artifacts: prototype/product.md, surface-maps/m1.md, foundation/f1.md, tokens.css (via compile_tokens.py), slices/<slice_id>/c1.md, specifications/<slice_id>/r1.md (authority status: provisional baseline).
+  │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; establishes provisional baseline under the authority lifecycle `Draft → Provisional → Validated → Frozen` before Stage 2 probe validation).
   ▼
 [Stage 2: 立 - Proposition & High-Risk Probe (解空间主干物化与探针验证)]
   │  Core Objective: Materialize the single highest-risk Hero Anchor screen or direction probe via bounded Builder dispatch under the frozen Stage 1 Spec contracts.
@@ -79,7 +79,7 @@ Execute the stages matching declared intent and required evidence. The stages re
 [Stage 3: 拓 - Walking Skeleton Rollout (端到端真实骨架贯通)]
   │  Core Objective: Expand probe into a cohesive Walking Skeleton validating complete task continuity (Trigger -> Action -> State Mutation -> Recovery -> Return).
   │  Structure: Derived from authentic Surface Topology (Primary, Contextual, Supporting). Unbound from rigid screen counts.
-  │  Strict Floors: Compression & release, contextual reference data (zero naked metrics), action verb closure, tokens.css adherence, zero inline hex.
+  │  Strict Floors & Craft Guidance: Action verb closure, tokens.css adherence, zero inline hex, and contextual craft guidelines (contextual reference data, compression & release).
   ▼
 [Stage 4: 验 - Four-Dimensional Evidence & Holistic Critique (四维证据客观走查)]
   │  Automated Capture & Portal: capture.mjs (headless multi-viewport 320/390/1280px) & generate_review_portal.py.

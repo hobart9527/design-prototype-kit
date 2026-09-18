@@ -182,7 +182,8 @@ When issuing a non-pass finding (`VIOLATION` or critical `DEFECT`), Critic MUST 
 ```yaml
 targeted_refinement:
   finding:
-    pillar: Attention | Interaction | Visual | Resilience
+    pillar: Attention | Interaction | Expression | Resilience
+    layer: visual_hierarchy | visual_composition | typography | state_transition
     scope: screen.slice_id.component_selector
     severity: major | minor
     classification: VIOLATION | DEFECT | DESIGN JUDGMENT

@@ -334,13 +334,14 @@ def test_frontend_contract_projection_schema_and_validity(tmp_path: Path):
     proto = tmp_path / "prototype"
     proto.mkdir(parents=True, exist_ok=True)
     (proto / "product.md").write_text("# SRE Platform\n## Core Tension\n- 极致吞吐 vs 误触高危\n", encoding="utf-8")
+    # 1. First test: without authored state machine and responsive rules, compiler must NOT invent them
     (proto / "discussion.md").write_text(
         "# Discussion\n"
         "## Action Verbs\n"
         "| Action ID | Trigger Button | Modal Header | Commit Button | Toast | Impact |\n"
         "|---|---|---|---|---|---|\n"
-        "| drain-node | Drain Node | Confirm Node Drain | Execute Drain | Drain Complete | Evicts batch workload |\n"
-        "| isolate-region | Isolate Region | Emergency Region Isolation | Authorize Isolation | Region Isolated | Reroutes traffic |\n",
+        "| drain-node | Drain Node | Confirm Node Drain | Execute Drain | Drain Complete | Irreversible eviction of batch workload |\n"
+        "| isolate-region | Isolate Region | Emergency Region Isolation | Authorize Isolation | Region Isolated | High hazard traffic reroute |\n",
         encoding="utf-8"
     )
 
@@ -358,17 +359,34 @@ def test_frontend_contract_projection_schema_and_validity(tmp_path: Path):
         assert data["slice_id"] == "commander-hero"
         assert "provenance" in data
         assert "structure" in data
-        assert "regions" in data["structure"]
-        assert "state_machine" in data
-        assert "ready" in data["state_machine"]["states"]
-        assert "confirming" in data["state_machine"]["states"]
-        assert "interaction_verbs" in data
+        # De-inference assertion: unauthored states and responsive rules report unspecified rather than guessing
+        assert data["state_machine"]["status"] == "unspecified"
+        assert data["responsive_rules"]["status"] == "unspecified"
         assert "drain-node" in data["interaction_verbs"]
         assert data["interaction_verbs"]["drain-node"]["hazard_level"] == "high"
-        assert "experience_invariants" in data
-        assert "accessibility_contract" in data
-        assert data["accessibility_contract"]["wcag_level"] == "WCAG 2.2 AA"
-        assert "tokens_binding" in data
+
+    # 2. Second test: when state machine and responsive rules are authored, they are accurately projected
+    (proto / "discussion.md").write_text(
+        "# Discussion\n"
+        "## Responsive\n"
+        "- desktop: 1280px split-rack canvas\n"
+        "- mobile: 390px bottom-sheet stack\n"
+        "## State Machine\n"
+        "- ready: Baseline telemetry streaming\n"
+        "- confirming: Modal confirmation dialog active\n"
+        "## Action Verbs\n"
+        "| Action ID | Trigger Button | Modal Header | Commit Button | Toast | Impact |\n"
+        "|---|---|---|---|---|---|\n"
+        "| drain-node | Drain Node | Confirm Node Drain | Execute Drain | Drain Complete | Irreversible eviction of batch workload |\n",
+        encoding="utf-8"
+    )
+    res2 = mat_mod.materialize(tmp_path, "commander-hero", force=True)
+    if yaml is not None:
+        data2 = yaml.safe_load(Path(res2["frontend_contract"]).read_text(encoding="utf-8"))
+        assert "ready" in data2["state_machine"]["states"]
+        assert "confirming" in data2["state_machine"]["states"]
+        assert "1280px split-rack canvas" in data2["responsive_rules"]["desktop"]
+        assert "390px bottom-sheet stack" in data2["responsive_rules"]["mobile"]
 
 
 def test_critic_finding_classifications_and_targeted_refinement():
@@ -388,6 +406,7 @@ def test_critic_finding_classifications_and_targeted_refinement():
     # Targeted Refinement Contract
     assert "Targeted Refinement Contract" in text
     assert "targeted_refinement:" in text
+    assert "pillar: Attention | Interaction | Expression | Resilience" in text
     assert "invalidate:" in text
     assert "preserve:" in text
 
@@ -409,6 +428,32 @@ def test_change_scope_router_and_tension_in_core_workflow():
     assert "Signature vs. Convention" in text
     assert "Signature Surface" in text
     assert "Convention Surfaces" in text
+
+
+def test_method_registry_and_craft_guidelines_hygiene():
+    """v10.2 Hygiene: Ensure lightweight Method Registry exists and quality-floor distinguishes invariants from craft guidelines."""
+    try:
+        import yaml
+    except ImportError:
+        yaml = None
+
+    registry_path = REPO / "skills/spec-prototype/methods/registry.yaml"
+    assert registry_path.is_file()
+    if yaml is not None:
+        reg_data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+        assert "methods" in reg_data
+        assert len(reg_data["methods"]) >= 8
+        ids = [m["id"] for m in reg_data["methods"]]
+        assert "ooux-mapping" in ids
+        assert "context-preservation" in ids
+        assert "action-verb-lifecycle" in ids
+        assert "the-break-protocol" in ids
+
+    qfloor_path = REPO / "skills/spec-prototype/references/03-verification/quality-floor.md"
+    qtext = qfloor_path.read_text(encoding="utf-8")
+    assert "Contextual Craft Guidelines & Heuristics" in qtext
+    assert "Integrated Design Invariant Standards" not in qtext
+
 
 
 
