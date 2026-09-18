@@ -124,7 +124,8 @@ def parse_tokens_markdown(content: str) -> dict[str, Any]:
                 "$extensions": {
                     "design-prototype-kit": {
                         "authority": "frozen_spec",
-                        "provenance": "spec-prototype v10.1"
+                        "provenance": "spec-prototype v10.1",
+                        "format_version": "2025.10"
                     }
                 }
             }

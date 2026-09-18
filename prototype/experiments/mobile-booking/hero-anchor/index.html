@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mobile-booking / hero-anchor — GPU Reservation Control</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  [hidden] { display: none !important; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    flex-direction: column;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: var(--space-2);
+    top: calc(-1 * var(--space-8));
+    background: var(--bg-overlay);
+    color: var(--text-primary);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-btn);
+    z-index: 40;
+    transition: top var(--duration-fast) var(--ease-out);
+  }
+  .skip-link:focus { top: var(--space-2); }
+
+  /* ---------- Ambient shell: standard conventions, zero learning curve ---------- */
+  .app-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .brand { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; }
+  .brand-mark {
+    color: var(--accent-primary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .brand-title { font-size: 14px; font-weight: 600; margin: 0; }
+  .app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-btn);
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: background var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out);
+  }
+  .nav-link:hover { color: var(--text-primary); background: var(--bg-surface); }
+  .nav-link[aria-current="page"] {
+    color: var(--accent-primary);
+    background: var(--accent-subtle);
+    border-color: var(--border-bright);
+  }
+  .nav-link:focus-visible,
+  button:focus-visible,
+  a:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+
+  .shell-readout {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .readout { display: flex; align-items: baseline; gap: var(--space-2); }
+  .readout dt { color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .readout dd { margin: 0; font-family: var(--font-mono); font-size: 14px; }
+  .unit { color: var(--text-secondary); font-size: 11px; }
+  .delta { font-size: 11px; color: var(--status-running); }
+  .sparkline { display: block; }
+
+  /* ---------- Workspace: 1:N master list + contextual inspector ---------- */
+  .workspace {
+    flex: 1;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-4);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+  }
+  .panel-body {
+    background: var(--bg-base);
+    border-radius: var(--radius-inner);
+    padding: var(--space-3);
+  }
+
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3) var(--space-3);
+  }
+  .section-title { margin: 0; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); }
+
+  .facets { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-left: auto; }
+  .chip {
+    background: var(--bg-surface-raised);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    padding: var(--space-1) var(--space-3);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    min-height: 32px;
+    transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-hud);
+  }
+  .chip:active { transform: scale(0.97); }
+  .chip[aria-pressed="true"] { color: var(--accent-primary); border-color: var(--border-bright); background: var(--accent-subtle); }
+
+  /* ---------- Reservation stream (high-yield borrow zone) ---------- */
+  .reservations { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+
+  .reservation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-left: 2px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: var(--space-3);
+    transition: border-color var(--duration-normal) var(--ease-out), background var(--duration-normal) var(--ease-out);
+  }
+  .reservation:hover { background: var(--bg-surface-raised); }
+  .reservation.is-active { border-left-color: var(--accent-primary); background: var(--bg-surface-raised); }
+
+  .res-top { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+  .node-id {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .res-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-2); color: var(--text-secondary); font-size: 12px; }
+  .res-metric { font-family: var(--font-mono); color: var(--text-primary); }
+  .res-side { display: flex; align-items: center; gap: var(--space-3); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    border-radius: var(--radius-pill);
+    padding: 2px var(--space-2);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: currentColor; }
+  .badge[data-status="running"] { color: var(--status-running); border-color: var(--status-running); }
+  .badge[data-status="warning"] { color: var(--status-warning); border-color: var(--border-warning); }
+  .badge[data-status="locked"] { color: var(--accent-primary); border-color: var(--border-bright); }
+  .badge[data-status="danger"] { color: var(--status-danger); border-color: var(--border-danger); }
+
+  .btn {
+    font: inherit;
+    cursor: pointer;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface-raised);
+    color: var(--text-primary);
+    padding: var(--space-2) var(--space-3);
+    min-height: 32px;
+    transition: transform var(--duration-fast) var(--ease-hud), background var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out);
+  }
+  .btn:hover { border-color: var(--border-bright); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent-subtle); border-color: var(--border-bright); color: var(--accent-primary); }
+  .btn-quiet { background: transparent; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ---------- Break Protocol: empty & error presentations ---------- */
+  .empty-state,
+  .error-state {
+    background: var(--bg-surface);
+    border: 1px dashed var(--border-bright);
+    border-radius: var(--radius-outer);
+    padding: var(--space-6) var(--space-4);
+    text-align: center;
+  }
+  .error-state { border-style: solid; border-color: var(--border-danger); text-align: left; }
+  .empty-title, .error-title { margin: 0 0 var(--space-2); font-size: 15px; }
+  .muted { color: var(--text-secondary); margin: 0 0 var(--space-4); overflow-wrap: anywhere; }
+  .hint { color: var(--text-secondary); font-size: 12px; margin: var(--space-3) 0 0; }
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 1px var(--space-1);
+    background: var(--bg-surface-raised);
+    color: var(--text-primary);
+  }
+  .telemetry-alert {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+    border: 1px solid var(--border-danger);
+    background: var(--bg-surface-raised);
+    border-radius: var(--radius-card);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .alert-code { font-family: var(--font-mono); color: var(--status-danger); overflow-wrap: anywhere; }
+
+  #list-ideal { display: none; }
+  #view-empty, #view-error { display: none; }
+  body[data-state="ideal"] #list-ideal { display: block; }
+  body[data-state="empty"] #view-empty { display: block; }
+  body[data-state="error"] #view-error { display: block; }
+
+  /* ---------- Contextual inspector (L2 disclosure) ---------- */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-void);
+    opacity: 0.72;
+    z-index: 20;
+  }
+  .inspector {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 30;
+    width: min(420px, 100vw);
+    height: 100%;
+    overflow-y: auto;
+    background: var(--bg-overlay);
+    border-left: 1px solid var(--border-bright);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    transform: translateX(100%);
+    transition: transform var(--duration-slow) var(--ease-hud);
+  }
+  body.drawer-open .inspector { transform: translateX(0); }
+  .inspector-head { display: flex; align-items: flex-start; gap: var(--space-3); }
+  .inspector-title { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+  .param-grid { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-3); margin: 0; }
+  .param-grid dt { color: var(--text-secondary); font-size: 12px; }
+  .param-grid dd { margin: 0; font-family: var(--font-mono); text-align: right; overflow-wrap: anywhere; }
+  .inspector-actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .confirm-gate {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    border: 1px solid var(--border-warning);
+    border-radius: var(--radius-card);
+    padding: var(--space-3);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .confirm-gate input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--accent-primary); }
+
+  /* ---------- Toast settlement ---------- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: var(--space-6);
+    transform: translateX(-50%);
+    z-index: 35;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: var(--bg-overlay);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-card);
+    padding: var(--space-3) var(--space-4);
+    max-width: calc(100vw - var(--space-8));
+  }
+  .toast-msg { overflow-wrap: anywhere; }
+
+  .status-bar {
+    border-top: 1px solid var(--border-dim);
+    background: var(--bg-base);
+    padding: var(--space-2) var(--space-4);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .status-bar .sep { color: var(--border-bright); }
+
+  @media (min-width: 900px) {
+    .reservation { grid-template-columns: minmax(0, 1fr) auto; padding: var(--space-4); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+      scroll-behavior: auto !important;
+    }
+    .inspector { transform: none; }
+    body.drawer-open .inspector { transform: none; }
+    .btn:active, .chip:active { transform: none; }
+  }
+</style>
+</head>
+<body data-state="ideal">
+<a class="skip-link" href="#workspace">Skip to workspace</a>
+
+<header class="app-bar">
+  <div class="brand">
+    <span class="brand-mark">drain·priority</span>
+    <h1 class="brand-title">GPU Reservation Control</h1>
+  </div>
+  <nav class="app-nav" aria-label="Surface topology">
+    <a class="nav-link" href="./index.html" aria-current="page">Mobile Booking</a>
+    <a class="nav-link" href="../../../experiments/console/hero-anchor/index.html">Primary Workspace</a>
+    <a class="nav-link" href="../../../experiments/incident-replay/hero-anchor/index.html">Incident Replay</a>
+    <a class="nav-link" href="../../../experiments/capacity-matrix/hero-anchor/index.html">Capacity Matrix</a>
+  </nav>
+  <div class="shell-readout">
+    <dl class="readout">
+      <dt>Allocated</dt>
+      <dd>3,072<span class="unit"> / 4,096 GPU-slot</span></dd>
+    </dl>
+    <svg class="sparkline" viewBox="0 0 64 20" width="64" height="20" role="img" aria-label="Cluster allocation trend, 9 intervals, rising to 75 percent">
+      <polyline points="0,17 8,15 16,16 24,12 32,13 40,9 48,10 56,6 64,4" fill="none" stroke="var(--accent-primary)" stroke-width="1.5"></polyline>
+      <line x1="0" y1="14" x2="64" y2="14" stroke="var(--border-bright)" stroke-width="1" stroke-dasharray="2 2"></line>
+    </svg>
+    <span class="delta" data-baseline="68.0%">+7.0 pts vs 24h baseline</span>
+  </div>
+</header>
+
+<main id="workspace" class="workspace">
+  <section class="master panel" aria-labelledby="master-title">
+    <div class="panel-body">
+      <div class="section-head">
+        <h2 class="section-title" id="master-title">Reservation Queue</h2>
+        <div class="facets" role="group" aria-label="Filter facets">
+          <button class="chip" type="button" data-facet="region" aria-pressed="true">region=eu-north-3</button>
+          <button class="chip" type="button" data-facet="class" aria-pressed="true">class=h100</button>
+          <button class="chip" type="button" data-facet="drain" aria-pressed="false">drain-only</button>
+          <button class="chip" type="button" data-action="reset-filter">Reset</button>
+        </div>
+      </div>
+
+      <div id="list-ideal">
+        <ul class="reservations" id="reservation-list" role="listbox" aria-label="Reservations" tabindex="0">
+          <li class="reservation is-active" role="option" aria-selected="true" tabindex="-1" data-node-id="node-eu-north-3-a41" data-action="execution-boundary">
+            <div>
+              <div class="res-top">
+                <span class="badge" data-status="running" id="badge-0">running</span>
+                <span class="node-id" title="node-eu-north-3-a41">node-eu-north-3-a41</span>
+              </div>
+              <div class="res-meta">
+                <span class="res-metric">768<span class="unit"> GPU</span></span>
+                <span class="res-metric">92.4<span class="unit"> % util</span></span>
+                <span>baseline 88.1%</span>
+                <svg class="sparkline" viewBox="0 0 48 16" width="48" height="16" role="img" aria-label="Utilization trend, rising">
+                  <polyline points="0,12 8,11 16,12 24,9 32,7 40,6 48,4" fill="none" stroke="var(--status-running)" stroke-width="1.5"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="res-side">
+              <button class="btn btn-primary" type="button" data-action="execution-boundary">Execution Boundary</button>
+            </div>
+          </li>
+
+          <li class="reservation" role="option" aria-selected="false" tabindex="-1" data-node-id="node-eu-north-3-b07" data-action="execution-boundary">
+            <div>
+              <div class="res-top">
+                <span class="badge" data-status="warning" id="badge-1">warning</span>
+                <span class="node-id" title="node-eu-north-3-b07">node-eu-north-3-b07</span>
+              </div>
+              <div class="res-meta">
+                <span class="res-metric">512<span class="unit"> GPU</span></span>
+                <span class="res-metric">99.1<span class="unit"> % util</span></span>
+                <span>baseline 90.5%</span>
+                <svg class="sparkline" viewBox="0 0 48 16" width="48" height="16" role="img" aria-label="Utilization trend, saturated at ceiling">
+                  <polyline points="0,10 8,8 16,6 24,5 32,4 40,3 48,3" fill="none" stroke="var(--status-warning)" stroke-width="1.5"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="res-side">
+              <button class="btn btn-primary" type="button" data-action="execution-boundary">Execution Boundary</button>
+            </div>
+          </li>
+
+          <li class="reservation" role="option" aria-selected="false" tabindex="-1" data-node-id="unbreakable-entity-hash-00000000-0000-0000-0000-000000000000" data-action="product-archetype-basis">
+            <div>
+              <div class="res-top">
+                <span class="badge" data-status="running" id="badge-2">running</span>
+                <span class="node-id" title="unbreakable-entity-hash-00000000-0000-0000-0000-000000000000" style="overflow-wrap: anywhere;">unbreakable-entity-hash-00000000-0000-0000-0000-000000000000</span>
+              </div>
+              <div class="res-meta">
+                <span class="res-metric">256<span class="unit"> GPU</span></span>
+                <span class="res-metric">61.7<span class="unit"> % util</span></span>
+                <span>baseline 64.2%</span>
+                <svg class="sparkline" viewBox="0 0 48 16" width="48" height="16" role="img" aria-label="Utilization trend, flat with drift">
+                  <polyline points="0,7 8,8 16,7 24,9 32,8 40,10 48,9" fill="none" stroke="var(--accent-hover)" stroke-width="1.5"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="res-side">
+              <button class="btn" type="button" data-action="product-archetype-basis">Product Archetype Basis</button>
+            </div>
+          </li>
+
+          <li class="reservation" role="option" aria-selected="false" tabindex="-1" data-node-id="node-eu-north-3-d19" data-action="baseline">
+            <div>
+              <div class="res-top">
+                <span class="badge" data-status="running" id="badge-3">running</span>
+                <span class="node-id" title="node-eu-north-3-d19">node-eu-north-3-d19</span>
+              </div>
+              <div class="res-meta">
+                <span class="res-metric">1,024<span class="unit"> GPU</span></span>
+                <span class="res-metric">74.8<span class="unit"> % util</span></span>
+                <span>baseline 79.0%</span>
+                <svg class="sparkline" viewBox="0 0 48 16" width="48" height="16" role="img" aria-label="Utilization trend, declining">
+                  <polyline points="0,4 8,6 16,5 24,8 32,9 40,11 48,12" fill="none" stroke="var(--accent-hover)" stroke-width="1.5"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="res-side">
+              <button class="btn" type="button" data-action="baseline">Baseline</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <section class="empty-state" id="view-empty" data-state="empty" aria-labelledby="empty-title">
+        <svg class="sparkline" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Empty reservation stream">
+          <rect x="8" y="10" width="32" height="6" rx="2" fill="none" stroke="var(--border-bright)"></rect>
+          <rect x="8" y="22" width="24" height="6" rx="2" fill="none" stroke="var(--border-bright)"></rect>
+          <rect x="8" y="34" width="16" height="6" rx="2" fill="none" stroke="var(--border-bright)"></rect>
+        </svg>
+        <h2 class="empty-title" id="empty-title">No reservations match the active filter</h2>
+        <p class="muted">0 of 4,096 GPU-slots match <strong>region=eu-north-3</strong> and <strong>drain-only</strong>. Widen the facet to resume booking.</p>
+        <button class="btn btn-primary" type="button" data-action="reset-filter">Reset Filter</button>
+        <p class="hint">Press <kbd>Esc</kbd> to clear facets, or <kbd>J</kbd> / <kbd>K</kbd> to move selection.</p>
+      </section>
+
+      <section class="error-state" id="view-error" data-state="error" aria-labelledby="error-title">
+        <div class="telemetry-alert" role="alert">
+          <span class="badge" data-status="danger">telemetry</span>
+          <span class="alert-code">DCGM_FI_DEV_XID_ERROR — drain scheduler unreachable (retry 3/3)</span>
+        </div>
+        <h2 class="error-title" id="error-title">Reservation telemetry interrupted</h2>
+        <p class="muted">Last confirmed snapshot 00:04:12 ago. Booking is held read-only until the scheduler stream reconnects; no partial commit was written.</p>
+        <button class="btn btn-primary" type="button" data-action="retry-telemetry">Retry Telemetry Stream</button>
+        <p class="hint">Press <kbd>Esc</kbd> to return to the last confirmed snapshot.</p>
+      </section>
+    </div>
+  </section>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+
+<aside class="inspector" id="inspector" role="dialog" aria-modal="true" aria-labelledby="inspector-title" hidden>
+  <div class="inspector-head">
+    <h2 class="inspector-title" id="inspector-title">Confirm Execution Boundary</h2>
+    <button class="btn btn-quiet" type="button" data-action="dismiss" aria-label="Dismiss inspector">Esc</button>
+  </div>
+  <p class="muted" id="inspector-context">node-eu-north-3-a41 · 768 GPU</p>
+  <dl class="param-grid">
+    <dt>Target node</dt><dd id="param-node">node-eu-north-3-a41</dd>
+    <dt>Allocation</dt><dd id="param-alloc">768 GPU</dd>
+    <dt>Utilization</dt><dd id="param-util">92.4 %</dd>
+    <dt>Baseline</dt><dd id="param-base">88.1 %</dd>
+    <dt>Hazard class</dt><dd id="param-hazard">Medium / conditionally reversible</dd>
+  </dl>
+  <label class="confirm-gate" id="confirm-gate" hidden>
+    <input type="checkbox" id="confirm-check">
+    <span>Two-phase confirmation: this mutation is irreversible and writes an audit log entry.</span>
+  </label>
+  <div class="inspector-actions">
+    <button class="btn btn-primary" type="button" id="commit-btn" data-action="commit">Execute Execution Boundary</button>
+    <button class="btn btn-quiet" type="button" data-action="dismiss">Cancel</button>
+  </div>
+  <p class="hint">Draft context is preserved on dismiss: facets, scroll offset and active row stay pinned.</p>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span class="toast-msg" id="toast-msg">Execution Boundary Completed</span>
+  <button class="btn btn-quiet" type="button" id="undo-btn" data-action="undo" hidden>Undo</button>
+</div>
+
+<footer class="status-bar">
+  <span id="state-readout">state: ideal</span>
+  <span class="sep">|</span>
+  <span>selection <span class="res-metric" id="sel-readout">1 / 4</span></span>
+  <span class="sep">|</span>
+  <span><kbd>Space</kbd>/<kbd>P</kbd> inspector · <kbd>J</kbd>/<kbd>K</kbd> move · <kbd>Esc</kbd> dismiss</span>
+</footer>
+
+<script>
+  var ACTIONS = {
+    "execution-boundary": {
+      trigger: "Execution Boundary",
+      header: "Confirm Execution Boundary",
+      commit: "Execute Execution Boundary",
+      toast: "Execution Boundary Completed",
+      hazard: "Medium / conditionally reversible",
+      reversible: true
+    },
+    "product-archetype-basis": {
+      trigger: "Product Archetype Basis",
+      header: "Confirm Product Archetype Basis",
+      commit: "Execute Product Archetype Basis",
+      toast: "Product Archetype Basis Completed",
+      hazard: "Medium / conditionally reversible",
+      reversible: true
+    },
+    "baseline": {
+      trigger: "Baseline",
+      header: "Confirm Baseline",
+      commit: "Execute Baseline",
+      toast: "Baseline Completed",
+      hazard: "High / irreversible",
+      reversible: false
+    }
+  };
+
+  var ROWS = [
+    { id: "node-eu-north-3-a41", badge: "badge-0", alloc: "768 GPU", util: "92.4 %", base: "88.1 %", action: "execution-boundary" },
+    { id: "node-eu-north-3-b07", badge: "badge-1", alloc: "512 GPU", util: "99.1 %", base: "90.5 %", action: "execution-boundary" },
+    { id: "unbreakable-entity-hash-00000000-0000-0000-0000-000000000000", badge: "badge-2", alloc: "256 GPU", util: "61.7 %", base: "64.2 %", action: "product-archetype-basis" },
+    { id: "node-eu-north-3-d19", badge: "badge-3", alloc: "1,024 GPU", util: "74.8 %", base: "79.0 %", action: "baseline" }
+  ];
+
+  var list = document.getElementById("reservation-list");
+  var rows = Array.prototype.slice.call(list.querySelectorAll(".reservation"));
+  var inspector = document.getElementById("inspector");
+  var scrim = document.getElementById("scrim");
+  var toast = document.getElementById("toast");
+  var toastMsg = document.getElementById("toast-msg");
+  var undoBtn = document.getElementById("undo-btn");
+  var stateReadout = document.getElementById("state-readout");
+  var selReadout = document.getElementById("sel-readout");
+  var confirmGate = document.getElementById("confirm-gate");
+  var confirmCheck = document.getElementById("confirm-check");
+  var commitBtn = document.getElementById("commit-btn");
+
+  var activeIndex = 0;
+  var lastFocus = null;
+  var pendingUndo = null;
+  var committing = false;
+  var toastTimer = null;
+  var undoTimer = null;
+
+  /* ---------- State machine: hash routing over #state=ideal|empty|error ---------- */
+  var SUPPORTED = ["ideal", "empty", "error"];
+
+  function readState() {
+    var match = /(?:^|[#&?])state=([a-z]+)/.exec(location.hash || "");
+    return match && SUPPORTED.indexOf(match[1]) !== -1 ? match[1] : "ideal";
+  }
+
+  function applyState() {
+    var next = readState();
+    if (document.body.dataset.state === next) { return; }
+    document.body.dataset.state = next;
+    stateReadout.textContent = "state: " + next;
+    if (next !== "ideal") { closeDrawer(false); }
+  }
+
+  window.addEventListener("hashchange", applyState);
+
+  /* ---------- Selection (J / K) ---------- */
+  function setActive(index, focusRow) {
+    activeIndex = Math.max(0, Math.min(rows.length - 1, index));
+    rows.forEach(function (row, i) {
+      var on = i === activeIndex;
+      row.classList.toggle("is-active", on);
+      row.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    selReadout.textContent = (activeIndex + 1) + " / " + rows.length;
+    if (focusRow) { rows[activeIndex].focus(); }
+  }
+
+  rows.forEach(function (row, i) {
+    row.addEventListener("click", function () { setActive(i, false); });
+    row.addEventListener("focus", function () { setActive(i, false); });
+  });
+
+  /* ---------- Inspector drawer: Frame 1 intent input ---------- */
+  function openDrawer(actionId, anchor) {
+    var action = ACTIONS[actionId];
+    if (!action) { return; }
+    var data = ROWS[activeIndex];
+    lastFocus = anchor || rows[activeIndex];
+
+    inspector.querySelector("#inspector-title").textContent = action.header;
+    document.getElementById("param-node").textContent = data.id;
+    document.getElementById("param-alloc").textContent = data.alloc;
+    document.getElementById("param-util").textContent = data.util;
+    document.getElementById("param-base").textContent = data.base;
+    document.getElementById("param-hazard").textContent = action.hazard;
+    document.getElementById("inspector-context").textContent = data.id + " · " + data.alloc;
+
+    commitBtn.textContent = action.commit;
+    commitBtn.dataset.actionId = actionId;
+    commitBtn.disabled = false;
+    confirmGate.hidden = action.reversible;
+    confirmCheck.checked = false;
+
+    inspector.hidden = false;
+    scrim.hidden = false;
+    requestAnimationFrame(function () { document.body.classList.add("drawer-open"); });
+    inspector.querySelector(".inspector-head button").focus();
+  }
+
+  function closeDrawer(restoreFocus) {
+    if (inspector.hidden) { return; }
+    document.body.classList.remove("drawer-open");
+    inspector.hidden = true;
+    scrim.hidden = true;
+    committing = false;
+    if (restoreFocus !== false && lastFocus) { lastFocus.focus(); }
+  }
+
+  /* ---------- Commit: Frame 2 decisive commit, Frame 3 settlement ---------- */
+  function commit() {
+    if (committing) { return; }
+    var action = ACTIONS[commitBtn.dataset.actionId];
+    if (!action) { return; }
+    if (!action.reversible && !confirmCheck.checked) {
+      confirmCheck.focus();
+      return;
+    }
+    committing = true;
+    commitBtn.disabled = true;
+
+    var row = rows[activeIndex];
+    var badge = document.getElementById(ROWS[activeIndex].badge);
+    var previous = badge.dataset.status;
+    badge.dataset.status = "locked";
+    badge.textContent = "locked";
+
+    closeDrawer(true);
+
+    toastMsg.textContent = action.toast;
+    undoBtn.hidden = !action.reversible;
+    pendingUndo = action.reversible ? function () {
+      badge.dataset.status = previous;
+      badge.textContent = previous;
+    } : null;
+
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 5000);
+    window.setTimeout(function () { committing = false; }, 600);
+    void row;
+  }
+
+  function hideToast() {
+    toast.hidden = true;
+    undoBtn.hidden = true;
+    pendingUndo = null;
+    clearTimeout(undoTimer);
+  }
+
+  function undo() {
+    if (pendingUndo) { pendingUndo(); }
+    toastMsg.textContent = "Execution Boundary reverted";
+    undoBtn.hidden = true;
+    pendingUndo = null;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toast.hidden = true;
+      commitBtn.dataset.actionId = "";
+    }, 2000);
+  }
+
+  /* ---------- Facets: optimistic live update, fully reversible ---------- */
+  var facets = Array.prototype.slice.call(document.querySelectorAll(".chip[data-facet]"));
+
+  var drainChip = document.querySelector('.chip[data-facet="drain"]');
+
+  function applyFacets() {
+    // drain-only is a real zero-match facet: no node in eu-north-3 is currently draining.
+    var visible = drainChip.getAttribute("aria-pressed") === "true" ? 0 : rows.length;
+    var nextHash = visible === 0 ? "#state=empty" : "#state=ideal";
+    if (location.hash !== nextHash) { location.hash = nextHash; }
+    applyState();
+  }
+
+  facets.forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      chip.setAttribute("aria-pressed", chip.getAttribute("aria-pressed") === "true" ? "false" : "true");
+      applyFacets();
+    });
+  });
+
+  function resetFilters() {
+    facets.forEach(function (chip) {
+      chip.setAttribute("aria-pressed", chip === drainChip ? "false" : "true");
+    });
+    if (location.hash) { location.hash = "#state=ideal"; }
+    applyState();
+    setActive(0, false);
+  }
+
+  /* ---------- Delegated controls ---------- */
+  document.addEventListener("click", function (event) {
+    var target = event.target.closest("[data-action]");
+    if (!target) { return; }
+    var actionId = target.dataset.action;
+    if (target.dataset.actionId) { actionId = target.dataset.actionId; }
+    switch (actionId) {
+      case "commit": commit(); break;
+      case "undo": undo(); break;
+      case "dismiss": closeDrawer(true); break;
+      case "reset-filter": resetFilters(); break;
+      case "retry-telemetry": location.hash = "#state=ideal"; applyState(); break;
+      default:
+        if (ACTIONS[actionId]) {
+          var rowIndex = rows.indexOf(target.closest(".reservation"));
+          if (rowIndex !== -1) { setActive(rowIndex, false); }
+          openDrawer(actionId, target);
+        }
+    }
+  });
+
+  scrim.addEventListener("click", function () { closeDrawer(true); });
+
+  /* ---------- Dual-channel keyboard: Space / P, Esc, J / K ---------- */
+  window.addEventListener("keydown", function (event) {
+    var typing = /^(INPUT|TEXTAREA)$/.test(event.target.tagName);
+    if (typing) { return; }
+
+    if (event.key === "Escape") {
+      if (!inspector.hidden) { event.preventDefault(); closeDrawer(true); return; }
+      if (!toast.hidden) { event.preventDefault(); hideToast(); return; }
+      if (document.body.dataset.state === "empty") { event.preventDefault(); resetFilters(); return; }
+      if (document.body.dataset.state === "error") { event.preventDefault(); location.hash = "#state=ideal"; applyState(); }
+      return;
+    }
+
+    if (event.code === "Space" || event.key === " " || event.key === "p" || event.key === "P") {
+      if (event.target.closest("button, a, input")) { return; }
+      event.preventDefault();
+      if (!inspector.hidden) { closeDrawer(true); return; }
+      var data = ROWS[activeIndex];
+      openDrawer(data.action, rows[activeIndex]);
+      return;
+    }
+
+    if (event.key === "j" || event.key === "J") { event.preventDefault(); setActive(activeIndex + 1, true); return; }
+    if (event.key === "k" || event.key === "K") { event.preventDefault(); setActive(activeIndex - 1, true); }
+  });
+
+  window.addEventListener("keyup", function (event) {
+    if (event.key === "Escape" && !inspector.hidden) { closeDrawer(true); }
+  });
+
+  applyState();
+  if (!/state=/.test(location.hash)) { applyState(); }
+  setActive(0, false);
+</script>
+</body>
+</html>

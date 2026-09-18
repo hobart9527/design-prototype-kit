@@ -180,8 +180,8 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     # Parse Action Verb Lifecycle and Frame deduction from slice contract
     cognitive_ledger = {
         "zero_borrow_base": "Standard navigation, filter chips, and basic data tables must maintain zero cognitive friction with zero distracting motion.",
-        "high_yield_borrow_zone": f"Primary operational {slice_id} workspace is granted visual energy budget: tactile detents (:active), baseline sparklines, and micro-flow liveliness.",
-        "repayment_settlement": "Upon decisive action commit or inspector close, all dynamic visual indicators settle back into baseline calm within 180ms."
+        "high_yield_borrow_zone": f"Primary operational {slice_id} workspace is granted visual energy budget: perceptible tactile feedback, baseline sparklines, and micro-flow liveliness.",
+        "repayment_settlement": "Upon decisive action commit or inspector close, all dynamic visual indicators settle back into baseline calm equilibrium."
     }
     in_ledger = False
     in_verbs = False
@@ -308,9 +308,9 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "Zero ungrounded alien physics, gratuitous full-screen particles, or unconsidered neutral gray #808080 washes."
         ],
         "material_non_transfer_boundaries": invariants or [
-            "Digital Glass & Surface Layering: Semi-transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
-            "Machined Tactile Detents: Interactive controls possess mechanical micro-press (:active scale(0.97)) resistance; never frictionless float.",
-            "Precision Telemetry Emissives: Status indicators simulate calibrated hardware LEDs with subtle ambient bloom; never raw flat neon washes."
+            "Digital Surface Layering: Transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
+            "Perceptible Action Feedback: Interactive controls possess immediate, perceptible feedback (e.g. tactile micro-press, subtle background shift, or border detent); never frictionless float.",
+            "Precision Status Emissives: Status indicators provide calibrated visual signals; never raw flat neon washes."
         ],
     }
     explicit_turns = extract_field(spec_content, "Maximum operational repair attempts")

@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diffusion GPU Cluster Orchestration Desk — Tensor Stream Runway</title>
+<link rel="stylesheet" href="../../../shared/tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.45;
+    font-variant-numeric: var(--font-variant-numeric);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  ::selection { background: var(--accent-subtle); }
+
+  /* ---------- Shell: header ---------- */
+  .shell-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-dim);
+    position: sticky; top: 0; z-index: 40;
+  }
+  .brand { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: var(--radius-btn);
+    background: var(--accent-subtle);
+    border: 1px solid var(--border-bright);
+    display: grid; place-items: center;
+    color: var(--accent-primary); font-size: 11px; font-weight: 700;
+  }
+  .brand-name { font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+  .brand-sub { color: var(--text-secondary); font-size: 11px; white-space: nowrap; }
+  .nav { display: flex; gap: var(--space-1); margin-left: auto; flex-wrap: wrap; }
+  .nav a {
+    color: var(--text-secondary); text-decoration: none;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-btn);
+    border: 1px solid transparent;
+    min-height: 32px; display: inline-flex; align-items: center;
+    transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+  }
+  .nav a:hover { color: var(--text-primary); background: var(--bg-surface); }
+  .nav a[aria-current="page"] {
+    color: var(--accent-primary);
+    background: var(--accent-subtle);
+    border-color: var(--border-subtle);
+  }
+
+  /* ---------- Layout ---------- */
+  .workbench {
+    flex: 1;
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    align-content: start;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    grid-template-areas: "main inspector";
+  }
+  .workspace { grid-area: main; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+  .inspector { grid-area: inspector; min-width: 0; }
+  @media (max-width: 900px) {
+    .workbench { grid-template-columns: minmax(0, 1fr); grid-template-areas: "main" "inspector"; }
+  }
+
+  .panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+  }
+  .panel-inner {
+    border-radius: var(--radius-inner);
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+  }
+  .panel-head {
+    display: flex; align-items: center; gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-dim);
+    flex-wrap: wrap;
+  }
+  .panel-title { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
+  .panel-body { padding: var(--space-3); }
+
+  /* ---------- Metrics strip (zero naked metrics) ---------- */
+  .metric-strip {
+    display: grid; gap: var(--space-2);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  .metric {
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-card);
+    padding: var(--space-3);
+    display: flex; flex-direction: column; gap: var(--space-1);
+    min-width: 0;
+  }
+  .metric-label { font-size: 11px; color: var(--text-secondary); letter-spacing: .04em; }
+  .metric-value { font-size: 20px; font-weight: 600; font-variant-numeric: var(--font-variant-numeric); }
+  .metric-unit { font-size: 11px; color: var(--text-secondary); font-weight: 400; margin-left: 2px; }
+  .metric-baseline {
+    font-size: 11px; color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+    min-width: 0;
+  }
+  .metric-baseline span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .delta { font-variant-numeric: var(--font-variant-numeric); white-space: nowrap; }
+  .delta-good { color: var(--status-running); }
+  .delta-warn { color: var(--status-warning); }
+  .delta-bad { color: var(--status-danger); }
+
+  .spark { width: 74px; height: 20px; display: block; }
+  .spark-line { fill: none; stroke: var(--accent-primary); stroke-width: 1.5; }
+  .spark-line.is-warn { stroke: var(--status-warning); }
+  .spark-line.is-bad { stroke: var(--status-danger); }
+  .spark-base { stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 2 2; }
+
+  /* ---------- Stream list (primary collection) ---------- */
+  .facet-bar { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; padding: var(--space-2) var(--space-3) 0; }
+  .chip {
+    border: 1px solid var(--border-subtle); background: var(--bg-surface);
+    color: var(--text-secondary); border-radius: var(--radius-pill);
+    padding: 2px var(--space-3); font-size: 11px; cursor: pointer;
+    min-height: 28px; font-family: inherit;
+    transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+  }
+  .chip[aria-pressed="true"] { background: var(--accent-subtle); color: var(--accent-primary); border-color: var(--border-bright); }
+  .chip:focus-visible, .nav a:focus-visible, .stream-row:focus-visible,
+  button:focus-visible, [role="button"]:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+
+  .collection { list-style: none; margin: 0; padding: 0; }
+  .stream-row {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr) 84px 96px 64px;
+    gap: var(--space-3);
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--border-dim);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3) var(--space-3);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-hud);
+  }
+  .stream-row:hover { background: var(--bg-surface-raised); }
+  .stream-row:active { transform: scale(0.997); }
+  .stream-row[aria-selected="true"] {
+    background: var(--accent-subtle);
+    box-shadow: inset 2px 0 0 var(--accent-primary);
+  }
+  .row-health { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--status-running); }
+  .row-health.warn { background: var(--status-warning); }
+  .row-health.bad { background: var(--status-danger); }
+  .row-main { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .row-name {
+    font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 100%;
+  }
+  .row-meta {
+    font-size: 11px; color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .row-num { font-variant-numeric: var(--font-variant-numeric); text-align: right; }
+  .row-num small { display: block; font-size: 10px; color: var(--text-secondary); }
+
+  /* ---------- Empty / error panes ---------- */
+  .pane-empty, .pane-error { display: none; }
+  body[data-state="empty"] .pane-empty { display: block; }
+  body[data-state="error"] .pane-error { display: block; }
+  body[data-state="empty"] .list-region,
+  body[data-state="error"] .list-region { display: none; }
+
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+    border: 1px dashed var(--border-subtle);
+    border-radius: var(--radius-card);
+    background: var(--bg-base);
+  }
+  .empty-glyph {
+    width: 40px; height: 40px; border-radius: var(--radius-card);
+    border: 1px solid var(--border-bright); background: var(--bg-surface-raised);
+    display: grid; place-items: center; color: var(--accent-primary); font-size: 18px;
+  }
+  .empty-title { font-size: 14px; font-weight: 600; }
+  .empty-copy { color: var(--text-secondary); max-width: 42ch; }
+
+  .alert {
+    border: 1px solid var(--border-danger);
+    background: var(--bg-surface-raised);
+    border-radius: var(--radius-card);
+    padding: var(--space-4);
+    display: flex; flex-direction: column; gap: var(--space-3);
+  }
+  .alert-head { display: flex; gap: var(--space-2); align-items: center; font-weight: 600; color: var(--status-danger); }
+  .alert pre {
+    margin: 0; font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
+    white-space: pre-wrap; overflow-wrap: anywhere;
+    background: var(--bg-void); border: 1px solid var(--border-dim);
+    border-radius: var(--radius-sm); padding: var(--space-3);
+    max-height: 132px; overflow: auto;
+  }
+
+  /* ---------- Inspector (master-detail) ---------- */
+  .inspector-card {
+    position: sticky; top: 64px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+  }
+  .inspector-inner {
+    border-radius: var(--radius-inner);
+    background: var(--bg-base);
+    border: 1px solid var(--border-dim);
+    overflow: hidden;
+  }
+  .inspector-head {
+    display: flex; align-items: baseline; gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .inspector-title { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
+  .inspector-body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+  .kv { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: var(--space-2) var(--space-3); }
+  .kv dt { color: var(--text-secondary); font-size: 11px; }
+  .kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-variant-numeric: var(--font-variant-numeric); }
+  .hash { font-family: var(--font-mono); font-size: 11px; word-break: break-all; overflow-wrap: anywhere; }
+
+  .action-stack { display: flex; flex-direction: column; gap: var(--space-2); }
+  .action-trigger {
+    font-family: inherit; font-size: 12px; text-align: left;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-primary);
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-hud);
+  }
+  .action-trigger:hover { border-color: var(--border-bright); background: var(--bg-overlay); }
+  .action-trigger:active { transform: scale(0.97); }
+  .action-trigger[data-locked="true"] { opacity: .55; cursor: progress; }
+  .action-key {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary);
+    border: 1px solid var(--border-dim); border-radius: var(--radius-sm);
+    padding: 1px var(--space-1); white-space: nowrap;
+  }
+  .badge {
+    font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+    border-radius: var(--radius-pill); padding: 1px var(--space-2);
+    border: 1px solid var(--border-subtle); color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .badge[data-tone="ok"] { color: var(--status-running); border-color: var(--border-subtle); }
+  .badge[data-tone="warn"] { color: var(--status-warning); border-color: var(--border-warning); }
+
+  .hint { font-size: 11px; color: var(--text-secondary); }
+  kbd {
+    font-family: var(--font-mono); font-size: 10px;
+    border: 1px solid var(--border-subtle); border-bottom-width: 2px;
+    border-radius: var(--radius-sm); padding: 1px 5px; color: var(--text-secondary);
+    background: var(--bg-surface);
+  }
+
+  /* ---------- Confirm gate (two-phase commit) ---------- */
+  .gate-backdrop {
+    position: fixed; inset: 0; z-index: 60;
+    background: color-mix(in srgb, var(--bg-void) 78%, transparent);
+    display: none; place-items: center; padding: var(--space-4);
+  }
+  .gate-backdrop[data-open="true"] { display: grid; }
+  .gate {
+    width: min(440px, 100%);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-outer);
+    padding: var(--padding-panel);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+  }
+  .gate-inner {
+    background: var(--bg-base); border: 1px solid var(--border-dim);
+    border-radius: var(--radius-inner); padding: var(--space-4);
+    display: flex; flex-direction: column; gap: var(--space-3);
+  }
+  .gate-head { font-size: 14px; font-weight: 600; }
+  .gate-copy { color: var(--text-secondary); overflow-wrap: anywhere; }
+  .gate-actions { display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; }
+  .btn {
+    font-family: inherit; font-size: 12px; cursor: pointer;
+    border-radius: var(--radius-btn); border: 1px solid var(--border-subtle);
+    background: var(--bg-surface-raised); color: var(--text-primary);
+    padding: var(--space-2) var(--space-4); min-height: 36px;
+    transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-hud);
+  }
+  .btn:hover { border-color: var(--border-bright); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent-subtle); border-color: var(--border-bright); color: var(--accent-primary); font-weight: 600; }
+  .btn[disabled] { opacity: .5; cursor: progress; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: var(--space-6); transform: translateX(-50%) translateY(120%);
+    z-index: 80;
+    display: flex; align-items: center; gap: var(--space-3);
+    background: var(--bg-overlay);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-card);
+    padding: var(--space-3) var(--space-4);
+    max-width: min(520px, calc(100vw - 32px));
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .5);
+    transition: transform var(--duration-normal) var(--ease-hud), opacity var(--duration-normal) var(--ease-out);
+    opacity: 0;
+  }
+  .toast[data-open="true"] { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toast .btn { min-height: 30px; padding: var(--space-1) var(--space-3); }
+
+  /* ---------- Status bar ---------- */
+  .status-bar {
+    display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap;
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-base);
+    border-top: 1px solid var(--border-dim);
+    color: var(--text-secondary); font-size: 11px;
+  }
+  .status-bar .dot { width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--status-running); display: inline-block; margin-right: var(--space-1); }
+  .status-spacer { margin-left: auto; }
+
+  /* ---------- 320px fold resilience ---------- */
+  @media (max-width: 560px) {
+    .workbench { padding: var(--space-2); gap: var(--space-2); }
+    .stream-row { grid-template-columns: 10px minmax(0, 1fr) 64px; padding: var(--space-3) var(--space-2); }
+    .stream-row .row-spark, .stream-row .row-num.is-optional { display: none; }
+    .inspector-card { position: static; }
+    .metric-value { font-size: 17px; }
+    .brand-sub { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
+    }
+    .toast { transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body data-state="ideal">
+
+<header class="shell-head">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">DC</span>
+    <span class="brand-name">Diffusion GPU Cluster Orchestration Desk</span>
+    <span class="brand-sub">4096× H100 SXM5 · Slurm + DCGM</span>
+  </div>
+  <nav class="nav" aria-label="Prototype topology">
+    <a href="../../console/hero-anchor/index.html">Console</a>
+    <a href="./index.html" aria-current="page">Tensor Runway</a>
+    <a href="../../../surfaces/incident-replay/index.html">Incident Replay</a>
+    <a href="../../../surfaces/capacity-matrix/index.html">Capacity Matrix</a>
+  </nav>
+</header>
+
+<main class="workbench">
+  <section class="workspace" aria-label="Tensor stream workspace">
+
+    <div class="panel">
+      <div class="panel-inner">
+        <div class="panel-head">
+          <span class="panel-title">Fleet Confidence Horizon</span>
+          <span class="badge" data-tone="ok" id="fleet-badge">Cruising</span>
+        </div>
+        <div class="panel-body">
+          <div class="metric-strip">
+            <div class="metric">
+              <span class="metric-label">Aggregate Throughput</span>
+              <span class="metric-value" data-metric="throughput">41.2<span class="metric-unit">k tok/s</span></span>
+              <span class="metric-baseline">
+                <span>P50 baseline 38.5k</span>
+                <svg class="spark" viewBox="0 0 74 20" role="img" aria-label="throughput trend rising">
+                  <line class="spark-base" x1="0" y1="13" x2="74" y2="13"></line>
+                  <polyline class="spark-line" points="0,16 12,14 24,15 36,11 48,12 60,8 74,6"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Step Latency P95</span>
+              <span class="metric-value" data-metric="latency">24.8<span class="metric-unit">ms</span></span>
+              <span class="metric-baseline">
+                <span>SLO ceiling 30.0 ms</span>
+                <svg class="spark" viewBox="0 0 74 20" role="img" aria-label="latency trend rising toward ceiling">
+                  <line class="spark-base" x1="0" y1="15" x2="74" y2="15"></line>
+                  <polyline class="spark-line is-warn" points="0,10 12,9 24,11 36,7 48,8 60,5 74,4"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">HBM Occupancy</span>
+              <span class="metric-value" data-metric="vram">91.4<span class="metric-unit">%</span></span>
+              <span class="metric-baseline">
+                <span>Drain trigger 94.0%</span>
+                <svg class="spark" viewBox="0 0 74 20" role="img" aria-label="occupancy near drain trigger">
+                  <line class="spark-base" x1="0" y1="6" x2="74" y2="6"></line>
+                  <polyline class="spark-line is-bad" points="0,15 12,13 24,12 36,10 48,9 60,7 74,6"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Streams In Flight</span>
+              <span class="metric-value" data-metric="streams">6<span class="metric-unit">active</span></span>
+              <span class="metric-baseline">
+                <span>Quota ceiling 8</span>
+                <span class="delta delta-good">+2 headroom</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-inner">
+        <div class="panel-head">
+          <span class="panel-title">Tensor Stream Runway</span>
+          <span class="hint"><kbd>J</kbd> / <kbd>K</kbd> navigate · <kbd>Space</kbd> inspect</span>
+        </div>
+        <div class="facet-bar" role="group" aria-label="Stream facets">
+          <button class="chip" data-facet="all" aria-pressed="true" type="button">All streams</button>
+          <button class="chip" data-facet="at-risk" aria-pressed="false" type="button">At risk</button>
+          <button class="chip" data-facet="isolated" aria-pressed="false" type="button">Isolated</button>
+        </div>
+
+        <div class="list-region panel-body">
+          <ul class="collection" id="stream-list" aria-label="Active tensor streams"></ul>
+        </div>
+
+        <div class="pane-empty panel-body" data-state-for="empty">
+          <section class="empty-state" id="empty-state" aria-label="No streams match the current facet">
+            <span class="empty-glyph" aria-hidden="true">∅</span>
+            <span class="empty-title">No tensor streams match this facet</span>
+            <span class="empty-copy">The current filter excludes every stream in the 4096-card fabric. Clear the facet or open a new execution boundary to re-enter the runway.</span>
+            <div class="gate-actions" style="justify-content:center">
+              <button class="btn" type="button" id="empty-reset">Reset filter</button>
+              <button class="btn btn-primary" type="button" data-empty-recovery>Execution Boundary</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="pane-error panel-body" data-state-for="error">
+          <div class="alert" role="alert" id="error-alert">
+            <span class="alert-head">DCGM telemetry stream interrupted</span>
+            <span class="hint">Node group <span class="hash">rack-07</span> stopped reporting at 14:02:11Z. Last known values are held, not blanked.</span>
+            <pre>E/DCGM_QUERY_FAILED: channel closed mid-frame (code 0x1F)
+target=unbreakable-entity-hash-00000000-0000-0000-0000-000000000000
+retry_budget=3 remaining=3 backoff=200ms</pre>
+            <div class="gate-actions" style="justify-content:flex-start">
+              <button class="btn btn-primary" type="button" id="error-retry">Retry telemetry channel</button>
+              <button class="btn" type="button" id="error-diagnose">Baseline</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="inspector" aria-label="Stream inspector">
+    <div class="inspector-card">
+      <div class="inspector-inner">
+        <div class="inspector-head">
+          <span class="inspector-title">Inspector</span>
+          <span class="badge" id="inspector-stream">no selection</span>
+          <span class="badge" id="inspector-status" data-tone="ok">idle</span>
+        </div>
+        <div class="inspector-body">
+          <dl class="kv">
+            <dt>Entity</dt><dd id="insp-entity" class="hash">—</dd>
+            <dt>Step</dt><dd id="insp-step">—</dd>
+            <dt>P95</dt><dd id="insp-p95">—</dd>
+            <dt>HBM</dt><dd id="insp-hbm">—</dd>
+            <dt>Confidence</dt><dd id="insp-confidence">—</dd>
+          </dl>
+
+          <div class="action-stack" aria-label="Action verb lifecycle">
+            <button class="action-trigger" type="button" data-action="execution-boundary"
+                    data-trigger-label="Execution Boundary"
+                    data-header="Confirm Execution Boundary"
+                    data-commit="Execute Execution Boundary"
+                    data-toast="Execution Boundary Completed">
+              <span>Execution Boundary</span><span class="action-key">Enter</span>
+            </button>
+            <button class="action-trigger" type="button" data-action="product-archetype-basis"
+                    data-trigger-label="Product Archetype Basis"
+                    data-header="Confirm Product Archetype Basis"
+                    data-commit="Execute Product Archetype Basis"
+                    data-toast="Product Archetype Basis Completed">
+              <span>Product Archetype Basis</span><span class="action-key">Enter</span>
+            </button>
+            <button class="action-trigger" type="button" data-action="baseline"
+                    data-trigger-label="Baseline"
+                    data-header="Confirm Baseline"
+                    data-commit="Execute Baseline"
+                    data-toast="Baseline Completed">
+              <span>Baseline</span><span class="action-key">Enter</span>
+            </button>
+          </div>
+
+          <p class="hint">
+            <kbd>Space</kbd> / <kbd>P</kbd> toggle inspector · <kbd>Esc</kbd> dismiss ·
+            <kbd>J</kbd> / <kbd>K</kbd> move selection. Facets and scroll offset persist across dismissal.
+          </p>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="status-bar">
+  <span><span class="dot" aria-hidden="true"></span>DCGM link healthy</span>
+  <span class="status-spacer"></span>
+  <span id="status-state">state: ideal</span>
+  <span id="status-selection">selection: none</span>
+  <span class="tabular-nums">quota 6/8</span>
+</footer>
+
+<div class="gate-backdrop" id="gate-backdrop" data-open="false">
+  <div class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-head" id="gate">
+    <div class="gate-inner">
+      <span class="gate-head" id="gate-head">Confirm Execution Boundary</span>
+      <span class="gate-copy" id="gate-copy">Two-phase commit: this mutation is irreversible once executed. An audit log entry is written on commit.</span>
+      <div class="gate-actions">
+        <button class="btn" type="button" id="gate-cancel">Cancel</button>
+        <button class="btn btn-primary" type="button" id="gate-commit">Execute Execution Boundary</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" data-open="false">
+  <span class="toast-text" id="toast-text">Execution Boundary Completed</span>
+  <button class="btn" type="button" id="toast-undo">Undo</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STREAMS = [
+    { id: "stream-a17", name: "tensor-runway-α17", hash: "sdxl-turbo/step-41k", health: "ok",   step: 41208, p95: 22.4, hbm: 88.1, conf: 96, trend: [3,4,3,5,4,6] },
+    { id: "stream-b04", name: "tensor-runway-β04", hash: "flux-pro/step-08k",   health: "ok",   step: 8012,  p95: 25.9, hbm: 90.7, conf: 91, trend: [2,3,4,4,5,5] },
+    { id: "stream-c22", name: "tensor-runway-γ22", hash: "unbreakable-entity-hash-00000000-0000-0000-0000-000000000000", health: "warn", step: 19044, p95: 29.3, hbm: 93.6, conf: 72, trend: [3,5,6,7,8,9] },
+    { id: "stream-d09", name: "tensor-runway-δ09", hash: "sdxl-turbo/step-77k", health: "ok",   step: 77010, p95: 21.8, hbm: 86.4, conf: 94, trend: [4,4,3,4,4,5] },
+    { id: "stream-e31", name: "tensor-runway-ε31", hash: "controlnet-fill/step-02k", health: "bad", step: 2041, p95: 33.6, hbm: 94.2, conf: 58, trend: [5,6,8,8,9,10] },
+    { id: "stream-f08", name: "tensor-runway-ζ08", hash: "flux-pro/step-12k",   health: "ok",   step: 12330, p95: 23.1, hbm: 87.9, conf: 89, trend: [3,3,4,4,4,5] }
+  ];
+
+  var ACTIONS = {
+    "execution-boundary":      { header: "Confirm Execution Boundary",      commit: "Execute Execution Boundary",      toast: "Execution Boundary Completed" },
+    "product-archetype-basis": { header: "Confirm Product Archetype Basis", commit: "Execute Product Archetype Basis", toast: "Product Archetype Basis Completed" },
+    "baseline":                { header: "Confirm Baseline",                commit: "Execute Baseline",                toast: "Baseline Completed" }
+  };
+
+  var SUPPORTED_STATES = ["ideal", "empty", "error"];
+  var listEl = document.getElementById("stream-list");
+  var statusState = document.getElementById("status-state");
+  var statusSelection = document.getElementById("status-selection");
+  var inspectorStream = document.getElementById("inspector-stream");
+  var inspectorStatus = document.getElementById("inspector-status");
+  var fleetBadge = document.getElementById("fleet-badge");
+  var gateBackdrop = document.getElementById("gate-backdrop");
+  var gateHead = document.getElementById("gate-head");
+  var gateCommit = document.getElementById("gate-commit");
+  var toastEl = document.getElementById("toast");
+  var toastText = document.getElementById("toast-text");
+  var toastUndo = document.getElementById("toast-undo");
+  var emptyReset = document.getElementById("empty-reset");
+
+  var activeIndex = 0;
+  var selectedId = null;
+  var openedFrom = null;
+  var facet = "all";
+  var pendingAction = null;
+  var pendingTrigger = null;
+  var locked = false;
+  var lastToggle = 0;
+  var toastTimer = null;
+  var undoSnapshot = null;
+
+  /* ---------- hash state machine ---------- */
+  function readHash() {
+    var m = /(?:^|[#&])state=([a-z]+)/.exec(location.hash || "");
+    var s = m ? m[1] : "ideal";
+    return SUPPORTED_STATES.indexOf(s) === -1 ? "ideal" : s;
+  }
+
+  function applyState() {
+    var state = readHash();
+    document.body.dataset.state = state;
+    if (statusState) statusState.textContent = "state: " + state;
+    if (fleetBadge) {
+      fleetBadge.textContent = state === "error" ? "Telemetry Degraded" : state === "empty" ? "No Matches" : "Cruising";
+      fleetBadge.dataset.tone = state === "ideal" ? "ok" : "warn";
+    }
+    applyFacet();
+  }
+
+  /* ---------- facets + list ---------- */
+  function visibleStreams() {
+    if (facet === "at-risk") return STREAMS.filter(function (s) { return s.conf < 85; });
+    if (facet === "isolated") return STREAMS.filter(function (s) { return s.health === "bad"; });
+    return STREAMS.slice();
+  }
+
+  function sparkline(trend, tone) {
+    var max = Math.max.apply(null, trend) || 1;
+    var pts = trend.map(function (v, i) {
+      var x = Math.round((i / (trend.length - 1)) * 72) + 1;
+      var y = 18 - Math.round((v / max) * 14);
+      return x + "," + y;
+    }).join(" ");
+    return '<svg class="spark" viewBox="0 0 74 20" role="img" aria-label="recent trend">' +
+      '<line class="spark-base" x1="0" y1="10" x2="74" y2="10"></line>' +
+      '<polyline class="spark-line' + (tone ? " is-" + tone : "") + '" points="' + pts + '"></polyline>' +
+      '</svg>';
+  }
+
+  function toneOf(health) {
+    return health === "bad" ? "bad" : health === "warn" ? "warn" : "";
+  }
+
+  function render() {
+    var items = visibleStreams();
+    listEl.textContent = "";
+    items.forEach(function (s, i) {
+      var li = document.createElement("li");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "stream-row";
+      btn.setAttribute("data-entity", s.id);
+      btn.setAttribute("aria-selected", s.id === selectedId ? "true" : "false");
+      btn.setAttribute("tabindex", i === activeIndex ? "0" : "-1");
+      var tone = toneOf(s.health);
+      btn.innerHTML =
+        '<span class="row-health ' + tone + '" aria-hidden="true"></span>' +
+        '<span class="row-main">' +
+          '<span class="row-name" title="' + s.hash + '">' + s.name + "</span>" +
+          '<span class="row-meta">' + s.hash + "</span>" +
+        "</span>" +
+        '<span class="row-spark">' + sparkline(s.trend, tone) + "</span>" +
+        '<span class="row-num">' + s.step.toLocaleString("en-US") + "<small>step</small></span>" +
+        '<span class="row-num is-optional">' + s.p95.toFixed(1) + "<small>p95 ms</small></span>";
+      btn.addEventListener("click", function () {
+        selectStream(s.id, btn, true);
+      });
+      li.appendChild(btn);
+      listEl.appendChild(li);
+    });
+    if (activeIndex >= items.length) activeIndex = Math.max(0, items.length - 1);
+  }
+
+  function applyFacet() {
+    render();
+    var items = visibleStreams();
+    if (document.body.dataset.state === "ideal" && items.length === 0) {
+      document.body.dataset.state = "empty";
+      if (statusState) statusState.textContent = "state: empty";
+      if (fleetBadge) { fleetBadge.textContent = "No Matches"; fleetBadge.dataset.tone = "warn"; }
+    }
+  }
+
+  function rowButtons() {
+    return Array.prototype.slice.call(listEl.querySelectorAll(".stream-row"));
+  }
+
+  /* ---------- inspector ---------- */
+  function selectStream(id, triggerEl, open) {
+    var s = STREAMS.filter(function (x) { return x.id === id; })[0];
+    if (!s) return;
+    selectedId = id;
+    activeIndex = visibleStreams().indexOf(s);
+    inspectorStream.textContent = s.name;
+    document.getElementById("insp-entity").textContent = s.hash;
+    document.getElementById("insp-step").textContent = s.step.toLocaleString("en-US");
+    document.getElementById("insp-p95").textContent = s.p95.toFixed(1) + " ms (baseline 24.0 ms)";
+    document.getElementById("insp-hbm").textContent = s.hbm.toFixed(1) + "% (drain 94.0%)";
+    document.getElementById("insp-confidence").textContent = s.conf + "% (detent < 85%)";
+    inspectorStatus.textContent = s.health === "ok" ? "cruising" : s.health === "warn" ? "detent captured" : "isolated";
+    inspectorStatus.dataset.tone = s.health === "ok" ? "ok" : "warn";
+    statusSelection.textContent = "selection: " + s.name;
+    rowButtons().forEach(function (b) {
+      b.setAttribute("aria-selected", b.getAttribute("data-entity") === id ? "true" : "false");
+    });
+    if (open) {
+      openedFrom = triggerEl || document.activeElement;
+      document.querySelector(".inspector-card").scrollIntoView({ block: "nearest" });
+      var first = document.querySelector(".action-trigger");
+      if (first && window.matchMedia("(min-width: 901px)").matches) first.focus();
+    }
+  }
+
+  function focusRow(index) {
+    var items = visibleStreams();
+    if (!items.length) return;
+    if (index < 0) index = items.length - 1;
+    if (index >= items.length) index = 0;
+    activeIndex = index;
+    var btns = rowButtons();
+    btns.forEach(function (b, i) { b.setAttribute("tabindex", i === activeIndex ? "0" : "-1"); });
+    selectStream(items[activeIndex].id, btns[activeIndex], false);
+    if (btns[activeIndex]) btns[activeIndex].focus();
+  }
+
+  /* ---------- two-phase commit gate ---------- */
+  function openGate(actionId, triggerEl) {
+    pendingAction = actionId;
+    pendingTrigger = triggerEl || document.activeElement;
+    gateHead.textContent = ACTIONS[actionId].header;
+    gateCommit.textContent = ACTIONS[actionId].commit;
+    gateBackdrop.dataset.open = "true";
+    gateCommit.disabled = false;
+    gateCommit.focus();
+  }
+
+  function closeGate(restoreFocus) {
+    gateBackdrop.dataset.open = "false";
+    pendingAction = null;
+    if (restoreFocus && pendingTrigger && pendingTrigger.focus) pendingTrigger.focus();
+    pendingTrigger = null;
+  }
+
+  function commit() {
+    if (!pendingAction || locked) return;           /* rapid-interruption debounce */
+    locked = true;
+    gateCommit.disabled = true;
+    var actionId = pendingAction;
+    var spec = ACTIONS[actionId];
+    var trigger = pendingTrigger;
+    if (trigger) trigger.dataset.locked = "true";
+
+    undoSnapshot = {};
+    STREAMS.forEach(function (s) { undoSnapshot[s.id] = s.conf; });
+    var target = STREAMS.filter(function (s) { return s.id === selectedId; })[0];
+    if (target) target.conf = Math.min(99, target.conf + 6);
+
+    closeGate(false);
+    showToast(spec.toast, true);
+
+    window.setTimeout(function () {
+      locked = false;
+      if (trigger) trigger.dataset.locked = "false";
+      gateCommit.disabled = false;
+      /* Focus settlement: state returns to calm equilibrium within 180ms. */
+      if (trigger && trigger.focus) trigger.focus();
+    }, 600);
+  }
+
+  function showToast(text, withUndo) {
+    toastText.textContent = text;
+    toastUndo.hidden = !withUndo;
+    toastEl.dataset.open = "true";
+    if (toastTimer) window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(function () {
+      toastEl.dataset.open = "false";
+      undoSnapshot = null;
+    }, 5000);
+  }
+
+  /* ---------- wiring ---------- */
+  document.querySelectorAll(".action-trigger").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (!selectedId) {
+        showToast("Select a stream first (J / K)", false);
+        return;
+      }
+      openGate(btn.getAttribute("data-action"), btn);
+    });
+  });
+
+  gateCommit.addEventListener("click", commit);
+  document.getElementById("gate-cancel").addEventListener("click", function () { closeGate(true); });
+  gateBackdrop.addEventListener("click", function (e) { if (e.target === gateBackdrop) closeGate(true); });
+
+  toastUndo.addEventListener("click", function () {
+    if (!undoSnapshot) return;
+    STREAMS.forEach(function (s) { if (s.id in undoSnapshot) s.conf = undoSnapshot[s.id]; });
+    undoSnapshot = null;
+    toastEl.dataset.open = "false";
+    applyFacet();
+  });
+
+  document.querySelectorAll(".chip").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      facet = chip.getAttribute("data-facet");
+      document.querySelectorAll(".chip").forEach(function (c) {
+        c.setAttribute("aria-pressed", String(c === chip));
+      });
+      document.body.dataset.state = readHash();
+      applyFacet();
+      if (visibleStreams().length === 0) {
+        document.body.dataset.state = "empty";
+        if (statusState) statusState.textContent = "state: empty";
+      }
+    });
+  });
+
+  emptyReset.addEventListener("click", function () {
+    facet = "all";
+    document.querySelectorAll(".chip").forEach(function (c) {
+      c.setAttribute("aria-pressed", String(c.getAttribute("data-facet") === "all"));
+    });
+    applyFacet();
+    focusRow(0);
+  });
+
+  document.getElementById("error-retry").addEventListener("click", function () {
+    location.hash = "#state=ideal";
+  });
+  document.getElementById("error-diagnose").addEventListener("click", function () {
+    facet = "at-risk";
+    location.hash = "#state=ideal";
+  });
+  document.querySelector("[data-empty-recovery]").addEventListener("click", function () {
+    facet = "all";
+    location.hash = "#state=ideal";
+  });
+
+  document.addEventListener("keydown", function (e) {
+    var key = e.key;
+    if (key === "Escape") {
+      if (gateBackdrop.dataset.open === "true") { closeGate(true); return; }
+      if (toastEl.dataset.open === "true") { toastEl.dataset.open = "false"; return; }
+      if (openedFrom && openedFrom.focus) { openedFrom.focus(); openedFrom = null; }
+      return;
+    }
+    if (gateBackdrop.dataset.open === "true") return;
+    if (key === "j" || key === "J") { e.preventDefault(); focusRow(activeIndex + 1); return; }
+    if (key === "k" || key === "K") { e.preventDefault(); focusRow(activeIndex - 1); return; }
+    if (key === " " || key === "Spacebar" || key === "p" || key === "P") {
+      var target = e.target;
+      if (target && (target.tagName === "BUTTON" || target.tagName === "INPUT")) return;
+      e.preventDefault();
+      var now = (window.performance && window.performance.now) ? window.performance.now() : Date.now();
+      if (now - lastToggle < 250) return;   /* rapid Space hits debounced */
+      lastToggle = now;
+      var items = visibleStreams();
+      if (!items.length) return;
+      openedFrom = rowButtons()[activeIndex] || null;
+      selectStream(items[activeIndex].id, openedFrom, true);
+    }
+  });
+
+  window.addEventListener("hashchange", applyState);
+  applyState();
+  if (readHash() === "ideal") selectStream(STREAMS[0].id, null, false);
+  render();
+  applyFacet();
+})();
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@ Eliminates manual CSS guesswork and enforces:
 2. Concentric Radii Mathematics: R_inner = max(0, R_outer - Padding).
 3. Density-calibrated Spacing Scales: Dense (4px), Normal (8px), Sparse (12px).
 4. Machined Industrial Finish: 1px layered edge hierarchy & tabular-nums.
-5. Mechanical Tactile Physics: :active scale(0.97) micro-motion & cubic-bezier.
+5. Tactile Physics Invariant: perceptible feedback micro-motion & cubic-bezier.
 
 Usage:
   python3 compile_tokens.py [--discussion prototype/discussion.md]
@@ -660,8 +660,8 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --ink-primary: {c.get('ink_primary', c['text_primary'])};",
         f"  --ink-secondary: {c.get('ink_secondary', c['text_secondary'])};",
         f"  --reading-measure-max: 68ch;",
-        "  --line-height-body: 1.5;",
-        "  --line-height-heading: 1.2;",
+        f"  --line-height-body: {tokens.get('typography', {}).get('line_height_body', '1.5')};",
+        f"  --line-height-heading: {tokens.get('typography', {}).get('line_height_heading', '1.2')};",
         "  --min-touch-target: 44px;",
         "  --safe-area-inset-bottom: env(safe-area-inset-bottom, 16px);",
         "",
@@ -884,6 +884,13 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
         "$description": "Machine-compiled 3-Tier DTCG token specification with authority provenance.",
+        "$extensions": {
+            "design-prototype-kit": {
+                "authority": default_auth,
+                "provenance": "spec-prototype v10.1",
+                "format_version": "2025.10"
+            }
+        },
         "primitives": primitives,
         "semantics": semantics,
         "components": components,

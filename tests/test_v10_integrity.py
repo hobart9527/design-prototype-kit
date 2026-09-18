@@ -279,10 +279,21 @@ def test_stale_digest_guard_blocks_modified_contract(tmp_path: Path):
     with pytest.raises(ValueError, match="Stale contract: product.md changed"):
         boundary_mod.check(event)
 
+    # 5. Delete product.md completely -> must block with "deleted since envelope was compiled"
+    prod.unlink()
+    with pytest.raises(ValueError, match="Stale contract: product.md was deleted"):
+        boundary_mod.check(event)
+
 
 def test_build_authority_gate_blocks_formal_candidate_with_hypotheses(tmp_path: Path):
     """P0 Build Authority Gate: Formal candidate builds must be blocked if unvalidated [Hypothesis] actions exist."""
     boundary_mod = _load("execution_boundary", SCRIPTS / "execution_boundary.py")
+
+    prod_file = tmp_path / "prototype/product.md"
+    prod_file.parent.mkdir(parents=True, exist_ok=True)
+    prod_file.write_text("# Product\n", encoding="utf-8")
+    import hashlib
+    prod_digest = hashlib.sha256(prod_file.read_bytes()).hexdigest()
 
     fake_env = {
         "mode": "lean-builder-envelope",
@@ -292,7 +303,7 @@ def test_build_authority_gate_blocks_formal_candidate_with_hypotheses(tmp_path: 
         "target_html_path": "prototype/experiments/checkout/index.html",
         "target_environment": "formal-candidate",
         "has_hypothesis_actions": True,
-        "spec_sources": {"product_digest": "dummy"}
+        "spec_sources": {"product_digest": prod_digest}
     }
     # Create target html directory to satisfy boundary path checks
     (tmp_path / "prototype/experiments/checkout").mkdir(parents=True, exist_ok=True)

@@ -91,7 +91,7 @@ not a competing rule.
   - Optical Alignment nudge applied:
   - Tabular Numbers (`font-variant-numeric: tabular-nums`):
 - **Atmospheric Undertone (Anti-sterile gray bias)**:
-- **Tactile Physics & Kinetics** (`:active scale(0.97)`, `cubic-bezier(0.16, 1, 0.3, 1)`, `120ms` detent):
+- **Tactile Physics & Perceptible Feedback** (instant tactile press/shift, `cubic-bezier(0.16, 1, 0.3, 1)`, calibrated duration):
 - **Physical Token Entity (`prototype/shared/tokens.css`)**:
 - **Component Boundary**: Native HTML5 (`<dialog>`, `<details>`, `<form>`) + token utility classes (no heavy JS UI frameworks)
 - **User Gate Verdict (`AskUserQuestion`)**:

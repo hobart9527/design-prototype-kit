@@ -285,9 +285,9 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 |---|---|---|
 | Declared product intent is represented | present | unverified |
 | Touch Target Floor: minimum 44x44px interactive tap zones | present | unverified |
-| Gesture Detents: pull-to-refresh or bottom sheet swipe dismissal | present | unverified |
+| Gesture Detents: ergonomic touch navigation or swipe dismissal | present | unverified |
 | High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Tactile Active State: active scale tap feedback | present | unverified |
+| Tactile Action Feedback: perceptible interactive press state | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
     else:
         contract_assertions = """| Assertion | Expected | Observed |
@@ -297,8 +297,8 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | Tabular Numerics: font-variant-numeric: tabular-nums on all metrics | present | unverified |
 | Concentric Radii Formula: outer radius >= inner radius + padding | present | unverified |
 | High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Dual-channel keyboard shortcuts (Space / Esc) operable | present | unverified |
-| Action Verb Lifecycle closure: trigger -> drawer/modal -> commit -> toast | present | unverified |
+| Dual-channel keyboard shortcuts (e.g. Space / Esc) operable | present | unverified |
+| Action Verb Lifecycle closure: trigger -> context/review -> commit -> settlement | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
 
     targets = {
@@ -382,7 +382,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 |---|---|---|---|
 | **Low-Entropy Base (零借贷基座)** | {c_ledger['zero_borrow_base']} | 0 learning friction, zero distracting motion, standard UI conventions | Zero cognitive drain; preserves operator attention for decisive tasks |
 | **High-Yield Borrow Zone (能量溢价特区)** | {c_ledger['high_yield_borrow_zone']} | High-tension visual craft: tactile detents, micro-sparklines, kinetic pulses | Borrowed visual energy delivers 10x situational awareness and commit certainty |
-| **Settlement & Repayment (闭环偿还机制)** | {c_ledger['repayment_settlement']} | Transition locks settle to steady state within 180ms | Restores baseline low entropy immediately after decision execution |
+| **Settlement & Repayment (闭环偿还机制)** | {c_ledger['repayment_settlement']} | Focus and state settle smoothly to steady state | Restores baseline low entropy immediately after decision execution |
 
 ## Action Verb Lifecycle Table (4-Phase Atomic Terminology)
 

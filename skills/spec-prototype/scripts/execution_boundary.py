@@ -74,14 +74,19 @@ def dispatch(args, active):
         }
         for digest_key, file_path in file_map.items():
             expected = spec_sources.get(digest_key)
-            if expected and file_path.is_file():
+            if expected:
+                require(file_path.is_file(),
+                        f'Stale contract: {file_path.name} was deleted since envelope was compiled. Re-assemble envelope before dispatch.')
                 actual = hashlib.sha256(file_path.read_bytes()).hexdigest()
                 require(actual == expected,
                         f'Stale contract: {file_path.name} changed since envelope was compiled ({actual[:8]} != {expected[:8]}). Re-assemble envelope before dispatch.')
 
         # P0-1: Build Authority Gate in execution boundary
-        # If the envelope targets formal release/freeze, it must not carry unconfirmed [Hypothesis] actions
-        if data.get('target_environment') == 'formal-candidate' and data.get('has_hypothesis_actions'):
+        # If the envelope targets formal release/freeze or is not explicitly probe,
+        # it must not carry unconfirmed [Hypothesis] or [Unknown] actions.
+        target_env = data.get('target_environment', 'formal-candidate')
+        has_hyp = data.get('has_hypothesis_actions') or data.get('build_authority') == 'probe_only'
+        if target_env in ('formal-candidate', 'formal') and has_hyp:
             raise ValueError('Build Authority Gate: Formal candidate build blocked because envelope contains unvalidated [Hypothesis] actions. Run as direction probe or confirm explicit authority.')
     else:
         require(data == packet(root, data['specification']['path']),
