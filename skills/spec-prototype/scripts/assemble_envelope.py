@@ -160,37 +160,61 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     in_verbs = False
     in_frames = False
     in_rules = False
+    in_fault = False
+    fault_tolerance: List[Dict[str, str]] = []
     for line in contract_content.splitlines():
         if "Cognitive Budgeting & Energy Return Ledger" in line:
             in_ledger = True
             in_verbs = False
             in_frames = False
             in_rules = False
+            in_fault = False
             continue
         elif "Action Verb Lifecycle Table" in line:
             in_ledger = False
             in_verbs = True
             in_frames = False
             in_rules = False
+            in_fault = False
+            continue
+        elif "Fault Tolerance & Error Recovery Contract" in line:
+            in_ledger = False
+            in_verbs = False
+            in_frames = False
+            in_rules = False
+            in_fault = True
             continue
         elif "Decisive Exchange 3-Frame" in line:
             in_ledger = False
             in_verbs = False
             in_frames = True
             in_rules = False
+            in_fault = False
             continue
         elif "Context Preservation Rules" in line:
             in_ledger = False
             in_verbs = False
             in_frames = False
             in_rules = True
+            in_fault = False
             continue
         elif line.startswith("##"):
             in_ledger = False
             in_verbs = False
             in_frames = False
             in_rules = False
+            in_fault = False
             continue
+
+        if in_fault and line.strip().startswith("|") and not line.strip().startswith("|---"):
+            parts = [re.sub(r"[*`]", "", p).strip() for p in line.split("|") if p.strip()]
+            if parts and len(parts) >= 3 and parts[0] not in ("Operation Category",):
+                fault_tolerance.append({
+                    "category": parts[0],
+                    "hazard_level": parts[1] if len(parts) > 1 else "",
+                    "defense": parts[2] if len(parts) > 2 else "",
+                    "recovery": parts[3] if len(parts) > 3 else ""
+                })
 
         if in_ledger and line.strip().startswith("|") and not line.strip().startswith("|---"):
             parts = [p.strip() for p in line.split("|") if p.strip()]
@@ -554,6 +578,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "verification_command": verification_cmd,
         "capture_command": capture_cmd,
         "cognitive_ledger": cognitive_ledger,
+        "fault_tolerance_protocol": fault_tolerance,
         "available_tokens": extract_css_tokens(paths["tokens_css"].read_text(encoding="utf-8")),
         "interaction_spec": interaction_spec,
         "design_constraints": constraints,
