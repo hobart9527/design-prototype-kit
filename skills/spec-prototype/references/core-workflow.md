@@ -59,6 +59,18 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Change Scope Router (变更分级与准入路由器)
+
+Before entering Stage 1 or reopening design work, classify the requested change scope to prevent manufactured friction and redundant re-derivations:
+
+| Scope Level | Change Category | Entry Point & Scope | Bypass Rule |
+|---|---|---|---|
+| **L0 (Cosmetic)** | Palette token tweaks, typography scale, spacing adjustments | Fast-track directly to **Stage 3/4** | Skip Stage 1/2 reasoning entirely; recompile tokens and re-run quality/visual checks. |
+| **L1 (Component)** | Single component interaction state, tactile feedback, micro-animations | Fast-track to **Stage 4** targeted review | Preserve global topology and spec; re-test targeted component resilience and a11y. |
+| **L2 (Screen)** | Single surface IA adjustment, information density re-layout | Enter at **Stage 1 (Define)** $\to$ **Stage 2/4** | Preserve product thesis and object model; re-derive surface map and hero anchor. |
+| **L3 (Flow)** | Multi-surface task flow, user journey transitions, new major surface | Standard **5-Stage Engine** (Stage 1 to 5) | Full lifecycle execution across declared slice. |
+| **L4 (Product)** | Domain object model, core tension inversion, lifecycle or permissions | Full **5-Stage Engine** with Evidence Re-anchoring | Re-anchor all Nine Pillars from source truth. |
+
 ### Stage 1: Understand & Frame (破 - 魂立约：双钻收敛与全套契约冻结)
 - **Primary Goal**: Transition from user intent to a **complete, frozen Design Specification (`spec`)** spanning problem ontology, topology, visual register, and interaction contracts.
 - **Cadence Principle**:
@@ -66,7 +78,10 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
 - **Macro Double Diamond Alignment**:
   - **Discover (深度发散 · Pillars: Value, Research)**:
     - **现实世界参考锚点 (Reference Benchmarks)**: 选定高说服力的行业标杆（如 Linear、Datadog、iA Writer、Stripe）或实体器物交互作为共识支点，拒绝凭空臆造。
-    - **破局反转门 (Tension Triad & Inversions)**: 拒绝平庸惯性思维，深挖业务深水区的内在张力矛盾（如：极致吞吐 vs 误触高危；新手极简 vs 资深极速）。
+    - **破局反转门 (Tension Triad & Inversions)**: 拒绝平庸惯性思维，深挖业务深水区的内在张力矛盾（如：极致吞吐 vs 误触高危；新手极简 vs 资深极速）。强制在 `prototype/product.md` 中声明 Core Tension 与非目标边界。
+    - **签名关系与克制创新 (Signature vs. Convention Discipline)**:
+      - *Signature Surface (签名表层)*: 严格限定在全案**唯一核心交互表面**（如核心调度画布、决策驾驶舱、沉浸比对台）释放设计张力、特定触感与特色微动效（Signature Relationship）；
+      - *Convention Surfaces (规范表层)*: 其余支撑性、设置、通用表格与表单表面一律遵循行业既定成熟交互范式，杜绝无节制的过度设计与装饰性噪点（AI Slop）。
     - **克制舍弃与非目标定义 (Ruthless Omissions & Non-goals)**: 建立非目标防火墙，斩断无效复杂度（如剔除无序弹窗、脱离语境的营销横幅或空洞微动效）。
     - **Gated Output**: 经由人机共识确认后，物化 `prototype/product.md`。
   - **Define (精准收敛 · Pillars: Object, Journey, Topology)**:
@@ -163,10 +178,30 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
       - *C-Consumer Somatic Test*: 消费级与触控场景，走查体感习惯能否单凭直觉顺畅完成核心链路。
     - *Human Gate & Delegation-Aware Protocol*:
       人类审查环节具备授权感知（Delegation-Aware）。当用户在会话中已授予设计全权委托（`delegated`）或预先约定验收标准时，系统依据测试断言和已捕获的视口证据自动推进，无需无谓停顿打扰；仅当遇到不可逆分歧、严重体验倒退（Floor failure）或全新业务分叉时，方暂停请求用户裁决。
-- **Controlled Feedback Absorption Loop (单向吸收流)**:
-  - 全局视觉与节奏反馈必须回流至 `prototype/contracts/foundation/f1.md` / `discussion.md`，并通过 `compile_tokens.py` 重新编译更新 `prototype/shared/tokens.css`，杜绝孤岛覆写；
-  - 页面局部结构缺陷直接就地修正对应 HTML 切片；
-  - 修复完成后重新执行自动化校验与多视口走查，直至所有红线闭环。
+- **Controlled Feedback Absorption & Targeted Refinement Loop (定向返工协议)**:
+  - **Zero Full-Wipeout Rule (禁止推倒重来)**: Critic 走查发现缺陷时，严禁触发全局无差别重建。必须将缺陷精准定位到特定 Pillar 与对应 Artifact，保留未受影响的既有决策。
+  - **Targeted Refinement Contract (结构化修复单)**:
+    Critic 在报告缺陷时必须输出明确的修复边界（Targeted Repair Envelope）：
+    ```yaml
+    finding:
+      pillar: Attention | Interaction | Visual | Resilience
+      scope: screen.slice_id.component_target
+      severity: major | minor | preference
+      classification: VIOLATION | DEFECT | DESIGN JUDGMENT
+    action: targeted_repair
+    return_to: Stage 2 (probe) | Stage 3 (skeleton) | Stage 4 (tuning)
+    invalidate:
+      - visual_hierarchy  # 仅作废特定层级
+    preserve:
+      - object_model      # 显式保留领域模型
+      - topology          # 显式保留空间拓扑
+      - state_matrix      # 显式保留状态流转
+      - token_bindings    # 显式保留系统 Token
+    ```
+  - **Surgical In-Place Patching**:
+    - 全局视觉与节奏反馈必须回流至 `prototype/contracts/foundation/f1.md` / `discussion.md`，并通过 `compile_tokens.py` 重新编译更新 `prototype/shared/tokens.css`，杜绝孤岛覆写；
+    - 页面局部结构或微观交互缺陷直接就地修正对应 HTML 切片；
+    - 修复完成后重新执行自动化校验与多视口走查，直至所有红线闭环。
 
 ### Stage 5: Silent Governance Compilation (冻 - 根：静默封版与工件交付)
 - **Primary Goal**: Headless compilation of durable specifications, design tokens, and verifiable asset digests for downstream engineering handoff.

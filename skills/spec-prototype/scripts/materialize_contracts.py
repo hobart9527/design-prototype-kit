@@ -10,6 +10,11 @@ import sys
 from pathlib import Path
 from typing import Any, List
 
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
 
 def extract_section_by_patterns(text: str, patterns: list[str]) -> str:
     """Extract markdown field or section matching any of the regex patterns."""
@@ -207,6 +212,175 @@ def extract_material_invariants(disc_text: str, prod_text: str) -> list[str]:
     ]
 
 
+def build_frontend_contract(
+    slice_id: str,
+    prod_title: str,
+    tension: str,
+    surfaces: list[str],
+    action_verbs: list[dict[str, str]],
+    is_mobile: bool,
+    is_writer_canvas: bool,
+    is_reading: bool,
+    is_marketing: bool,
+    disc_digest: str,
+    prod_digest: str,
+) -> str:
+    """Generate machine-readable frontend contract specification (frontend-contract.yaml)."""
+    if is_mobile:
+        layout_mode = "touch-first-stack"
+        drawer_behavior = "swipe-down-sheet"
+    elif is_writer_canvas:
+        layout_mode = "focused-canvas"
+        drawer_behavior = "inline-revision-drawer"
+    elif is_reading:
+        layout_mode = "editorial-column"
+        drawer_behavior = "contextual-footnote-rail"
+    elif is_marketing:
+        layout_mode = "hero-storyboard"
+        drawer_behavior = "modal-overlay"
+    else:
+        layout_mode = "split-rack"
+        drawer_behavior = "persistent-rail"
+
+    actions_dict: dict[str, Any] = {}
+    for v in action_verbs:
+        act_id = v["action_id"]
+        is_hazard = any(h in act_id.lower() for h in ("drain", "preempt", "isolate", "delete", "remove", "drop", "terminate"))
+        actions_dict[act_id] = {
+            "trigger_control": f"button[data-action='{act_id}']",
+            "trigger_label": v["trigger_btn"],
+            "modal_header": v["modal_header"],
+            "commit_control": f"button#confirm-{act_id}",
+            "commit_label": v["commit_btn"],
+            "feedback_toast": v["toast"],
+            "consequence": v["impact"],
+            "hazard_level": "high" if is_hazard else "low" if "bookmark" in act_id or "filter" in act_id else "medium",
+            "haptic_detent": "deliberate_confirm" if is_hazard else "subtle_press",
+        }
+
+    surface_regions = []
+    if surfaces:
+        for s in surfaces[:3]:
+            slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", s.lower()).strip("-")
+            surface_regions.append({
+                "id": slug or "surface-region",
+                "role": "region",
+                "aria_label": s,
+            })
+    if not surface_regions:
+        surface_regions = [
+            {"id": "primary-stage", "role": "main", "aria_label": f"{prod_title} Primary Stage", "layout_mode": layout_mode},
+            {"id": "contextual-drawer", "role": "complementary", "aria_label": "Contextual Parameters & Inspection", "drawer_behavior": drawer_behavior},
+            {"id": "status-telemetry", "role": "region", "aria_label": "System Telemetry & Action Feedback"},
+        ]
+
+    contract_data: dict[str, Any] = {
+        "contract_version": "1.0",
+        "slice_id": slice_id,
+        "provenance": {
+            "product_title": prod_title,
+            "core_tension": tension,
+            "spec_ref": f"prototype/specifications/{slice_id}/r1.md",
+            "slice_contract_ref": f"prototype/contracts/slices/{slice_id}/c1.md",
+            "tokens_json_ref": "prototype/contracts/tokens/t1.json",
+            "tokens_css_ref": "prototype/shared/tokens.css",
+            "discussion_digest": disc_digest,
+            "product_digest": prod_digest,
+        },
+        "structure": {
+            "root_element": f"main#{slice_id}-surface",
+            "regions": surface_regions,
+        },
+        "responsive_rules": {
+            "desktop_1280": {
+                "layout": layout_mode,
+                "drawer_behavior": "persistent-rail" if not is_mobile else "swipe-down-sheet",
+            },
+            "mobile_390": {
+                "layout": "vertical-stack",
+                "drawer_behavior": "swipe-down-sheet",
+                "touch_target_floor_px": 44,
+            },
+        },
+        "state_machine": {
+            "initial": "ready",
+            "states": {
+                "loading": {
+                    "on": {
+                        "DATA_READY": "ready",
+                        "FETCH_ERROR": "error",
+                    }
+                },
+                "ready": {
+                    "on": {
+                        "TRIGGER_ACTION": "confirming",
+                        "SELECT_ITEM": "inspecting",
+                    }
+                },
+                "inspecting": {
+                    "on": {
+                        "CLOSE_INSPECTOR": "ready",
+                        "TRIGGER_ACTION": "confirming",
+                    }
+                },
+                "confirming": {
+                    "invariants": [
+                        "modal_must_trap_keyboard_focus",
+                        "background_context_must_survive",
+                    ],
+                    "on": {
+                        "CANCEL": "ready",
+                        "COMMIT": "processing",
+                    }
+                },
+                "processing": {
+                    "on": {
+                        "SUCCESS": "settled",
+                        "FAILURE": "error",
+                    }
+                },
+                "settled": {
+                    "on": {
+                        "TIMEOUT": "ready",
+                        "RESET": "ready",
+                    }
+                },
+                "error": {
+                    "on": {
+                        "RETRY": "processing",
+                        "DISMISS": "ready",
+                    }
+                },
+            },
+        },
+        "interaction_verbs": actions_dict,
+        "experience_invariants": [
+            "context_preservation: dismissing modal or drawer must preserve unsaved user input state",
+            "destructive_safety: high-hazard operations require deliberate confirmation detents",
+            "zero_silent_noop: all operable triggers must produce perceptible immediate state feedback",
+            "focus_restoration: overlay dismissal must deterministically restore focus to originating trigger",
+        ],
+        "accessibility_contract": {
+            "wcag_level": "WCAG 2.2 AA",
+            "min_contrast_ratio": 4.5,
+            "focus_visible_ring": "var(--accent-primary, #3b82f6)",
+            "focus_restore_target": "originating_trigger",
+            "keyboard_shortcuts": [
+                {"key": "Esc", "action": "Dismiss active modal/drawer and restore focus"},
+                {"key": "Space" if not is_mobile else "Tap", "action": "Activate primary operational trigger"},
+            ],
+        },
+        "tokens_binding": {
+            "stylesheet": "prototype/shared/tokens.css",
+            "json_spec": "prototype/contracts/tokens/t1.json",
+        },
+    }
+
+    if yaml is not None:
+        return yaml.dump(contract_data, sort_keys=False, allow_unicode=True)
+    return json.dumps(contract_data, indent=2, ensure_ascii=False)
+
+
 def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "all") -> dict[str, str]:
     disc_path = root / "prototype/discussion.md"
     prod_path = root / "prototype/product.md"
@@ -306,6 +480,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
         "foundation": root / "prototype/contracts/foundation/f1.md",
         "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
         "specification": root / f"prototype/specifications/{slice_id}/r1.md",
+        "frontend_contract": root / f"prototype/contracts/slices/{slice_id}/frontend-contract.yaml",
     }
 
     phase_map = {
@@ -315,9 +490,10 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
         "surface_map": ["surface_map"],
         "3": ["foundation"],
         "foundation": ["foundation"],
-        "4": ["slice_contract", "specification"],
-        "slice": ["slice_contract", "specification"],
-        "all": ["product", "surface_map", "foundation", "slice_contract", "specification"],
+        "4": ["slice_contract", "specification", "frontend_contract"],
+        "slice": ["slice_contract", "specification", "frontend_contract"],
+        "frontend": ["frontend_contract"],
+        "all": ["product", "surface_map", "foundation", "slice_contract", "specification", "frontend_contract"],
     }
     active_keys = set(phase_map.get(phase.lower(), phase_map["all"]))
 
@@ -409,6 +585,20 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - **Draft Context**: Dismissing inspector or drawer without submitting preserves filter parameters and active tab.
 - **Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return.
 """
+        elif key == "frontend_contract":
+            content = build_frontend_contract(
+                slice_id=slice_id,
+                prod_title=product_title,
+                tension=tension,
+                surfaces=surfaces,
+                action_verbs=action_verbs,
+                is_mobile=is_mobile,
+                is_writer_canvas=is_writer_canvas,
+                is_reading=is_reading,
+                is_marketing=is_marketing,
+                disc_digest=_digest(disc_path),
+                prod_digest=_digest(prod_path),
+            )
         else:
             scope_suffix = "hero-anchor" if "hero-anchor" in disc_text else "anchor"
             if is_mobile:

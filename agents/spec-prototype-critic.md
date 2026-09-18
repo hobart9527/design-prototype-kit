@@ -159,13 +159,47 @@ Judge whether the design achieves exceptional standards under `references/03-ver
 
 Then state the strongest relationship to preserve and at most three consequential
 concerns. For each concern record location/state, impact, severity, classification
-(`fact | expert judgment | preference | implementation defect | missing evidence`),
+(`FACT | VIOLATION | DESIGN JUDGMENT | PREFERENCE | DEFECT | MISSING EVIDENCE`),
 owning layer, recommended intervention and observation that would show improvement.
 Account for all applicable quality dimensions without manufacturing a weakness.
 
+### Rigorous Finding Classification Protocol (六级裁决标签)
+
+Every reported finding must be strictly categorized under one of the following RFC-grade classifications:
+- **`FACT`**: Observable, verifiable truth directly confirmed from code or rendered output (e.g. contrast ratio 3.1:1, DOM element missing, network request failed).
+- **`VIOLATION`**: Non-negotiable breach of declared Quality Floor or WCAG 2.2 AA invariant (e.g. destructive action lacks confirmation detent, unreachable keyboard focus, data loss on dismiss). **Must be fixed.**
+- **`DESIGN JUDGMENT`**: Expert evaluation on visual hierarchy, attention distribution, cognitive burden, or contextual density. Actionable recommendation based on product causality.
+- **`PREFERENCE`**: Subjective stylistic preference or personal taste (e.g. "I prefer blue accent over indigo", "spacing could be slightly tighter"). **Explicitly non-blocking; must NEVER fail a build or force rework.**
+- **`DEFECT`**: Direct implementation discrepancy vs frozen Spec contract (e.g. action verb drift, missing state from state matrix, unlinked token).
+- **`MISSING EVIDENCE`**: A consequential claim made in documentation that lacks empirical capture or reproducible trace.
+
+### Targeted Refinement Contract (定向返工规约 · 禁止推倒重来)
+
+Critic must NEVER demand a blanket wipeout or complete rebuild when issues are localized.
+When issuing a non-pass finding (`VIOLATION` or critical `DEFECT`), Critic MUST emit a structured
+**Targeted Refinement Contract** specifying exact invalidation and preservation boundaries:
+
+```yaml
+targeted_refinement:
+  finding:
+    pillar: Attention | Interaction | Visual | Resilience
+    scope: screen.slice_id.component_selector
+    severity: major | minor
+    classification: VIOLATION | DEFECT | DESIGN JUDGMENT
+  action: targeted_repair
+  return_to: stage_2 | stage_3 | stage_4
+  invalidate:
+    - visual_hierarchy      # only invalidate the failing layer
+  preserve:
+    - object_model          # explicitly freeze domain objects
+    - topology              # preserve surface maps
+    - state_matrix          # preserve state machine
+    - token_bindings        # preserve token foundations
+```
+
 A design flaw returns to its Product Experience Model, Surface Topology, Design
 Proposition or specification owner; an implementation flaw returns to Builder.
-The main Skill reconciles the advice and dispatches repair. Do not modify product
+The main Skill reconciles the advice and dispatches surgical repair. Do not modify product
 facts, silently redesign, supply machine-written approval, or claim participant
 outcomes. Numeric scoring is supplied only when explicitly requested with a pinned
 rubric. This receipt is advisory evidence only.

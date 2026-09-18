@@ -323,6 +323,95 @@ def test_build_authority_gate_blocks_formal_candidate_with_hypotheses(tmp_path: 
         boundary_mod.check(event)
 
 
+def test_frontend_contract_projection_schema_and_validity(tmp_path: Path):
+    """v10.1 Frontend Contract Projection: Ensure machine-readable contract is generated with complete state and action models."""
+    mat_mod = _load("materialize_contracts", SCRIPTS / "materialize_contracts.py")
+    try:
+        import yaml
+    except ImportError:
+        yaml = None
+
+    proto = tmp_path / "prototype"
+    proto.mkdir(parents=True, exist_ok=True)
+    (proto / "product.md").write_text("# SRE Platform\n## Core Tension\n- 极致吞吐 vs 误触高危\n", encoding="utf-8")
+    (proto / "discussion.md").write_text(
+        "# Discussion\n"
+        "## Action Verbs\n"
+        "| Action ID | Trigger Button | Modal Header | Commit Button | Toast | Impact |\n"
+        "|---|---|---|---|---|---|\n"
+        "| drain-node | Drain Node | Confirm Node Drain | Execute Drain | Drain Complete | Evicts batch workload |\n"
+        "| isolate-region | Isolate Region | Emergency Region Isolation | Authorize Isolation | Region Isolated | Reroutes traffic |\n",
+        encoding="utf-8"
+    )
+
+    res = mat_mod.materialize(tmp_path, "commander-hero", force=True)
+    assert "frontend_contract" in res
+    fe_file = Path(res["frontend_contract"])
+    assert fe_file.is_file()
+
+    content = fe_file.read_text(encoding="utf-8")
+    assert "contract_version: '1.0'" in content or 'contract_version: "1.0"' in content
+    assert "commander-hero" in content
+
+    if yaml is not None:
+        data = yaml.safe_load(content)
+        assert data["slice_id"] == "commander-hero"
+        assert "provenance" in data
+        assert "structure" in data
+        assert "regions" in data["structure"]
+        assert "state_machine" in data
+        assert "ready" in data["state_machine"]["states"]
+        assert "confirming" in data["state_machine"]["states"]
+        assert "interaction_verbs" in data
+        assert "drain-node" in data["interaction_verbs"]
+        assert data["interaction_verbs"]["drain-node"]["hazard_level"] == "high"
+        assert "experience_invariants" in data
+        assert "accessibility_contract" in data
+        assert data["accessibility_contract"]["wcag_level"] == "WCAG 2.2 AA"
+        assert "tokens_binding" in data
+
+
+def test_critic_finding_classifications_and_targeted_refinement():
+    """Verify spec-prototype-critic defines 6 RFC classifications and targeted refinement protocol."""
+    critic_path = REPO / "agents/spec-prototype-critic.md"
+    text = critic_path.read_text(encoding="utf-8")
+
+    # 6 Classifications
+    assert "FACT" in text
+    assert "VIOLATION" in text
+    assert "DESIGN JUDGMENT" in text
+    assert "PREFERENCE" in text
+    assert "DEFECT" in text
+    assert "MISSING EVIDENCE" in text
+    assert "PREFERENCE" in text and "must NEVER fail a build" in text
+
+    # Targeted Refinement Contract
+    assert "Targeted Refinement Contract" in text
+    assert "targeted_refinement:" in text
+    assert "invalidate:" in text
+    assert "preserve:" in text
+
+
+def test_change_scope_router_and_tension_in_core_workflow():
+    """Verify core-workflow.md defines L0-L4 Change Scope Router and Signature discipline."""
+    wf_path = REPO / "skills/spec-prototype/references/core-workflow.md"
+    text = wf_path.read_text(encoding="utf-8")
+
+    # Change Scope Router
+    assert "Change Scope Router" in text
+    assert "L0 (Cosmetic)" in text
+    assert "L1 (Component)" in text
+    assert "L2 (Screen)" in text
+    assert "L3 (Flow)" in text
+    assert "L4 (Product)" in text
+
+    # Signature vs Convention
+    assert "Signature vs. Convention" in text
+    assert "Signature Surface" in text
+    assert "Convention Surfaces" in text
+
+
+
 
 
 
