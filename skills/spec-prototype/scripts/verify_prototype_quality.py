@@ -189,6 +189,12 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             if not re.search(r"addEventListener\s*\(\s*['\"]key(?:down|up)['\"]|\bonkey(?:down|up)\s*=", source, re.IGNORECASE):
                 failures.append("ergonomics assertion: declared dual-channel keyboard shortcuts not bound (missing keydown/keyup listener)")
 
+        # Touch-first gesture detents check: when touch-first ergonomics are declared in contract
+        if "Touch-First Ergonomics" in contract_text or "Gesture Detents" in contract_text:
+            has_touch = bool(re.search(r"addEventListener\s*\(\s*['\"](?:touch|pointer|click)['\"]|\b(?:ontouchstart|ontouchend|onclick)\s*=", source, re.IGNORECASE))
+            if not has_touch:
+                failures.append("touch ergonomics assertion: declared touch-first gestures or tap detents not bound (missing touch/pointer/click handler)")
+
         # Dynamic state machine check: when multi-state or Break Protocol stress checkpoints are declared
         if "The Break Protocol Stress Checkpoints" in contract_text or "Zero-Item Empty State" in contract_text:
             has_state_hook = bool(re.search(

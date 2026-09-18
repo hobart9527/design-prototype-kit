@@ -115,6 +115,29 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     target_html = write_scope_clean + "index.html"
     evidence_scope = extract_field(spec_content, "Evidence write scope", f"prototype/evidence/probes/{slice_id}/").strip("`'\" ")
 
+    # Determine layout profile EARLY — drives interaction_spec and constraints
+    baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
+    declared_baseline = baseline_match.group(1).strip() if baseline_match else ""
+
+    if re.search(r"Baseline 4|Consumer|Mobile|Touch|消费|移动|触控", declared_baseline, re.IGNORECASE):
+        layout_profile = "somatic-touchflow"
+    elif re.search(r"Baseline 3|Editorial|Reading|阅读|文章|出版", declared_baseline, re.IGNORECASE):
+        layout_profile = "editorial-reading"
+    elif re.search(r"Baseline 2|SaaS|Commerce|Project|画布|业务|交易", declared_baseline, re.IGNORECASE):
+        layout_profile = "operational-canvas"
+    elif re.search(r"Baseline 1|Console|Control|工作台|控制台|运维", declared_baseline, re.IGNORECASE):
+        layout_profile = "dense-console"
+    else:
+        all_spec_text = product_content + " " + spec_content
+        if re.search(r"\bBaseline 4\b", all_spec_text, re.IGNORECASE):
+            layout_profile = "somatic-touchflow"
+        elif re.search(r"\bBaseline 3\b", all_spec_text, re.IGNORECASE):
+            layout_profile = "editorial-reading"
+        elif re.search(r"\bBaseline 2\b", all_spec_text, re.IGNORECASE):
+            layout_profile = "operational-canvas"
+        else:
+            layout_profile = "dense-console"
+
     # Extract verifiable assertions & Break Protocol
     assertions: List[str] = []
     break_checkpoints: List[str] = []
@@ -264,6 +287,10 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             omissions.append(line.strip()[2:].strip())
         elif in_inv and line.strip().startswith("- "):
             invariants.append(line.strip()[2:].strip())
+
+    # For mobile/touch profiles, sanitize constraints to avoid desktop keybinding bleeds
+    if layout_profile == "somatic-touchflow":
+        shortcuts = ["`Tap` / `Press`", "`Swipe Down`", "`Edge Swipe`"]
 
     constraints = {
         "dual_channel_shortcuts": shortcuts,

@@ -249,6 +249,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
     # Determine profile-aware assertions and interaction patterns
     is_reading = bool(re.search(r"Baseline 3|Editorial|Reading|Content|Article|文档|阅读|排版", prod_text + " " + disc_text, re.IGNORECASE))
     is_marketing = bool(re.search(r"Marketing|Product Landing|Landing|官网|宣传|介绍", prod_text + " " + disc_text, re.IGNORECASE))
+    is_mobile = bool(re.search(r"Baseline 4|Consumer|Mobile|Touch|Booking|移动|预约|触控", prod_text + " " + disc_text, re.IGNORECASE))
 
     if is_reading:
         contract_assertions = """| Assertion | Expected | Observed |
@@ -267,6 +268,16 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | Hero visual anchor: clear value proposition and primary call-to-action | present | unverified |
 | Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
 | Action verb progression: clear engagement path | present | unverified |
+| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
+    elif is_mobile:
+        contract_assertions = """| Assertion | Expected | Observed |
+|---|---|---|
+| Declared product intent is represented | present | unverified |
+| Touch Target Floor: minimum 44x44px interactive tap zones | present | unverified |
+| Gesture Detents: pull-to-refresh or bottom sheet swipe dismissal | present | unverified |
+| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
+| High text-to-background contrast (> 7:1) | present | unverified |
+| Tactile Active State: active scale tap feedback | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
     else:
         contract_assertions = """| Assertion | Expected | Observed |
@@ -389,6 +400,23 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 """
         else:
             scope_suffix = "hero-anchor" if "hero-anchor" in disc_text else "anchor"
+            if is_mobile:
+                ergonomics_section = """## Touch-First Ergonomics (Gesture Detents & Haptic Recovery)
+
+| Gesture Vector | Target Action / Interaction | Scope | Focus / State Settlement |
+|---|---|---|---|
+| `Tap` / `Press` | Direct manipulation of reservation card / action trigger | Active card or action slot | Tactile scale(0.97) micro-feedback |
+| `Swipe Down` | Dismiss modal sheet / parameter drawer | Bottom sheet overlay | Restore viewport to originating card |
+| `Edge Swipe` | Navigate back through historical booking steps | Global screen edge | Settle immediately into previous step |"""
+            else:
+                ergonomics_section = """## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)
+
+| Shortcut Key | Target Action / Interaction | Scope | Focus Restoration Anchor |
+|---|---|---|---|
+| `Space` or `P` | Activate primary operational trigger / toggle inspector drawer | Active operational item or selection | Active selection anchor |
+| `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |
+| `J` / `K` | Navigate primary items or table rows | Active collection or matrix | Active selection index |"""
+
             content = f"""# Prototype Specification: {slice_id} / r1
 
 - Candidate revision: r1
@@ -400,13 +428,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Visual verification: unverified
 - Browser verification: unverified
 
-## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)
-
-| Shortcut Key | Target Action / Interaction | Scope | Focus Restoration Anchor |
-|---|---|---|---|
-| `Space` or `P` | Activate primary operational trigger / toggle inspector drawer | Active operational item or selection | Active selection anchor |
-| `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |
-| `J` / `K` | Navigate primary items or table rows | Active collection or matrix | Active selection index |
+{ergonomics_section}
 
 ## The Break Protocol Stress Checkpoints (四维破坏性极限压测)
 
