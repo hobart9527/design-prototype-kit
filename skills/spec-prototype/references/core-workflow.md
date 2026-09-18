@@ -12,13 +12,13 @@ Why is this engine called `spec-prototype`?
 2. **Prototype (原型样板 - Disposable Empirical Proof)**:
    The prototype is NOT an unguided art project or a throwaway toy. It is the rapid, inspectable, physical falsification tool that proves the Spec is ergonomic, viable, and aesthetically cohesive.
 3. **Execution Invariant & Authority Lifecycle (权威状态跃迁体系)**:
-   - **Authority States**: `Draft → Provisional (Stage 1) → Validated (Stage 4) → Frozen / Approved (Stage 5)`.
+   - **Authority States**: `Draft → Sealed Provisional (Stage 1) → Validated (Stage 4) → Frozen Approved (Stage 5)`.
      - *Draft*: 需求拆解与讨论初期的动态草案；
-     - *Provisional (Stage 1)*: 第一钻双收敛后确立的**暂行基线契约**。明确其为待探针证伪之假设总成，严禁在未探针物化前提前宣布不可推翻；
-     - *Validated (Stage 4)*: 经由 Stage 2 Hero Probe 与 Stage 3 Walking Skeleton 在真实多视口渲染与 Critic 走查证伪后，证明成立的设计契约；
-     - *Frozen / Approved (Stage 5)*: 终审封版，不可篡改，交付下游前端工程与机器投影消费。
+     - *Sealed Provisional (Stage 1)*: 第一钻双收敛后确立的**密封暂行基线契约**。明确其为待探针证伪之假设总成，严禁在未探针物化前提前宣布不可推翻；
+     - *Validated (Stage 4)*: 经由 Stage 2 Hero Probe 与 Stage 3 Walking Skeleton 在真实多视口渲染与 Critic 走查证伪后，证明成立的已验证设计契约；
+     - *Frozen Approved (Stage 5)*: 终审静默封版与工件不可变固化，下游前端工程交付（Loom Entry 2）唯一准入状态。
    - **Execution Invariant**:
-     **No Prototype Code without a Frozen Spec Contract (Formal Delivery).** Bypassing Stage 1 discussion and spec formulation to write code is strictly prohibited for formal candidate delivery. Exploration proceeds from a revisable direction brief; formal candidates require frozen specification evidence (`provisional baseline`). The Spec/Brief directs the Prototype; the Prototype validates and refines the Spec before Stage 5 final freeze.
+     **No Prototype Code without a Sealed Provisional Spec Contract (Formal Delivery).** Bypassing Stage 1 discussion and spec formulation to write code is strictly prohibited for formal candidate delivery. Exploration proceeds from a revisable direction brief; formal candidates require sealed provisional specification evidence (`sealed provisional baseline`). The Spec/Brief directs the Prototype; the Prototype validates and refines the Spec before Stage 5 final freeze.
 
 ---
 
@@ -61,7 +61,7 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
 │  Stage 3 (拓): Walking Skeleton Rollout ──> Full IA Surface Expansion, Compression & Release, Action Continuity    │
 │  Stage 4 (验): Four-Dimensional Audit   ──> Decoupled review: Engineering DOM, Interaction, Renderer, Human       │
 │                                             (review-portal.html, verify_prototype_quality.py, capture.mjs)        │
-│  Stage 5 (冻): Silent Governance        ──> Headless compiler: W3C DTCG tokens.json, WCAG 2.2 AA, SHA-256 manifest│
+│  Stage 5 (冻): Frozen Approved Delivery ──> Headless compiler: W3C DTCG tokens.json, WCAG 2.2 AA, SHA-256 manifest│
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -77,8 +77,8 @@ Before entering Stage 1 or reopening design work, classify the requested change 
 | **L3 (Flow)** | Multi-surface task flow, user journey transitions, new major surface | Standard **5-Stage Engine** (Stage 1 to 5) | Full lifecycle execution across declared slice. |
 | **L4 (Product)** | Domain object model, core tension inversion, lifecycle or permissions | Full **5-Stage Engine** with Evidence Re-anchoring | Re-anchor all Nine Pillars from source truth. |
 
-### Stage 1: Understand & Frame (破 - 魂立约：双钻收敛与全套契约冻结)
-- **Primary Goal**: Transition from user intent to a **complete, frozen Design Specification (`spec`)** spanning problem ontology, topology, visual register, and interaction contracts.
+### Stage 1: Understand & Frame (破 - 魂立约：双钻收敛与全套契约密封暂行)
+- **Primary Goal**: Transition from user intent to a **complete, sealed provisional Design Specification (`spec`)** spanning problem ontology, topology, visual register, and interaction contracts.
 - **Cadence Principle**:
   Zero black-box guessing, but zero manufactured friction. Coalesce inquiries when intent or delegation is clear; invoke `AskUserQuestion` only when genuine forks exist (e.g. Direction A vs B or unresolved core value tensions).
 - **Macro Double Diamond Alignment**:
@@ -110,11 +110,11 @@ Before entering Stage 1 or reopening design work, classify the requested change 
     - **破坏性应力极限 (The Break Protocol)**: 预定义长字符截断、0/1/1000 状态与视口折叠极限检查。
     - **自动化契约物化 (Automated Contract Materialization)**:
       运行 `python3 skills/spec-prototype/scripts/materialize_contracts.py` 编译提取结构化契约，物化 `prototype/contracts/slices/<slice_id>/c1.md` 与 `prototype/specifications/<slice_id>/r1.md`。
-- **Stage 1 全套契约冻结 (Artifact Ownership Closure)**:
-  Stage 1 结束时，必须完整物化并冻结 6 大契约工件：`product.md`、`surface-maps/m1.md`、`foundation/f1.md`、`tokens.css`、`slices/<slice_id>/c1.md` 与 `specifications/<slice_id>/r1.md`。至此设计契约凝固，直通 Stage 2，杜绝在 Stage 2 随意篡改业务语义。
+- **Stage 1 全套契约密封暂行 (Sealed Provisional Baseline Closure)**:
+  Stage 1 结束时，必须完整物化并建立 6 大密封暂行基线契约工件：`product.md`、`surface-maps/m1.md`、`foundation/f1.md`、`tokens.css`、`slices/<slice_id>/c1.md` 与 `specifications/<slice_id>/r1.md`（authority status: sealed provisional）。至此基线契约密封，直通 Stage 2 探针验证，确立待证伪基准。
 
 ### Stage 2: Core Hero Anchor Prototyping via Dual Envelope (核心主交互原型物化)
-- **Primary Goal**: Materialize the single highest-risk Hero Anchor screen or direction probe via bounded Builder dispatch under the frozen Stage 1 Spec contracts.
+- **Primary Goal**: Materialize the single highest-risk Hero Anchor screen or direction probe via bounded Builder dispatch under the sealed provisional Stage 1 Spec contracts.
 - **Adaptive Hero Anchor Chassis (自适应主交互骨架)**:
   Stage 2 拒绝单一模板化教条。核心原型根据 Stage 1 识别的产品语境自适应构建架构底盘：
   1. *Dense Workbench Pattern*: 高密数据台 — 4px 微网格、多窗格仪表、等宽数值排布。
@@ -210,7 +210,7 @@ Before entering Stage 1 or reopening design work, classify the requested change 
     - 页面局部结构或微观交互缺陷直接就地修正对应 HTML 切片；
     - 修复完成后重新执行自动化校验与多视口走查，直至所有红线闭环。
 
-### Stage 5: Silent Governance Compilation (冻 - 根：静默封版与工件交付)
+### Stage 5: Silent Governance & Frozen Approved Delivery (冻 - 根：静默封版与工件交付)
 - **Primary Goal**: Headless compilation of durable specifications, design tokens, and verifiable asset digests for downstream engineering handoff.
 - **Headless Pipeline Execution**:
   1. `python3 skills/spec-prototype/scripts/export-tokens.py prototype/shared/tokens.css --output prototype/contracts/tokens/t1.json`: 将 `shared/tokens.css` 编译为 W3C DTCG 标准 `tokens.json`。

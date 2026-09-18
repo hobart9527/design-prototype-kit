@@ -507,23 +507,31 @@ def freeze(root: Path, spec: str) -> dict:
     require_prototype_entry(root, pkt["prototype_write_scope"])
     if spec_path.parent.name == "briefs":
         raise HandoffError("Cannot freeze an exploration brief; formal Specification approval is required")
-    if not re.search(r"^- Compilation status:\s*`?frozen`?\s*$", spec_body := spec_path.read_text(encoding="utf-8"), re.M):
-        raise HandoffError("Cannot freeze without formal approved Specification (Compilation status: frozen)")
-    spec_body = spec_path.read_text()
 
-    # Verify status declarations if present
-    status_match = re.search(r"^- Compilation status:\s*`?([a-zA-Z0-9_-]+)`?", spec_body, re.M)
+    spec_body = spec_path.read_text(encoding="utf-8")
+    status_match = re.search(r"^-\s*(?:Compilation status|Authority status):\s*`?([a-zA-Z0-9_ -]+)`?", spec_body, re.M | re.IGNORECASE)
     if status_match:
-        status = status_match.group(1).strip()
-        if status not in ("candidate", "frozen"):
-            raise HandoffError(f"Specification compilation status must be candidate or frozen to freeze, got: {status}")
-
+        status = status_match.group(1).strip().lower()
+        if status not in ("candidate", "provisional", "sealed provisional", "validated", "frozen", "frozen approved"):
+            raise HandoffError(f"Specification compilation status must be candidate, provisional, validated, or frozen to freeze, got: {status}")
 
     evidence_path = root / "prototype" / "evidence" / pkt["slice_id"] / pkt["candidate_id"] / "prototype-evidence.md"
     evidence_record = retained(root, str(evidence_path.relative_to(root))) if evidence_path.is_file() else None
 
+    # Transition specification status to frozen approved upon freeze
+    updated_spec_body = re.sub(
+        r"^-\s*(?:Compilation status|Authority status):\s*`?[a-zA-Z0-9_ -]+`?",
+        "- Compilation status: frozen\n- Authority status: frozen approved",
+        spec_body,
+        flags=re.M | re.IGNORECASE
+    )
+    if updated_spec_body != spec_body:
+        spec_path.write_text(updated_spec_body, encoding="utf-8")
+        pkt["specification"] = retained(root, str(spec_path.relative_to(root)))
+
     frozen_manifest = {
         "status": "frozen",
+        "authority_status": "frozen_approved",
         "slice_id": pkt["slice_id"],
         "candidate_id": pkt["candidate_id"],
         "specification": pkt["specification"],
@@ -538,6 +546,71 @@ def freeze(root: Path, spec: str) -> dict:
     manifest_path = evidence_dir / "freeze-manifest.json"
     manifest_path.write_text(json.dumps(frozen_manifest, ensure_ascii=False, indent=2) + chr(10))
     return frozen_manifest
+
+
+def check_downstream_gate(root: Path, slice_id: str) -> dict:
+    """Downstream Engineering Gate (Loom Entry 2).
+
+    Strictly gates production implementation:
+    - Rejects 'draft', 'provisional', 'sealed provisional' specifications.
+    - Rejects 'validated' specifications that have not been frozen.
+    - Strictly requires 'frozen' / 'frozen approved' status with valid freeze manifest.
+    """
+    root = root.resolve()
+    spec_dir = root / "prototype/specifications" / slice_id
+    if not spec_dir.is_dir():
+        raise HandoffError(f"Downstream Gate Blocked: Specification directory missing for slice '{slice_id}'")
+    spec_files = list(spec_dir.glob("*.md"))
+    if not spec_files:
+        raise HandoffError(f"Downstream Gate Blocked: No specification markdown found for slice '{slice_id}'")
+
+    spec_path = spec_files[0]
+    spec_body = spec_path.read_text(encoding="utf-8")
+
+    # Check for freeze manifest
+    evidence_dir = root / "prototype/evidence" / slice_id / spec_path.stem
+    manifest_path = evidence_dir / "freeze-manifest.json"
+
+    # Extract authority / compilation status
+    status_match = re.search(r"^-\s*(?:Compilation status|Authority status):\s*`?([a-zA-Z0-9_ -]+)`?", spec_body, re.M | re.IGNORECASE)
+    spec_status = status_match.group(1).strip().lower() if status_match else "provisional"
+
+    if manifest_path.is_file():
+        try:
+            m_data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if m_data.get("status") == "frozen" or m_data.get("authority_status") == "frozen_approved":
+                return {
+                    "gate": "passed",
+                    "authority_status": "frozen_approved",
+                    "slice_id": slice_id,
+                    "specification": str(spec_path.relative_to(root)),
+                    "manifest": str(manifest_path.relative_to(root)),
+                    "message": "Downstream Gate Passed: Specification is frozen approved and ready for Loom delivery.",
+                }
+        except Exception:
+            pass
+
+    if spec_status in ("draft", "provisional", "sealed provisional", "candidate"):
+        raise HandoffError(
+            f"Downstream Gate Blocked: Specification for slice '{slice_id}' is in '{spec_status}' status. "
+            "Downstream engineering implementation (Loom Entry 2) strictly requires 'frozen approved' status. "
+            "Complete Stage 4 validation and Stage 5 silent packaging (handoff.py freeze) first."
+        )
+    elif spec_status == "validated":
+        raise HandoffError(
+            f"Downstream Gate Blocked: Specification for slice '{slice_id}' is 'validated' but not yet frozen. "
+            "Run Stage 5 silent packaging (python3 skills/spec-prototype/scripts/handoff.py freeze) to produce immutable frozen approved delivery."
+        )
+    elif spec_status in ("frozen", "frozen approved", "frozen_approved"):
+        return {
+            "gate": "passed",
+            "authority_status": "frozen_approved",
+            "slice_id": slice_id,
+            "specification": str(spec_path.relative_to(root)),
+            "message": "Downstream Gate Passed: Specification is frozen approved.",
+        }
+    else:
+        raise HandoffError(f"Downstream Gate Blocked: Unrecognized authority status '{spec_status}' for slice '{slice_id}'.")
 
 
 def directory_manifest(directory: Path) -> dict:
@@ -571,6 +644,9 @@ def main() -> int:
     man = sub.add_parser("manifest")
     man.add_argument("--dir", type=Path, required=True)
     man.add_argument("--output", type=Path)
+    gate_cmd = sub.add_parser("gate")
+    gate_cmd.add_argument("--root", type=Path, required=True)
+    gate_cmd.add_argument("--slice", required=True)
     args = parser.parse_args()
     try:
         if args.command == "digests":
@@ -581,6 +657,8 @@ def main() -> int:
             print(json.dumps(packet(args.root, args.spec), ensure_ascii=False, indent=2))
         elif args.command == "freeze":
             print(json.dumps(freeze(args.root, args.spec), ensure_ascii=False, indent=2))
+        elif args.command == "gate":
+            print(json.dumps(check_downstream_gate(args.root, args.slice), ensure_ascii=False, indent=2))
         elif args.command == "manifest":
             data = directory_manifest(args.dir)
             formatted = json.dumps(data, ensure_ascii=False, indent=2) + "\n"

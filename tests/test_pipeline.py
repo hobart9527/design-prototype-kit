@@ -354,10 +354,12 @@ def test_spec_first_contract_formulation_and_lean_envelope(tmp_path: Path):
 
     # 8. Verify SKILL.md and core-workflow.md declare Spec-First invariant & 6 pillars
     core_wf = (SKILL / "references/core-workflow.md").read_text(encoding="utf-8")
-    assert "No Prototype Code without a Frozen Spec Contract" in core_wf
+    assert ("No Prototype Code without a Sealed Provisional Spec Contract" in core_wf or
+            "No Prototype Code without a Frozen Spec Contract" in core_wf)
     assert "foundation/f1.md" in core_wf
     skill_md = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-    assert "ZERO Prototype Code without a complete frozen Spec Contract" in skill_md
+    assert ("ZERO Prototype Code without a complete sealed provisional Spec Contract" in skill_md or
+            "ZERO Prototype Code without a complete frozen Spec Contract" in skill_md)
     assert "foundation/f1.md" in skill_md
 
 

@@ -455,6 +455,146 @@ def test_method_registry_and_craft_guidelines_hygiene():
     assert "Integrated Design Invariant Standards" not in qtext
 
 
+def test_method_registry_runtime_selection_and_negative_selection():
+    """v10.2.1 Task 1: Verify Method Registry runtime selection, lazy load, and negative selection."""
+    assemble_mod = _load("assemble_envelope", SCRIPTS / "assemble_envelope.py")
+    registry_path = REPO / "skills/spec-prototype/methods/registry.yaml"
+
+    # Case 1: Positive selection for dense telemetry console
+    selected = assemble_mod.select_active_methods(
+        registry_path=registry_path,
+        stage=2,
+        layout_profile="dense-console",
+        spec_text="Telemetry metrics, latency sparklines, tabular-nums table, action verb quarantine",
+        contract_text="action verb: quarantine-node",
+        product_text="Cluster telemetry monitor",
+        slice_id="telemetry-slice",
+    )
+    assert 3 <= len(selected) <= 6
+    selected_ids = [m["id"] for m in selected]
+    assert "data-context-metrics" in selected_ids
+    assert "action-verb-lifecycle" in selected_ids
+    # Invariant lazy loading verification
+    for m in selected:
+        assert "invariants" in m and len(m["invariants"]) > 0
+        assert "reference_file" in m
+
+    # Case 2: Negative selection for editorial reader
+    # (pure reading, no forms, no telemetry, no destructive operations)
+    editorial_selected = assemble_mod.select_active_methods(
+        registry_path=registry_path,
+        stage=2,
+        layout_profile="editorial-reading",
+        spec_text="Editorial essay, typographic hierarchy, 68ch measure, chapter navigation",
+        contract_text="reading surface",
+        product_text="Literary journal reader",
+        slice_id="reader-slice",
+    )
+    editorial_ids = [m["id"] for m in editorial_selected]
+    assert "visual-rhythm-density" in editorial_ids
+    # Negative selection assertions: non-relevant methods MUST be excluded
+    assert "data-context-metrics" not in editorial_ids, "Telemetry metrics must NOT be selected for pure reading"
+    assert "form-ergonomics" not in editorial_ids, "Form ergonomics must NOT be selected without inputs"
+    assert "fault-tolerance-recovery" not in editorial_ids, "Fault tolerance must NOT be selected without destructive operations"
+
+
+def test_builder_recipe_purge_and_adaptive_state_machine():
+    """v10.2.1 Task 2: Verify pre-baked recipes purged from Builder dispatch and envelope."""
+    assemble_mod = _load("assemble_envelope", SCRIPTS / "assemble_envelope.py")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        (root / "prototype").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/product.md").write_text("# Product\n- Core Tension: Speed vs Safety\n", encoding="utf-8")
+        (root / "prototype/contracts/surface-maps").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/contracts/surface-maps/m1.md").write_text("# Surface Map\n", encoding="utf-8")
+        (root / "prototype/contracts/foundation").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/contracts/foundation/f1.md").write_text("# Foundation\n", encoding="utf-8")
+        (root / "prototype/shared").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/shared/tokens.css").write_text(":root { --bg-void: #000; }\n", encoding="utf-8")
+        (root / "prototype/contracts/tokens").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/contracts/tokens/t1.md").write_text("# Tokens\n", encoding="utf-8")
+        (root / "prototype/contracts/tokens/t1.json").write_text("{}", encoding="utf-8")
+        (root / "prototype/contracts/slices/s1").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/contracts/slices/s1/c1.md").write_text("# Contract\n", encoding="utf-8")
+        (root / "prototype/specifications/s1").mkdir(parents=True, exist_ok=True)
+        (root / "prototype/specifications/s1/r1.md").write_text("""# Spec
+- Supported States: inspecting, draining, settled
+## Verifiable Design Assertions
+| Assertion | Expected |
+|---|---|
+| Drain action executes | pass |
+""", encoding="utf-8")
+
+        env = assemble_mod.assemble(root, "s1")
+        # 1. State machine respects authored states
+        assert env["interaction_spec"]["state_machine"]["supported_states"] == ["inspecting", "draining", "settled"]
+
+        # 2. Tabular numbers not forced when no telemetry is present
+        assert env["data_stress_boundaries"]["tabular_numbers_required"] is False
+
+        # 3. Ruthless omissions and invariants fallbacks do not carry v9 recipes
+        omissions = env["design_constraints"]["ruthless_omissions"]
+        invariants = env["design_constraints"]["material_non_transfer_boundaries"]
+        for om in omissions:
+            assert "Digital Glass" not in om
+            assert "Machined Detents" not in om
+        for inv in invariants:
+            assert "Precision Telemetry Emissives" not in inv
+            assert "Machined Tactile Detents" not in inv
+
+        # 4. Envelope contains active_methods and authority_status
+        assert "active_methods" in env
+        assert env["authority_status"] == "sealed_provisional"
+
+
+def test_authority_lifecycle_mechanization_and_downstream_gate():
+    """v10.2.1 Task 3: Verify downstream gate and freeze state transition in handoff.py."""
+    handoff_mod = _load("handoff", SCRIPTS / "handoff.py")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        spec_dir = root / "prototype/specifications/s1"
+        spec_dir.mkdir(parents=True, exist_ok=True)
+        spec_file = spec_dir / "r1.md"
+
+        # 1. Provisional spec is rejected by downstream gate
+        spec_file.write_text("# Spec\n- Candidate revision: r1\n- Compilation status: provisional\n- Authority status: sealed provisional\n", encoding="utf-8")
+        with pytest.raises(handoff_mod.HandoffError, match="Downstream Gate Blocked.*provisional"):
+            handoff_mod.check_downstream_gate(root, "s1")
+
+        # 2. Validated spec is blocked until frozen
+        spec_file.write_text("# Spec\n- Candidate revision: r1\n- Compilation status: validated\n- Authority status: validated\n", encoding="utf-8")
+        with pytest.raises(handoff_mod.HandoffError, match="Downstream Gate Blocked.*validated.*not yet frozen"):
+            handoff_mod.check_downstream_gate(root, "s1")
+
+        # 3. Frozen spec passes downstream gate
+        evidence_dir = root / "prototype/evidence/s1/r1"
+        evidence_dir.mkdir(parents=True, exist_ok=True)
+        manifest_file = evidence_dir / "freeze-manifest.json"
+        manifest_file.write_text(json.dumps({"status": "frozen", "authority_status": "frozen_approved"}), encoding="utf-8")
+        spec_file.write_text("# Spec\n- Candidate revision: r1\n- Compilation status: frozen\n- Authority status: frozen approved\n", encoding="utf-8")
+
+        result = handoff_mod.check_downstream_gate(root, "s1")
+        assert result["gate"] == "passed"
+        assert result["authority_status"] == "frozen_approved"
+
+
+def test_stage1_sealed_provisional_and_stage5_frozen_approved_terminology():
+    """v10.2.1 Task 4: Harmonize Stage 1 Sealed Provisional and Stage 5 Frozen Approved terminology."""
+    skill_text = (REPO / "skills/spec-prototype/SKILL.md").read_text(encoding="utf-8")
+    wf_text = (REPO / "skills/spec-prototype/references/core-workflow.md").read_text(encoding="utf-8")
+
+    # SKILL.md
+    assert "Sealed Provisional Spec Artifacts" in skill_text
+    assert "authority status: sealed provisional" in skill_text
+    assert "Draft → Sealed Provisional → Validated → Frozen Approved" in skill_text
+    assert "Silent Packaging & Frozen Approved Delivery" in skill_text
+
+    # core-workflow.md
+    assert "Draft → Sealed Provisional (Stage 1) → Validated (Stage 4) → Frozen Approved (Stage 5)" in wf_text
+    assert "Sealed Provisional Baseline Closure" in wf_text
+    assert "Silent Governance & Frozen Approved Delivery" in wf_text
+
+
 
 
 

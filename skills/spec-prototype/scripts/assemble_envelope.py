@@ -102,6 +102,152 @@ def extract_css_tokens(css_text: str) -> Dict[str, str]:
     return tokens
 
 
+def load_method_registry(registry_path: Path) -> List[Dict[str, Any]]:
+    """Load craft methods from registry.yaml."""
+    if not registry_path.is_file():
+        return []
+    try:
+        import yaml
+        content = registry_path.read_text(encoding="utf-8")
+        data = yaml.safe_load(content)
+        if isinstance(data, dict) and "methods" in data:
+            return data["methods"]
+    except Exception:
+        pass
+    return []
+
+
+def select_active_methods(
+    registry_path: Path,
+    stage: int = 2,
+    layout_profile: str = "adaptive-workspace",
+    spec_text: str = "",
+    contract_text: str = "",
+    product_text: str = "",
+    slice_id: str = "",
+    limit_range: tuple[int, int] = (3, 6),
+) -> List[Dict[str, Any]]:
+    """Select 3-6 relevant craft methods from registry.yaml based on stage and context triggers.
+
+    Loads methods lazily, scores against observed triggers, and excludes non-matching methods.
+    """
+    all_methods = load_method_registry(registry_path)
+    if not all_methods:
+        return []
+
+    combined = f"{slice_id} {layout_profile} {product_text} {contract_text} {spec_text}".lower()
+
+    # Detect context features (triggers)
+    active_triggers = set()
+
+    # 1. State mutation & actions
+    if re.search(r"\b(action|verb|mutation|drain|delete|quarantine|commit|isolate|revert|cancel|retry|lifecycle)\b", combined):
+        active_triggers.add("state_mutation")
+        active_triggers.add("decisive_commit")
+    if re.search(r"\b(destructive|irreversible|hazard|permanent|remove|drop|evict)\b", combined):
+        active_triggers.add("destructive_operations")
+    if re.search(r"\b(multi-step|wizard|stepper|confirm\s+dialog|modal\s+header)\b", combined):
+        active_triggers.add("multi_step_commit")
+
+    # 2. Telemetry & Metrics
+    if re.search(r"\b(telemetry|kpi|metric|metrics|sparkline|throughput|latency|chart|dashboard|counter|tabular-nums|numeric)\b", combined):
+        active_triggers.add("telemetry_display")
+        active_triggers.add("kpi_dashboard")
+        active_triggers.add("real_time_monitoring")
+
+    # 3. Forms & Inputs
+    if re.search(r"\b(form|input|fields|validation|text-field|textarea|select|checkbox|submit|tabindex|tab\s+order)\b", combined):
+        active_triggers.add("multi_field_input")
+        active_triggers.add("inline_validation")
+        active_triggers.add("complex_form")
+
+    # 4. Topology & Entity cardinality
+    if re.search(r"\b(1:n|n:m|cardinality|master-detail|entity|entities|relational|node-link|graph)\b", combined):
+        active_triggers.add("multi_entity_domain")
+        active_triggers.add("complex_cardinality")
+        active_triggers.add("relational_navigation")
+
+    # 5. Context & Navigation / Interruption
+    if re.search(r"\b(drawer|modal|inspector|overlay|sheet|filter|facet|tab|preserve|resume|interruption)\b", combined):
+        active_triggers.add("interruption_likely")
+        active_triggers.add("drawer_or_modal_interaction")
+        active_triggers.add("resumable_work")
+        active_triggers.add("multi_object_context")
+
+    # 6. Progressive disclosure & Density
+    if layout_profile in ("dense-console", "operational-canvas") or re.search(r"\b(workbench|console|dense|advanced|secondary|parameters|disclosure)\b", combined):
+        active_triggers.add("dense_data_workbench")
+        active_triggers.add("advanced_parameters")
+        active_triggers.add("secondary_actions")
+
+    # 7. Visual rhythm & composition
+    active_triggers.add("hero_anchor_layout")
+    active_triggers.add("typographic_hierarchy")
+    active_triggers.add("spatial_composition")
+
+    # 8. Stress & Break protocol
+    if re.search(r"\b(break\s+protocol|stress|unbreakable|320px|empty\s+state|overflow|debounce|edge\s+case)\b", combined):
+        active_triggers.add("edge_case_audit")
+        active_triggers.add("extreme_viewport_320px")
+        active_triggers.add("unbreakable_strings")
+        active_triggers.add("zero_one_thousand_data")
+
+    # 9. Fault tolerance & Undo
+    if re.search(r"\b(undo|rollback|revert|recovery|fault\s+tolerance|reversib)\b", combined):
+        active_triggers.add("undoable_actions")
+        active_triggers.add("network_recovery")
+
+    # 10. Tactile & Decisive feedback
+    if re.search(r"\b(tactile|detent|press|feedback|spring|haptic|settlement|frame)\b", combined):
+        active_triggers.add("tactile_feedback")
+        active_triggers.add("state_settlement")
+
+    scored_candidates = []
+    for m in all_methods:
+        stages = m.get("stages", [])
+        if stages and stage not in stages:
+            continue
+
+        method_triggers = set(m.get("activate_when", []))
+        matched = method_triggers.intersection(active_triggers)
+        score = len(matched) * 2
+
+        # Bonus: explicit mention of method id or name
+        if m.get("id", "").lower() in combined or m.get("name", "").lower() in combined:
+            score += 10
+
+        # Bonus: explicit mention of pillars in combined
+        for p in m.get("pillars", []):
+            if p.lower() in combined:
+                score += 1
+
+        if score > 0:
+            scored_candidates.append({
+                "method": m,
+                "score": score,
+                "matched_triggers": sorted(list(matched)),
+            })
+
+    # Sort candidates by score descending
+    scored_candidates.sort(key=lambda x: x["score"], reverse=True)
+
+    min_limit, max_limit = limit_range
+    selected_scored = scored_candidates[:max_limit]
+
+    result = []
+    for sc in selected_scored:
+        m = sc["method"]
+        result.append({
+            "id": m.get("id"),
+            "name": m.get("name"),
+            "pillars": m.get("pillars", []),
+            "invariants": m.get("invariants", []),
+            "reference_file": m.get("file", ""),
+            "matched_triggers": sc["matched_triggers"],
+        })
+    return result
+
+
 def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     """Assemble an envelope for either exploration or formal candidate work."""
     brief = _brief_path(root, slice_id)
@@ -302,10 +448,6 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         elif in_inv and line.strip().startswith("- "):
             invariants.append(line.strip()[2:].strip())
 
-    # For mobile/touch profiles, sanitize constraints to avoid desktop keybinding bleeds
-    if layout_profile == "somatic-touchflow":
-        shortcuts = ["`Tap` / `Press`", "`Swipe Down`", "`Edge Swipe`"]
-
     constraints = {
         "dual_channel_shortcuts": shortcuts,
         "action_verb_lifecycle": verb_lifecycle,
@@ -313,14 +455,14 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "decisive_exchange_frames": decisive_frames,
         "context_preservation_rules": context_rules,
         "ruthless_omissions": omissions or [
-            "Zero generic marketing cards, promotional hero banners, or superficial carousel widgets.",
-            "Zero nested modal inception or multi-step wizard deadlocks; interactions stay in-canvas or single contextual drawer.",
-            "Zero ungrounded alien physics, gratuitous full-screen particles, or unconsidered neutral gray #808080 washes."
+            "No unauthored promotional hero widgets or marketing carousels.",
+            "No nested modal deadlocks; interactions stay in-canvas or single contextual drawer.",
+            "No ungrounded alien physics or decorative animations."
         ],
         "material_non_transfer_boundaries": invariants or [
-            "Digital Surface Layering: Transparency expresses spatial depth hierarchy only, never gratuitous frosted blur that compromises contrast.",
-            "Perceptible Action Feedback: Interactive controls possess immediate, perceptible feedback (e.g. tactile micro-press, subtle background shift, or border detent); never frictionless float.",
-            "Precision Status Emissives: Status indicators provide calibrated visual signals; never raw flat neon washes."
+            "Surface contrast and visual hierarchy respect design tokens; zero unconsidered flat grays.",
+            "Interactive controls provide immediate, perceptible state feedback without layout shift.",
+            "Visual indicators and state badges deliver calibrated operational signals."
         ],
     }
     explicit_turns = extract_field(spec_content, "Maximum operational repair attempts")
@@ -436,24 +578,47 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     _is_editorial = layout_profile == "editorial-reading"
     _is_touch = layout_profile == "somatic-touchflow"
 
+    # Extract authored states from spec or contract if present; otherwise default to minimal standard states
+    authored_states: List[str] = []
+    for line in spec_content.splitlines() + contract_content.splitlines():
+        m_st = re.search(r"(?:Supported States|States|状态流转|支持状态)\s*[:=]\s*([^\n]+)", line, re.IGNORECASE)
+        if m_st:
+            raw_states = [s.strip("`'\" ") for s in re.split(r"[,/|;]", m_st.group(1)) if s.strip("`'\" ")]
+            if raw_states:
+                authored_states = raw_states
+                break
+    if not authored_states:
+        found_states = []
+        for a in assertions + break_checkpoints:
+            a_lower = a.lower()
+            if "empty" in a_lower and "empty" not in found_states:
+                found_states.append("empty")
+            if ("error" in a_lower or "alert" in a_lower) and "error" not in found_states:
+                found_states.append("error")
+        if found_states:
+            authored_states = ["default"] + found_states
+        else:
+            authored_states = ["default"]
+
     interaction_spec: Dict[str, Any] = {
         "state_machine": {
             "type": "hash_state",
             "query_param": "state",
-            "supported_states": ["ideal", "empty", "error"],
+            "supported_states": authored_states,
             "dom_hook": "document.body.dataset.state"
         },
         "break_protocol_checkpoints": break_checkpoints,
     }
     if _is_dense:
         # Full rich interaction contract for workbench/console profiles
-        interaction_spec["dual_channel_shortcuts"] = shortcuts
+        if shortcuts:
+            interaction_spec["dual_channel_shortcuts"] = shortcuts
         interaction_spec["action_verb_lifecycle"] = verb_lifecycle
         interaction_spec["decisive_exchange_frames"] = decisive_frames
         interaction_spec["context_preservation_rules"] = context_rules
         interaction_spec["profile_notes"] = (
-            "dense-console: implement full Action Verb Lifecycle (trigger→drawer/modal→commit→toast), "
-            "Space/Esc dual-channel shortcuts, tabular-nums telemetry, SVG micro-sparklines."
+            "dense-console: implement Action Verb Lifecycle (trigger→drawer/modal→commit→toast), "
+            "declared keyboard shortcuts (if any), tabular-nums telemetry where comparative data is displayed, and SVG micro-sparklines."
         )
     elif _is_editorial:
         # Reading profile: quiet interactions, no intrusive modals
@@ -573,6 +738,22 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         elif line.startswith("# Product Thesis:"):
             prod_thesis_raw = line.split(":", 1)[1].strip()
 
+    # Runtime Method Registry selection & lazy loading (v10.2.1)
+    active_methods = select_active_methods(
+        registry_path=SKILL / "methods/registry.yaml",
+        stage=2,
+        layout_profile=layout_profile,
+        spec_text=spec_content,
+        contract_text=contract_content,
+        product_text=product_content,
+        slice_id=slice_id,
+    )
+
+    requires_tabular = bool(
+        re.search(r"\b(tabular-nums|tabular\s+numbers|telemetry|metrics|latency|throughput|counter|kpi|currency|timestamp)\b", spec_content + " " + contract_content + " " + product_content, re.IGNORECASE)
+        or any(m["id"] == "data-context-metrics" for m in active_methods)
+    )
+
     # Dual-Envelope Architecture (v10): Decouple rigid constraints from creative agency
     constraint_envelope = {
         "domain_thesis": {
@@ -586,11 +767,11 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "data_stress_boundaries": {
             "overflow_protection": "text-overflow: ellipsis, overflow-wrap: anywhere, or word-break: break-all required on dynamic labels",
             "empty_state_guidance": (
-                f"Actionable guidance: render meaningful empty illustration/icon paired with '{verb_lifecycle[0]['trigger_btn']}' primary recovery button"
+                f"Actionable guidance: render meaningful empty state paired with '{verb_lifecycle[0]['trigger_btn']}' recovery action"
                 if verb_lifecycle else
-                "Explicit guidance message required; provide action button if state is user-correctable"
+                "Explicit guidance message required; provide recovery action if state is user-correctable"
             ),
-            "tabular_numbers_required": True
+            "tabular_numbers_required": requires_tabular
         },
         "target_html_path": target_html,
         "token_stylesheet_ref": token_rel_href,
@@ -666,8 +847,10 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     envelope = {
         "envelope_version": "2.0",
         "envelope_architecture": "3.0-dual",
+        "authority_status": "sealed_provisional",
         "build_authority": build_authority,
         "has_hypothesis_actions": has_hypothesis_action,
+        "active_methods": active_methods,
         "repository_root": str(root.resolve()),
         "skill_root": str(SKILL.resolve()),
         "slice_id": slice_id,

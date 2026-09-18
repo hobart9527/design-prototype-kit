@@ -49,17 +49,16 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
   Link the shared tokens stylesheet in `<head>` using the exact `token_link_tag` (or `token_stylesheet_ref`) from the envelope.
   Do NOT redeclare or shadow `:root { ... }` custom properties in `<style>`! Consume standard tokens (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`, `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--space-*)`, etc.) directly from the linked stylesheet.
   Never use raw inline hex codes in `style="..."` attributes.
-  Enforce `font-variant-numeric: tabular-nums` across all numeric metrics.
+  Apply `font-variant-numeric: tabular-nums` to numeric metrics, telemetry streams, and timestamps when `data_stress_boundaries.tabular_numbers_required` is true to prevent scan jitter.
 - **Shared Shell & Multi-Surface Topology Navigation**:
   Render the shared top navigation bar using `topology_context.shared_shell`. Include the brand title and render all `navigation_links` with their exact relative `href` and `active` status. This guarantees that all prototype surfaces form an interconnected product topology rather than disconnected silos.
 - **Declarative State Machine & Hash Routing**:
-  Implement dynamic state machine based on `interaction_spec.state_machine`:
-  Listen to `window.addEventListener("hashchange", applyState)` and read `location.hash` (`#state=ideal`, `#state=empty`, `#state=error`).
-  Mutate `document.body.dataset.state` and render distinct data/views for `ideal` (normal list), `empty` (zero results with recovery action), and `error` (telemetry alert) so headless capture records authentic multi-state visual evidence.
-- **Dual-Channel Ergonomics**: Implement keyboard listeners (`keydown`/`keyup`) for declared shortcuts
-  (such as `Space`/`Esc`/`J`/`K`) with deterministic focus management and visual feedback.
-- **The Break Protocol Resilience**: Ensure graceful layout under the 4 stress checkpoints
-  (unbreakable strings, zero-item empty states, extreme 320px fold, and rapid click debouncing).
+  Implement dynamic state transitions based on `interaction_spec.state_machine`:
+  Listen to `window.addEventListener("hashchange", applyState)` and read `location.hash` using the declared `supported_states` (e.g. default, empty, error, or domain-specific states).
+  Mutate `document.body.dataset.state` accordingly to render authentic multi-state visual evidence for headless capture. Do not invent unauthored arbitrary states.
+- **Dual-Channel Ergonomics**: Implement input listeners for declared shortcuts in `interaction_spec.dual_channel_shortcuts` (if any are declared in the envelope). Ensure deterministic focus management and visual feedback without inventing unauthored shortcuts.
+- **The Break Protocol Resilience**: Ensure graceful layout under the stress checkpoints declared in `break_protocol_checkpoints` and verifiable assertions (e.g. long string wrapping, empty state recovery, narrow viewport fold, and input debouncing).
+- **Active Craft Methods Guidance**: Consult `active_methods` in the envelope for targeted experience invariants and candidate techniques (e.g. Action Verb Lifecycle, Context Preservation, Visual Rhythm) dynamically selected for this slice.
 
 ## 4. Receipt Format
 

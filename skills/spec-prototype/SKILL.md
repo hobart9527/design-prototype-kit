@@ -65,13 +65,13 @@ Execute the stages matching declared intent and required evidence. The stages re
 
 ```text
 [Stage 1: 破 - Understand & Frame (问题空间与设计契约定义)]
-  │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, derive Surface Topology, calibrate Five-Axis register & initial tokens, and establish provisional baseline Spec Contracts.
+  │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, derive Surface Topology, calibrate Five-Axis register & initial tokens, and establish sealed provisional baseline Spec Contracts.
   │  Alignment Cadence: Coalesce inquiries when intent or delegation is clear. AskUserQuestion only when genuine forks exist (e.g. Direction A vs B or unresolved core tension).
-  │  Frozen Spec Artifacts: prototype/product.md, surface-maps/m1.md, foundation/f1.md, tokens.css (via compile_tokens.py), slices/<slice_id>/c1.md, specifications/<slice_id>/r1.md (authority status: provisional baseline).
-  │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; establishes provisional baseline under the authority lifecycle `Draft → Provisional → Validated → Frozen` before Stage 2 probe validation).
+  │  Sealed Provisional Spec Artifacts: prototype/product.md, surface-maps/m1.md, foundation/f1.md, tokens.css (via compile_tokens.py), slices/<slice_id>/c1.md, specifications/<slice_id>/r1.md (authority status: sealed provisional).
+  │  Gate Rule: ZERO Prototype Code without a complete sealed provisional Spec Contract (for formal candidate delivery; establishes sealed provisional baseline under the authority lifecycle `Draft → Sealed Provisional → Validated → Frozen Approved` before Stage 2 probe validation).
   ▼
 [Stage 2: 立 - Proposition & High-Risk Probe (解空间主干物化与探针验证)]
-  │  Core Objective: Materialize the single highest-risk Hero Anchor screen or direction probe via bounded Builder dispatch under the frozen Stage 1 Spec contracts.
+  │  Core Objective: Materialize the single highest-risk Hero Anchor screen or direction probe via bounded Builder dispatch under the sealed provisional Stage 1 Spec contracts.
   │  Envelope Assembly: python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json
   │  Dispatched via Lean Envelope: Builder receives bounded constraints (Constraint Envelope) while retaining layout composition agency (Creative Envelope).
   │  Execution Safety: Single hero anchor / signature relationship only; headless browser verification; no exploratory runaway code.
@@ -90,7 +90,7 @@ Execute the stages matching declared intent and required evidence. The stages re
   │    - Human Evidence: Final signoff and stakeholder confirmation
   │  Controlled Absorption Loop: Critique absorbed into tokens.css / HTML slices -> Re-verify.
   ▼
-[Stage 5: 冻 - Silent Packaging & Headless Governance (静默封版与工件交付)]
+[Stage 5: 冻 - Silent Packaging & Frozen Approved Delivery (静默封版与工件交付)]
      Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (WCAG 2.2 AA floor / AAA static tokens), handoff.py (SHA-256 integrity manifest).
 ```
 

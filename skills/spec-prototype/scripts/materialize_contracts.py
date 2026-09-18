@@ -294,6 +294,7 @@ def build_frontend_contract(
 
     contract_data: dict[str, Any] = {
         "contract_version": "1.0",
+        "authority_status": "sealed_provisional",
         "slice_id": slice_id,
         "provenance": {
             "product_title": prod_title,
@@ -453,7 +454,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 
 - Product: {product_title}
 - Source discussion: `prototype/discussion.md`, {_digest(disc_path)}
-- Status: candidate
+- Status: sealed provisional
 
 ## Declared surfaces
 {surface_lines}
@@ -468,7 +469,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Product: {product_title}
 - Product source: `prototype/product.md`, {_digest(prod_path)}
 - Core tension: {tension}
-- Status: candidate
+- Status: sealed provisional
 
 ## Product Context & Alignment
 {prod_text.strip()}
@@ -491,7 +492,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Foundation revision: f1
 - Product source: `prototype/product.md`, {_digest(prod_path)}
 - Canonical Ontology: Nine Pillars Mapping (Object, Journey, Attention, Interaction, Resilience)
-- Status: candidate
+- Status: sealed provisional
 
 ## Intent & Value Anchor
 {tension}
@@ -563,7 +564,8 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
             content = f"""# Prototype Specification: {slice_id} / r1
 
 - Candidate revision: r1
-- Compilation status: candidate
+- Compilation status: sealed provisional
+- Authority status: sealed provisional
 - Product source: `prototype/product.md`, {_digest(prod_path)}
 - Discussion source: `prototype/discussion.md`, {_digest(disc_path)}
 - Prototype write scope: `prototype/experiments/{slice_id}/{scope_suffix}/`
