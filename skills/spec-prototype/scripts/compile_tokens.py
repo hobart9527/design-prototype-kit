@@ -27,6 +27,121 @@ import sys
 from typing import Any, Dict
 
 
+from typing import Any, Dict, Tuple
+import math
+
+
+def _srgb_to_linear(v: float) -> float:
+    return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+
+
+def _linear_to_srgb(v: float) -> float:
+    v = max(0.0, min(1.0, v))
+    return 12.92 * v if v <= 0.0031308 else 1.055 * (v ** (1.0 / 2.4)) - 0.055
+
+
+def _rgb_to_oklab(r: float, g: float, b: float) -> Tuple[float, float, float]:
+    """Convert sRGB float (0..1) to OKLab (L, a, b)."""
+    lr = _srgb_to_linear(r)
+    lg = _srgb_to_linear(g)
+    lb = _srgb_to_linear(b)
+
+    l = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
+    m = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
+    s = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
+
+    l_ = l ** (1.0 / 3.0) if l > 0 else 0.0
+    m_ = m ** (1.0 / 3.0) if m > 0 else 0.0
+    s_ = s ** (1.0 / 3.0) if s > 0 else 0.0
+
+    L = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
+    a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+    b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+    return L, a, b
+
+
+def _oklab_to_rgb(L: float, a: float, b: float) -> Tuple[float, float, float]:
+    """Convert OKLab (L, a, b) to sRGB float (0..1)."""
+    l_ = L + 0.3963377774 * a + 0.2158037573 * b
+    m_ = L - 0.1055613458 * a - 0.0638541728 * b
+    s_ = L - 0.0894841775 * a - 1.2914855480 * b
+
+    l = l_ ** 3.0 if l_ > 0 else 0.0
+    m = m_ ** 3.0 if m_ > 0 else 0.0
+    s = s_ ** 3.0 if s_ > 0 else 0.0
+
+    lr = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s
+    lg = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s
+    lb = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+
+    return _linear_to_srgb(lr), _linear_to_srgb(lg), _linear_to_srgb(lb)
+
+
+def _hex_to_oklab(hex_code: str) -> Tuple[float, float, float]:
+    r, g, b = _hex_to_rgb(hex_code)
+    return _rgb_to_oklab(r / 255.0, g / 255.0, b / 255.0)
+
+
+def _oklab_to_hex(L: float, a: float, b: float) -> str:
+    r, g, b = _oklab_to_rgb(L, a, b)
+    return _rgb_to_hex(int(round(r * 255)), int(round(g * 255)), int(round(b * 255)))
+
+
+def derive_perceptual_surface_scale(base_hex: str, is_light: bool) -> Dict[str, str]:
+    """Derive perceptually uniform surface elevations and borders via OKLab lightness steps."""
+    L, a, b = _hex_to_oklab(base_hex)
+    scale: Dict[str, str] = {}
+
+    if is_light:
+        # Light surface step-downs: void is slight warm wash, base/surface pure or near white, borders step down in L
+        scale["bg_void"] = base_hex
+        scale["bg_base"] = _oklab_to_hex(min(0.99, L + 0.02), a * 0.7, b * 0.7)
+        scale["bg_surface"] = _oklab_to_hex(min(1.0, L + 0.04), a * 0.5, b * 0.5)
+        scale["bg_surface_raised"] = _oklab_to_hex(1.0, 0.0, 0.0)
+        scale["bg_overlay"] = _oklab_to_hex(1.0, 0.0, 0.0)
+
+        # Border steps (decreasing lightness)
+        scale["border_dim"] = _oklab_to_hex(max(0.0, L - 0.06), a, b)
+        scale["border_subtle"] = _oklab_to_hex(max(0.0, L - 0.12), a, b)
+        scale["border_bright"] = _oklab_to_hex(max(0.0, L - 0.24), a, b)
+
+        # Text steps (high contrast dark)
+        scale["text_primary"] = _oklab_to_hex(0.18, a * 0.2, b * 0.2)
+        scale["text_secondary"] = _oklab_to_hex(0.42, a * 0.3, b * 0.3)
+        scale["text_tertiary"] = _oklab_to_hex(0.58, a * 0.3, b * 0.3)
+    else:
+        # Dark surface step-ups (increasing lightness)
+        scale["bg_void"] = base_hex
+        scale["bg_base"] = _oklab_to_hex(min(0.9, L + 0.035), a, b)
+        scale["bg_surface"] = _oklab_to_hex(min(0.9, L + 0.07), a, b)
+        scale["bg_surface_raised"] = _oklab_to_hex(min(0.9, L + 0.11), a, b)
+        scale["bg_overlay"] = _oklab_to_hex(min(0.9, L + 0.16), a, b)
+
+        # Border steps (increasing lightness in dark mode)
+        scale["border_dim"] = _oklab_to_hex(min(0.9, L + 0.10), a, b)
+        scale["border_subtle"] = _oklab_to_hex(min(0.9, L + 0.16), a, b)
+        scale["border_bright"] = _oklab_to_hex(min(0.9, L + 0.26), a, b)
+
+        # Text steps (high contrast light)
+        scale["text_primary"] = _oklab_to_hex(0.96, a * 0.2, b * 0.2)
+        scale["text_secondary"] = _oklab_to_hex(0.70, a * 0.3, b * 0.3)
+        scale["text_tertiary"] = _oklab_to_hex(0.48, a * 0.3, b * 0.3)
+
+    return scale
+
+
+def check_wcag_contrast(fg_hex: str, bg_hex: str) -> float:
+    """Calculate WCAG 2.1 relative luminance contrast ratio."""
+    def _rel_lum(h: str) -> float:
+        r, g, b = _hex_to_rgb(h)
+        rgb_lin = [_srgb_to_linear(c / 255.0) for c in (r, g, b)]
+        return 0.2126 * rgb_lin[0] + 0.7152 * rgb_lin[1] + 0.0722 * rgb_lin[2]
+
+    l1 = _rel_lum(fg_hex)
+    l2 = _rel_lum(bg_hex)
+    return (max(l1, l2) + 0.05) / (min(l1, l2) + 0.05)
+
+
 # Legacy named palettes remain available only for callers that explicitly opt in.
 DARK_ATMOSPHERES = {
     # Modern Industrial Craft Palettes (P9+ Reality Anchors)
@@ -266,35 +381,13 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
 
     base_colors = dict(DARK_ATMOSPHERES[resolved_base])
 
-    # If custom background was authored, synthesize physical elevation hierarchy with contrast fidelity
+    # If custom background was authored, synthesize physical elevation hierarchy via OKLab perceptual scale
     if "bg_void" in extracted and extracted["bg_void"].startswith("#"):
         try:
-            vr, vg, vb = _hex_to_rgb(extracted["bg_void"])
             is_light = _is_light_color(extracted["bg_void"])
-            base_colors["bg_void"] = extracted["bg_void"]
-
-            if is_light:
-                # Light mode: clean, luminous surfaces with dark high-contrast typography (WCAG AAA compliant)
-                base_colors["bg_base"] = extracted.get("bg_base", "#ffffff")
-                base_colors["bg_surface"] = extracted.get("bg_surface", "#ffffff")
-                base_colors["bg_surface_raised"] = extracted.get("bg_surface_raised", "#ffffff")
-                base_colors["bg_overlay"] = extracted.get("bg_overlay", "#ffffff")
-                base_colors["border_dim"] = extracted.get("border_dim", _rgb_to_hex(max(0, vr - 15), max(0, vg - 15), max(0, vb - 15)))
-                base_colors["border_subtle"] = extracted.get("border_subtle", _rgb_to_hex(max(0, vr - 28), max(0, vg - 28), max(0, vb - 28)))
-                base_colors["border_bright"] = extracted.get("border_bright", _rgb_to_hex(max(0, vr - 50), max(0, vg - 50), max(0, vb - 50)))
-                # Default dark typography for light background
-                base_colors["text_primary"] = extracted.get("text_primary", "#18181b")
-                base_colors["text_secondary"] = extracted.get("text_secondary", "#52525b")
-                base_colors["text_tertiary"] = extracted.get("text_tertiary", "#71717a")
-            else:
-                # Dark mode: layered atmospheric step-ups
-                base_colors["bg_base"] = extracted.get("bg_base", _rgb_to_hex(vr + 8, vg + 9, vb + 9))
-                base_colors["bg_surface"] = extracted.get("bg_surface", _rgb_to_hex(vr + 16, vg + 18, vb + 18))
-                base_colors["bg_surface_raised"] = extracted.get("bg_surface_raised", _rgb_to_hex(vr + 26, vg + 29, vb + 29))
-                base_colors["bg_overlay"] = extracted.get("bg_overlay", _rgb_to_hex(vr + 36, vg + 40, vb + 40))
-                base_colors["border_dim"] = extracted.get("border_dim", _rgb_to_hex(vr + 24, vg + 27, vb + 27))
-                base_colors["border_subtle"] = extracted.get("border_subtle", _rgb_to_hex(vr + 36, vg + 41, vb + 41))
-                base_colors["border_bright"] = extracted.get("border_bright", _rgb_to_hex(vr + 56, vg + 64, vb + 64))
+            oklab_scale = derive_perceptual_surface_scale(extracted["bg_void"], is_light)
+            for k, v in oklab_scale.items():
+                base_colors[k] = extracted.get(k, v)
         except Exception:
             pass
 
@@ -668,6 +761,16 @@ def compile_tokens(
     # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or derives mathematically
     dynamic_colors = extract_dynamic_palette(disc_text)
     computed = compute_tokens(dials, dynamic_colors)
+
+    # Perform WCAG AAA/AA relative luminance pre-flight diagnostics
+    c = computed["colors"]
+    c_ratio = check_wcag_contrast(c["text_primary"], c["bg_surface"])
+    c_ratio_void = check_wcag_contrast(c["text_primary"], c["bg_void"])
+    if c_ratio < 7.0:
+        print(f"[TOKEN COMPILER WARNING] text_primary/bg_surface contrast ratio {c_ratio:.2f}:1 is below WCAG AAA (7.0:1)")
+    if c_ratio_void < 7.0:
+        print(f"[TOKEN COMPILER WARNING] text_primary/bg_void contrast ratio {c_ratio_void:.2f}:1 is below WCAG AAA (7.0:1)")
+
     css_content = generate_css(computed)
 
     out_css = Path(output_css_path)

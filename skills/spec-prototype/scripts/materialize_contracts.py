@@ -368,6 +368,14 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 |---|---|---|---|---|---|
 {verb_table}
 
+## Fault Tolerance & Error Recovery Contract (容错与撤销边界)
+
+| Operation Category | Hazard / Reversibility Level | Defensive Mechanism | Recovery Path |
+|---|---|---|---|
+| **Contextual Parameter / Filter** | Low / Fully Reversible | Optimistic live update, zero blocking modal | Instant reset via reset chip or `Esc` key |
+| **Operational State Transition** | Medium / Conditionally Reversible | Immediate tactile commit with 5s undo toast | Click 'Undo' in toast within 5s to revert state |
+| **Destructive Resource Mutation** | High / Irreversible | Two-phase commit modal with explicit confirmation | Explicit cancel button or `Esc`; audit log entry |
+
 ## Decisive Exchange 3-Frame Specification (核心决定性交换三帧推演)
 
 - **Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.

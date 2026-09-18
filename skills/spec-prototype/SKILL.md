@@ -55,12 +55,12 @@ Evidence lens labels retained for lineage review: **Archetype A: Greenfield 0-to
 Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
 
 ```text
-[Stage 1: 破 - Tone & Tension Divergence & Spec Formulation (双钻四阶共创工法)]
+[Stage 1: 破 - Tone & Tension Divergence & Spec Formulation (五轴九柱双钻设计治理 Harness)]
   │  Co-Authored Invariant: ZERO black-box contract guessing. Progressive alignment through 4 interlocking Diamond Phases:
   │  Phase 1 (Discover · Ontology): Tension Reframing + 4 Baseline References + Ruthless Omissions ──> AskUserQuestion ──> prototype/product.md
-  │  Phase 2 (Define · Physicality & Topology): Reality Anchors + Material Boundaries + OOUX Heuristics ──> AskUserQuestion ──> surface-maps/m1.md
-  │  Phase 3 (Develop · Energy & Chromatics): Multi-Direction Aesthetic Proposals + Dynamic 16-Elevation Tokens + 5 Dials + Cognitive Ledger ──> AskUserQuestion ──> foundation/f1.md & tokens.css (t1.json, t1.md via compile_tokens.py)
-  │  Phase 4 (Deliver · Mechanics & Stress): Action Verb Lifecycle + Decisive 3-Frame + Ergonomics + Break Protocol ──> AskUserQuestion ──> c1.md & r1.md (via materialize_contracts.py)
+  │  Phase 2 (Define · Physicality & Topology): Reality Anchors + Material Boundaries + OOUX Heuristics (拓扑柱、注意力流柱) ──> AskUserQuestion ──> surface-maps/m1.md
+  │  Phase 3 (Develop · Energy & Chromatics): 5 Dials (心智五轴) + Multi-Direction Aesthetic Proposals + OKLCH Dynamic Tokens (色彩、排印、空间、阻尼柱) ──> AskUserQuestion ──> foundation/f1.md & tokens.css (t1.json, t1.md via compile_tokens.py)
+  │  Phase 4 (Deliver · Mechanics & Stress): Action Verb Lifecycle + Fault Tolerance + Data Stress Boundaries (动作三帧、容错宽容、数据应力柱) ──> AskUserQuestion ──> c1.md & r1.md (via materialize_contracts.py)
   │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; exploration uses direction briefs).
   ▼
 [Stage 2: 立 - Core Hero Anchor Prototyping via Lean Pre-baked Envelope]

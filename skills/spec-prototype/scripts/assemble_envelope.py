@@ -520,6 +520,23 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "core_tension": prod_tension_raw or "Operational Efficiency vs Cognitive Ergonomics",
         },
         "ooux_topology": ooux_topology,
+        "attention_routing": {
+            "primary_visual_anchor": f"Primary {slice_id} focal workspace & status indicator",
+            "disclosure_levels": {
+                "l1_ambient_scan": "Persistent core identity, key health/progress metrics, and primary action trigger",
+                "l2_contextual_inspection": "In-place details, expandable drawer, or docked inspection panel",
+                "l3_deep_diagnostics": "Full event logs, raw payload inspector, and historical audit trail"
+            },
+            "noise_budget": {
+                "max_simultaneous_emissive_alerts": 3,
+                "rule": "Avoid saturated multi-alert flashing; maintain atmospheric calm under normal operational states"
+            }
+        },
+        "data_stress_boundaries": {
+            "overflow_protection": "text-overflow: ellipsis, overflow-wrap: anywhere, or word-break: break-all required on dynamic labels",
+            "empty_state_guidance": "Explicit guidance message required; provide action button if state is user-correctable",
+            "tabular_numbers_required": True
+        },
         "app_shell_blueprint": app_shell_blueprints.get(layout_profile, app_shell_blueprints["dense-console"]),
         "app_shell_contract": app_shell_contracts.get(layout_profile, app_shell_contracts["dense-console"]),
         "target_html_path": target_html,

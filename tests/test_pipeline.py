@@ -1130,7 +1130,7 @@ def test_light_mode_palette_derivation_and_wcag_contrast(tmp_path: Path):
 
     css_content = out_css.read_text(encoding="utf-8")
     # Verify dark text is generated, not light off-white
-    assert "--text-primary: #18181b" in css_content or "--text-primary: #0" in css_content
+    assert "--text-primary: #18181b" in css_content or "--text-primary: #121211" in css_content or "--text-primary: #0" in css_content
 
     data = json.loads(out_json.read_text(encoding="utf-8"))
     bg_surface = data["color"]["surface"]["$value"]
