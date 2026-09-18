@@ -390,19 +390,19 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 |---|---|---|---|---|---|
 {verb_table}
 
-## Fault Tolerance & Error Recovery Contract (容错与撤销边界)
+## Fault Tolerance & Error Recovery Contract (容错与撤销边界 · Experience Invariants)
 
-| Operation Category | Hazard / Reversibility Level | Defensive Mechanism | Recovery Path |
+| Operation Category | Hazard / Reversibility Level | Defensive Invariant | Recovery Path & Candidate Techniques |
 |---|---|---|---|
 | **Contextual Parameter / Filter** | Low / Fully Reversible | Optimistic live update, zero blocking modal | Instant reset via reset chip or `Esc` key |
-| **Operational State Transition** | Medium / Conditionally Reversible | Immediate tactile commit with 5s undo toast | Click 'Undo' in toast within 5s to revert state |
-| **Destructive Resource Mutation** | High / Irreversible | Two-phase commit modal with explicit confirmation | Explicit cancel button or `Esc`; audit log entry |
+| **Operational State Transition** | Medium / Conditionally Reversible | Reversibility Invariant: clear temporal recovery path | Candidate: Undo toast, history rollback, or status revert |
+| **Destructive Resource Mutation** | High / Irreversible | Commit Safety Invariant: deliberate confirmation proportional to hazard | Candidate: Confirmation dialog, hold-to-confirm, or explicit review step |
 
-## Decisive Exchange 3-Frame Specification (核心决定性交换三帧推演)
+## Decisive Exchange 3-Frame Specification (核心决定性交换三帧推演 · Experience Invariants)
 
-- **Frame 1 (Intent Input)**: Operator activates target trigger via mouse click or `Space` key; contextual inspector slides in with operational parameters.
-- **Frame 2 (Decisive Commit)**: Operator hits commit action; trigger undergoes tactile `:active scale(0.97)` mechanical response; inline state locks to prevent duplicate submissions.
-- **Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; feedback toast displays completion; focus deterministically restores to originating anchor.
+- **Frame 1 (Intent Input)**: Operator activates target trigger via primary pointer or keyboard; contextual parameters reveal smoothly without layout shift.
+- **Frame 2 (Decisive Commit)**: Operator commits action; trigger delivers immediate perceptible feedback (Candidate: tactile press, border shift, or luminance response); state locks to prevent duplicate submissions.
+- **Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; completion feedback displays; focus deterministically restores to originating anchor; indicators settle into baseline calm.
 
 ## Context Preservation Rules (上下文绝对保持法则)
 
@@ -416,7 +416,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 
 | Gesture Vector | Target Action / Interaction | Scope | Focus / State Settlement |
 |---|---|---|---|
-| `Tap` / `Press` | Direct manipulation of reservation card / action trigger | Active card or action slot | Tactile scale(0.97) micro-feedback |
+| `Tap` / `Press` | Direct manipulation of reservation card / action trigger | Active card or action slot | Immediate perceptible feedback (e.g. tactile scale or highlight) |
 | `Swipe Down` | Dismiss modal sheet / parameter drawer | Bottom sheet overlay | Restore viewport to originating card |
 | `Edge Swipe` | Navigate back through historical booking steps | Global screen edge | Settle immediately into previous step |"""
             else:

@@ -125,9 +125,9 @@ Route design work by declared intent and required evidence. The five stages are 
   - Ban sterile dead neutral gray (`#808080`, unconsidered `gray-500` washes).
   - Infuse subtle chromatic undertones (e.g. deep titanium with cobalt glow, warm graphite, or parchment tint) to establish character without compromising contrast.
 - **Tactile Physics & Micro-dynamics**:
-  - Button elastic press: `:active { transform: scale(0.97); }`
-  - Industrial deceleration: `cubic-bezier(0.16, 1, 0.3, 1)`
-  - Micro-snap: `120ms` detent transitions.
+  - Button elastic press: Perceptible feedback on activation (e.g. tactile active press scaling, border shift, or subtle depth depression).
+  - Kinetic deceleration: Smooth responsive deceleration curves (e.g. `cubic-bezier(0.16, 1, 0.3, 1)`).
+  - Micro-snap: Rapid settled detent transitions.
 - **Physical Token Entity**: Materialize `prototype/shared/tokens.css` with fundamental colors, typography, elevations, and motion curves.
 - **Prototype Component Discipline (Native-First vs Production Handoff)**: Prototypes must remain frictionless, zero-build, and immediately runnable. Use native HTML5 semantic tags (`<dialog>`, `<details>`, `<form>`) and CSS token recipes. Formal UI framework componentization (React/Vue/shadcn, prop interfaces, complex state machines) is strictly deferred to downstream Loom Entry 2 engineering delivery.
 - **Stage 2 Anchor Approval Gate (严禁跳步：样板未定，骨架不展)**:
@@ -155,7 +155,7 @@ Route design work by declared intent and required evidence. The five stages are 
 - **Unified Review Portal (`review-portal.html`)**: Single responsive multi-view harness generated via `python3 skills/spec-prototype/scripts/generate_review_portal.py`, embedding an iframe for all screens, viewport switches (390px, 768px, 1280px, 1600px), and state triggers.
 - **Decisive Exchange 3-Frame Inspection (`interaction-power.md:64`)**: Visually inspect the primary decisive interaction across its three continuous phases:
   - `Intent`: Clear signifiers on hover/focus before commitment.
-  - `Detent`: Visible physical resistance/damping during execution (`:active scale(0.97)`).
+  - `Detent`: Visible physical resistance/damping or immediate perceptible feedback during execution.
   - `Settled`: Deterministic feedback, focus restoration, and reversible exit.
 - **Dual-Floor Reality Verification (双轨红线验收门)**:
   - **Track A: Machine & Geometry Code Floor**: Concentric radii formula verification (`R_in = max(0, R_out - P)`), zero raw inline hex colors, 100% token inheritance, WCAG AAA static contrast, and zero layout breakage under unhyphenated string stress.

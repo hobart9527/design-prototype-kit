@@ -288,7 +288,7 @@ redundant finding — report the cheaper fix instead.
 - Tabular Numerics: font-variant-numeric: tabular-nums on all high-frequency telemetry, timestamps, and currency values.
 - Zero Naked Metrics: Every metric must display a baseline, threshold, or floor/ceiling benchmark.
 - Atmospheric Undertone: Surfaces must derive from contextual dark/light undertones, eliminating flat dead neutral greys.
-- Tactile Kinetics: Active states must provide tactile feedback (:active { transform: scale(0.97); }) with damped cubic-bezier transitions.
+- Perceptible Action Feedback: Active states must provide immediate, perceptible feedback (e.g. tactile scale, elevation shift, or luminance pulse) with stable layout integrity.
 - Action Verb Lifecycle: Interactive buttons must reflect full lifecycle state transitions (e.g. QUARANTINE STEP -> QUARANTINED).
 - Non-Transfer Boundary: Every physical or conceptual metaphor must explicitly define and enforce its non-transfer boundary.
 - Vague-Word Firewall: Reject any aesthetic justification relying on vague adjectives without concrete token, contrast, and spacing bounds.

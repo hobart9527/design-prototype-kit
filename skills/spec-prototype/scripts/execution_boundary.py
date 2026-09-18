@@ -78,6 +78,11 @@ def dispatch(args, active):
                 actual = hashlib.sha256(file_path.read_bytes()).hexdigest()
                 require(actual == expected,
                         f'Stale contract: {file_path.name} changed since envelope was compiled ({actual[:8]} != {expected[:8]}). Re-assemble envelope before dispatch.')
+
+        # P0-1: Build Authority Gate in execution boundary
+        # If the envelope targets formal release/freeze, it must not carry unconfirmed [Hypothesis] actions
+        if data.get('target_environment') == 'formal-candidate' and data.get('has_hypothesis_actions'):
+            raise ValueError('Build Authority Gate: Formal candidate build blocked because envelope contains unvalidated [Hypothesis] actions. Run as direction probe or confirm explicit authority.')
     else:
         require(data == packet(root, data['specification']['path']),
                 'Pass the exact handoff.py packet JSON unchanged to Builder.')

@@ -121,6 +121,12 @@ def parse_tokens_markdown(content: str) -> dict[str, Any]:
                 "$value": val,
                 "$type": token_type,
                 "authority": "frozen_spec",
+                "$extensions": {
+                    "design-prototype-kit": {
+                        "authority": "frozen_spec",
+                        "provenance": "spec-prototype v10.1"
+                    }
+                }
             }
             if usage:
                 token_obj["$description"] = usage

@@ -280,5 +280,38 @@ def test_stale_digest_guard_blocks_modified_contract(tmp_path: Path):
         boundary_mod.check(event)
 
 
+def test_build_authority_gate_blocks_formal_candidate_with_hypotheses(tmp_path: Path):
+    """P0 Build Authority Gate: Formal candidate builds must be blocked if unvalidated [Hypothesis] actions exist."""
+    boundary_mod = _load("execution_boundary", SCRIPTS / "execution_boundary.py")
+
+    fake_env = {
+        "mode": "lean-builder-envelope",
+        "slice_id": "checkout",
+        "repository_root": str(tmp_path.resolve()),
+        "skill_root": str(SCRIPTS.parent.resolve()),
+        "target_html_path": "prototype/experiments/checkout/index.html",
+        "target_environment": "formal-candidate",
+        "has_hypothesis_actions": True,
+        "spec_sources": {"product_digest": "dummy"}
+    }
+    # Create target html directory to satisfy boundary path checks
+    (tmp_path / "prototype/experiments/checkout").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/experiments/checkout/index.html").write_text("<!DOCTYPE html><html></html>", encoding="utf-8")
+    (tmp_path / "prototype/discussion.md").write_text("- Execution boundary: active\n", encoding="utf-8")
+
+    event = {
+        "cwd": str(tmp_path),
+        "tool_name": "Agent",
+        "tool_input": {
+            "subagent_type": "spec-prototype-builder",
+            "prompt": json.dumps(fake_env),
+        },
+    }
+
+    with pytest.raises(ValueError, match="Build Authority Gate"):
+        boundary_mod.check(event)
+
+
+
 
 

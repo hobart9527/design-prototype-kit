@@ -635,9 +635,29 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "reference_pattern_guidance": app_shell_contracts.get(layout_profile, app_shell_contracts["adaptive-workspace"])
     }
 
+    # P0-1: Build Authority Gate
+    # In formal build mode (lean-builder-envelope), actions marked with [Hypothesis] cannot be built as frozen fact
+    # unless explicitly allowed via probe mode or non-formal flag.
+    has_hypothesis_action = False
+    for v in verb_lifecycle:
+        # Check action label, modal header or impact for hypothesis markers
+        for val in v.values():
+            if isinstance(val, str) and "[hypothesis]" in val.lower():
+                has_hypothesis_action = True
+                break
+        if has_hypothesis_action:
+            break
+
+    # Determine build authority
+    build_authority = "formal"
+    if has_hypothesis_action:
+        build_authority = "probe_only"
+
     envelope = {
         "envelope_version": "2.0",
         "envelope_architecture": "3.0-dual",
+        "build_authority": build_authority,
+        "has_hypothesis_actions": has_hypothesis_action,
         "repository_root": str(root.resolve()),
         "skill_root": str(SKILL.resolve()),
         "slice_id": slice_id,
