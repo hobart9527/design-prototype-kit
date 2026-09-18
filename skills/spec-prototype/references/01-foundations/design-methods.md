@@ -1,89 +1,102 @@
-# Design Methods — Seven High-Leverage Levers & Divergence Engine
+# Design Methods & Craft Library (工法与参考库)
 
-Use this reference when an experience design choice is open, or when a validated design lacks tension, authority, or craft verisimilitude. Methods do not replace the Canonical 5-Stage state machine; they supply the disciplined generative and falsification mechanics that sharpen Stage 1 (破) and Stage 2 (立).
+> Canonical Design Architecture: **Nine Pillars** (主模型 · WHAT) · **Double Diamond** (决策流 · HOW DECIDE) · **Five Axes** (表达坐标 · HOW FEELS) · **Craft Library** (工法库 · HOW CRAFT) · **Evidence Protocol** (横向治理)。
 
----
-
-## 1. The Seven High-Leverage Design Levers (七大高杠杆设计技法)
-
-When faced with infinite styling choices, prioritize these seven high-leverage levers. They yield maximal systemic rigor, cognitive clarity, and physical realism for minimal decision cost:
-
-### Lever 1: Reality Anchors & Tension Triad (现实双地锚与三大舍弃)
-- **Reality Benchmark Anchors**: Ground every design in two real-world reference systems:
-  1. *Operational / Data Reality* (e.g. Datadog high-density telemetry, Bloomberg terminal density, Ableton Live clip workflow);
-  2. *Physical / Kinetic Reality* (e.g. aviation fly-by-wire detent, machine tool caliper scale, analog optical substrate).
-- **Core Tension Triad**: Identify the defining operational trade-off (e.g. Throughput vs Liability, Focal Immersion vs Context Awareness).
-- **Three Ruthless Omissions**: Explicitly declare at least 3 things this surface will NOT do (e.g. no multi-step wizards, no naked scalar metrics, no decorative floating cards).
-
-### Lever 2: OOUX Cardinality-to-Layout Mapping (实体基数到空间拓扑映射)
-Structure layout strictly around authentic domain object cardinalities:
-- `1 : 1` Singular Entity $\longrightarrow$ Focused Inspection Canvas / Dedicated Setting Workbench.
-- `1 : N` Master-Detail $\longrightarrow$ High-Density Faceted Data Table / Master-Detail Split Screen.
-- `N : M` Relational Network $\longrightarrow$ Multi-Column Topology Board / Relational Node-Link Canvas.
-*Anti-Contamination Rule*: Never rename genuine domain entities to fit visual metaphors (e.g. never call database replicas "particles" or compute nodes "planets").
-
-### Lever 3: Action Verb Lifecycle (动作动词全生命周期闭环)
-Every primary and secondary operational action must maintain exact atomic terminology across its entire 4-phase lifecycle:
-$$\text{Trigger Button} \longrightarrow \text{Modal / Drawer Title} \longrightarrow \text{Commit Action Button} \longrightarrow \text{Completion Feedback Toast}$$
-*Example*: `Quarantine` (trigger) $\longrightarrow$ `Quarantine Worker` (dialog title) $\longrightarrow$ `Quarantine` (primary button) $\longrightarrow$ `Worker Node Quarantined` (toast). Zero semantic drifting or synonym substitution.
-
-### Lever 4: Zero Naked Metrics & Micro Sparklines (拒斥裸指标与内联微时序)
-Never show a floating scalar number without context. Every critical metric must provide:
-1. **Threshold Baseline**: An explicit rated limit, capacity ceiling, or warning threshold;
-2. **Inline Micro Sparkline**: A compact 40-60px SVG `<polyline>` or `<path>` showing the recent 15-minute trend;
-3. **Temporal Frequency**: Explicit sampling window (e.g. "last 5s avg", "p99 15m").
-
-### Lever 5: Decisive 3-Frame & Context Preservation (决定性交换三帧推演与上下文保持)
-- **Decisive 3-Frame Inspection**: Map the consequential commitment moment:
-  $$\text{Frame 1: Intent Input} \longrightarrow \text{Frame 2: Decisive Commit with Tactile Resistance} \longrightarrow \text{Frame 3: State Settlement & Focus Restoration}$$
-- **Context Preservation Invariant**: When an operator branches into a drawer, popover, or secondary modal and subsequently dismisses or cancels it, their uncommitted form drafts, scroll offsets, and active table filters MUST be strictly preserved.
-
-### Lever 6: The Craft Physics Triad (三大微观物理底线)
-Every prototype surface must implement the three microscopic geometry rules:
-1. **Concentric Radii**: $R_{\text{inner}} = \max(0, R_{\text{outer}} - \text{padding})$. Eliminates jarring geometric visual dissonance.
-2. **Tabular Numerics**: `font-variant-numeric: tabular-nums` on all metrics, timestamps, counters, and telemetry readouts.
-3. **Tactile Mechanical Detents**: `:active { transform: scale(0.97); }` with `cubic-bezier(0.16, 1, 0.3, 1)` transition curves.
-
-### Lever 7: The Break Protocol (四维破坏性应力极限测试)
-Stress-test runnable prototypes against four reality breakers before user presentation:
-1. **Unbreakable String Overflow**: Long un-spaced hashes and IDs to verify truncation and tooltip behavior.
-2. **Zero-Item Empty State**: Verify that an empty dataset renders an actionable recovery mechanism rather than a dead canvas.
-3. **Extreme 320px Fold**: Ensure primary actions and orientation survive extreme mobile viewport folds.
-4. **Rapid Interruption**: Rapid repeated clicks to verify idempotency and debouncing.
+This reference serves as the **Craft Library** under the Nine Pillars ontology. Craft methods provide generative rigor and falsification techniques, but **techniques never masquerade as universal quality floors**. Experience invariants govern quality; techniques supply candidate implementations.
 
 ---
 
-## 2. The Divergence Gate (分歧四反转法)
+## 1. The Nine Pillars Canonical Ontology (九柱设计本体)
 
-Do not allow "settled by convention" to become an excuse for unexamined clichés. When exploring Stage 1 directions, pass through the **Divergence Gate**:
+Every consequential product design must resolve the core questions across nine orthogonal pillars:
 
-1. **Axis Inversion**: Reorganize the primary information/interaction axis (e.g. from a sequential step flow to a spatial workbench, or from a passive status monitor to a direct-manipulation steering wheel).
-2. **Constraint Inversion**: Invert a key assumption (e.g. assume extreme screen density, zero-latency feedback, or keyboard-only emergency operation) and test if the core relationship survives.
-3. **Antithetical Metaphor**: Counter the default generic dashboard with a contrasting domain metaphor (e.g. artisan's cutting mat, astronomical spectrograph, submarine acoustic console).
-4. **Signature Craft Focus**: Select the single interaction moment that defines the character of the product, and articulate how its typography, spatial hierarchy, and motion create genuine brand and emotional resonance.
+1. **Value**: Why build this? Who is it for? What is the defining operational tension and success signal?
+2. **Research**: What is known vs unknown? What is empirical evidence vs working hypothesis?
+3. **Object**: What entities, relationships, ownerships, and lifecycles truly exist in the domain? (OOUX)
+4. **Journey**: How does an operator initiate, execute, recover, and conclude tasks across interruptions?
+5. **Topology**: How are surfaces, workspaces, drawers, and contexts spatially organized and preserved?
+6. **Attention**: Where does the eye travel first, second, and third? Progressive disclosure and noise budget.
+7. **Expression**: What sensory language (Five Axes: density, energy, materiality, rhythm, character) is projected?
+8. **Interaction**: How do inputs trigger direct manipulation, feedback detents, and state mutations?
+9. **Resilience**: How does the surface behave under empty data, overflow, latency, disruption, and accessibility constraints?
 
 ---
 
-## 3. Eight-Lens Method Router (八维工法导航)
+## 2. Invariants vs. Techniques (体验不变式与具体手艺解耦)
 
-Scan the eight lenses to identify applicable craft references:
+A core failure of rule-heavy systems is elevating specific techniques to rigid quality floors. In v10, quality floors assert **invariants**, allowing the Builder creative agency across candidate techniques:
 
-| Lens | Questions that trigger deeper work | Reference Pillar |
+| Invariant (体验不变式 · 必须满足) | Candidate Techniques (候选手艺 · 按需选用) | Anti-Pattern to Avoid |
 |---|---|---|
-| **Value & Outcomes** | Purpose, audience, consequential tension is ambiguous | `01-foundations/product-understanding.md` |
-| **Research & Context** | Real user mental model or operating environment unclear | `01-foundations/research.md` |
-| **Objects & Content** | Object boundaries, attributes, and relationships unclear | `02-craft-methods/ia-interaction.md` |
-| **Journeys & States** | Task transitions, interruptions, or recovery ambiguous | `02-craft-methods/ia-interaction.md` |
-| **Surface Topology** | Page necessity, wayfinding tiers, responsive collapse | `02-craft-methods/ia-interaction.md` |
-| **Interaction & Power** | Keyboard shortcuts, decisive exchange, micro-motion | `02-craft-methods/interaction-power.md` |
-| **Data & Information** | High-density tables, sparklines, comparison matrices | `02-craft-methods/data-information.md` |
-| **Resilience & Trust** | Destructive actions, confirmation ladders, AI agency | `02-craft-methods/resilience-trust.md` |
+| **Perceptible Immediate Feedback**: Consequential actions must provide instant, visible, non-destructive feedback. | `:active { transform: scale(0.97); }`, background shift, inset shadow, border detent, tactile spring. | Mandating `scale(0.97)` everywhere or breaking layout during press. |
+| **Contextual Data Grounding**: Key numbers must carry baseline, unit, or comparative context. | Inline units, thresholds, rated ceilings, status badges, delta arrows, compact sparklines. | Forcing SVG sparklines into focused reading or document canvases. |
+| **Harmonious Geometry**: Container borders and nested elements must maintain optical concentricity. | $R_{\text{in}} = \max(0, R_{\text{out}} - P)$, matched corner radii, optical alignment. | Disjointed nested rounded corners causing visual distortion. |
+| **Numeric Stability**: Tabular metrics, timers, and quantities must not jitter during updates. | `font-variant-numeric: tabular-nums`, monospace digits, dedicated figure columns. | Shifting layouts when digits fluctuate from 1 to 8. |
+| **Structural Resilience (Break Protocol)**: Surfaces must gracefully withstand edge data without collapse. | `text-overflow: ellipsis`, flex-wrap containment, actionable empty CTA, 320px fold integrity. | Dead empty screens with zero recovery path or runaway horizontal overflow. |
 
 ---
 
-## 4. Method Lineage and Clean Routing
+## 3. High-Leverage Craft Methods (高杠杆工法库)
 
-- **OOUX / ORCA**: Use for object-centered modeling (Objects, Relationships, Calls-to-action, Attributes) before container selection.
-- **Nielsen / Norman**: Apply as observable heuristic acceptance criteria (visibility of system status, match between system and real world, error prevention, recognition over recall).
-- **Elements of UX**: Strategy $\longrightarrow$ Scope $\longrightarrow$ Structure $\longrightarrow$ Skeleton $\longrightarrow$ Surface dependency hierarchy.
-- **W3C DTCG**: Single source of truth for design token export and handoff.
+When shaping Stage 1 specs and Stage 2 probes, apply these methods under their owning Pillars:
+
+### Method 1: Reality Anchors & Tension Triad (Pillar: Value)
+- **Operational Reality vs Physical Substrate**: Ground every design in empirical operational standards (e.g. Linear/Datadog high-density telemetry, iA Writer focused canvas, Stripe checkout clarity).
+- **Three Ruthless Omissions**: Explicitly state at least 3 things this surface will NOT do (e.g. zero promotional carousels, zero ungrounded scalar metrics, zero nested modal traps).
+- **Divergence Gate & Axis Inversion**: Invert default assumptions across operational axes before converging on design proposals.
+
+### Method 2: OOUX Cardinality-to-Layout Mapping (Pillars: Object & Topology)
+Map domain relationships directly to spatial structure:
+- `1 : 1` Singular Entity $\longrightarrow$ Focused Inspection Canvas / Dedicated Detail View.
+- `1 : N` Master-Detail $\longrightarrow$ High-Density Faceted Matrix / Master-Detail Split Rack.
+- `N : M` Relational Network $\longrightarrow$ Multi-Column Topology Board / Interactive Node-Link Canvas.
+
+### Method 3: Action Verb Lifecycle (Pillars: Interaction & Journey)
+Every state-mutating action must preserve exact atomic terminology across its entire lifecycle:
+$$\text{Trigger Button} \longrightarrow \text{Modal / Drawer Confirmation} \longrightarrow \text{Commit Action Button} \longrightarrow \text{Completion Toast / Feedback}$$
+*Rule*: Zero semantic drift or synonym mutation between trigger and completion.
+
+### Method 4: Zero Naked Metrics & Micro Sparklines (Pillars: Expression & Attention)
+Every critical metric must carry contextual baselines, unit tags, delta trends, or compact sparklines to prevent naked ungrounded readouts.
+
+### Method 5: Decisive 3-Frame & Context Preservation (Pillars: Journey & Resilience)
+- **Decisive 3-Frame Mapping**:
+  $$\text{Frame 1: Intent Input} \longrightarrow \text{Frame 2: Commitment with Perceptible Feedback} \longrightarrow \text{Frame 3: State Settlement \& Return}$$
+- **Context Preservation**: Dismissing a secondary modal or drawer must preserve existing form drafts, scroll offsets, and active table filters without data loss.
+
+### Method 6: The Craft Physics Triad (Pillars: Expression & Interaction)
+Calibrate concentric radii formulas, kinetic press detents, and tabular numerics to achieve tactile precision.
+
+### Method 7: The Break Protocol (Pillar: Resilience)
+Stress-test string overflow, zero-item empty state recovery CTA, and 320px fold integrity.
+
+---
+
+## 4. Reference Patterns (场景参考模式，非互斥分类)
+
+The historical "4 Baselines" are demoted from rigid code classifiers to composable reference patterns:
+
+- **Dense Workbench**: High information density, compact tabular readouts, multi-pane instrument layouts (Operations, SRE, Trading).
+- **Operational Canvas**: Fluid workspaces, dual-track review flows, contextual inspector drawers (Collaboration, SaaS, PM).
+- **Editorial Reading**: Distraction-free focus, ergonomic reading measures (55-75ch), proportional typographic hierarchy (Publishing, Documentation, AI Writing).
+- **Touch-First Somatic**: Bounded touch targets (min 44px), spring friction curves, tactile sheet drawers (Mobile, Consumer booking).
+
+*Composition Principle*: Complex products combine reference patterns orthogonally (e.g., an AI Writer combines *Editorial Reading* typography with *Operational Canvas* version diffing).
+
+---
+
+## 5. Nine Pillars Reference Router (内部参考路由)
+
+Use this table to navigate in-depth references under the Nine Pillars:
+
+| Pillar | Focus Area | In-Depth Reference File |
+|---|---|---|
+| **Value** | Product thesis, core tension, non-goals | `01-foundations/product-understanding.md` |
+| **Research** | Knowns/unknowns, evidence levels L0-L5 | `01-foundations/research.md` |
+| **Object** | Entities, attributes, lifecycles, OOUX | `02-craft-methods/ia-interaction.md` |
+| **Journey** | Task flows, entry/return, interruptions | `02-craft-methods/ia-interaction.md` |
+| **Topology** | Surface maps, drawers, context preservation | `02-craft-methods/ia-interaction.md` |
+| **Attention** | Reading order, disclosure levels, noise budget | `02-craft-methods/interaction-power.md` |
+| **Expression** | Five axes, color, typography, materiality | `01-foundations/design-language.md`, `02-craft-methods/visual-craft.md` |
+| **Interaction** | Action lifecycles, tactile feedback, shortcuts | `02-craft-methods/interaction-power.md` |
+| **Resilience** | Fault tolerance, empty states, Break Protocol, a11y | `02-craft-methods/resilience-trust.md` |

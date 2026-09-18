@@ -50,36 +50,48 @@ of tokens, stylesheets, or prototypes alone.
 
 Evidence lens labels retained for lineage review: **Archetype A: Greenfield 0-to-1**, **Archetype B: New Surface 1-to-N**, and **Archetype C: Refinement & Audit**. These labels describe observed workspace context only.
 
+## Canonical Design Architecture (1 主 + 3 辅 + Evidence 终局模型)
+
+The system unifies all design operations into four orthogonal layers and one transverse governance protocol:
+1. **Nine Pillars (WHAT WE DESIGN — 唯一设计本体)**: Value · Research · Object · Journey · Topology · Attention · Expression · Interaction · Resilience. Defines what consequential problems every design must resolve.
+2. **Double Diamond (HOW WE DECIDE — 决策收放流向)**: Problem Space (Discover · Define) ──> Solution Space (Develop · Deliver). Directs when to diverge and when to converge across the entire design lifecycle.
+3. **Five Axes (HOW IT FEELS — 表达坐标寄存器)**: Density · Energy · Materiality · Rhythm · Character. Evaluates and calibrates sensory direction; optionally declared as needed, never forced as a mandatory CSS formula.
+4. **Craft Library (HOW TO CRAFT — 工法与参考库)**: General craft methods (OOUX, Action Verb Lifecycle, Context Preservation, Break Protocol, etc.) and composable reference patterns (Workbench, Canvas, Editorial, Touch). Subservient to Nine Pillars; techniques serve invariants and are never global rigid gates.
+5. **Evidence Protocol (横向证据治理)**: `explicit > observed > derived > hypothesis > unknown`. Every design decision must trace to empirical facts or declared hypotheses.
+
 ## Canonical 5-Stage Design Workflow (五阶工序状态机)
 
 Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
 
 ```text
-[Stage 1: 破 - Tone & Tension Divergence & Spec Formulation (五轴九柱双钻设计治理 Harness)]
-  │  Co-Authored Invariant: ZERO black-box contract guessing. Progressive alignment through 4 interlocking Diamond Phases:
-  │  Phase 1 (Discover · Ontology): Tension Reframing + 4 Baseline References + Ruthless Omissions ──> AskUserQuestion ──> prototype/product.md
-  │  Phase 2 (Define · Physicality & Topology): Reality Anchors + Material Boundaries + OOUX Heuristics (拓扑柱、注意力流柱) ──> AskUserQuestion ──> surface-maps/m1.md
-  │  Phase 3 (Develop · Energy & Chromatics): 5 Dials (心智五轴) + Multi-Direction Aesthetic Proposals + OKLCH Dynamic Tokens (色彩、排印、空间、阻尼柱) ──> AskUserQuestion ──> foundation/f1.md & tokens.css (t1.json, t1.md via compile_tokens.py)
-  │  Phase 4 (Deliver · Mechanics & Stress): Action Verb Lifecycle + Fault Tolerance + Data Stress Boundaries (动作三帧、容错宽容、数据应力柱) ──> AskUserQuestion ──> c1.md & r1.md (via materialize_contracts.py)
+[Stage 1: 破 - Understand & Frame (问题澄清与契约基准)]
+  │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, establish Surface Topology & initial design tokens.
+  │  Alignment Cadence: Coalesce inquiries when intent or delegation is clear. AskUserQuestion only when genuine forks exist (e.g. Direction A vs B or unresolved core tension).
+  │  Frozen Spec Artifacts: prototype/product.md, surface-maps/m1.md, foundation/f1.md & tokens.css (via compile_tokens.py).
   │  Gate Rule: ZERO Prototype Code without a complete frozen Spec Contract (for formal candidate delivery; exploration uses direction briefs).
   ▼
-[Stage 2: 立 - Core Hero Anchor Prototyping via Lean Pre-baked Envelope]
-  │  Gated: AskUserQuestion (Single Hero Anchor ONLY, Headless Chrome authentic rendering, Concentric Radii, Tabular Numbers, tokens.css, NO secondary pages until approved)
+[Stage 2: 立 - Proposition & High-Risk Probe (设计主张与探针验证)]
+  │  Core Objective: Formulate Design Proposition, select Five-Axis register, build bounded representative Probe to validate highest-risk interaction relationship.
   │  Envelope Assembly: python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json
-  │  Dispatched via Pre-baked Envelope: Builder receives self-contained envelope JSON string as prompt
-  │  Execution Safety: Bounded budget with evidence-led repair; no exploratory wandering.
+  │  Dispatched via Lean Envelope: Builder receives bounded constraints (Constraint Envelope) while retaining layout composition agency (Creative Envelope).
+  │  Execution Safety: Single hero anchor / signature relationship only; headless browser verification; no exploratory runaway code.
   ▼
-[Stage 3: 拓 - Full IA Surface Rollout]
-  │  Rollout derived strictly from genuine Surface Topology (Primary, Contextual, Supporting; unbind from rigid Tier 0/1/2)
-  │  Strict: Compression & Release, Reference benchmarks (zero naked metrics), Action verb lifecycle closure, <link href="../../shared/tokens.css">, zero inline hex
+[Stage 3: 拓 - Walking Skeleton Rollout (端到端真实骨架贯通)]
+  │  Core Objective: Expand probe into a cohesive Walking Skeleton validating complete task continuity (Trigger -> Action -> State Mutation -> Recovery -> Return).
+  │  Structure: Derived from authentic Surface Topology (Primary, Contextual, Supporting). Unbound from rigid screen counts.
+  │  Strict Floors: Compression & release, contextual reference data (zero naked metrics), action verb closure, tokens.css adherence, zero inline hex.
   ▼
-[Stage 4: 验 - Holistic Review & Feedback Loop]
-  │  Automated Portal Generation: python3 skills/spec-prototype/scripts/generate_review_portal.py
-  │  Gated: AskUserQuestion (review-portal.html walkthrough, Dual-Floor Reality Gate, The Break Protocol stress limits, 5 operational states)
-  │  Controlled Feedback Absorption Loop: Granular user critique absorbed via tokens.css / HTML slices -> Re-verification -> Human signoff
+[Stage 4: 验 - Four-Dimensional Evidence & Holistic Critique (四维证据客观走查)]
+  │  Automated Capture & Portal: capture.mjs (headless multi-viewport 320/390/1280px) & generate_review_portal.py.
+  │  Decoupled Evidence Gate:
+  │    - Engineering Evidence: DOM integrity, tokens, a11y floors (verify_prototype_quality.py)
+  │    - Interaction Evidence: State mutations, error recovery, undo detents, break protocol limits
+  │    - Visual Capture: Renderer capture status (captured != verified; visual critique remains explicit)
+  │    - Human Evidence: Final signoff and stakeholder confirmation
+  │  Controlled Absorption Loop: Critique absorbed into tokens.css / HTML slices -> Re-verify.
   ▼
-[Stage 5: 冻 - Silent Packaging & Headless Governance]
-     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (AAA), handoff.py (SHA-256)
+[Stage 5: 冻 - Silent Packaging & Headless Governance (静默封版与工件交付)]
+     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (AAA), handoff.py (SHA-256 integrity manifest).
 ```
 
 ## Dual-Engine Architecture: Sharp Exploration vs Silent Governance

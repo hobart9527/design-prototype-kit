@@ -113,7 +113,7 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                 if len(extracted) >= 3:
                     break
 
-    # Tertiary Fallback: Clean domain-agnostic operational contract derived from slice_id
+    # Tertiary Fallback: Candidate hypothesis derived from slice_id — never fabricated as frozen fact
     if not extracted:
         clean_slice = slice_id.replace("-", " ").title()
         action_id = f"execute-{slice_id}"
@@ -123,7 +123,7 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
             "modal_header": f"Confirm {clean_slice} Action",
             "commit_btn": "Confirm",
             "toast": f"{clean_slice} Action Completed",
-            "impact": f"Executes decisive operational change for {slice_id}",
+            "impact": f"[Hypothesis] Candidate operational flow for {slice_id}; unresolved pending empirical validation in Stage 2/4",
         })
     return extracted
 
@@ -247,11 +247,23 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
     action_verbs = extract_action_verbs(disc_text, slice_id)
 
     # Determine profile-aware assertions and interaction patterns
-    is_reading = bool(re.search(r"Baseline 3|Editorial|Reading|Content|Article|文档|阅读|排版", prod_text + " " + disc_text, re.IGNORECASE))
+    is_reading = bool(re.search(r"Baseline 3|Editorial|Reading|Article|阅读|排版", prod_text + " " + disc_text, re.IGNORECASE))
     is_marketing = bool(re.search(r"Marketing|Product Landing|Landing|官网|宣传|介绍", prod_text + " " + disc_text, re.IGNORECASE))
     is_mobile = bool(re.search(r"Baseline 4|Consumer|Mobile|Touch|Booking|移动|预约|触控", prod_text + " " + disc_text, re.IGNORECASE))
+    is_writer_canvas = bool(re.search(r"Writer|Writing|Editor|Canvas|写作|编辑|协同写作", prod_text + " " + disc_text, re.IGNORECASE))
 
-    if is_reading:
+    if is_writer_canvas:
+        contract_assertions = """| Assertion | Expected | Observed |
+|---|---|---|
+| Declared product intent is represented | present | unverified |
+| Document canvas clarity: distraction-free focus, content-first typography | present | unverified |
+| Inline state preservation: seamless revision and diff review flow | present | unverified |
+| Tabular Numerics: font-variant-numeric: tabular-nums on document metrics | present | unverified |
+| Atmospheric undertone: zero sterile neutral gray #808080 | present | unverified |
+| Keyboard ergonomics: operable shortcuts (e.g. Esc, Space) | present | unverified |
+| Action Verb Lifecycle closure: trigger -> review/diff -> commit -> toast | present | unverified |
+| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
+    elif is_reading:
         contract_assertions = """| Assertion | Expected | Observed |
 |---|---|---|
 | Declared product intent is represented | present | unverified |
@@ -360,9 +372,10 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Slice ID: {slice_id}
 - Foundation revision: f1
 - Product source: `prototype/product.md`, {_digest(prod_path)}
+- Canonical Ontology: Nine Pillars Mapping (Object, Journey, Attention, Interaction, Resilience)
 - Status: candidate
 
-## Intent
+## Intent & Value Anchor
 {tension}
 
 ## Cognitive Budgeting & Energy Return Ledger (认知借贷收支账本)

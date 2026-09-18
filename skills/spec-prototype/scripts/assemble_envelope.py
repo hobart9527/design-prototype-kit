@@ -367,30 +367,6 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     verification_cmd = f"python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice {slice_id}"
     capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
 
-    # Determine layout profile FIRST — drives interaction_spec trimming below
-    baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
-    declared_baseline = baseline_match.group(1).strip() if baseline_match else ""
-
-    if re.search(r"Baseline 4|Consumer|Mobile|Touch|消费|移动|触控", declared_baseline, re.IGNORECASE):
-        layout_profile = "somatic-touchflow"
-    elif re.search(r"Baseline 3|Editorial|Reading|阅读|文章|出版", declared_baseline, re.IGNORECASE):
-        layout_profile = "editorial-reading"
-    elif re.search(r"Baseline 2|SaaS|Commerce|Project|画布|业务|交易", declared_baseline, re.IGNORECASE):
-        layout_profile = "operational-canvas"
-    elif re.search(r"Baseline 1|Console|Control|工作台|控制台|运维", declared_baseline, re.IGNORECASE):
-        layout_profile = "dense-console"
-    else:
-        # Fallback to general scan only if no explicit dominant baseline was declared in product.md
-        all_spec_text = product_content + " " + spec_content
-        if re.search(r"\bBaseline 4\b", all_spec_text, re.IGNORECASE):
-            layout_profile = "somatic-touchflow"
-        elif re.search(r"\bBaseline 3\b", all_spec_text, re.IGNORECASE):
-            layout_profile = "editorial-reading"
-        elif re.search(r"\bBaseline 2\b", all_spec_text, re.IGNORECASE):
-            layout_profile = "operational-canvas"
-        else:
-            layout_profile = "dense-console"
-
     # Extract OOUX Cardinality & Spatial Mapping from surface map or profile defaults
     ooux_cardinality = "1:N"
     ooux_layout_mode = "split-master-detail"
@@ -558,19 +534,37 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         elif line.startswith("# Product Thesis:"):
             prod_thesis_raw = line.split(":", 1)[1].strip()
 
-    envelope = {
-        "envelope_version": "2.0",
-        "repository_root": str(root.resolve()),
-        "skill_root": str(SKILL.resolve()),
-        "slice_id": slice_id,
-        "mode": "lean-builder-envelope",
-        "layout_profile": layout_profile,
+    # Dual-Envelope Architecture (v10): Decouple rigid constraints from creative agency
+    constraint_envelope = {
         "domain_thesis": {
             "title": brand_title,
             "product_thesis": prod_thesis_raw or brand_title,
             "core_tension": prod_tension_raw or "Operational Efficiency vs Cognitive Ergonomics",
         },
         "ooux_topology": ooux_topology,
+        "interaction_spec": interaction_spec,
+        "fault_tolerance_protocol": fault_tolerance,
+        "data_stress_boundaries": {
+            "overflow_protection": "text-overflow: ellipsis, overflow-wrap: anywhere, or word-break: break-all required on dynamic labels",
+            "empty_state_guidance": (
+                f"Actionable guidance: render meaningful empty illustration/icon paired with '{verb_lifecycle[0]['trigger_btn']}' primary recovery button"
+                if verb_lifecycle else
+                "Explicit guidance message required; provide action button if state is user-correctable"
+            ),
+            "tabular_numbers_required": True
+        },
+        "target_html_path": target_html,
+        "token_stylesheet_ref": token_rel_href,
+        "verifiable_assertions": assertions,
+        "a11y_floors": {
+            "contrast": "WCAG 2.2 AA compliant (>4.5:1 text, >3:1 UI components)",
+            "motion": "@media (prefers-reduced-motion: reduce) override required",
+            "min_touch_target": "44px on touch-first somatic, 32px on compact workbench"
+        }
+    }
+
+    creative_envelope = {
+        "spatial_composition_agency": "Builder owns layout rhythm, panel proportions, and responsive flow. No pre-baked rigid HTML scaffolding mandated.",
         "attention_routing": {
             "primary_visual_anchor": f"Primary {slice_id} focal workspace & status indicator",
             "disclosure_levels": {
@@ -583,17 +577,27 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
                 "rule": "Avoid saturated multi-alert flashing; maintain atmospheric calm under normal operational states"
             }
         },
-        "data_stress_boundaries": {
-            "overflow_protection": "text-overflow: ellipsis, overflow-wrap: anywhere, or word-break: break-all required on dynamic labels",
-            "empty_state_guidance": (
-                f"Actionable guidance: render meaningful empty illustration/icon paired with '{verb_lifecycle[0]['trigger_btn']}' primary recovery button"
-                if verb_lifecycle else
-                "Explicit guidance message required; provide action button if state is user-correctable"
-            ),
-            "tabular_numbers_required": True
-        },
-        "app_shell_blueprint": app_shell_blueprints.get(layout_profile, app_shell_blueprints["dense-console"]),
-        "app_shell_contract": app_shell_contracts.get(layout_profile, app_shell_contracts["dense-console"]),
+        "cognitive_ledger": cognitive_ledger,
+        "suggested_blueprints": app_shell_blueprints.get(layout_profile, app_shell_blueprints["dense-console"]),
+        "reference_pattern_guidance": app_shell_contracts.get(layout_profile, app_shell_contracts["dense-console"])
+    }
+
+    envelope = {
+        "envelope_version": "2.0",
+        "envelope_architecture": "3.0-dual",
+        "repository_root": str(root.resolve()),
+        "skill_root": str(SKILL.resolve()),
+        "slice_id": slice_id,
+        "mode": "lean-builder-envelope",
+        "layout_profile": layout_profile,
+        "constraint_envelope": constraint_envelope,
+        "creative_envelope": creative_envelope,
+        "domain_thesis": constraint_envelope["domain_thesis"],
+        "ooux_topology": ooux_topology,
+        "attention_routing": creative_envelope["attention_routing"],
+        "data_stress_boundaries": constraint_envelope["data_stress_boundaries"],
+        "app_shell_blueprint": creative_envelope["suggested_blueprints"],
+        "app_shell_contract": creative_envelope["reference_pattern_guidance"],
         "target_html_path": target_html,
         "evidence_output_dir": evidence_scope,
         "token_stylesheet_ref": token_rel_href,

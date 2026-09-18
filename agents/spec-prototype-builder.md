@@ -59,4 +59,4 @@ Return a concise receipt containing:
 - Quality gate assertion results (`STATIC: pass`);
 - State and interaction coverage actually exercised;
 - Visual evidence screenshot paths from `evidence_output_dir`;
-- Status: `verified` only when all required checks pass, otherwise `prototype_blocked`.
+- Status: `code_verified_renderer_captured` only when all required static checks pass and multi-viewport screenshots are captured, otherwise `prototype_blocked`. Visual critique and human signoff remain explicitly decoupled.

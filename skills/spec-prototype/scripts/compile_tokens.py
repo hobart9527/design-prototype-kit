@@ -503,6 +503,47 @@ def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str
             "active_scale": tactile_scale,
         }
 
+    # 3-Tier Semantic & Component Hierarchy (Rich Contract, Lean Engine)
+    is_light = _is_light_color(colors.get("bg_void", "#080b0b"))
+    text_inverse = "#121518" if is_light else "#f8fafc"
+
+    semantics = {
+        "surface_base": colors["bg_surface"],
+        "surface_elevated": colors["bg_surface_raised"],
+        "surface_sunken": colors["bg_base"],
+        "surface_overlay": colors["bg_overlay"],
+        "text_primary": colors["text_primary"],
+        "text_secondary": colors["text_secondary"],
+        "text_tertiary": colors["text_tertiary"],
+        "text_muted": colors["text_tertiary"],
+        "text_inverse": text_inverse,
+        "action_primary": colors["accent_primary"],
+        "action_primary_hover": colors["accent_hover"],
+        "action_primary_active": colors["accent_hover"],
+        "action_ghost_hover": colors["accent_subtle"],
+        "status_nominal": colors["status_running"],
+        "status_warning": colors["status_warning"],
+        "status_danger": colors["status_danger"],
+    }
+
+    components = {
+        "input_bg": colors["bg_base"],
+        "input_border": colors["border_subtle"],
+        "input_border_focus": colors["accent_primary"],
+        "input_focus_ring": f"0 0 0 2px {colors['accent_subtle']}",
+        "card_bg": colors["bg_surface"],
+        "card_bg_hover": colors["bg_surface_raised"],
+        "card_border": colors["border_subtle"],
+        "card_border_active": colors["border_bright"],
+        "table_row_hover": colors["bg_surface_raised"],
+        "table_border": colors["border_dim"],
+        "badge_bg": colors["accent_subtle"],
+        "badge_text": colors["accent_primary"],
+        "modal_backdrop": "rgba(0, 0, 0, 0.70)" if not is_light else "rgba(15, 23, 42, 0.40)",
+        "modal_surface": colors["bg_surface_raised"],
+        "modal_border": colors["border_bright"],
+    }
+
     return {
         "dials": dials,
         "colors": colors,
@@ -510,6 +551,8 @@ def compute_tokens(dials: Dict[str, str], palette_or_colors: str | Dict[str, str
         "radii": radii,
         "fonts": fonts,
         "motion": motion,
+        "semantics": semantics,
+        "components": components,
     }
 
 
@@ -592,6 +635,47 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --duration-slow: {m['duration_slow']};",
         f"  --ease-hud: {m['ease_hud']};",
         f"  --ease-out: {m['ease_out']};",
+        "",
+        "  /* ==========================================================================",
+        "     Layer 2: Semantic Tokens (Functional Roles & Expressive Intent)",
+        "     ========================================================================== */",
+        "  --surface-base: var(--bg-surface);",
+        "  --surface-elevated: var(--bg-surface-raised);",
+        "  --surface-sunken: var(--bg-base);",
+        "  --surface-overlay: var(--bg-overlay);",
+        "",
+        "  --text-muted: var(--text-tertiary);",
+        f"  --text-inverse: {tokens['semantics']['text_inverse']};",
+        "",
+        "  --action-primary: var(--accent-primary);",
+        "  --action-primary-hover: var(--accent-hover);",
+        f"  --action-primary-active: {tokens['semantics']['action_primary_active']};",
+        "  --action-ghost-hover: var(--accent-subtle);",
+        "",
+        "  --status-nominal: var(--status-running);",
+        "",
+        "  /* ==========================================================================",
+        "     Layer 3: Component & Container Slots (Zero-Boilerplate Front-End Slots)",
+        "     ========================================================================== */",
+        "  --input-bg: var(--bg-base);",
+        "  --input-border: var(--border-subtle);",
+        "  --input-border-focus: var(--accent-primary);",
+        f"  --input-focus-ring: {tokens['components']['input_focus_ring']};",
+        "",
+        "  --card-bg: var(--bg-surface);",
+        "  --card-bg-hover: var(--bg-surface-raised);",
+        "  --card-border: var(--border-subtle);",
+        "  --card-border-active: var(--border-bright);",
+        "",
+        "  --table-row-hover: var(--bg-surface-raised);",
+        "  --table-border: var(--border-dim);",
+        "",
+        "  --badge-bg: var(--accent-subtle);",
+        "  --badge-text: var(--accent-primary);",
+        "",
+        f"  --modal-backdrop: {tokens['components']['modal_backdrop']};",
+        "  --modal-surface: var(--bg-surface-raised);",
+        "  --modal-border: var(--border-bright);",
         "}",
         "",
         "/* ==========================================================================",
@@ -637,60 +721,126 @@ def generate_css(tokens: Dict[str, Any]) -> str:
 
 
 def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
-    """Render W3C DTCG-compliant JSON token specification.
+    """Render W3C DTCG-compliant 3-Tier JSON token specification.
 
-    Produces clean, unnested DTCG groups compatible with export-tokens.py
-    and downstream engineering consumption.
+    Produces structured 3-tier architecture (Primitives -> Semantics -> Components)
+    with explicit authority provenance and metadata, while preserving backward-compatible
+    top-level groups for export-tokens.py and downstream CLI consumption.
     """
     c = tokens["colors"]
     s = tokens["space"]
     r = tokens["radii"]
     f = tokens["fonts"]
+    m = tokens.get("motion", {})
+    sem = tokens.get("semantics", {})
+    comp = tokens.get("components", {})
+
+    # Determine authority provenance
+    # Explicit Human Decision > Frozen Product Rule > Derived Token > Default
+    default_auth = tokens.get("authority", "derived")
 
     color_tokens: Dict[str, Any] = {
-        "primary": {"$value": c["accent_primary"], "$type": "color", "$description": "Primary action and key interactive state"},
-        "primary-hover": {"$value": c["accent_hover"], "$type": "color", "$description": "Hover state of primary"},
-        "surface": {"$value": c["bg_surface"], "$type": "color", "$description": "Card, panel, and workbench base surface"},
-        "surface-raised": {"$value": c["bg_surface_raised"], "$type": "color", "$description": "Elevated modal, sheet, or popover"},
-        "surface-overlay": {"$value": c["bg_overlay"], "$type": "color", "$description": "Top-tier fly-by-wire controls and overlay"},
-        "border": {"$value": c["border_subtle"], "$type": "color", "$description": "Default component boundary"},
-        "border-strong": {"$value": c["border_bright"], "$type": "color", "$description": "Active or emphasized component boundary"},
-        "border-dim": {"$value": c["border_dim"], "$type": "color", "$description": "Subtle hairline divider"},
-        "text-primary": {"$value": c["text_primary"], "$type": "color", "$description": "Primary high-contrast typography"},
-        "text-secondary": {"$value": c["text_secondary"], "$type": "color", "$description": "Supplementary metadata and labels"},
-        "text-tertiary": {"$value": c["text_tertiary"], "$type": "color", "$description": "De-emphasized or disabled controls and copy"},
-        "status-running": {"$value": c["status_running"], "$type": "color", "$description": "Nominal operational state"},
-        "status-warning": {"$value": c["status_warning"], "$type": "color", "$description": "Warning state or capacity threshold"},
-        "status-danger": {"$value": c["status_danger"], "$type": "color", "$description": "Critical failure or thermal alert"},
-        "bg-void": {"$value": c["bg_void"], "$type": "color", "$description": "Deepest atmospheric background"},
-        "bg-base": {"$value": c["bg_base"], "$type": "color", "$description": "App foundation background chassis"},
+        "primary": {"$value": c["accent_primary"], "$type": "color", "$description": "Primary action and key interactive state", "authority": default_auth},
+        "primary-hover": {"$value": c["accent_hover"], "$type": "color", "$description": "Hover state of primary", "authority": default_auth},
+        "surface": {"$value": c["bg_surface"], "$type": "color", "$description": "Card, panel, and workbench base surface", "authority": default_auth},
+        "surface-raised": {"$value": c["bg_surface_raised"], "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": default_auth},
+        "surface-overlay": {"$value": c["bg_overlay"], "$type": "color", "$description": "Top-tier fly-by-wire controls and overlay", "authority": default_auth},
+        "border": {"$value": c["border_subtle"], "$type": "color", "$description": "Default component boundary", "authority": default_auth},
+        "border-strong": {"$value": c["border_bright"], "$type": "color", "$description": "Active or emphasized component boundary", "authority": default_auth},
+        "border-dim": {"$value": c["border_dim"], "$type": "color", "$description": "Subtle hairline divider", "authority": default_auth},
+        "text-primary": {"$value": c["text_primary"], "$type": "color", "$description": "Primary high-contrast typography", "authority": default_auth},
+        "text-secondary": {"$value": c["text_secondary"], "$type": "color", "$description": "Supplementary metadata and labels", "authority": default_auth},
+        "text-tertiary": {"$value": c["text_tertiary"], "$type": "color", "$description": "De-emphasized or disabled controls and copy", "authority": default_auth},
+        "status-running": {"$value": c["status_running"], "$type": "color", "$description": "Nominal operational state", "authority": default_auth},
+        "status-warning": {"$value": c["status_warning"], "$type": "color", "$description": "Warning state or capacity threshold", "authority": default_auth},
+        "status-danger": {"$value": c["status_danger"], "$type": "color", "$description": "Critical failure or thermal alert", "authority": default_auth},
+        "bg-void": {"$value": c["bg_void"], "$type": "color", "$description": "Deepest atmospheric background", "authority": default_auth},
+        "bg-base": {"$value": c["bg_base"], "$type": "color", "$description": "App foundation background chassis", "authority": default_auth},
     }
 
     spacing_tokens: Dict[str, Any] = {
-        str(k): {"$value": v, "$type": "dimension", "$description": f"Spacing unit {k}"}
+        str(k): {"$value": v, "$type": "dimension", "$description": f"Spacing unit {k}", "authority": default_auth}
         for k, v in sorted(s.items())
     }
 
     radius_tokens: Dict[str, Any] = {
-        "outer": {"$value": r["outer"], "$type": "dimension", "$description": "Outer container boundary"},
-        "inner": {"$value": r["inner"], "$type": "dimension", "$description": "Concentric inner child boundary"},
-        "card": {"$value": r["card"], "$type": "dimension", "$description": "Card entity radius"},
-        "btn": {"$value": r["btn"], "$type": "dimension", "$description": "Interactive control radius"},
-        "pill": {"$value": r["pill"], "$type": "dimension", "$description": "Status badge pill radius"},
+        "outer": {"$value": r["outer"], "$type": "dimension", "$description": "Outer container boundary", "authority": default_auth},
+        "inner": {"$value": r["inner"], "$type": "dimension", "$description": "Concentric inner child boundary", "authority": default_auth},
+        "card": {"$value": r["card"], "$type": "dimension", "$description": "Card entity radius", "authority": default_auth},
+        "btn": {"$value": r["btn"], "$type": "dimension", "$description": "Interactive control radius", "authority": default_auth},
+        "pill": {"$value": r["pill"], "$type": "dimension", "$description": "Status badge pill radius", "authority": default_auth},
     }
 
     typography_tokens: Dict[str, Any] = {
-        "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family"},
-        "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Telemetry and code font family"},
+        "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family", "authority": default_auth},
+        "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Telemetry and code font family", "authority": default_auth},
     }
 
-    return {
-        "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
-        "$description": "Machine-compiled from spec-prototype 5-dial state machine.",
+    motion_tokens: Dict[str, Any] = {
+        "duration-fast": {"$value": m.get("duration_fast", "80ms"), "$type": "duration", "$description": "Fast tactile duration", "authority": default_auth},
+        "duration-normal": {"$value": m.get("duration_normal", "180ms"), "$type": "duration", "$description": "Normal transition duration", "authority": default_auth},
+        "ease-hud": {"$value": m.get("ease_hud", "cubic-bezier(0.16, 1, 0.3, 1)"), "$type": "cubicBezier", "$description": "HUD snappy curve", "authority": default_auth},
+    }
+
+    # Structured 3-Tier Organization
+    primitives = {
         "color": color_tokens,
         "spacing": spacing_tokens,
         "radius": radius_tokens,
         "typography": typography_tokens,
+        "motion": motion_tokens,
+    }
+
+    semantics = {
+        "surface": {
+            "base": {"$value": "{primitives.color.surface.$value}", "$type": "color", "$description": "Base canvas and container surface", "authority": default_auth},
+            "elevated": {"$value": "{primitives.color.surface-raised.$value}", "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": default_auth},
+            "sunken": {"$value": "{primitives.color.bg-base.$value}", "$type": "color", "$description": "Sunken instrument well or canvas backdrop", "authority": default_auth},
+        },
+        "text": {
+            "primary": {"$value": "{primitives.color.text-primary.$value}", "$type": "color", "$description": "Primary high-contrast typography", "authority": default_auth},
+            "secondary": {"$value": "{primitives.color.text-secondary.$value}", "$type": "color", "$description": "Supplementary metadata and labels", "authority": default_auth},
+            "muted": {"$value": "{primitives.color.text-tertiary.$value}", "$type": "color", "$description": "De-emphasized or disabled controls", "authority": default_auth},
+        },
+        "action": {
+            "primary": {"$value": "{primitives.color.primary.$value}", "$type": "color", "$description": "Primary action trigger", "authority": default_auth},
+            "primary-hover": {"$value": "{primitives.color.primary-hover.$value}", "$type": "color", "$description": "Primary hover state", "authority": default_auth},
+        },
+        "status": {
+            "nominal": {"$value": "{primitives.color.status-running.$value}", "$type": "color", "$description": "Nominal operational state", "authority": default_auth},
+            "warning": {"$value": "{primitives.color.status-warning.$value}", "$type": "color", "$description": "Warning state or capacity threshold", "authority": default_auth},
+            "danger": {"$value": "{primitives.color.status-danger.$value}", "$type": "color", "$description": "Critical failure or alert", "authority": default_auth},
+        }
+    }
+
+    components = {
+        "input": {
+            "bg": {"$value": "{primitives.color.bg-base.$value}", "$type": "color", "$description": "Input field background", "authority": default_auth},
+            "border": {"$value": "{primitives.color.border.$value}", "$type": "color", "$description": "Input field boundary", "authority": default_auth},
+            "focus": {"$value": "{primitives.color.primary.$value}", "$type": "color", "$description": "Input focus ring color", "authority": default_auth},
+        },
+        "card": {
+            "bg": {"$value": "{primitives.color.surface.$value}", "$type": "color", "$description": "Card surface background", "authority": default_auth},
+            "border": {"$value": "{primitives.color.border.$value}", "$type": "color", "$description": "Card boundary", "authority": default_auth},
+        },
+        "table": {
+            "row-hover": {"$value": "{primitives.color.surface-raised.$value}", "$type": "color", "$description": "Table row hover highlight", "authority": default_auth},
+            "border": {"$value": "{primitives.color.border-dim.$value}", "$type": "color", "$description": "Table divider hairline", "authority": default_auth},
+        }
+    }
+
+    return {
+        "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
+        "$description": "Machine-compiled 3-Tier DTCG token specification with authority provenance.",
+        "primitives": primitives,
+        "semantics": semantics,
+        "components": components,
+        # Backward-compatible flat groups for legacy export tools
+        "color": color_tokens,
+        "spacing": spacing_tokens,
+        "radius": radius_tokens,
+        "typography": typography_tokens,
+        "motion": motion_tokens,
     }
 
 
@@ -775,6 +925,11 @@ def compile_tokens(
     # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or derives mathematically
     dynamic_colors = extract_dynamic_palette(disc_text)
     computed = compute_tokens(dials, dynamic_colors)
+
+    has_confirmed = "## Confirmed Decisions" in disc_text or any(
+        k in disc_text for k in ("--color-primary", "--accent-primary", "--bg-surface")
+    )
+    computed["authority"] = "explicit_human" if has_confirmed else "derived"
 
     # Perform WCAG AAA/AA relative luminance pre-flight diagnostics
     c = computed["colors"]

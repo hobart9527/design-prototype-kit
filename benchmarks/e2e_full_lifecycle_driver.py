@@ -355,14 +355,15 @@ def run_full_lifecycle_case(case_name: str, choice: str, output_base: Path, port
 
     captured_files = list(evidence_dir.glob("*.png"))
 
-    # Write handoff-manifest.json for Stage 4
+    # Write handoff-manifest.json for Stage 4 (decoupling renderer capture from visual signoff)
     manifest = {
         "verification": {
-            "status": "verified" if len(captured_files) >= 3 else "partial",
-            "browser": "verified" if cap_proc.returncode == 0 else "unverified",
-            "visual": "verified" if len(captured_files) >= 3 else "unverified",
+            "status": "captured_pending_review" if len(captured_files) >= 3 else "partial",
+            "renderer": "captured" if len(captured_files) >= 3 else "unverified",
+            "browser": "captured" if cap_proc.returncode == 0 else "unverified",
+            "visual": "pending_review",
             "human": "pending_review",
-            "evidence": f"Multi-viewport screenshots captured ({len(captured_files)} views)",
+            "evidence": f"Multi-viewport screenshots captured ({len(captured_files)} views); visual review pending",
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "runner": "system-browser-cli-concurrent"
         }
@@ -378,6 +379,11 @@ def run_full_lifecycle_case(case_name: str, choice: str, output_base: Path, port
         "--contract", str(spec_path)
     ], capture_output=True, text=True)
 
+    # ── STAGE 4b: Deterministic Design Signal Coverage ────────────────────────
+    sys.path.insert(0, str(ROOT / "benchmarks"))
+    from evaluate_design_signals import evaluate_design_signals
+    signal_eval = evaluate_design_signals(proto_dir, case_name)
+
     dur = round(time.time() - t0, 3)
 
     return {
@@ -389,7 +395,8 @@ def run_full_lifecycle_case(case_name: str, choice: str, output_base: Path, port
         "stage3_captures": [p.name for p in captured_files],
         "stage3_capture_count": len(captured_files),
         "stage4_verify_output": verify_proc.stdout.strip(),
-        "stage4_ok": "STATIC: pass" in verify_proc.stdout and "VISUAL: verified" in verify_proc.stdout,
+        "stage4_ok": "STATIC: pass" in verify_proc.stdout and signal_eval["status"] == "PASS",
+        "signal_coverage_pct": signal_eval["signal_coverage_pct"],
         "sandbox_dir": str(sandbox_dir)
     }
 
@@ -397,13 +404,23 @@ def run_full_lifecycle_case(case_name: str, choice: str, output_base: Path, port
 def main():
     parser = argparse.ArgumentParser(description="End-to-end multi-stage lifecycle driver")
     parser.add_argument("--choice", default="A", choices=["A", "B"])
-    parser.add_argument("--cases", nargs="*", default=["incident-commander", "editorial-reader", "mobile-booking"])
+    parser.add_argument("--cases", nargs="*", default=[
+        "incident-commander", "editorial-reader", "mobile-booking",
+        "project-workspace", "product-marketing", "ai-writer-workspace"
+    ])
     args = parser.parse_args()
 
     # Start ephemeral background HTTP server
+    socketserver.TCPServer.allow_reuse_address = True
     PORT = 8993
-    Handler = http.server.SimpleHTTPRequestHandler
-    httpd = socketserver.TCPServer(("", PORT), Handler)
+    for p in range(8993, 9020):
+        try:
+            Handler = http.server.SimpleHTTPRequestHandler
+            httpd = socketserver.TCPServer(("", p), Handler)
+            PORT = p
+            break
+        except OSError:
+            continue
     srv_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     srv_thread.start()
 

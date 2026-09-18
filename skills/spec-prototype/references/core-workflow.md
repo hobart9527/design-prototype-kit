@@ -19,33 +19,34 @@ Why is this engine called `spec-prototype`?
 Route design work by declared intent and required evidence. The five stages are a capability set, not a mandatory sequence; use only the stages needed for the requested outcome. Prototype code must be grounded in its matching brief or contract evidence:
 
 ```text
- Stage 1 (破): Tone & Tension Divergence ──> Formalize 6-Pillar Design Spec: product.md, surface-maps/m1.md, foundation/f1.md, tokens (t1.json/t1.md/tokens.css), slices/c1.md, specs/r1.md (Gated)
- Stage 2 (立): Core Hero Anchor          ──> Dispatch a bounded Builder envelope when a hero anchor is the chosen proof (Gated when consequential)
- Stage 3 (拓): Surface Rollout             ──> Expand only the surfaces justified by the Surface Topology; inherit tokens
- Stage 4 (验): Holistic Review Portal    ──> review-portal.html walkthrough, 5 experience states, controlled loopback
- Stage 5 (冻): Silent Governance         ──> DTCG tokens.json export, WCAG AAA static audit, SHA-256 asset manifest
+ Stage 1 (破): Understand & Frame       ──> Establish Product Thesis, Objects, Journey, Surface Topology & initial tokens (product.md, surface-maps/m1.md, foundation/f1.md, tokens.css)
+ Stage 2 (立): Proposition & Probe      ──> Dispatch bounded Builder envelope to validate highest-risk interaction probe (c1.md, envelope.json)
+ Stage 3 (拓): Walking Skeleton         ──> Expand probe into full-flow walking skeleton validating complete task continuity
+ Stage 4 (验): Four-Dimensional Audit   ──> Decoupled review: Engineering DOM, Interaction state mutations, Renderer capture, Human critique
+ Stage 5 (冻): Silent Governance        ──> DTCG tokens.json export, WCAG AAA static audit, SHA-256 asset manifest
 ```
 
-### Stage 1: Tone & Tension Divergence & Spec Formulation (破 - 魂立约：双钻四阶共创工法)
-- **Primary Goal**: Transition from user intent to a **complete, frozen Design Specification (`spec`)** through an unescapable **Co-Authored Double Diamond (双钻共创模型)** driven by **Four Interlocking Gear-Chains (四大协同传动齿轮链)**.
-- **Co-Creation Invariant (严禁黑盒代拟契约)**:
-  Zero black-box contract guessing. Every single contract pillar must be co-authored with the human designer through progressive, structured dialogue. Stage 1 must progress through the four interlocking phases; skipping directly to code or auto-generating all 6 pillars without human alignment is strictly forbidden.
+### Stage 1: Understand & Frame (破 - 魂立约：九柱与双钻决策流)
+- **Primary Goal**: Transition from user intent to a **complete, frozen Design Specification (`spec`)** through the **Nine Pillars Canonical Ontology (九柱设计本体)** and **Double Diamond Decision Flow (双钻决策流)**.
+- **Cadence Principle**:
+  Zero black-box contract guessing, but zero manufactured friction. Coalesce inquiries when intent or delegation is clear; use `AskUserQuestion` only when genuine forks exist (e.g. Direction A vs B or unresolved core tension).
+- **Core Architecture Alignment**:
+  1. **Nine Pillars (WHAT)**: Value, Research, Object, Journey, Topology, Attention, Expression, Interaction, Resilience.
+  2. **Double Diamond (HOW DECIDE)**: Problem Space (Discover · Define) ──> Solution Space (Develop · Deliver).
+  3. **Five Axes (HOW FEELS)**: Density, Energy, Materiality, Rhythm, Character.
+  4. **Craft Library (HOW CRAFT)**: Methods and composable Reference Patterns.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│ 【第一钻：问题域与本体拓扑钻 (Macro Ontology Diamond)】                             │
-│  Phase 1: Discover (深度发散) ──> Gear-Chain 1: 业务本体传动链                    │
-│    破局反转门 ──> 锁定四大基准 ──> 倒逼三大克制舍弃 ──> 落盘 prototype/product.md  │
-│  Phase 2: Define (精准收敛) ────> Gear-Chain 2: 空间拓扑与物理传动链              │
-│    现实世界双地锚 ──> 材质不可跨界 ──> OOUX实体基数 ──> 落盘 surface-maps/m1.md   │
+│ 【第一钻：问题空间与业务本体 (Problem Space: Discover & Define)】                   │
+│  Discover (问题发散) ──> Value, Research, Object 探索，破除表面需求，识别真实矛盾   │
+│  Define   (拓扑收敛) ──> 明确 Product Thesis、核心张力、OOUX 实体基数与 Surface 地图 │
+│  落盘工件: prototype/product.md, surface-maps/m1.md                             │
 ├──────────────────────────────────────────────────────────────────────────────────┤
-│ 【第二钻：解空间与神经机械钻 (Micro Craft Diamond)】                              │
-│  Phase 3: Develop (方案发散) ──> Gear-Chain 3: 感官能量传动链                    │
-│    具象色彩提案 ──> 16阶物理标高算法 ──> 风格五轴定量 ──> 认知借贷收支账本         │
-│    ──> 落盘 foundation/f1.md 与 tokens.css / t1.json / t1.md                     │
-│  Phase 4: Deliver (终局收敛) ──> Gear-Chain 4: 神经机械传动链                    │
-│    动词生命周期 ──> 决定性交换三帧 ──> 双通道人机工效 ──> 破坏性应力终局          │
-│    ──> 落盘 slices/<slice>/c1.md 与 specs/<slice>/r1.md ──> 门禁签字直通 Stage 2 │
+│ 【第二钻：解空间与方案收敛 (Solution Space: Develop & Deliver)】                    │
+│  Develop  (表达发散) ──> Five-Axis Register、色彩提案、Token 层级、高风险关系探针   │
+│  Deliver  (交互收敛) ──> Action Verb 全生命周期、容错边界、Break Protocol 应力防线   │
+│  落盘工件: foundation/f1.md, tokens.css, slices/<slice>/c1.md                    │
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
