@@ -1,6 +1,6 @@
 ## 1. Admit the authored scope at the formal entry
 
-- [ ] T-01 Admit full-product coverage and enforce retained map identity at the formal entry
+- [x] T-01 Admit full-product coverage and enforce retained map identity at the formal entry
   - Depends on: none
   - Anchors: skills/spec-prototype/scripts/lint_spec_contracts.py, skills/spec-prototype/scripts/assemble_envelope.py
   - Write scope: skills/spec-prototype/scripts/lint_spec_contracts.py, skills/spec-prototype/scripts/assemble_envelope.py, tests/test_formal_entry_admission.py
@@ -12,7 +12,7 @@
 
 ## 2. Withhold completion for an unusable scope
 
-- [ ] T-02 Refuse completion of an unusable scope in the reconciler, the quality check and the review portal
+- [x] T-02 Refuse completion of an unusable scope in the reconciler, the quality check and the review portal
   - Depends on: T-01
   - Anchors: skills/spec-prototype/scripts/prototype_context.py, skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/scripts/generate_review_portal.py
   - Write scope: skills/spec-prototype/scripts/prototype_context.py, skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/scripts/generate_review_portal.py, tests/test_empty_scope_completion.py
@@ -24,7 +24,7 @@
 
 ## 3. Name the platform fields the roles receive
 
-- [ ] T-03 Name the envelope platform fields the Builder and Critic actually receive
+- [x] T-03 Name the envelope platform fields the Builder and Critic actually receive
   - Depends on: none
   - Anchors: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, skills/spec-prototype/scripts/prototype_context.py
   - Write scope: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, tests/test_platform_instruction_fields.py
@@ -36,7 +36,7 @@
 
 ## 4. Allow a spec-only freeze
 
-- [ ] T-04 Allow spec-only approval to freeze without a built prototype
+- [x] T-04 Allow spec-only approval to freeze without a built prototype
   - Depends on: none
   - Anchors: skills/spec-prototype/scripts/handoff.py, skills/spec-prototype/references/04-governance/handoff.md
   - Write scope: skills/spec-prototype/scripts/handoff.py, tests/test_spec_only_freeze.py
