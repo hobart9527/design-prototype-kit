@@ -41,6 +41,20 @@ when visual evidence exists. For a runnable target, inspect the real runner befo
 evidence. Screenshots establish appearance and responsive fold; interactive claims require a task
 trace. A storyboard is not runtime evidence.
 
+Read the capture metadata (`metadata`) emitted with the evidence before judging coverage. It binds each
+screenshot to the runner, `browser_execution`, runtime, target platform and dependency identity that
+produced it. Never infer native-platform validation from a requested viewport width, a target-platform
+label or a file name: a browser render on desktop Chromium is not Android or iOS validation. When the
+metadata shows `browser_execution: html-browser` against a non-web target platform, report that
+platform's validation as `unverified` rather than passed. When metadata or screenshots are absent,
+stale, or bound to a different source/dependency revision, or when `capture_failed` /
+`browser_unavailable` is reported, state that consequence explicitly and withhold the affected visual
+claims instead of restating the producer's summary.
+
+A metadata claim is still a claim: compare it against the bytes inspected and against the target's
+actual runner. Where metadata bound to a changed dependency no longer matches the inspected revision,
+mark that evidence unusable for this review and name which dependency change invalidated it.
+
 Attempt the requested task from visible cues. Exercise the applicable dense,
 consequential, narrow, interrupted, recovery or return case named by the review
 question or source risk. Do not force a universal set of states. Stop when each

@@ -91,11 +91,30 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
 - **The Break Protocol Resilience**: Ensure graceful layout under the stress checkpoints declared in `break_protocol_checkpoints` and verifiable assertions (e.g. long string wrapping, empty state recovery, narrow viewport fold, and input debouncing).
 - **Active Craft Methods Guidance**: Consult `active_methods` in the envelope for targeted experience invariants and candidate techniques (e.g. Action Verb Lifecycle, Context Preservation, Visual Rhythm) dynamically selected for this slice.
 
+- **Platform Rules and Consequential Task Exercise**:
+  Apply every applicable rule of the declared platform target (`target_platform` in the envelope) with
+  the platform's own idioms, not a generic web shell relabelled. Exercise each consequential task the
+  Slice Contract names to a settled observable outcome before claiming coverage; a rendered screen that
+  was never driven through its committed action is not coverage.
+
+- **Capture Identity Binding (Revision-Specific Evidence)**:
+  Capture binds evidence to the environment, target and dependency identity actually used. Invoke the
+  capture script with the declared identity:
+  `node capture.mjs <url> --output <dir> --target-path <path> --target-platform <platform> --runtime <runtime> --source-revision <rev> [--dep <ref>=<digest>] [--repo-root <repo>]`.
+  Requested viewport widths, a filename, or a target-platform label are NOT native validation. A browser
+  render on desktop Chromium stays `browser_execution: html-browser` even when the target platform is
+  `android` or `ios`; record such native validation as `unverified` until it is actually captured on that
+  platform. A capture failure stays explicit (`capture_failed` / `browser_unavailable`) and is never
+  recorded as passing evidence. Evidence is written to the repository that owns the Skill; when none can
+  be resolved, report that no evidence was recorded rather than writing into an unrelated tree.
+
 ## 4. Receipt Format
 
 Return a concise receipt containing:
-- Target path and revision identity;
+- Target path and revision identity (path plus digest or equivalent revision identity);
 - Quality gate assertion results (`STATIC: pass`);
+- Capture metadata: runner, `browser_execution`, runtime, target platform, and the dependency identity
+  bound to the captured pixels; state any declared platform whose validation remains `unverified`;
 - State and interaction coverage actually exercised;
 - Visual evidence screenshot paths from `evidence_output_dir`;
 - Status: `code_verified_renderer_captured` only when all required static checks pass and multi-viewport screenshots are captured, otherwise `prototype_blocked`. Visual critique and human signoff remain explicitly decoupled.

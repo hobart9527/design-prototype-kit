@@ -4,9 +4,12 @@
 - Prototype Specification revision and digest:
 - Product/Foundation/Surface Map/Contract rationale chain confirmed:
 - Prototype path:
+- Evidence identity (target / source / dependency revision bound to every capture):
 - Status: `verified | prototype_blocked`
 - Repair attempts:
 - Human selection / approval / usability testing: separate referenced evidence, or pending.
+- Inherited human/visual status from a prior revision: only valid while the evidence identity is
+  unchanged; any target, source or dependency change resets it to `pending_review`.
 
 ## Implementation map and capability preflight
 
@@ -30,6 +33,9 @@ comprehension, rendered quality, behavior, creative merit or approval.
 - Runtime location:
 - Diagnostics and raw-output paths:
 - Browser launch result:
+- Capture metadata reference (runner, `browser_execution`, runtime, target platform, dependency identity):
+- Native-platform validation actually performed (or `unverified` for each declared platform not run):
+- Capture failures and their explicit status (never recorded as passing evidence):
 
 ## Surface, journey and state coverage
 
@@ -41,10 +47,22 @@ Account for all requested surfaces and **applicable** states, including unbuilt
 coverage. Record exclusion reasons. Required fail/unverified entries block
 `verified`; do not invent states to fill a universal matrix.
 
+## Environment, simulation and dependency boundaries
+
+| Aspect | Declared source | Actual environment observed | Evidence reference | Result |
+|---|---|---|---|---|
+| Execution environment (runtime, browser engine, shell, device/emulator) | | | | `pass | fail | unverified | n/a` |
+| Simulated versus real service, data and platform | | | | `pass | fail | unverified | n/a` |
+| Dependency identity and whether its change invalidates prior evidence | | | | `pass | fail | unverified | n/a` |
+
+A declared platform that was not actually executed stays `unverified`; a browser render
+never stands in for native-platform validation. A changed dependency invalidates the
+evidence bound to its prior revision; unaffected dependencies remain reusable.
+
 ## Behavioral and continuity evidence
 
-| Task/case | Steps and fixture | Expected object/state/feedback | Observed result and retained context | Evidence path | Result |
-|---|---|---|---|---|---|
+| Task/case | Action reference | Steps and fixture | Observation reference | Expected object/state/feedback | Observed result and retained context | Evidence path | Result |
+|---|---|---|---|---|---|---|---|
 | Primary task | | | | | |
 | Transfer / contrasting case | | | | | |
 | Applicable interruption/recovery/return | | | | | |
