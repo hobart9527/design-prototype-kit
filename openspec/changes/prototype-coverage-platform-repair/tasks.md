@@ -2,7 +2,7 @@
 
 - [ ] T-01 Admit full-product coverage and enforce retained map identity at the formal entry
   - Depends on: none
-  - Anchors: skills/spec-prototype/scripts/lint_spec_contracts.py, skills/spec-prototype/scripts/assemble_envelope.py, skills/spec-prototype/templates/surface-map.md
+  - Anchors: skills/spec-prototype/scripts/lint_spec_contracts.py, skills/spec-prototype/scripts/assemble_envelope.py
   - Write scope: skills/spec-prototype/scripts/lint_spec_contracts.py, skills/spec-prototype/scripts/assemble_envelope.py, tests/test_formal_entry_admission.py
   - Implements: CPC-002, CPC-005
   - Proves: CPC-SCN-003, CPC-SCN-004, CPC-SCN-018, CPC-SCN-019, CPC-SCN-020
