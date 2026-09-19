@@ -161,6 +161,12 @@ def coverage_failures(html: Path) -> list[str]:
         bound_revision=context["surface_map"]["revision"])
 
     failures: list[str] = []
+    # An unusable scope withholds completion rather than passing: the check fails
+    # and names the governing error instead of laundering a met completion.
+    if reconciliation["governing_error"]:
+        error = reconciliation["governing_error"]
+        failures.append(f"coverage assertion: resolved scope is unusable ({error['code']}); "
+                        "completion is withheld until the scope error is resolved")
     if reconciliation["coverage"] == "unresolved" and context["surface_map"]["surfaces"]:
         failures.append("coverage assertion: surface map declares surfaces without an explicit selected/full-product coverage")
     if reconciliation["missing_delivery"]:

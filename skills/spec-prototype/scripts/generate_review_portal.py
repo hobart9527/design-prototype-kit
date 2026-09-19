@@ -114,6 +114,10 @@ def read_coverage(root: Path) -> Dict[str, object] | None:
 def build_coverage_html(reconciliation: Dict[str, object] | None) -> str:
     if not reconciliation:
         return ""
+    # An unusable scope never renders met: completion stays withheld and the
+    # governing scope error is named in the view.
+    completion = bool(reconciliation.get("completion")) and not reconciliation.get("governing_error")
+    governing = reconciliation.get("governing_error") or {}
     rows = []
     for obligation in reconciliation.get("obligations", []):
         rows.append(
@@ -129,8 +133,10 @@ def build_coverage_html(reconciliation: Dict[str, object] | None) -> str:
         f'<p>Outside this round: {", ".join(reconciliation.get("outside_round") or []) or "none"}</p>'
         f'<p>Declared but absent: {", ".join(reconciliation.get("missing_delivery") or []) or "none"}</p>'
         f'<p>Missing evidence: {", ".join(reconciliation.get("missing_evidence") or []) or "none"}</p>'
-        f'<p data-completion="{str(reconciliation.get("completion")).lower()}">'
-        f'Completion: {"met" if reconciliation.get("completion") else "withheld"}</p>'
+        + (f'<p data-scope-error="{governing.get("code", "")}">Scope error: {governing["code"]}</p>'
+           if governing else "")
+        + f'<p data-completion="{str(completion).lower()}">'
+        f'Completion: {"met" if completion else "withheld"}</p>'
         "<table><tr><th>Surface</th><th>Scope</th><th>Delivery</th><th>Evidence</th><th>Blocker</th></tr>"
         + "".join(rows) + "</table></section>")
 

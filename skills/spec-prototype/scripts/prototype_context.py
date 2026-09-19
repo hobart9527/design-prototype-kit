@@ -245,6 +245,13 @@ def reconcile_obligations(context: Dict[str, Any], delivered: Any = None,
     missing_evidence = [o["surface"] for o in obligations if o["scope"] != "outside-round" and o["evidence"] == "missing"]
     stale = bool(bound_revision is not None and bound_revision != revision)
 
+    # An unusable scope has no obligations to satisfy, so deriving completion
+    # from the in-round set alone would report met. The context errors govern:
+    # the first is attached and every error withholds completion.
+    scope_errors = [{"code": str(error.get("code")), "detail": str(error.get("detail") or "")}
+                    for error in ((context or {}).get("errors") or [])
+                    if isinstance(error, dict) and error.get("code")]
+
     # Sibling links follow actual delivery: a pending sibling needs no href, but a
     # delivered sibling must be reachable from every other delivered member.
     delivered_in_round = [o["surface"] for o in obligations
@@ -271,8 +278,13 @@ def reconcile_obligations(context: Dict[str, Any], delivered: Any = None,
         # Only a full-product selection authorizes continuation into further
         # batches; a subset stops at its declared obligations.
         "auto_continue": bool(coverage == "full-product" and unmet),
-        # A reason never discharges an obligation.
-        "completion": bool(coverage in ("selected", "full-product") and not unmet and not stale),
+        # The context errors that make the scope unusable; the first governs.
+        "scope_errors": scope_errors,
+        "governing_error": scope_errors[0] if scope_errors else None,
+        # A reason never discharges an obligation, and an unusable scope has no
+        # obligation to discharge, so it withholds completion too.
+        "completion": bool(coverage in ("selected", "full-product") and not unmet
+                           and not stale and not scope_errors),
         "qualifier": (f"prototype medium {(context or {}).get('specification', {}).get('prototype_medium') or 'unknown'}; "
                       f"environment {(context or {}).get('platform', {}).get('verification_environment') or 'unknown'}"),
     }
