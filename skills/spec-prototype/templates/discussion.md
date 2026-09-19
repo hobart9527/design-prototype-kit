@@ -65,6 +65,7 @@ not a competing rule.
 - **Problem Space (Discover & Define · Value, Research, Object, Journey, Topology)**:
   - *Core Tension & Inversions*:
   - *Ruthless Omissions (explicit non-goals)*:
+  - *Content Language (Locked)*: (primary fixture language for shipped copy, e.g. `zh-Hans`; declare a secondary language when the product mixes scripts)
   - *OOUX Cardinality-to-Layout Anchor (`1:1` Canvas | `1:N` Master-Detail | `N:M` Relational Graph)*:
   - *Reference Benchmarks*:
   - *Material Non-transfer Boundaries*:

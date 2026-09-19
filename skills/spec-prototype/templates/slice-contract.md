@@ -16,6 +16,7 @@
 - Total product coverage represented by this slice:
 - Explicitly out-of-scope surfaces/relationships and reason:
 - User task outcome and visible decision:
+- Content language (locked): (inherited from Product; shipped copy and fixtures must be authored in this language)
 - Entry, completion, interruption and return boundary:
 - Explicit non-goals:
 

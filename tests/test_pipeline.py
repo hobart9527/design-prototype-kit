@@ -673,6 +673,10 @@ def test_topology_context_and_convention_cli(tmp_path: Path):
     assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is False
 
     # Page with sibling link passes topology assertion
+    # The referenced sibling surface must exist: a link to an undelivered surface is a 404 defect.
+    sibling = tmp_path / "prototype/surfaces/incident-replay/index.html"
+    sibling.parent.mkdir(parents=True, exist_ok=True)
+    sibling.write_text("<!DOCTYPE html><html><body>Incident Replay</body></html>", encoding="utf-8")
     test_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="../../../shared/tokens.css"></head><body>
 <nav><a href="../../../surfaces/incident-replay/index.html">Incident</a></nav>
 <main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;"><button>Go</button></main>
@@ -885,6 +889,10 @@ def test_operationalized_design_techniques_across_stages(tmp_path: Path):
     assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(r1_path)) is False
 
     # Fully conforming HTML that satisfies all operationalized techniques
+    # Sibling nav target must exist on disk: navigation integrity rejects links to undelivered surfaces.
+    (tmp_path / "prototype/surfaces/console").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/surfaces/console/index.html").write_text(
+        "<!DOCTYPE html><html><body>Console</body></html>", encoding="utf-8")
     good_html = tmp_path / "good_conforming.html"
     good_html.write_text("""<!DOCTYPE html><html><head>
 <link rel="stylesheet" href="../../../shared/tokens.css">
@@ -893,7 +901,7 @@ def test_operationalized_design_techniques_across_stages(tmp_path: Path):
   .truncate { text-overflow: ellipsis; overflow: hidden; }
 </style>
 </head><body>
-<nav><a href="../../../surfaces/console/index.html">Console</a></nav>
+<nav><a href="prototype/surfaces/console/index.html">Console</a></nav>
 <main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;" class="truncate">
   <!-- Full Action Verb Lifecycle elements -->
   <button id="drain-node" data-action="drain-node">Drain Node</button>
@@ -928,7 +936,7 @@ def test_operationalized_design_techniques_across_stages(tmp_path: Path):
   .truncate { text-overflow: ellipsis; overflow: hidden; }
 </style>
 </head><body>
-<nav><a href="../../../surfaces/console/index.html">Console</a></nav>
+<nav><a href="prototype/surfaces/console/index.html">Console</a></nav>
 <main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;" class="truncate">
   <!-- Direct trigger with inline feedback (no modal dialog) -->
   <button id="drain-node" data-action="drain-node">Drain Node</button>
@@ -1280,8 +1288,6 @@ def test_reconcile_review_tokens_back_to_contracts(tmp_path: Path):
 
     updated_json = json.loads(out_json.read_text(encoding="utf-8"))
     assert updated_json["color"]["primary"]["$value"] == "#38bdf8"
-
-
 
 
 
