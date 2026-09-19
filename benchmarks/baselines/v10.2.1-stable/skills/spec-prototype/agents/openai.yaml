@@ -1,7 +1,0 @@
-interface:
-  display_name: "Spec Prototype"
-  short_description: "Whole-product UX/UI design from product evidence"
-  default_prompt: "Use $spec-prototype to turn this PRD or product evidence into a coherent, validated digital-product design."
-
-policy:
-  allow_implicit_invocation: true

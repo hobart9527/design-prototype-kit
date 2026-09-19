@@ -11,6 +11,7 @@ Nothing in this module may hand product information to a design agent.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import pathlib
@@ -19,6 +20,7 @@ import shutil
 import socketserver
 import subprocess
 import sys
+import tarfile
 import threading
 import time
 import uuid
@@ -197,13 +199,53 @@ def extract_user_input(text: str) -> str | None:
 
 # -- variants and workspaces --------------------------------------------------
 
+def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
+    """Restore a frozen baseline's file tree on demand, verifying it against MANIFEST.json.
+
+    The baseline tree is derived data: MANIFEST.json pins the commit it was frozen at and
+    the sha256 of every file, so the tree lives in the git-ignored cache next to it and is
+    rebuilt from that commit when absent. A tag whose content no longer matches the manifest
+    is refused rather than silently used as a control condition.
+    """
+    base = BASELINES_DIR / tag
+    manifest = read_json(base / "MANIFEST.json")
+    rev = str(manifest.get("git_rev") or "")
+
+    def divergences() -> list[str]:
+        skill_root = base / "skills/spec-prototype"
+        return [rel for rel, meta in (manifest.get("hashes") or {}).items()
+                if sha256_file(skill_root / rel) != meta["sha256"]]
+
+    if (base / "skills/spec-prototype").is_dir():
+        # The tree is git-ignored, so nothing else guards it. Hashing 59 files costs ~2ms.
+        stale = divergences()
+        if not stale:
+            return base
+        shutil.rmtree(base / "skills", ignore_errors=True)
+        shutil.rmtree(base / "agents", ignore_errors=True)
+
+    if not rev or rev == "unknown":
+        raise BenchBlocked(f"baseline {tag} missing and MANIFEST.json records no git_rev")
+    proc = subprocess.run(["git", "archive", rev, "--format=tar", "skills/spec-prototype", "agents"],
+                          cwd=ROOT, capture_output=True)
+    if proc.returncode != 0:
+        detail = proc.stderr.decode(errors="replace").strip()[:200]
+        raise BenchBlocked(f"baseline {tag}: git archive {rev[:12]} failed: {detail}")
+    base.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(fileobj=io.BytesIO(proc.stdout)) as tf:
+        tf.extractall(base, filter="data")
+    divergent = divergences()
+    if divergent:
+        raise BenchBlocked(f"baseline {tag}: {len(divergent)} file(s) diverge from MANIFEST "
+                           f"at {rev[:12]}: {divergent[:3]}")
+    return base
+
+
 def variant_sources(variant: str) -> dict:
     if variant == "no_skill":
         return {"skill": None, "agents": None}
     if variant == "stable_skill":
-        base = BASELINES_DIR / STABLE_TAG
-        if not (base / "skills/spec-prototype").is_dir():
-            raise BenchBlocked(f"stable baseline missing: {base} -- run runners/freeze_baseline.py")
+        base = ensure_baseline()
         return {"skill": base / "skills/spec-prototype", "agents": base / "agents"}
     if variant == "candidate_skill":
         return {"skill": ROOT / "skills/spec-prototype", "agents": ROOT / "agents"}

@@ -52,10 +52,15 @@ case.yaml + brief.md ──► PREPARE (workspace in /tmp/design-bench/<case>/<v
 | variant | skill source |
 | --- | --- |
 | `no_skill` | none (control) |
-| `stable_skill` | `benchmarks/baselines/<tag>/` frozen by `runners/freeze_baseline.py` |
+| `stable_skill` | `benchmarks/baselines/<tag>/`, rebuilt on demand from the `git_rev` in its `MANIFEST.json` |
 | `candidate_skill` | live `skills/spec-prototype` + `agents/` working tree |
 
 Freeze a new baseline before comparing anything: `python benchmarks/runners/freeze_baseline.py --tag vX`.
+Only `MANIFEST.json` is committed — the frozen tree is derived data, rebuilt from the recorded `git_rev`
+and sha256-verified on every use, so a tampered or stale cache is rejected rather than silently compared
+against. Committing the whole tree would store the same bytes twice and let the copy drift from the rev
+it claims to be. Freezing a dirty working tree is refused (`--force` overrides) because the recorded rev
+would not reproduce it.
 
 ## Isolation rules
 

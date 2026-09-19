@@ -27,6 +27,17 @@ def git_rev() -> str:
         return "unknown"
 
 
+def uncommitted(paths: list[str]) -> list[str]:
+    """Paths under `paths` that differ from HEAD.
+
+    A baseline's tree is rebuilt from the recorded git_rev, so freezing a dirty tree would
+    record a rev that does not reproduce it -- the control condition would silently be a lie.
+    """
+    proc = subprocess.run(["git", "status", "--porcelain", "--", *paths], cwd=bl.ROOT,
+                          capture_output=True, text=True, timeout=30)
+    return [line[3:].strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tag", default=bl.STABLE_TAG)
@@ -37,6 +48,13 @@ def main() -> int:
     if dest.exists() and not args.force:
         print(f"BLOCKED baseline already frozen: {dest}")
         return 2
+    dirty = uncommitted(["skills/spec-prototype", "agents"])
+    if dirty and not args.force:
+        print(f"BLOCKED working tree is dirty for {len(dirty)} path(s); the recorded git_rev "
+              f"would not reproduce this baseline. Commit first, or pass --force to freeze a "
+              f"baseline that cannot be restored.\n  " + "\n  ".join(dirty[:5]))
+        return 2
+
     if dest.exists():
         shutil.rmtree(dest)
 

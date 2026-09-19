@@ -6,3 +6,8 @@ __pycache__/
 benchmarks/spec-prototype/results/
 
 benchmarks/results/
+
+# Frozen baseline trees are rebuilt from the git_rev in MANIFEST.json (bench_lib.ensure_baseline).
+benchmarks/baselines/*/*
+!benchmarks/baselines/*/MANIFEST.json
+

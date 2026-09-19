@@ -151,3 +151,31 @@ def test_aggregate_report_blocks_promotion_on_a_hard_gate(tmp_path):
     assert report["hard_gates"]["authority_escape"] == 1
     assert report["status"] == "REGRESSION"
     assert "task behaviour unverified" in " ".join(report["unverified"])
+
+
+def test_frozen_baseline_restores_from_its_recorded_rev(tmp_path, monkeypatch):
+    """The baseline tree is git-ignored derived data: it must rebuild, verified, from MANIFEST.json."""
+    base = bl.BASELINES_DIR / bl.STABLE_TAG
+    manifest = bl.read_json(base / "MANIFEST.json")
+    assert manifest["git_rev"] and manifest["git_rev"] != "unknown", "baseline records no rev to restore from"
+    assert manifest["hashes"], "baseline records no per-file hashes to verify against"
+
+    # Restore into a scratch copy so the real cache is untouched.
+    scratch = tmp_path / bl.STABLE_TAG
+    scratch.mkdir()
+    (scratch / "MANIFEST.json").write_text((base / "MANIFEST.json").read_text(), encoding="utf-8")
+    monkeypatch.setattr(bl, "BASELINES_DIR", tmp_path)
+
+    restored = bl.ensure_baseline()
+    skill = restored / "skills/spec-prototype"
+    assert (skill / "SKILL.md").is_file()
+    for rel, meta in manifest["hashes"].items():
+        assert bl.sha256_file(skill / rel) == meta["sha256"], f"restored {rel} does not match MANIFEST"
+
+    # A tampered cache must be detected and rebuilt, never used as the control condition.
+    target = skill / "SKILL.md"
+    good = target.read_text(encoding="utf-8")
+    target.write_text(good + "\n<!-- tampered -->\n", encoding="utf-8")
+    assert target.read_text(encoding="utf-8") != good
+    bl.ensure_baseline()
+    assert target.read_text(encoding="utf-8") == good, "tampered baseline was reused instead of rebuilt"
