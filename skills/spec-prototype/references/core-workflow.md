@@ -106,6 +106,19 @@ risks, probe results and applicable platform contexts:
   or a local refinement keeps its existing route and is not forced through
   full-product enumeration, implementation or approval; a formal candidate still
   requires its applicable sealed provisional Spec.
+- **One obligation reconciler, two coverages**: selected and full-product coverage
+  execute and report through the same reconciler
+  (`prototype_context.reconcile_obligations`). Only a `full-product` selection
+  authorizes automatic continuation across further batches; a `selected` coverage
+  stops at its declared obligations. Scope membership, delivery and evidence remain
+  separate facts: a missing artifact or missing evidence withholds completion, and a
+  documented blocker or deferred label never discharges an obligation — only an
+  explicit scope change does. Review views reconcile the authored map with delivery
+  and evidence, listing declared-but-absent surfaces and separating in-round from
+  outside-round obligations. Pending destinations stay href-free rather than becoming
+  broken links; required navigation dependencies are disclosed. Product navigation is
+  never forced to display review-management statuses. A map revision change is
+  reconciled explicitly and neither auto-expands nor shrinks the retained set.
 
 ### Stage 1: Understand & Frame (破 - 魂立约：双钻收敛与全套契约密封暂行)
 - **Primary Goal**: Transition from user intent to a **complete, sealed provisional Design Specification (`spec`)** spanning problem ontology, topology, visual register, and interaction contracts.

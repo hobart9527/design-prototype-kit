@@ -173,3 +173,106 @@ def read_context(surface_map: str = "", product: str = "", foundation: str = "",
         "recommendation_required": coverage in ("unresolved", "legacy"),
         "errors": errors,
     }
+
+
+def _ids(value: Any) -> List[str]:
+    """Normalize a delivered/blocked fact into surface IDs."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if isinstance(value, dict):
+        return [str(k) for k in value]
+    return [str(v) for v in value]
+
+
+def _evidence_refs(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if isinstance(value, dict):
+        return [str(k) for k, ref in value.items() if ref]
+    return [str(v) for v in value if v]
+
+
+def reconcile_obligations(context: Dict[str, Any], delivered: Any = None,
+                          evidence: Any = None, blocked: Any = None,
+                          bound_revision: Optional[str] = None) -> Dict[str, Any]:
+    """One obligation reconciler for selected and full-product coverage.
+
+    Scope membership, delivery and evidence stay separate facts: a documented
+    blocker is recorded and never discharges an obligation, and a later map edit
+    neither expands nor shrinks the retained selection.
+    """
+    smap = (context or {}).get("surface_map", {}) or {}
+    coverage = smap.get("coverage") or "unresolved"
+    revision = smap.get("revision") or ""
+    declared = list(smap.get("surfaces") or [])
+    retained = list(smap.get("selected_surfaces") or [])
+    applicability = dict(smap.get("applicability") or {})
+
+    # The retained promise is the selection itself: a map that later drops a
+    # selected surface leaves the obligation visible rather than shrinking it.
+    in_round = retained if coverage == "selected" else (
+        declared if coverage == "full-product" else [])
+
+    delivered_ids = set(_ids(delivered))
+    evidence_map = evidence if isinstance(evidence, dict) else {
+        sid: True for sid in (evidence or [])}
+    blocked_map = dict(blocked or {}) if not isinstance(blocked, str) else {blocked: "blocked"}
+
+    obligations: List[Dict[str, Any]] = []
+    order = declared + [sid for sid in in_round if sid not in declared]
+    for surface in order:
+        in_scope = surface in in_round
+        refs = _evidence_refs(evidence_map.get(surface))
+        has_delivery = surface in delivered_ids
+        obligations.append({
+            "surface": surface,
+            "scope": ("selected" if coverage == "selected" else "authorized") if in_scope else "outside-round",
+            "delivery": "delivered" if has_delivery else "missing",
+            "evidence": "verified" if refs else "missing",
+            "evidence_refs": refs,
+            "blocker": str(blocked_map.get(surface, "") or ""),
+            "platforms": _items(applicability.get(surface, "")),
+            "met": bool(in_scope and has_delivery and refs),
+        })
+
+    unmet = [o["surface"] for o in obligations if o["scope"] != "outside-round" and not o["met"]]
+    outside_round = [o["surface"] for o in obligations if o["scope"] == "outside-round"]
+    missing_delivery = [o["surface"] for o in obligations if o["scope"] != "outside-round" and o["delivery"] == "missing"]
+    missing_evidence = [o["surface"] for o in obligations if o["scope"] != "outside-round" and o["evidence"] == "missing"]
+    stale = bool(bound_revision is not None and bound_revision != revision)
+
+    # Sibling links follow actual delivery: a pending sibling needs no href, but a
+    # delivered sibling must be reachable from every other delivered member.
+    delivered_in_round = [o["surface"] for o in obligations
+                          if o["scope"] != "outside-round" and o["delivery"] == "delivered"]
+    sibling_links = {sid: [other for other in delivered_in_round if other != sid]
+                     for sid in delivered_in_round}
+
+    return {
+        "coverage": coverage,
+        "revision": revision,
+        "selection_source": smap.get("selection_source") or "",
+        "authorized_full_product": coverage == "full-product",
+        "recommendation_required": coverage in ("unresolved", "legacy"),
+        "stale_revision": stale,
+        "obligations": obligations,
+        "in_round": [o["surface"] for o in obligations if o["scope"] != "outside-round"],
+        "outside_round": outside_round,
+        "unmet": unmet,
+        "missing_delivery": missing_delivery,
+        "missing_evidence": missing_evidence,
+        "blockers": {o["surface"]: o["blocker"] for o in obligations if o["blocker"]},
+        "delivered": delivered_in_round,
+        "sibling_links": sibling_links,
+        # Only a full-product selection authorizes continuation into further
+        # batches; a subset stops at its declared obligations.
+        "auto_continue": bool(coverage == "full-product" and unmet),
+        # A reason never discharges an obligation.
+        "completion": bool(coverage in ("selected", "full-product") and not unmet and not stale),
+        "qualifier": (f"prototype medium {(context or {}).get('specification', {}).get('prototype_medium') or 'unknown'}; "
+                      f"environment {(context or {}).get('platform', {}).get('verification_environment') or 'unknown'}"),
+    }

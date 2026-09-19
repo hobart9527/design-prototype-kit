@@ -13,6 +13,9 @@ import sys
 from typing import Dict, List, Tuple
 import json
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import prototype_context  # noqa: E402
+
 
 def _read_verification(root: Path) -> Dict[str, str]:
     manifest = root / "prototype/evidence/handoff-manifest.json"
@@ -76,6 +79,60 @@ def discover_surfaces(root: Path) -> List[Dict[str, str]]:
                 })
 
     return surfaces
+
+
+def read_coverage(root: Path) -> Dict[str, object] | None:
+    """Reconcile authored scope with on-disk delivery for the review view.
+
+    Declared-but-absent surfaces stay visible; review management statuses stay
+    out of the prototype's own navigation.
+    """
+    sources = {
+        "surface_map": root / "prototype/contracts/surface-maps/m1.md",
+        "product": root / "prototype/product.md",
+        "foundation": root / "prototype/contracts/foundation/f1.md",
+        "specification": None,
+    }
+    specs = sorted((root / "prototype/specifications").glob("*/r1.md"))
+    sources["specification"] = specs[0] if specs else None
+    texts = {}
+    for key, path in sources.items():
+        texts[key] = path.read_text(encoding="utf-8") if path and path.is_file() else ""
+    if not texts["surface_map"]:
+        return None
+    context = prototype_context.read_context(**texts)
+
+    delivered: Dict[str, str] = {}
+    for html in sorted((root / "prototype/surfaces").glob("*/index.html")) + sorted(
+            (root / "prototype/experiments").glob("*/**/index.html")):
+        name = html.parent.parent.name if html.parent.name in ("anchor", "hero-anchor") else html.parent.name
+        delivered[name] = html.relative_to(root).as_posix()
+
+    return prototype_context.reconcile_obligations(context, delivered=delivered)
+
+
+def build_coverage_html(reconciliation: Dict[str, object] | None) -> str:
+    if not reconciliation:
+        return ""
+    rows = []
+    for obligation in reconciliation.get("obligations", []):
+        rows.append(
+            "<tr><td>{surface}</td><td>{scope}</td><td>{delivery}</td>"
+            "<td>{evidence}</td><td>{blocker}</td></tr>".format(
+                surface=obligation["surface"], scope=obligation["scope"],
+                delivery=obligation["delivery"], evidence=obligation["evidence"],
+                blocker=obligation["blocker"] or "-"))
+    return (
+        '<section id="coverage-reconciliation">'
+        f'<h2>Coverage: {reconciliation.get("coverage")} (rev {reconciliation.get("revision")})</h2>'
+        f'<p>In round: {", ".join(reconciliation.get("in_round") or []) or "none"}</p>'
+        f'<p>Outside this round: {", ".join(reconciliation.get("outside_round") or []) or "none"}</p>'
+        f'<p>Declared but absent: {", ".join(reconciliation.get("missing_delivery") or []) or "none"}</p>'
+        f'<p>Missing evidence: {", ".join(reconciliation.get("missing_evidence") or []) or "none"}</p>'
+        f'<p data-completion="{str(reconciliation.get("completion")).lower()}">'
+        f'Completion: {"met" if reconciliation.get("completion") else "withheld"}</p>'
+        "<table><tr><th>Surface</th><th>Scope</th><th>Delivery</th><th>Evidence</th><th>Blocker</th></tr>"
+        + "".join(rows) + "</table></section>")
 
 
 def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Review Portal", verification: Dict[str, str] | None = None) -> str:
@@ -307,6 +364,13 @@ def main():
         except (json.JSONDecodeError, OSError):
             verification = {}
     html = build_portal_html(surfaces, verification=verification)
+    coverage_html = ""
+    reconciliation = read_coverage(root)
+    if reconciliation:
+        coverage_html = build_coverage_html(reconciliation)
+        marker = "  <div class=\"portal-frame-box\">"
+        if marker in html:
+            html = html.replace(marker, coverage_html + "\n" + marker, 1)
     out_path = root / args.output
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")

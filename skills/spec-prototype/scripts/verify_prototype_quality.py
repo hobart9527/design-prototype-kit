@@ -13,6 +13,9 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import prototype_context  # noqa: E402
+
 
 def _contract_items(path: Path | None) -> list[str]:
     """Extract verifiable entity names, action IDs, or button labels from contract markdown."""
@@ -118,6 +121,64 @@ def _evidence_state(html: Path) -> dict[str, str]:
             except (json.JSONDecodeError, OSError):
                 return {}
     return {}
+
+
+def coverage_failures(html: Path) -> list[str]:
+    """Reconcile the authored scope with delivery and evidence.
+
+    Scope membership, delivery and evidence stay separate facts; a documented
+    blocker never discharges an obligation and a pending destination stays
+    href-free rather than becoming a broken link.
+    """
+    root = None
+    for parent in [html.parent, *html.parents]:
+        if (parent / "prototype/contracts/surface-maps/m1.md").is_file():
+            root = parent
+            break
+    if root is None:
+        return []
+    texts = {}
+    for key, path in (
+        ("surface_map", root / "prototype/contracts/surface-maps/m1.md"),
+        ("product", root / "prototype/product.md"),
+        ("foundation", root / "prototype/contracts/foundation/f1.md"),
+    ):
+        texts[key] = path.read_text(encoding="utf-8") if path.is_file() else ""
+    specs = sorted((root / "prototype/specifications").glob("*/r1.md"))
+    texts["specification"] = specs[0].read_text(encoding="utf-8") if specs else ""
+    if not texts["surface_map"]:
+        return []
+
+    context = prototype_context.read_context(**texts)
+    delivered = {}
+    pages = sorted((root / "prototype/surfaces").glob("*/index.html")) + sorted(
+        (root / "prototype/experiments").glob("*/**/index.html"))
+    for page in pages:
+        name = page.parent.parent.name if page.parent.name in ("anchor", "hero-anchor") else page.parent.name
+        delivered[name] = page.read_text(encoding="utf-8")
+    reconciliation = prototype_context.reconcile_obligations(
+        context, delivered=list(delivered), evidence=None, blocked=None,
+        bound_revision=context["surface_map"]["revision"])
+
+    failures: list[str] = []
+    if reconciliation["coverage"] == "unresolved" and context["surface_map"]["surfaces"]:
+        failures.append("coverage assertion: surface map declares surfaces without an explicit selected/full-product coverage")
+    if reconciliation["missing_delivery"]:
+        failures.append("coverage assertion: selected obligations undelivered ("
+                        + ", ".join(reconciliation["missing_delivery"][:5])
+                        + "); absent surfaces remain review-visible, not silently dropped")
+    if reconciliation["stale_revision"]:
+        failures.append("coverage assertion: delivered scope does not match the retained map revision")
+    for surface in reconciliation["in_round"]:
+        source = delivered.get(surface, "")
+        if not source:
+            continue
+        for sibling in reconciliation["in_round"]:
+            if sibling == surface or sibling in delivered:
+                continue
+            if re.search(rf"href=[\"'][^\"']*{re.escape(sibling)}[^\"']*[\"']", source):
+                failures.append(f"coverage assertion: pending sibling {sibling} linked from {surface} but not delivered (render a disabled affordance instead)")
+    return failures
 
 
 def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
@@ -293,6 +354,8 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                     has_sibling_link = any(re.search(rf"href=[\"'][^\"']*{re.escape(sid)}[^\"']*[\"']", source) for sid in siblings)
                     if not has_sibling_link:
                         failures.append(f"topology assertion: multi-surface navigation links missing for sibling surfaces ({', '.join(siblings)})")
+
+    failures.extend(coverage_failures(html))
 
     if check_stale:
         if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", source, re.IGNORECASE):
