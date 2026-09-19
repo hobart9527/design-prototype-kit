@@ -65,7 +65,11 @@ def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> 
     if lint:  # the formal entry runs the real lint, not a parallel copy of it
         failures = _contract_lint_gate(root, slice_id)
         if failures:
-            detail = "; ".join(f"{f['code']}:{f['path']}" for f in failures)
+            # Carry the rule's own detail: a stale map identity must name the
+            # revision or digest that differs, not merely that something differs.
+            detail = "; ".join(
+                f"{f['code']}:{f['path']} ({f['message']})" if f["message"] else f"{f['code']}:{f['path']}"
+                for f in failures)
             raise ValueError(
                 f"Stage 1 contract lint failed at the formal entry. {detail}. "
                 f"Existing artifacts are unchanged; resolve each failure and re-assemble."

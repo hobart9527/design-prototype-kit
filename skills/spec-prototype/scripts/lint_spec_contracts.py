@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 import re
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 class SpecLintError:
@@ -105,15 +105,62 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
-def read_formal_context(root: Path, slice_id: str) -> Dict[str, object]:
-    """Normalize authored coverage/platform facts for the formal path."""
+# The retained selection record declares the map identity the scope was chosen
+# against. Accept the documented template wording and a bare key; a revision may
+# carry the template's `/ status` tail, which is not part of the identity.
+_SELECTION_REVISION_RE = re.compile(
+    r"^[ \t\-*+]*(?:surface[ _-]?map[ _-]?)?revision[ \t]*[:=][ \t]*([^\n#]+)",
+    re.IGNORECASE | re.MULTILINE)
+_SELECTION_DIGEST_RE = re.compile(
+    r"^[ \t\-*+]*(?:surface[ _-]?map[ _-]?)?digest[ \t]*[:=][ \t]*"
+    r"(?:sha256:)?([0-9a-fA-F]{64})",
+    re.IGNORECASE | re.MULTILINE)
+
+
+def retained_map_identity(root: Path) -> Tuple[Optional[str], Optional[str]]:
+    """The map revision and digest the retained selection was made against.
+
+    `selection-source` names the record that chose this scope, so that record
+    owns the identity the formal entry compares against — not the working file's
+    current revision, which is what a stale map would present. A record that is
+    absent, outside the repository or silent about identity yields no expectation
+    and adds no refusal; the map's own facts still stand on their own.
+    """
     import prototype_context
 
+    resolved_root = root.resolve()
+    map_text = _read(resolved_root / "prototype/contracts/surface-maps/m1.md")
+    source = (prototype_context.read_context(map_text)["surface_map"]["selection_source"]
+              or "").strip().strip("`'\"")
+    if not source:
+        return None, None
+    record = resolved_root / source
+    if not record.is_file() or not record.resolve().is_relative_to(resolved_root):
+        return None, None
+    text = record.read_text(encoding="utf-8")
+    revision = _SELECTION_REVISION_RE.search(text)
+    digest = _SELECTION_DIGEST_RE.search(text)
+    expected_revision = revision.group(1).split("/")[0].split()[0].strip("`'\"") if revision else None
+    return expected_revision, (digest.group(1).lower() if digest else None)
+
+
+def read_formal_context(root: Path, slice_id: str) -> Dict[str, object]:
+    """Normalize authored coverage/platform facts for the formal path.
+
+    The retained selection supplies the expected map identity, so an authored map
+    that moved past its retained revision or digest is reported here rather than
+    dispatching against a scope nobody selected.
+    """
+    import prototype_context
+
+    expected_revision, expected_digest = retained_map_identity(root)
     return prototype_context.read_context(
         _read(root / "prototype/contracts/surface-maps/m1.md"),
         _read(root / "prototype/product.md"),
         _read(root / "prototype/contracts/foundation/f1.md"),
         _read(root / f"prototype/specifications/{slice_id}/r1.md"),
+        expected_map_revision=expected_revision,
+        expected_map_digest=expected_digest,
     )
 
 
@@ -154,9 +201,12 @@ def lint_formal_entry(root: Path, slice_id: str) -> List[SpecLintError]:
     if "missing_selection_source" in codes:
         errors.append(SpecLintError("E009_SELECTION_SOURCE_MISSING", "m1.md",
                                     "A selected coverage declares no retained selection source."))
-    if "stale_map_identity" in codes:
+    stale = [error["detail"] for error in context["errors"]
+             if error["code"] == "stale_map_identity"]
+    if stale:
         errors.append(SpecLintError("E010_STALE_CONTRACT", "m1.md",
-                                    "Surface Map revision or digest does not match the expected identity."))
+                                    "Surface Map identity does not match the retained selection: "
+                                    f"{'; '.join(stale)}."))
     if "unknown_platform_context" in codes:
         errors.append(SpecLintError("E013_PLATFORM_CONTEXT_UNKNOWN", "m1.md",
                                     "Applicability references an undeclared platform context."))
@@ -165,14 +215,20 @@ def lint_formal_entry(root: Path, slice_id: str) -> List[SpecLintError]:
         errors.append(SpecLintError("E014_SELECTION_INVALID", "m1.md",
                                     f"Selection identities are not well-formed: {', '.join(invalid)}."))
 
+    # Widening asks whether a target was added outside the declared selection, so
+    # it applies only to a `selected` coverage. A `full-product` selection names no
+    # surface by design: it authorizes every applicable surface of the bound map
+    # revision, and comparing that target set against an empty list is the wrong
+    # question. An empty `selected` coverage still authorizes nothing and is refused.
     selected = list(map_facts["selected_surfaces"])
-    widened = [s for s in map_facts["target_surfaces"] if s not in selected]
-    if widened:
-        errors.append(SpecLintError("E011_SELECTION_WIDENED", "m1.md",
-                                    f"Target surfaces {widened} are outside the selected set {selected}."))
-    if map_facts["coverage"] == "selected" and not selected:
-        errors.append(SpecLintError("E011_SELECTION_WIDENED", "m1.md",
-                                    "Selected coverage produced an empty target set."))
+    if map_facts["coverage"] == "selected":
+        widened = [s for s in map_facts["target_surfaces"] if s not in selected]
+        if widened:
+            errors.append(SpecLintError("E011_SELECTION_WIDENED", "m1.md",
+                                        f"Target surfaces {widened} are outside the selected set {selected}."))
+        if not selected:
+            errors.append(SpecLintError("E011_SELECTION_WIDENED", "m1.md",
+                                        "Selected coverage produced an empty target set."))
 
     return errors
 
