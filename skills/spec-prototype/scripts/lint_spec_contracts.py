@@ -101,6 +101,82 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
     return errors
 
 
+def _read(path: Path) -> str:
+    return path.read_text(encoding="utf-8") if path.is_file() else ""
+
+
+def read_formal_context(root: Path, slice_id: str) -> Dict[str, object]:
+    """Normalize authored coverage/platform facts for the formal path."""
+    import prototype_context
+
+    return prototype_context.read_context(
+        _read(root / "prototype/contracts/surface-maps/m1.md"),
+        _read(root / "prototype/product.md"),
+        _read(root / "prototype/contracts/foundation/f1.md"),
+        _read(root / f"prototype/specifications/{slice_id}/r1.md"),
+    )
+
+
+def lint_formal_entry(root: Path, slice_id: str) -> List[SpecLintError]:
+    """Lint the formal entry itself: canonical paths, selected IDs, coverage authority.
+
+    Content lint (lint_spec_contracts) is a subset of this. Every failure keeps the
+    offending path and detail; nothing is repaired or widened on the caller's behalf.
+    """
+    errors: List[SpecLintError] = list(lint_spec_contracts(root, slice_id))
+    resolved_root = root.resolve()
+
+    # Canonical paths: no symlink and no escape out of the repository root.
+    canonical = {
+        "product": root / "prototype/product.md",
+        "surface_map": root / "prototype/contracts/surface-maps/m1.md",
+        "foundation": root / "prototype/contracts/foundation/f1.md",
+        "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
+        "specification": root / f"prototype/specifications/{slice_id}/r1.md",
+    }
+    for name, path in canonical.items():
+        if path.is_symlink():
+            errors.append(SpecLintError("E012_PATH_ESCAPE", str(path),
+                                        f"{name} must be a regular contract file, not a symlink."))
+        elif path.is_file() and not path.resolve().is_relative_to(resolved_root):
+            errors.append(SpecLintError("E012_PATH_ESCAPE", str(path),
+                                        f"{name} resolves outside the repository root."))
+
+    context = read_formal_context(root, slice_id)
+    codes = {error["code"] for error in context["errors"]}
+    map_facts = context["surface_map"]
+
+    if context["recommendation_required"]:
+        errors.append(SpecLintError(
+            "E008_COVERAGE_UNRESOLVED", "m1.md",
+            f"Coverage is {map_facts['coverage']!r}; a recommended combination must be "
+            "selected and authored before a formal build. Absent selection is never full-product."))
+    if "missing_selection_source" in codes:
+        errors.append(SpecLintError("E009_SELECTION_SOURCE_MISSING", "m1.md",
+                                    "A selected coverage declares no retained selection source."))
+    if "stale_map_identity" in codes:
+        errors.append(SpecLintError("E010_STALE_CONTRACT", "m1.md",
+                                    "Surface Map revision or digest does not match the expected identity."))
+    if "unknown_platform_context" in codes:
+        errors.append(SpecLintError("E013_PLATFORM_CONTEXT_UNKNOWN", "m1.md",
+                                    "Applicability references an undeclared platform context."))
+    invalid = sorted(codes & {"duplicate_surface_id", "unknown_surface_id", "empty_selection"})
+    if invalid:
+        errors.append(SpecLintError("E014_SELECTION_INVALID", "m1.md",
+                                    f"Selection identities are not well-formed: {', '.join(invalid)}."))
+
+    selected = list(map_facts["selected_surfaces"])
+    widened = [s for s in map_facts["target_surfaces"] if s not in selected]
+    if widened:
+        errors.append(SpecLintError("E011_SELECTION_WIDENED", "m1.md",
+                                    f"Target surfaces {widened} are outside the selected set {selected}."))
+    if map_facts["coverage"] == "selected" and not selected:
+        errors.append(SpecLintError("E011_SELECTION_WIDENED", "m1.md",
+                                    "Selected coverage produced an empty target set."))
+
+    return errors
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Lint Stage 1 Design Spec Contracts")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Workspace root directory")

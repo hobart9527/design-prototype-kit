@@ -18,9 +18,33 @@ from typing import Any, Dict, List, Optional
 
 
 SKILL = Path(__file__).resolve().parents[1]
+if str(SKILL / "scripts") not in sys.path:
+    sys.path.insert(0, str(SKILL / "scripts"))
 
 
-def check_spec_completeness(root: Path, slice_id: str) -> Dict[str, Path]:
+def formal_contract_lint(root: Path, slice_id: str) -> List[Dict[str, str]]:
+    """Run the real contract lint at the formal entry and return bounded failure records."""
+    import lint_spec_contracts
+
+    lint_errors = lint_spec_contracts.lint_formal_entry(root, slice_id)
+    return [{"code": e.rule, "path": e.file_path, "message": e.message} for e in lint_errors]
+
+
+def read_formal_context(root: Path, slice_id: str) -> Dict[str, Any]:
+    """Normalized coverage/platform context, read from the retained authored sources."""
+    import lint_spec_contracts
+
+    return lint_spec_contracts.read_formal_context(root, slice_id)
+
+
+def _contract_lint_gate(root: Path, slice_id: str) -> List[Dict[str, str]]:
+    try:
+        return formal_contract_lint(root, slice_id)
+    except Exception as error:  # preserve context; never let a broken lint open the gate
+        return [{"code": "E010_STALE_CONTRACT", "path": str(root), "message": str(error)}]
+
+
+def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Path]:
     """Verify that all required Stage 1 design contract artifacts exist and meet minimum content floors."""
     required = {
         "product": root / "prototype/product.md",
@@ -37,6 +61,15 @@ def check_spec_completeness(root: Path, slice_id: str) -> Dict[str, Path]:
             f"Stage 1 Spec Contract incomplete. Missing required artifacts: {', '.join(missing)}. "
             f"All 6 contract pillars must be materialized before Stage 2 prototype building."
         )
+
+    if lint:  # the formal entry runs the real lint, not a parallel copy of it
+        failures = _contract_lint_gate(root, slice_id)
+        if failures:
+            detail = "; ".join(f"{f['code']}:{f['path']}" for f in failures)
+            raise ValueError(
+                f"Stage 1 contract lint failed at the formal entry. {detail}. "
+                f"Existing artifacts are unchanged; resolve each failure and re-assemble."
+            )
 
     return required
 
@@ -795,7 +828,17 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         }
     }
 
-    # Extract product thesis, core tension and reality anchors
+    # Coverage and platform context, normalized from the retained authored sources.
+    # Absent fields stay absent: a missing selection never becomes full-product, an
+    # unselected dependency is disclosed rather than added, and a native target built
+    # in a browser medium keeps its validation gap.
+    platform_context = read_formal_context(root, slice_id)
+    selected_surfaces = list(platform_context["surface_map"]["selected_surfaces"])
+    target_surfaces = list(platform_context["surface_map"]["target_surfaces"])
+    if platform_context["authorizes_full_product"]:
+        selected_surfaces = target_surfaces
+
+    # Extract product thesis, core tension and reality anchors (authored only).
     prod_thesis_raw = ""
     prod_tension_raw = ""
     for line in product_content.splitlines():
@@ -803,6 +846,8 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             prod_tension_raw = line.split(":", 1)[1].strip()
         elif line.startswith("# Product Thesis:"):
             prod_thesis_raw = line.split(":", 1)[1].strip()
+    if prod_tension_raw in ("unspecified", "Not yet decided"):
+        prod_tension_raw = ""  # an unauthored tension does not become a domain claim
 
     # Runtime Method Registry selection & lazy loading (v10.2.1)
     active_methods = select_active_methods(
@@ -821,12 +866,15 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     )
 
     # Dual-Envelope Architecture (v10): Decouple rigid constraints from creative agency
+    domain_thesis: Dict[str, Any] = {
+        "title": brand_title,
+        "product_thesis": prod_thesis_raw or brand_title,
+    }
+    if prod_tension_raw:
+        domain_thesis["core_tension"] = prod_tension_raw
+
     constraint_envelope = {
-        "domain_thesis": {
-            "title": brand_title,
-            "product_thesis": prod_thesis_raw or brand_title,
-            "core_tension": prod_tension_raw or "Operational Efficiency vs Cognitive Ergonomics",
-        },
+        "domain_thesis": domain_thesis,
         "ooux_topology": ooux_topology,
         "interaction_spec": interaction_spec,
         "fault_tolerance_protocol": fault_tolerance,
@@ -995,6 +1043,22 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "specification": paths["specification"].relative_to(root).as_posix(),
             "tokens_stylesheet": paths["tokens_css"].relative_to(root).as_posix(),
         },
+        # Retained source references, including the tokens Markdown revision the
+        # boundary re-checks for staleness.
+        "tokens_md_ref": paths["tokens_md"].relative_to(root).as_posix(),
+        "coverage": {
+            "coverage": platform_context["surface_map"]["coverage"],
+            "selection_source": platform_context["surface_map"]["selection_source"],
+            "selected_surfaces": selected_surfaces,
+            "target_surfaces": target_surfaces,
+            "unselected_surfaces": [s for s in platform_context["surface_map"]["surfaces"]
+                                    if s not in target_surfaces],
+            "applicability": dict(platform_context["surface_map"]["applicability"]),
+            "authorizes_full_product": platform_context["authorizes_full_product"],
+            "recommendation_required": platform_context["recommendation_required"],
+        },
+        "platform": dict(platform_context["platform"]),
+        "contract_lint": _contract_lint_gate(root, slice_id),
         "spec_sources": {
             "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest(),
             "surface_map_digest": hashlib.sha256(paths["surface_map"].read_bytes()).hexdigest(),

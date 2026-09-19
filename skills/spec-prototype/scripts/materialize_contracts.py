@@ -15,6 +15,16 @@ try:
 except ImportError:
     yaml = None
 
+# Provenance placeholders. A projection seam may not declare a fixed domain claim
+# ("Core Tension: X vs Y", borrowed reference, fixed shortcut) that no author wrote.
+# Marked text is machine-detectable so it can never read as an authored decision.
+UNSPECIFIED = "unspecified"
+NOT_YET_DECIDED = "Not yet decided"
+
+# Contract keys that require an authored source in the discussion/product records.
+# Missing source => key is omitted, never defaulted.
+AUTHORED_PROJECTION_KEYS = ("core_tension",)
+
 
 def extract_section_by_patterns(text: str, patterns: list[str]) -> str:
     """Extract markdown field or section matching any of the regex patterns, supporting bullets, tables, and headings."""
@@ -334,7 +344,9 @@ def build_frontend_contract(
         "slice_id": slice_id,
         "provenance": {
             "product_title": prod_title,
-            "core_tension": tension if tension else "unspecified",
+            # Projection seam: an unauthored tension is omitted, not defaulted to a
+            # domain claim. Consumers treat the absent key as an unknown optional fact.
+            **({"core_tension": tension} if tension not in (NOT_YET_DECIDED, UNSPECIFIED) else {}),
             "spec_ref": f"prototype/specifications/{slice_id}/r1.md",
             "slice_contract_ref": f"prototype/contracts/slices/{slice_id}/c1.md",
             "tokens_json_ref": "prototype/contracts/tokens/t1.json",
@@ -374,32 +386,11 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
     # Support Phase 1 synthesis of product.md if missing or requested
     if not prod_path.is_file() or (force and phase.lower() in ("1", "product")):
         p_title = extract_section_by_patterns(disc_text, ["Product Title", "Product", "产品名称", "产品"]) or slice_id.replace("-", " ").title()
-        # Infer neutral adaptive domain baseline rather than forcing Baseline 1 / Linear, Datadog
-        inferred_baseline = "Adaptive Lifecycle & Domain Anchors"
-        inferred_anchors = "Field-specific Reality Anchors"
-        disc_lower = disc_text.lower()
-        if any(k in disc_lower for k in ("reader", "reading", "editorial", "essay", "literature", "长文", "阅读")):
-            inferred_baseline = "Baseline 3: Editorial Reading Pattern"
-            inferred_anchors = "iA Writer, The New Yorker, Penguin Classics"
-        elif any(k in disc_lower for k in ("sre", "cluster", "telemetry", "incident", "ops", "运维", "事故", "监控")):
-            inferred_baseline = "Baseline 1: Dense Data & Engineering Workbench"
-            inferred_anchors = "Datadog, Bloomberg Terminal, Linear"
-        elif any(k in disc_lower for k in ("mobile", "touch", "booking", "consumer", "移动", "预约", "触控")):
-            inferred_baseline = "Baseline 4: Mobile Touch-First Somatic"
-            inferred_anchors = "Apple Fitness, Uber, Things 3"
-        elif any(k in disc_lower for k in ("saas", "approval", "workflow", "procurement", "crm", "审批", "采购", "看板")):
-            inferred_baseline = "Baseline 2: Modern SaaS & Operational Canvas"
-            inferred_anchors = "Notion, Stripe Dashboard, Linear"
-
-        p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or inferred_baseline
-        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or inferred_anchors
-        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"])
-        if not p_tension:
-            p_val = extract_section_by_patterns(disc_text, ["Value", "价值"])
-            if p_val:
-                p_tension = f"{p_val} (Deliberate Trade-off Stance)"
-            else:
-                p_tension = f"{p_title} Domain Value Integrity vs Friction"
+        # No inferred baseline, borrowed reference, tension or omission is synthesized here.
+        # An absent authored field stays marked, never promoted to a domain claim.
+        p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or UNSPECIFIED
+        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or UNSPECIFIED
+        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or UNSPECIFIED
         omissions = extract_ruthless_omissions(disc_text, "")
         omissions_md = "\n".join(f"- {o}" for o in omissions)
         prod_content = f"""# Product Thesis: {p_title}
@@ -420,7 +411,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
     product_title = next((line.lstrip("# ").strip() for line in prod_text.splitlines() if line.startswith("#")), "Product")
     tension = extract_section_by_patterns(prod_text, ["Core Tension", "Tension", "张力", "冲突"]) or \
               extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or \
-              "Not yet decided"
+              NOT_YET_DECIDED
     surfaces = extract_surfaces(disc_text, prod_text)
     action_verbs = extract_action_verbs(disc_text, slice_id)
 
