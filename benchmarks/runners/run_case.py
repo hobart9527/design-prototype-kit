@@ -40,6 +40,18 @@ def _capture_session_fidelity(session: dict, workspace: pathlib.Path) -> dict:
     }
 
 
+def _run_provenance(variant: str, out_dir: pathlib.Path) -> dict:
+    """What actually ran: candidate source bytes and the judge inputs stored for this run.
+
+    A published Git revision says nothing about an uncommitted candidate, so the source
+    files themselves are hashed. Legacy runs without stored provenance stay disclosed as
+    absent instead of being back-filled with a revision they never used.
+    """
+    provenance = {"candidate": bl.source_identity(variant), "judge_inputs": bl.judge_identity(out_dir)}
+    provenance["aggregate_sha256"] = provenance["candidate"].get("aggregate_sha256")
+    return provenance
+
+
 def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *, model: str | None,
             max_turns: int | None, timeout_s: int | None, budget_usd: float | None,
             do_task_trace: bool, max_task_steps: int, do_visual: bool,
@@ -63,7 +75,7 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
         "status": "INCONCLUSIVE",
         "metrics": {},
         "runtime": None, "semantic": None, "task": None, "visual": None, "contract": None,
-        "notes": [], "artifacts": None,
+        "notes": [], "artifacts": None, "provenance": None,
     }
 
     if rejudge:
@@ -165,6 +177,9 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             bl.write_json(out_dir / "visual-manifest.json", result["visual"])
         except Exception as exc:
             result["notes"].append(f"visual capture error: {exc}")
+
+    # PROVENANCE (what actually ran, archived result files excluded so re-judging is stable)
+    result["provenance"] = _run_provenance(variant, out_dir)
 
     # RESULT
     hard_fail = False

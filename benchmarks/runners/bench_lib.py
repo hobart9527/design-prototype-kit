@@ -514,6 +514,108 @@ def find_entry(directory: pathlib.Path) -> str | None:
     return str(html[0].relative_to(directory)) if html else None
 
 
+# -- source identity ----------------------------------------------------------
+
+IDENTITY_SUFFIXES = (".md", ".py", ".mjs", ".js", ".json", ".yaml", ".txt")
+IDENTITY_EXCLUDED_NAMES = {".env", ".credentials.json", ".netrc", "settings.local.json", "credentials.json"}
+IDENTITY_EXCLUDED_PARTS = {"__pycache__", ".pytest_cache", ".git"}
+
+
+def tree_identity(root) -> dict:
+    """Actual content identity of a source tree.
+
+    The recorded Git revision is not a claim of identity for a dirty candidate: the
+    working tree can differ from HEAD. Hashing the files themselves records what was
+    actually present. Secret-bearing files are skipped by name and never read, so hashes
+    can be published without publishing secrets.
+    """
+    root = pathlib.Path(root)
+    if not root.is_dir():
+        return {"file_count": 0, "aggregate_sha256": None, "files": {}, "excluded": []}
+    files, excluded = {}, []
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        if path.name in IDENTITY_EXCLUDED_NAMES or (path.name.startswith(".env") and path.name != ".env.example"):
+            excluded.append(str(path.relative_to(root)))
+            continue
+        if path.suffix.lower() not in IDENTITY_SUFFIXES:
+            continue
+        if IDENTITY_EXCLUDED_PARTS & set(path.relative_to(root).parts):
+            continue
+        files[str(path.relative_to(root))] = sha256_file(path)
+    digest = hashlib.sha256()
+    for rel, sha in sorted(files.items()):
+        digest.update(f"{rel}\0{sha}\n".encode())
+    return {"file_count": len(files), "aggregate_sha256": digest.hexdigest() if files else None,
+            "files": files, "excluded": excluded}
+
+
+def source_identity(variant: str) -> dict:
+    """Content identity of the sources a run actually used, dirty tree included.
+
+    Returns a disclosed identity. An absent source tree records `unknown` with a note
+    rather than inventing a hash.
+    """
+    ident = {"variant": variant, "git_rev": git_rev(),
+             "git_dirty": git_dirty(), "skill": None, "agents": None, "notes": []}
+    try:
+        sources = variant_sources(variant)
+    except BenchBlocked as exc:
+        ident["notes"].append(f"source identity unavailable: {exc}")
+        return ident
+    if not sources.get("skill"):
+        ident["notes"].append("variant runs without a skill source")
+        return ident
+    ident["skill"] = tree_identity(sources["skill"])
+    ident["agents"] = tree_identity(sources["agents"])
+    if ident["git_dirty"]:
+        ident["notes"].append("candidate tree is dirty; hashes describe the working files, not HEAD")
+    return ident
+
+
+def git_rev(cwd: pathlib.Path | None = None) -> str:
+    try:
+        proc = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(cwd or ROOT),
+                              capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+    return proc.stdout.strip() if proc.returncode == 0 and proc.stdout.strip() else "unknown"
+
+
+def git_dirty(cwd: pathlib.Path | None = None) -> bool | None:
+    """True when the tracked tree differs from HEAD. None when Git cannot say."""
+    try:
+        proc = subprocess.run(["git", "status", "--porcelain"], cwd=str(cwd or ROOT),
+                              capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return bool(proc.stdout.strip())
+
+
+def judge_identity(run_dir) -> dict:
+    """Hash the judge evidence a run stored, so a re-judge with changed judge bytes shows up."""
+    run_dir = pathlib.Path(run_dir)
+    out = {}
+    for name in ("artifacts-manifest.json", "session-summary.json", "task-traces.json",
+                 "visual-manifest.json", "session-transcript.md"):
+        path = run_dir / name
+        if path.is_file():
+            out[name] = sha256_file(path)
+    return {"files": out, "aggregate_sha256": _digest_map(out), "file_count": len(out)}
+
+
+def _digest_map(mapping: dict) -> str | None:
+    if not mapping:
+        return None
+    digest = hashlib.sha256()
+    for rel, sha in sorted(mapping.items()):
+        digest.update(f"{rel}\0{sha}\n".encode())
+    return digest.hexdigest()
+
+
 TEXT_SUFFIXES = (".md", ".html", ".css", ".js", ".mjs", ".json", ".txt", ".yaml")
 
 

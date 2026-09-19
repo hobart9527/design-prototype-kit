@@ -19,6 +19,44 @@ def _mean(values):
     return round(statistics.fmean(clean), 3) if clean else None
 
 
+def _critical_accessibility_violation(run: dict) -> bool:
+    """A critical accessibility failure, from whichever evidence the run actually stored.
+
+    Contrast failure is the direct signal; a failed touch-target outcome is the same class
+    of violation and counts too. Absent evidence is not a violation — it stays unverified.
+    """
+    checks = (run.get("runtime") or {}).get("checks") or []
+    if any(c.get("id") == "contrast_primary_text" and c.get("status") == "fail" for c in checks):
+        return True
+    for task in ((run.get("task") or {}).get("tasks") or []):
+        if any(o.get("id") == "touch_targets" and o.get("status") == "fail"
+               for o in (task.get("required_outcomes") or [])):
+            return True
+    return False
+
+
+def _provenance(runs: list) -> dict:
+    """Disclose what actually ran: recorded source identity, or an explicit absence.
+
+    Legacy runs predate provenance. Saying so is the honest record; back-filling them with
+    the current revision would claim those bytes ran when they did not.
+    """
+    recorded = [r for r in runs if r.get("provenance")]
+    missing = [f"{r.get('case_id')}/{r.get('variant')}" for r in runs if not r.get("provenance")]
+    identities = {r["provenance"].get("aggregate_sha256") for r in recorded}
+    return {
+        "runs_with_provenance": len(recorded),
+        "runs_missing_provenance": len(missing),
+        "missing": sorted(missing),
+        "identical_across_runs": len(identities) == 1 and None not in identities,
+        "source_identity": sorted({(r["provenance"].get("candidate") or {}).get("aggregate_sha256")
+                                   for r in recorded} - {None}),
+        "disclosure": ("no run recorded source identity; provenance unknown for this matrix"
+                       if not recorded else
+                       f"{len(missing)} of {len(runs)} runs recorded no provenance"),
+    }
+
+
 def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
     runs = [bl.read_json(path) for path in sorted(matrix_dir.rglob("run-result.json"))]
     pairwise_files = sorted(matrix_dir.glob("pairwise/*/result.json"))
@@ -54,14 +92,7 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         "semantic_fabrication": sum(1 for r in runs if (r.get("semantic") or {}).get("hard_gate") == "fail"),
         "authority_escape": sum(1 for r in runs if (r.get("runtime") or {}).get("authority_escape")),
         "critical_task_break": sum(1 for r in runs if (r.get("task") or {}).get("critical_task_break")),
-        "critical_accessibility_violation": sum(
-            1 for r in runs
-            if any(c["id"] == "contrast_primary_text" and c["status"] == "fail"
-                   for c in ((r.get("runtime") or {}).get("checks") or []))
-            or ((r.get("task") or {}).get("tasks") or [])
-            and any(o["id"] == "touch_targets" and o["status"] == "fail"
-                    for t in ((r.get("task") or {}).get("tasks") or [])
-                    for o in (t.get("required_outcomes") or []))),
+        "critical_accessibility_violation": sum(1 for r in runs if _critical_accessibility_violation(r)),
     }
 
     judged_pairs = [p for p in pairwise if p.get("status") == "judged" and p.get("result")]
@@ -82,7 +113,8 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
 
     if not runs:
         status = "BLOCKED"
-    elif hard_gates["semantic_fabrication"] or hard_gates["authority_escape"] or hard_gates["critical_task_break"]:
+    elif (hard_gates["semantic_fabrication"] or hard_gates["authority_escape"]
+          or hard_gates["critical_task_break"] or hard_gates["critical_accessibility_violation"]):
         status = "REGRESSION"
     elif regression["verdict"] == "REGRESSION":
         status = "REGRESSION"
@@ -104,6 +136,7 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
                                         "session_fidelity")} for r in runs],
         "hard_gates": hard_gates,
         "per_variant": per_variant,
+        "provenance": _provenance(runs),
         "metrics": {
             "pairwise_preference": preference,
             "pairwise_pairs": len(judged_pairs),
@@ -125,6 +158,16 @@ def render_markdown(report: dict) -> str:
              "## Hard gates", ""]
     for name, value in report["hard_gates"].items():
         lines.append(f"- `{name}`: {value}")
+    provenance = report.get("provenance") or {}
+    if provenance:
+        lines += ["", "## Candidate provenance", "",
+                  f"- runs with recorded provenance: {provenance.get('runs_with_provenance')}",
+                  f"- runs missing provenance: {provenance.get('runs_missing_provenance')}",
+                  f"- {provenance.get('disclosure')}", ""]
+        if provenance.get("missing"):
+            lines.append(f"- missing: {', '.join(provenance['missing'])}")
+        lines.append(f"- source identity (sha256 of candidate Skill/agent files): "
+                     f"{', '.join(provenance.get('source_identity') or []) or 'unknown'}")
     lines += ["", "## Per variant", "",
               "| variant | runs | completed | blocked | task success | method recall | semantic pass/fail/unverified | turns | cost USD |",
               "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
