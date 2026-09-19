@@ -85,6 +85,25 @@ design-semantic changes outside the build phase. If the host cannot preserve
 those invariants, stop with `prototype_blocked`; do not rewrite the packet,
 initialize Git, or weaken scope to work around it.
 
+## Freeze approval binding
+
+Freeze binds an actual approval decision, not a matching phrase. The retained
+record must carry one decision row with status `confirmed | delegated` that names
+its approval or delegated-authority source and a locator (turn, original quote,
+date or retained source path). A planned, negated or override-only statement
+never authorizes freeze, and there is no permissive fallback: a strict packet
+failure stays failed, and no `--force` or hook admission manufactures
+frozen-approved status. A mismatch is repaired at its authoring owner and the
+packet is rerun.
+
+The manifest records the approval binding's decision, scope and retained source
+digest. Downstream admission re-verifies those digests, so content changed after
+freeze invalidates admission rather than inheriting the older receipt. Freezing a
+design scope never exercises implementation: `implementation`, `platform` and
+`production` validation stay `pending`, and a spec-only approval retains the
+approved design scope while reporting exactly that pending state. Selecting a
+ready spec does not require a build.
+
 A denied or timed-out implementation is terminal for that target and checkpoint
 unless the host can prove that no external action started. Never retry with a
 modified packet merely to bypass a host boundary. Preserve `prototype_blocked`

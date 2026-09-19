@@ -151,6 +151,10 @@ def shell_read(command, root):
         if script.name == 'lint_spec_contracts.py':
             admits_lint_helper({'script': script, 'argv': args[2:]}, root)
         if script.name == 'handoff.py' and 'freeze' in args:
+            # No admission flag can manufacture frozen-approved status: a failed
+            # approval binding is repaired at its authoring owner, not bypassed.
+            require(not any(arg == '--force' or arg.startswith('--force=') for arg in args),
+                    'Freeze has no force/permissive form; record the actual approval decision.')
             freeze_root = None
             if '--root' in args:
                 idx = args.index('--root')
