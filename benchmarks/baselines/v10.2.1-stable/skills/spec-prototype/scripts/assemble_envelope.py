@@ -271,6 +271,32 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     target_html = write_scope_clean + "index.html"
     evidence_scope = extract_field(spec_content, "Evidence write scope", f"prototype/evidence/probes/{slice_id}/").strip("`'\" ")
 
+    # ── Content Language Lock (语种锁定) ──
+    # Stage 1 declares the shipped-copy language; every downstream fixture must honour it.
+    lang_raw = (
+        extract_field(spec_content, "Content language", "")
+        or extract_field(contract_content, "Content language", "")
+        or extract_field(product_content, "Content Language", "")
+    ).strip("`'\" ")
+    lang_token = re.split(r"[\s(（;、,]", lang_raw.strip())[0].strip("`'\" ") if lang_raw else ""
+    if not re.match(r"^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$", lang_token or ""):
+        discussion_path = root / "prototype/discussion.md"
+        discussion_text = discussion_path.read_text(encoding="utf-8") if discussion_path.is_file() else ""
+        disc_lang = re.search(r"(?:Content\s+Language|语种|语言)\s*[:=]?\s*`?([a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*)`?", discussion_text, re.IGNORECASE)
+        lang_token = disc_lang.group(1) if disc_lang else ""
+    content_language = {
+        "tag": lang_token or "undetermined",
+        "locked": bool(lang_token),
+        "rule": (
+            f"All shipped copy, fixture content and aria labels MUST be authored in `{lang_token}` "
+            "(secondary language allowed only where the declaration includes it). "
+            "Set <html lang> to match."
+            if lang_token else
+            "Stage 1 did not declare a content language. Author copy in the language of the brief "
+            "and set <html lang> to match; do not silently translate surfaced content."
+        ),
+    }
+
     # ── Universal Physical Grounding & Reality Anchor Extraction ──
     # Rather than rigid 4-baseline silos, extract authored Reality Anchors and physical lifeworld analogies
     anchors_match = re.search(r"^[-*+]?\s*(?:Reality\s+(?:Benchmark\s+)?Anchors?|Physical\s+Anchors?|Reality\s+Anchors?|对标|地锚)\s*[:=]?\s*([^\n]+)", product_content + "\n" + spec_content, re.MULTILINE | re.IGNORECASE)
@@ -516,13 +542,26 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
 
             rel_href = os.path.relpath(surf_path, target_dir)
             label = sid.replace("-", " ").title()
-            nav_links.append({
+            # Navigation integrity: the current slice will be written by this dispatch,
+            # but a sibling surface only gets an href when it is actually delivered.
+            # An undelivered surface becomes a declared pending entry, never a broken link.
+            delivered = is_active or surf_path.is_file()
+            entry = {
                 "slice_id": sid,
                 "label": label,
                 "role": role_label,
-                "href": rel_href,
-                "active": is_active
-            })
+                "active": is_active,
+                "delivered": delivered,
+            }
+            if delivered:
+                entry["href"] = rel_href
+            else:
+                entry["href"] = None
+                entry["pending_note"] = (
+                    "Surface not delivered in this slice. Render a disabled affordance with no href; "
+                    "never emit a link that escapes the prototype scope."
+                )
+            nav_links.append(entry)
 
     verification_cmd = f"python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice {slice_id}"
     capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
@@ -801,6 +840,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "target_html_path": target_html,
         "token_stylesheet_ref": token_rel_href,
         "verifiable_assertions": assertions,
+        "content_language": content_language,
         "a11y_floors": {
             "contrast": "WCAG 2.2 AA compliant (>4.5:1 text, >3:1 UI components)",
             "motion": "@media (prefers-reduced-motion: reduce) override required",

@@ -10,6 +10,7 @@
 - Scope represented here:
 - Primary product sources and revisions:
 - Dominant Baseline: `Baseline 1: Dense Workbench | Baseline 2: Modern SaaS | Baseline 3: Editorial Reading | Baseline 4: Mobile Touch-First`
+- Content Language (Locked at Stage 1): `zh-Hans | zh-Hant | en | ja | ...` (language of shipped copy and fixtures; may declare a secondary language for mixed-script products)
 
 ## Operational Scene & Consequence (使用场景与后果)
 

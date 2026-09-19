@@ -164,6 +164,26 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if raw_style_hex:
         failures.append(f"craft assertion: raw inline hex colors in style attributes ({len(raw_style_hex)} found; use CSS custom properties / var(--...))")
 
+    # Navigation integrity: every relative href must resolve inside the delivered prototype scope
+    broken_nav = []
+    artifact_root = html.parent
+    for depth in range(1, 5):
+        candidate = html.parents[depth - 1]
+        if (candidate / "shared/tokens.css").is_file():
+            artifact_root = candidate
+            break
+    # Only navigable anchors are checked here: stylesheet/asset links are validated by token inheritance.
+    for href in re.findall(r'<a\b[^>]*href=["\']([^"\'#][^"\']*)["\']', source, re.IGNORECASE):
+        if href.startswith(("http://", "https://", "mailto:", "data:", "javascript:")):
+            continue
+        if not (html.parent / href).resolve().exists():
+            broken_nav.append(href)
+    if broken_nav:
+        failures.append(
+            "navigation assertion: relative href(s) do not resolve inside the artifact "
+            f"({', '.join(sorted(set(broken_nav))[:4])}); link only to delivered surfaces or render a disabled affordance"
+        )
+
     # Accessibility floor: conditional prefers-reduced-motion when animations or transitions are present
     has_motion = bool(re.search(r'(?:transition|animation)\s*:\s*(?!none\b)[^;}{]+', source, re.IGNORECASE))
     if has_motion:

@@ -1,12 +1,12 @@
 {
   "tag": "v10.2.1-stable",
-  "git_rev": "69a4d9980abfbacd2862cbeae84a41fcc460cfdf",
-  "frozen_at": "20260919_141319",
+  "git_rev": "289b4a848e66e34e5a9d14750f2d783073c5ea72",
+  "frozen_at": "20260919_165016",
   "skill_files": 70,
   "hashes": {
     "scripts/assemble_envelope.py": {
-      "sha256": "2c978591417cc282cf44c1741196f71d5beb5bb004d66fc287a62b658fac39e2",
-      "bytes": 47627
+      "sha256": "e26d00c55ee4a24376a9bc4ddd94a9e2b61dbeef234d369ea49e2ed7f68f5127",
+      "bytes": 49913
     },
     "scripts/check-assertions.py": {
       "sha256": "86391ea85c1fe4f7e249c6f195ecd8dfc88a5ca8d98a4c8347369efae3096006",
@@ -41,8 +41,8 @@
       "bytes": 36144
     },
     "scripts/verify_prototype_quality.py": {
-      "sha256": "37ac10f744e542ae86c5e0d453748043c5632785135d8bde41f479ba2a7ba288",
-      "bytes": 19435
+      "sha256": "e35cec83fc4a15f10a7d3fbf180ce7f9d34b0f8e8ba2c15ed14da389fc2b965f",
+      "bytes": 20441
     },
     "scripts/capture.mjs": {
       "sha256": "80729f11ebefea9ff1fe1e116648c63311acbe52a501d53997e2a7a5db681e9e",
@@ -157,16 +157,16 @@
       "bytes": 2710
     },
     "templates/discussion.md": {
-      "sha256": "8d3604ed38f21b8b5a28f2fe5f6c984777a42bc095f6b9e3a67b6c268f0b8e3f",
-      "bytes": 7683
+      "sha256": "0d052a17d6184e27f3cbf8253c17b4d46b656c67aadb137d8dd53d4e4a3d2262",
+      "bytes": 7837
     },
     "templates/experience-foundation.md": {
       "sha256": "8b40c971757b4fb615523311698d1f183e249d76ec6ca701b01cf12b694fc983",
       "bytes": 9625
     },
     "templates/product.md": {
-      "sha256": "050b3a2263a442cca8c26fdd6996811248f8697f5c52ebcadccb0816ed7ce544",
-      "bytes": 2077
+      "sha256": "196cac16fbaa45613c51b1aba2abfb0931c979f912538a999b51f42b31809ae6",
+      "bytes": 2253
     },
     "templates/prototype-evidence.md": {
       "sha256": "5e85585d5bcadb1eab7f04022af9052a825edbe7d17fd08feb4028c1855dc8f7",
@@ -181,8 +181,8 @@
       "bytes": 7488
     },
     "templates/slice-contract.md": {
-      "sha256": "1b7184cf7f44eb0b9d9e2f1df40d7bfdf83d9a9434ea56164a8cb6169e2dc0dd",
-      "bytes": 7181
+      "sha256": "17b610a8a1818fb56c585e43cab7323225d5e3975b366262efa94a0db8e58f10",
+      "bytes": 7296
     },
     "templates/surface-map.md": {
       "sha256": "bd997d2b1b0a880e9fdb464629a17fdfed9cd29a85a7fd3131f26ff9b3093ba1",
