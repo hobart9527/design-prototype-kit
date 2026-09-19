@@ -45,6 +45,20 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
 
 ## 3. Specification-Faithful Implementation Rules
 
+- **Content Language Lock (绝对语种锁定)**:
+  Read `constraint_envelope.content_language.tag` (or `envelope.content_language.tag`).
+  Set `<html lang="{tag}">` matching the declared language tag exactly.
+  All primary titles, helper text, input placeholders, aria labels, and synthetic fixture data MUST be authored in this declared language.
+  Never mix half-English / half-Chinese unless secondary bilingual representation is explicitly declared in Stage 1 contracts.
+
+- **Five-Axis Sensory Embodiment (五轴感官物理具象化)**:
+  Read `creative_envelope.five_axes` to calibrate sensory geometry, pacing, and atmosphere:
+  - **Density (`dense` vs `sparse`)**: `dense` enforces compact padding (4-8px) and tight baseline grids; `sparse` enforces generous breathing room (24-32px padding, constrained reading columns 65-72ch).
+  - **Energy (`quiet` vs `expressive`)**: `quiet` enforces restrained, non-distracting CSS transitions (<=150ms ease-out) and static feedback; `expressive` allows perceptible kinetic detents and state elevation.
+  - **Materiality (`paper-warm` vs `machined-industrial` vs `polished`)**: Calibrate border definition and shadow softness to match the physical substrate. For `paper-warm`, prioritize gentle optical contrast without harsh saturated neon borders.
+  - **Rhythm (`calm` vs `dynamic`)**: `calm` enforces predictable, aligned vertical pacing; `dynamic` introduces asymmetric compression-and-release between focus and secondary zones.
+  - **Character (`humanist` vs `technical` vs `systemic`)**: Align typography measures, numeral styles (`tabular-nums`), and corner radii to the declared product essence.
+
 - **Design Token Invariance & Shared Stylesheet**:
   Link the shared tokens stylesheet in `<head>` using the exact `token_link_tag` (or `token_stylesheet_ref`) from the envelope.
   Do NOT redeclare or shadow `:root { ... }` custom properties in `<style>`! Consume standard tokens (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`, `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--space-*)`, etc.) directly from the linked stylesheet.

@@ -17,13 +17,33 @@ except ImportError:
 
 
 def extract_section_by_patterns(text: str, patterns: list[str]) -> str:
-    """Extract markdown field or section matching any of the regex patterns."""
+    """Extract markdown field or section matching any of the regex patterns, supporting bullets, tables, and headings."""
     for pat in patterns:
-        m_field = re.search(rf"^[-*+]?\s*(?:{pat})\s*[:=]\s*([^\n]+)", text, re.MULTILINE | re.IGNORECASE)
+        m_field = re.search(
+            rf"^\s*[-*+]?\s*[*_]*(?:{pat})[*_]*(?:\s*&[^\n:]*)?\s*[:=]\s*([^\n]+)",
+            text,
+            re.MULTILINE | re.IGNORECASE,
+        )
         if m_field and m_field.group(1).strip():
-            return m_field.group(1).strip()
+            val = m_field.group(1).strip().strip("`*_ ")
+            if val and not val.lower().startswith("not yet") and not val.lower().startswith("unspecified"):
+                return val
     for pat in patterns:
-        m = re.search(rf"^##+[^\n]*?(?:{pat})[^\n]*\n(.*?)(?=\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+        m_table = re.search(
+            rf"^\s*\|\s*[*_]*(?:{pat})[*_]*\s*\|\s*[^|]*\|\s*([^|]+)\|",
+            text,
+            re.MULTILINE | re.IGNORECASE,
+        )
+        if m_table and m_table.group(1).strip():
+            val = m_table.group(1).strip().strip("`*_ ")
+            if val and not val.lower().startswith("not yet"):
+                return val
+    for pat in patterns:
+        m = re.search(
+            rf"^##+[^\n]*?(?:{pat})[^\n]*\n(.*?)(?=\n##+|\Z)",
+            text,
+            re.DOTALL | re.MULTILINE | re.IGNORECASE,
+        )
         if m and m.group(1).strip():
             return m.group(1).strip()
     return ""
@@ -38,16 +58,32 @@ def _bullets(text: str) -> list[str]:
 
 
 def extract_surfaces(disc_text: str, prod_text: str) -> list[str]:
-    """Extract declared surfaces supporting both English and Chinese heading conventions."""
-    surfaces_sec = extract_section_by_patterns(disc_text, ["Surface", "表面", "拓扑", "Topology"]) or \
-                   extract_section_by_patterns(prod_text, ["Surface", "表面", "拓扑", "Topology"])
-    surfaces = _bullets(surfaces_sec) if surfaces_sec else []
+    """Extract declared surfaces supporting both English and Chinese heading conventions, rejecting non-surface metadata."""
+    surfaces: list[str] = []
+    for line in (disc_text + "\n" + prod_text).splitlines():
+        clean_line = line.strip()
+        m_surf = re.match(r"^[-*+]\s+[*_]*(?:[-*+]\s+)?(?:Primary|Secondary|Supporting|Contextual|主工作区|次级|支撑|上下文)[^:]*:\s*(.+)$", clean_line, re.IGNORECASE)
+        if m_surf:
+            surfaces.append(m_surf.group(0).lstrip("-*+ "))
+            continue
+        if re.search(r"\b(?:surfaces/|hero-anchor/|anchor/)[a-zA-Z0-9_-]+", clean_line):
+            surfaces.append(clean_line.lstrip("-*+ "))
+            continue
     if not surfaces:
-        # Fallback: sweep entire disc_text for surface bullet declarations
-        for line in disc_text.splitlines():
-            if re.match(r"^[-*+]\s+.*?(?:主工作区|上下文|支撑|Primary|Contextual|Supporting|hero-anchor|surfaces/)", line):
-                surfaces.append(re.sub(r"^[-*+]\s+", "", line).strip())
-    return surfaces
+        surfaces_sec = extract_section_by_patterns(disc_text, ["Surface", "表面", "拓扑", "Topology"]) or \
+                       extract_section_by_patterns(prod_text, ["Surface", "表面", "拓扑", "Topology"])
+        if surfaces_sec:
+            for b in _bullets(surfaces_sec):
+                if any(bad in b for bad in ("Rhythm", "Data Floor", "Action Verb", "Strict Token", "WCAG", "Contrast", "Token Inheritance")):
+                    continue
+                surfaces.append(b)
+    seen = set()
+    cleaned = []
+    for s in surfaces:
+        if s not in seen and len(s) > 2:
+            seen.add(s)
+            cleaned.append(s)
+    return cleaned
 
 
 def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
@@ -357,7 +393,13 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 
         p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or inferred_baseline
         p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or inferred_anchors
-        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or "Instant Operational Throughput vs Zero-Mistake Safety"
+        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"])
+        if not p_tension:
+            p_val = extract_section_by_patterns(disc_text, ["Value", "价值"])
+            if p_val:
+                p_tension = f"{p_val} (Deliberate Trade-off Stance)"
+            else:
+                p_tension = f"{p_title} Domain Value Integrity vs Friction"
         omissions = extract_ruthless_omissions(disc_text, "")
         omissions_md = "\n".join(f"- {o}" for o in omissions)
         prod_content = f"""# Product Thesis: {p_title}
@@ -383,13 +425,22 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
     action_verbs = extract_action_verbs(disc_text, slice_id)
 
     # Determine profile-aware assertions and interaction patterns based on physical grounding
-    is_reading = bool(re.search(r"Baseline 3|Editorial|Reading|Article|阅读|排版", prod_text + " " + disc_text, re.IGNORECASE))
+    is_reading = bool(re.search(r"Baseline 3|Editorial|Reading|Article|阅读|排版|essay|reader", prod_text + " " + disc_text, re.IGNORECASE))
     is_marketing = bool(re.search(r"Marketing|Product Landing|Landing|官网|宣传|介绍", prod_text + " " + disc_text, re.IGNORECASE))
     is_mobile = bool(re.search(r"Baseline 4|Consumer|Mobile|Touch|Booking|移动|预约|触控", prod_text + " " + disc_text, re.IGNORECASE))
-    is_writer_canvas = bool(re.search(r"Writer|Writing|Editor|Canvas|写作|编辑|协同写作", prod_text + " " + disc_text, re.IGNORECASE))
+    is_writer_canvas = (not is_reading) and bool(re.search(r"\b(?:Writing|Canvas|协同写作)\b|富文本编辑", prod_text + " " + disc_text, re.IGNORECASE))
     is_telemetry_ops = bool(re.search(r"Baseline 1|Telemetry|Console|SRE|Operations|Cluster|运维|监控|控制台", prod_text + " " + disc_text, re.IGNORECASE))
 
-    if is_writer_canvas:
+    if is_reading:
+        contract_assertions = """| Assertion | Expected | Observed |
+|---|---|---|
+| Declared product intent is represented | present | unverified |
+| Focused typography column: max-width constrained (65-75ch) | present | unverified |
+| Reading metric units present (e.g. min read, words) | present | unverified |
+| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
+| Quiet feedback: non-blocking inline state updates, no intrusive modals | present | unverified |
+| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
+    elif is_writer_canvas:
         contract_assertions = """| Assertion | Expected | Observed |
 |---|---|---|
 | Declared product intent is represented | present | unverified |
@@ -399,15 +450,6 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
 | Keyboard ergonomics: operable shortcuts (e.g. Esc, Cmd+K) | present | unverified |
 | Action Verb Lifecycle closure: trigger -> review/diff -> commit -> toast | present | unverified |
-| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
-    elif is_reading:
-        contract_assertions = """| Assertion | Expected | Observed |
-|---|---|---|
-| Declared product intent is represented | present | unverified |
-| Focused typography column: max-width constrained (65-75ch) | present | unverified |
-| Reading metric units present (e.g. min read, words) | present | unverified |
-| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Quiet feedback: non-blocking inline state updates, no intrusive modals | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
     elif is_marketing:
         contract_assertions = """| Assertion | Expected | Observed |
@@ -501,7 +543,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Status: sealed provisional
 
 ## Product Context & Alignment
-{prod_text.strip()}
+{re.sub(r"## 3 Ruthless Omissions.*", "", prod_text, flags=re.DOTALL).strip()}
 
 ## 3 Ruthless Omissions (克制舍弃清单)
 {omissions_md}

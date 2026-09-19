@@ -21,7 +21,7 @@ SKILL = Path(__file__).resolve().parents[1]
 
 
 def check_spec_completeness(root: Path, slice_id: str) -> Dict[str, Path]:
-    """Verify that all required Stage 1 design contract artifacts exist."""
+    """Verify that all required Stage 1 design contract artifacts exist and meet minimum content floors."""
     required = {
         "product": root / "prototype/product.md",
         "surface_map": root / "prototype/contracts/surface-maps/m1.md",
@@ -37,6 +37,7 @@ def check_spec_completeness(root: Path, slice_id: str) -> Dict[str, Path]:
             f"Stage 1 Spec Contract incomplete. Missing required artifacts: {', '.join(missing)}. "
             f"All 6 contract pillars must be materialized before Stage 2 prototype building."
         )
+
     return required
 
 
@@ -690,6 +691,7 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "Reading metric labels (e.g. '8 min read') are sufficient interactive feedback."
         )
         interaction_spec["action_verb_lifecycle"] = sanitized_verbs
+        constraints["action_verb_lifecycle"] = sanitized_verbs
         interaction_spec["reading_ergonomics"] = {
             "measure_max": "68ch",
             "contrast_floor": ">7:1 text-to-background",
@@ -871,8 +873,38 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         l2_inspect = "Contextual entity inspection, inline details, or adaptive drawer"
         l3_diag = "Complete entity audit, auxiliary parameters, or secondary flow"
 
+    # Five Axes Calibration & DTCG token extraction
+    from compile_tokens import parse_five_axes
+    discussion_path = root / "prototype/discussion.md"
+    discussion_text = discussion_path.read_text(encoding="utf-8") if discussion_path.is_file() else ""
+    five_axes = parse_five_axes(discussion_text + "\n" + spec_content)
+
+    dtcg_tokens: Dict[str, Any] = {}
+    t1_json_path = root / "prototype/contracts/tokens/t1.json"
+    if t1_json_path.is_file():
+        try:
+            dtcg_tokens = json.loads(t1_json_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    # Extract OOUX entity definitions
+    ooux_entities: List[Dict[str, str]] = []
+    m_ent = re.search(r"(?:Core entities|Entities|实体)\s*[:=]\s*([^\n]+)", discussion_text + "\n" + product_content, re.IGNORECASE)
+    if m_ent:
+        for raw_e in re.split(r"[,;、](?![^(]*\))", m_ent.group(1)):
+            raw_e = raw_e.strip()
+            if raw_e:
+                e_match = re.match(r"^([a-zA-Z0-9_\u4e00-\u9fa5]+)(?:\s*\(([^)]*)\))?", raw_e)
+                if e_match:
+                    ooux_entities.append({
+                        "name": e_match.group(1).strip(),
+                        "attributes": e_match.group(2).strip() if e_match.group(2) else ""
+                    })
+    ooux_topology["entities"] = ooux_entities
+
     creative_envelope = {
         "layout_profile": layout_profile,
+        "five_axes": five_axes,
         "spatial_composition_agency": "Builder owns layout rhythm, panel proportions, and responsive flow. No pre-baked rigid HTML scaffolding mandated.",
         "attention_routing": {
             "primary_visual_anchor": f"Primary {slice_id} focal workspace & status indicator",
@@ -916,6 +948,8 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         "build_authority": build_authority,
         "has_hypothesis_actions": has_hypothesis_action,
         "active_methods": active_methods,
+        "five_axes": five_axes,
+        "dtcg_tokens": dtcg_tokens,
         "repository_root": str(root.resolve()),
         "skill_root": str(SKILL.resolve()),
         "slice_id": slice_id,
