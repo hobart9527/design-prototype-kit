@@ -80,6 +80,7 @@ Execute the stages matching declared intent and required evidence. The stages re
   ▼
 [Stage 3: 拓 - Walking Skeleton Rollout (端到端真实骨架贯通)]
   │  Core Objective: Expand probe into a cohesive Walking Skeleton validating complete task continuity (Trigger -> Action -> State Mutation -> Recovery -> Return).
+  │  Coverage Selection: Resolve the implementation scope against the current Surface Map, task risks, probe results and applicable platform contexts. The selection is scope, not approval: it never authorizes the selected surfaces. Present concrete recommended combinations with their verification purpose, dependencies and omissions only while scope is unresolved. An explicit prior selection is reused without another question. A subset reduces the implementation target only; the full map, object model, rationale and applicable method outcomes stay authoritative, and unselected surfaces stay provisional. Missing or stale selections never default to full-product.
   │  Structure: Derived from authentic Surface Topology (Primary, Contextual, Supporting). Unbound from rigid screen counts.
   │  Strict Floors & Craft Guidance: Action verb closure, tokens.css adherence, zero inline hex, and contextual craft guidelines (contextual reference data, compression & release).
   ▼
@@ -93,7 +94,7 @@ Execute the stages matching declared intent and required evidence. The stages re
   │  Controlled Absorption Loop: Critique absorbed into tokens.css / HTML slices -> Re-verify.
   ▼
 [Stage 5: 冻 - Silent Packaging & Frozen Approved Delivery (静默封版与工件交付)]
-     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (WCAG 2.2 AA floor / AAA static tokens), handoff.py (SHA-256 integrity manifest).
+     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (WCAG 2.2 AA floor / AAA static tokens), and `python3 skills/spec-prototype/scripts/handoff.py freeze --root prototype --spec prototype/specifications/<slice_id>/r1.md` (SHA-256 integrity manifest). Freeze binds the immutable candidate Specification, never a mutable product record.
 ```
 
 ## Dual-Engine Architecture: Sharp Exploration vs Silent Governance

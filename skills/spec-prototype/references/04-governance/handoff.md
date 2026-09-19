@@ -36,6 +36,15 @@ the smallest connected journey that answers the question, then expand to the
 remaining requested scope; a representative slice is not completion of an
 explicitly requested full prototype.
 
+The retained coverage selection is a dispatch input, not a substitute for approval:
+binding an explicit scope SHALL NOT be read as authorizing the selected surfaces or
+the full product, and an unselected surface stays provisional rather than deleted
+or invented. Retain the selected map revision, surfaces, journeys and target
+contexts with the packet, and reuse that retained selection when the session
+resumes; an ambiguous, invalid or revision-mismatched selection is reconciled
+against the current map before any expansion. Only a full-product selection
+authorizes expansion across every applicable surface of that revision.
+
 For multiple batches, establish a common runnable entry and compatible shared
 data/component references before dispatch. Keep each Builder's write scope
 bounded while planning and verifying connections between batches. Exercise
