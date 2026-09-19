@@ -595,6 +595,12 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
                 found_states.append("empty")
             if ("error" in a_lower or "alert" in a_lower) and "error" not in found_states:
                 found_states.append("error")
+            if ("select" in a_lower or "highlight" in a_lower) and "selecting" not in found_states:
+                found_states.append("selecting")
+            if ("note" in a_lower or "annotate" in a_lower) and "annotating" not in found_states:
+                found_states.append("annotating")
+            if ("undo" in a_lower or "recover" in a_lower) and "undo_pending" not in found_states:
+                found_states.append("undo_pending")
         if found_states:
             authored_states = ["default"] + found_states
         else:
@@ -622,15 +628,26 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         )
     elif _is_editorial:
         # Reading profile: quiet interactions, no intrusive modals
+        # Sanitize verb lifecycle for reading profile: purge drawer/modal instructions so Builder receives unambiguous in-situ commands
+        sanitized_verbs = []
+        for v in verb_lifecycle:
+            v_clean = dict(v)
+            v_clean["container_mode"] = "in_situ_popover"
+            v_clean["modal_header"] = "N/A (Inline popover only; no blocking drawer or modal)"
+            sanitized_verbs.append(v_clean)
+
         interaction_spec["profile_notes"] = (
             "editorial-reading: prioritize focused typography (max-width 68ch), paper-contrast palette, "
-            "quiet inline feedback. Do NOT implement modal dialogs, action drawers, or telemetry sparklines. "
+            "quiet inline feedback. Do NOT implement modal dialogs, full-height action drawers, or telemetry sparklines. "
+            "Selection actions must appear in-situ via floating popover or companion margin column. "
             "Reading metric labels (e.g. '8 min read') are sufficient interactive feedback."
         )
+        interaction_spec["action_verb_lifecycle"] = sanitized_verbs
         interaction_spec["reading_ergonomics"] = {
             "measure_max": "68ch",
             "contrast_floor": ">7:1 text-to-background",
             "feedback_style": "inline non-blocking state labels only",
+            "selection_container": "in_situ_popover",
         }
     elif _is_touch:
         # Touch/mobile: thumb-zone ergonomics, spring physics

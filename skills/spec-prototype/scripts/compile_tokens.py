@@ -447,9 +447,9 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
 
     # Third priority: natural language heuristic extraction (e.g. "温润米白 `#F9F6F0` 纸感底色")
     if "bg_void" not in extracted:
-        bg_nl = re.search(r"`?(#[0-9a-fA-F]{6})`?[^#\n]{0,25}(?:底色|背景|纸感|paper|undertone|background)", discussion_text, re.IGNORECASE)
+        bg_nl = re.search(r"`?(#[0-9a-fA-F]{6})`?[^#\n]{0,35}(?:底色|背景|纸感|基色|tone|palette|style|paper|undertone|background|snow|vinyl|slate|brown|dark|white)", discussion_text, re.IGNORECASE)
         if not bg_nl:
-            bg_nl = re.search(r"(?:底色|背景|纸感|paper|undertone|background)[^#\n]{0,25}`?(#[0-9a-fA-F]{6})`?", discussion_text, re.IGNORECASE)
+            bg_nl = re.search(r"(?:底色|背景|纸感|基色|tone|palette|style|paper|undertone|background|snow|vinyl|slate|brown|dark|white)[^#\n]{0,35}`?(#[0-9a-fA-F]{6})`?", discussion_text, re.IGNORECASE)
         if bg_nl:
             extracted["bg_void"] = bg_nl.group(1).strip()
 
@@ -494,12 +494,14 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
     base_colors = dict(DARK_ATMOSPHERES[resolved_base])
 
     # If custom background was authored, synthesize physical elevation hierarchy via OKLab perceptual scale
-    if "bg_void" in extracted and extracted["bg_void"].startswith("#"):
+    seed_bg = extracted.get("bg_void") or extracted.get("bg_base")
+    if seed_bg and seed_bg.startswith("#"):
         try:
-            is_light = _is_light_color(extracted["bg_void"])
-            oklab_scale = derive_perceptual_surface_scale(extracted["bg_void"], is_light)
+            is_light = _is_light_color(seed_bg)
+            oklab_scale = derive_perceptual_surface_scale(seed_bg, is_light)
             for k, v in oklab_scale.items():
-                base_colors[k] = extracted.get(k, v)
+                # Autonomously project perceptual steps unless explicitly overridden by authored tokens
+                base_colors[k] = extracted.get(k) or v
         except Exception:
             pass
 
