@@ -84,9 +84,9 @@ not a competing rule.
     - Vague-word translations:
   - *Action Verb Lifecycle*:
     - Trigger action verb:
-    - Modal / drawer context:
+    - Container level & form (Level 0 Popover / Level 1 Flyout / Level 2 Margin / Level 3 Drawer / Level 4 Modal):
     - Commit button label:
-    - Post-completion toast:
+    - Completion feedback (In-situ / Toast):
   - *Materialized Spec Artifacts*: `prototype/contracts/foundation/f1.md`, `prototype/shared/tokens.css` (`t1.json`, `t1.md`), `prototype/contracts/slices/<slice_id>/c1.md`, `prototype/specifications/<slice_id>/r1.md`
 - **Gate Status (`confirmed` | `delegated`)**:
 

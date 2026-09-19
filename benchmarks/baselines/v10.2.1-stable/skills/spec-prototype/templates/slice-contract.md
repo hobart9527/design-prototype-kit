@@ -94,13 +94,13 @@ rote; do not omit a supported consequential state merely because it is uncommon.
 - Permitted local adaptation and rationale:
 - Data/API facts, explicitly synthetic fixtures and unknowns:
 
-## Action Verb Lifecycle Table (4-Phase Atomic Terminology)
+## Action Verb Lifecycle Table & Container Proximity Binding (4-Phase Atomic Terminology)
 
-Every primary and secondary operational action must maintain exact atomic terminology across its entire 4-phase lifecycle.
+Every primary and secondary operational action must map to a specific Container Proximity Level (Level 0~4) matching its hazard and input complexity, maintaining exact atomic terminology.
 
-| Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact / Consequence |
-|---|---|---|---|---|---|
-| | | | | | |
+| Action ID | Trigger Button Label | Proximity Level (0~4) | Container Form (In-situ Popover / Anchored Flyout / Inspector Column / Drawer / Modal) | Commit Action Button | Feedback Style (In-situ / Toast) | Impact / Consequence |
+|---|---|---|---|---|---|---|
+| | | | | | | |
 
 ## Decisive Exchange 3-Frame Specification (核心决定性交换三帧推演)
 

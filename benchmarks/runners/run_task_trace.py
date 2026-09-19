@@ -106,7 +106,10 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
                 text=(snapshot.get("text") or "")[:4000],
                 steps=json.dumps([s.get("action") for s in trace["steps"]], ensure_ascii=False),
             )
-            decision = bl.ask_json(prompt, out_dir, model=model, timeout_s=timeout_s, max_turns=3)
+            decision = bl.ask_json(prompt, out_dir, model=model, timeout_s=timeout_s, max_turns=10)
+            if not decision["ok"]:
+                # One retry: a truncated judge call must not be recorded as a task failure
+                decision = bl.ask_json(prompt, out_dir, model=model, timeout_s=timeout_s, max_turns=10)
             if not decision["ok"]:
                 trace["status"] = "blocked"
                 trace["note"] = f"task agent unavailable: {decision['error']}"

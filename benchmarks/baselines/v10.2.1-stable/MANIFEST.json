@@ -1,12 +1,12 @@
 {
   "tag": "v10.2.1-stable",
-  "git_rev": "a8f16b0d9c75cdd4fd824bf005d5d3c587291316",
-  "frozen_at": "20260919_122541",
+  "git_rev": "69a4d9980abfbacd2862cbeae84a41fcc460cfdf",
+  "frozen_at": "20260919_141319",
   "skill_files": 70,
   "hashes": {
     "scripts/assemble_envelope.py": {
-      "sha256": "3107ddd5da7a0687d9f619f06c39603a071d452e40974c6fe69efebeb847bca0",
-      "bytes": 45784
+      "sha256": "2c978591417cc282cf44c1741196f71d5beb5bb004d66fc287a62b658fac39e2",
+      "bytes": 47627
     },
     "scripts/check-assertions.py": {
       "sha256": "86391ea85c1fe4f7e249c6f195ecd8dfc88a5ca8d98a4c8347369efae3096006",
@@ -17,8 +17,8 @@
       "bytes": 4740
     },
     "scripts/compile_tokens.py": {
-      "sha256": "16da24dc6b7dff5b013cfaa36a1e5808a3986180be7570d88a22bb82866ae7bd",
-      "bytes": 50251
+      "sha256": "ac54540489f2684f7b5443fcf9ed717df7e4a3bce7d380e4e684148d0716d890",
+      "bytes": 55309
     },
     "scripts/execution_boundary.py": {
       "sha256": "1124708a10a1ee8f2caeff3756cbc85b9b0a039c8beceb461a7fefcd9651c71a",
@@ -29,20 +29,20 @@
       "bytes": 8176
     },
     "scripts/generate_review_portal.py": {
-      "sha256": "b9fc57dcf3f41d67d15747a6cb9c43437f9b015d9f00f548351ba08ecd85e9ec",
-      "bytes": 11115
+      "sha256": "a3036cdf286dd058be448e7f2f1202d30f5e023f2385745006fb284c48494f63",
+      "bytes": 11525
     },
     "scripts/handoff.py": {
       "sha256": "cda9fbb5468c17722ba8dffb13ca4a552a642fb51db36e0ed43a50d0a5d16249",
       "bytes": 31868
     },
     "scripts/materialize_contracts.py": {
-      "sha256": "37a5726abfc165a3ab34e8eba90aa4ed555a584549d7d7ad5f961b9ddd933c3a",
-      "bytes": 33798
+      "sha256": "0ef20c289ae2f197437368697517f9fc54510f0e3a99a73250bfeec4e217f6f2",
+      "bytes": 36144
     },
     "scripts/verify_prototype_quality.py": {
-      "sha256": "299080415e33c53543650c17d8e4f449e56e50cab24bbd45af57de7c1f323402",
-      "bytes": 18963
+      "sha256": "37ac10f744e542ae86c5e0d453748043c5632785135d8bde41f479ba2a7ba288",
+      "bytes": 19435
     },
     "scripts/capture.mjs": {
       "sha256": "80729f11ebefea9ff1fe1e116648c63311acbe52a501d53997e2a7a5db681e9e",
@@ -81,8 +81,8 @@
       "bytes": 23222
     },
     "references/01-foundations/design-methods.md": {
-      "sha256": "09112f601dfe366dd012e7d4207d8df588449e68699e3fb1d39bff1973e26230",
-      "bytes": 8166
+      "sha256": "2f6b3afda859b7f7748f6341c237b6be4a72d7e461473358038bf6ee2a38c774",
+      "bytes": 9220
     },
     "references/01-foundations/product-understanding.md": {
       "sha256": "70046ef3e649fd40eead28d4cc6ebfee6c9ef2824306dd6612922db6e25deb63",
@@ -109,8 +109,8 @@
       "bytes": 12879
     },
     "references/02-craft-methods/interaction-power.md": {
-      "sha256": "91f67e552fabe730dd54dc12f6f4b4871b2cb9c08362044eca6e38555efae010",
-      "bytes": 47335
+      "sha256": "ce25cd8a6d9cd5294fe2dd86dd93ec1644e1cd7f6ad48a4850e7b9fdd923f184",
+      "bytes": 48331
     },
     "references/02-craft-methods/resilience-trust.md": {
       "sha256": "818c1ab7c43a03d6fb88efc10cb1c876f08bd3b32902677e03da64d4f53b802d",
@@ -149,16 +149,16 @@
       "bytes": 8255
     },
     "references/core-workflow.md": {
-      "sha256": "b914e50c7e03673f765c8659a662194b6d971ffb786e378f48dbf241ad7d51a9",
-      "bytes": 33075
+      "sha256": "359cbcf3215663ea6fcae48ed1f86878ad216e83fa9befc8d59459d19a8eeda4",
+      "bytes": 33119
     },
     "templates/design-study.md": {
       "sha256": "cf5a8a0571bbdb47ba372f7e16b04c4983a498ec7312e8be9962d20d50eefa42",
       "bytes": 2710
     },
     "templates/discussion.md": {
-      "sha256": "f394ae10a48fe235c632b4fdb88cd1127d70f1cc253c60087ddb8b13ac8a8438",
-      "bytes": 7582
+      "sha256": "8d3604ed38f21b8b5a28f2fe5f6c984777a42bc095f6b9e3a67b6c268f0b8e3f",
+      "bytes": 7683
     },
     "templates/experience-foundation.md": {
       "sha256": "8b40c971757b4fb615523311698d1f183e249d76ec6ca701b01cf12b694fc983",
@@ -177,12 +177,12 @@
       "bytes": 4899
     },
     "templates/prototype-specification.md": {
-      "sha256": "4cb054997f1311bd662d716872da5d2730af57da9e69667155c15eb4b8ba184a",
-      "bytes": 7204
+      "sha256": "cb071b75574ebd51bf11d08571c23c2e315c8d3608e138b06370b23ec789d10f",
+      "bytes": 7488
     },
     "templates/slice-contract.md": {
-      "sha256": "47139fbf231be2955a11ffc9501526e88652a81ef7b371fb01677a82bfc4236f",
-      "bytes": 6984
+      "sha256": "1b7184cf7f44eb0b9d9e2f1df40d7bfdf83d9a9434ea56164a8cb6169e2dc0dd",
+      "bytes": 7181
     },
     "templates/surface-map.md": {
       "sha256": "bd997d2b1b0a880e9fdb464629a17fdfed9cd29a85a7fd3131f26ff9b3093ba1",

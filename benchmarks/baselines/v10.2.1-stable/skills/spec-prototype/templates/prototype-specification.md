@@ -98,19 +98,21 @@ uncovered.
 - Forbidden writes: product sources, OpenSpec, Foundation, Surface Map, tokens,
   Contract, Specification, production source, Git or delivery state.
 
-## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)
+## Dual-Channel Ergonomics & Platform Key Sovereignty (快捷键与原生按键主权)
+
+Native browser keys are strictly protected: `Space` is permanently reserved for natural scrolling/input; `Tab` for focus chains. Global shortcuts employ disambiguated modifier combos.
 
 | Shortcut Key | Target Action / Interaction | Scope | Focus Restoration Anchor |
 |---|---|---|---|
-| `Space` or `P` | Primary action execution | Active node / selection | Retain focus on active row |
-| `Esc` | Dismiss drawer / modal / popover | Global overlay | Restore focus to originating trigger |
-| `J` / `K` or `Up` / `Down` | List / Table item navigation | Active list view | Update active item index |
+| `Cmd/Ctrl + K` or `Alt + /` | Search / Navigation Palette | Global workspace | Return to previous focal container |
+| `Esc` | Dismiss overlay / floating popover | Active overlay | Restore focus to originating trigger |
+| `J` / `K` (when not in input) | Item / Outline navigation | Active list or document | Update active anchor without scroll jitter |
 
 ## The Break Protocol Stress Checkpoints (四维破坏性极限压测)
 
 | Reality Breaker | Concrete Test Vector / Input | Expected Graceful Behavior | Observed Result |
 |---|---|---|---|
-| **Unbreakable String** | 64-char unbroken hash or UUID | CSS ellipsis + title tooltip, zero container blowout | `pending` |
+| **Unbreakable String** | Authentic 45+ char title or compound path | CSS ellipsis / break-word, zero container blowout, no fake hash UI litter | `pending` |
 | **Zero-Item Empty State** | 0 records / empty cluster filter | Actionable empty card with recovery button | `pending` |
 | **Extreme 320px Fold** | 320px viewport width test | Horizontal scroll or vertical reflow, primary action reachable | `pending` |
 | **Rapid Interruption** | Double-click / rapid Space hits | Debounced submission, single idempotency state transition | `pending` |

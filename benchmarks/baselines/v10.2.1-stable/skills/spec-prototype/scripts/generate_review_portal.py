@@ -180,27 +180,32 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       font-family: var(--font-mono, monospace);
       cursor: pointer;
       border-radius: 2px;
+      transition: all 0.15s ease;
     }}
     .vp-btn.active {{
       border-color: var(--accent-primary, #00f0ff);
       color: var(--accent-primary, #00f0ff);
+      background: var(--bg-surface-raised, #1e293b);
     }}
     .portal-frame-box {{
       flex: 1;
       width: 100%;
       height: calc(100vh - 48px - 36px);
-      background: #000;
+      background: var(--bg-void, #05070a);
       display: flex;
       justify-content: center;
       align-items: stretch;
       overflow: hidden;
+      padding: 10px 0;
     }}
     iframe {{
       width: 100%;
       height: 100%;
-      border: none;
+      border: 1px solid var(--border-dim, #1e293b);
+      border-radius: var(--radius-outer, 6px);
       background: var(--bg-void, #05070a);
-      transition: width 0.2s ease;
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
     }}
     .portal-status-bar {{
       background: var(--bg-base, #0b0f17);
@@ -240,9 +245,10 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     <div class="viewport-tools">
       <span class="vp-label">VIEWPORT:</span>
       <button class="vp-btn active" onclick="setViewport('100%')">FULL</button>
-      <button class="vp-btn" onclick="setViewport('1280px')">1280px</button>
+      <button class="vp-btn" onclick="setViewport('1440px')">1440px (Wide)</button>
+      <button class="vp-btn" onclick="setViewport('1024px')">1024px (Compact)</button>
       <button class="vp-btn" onclick="setViewport('768px')">768px</button>
-      <button class="vp-btn" onclick="setViewport('375px')">375px</button>
+      <button class="vp-btn" onclick="setViewport('390px')">390px (Mobile)</button>
     </div>
   </div>
 

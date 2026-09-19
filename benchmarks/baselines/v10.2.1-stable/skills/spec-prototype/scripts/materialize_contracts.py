@@ -338,8 +338,25 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
     # Support Phase 1 synthesis of product.md if missing or requested
     if not prod_path.is_file() or (force and phase.lower() in ("1", "product")):
         p_title = extract_section_by_patterns(disc_text, ["Product Title", "Product", "产品名称", "产品"]) or slice_id.replace("-", " ").title()
-        p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or "Baseline 1: Dense Data & Engineering Workbench"
-        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or "Linear, Datadog"
+        # Infer neutral adaptive domain baseline rather than forcing Baseline 1 / Linear, Datadog
+        inferred_baseline = "Adaptive Lifecycle & Domain Anchors"
+        inferred_anchors = "Field-specific Reality Anchors"
+        disc_lower = disc_text.lower()
+        if any(k in disc_lower for k in ("reader", "reading", "editorial", "essay", "literature", "长文", "阅读")):
+            inferred_baseline = "Baseline 3: Editorial Reading Pattern"
+            inferred_anchors = "iA Writer, The New Yorker, Penguin Classics"
+        elif any(k in disc_lower for k in ("sre", "cluster", "telemetry", "incident", "ops", "运维", "事故", "监控")):
+            inferred_baseline = "Baseline 1: Dense Data & Engineering Workbench"
+            inferred_anchors = "Datadog, Bloomberg Terminal, Linear"
+        elif any(k in disc_lower for k in ("mobile", "touch", "booking", "consumer", "移动", "预约", "触控")):
+            inferred_baseline = "Baseline 4: Mobile Touch-First Somatic"
+            inferred_anchors = "Apple Fitness, Uber, Things 3"
+        elif any(k in disc_lower for k in ("saas", "approval", "workflow", "procurement", "crm", "审批", "采购", "看板")):
+            inferred_baseline = "Baseline 2: Modern SaaS & Operational Canvas"
+            inferred_anchors = "Notion, Stripe Dashboard, Linear"
+
+        p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or inferred_baseline
+        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or inferred_anchors
         p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or "Instant Operational Throughput vs Zero-Mistake Safety"
         omissions = extract_ruthless_omissions(disc_text, "")
         omissions_md = "\n".join(f"- {o}" for o in omissions)
@@ -365,11 +382,12 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
     surfaces = extract_surfaces(disc_text, prod_text)
     action_verbs = extract_action_verbs(disc_text, slice_id)
 
-    # Determine profile-aware assertions and interaction patterns
+    # Determine profile-aware assertions and interaction patterns based on physical grounding
     is_reading = bool(re.search(r"Baseline 3|Editorial|Reading|Article|阅读|排版", prod_text + " " + disc_text, re.IGNORECASE))
     is_marketing = bool(re.search(r"Marketing|Product Landing|Landing|官网|宣传|介绍", prod_text + " " + disc_text, re.IGNORECASE))
     is_mobile = bool(re.search(r"Baseline 4|Consumer|Mobile|Touch|Booking|移动|预约|触控", prod_text + " " + disc_text, re.IGNORECASE))
     is_writer_canvas = bool(re.search(r"Writer|Writing|Editor|Canvas|写作|编辑|协同写作", prod_text + " " + disc_text, re.IGNORECASE))
+    is_telemetry_ops = bool(re.search(r"Baseline 1|Telemetry|Console|SRE|Operations|Cluster|运维|监控|控制台", prod_text + " " + disc_text, re.IGNORECASE))
 
     if is_writer_canvas:
         contract_assertions = """| Assertion | Expected | Observed |
@@ -379,7 +397,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | Inline state preservation: seamless revision and diff review flow | present | unverified |
 | Tabular Numerics: font-variant-numeric: tabular-nums on document metrics | present | unverified |
 | High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Keyboard ergonomics: operable shortcuts (e.g. Esc, Space) | present | unverified |
+| Keyboard ergonomics: operable shortcuts (e.g. Esc, Cmd+K) | present | unverified |
 | Action Verb Lifecycle closure: trigger -> review/diff -> commit -> toast | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
     elif is_reading:
@@ -408,7 +426,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
 | Tactile Action Feedback: perceptible interactive press state | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
-    else:
+    elif is_telemetry_ops:
         contract_assertions = """| Assertion | Expected | Observed |
 |---|---|---|
 | Declared product intent is represented | present | unverified |
@@ -416,7 +434,18 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | Tabular Numerics: font-variant-numeric: tabular-nums on all metrics | present | unverified |
 | Concentric Radii Formula: outer radius >= inner radius + padding | present | unverified |
 | High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Dual-channel keyboard shortcuts (e.g. Space / Esc) operable | present | unverified |
+| Dual-channel keyboard shortcuts operable with focus restoration | present | unverified |
+| Action Verb Lifecycle closure: trigger -> context/review -> commit -> settlement | present | unverified |
+| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
+    else:
+        # Adaptive Workspace / General Application: Clean neutral invariants without forced SRE sparklines
+        contract_assertions = """| Assertion | Expected | Observed |
+|---|---|---|
+| Declared product intent is represented | present | unverified |
+| Contextual Data Grounding: key figures carry clear units or semantic bounds | present | unverified |
+| Concentric Radii Formula: outer radius >= inner radius + padding | present | unverified |
+| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
+| Navigation and action affordances clear and reachable | present | unverified |
 | Action Verb Lifecycle closure: trigger -> context/review -> commit -> settlement | present | unverified |
 | The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
 

@@ -82,6 +82,15 @@ def _user_turns(case: dict, artifacts_dir: pathlib.Path) -> list:
     return []
 
 
+def _dominant_script(text: str) -> str:
+    import re as _re
+    cjk = len(_re.findall(r"[\u4e00-\u9fa5]", text))
+    latin = len(_re.findall(r"[A-Za-z]{3,}", text))
+    if cjk + latin < 40:
+        return "unknown"
+    return "cjk" if cjk * 3 > latin else ("latin" if latin > cjk * 3 else "mixed")
+
+
 def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     meta = case["meta"]
     is_control = variant == "no_skill"
@@ -161,6 +170,28 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     else:
         add("token_inheritance", "pass" if tokens_present and inline_hex == 0 else ("fail" if html_files else "unknown"),
             f"tokens.css={tokens_present} inline_hex_styles={inline_hex}")
+
+    # Content-language fidelity: shipped copy must follow the brief's dominant script
+    brief_script = _dominant_script(case.get("brief", ""))
+    artifact_script = _dominant_script(" ".join(html_files.values()) or joined)
+    if brief_script in ("cjk", "latin") and artifact_script in ("cjk", "latin"):
+        add("content_language_fidelity", "pass" if brief_script == artifact_script else "fail",
+            f"brief={brief_script} artifact={artifact_script}")
+    else:
+        add("content_language_fidelity", "unknown", f"brief={brief_script} artifact={artifact_script}")
+
+    # Navigation integrity: every relative link must resolve inside the delivered artifact
+    artifact_root = artifacts_dir
+    broken_links = []
+    for name, text in html_files.items():
+        base = (artifact_root / name).parent
+        for href in re.findall(r'href="([^"#][^"]*)"', text):
+            if href.startswith(("http", "mailto:", "data:", "javascript:")):
+                continue
+            if not (base / href).resolve().exists():
+                broken_links.append(f"{name}: {href}")
+    add("navigation_integrity", "pass" if html_files and not broken_links else ("fail" if broken_links else "unknown"),
+        f"broken={broken_links[:4]}")
 
     colors = {}
     for text in css_files.values():

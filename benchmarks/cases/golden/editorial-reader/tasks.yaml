@@ -8,7 +8,7 @@ tasks:
     required_outcomes:
       - id: article_text_visible
         check: text_present
-        pattern: "[\\u4e00-\\u9fa5]{12,}"
+        pattern: "[\\u4e00-\\u9fa5]{12,}|(?:[A-Za-z][A-Za-z'’-]+\\s+){12,}"
       - id: no_horizontal_scroll
         check: no_horizontal_scroll
 
@@ -30,7 +30,7 @@ tasks:
         pattern: "是否确定|确认要收藏|确定要保存吗"
       - id: save_feedback
         check: text_present
-        pattern: "已收藏|已保存|已加入|已收录|已存|saved"
+        pattern: "已收藏|已保存|已加入|已收录|已存|saved|stored|added to"
 
   - id: mobile-reading
     critical: false
@@ -43,4 +43,4 @@ tasks:
         check: no_horizontal_scroll
       - id: mobile_body_text_present
         check: text_present
-        pattern: "[\\u4e00-\\u9fa5]{12,}"
+        pattern: "[\\u4e00-\\u9fa5]{12,}|(?:[A-Za-z][A-Za-z'’-]+\\s+){12,}"

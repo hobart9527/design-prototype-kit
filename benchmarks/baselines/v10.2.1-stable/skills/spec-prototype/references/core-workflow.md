@@ -36,7 +36,7 @@ The system organizes all design operations into four orthogonal layers and one t
    Density · Energy · Materiality · Rhythm · Character.
    Subservient to the **Expression** pillar. Used to calibrate sensory orientation and trade-offs as needed; never forced as a rigid universal CSS formula.
 4. **Craft Library (HOW TO CRAFT — 工法与参考库)**:
-   General craft methods (OOUX Mapping, Action Verb Lifecycle, Decisive 3-Frame, The Break Protocol, Concentric Radii, Tabular Numerics) and composable reference patterns (Dense Workbench, Operational Canvas, Editorial Reading, Touch-First Somatic).
+   General craft methods (OOUX Mapping, Action Verb Lifecycle, Decisive 3-Frame, The Break Protocol, Concentric Radii, Tabular Numerics) and composable reference patterns (Dense Workbench, Operational Canvas, Editorial Reading, Touch-First Somatic, Acoustic Player, Card Ledger, Chrono Habit).
    *Subservience Principle*: Craft techniques supply candidate implementations to satisfy **Experience Invariants**; techniques never masquerade as universal quality floors.
 5. **Evidence Protocol (横向证据治理)**:
    `explicit | observed | derived | hypothesis | unknown`.

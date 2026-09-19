@@ -271,8 +271,13 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     target_html = write_scope_clean + "index.html"
     evidence_scope = extract_field(spec_content, "Evidence write scope", f"prototype/evidence/probes/{slice_id}/").strip("`'\" ")
 
+    # ── Universal Physical Grounding & Reality Anchor Extraction ──
+    # Rather than rigid 4-baseline silos, extract authored Reality Anchors and physical lifeworld analogies
+    anchors_match = re.search(r"^[-*+]?\s*(?:Reality\s+(?:Benchmark\s+)?Anchors?|Physical\s+Anchors?|Reality\s+Anchors?|对标|地锚)\s*[:=]?\s*([^\n]+)", product_content + "\n" + spec_content, re.MULTILINE | re.IGNORECASE)
+    reality_anchors = anchors_match.group(1).strip() if anchors_match else ""
+
     # Determine layout profile & composable context
-    # v10.1: Reference patterns are composable guides; default is adaptive composite rather than forced dense-console
+    # Reference patterns are composable archetypes derived naturally from physical domain properties, not rigid silos
     baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线|Reference\s+Pattern)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
     declared_baseline = baseline_match.group(1).strip() if baseline_match else ""
 
@@ -285,17 +290,16 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     elif re.search(r"Baseline 1|Console|Control|工作台|控制台|运维|telemetry", declared_baseline, re.IGNORECASE):
         layout_profile = "dense-console"
     else:
-        all_spec_text = product_content + " " + spec_content
+        all_spec_text = product_content + " " + spec_content + " " + reality_anchors
         if re.search(r"\bBaseline 4\b|mobile-first|touch-friendly", all_spec_text, re.IGNORECASE):
             layout_profile = "somatic-touchflow"
-        elif re.search(r"\bBaseline 3\b|editorial-reading|long-form", all_spec_text, re.IGNORECASE):
+        elif re.search(r"\bBaseline 3\b|editorial-reading|long-form|ia\s+writer|new\s+yorker|readwise", all_spec_text, re.IGNORECASE):
             layout_profile = "editorial-reading"
         elif re.search(r"\bBaseline 2\b|operational-canvas|master-detail", all_spec_text, re.IGNORECASE):
             layout_profile = "operational-canvas"
-        elif re.search(r"\bBaseline 1\b|dense-console|telemetry-grid", all_spec_text, re.IGNORECASE):
+        elif re.search(r"\bBaseline 1\b|dense-console|telemetry-grid|datadog|bloomberg", all_spec_text, re.IGNORECASE):
             layout_profile = "dense-console"
         else:
-            # v10.1: Composable adaptive workspace instead of rigid dense-console fallback
             layout_profile = "adaptive-workspace"
 
     # Extract verifiable assertions & Break Protocol
@@ -532,7 +536,11 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         if ooux_cardinality == "1:1":
             ooux_layout_mode = "focused-cockpit"
         elif ooux_cardinality == "1:N":
-            ooux_layout_mode = "split-master-detail"
+            # Adapt layout mode: master-detail for dense workbenches, feed/stream for reading and mobile touch
+            if layout_profile in ("editorial-reading", "somatic-touchflow"):
+                ooux_layout_mode = "stream-feed"
+            else:
+                ooux_layout_mode = "split-master-detail"
         elif ooux_cardinality == "N:M":
             ooux_layout_mode = "node-link-canvas"
         else:
@@ -595,6 +603,12 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
                 found_states.append("empty")
             if ("error" in a_lower or "alert" in a_lower) and "error" not in found_states:
                 found_states.append("error")
+            if ("select" in a_lower or "highlight" in a_lower) and "selecting" not in found_states:
+                found_states.append("selecting")
+            if ("note" in a_lower or "annotate" in a_lower) and "annotating" not in found_states:
+                found_states.append("annotating")
+            if ("undo" in a_lower or "recover" in a_lower) and "undo_pending" not in found_states:
+                found_states.append("undo_pending")
         if found_states:
             authored_states = ["default"] + found_states
         else:
@@ -622,15 +636,26 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         )
     elif _is_editorial:
         # Reading profile: quiet interactions, no intrusive modals
+        # Sanitize verb lifecycle for reading profile: purge drawer/modal instructions so Builder receives unambiguous in-situ commands
+        sanitized_verbs = []
+        for v in verb_lifecycle:
+            v_clean = dict(v)
+            v_clean["container_mode"] = "in_situ_popover"
+            v_clean["modal_header"] = "N/A (Inline popover only; no blocking drawer or modal)"
+            sanitized_verbs.append(v_clean)
+
         interaction_spec["profile_notes"] = (
             "editorial-reading: prioritize focused typography (max-width 68ch), paper-contrast palette, "
-            "quiet inline feedback. Do NOT implement modal dialogs, action drawers, or telemetry sparklines. "
+            "quiet inline feedback. Do NOT implement modal dialogs, full-height action drawers, or telemetry sparklines. "
+            "Selection actions must appear in-situ via floating popover or companion margin column. "
             "Reading metric labels (e.g. '8 min read') are sufficient interactive feedback."
         )
+        interaction_spec["action_verb_lifecycle"] = sanitized_verbs
         interaction_spec["reading_ergonomics"] = {
             "measure_max": "68ch",
             "contrast_floor": ">7:1 text-to-background",
             "feedback_style": "inline non-blocking state labels only",
+            "selection_container": "in_situ_popover",
         }
     elif _is_touch:
         # Touch/mobile: thumb-zone ergonomics, spring physics

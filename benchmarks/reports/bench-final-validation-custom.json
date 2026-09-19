@@ -1,0 +1,91 @@
+{
+  "run_id": "bench-final-validation",
+  "suite": "custom",
+  "generated_at": "20260919_162424",
+  "status": "REGRESSION",
+  "cases": [
+    "editorial-reader"
+  ],
+  "variants": [
+    "candidate_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "editorial-reader",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 3,
+        "elapsed_seconds": 1239.29,
+        "cost_usd": 21.8488
+      },
+      "notes": [
+        "rejudged from stored artifacts (no new session)"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "deepseek-flash,gemini,meta",
+        "router_host": "router360.duckdns.org",
+        "session_id": "d04bd682-a004-47e1-b811-bcf0b2f1fe99",
+        "workspace": "/tmp/design-bench/editorial-reader/candidate_skill/20260919_141347-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 0,
+    "authority_escape": 1,
+    "critical_task_break": 1,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 1,
+      "blocked": 0,
+      "task_success_rate": 0.667,
+      "method_recall": 0.5,
+      "method_precision": 0.333,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 1,
+      "semantic_signals": 0,
+      "artifact_turns": 3.0,
+      "cost_usd": 21.8488,
+      "elapsed_seconds": 1239.3,
+      "inline_hex_failures": 0
+    }
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "INCONCLUSIVE",
+    "pairs_compared": 0,
+    "regressions": [],
+    "improvements": [],
+    "missing_pairs": [
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      }
+    ]
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "editorial-reader/candidate_skill: semantic judge unverified"
+  ]
+}

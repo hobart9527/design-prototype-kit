@@ -72,16 +72,21 @@ Stress-test string overflow, zero-item empty state recovery CTA, and 320px fold 
 
 ---
 
-## 4. Reference Patterns (场景参考模式，非互斥分类)
+## 4. Open Physical Substrates & Composable Patterns (开放物理地质场与参考模式)
 
-The historical "4 Baselines" are demoted from rigid code classifiers to composable reference patterns:
+Product spaces must NEVER be trapped inside rigid 4-box classification silos. Instead, every product experience is an open synthesis of **Physical Lifeworld Substrates (物理现实对应物)** and **Domain Tension (业务张力)** across the Nine Pillars.
 
-- **Dense Workbench**: High information density, compact tabular readouts, multi-pane instrument layouts (Operations, SRE, Trading).
-- **Operational Canvas**: Fluid workspaces, dual-track review flows, contextual inspector drawers (Collaboration, SaaS, PM).
-- **Editorial Reading**: Distraction-free focus, ergonomic reading measures (55-75ch), proportional typographic hierarchy (Publishing, Documentation, AI Writing).
-- **Touch-First Somatic**: Bounded touch targets (min 44px), spring friction curves, tactile sheet drawers (Mobile, Consumer booking).
+The historical "4 Baselines" are demoted to illustrative composable patterns, accompanied by open lifeworld archetypes:
 
-*Composition Principle*: Complex products combine reference patterns orthogonally (e.g., an AI Writer combines *Editorial Reading* typography with *Operational Canvas* version diffing).
+- **Dense Workbench (仪表控制台)**: High information density, compact tabular readouts, multi-pane instrument layouts (Operations, SRE, Aviation, Trading).
+- **Operational Canvas (协作画布)**: Fluid workspaces, dual-track review flows, contextual inspector drawers (Design tools, Collaboration, SaaS, PM).
+- **Editorial Reading (文人纸韵)**: Distraction-free focus, ergonomic reading measures (55-75ch), proportional typographic hierarchy (Publishing, Documentation, AI Writing, Thought Pieces).
+- **Touch-First Somatic (体感触控流)**: Bounded touch targets (min 44px), spring friction curves, tactile sheet drawers (Mobile, Consumer booking, Quick services).
+- **Acoustic & Tactile Player (音频/留声硬件)**: Rotational scrub inertia, tactile knob damping, cassette deck mechanical latches (Audio streaming, Podcasting, Music production).
+- **Sensory Card & Ledger (收据皮夹/卡片流)**: Natural card stacking, monetary stamp detents, micro-flip counters (Personal finance, Micro-accounting, Wealth management).
+- **Habit Ring & Chrono (发条计时/印章成就)**: Closure detents, somatic ring completion vibrations, tactile calendar stamps (Habit tracking, Health, Kinetic routines).
+
+*Composition Principle*: Real products combine lifeworld substrates orthogonally. A modern professional tool (e.g., Linear) inherits B2C consumer fluidity while preserving B2B operational rigor. An editorial tool combines classical paper contrast with modern popover detents.
 
 ---
 

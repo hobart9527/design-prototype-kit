@@ -143,7 +143,51 @@ def check_wcag_contrast(fg_hex: str, bg_hex: str) -> float:
 
 
 # Legacy named palettes remain available only for callers that explicitly opt in.
-DARK_ATMOSPHERES = {
+CANONICAL_ATMOSPHERES = {
+    # ── Light & Materiality-Anchored Palettes (Humanist / Editorial / Clean Pro) ──
+    "editorial-paper-warm": {  # iA Writer / New Yorker / Penguin Classics Reality Anchor
+        "bg_void": "#f7f4ee",
+        "bg_base": "#faf7f2",
+        "bg_surface": "#ffffff",
+        "bg_surface_raised": "#f2eee6",
+        "bg_overlay": "rgba(247, 244, 238, 0.94)",
+        "border_dim": "#e8e2d8",
+        "border_subtle": "#dcd5c9",
+        "border_bright": "#bfb6a6",
+        "text_primary": "#23201d",
+        "text_secondary": "#5e5953",
+        "text_tertiary": "#8c8479",
+        "accent_primary": "#9b4221",  # Classic cinnabar / terracotta ink
+        "accent_subtle": "rgba(155, 66, 33, 0.12)",
+        "accent_hover": "#b8542d",
+        "status_running": "#2e7d32",
+        "status_warning": "#b45309",
+        "status_danger": "#b91c1c",
+        "border_danger": "rgba(185, 28, 28, 0.3)",
+        "border_warning": "rgba(180, 83, 9, 0.3)",
+    },
+    "clean-slate-pro": {  # Stripe / Notion / Precision Light Pro Anchor
+        "bg_void": "#ffffff",
+        "bg_base": "#f8fafc",
+        "bg_surface": "#ffffff",
+        "bg_surface_raised": "#f1f5f9",
+        "bg_overlay": "rgba(255, 255, 255, 0.96)",
+        "border_dim": "#e2e8f0",
+        "border_subtle": "#cbd5e1",
+        "border_bright": "#94a3b8",
+        "text_primary": "#0f172a",
+        "text_secondary": "#475569",
+        "text_tertiary": "#64748b",
+        "accent_primary": "#2563eb",  # Precision royal blue
+        "accent_subtle": "rgba(37, 99, 235, 0.10)",
+        "accent_hover": "#1d4ed8",
+        "status_running": "#16a34a",
+        "status_warning": "#d97706",
+        "status_danger": "#dc2626",
+        "border_danger": "rgba(220, 38, 38, 0.3)",
+        "border_warning": "rgba(217, 119, 6, 0.3)",
+    },
+    # ── Dark & Industrial Hardware Palettes (Telemetry / SRE / Workbench) ──
     # Modern Industrial Craft Palettes (P9+ Reality Anchors)
     "warm-graphite-lime": {  # Teenage Engineering / Industrial Hardware Anchor
         "bg_void": "#080b0b",
@@ -252,8 +296,19 @@ DARK_ATMOSPHERES = {
         "border_warning": "rgba(245, 158, 11, 0.4)",
     }
 }
+DARK_ATMOSPHERES = CANONICAL_ATMOSPHERES
 
 PALETTE_ALIASES = {
+    "paper": "editorial-paper-warm",
+    "paper-warm": "editorial-paper-warm",
+    "editorial": "editorial-paper-warm",
+    "editorial-paper": "editorial-paper-warm",
+    "humanist": "editorial-paper-warm",
+    "parchment": "editorial-paper-warm",
+    "clean-slate": "clean-slate-pro",
+    "light": "clean-slate-pro",
+    "notion": "clean-slate-pro",
+    "stripe": "clean-slate-pro",
     "teenage-engineering": "warm-graphite-lime",
     "teenage_engineering": "warm-graphite-lime",
     "acid-lime": "warm-graphite-lime",
@@ -390,25 +445,63 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
                 extracted[canon_key] = matches[-1].group(1).strip()
                 break
 
+    # Third priority: natural language heuristic extraction (e.g. "温润米白 `#F9F6F0` 纸感底色")
+    if "bg_void" not in extracted:
+        bg_nl = re.search(r"`?(#[0-9a-fA-F]{6})`?[^#\n]{0,35}(?:底色|背景|纸感|基色|tone|palette|style|paper|undertone|background|snow|vinyl|slate|brown|dark|white)", discussion_text, re.IGNORECASE)
+        if not bg_nl:
+            bg_nl = re.search(r"(?:底色|背景|纸感|基色|tone|palette|style|paper|undertone|background|snow|vinyl|slate|brown|dark|white)[^#\n]{0,35}`?(#[0-9a-fA-F]{6})`?", discussion_text, re.IGNORECASE)
+        if bg_nl:
+            extracted["bg_void"] = bg_nl.group(1).strip()
+
+    if "text_primary" not in extracted:
+        txt_nl = re.search(r"(?:字色|文字|正文|深石墨|primary-text)[^#\n]{0,20}`?(#[0-9a-fA-F]{6})`?", discussion_text, re.IGNORECASE)
+        if not txt_nl:
+            txt_nl = re.search(r"`?(#[0-9a-fA-F]{6})`?[^#\n]{0,20}(?:字色|文字|正文)", discussion_text, re.IGNORECASE)
+        if txt_nl:
+            cand_hex = txt_nl.group(1).strip()
+            # Only adopt if it doesn't collide with bg_void
+            if cand_hex.lower() != extracted.get("bg_void", "").lower():
+                extracted["text_primary"] = cand_hex
+
+    if "accent_primary" not in extracted:
+        acc_nl = re.search(r"`?(#[0-9a-fA-F]{6})`?[^#\n]{0,25}(?:强调色|主色|accent|点缀色)", discussion_text, re.IGNORECASE)
+        if not acc_nl:
+            acc_nl = re.search(r"(?:强调色|主色|accent|点缀色)[^#\n]{0,25}`?(#[0-9a-fA-F]{6})`?", discussion_text, re.IGNORECASE)
+        if acc_nl:
+            extracted["accent_primary"] = acc_nl.group(1).strip()
+
     pal_match = re.search(
         r"[`*]*(?:palette|color\s+palette|atmosphere)[`*]*\s*[:|=]\s*[`*]*([a-zA-Z0-9_-]+)[`*]*",
         discussion_text,
         re.IGNORECASE,
     )
-    base_name = pal_match.group(1).lower() if pal_match else fallback_palette
+    # Intelligent Reality Anchor Domain Routing:
+    # If no explicit named palette was authored, infer appropriate baseline atmosphere from domain keywords
+    inferred_domain_fallback = fallback_palette
+    disc_lower = discussion_text.lower()
+    if any(k in disc_lower for k in ("reader", "reading", "editorial", "essay", "literature", "长文", "阅读", "书库", "专栏", "书籍", "出版", "人文")):
+        inferred_domain_fallback = "editorial-paper-warm"
+    elif any(k in disc_lower for k in ("procurement", "approval", "crm", "internal", "clean", "notion", "审批", "采购", "政务", "OA", "看板")):
+        inferred_domain_fallback = "clean-slate-pro"
+    elif any(k in disc_lower for k in ("sre", "cluster", "telemetry", "incident", "trading", "terminal", "ops", "运维", "事故", "监控")):
+        inferred_domain_fallback = "titanium-amber"
+
+    base_name = pal_match.group(1).lower() if pal_match else inferred_domain_fallback
     resolved_base = PALETTE_ALIASES.get(base_name, base_name)
     if resolved_base not in DARK_ATMOSPHERES:
-        resolved_base = "warm-graphite-lime"
+        resolved_base = inferred_domain_fallback if inferred_domain_fallback in DARK_ATMOSPHERES else "editorial-paper-warm"
 
     base_colors = dict(DARK_ATMOSPHERES[resolved_base])
 
     # If custom background was authored, synthesize physical elevation hierarchy via OKLab perceptual scale
-    if "bg_void" in extracted and extracted["bg_void"].startswith("#"):
+    seed_bg = extracted.get("bg_void") or extracted.get("bg_base")
+    if seed_bg and seed_bg.startswith("#"):
         try:
-            is_light = _is_light_color(extracted["bg_void"])
-            oklab_scale = derive_perceptual_surface_scale(extracted["bg_void"], is_light)
+            is_light = _is_light_color(seed_bg)
+            oklab_scale = derive_perceptual_surface_scale(seed_bg, is_light)
             for k, v in oklab_scale.items():
-                base_colors[k] = extracted.get(k, v)
+                # Autonomously project perceptual steps unless explicitly overridden by authored tokens
+                base_colors[k] = extracted.get(k) or v
         except Exception:
             pass
 
