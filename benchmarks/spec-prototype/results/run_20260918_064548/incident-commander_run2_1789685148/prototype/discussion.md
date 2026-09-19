@@ -1,9 +1,0 @@
-# Discussion: incident-commander
-- Energy: 3
-- Finish: machined-industrial
-- Density: dense
-- Weight: regular
-- Seriousness: 3
-## Confirmed Decisions
-- bg-void: #0f172a
-- accent-primary: #f59e0b

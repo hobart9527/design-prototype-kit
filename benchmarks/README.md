@@ -23,9 +23,13 @@ Useful flags: `--cases a,b` (instead of `--suite`), `--max-turns`, `--timeout`, 
 
 | layer | runner | evidence it may claim |
 | --- | --- | --- |
-| mechanism | `benchmarks/run_benchmark.py` (pre-existing) | compile / materialise / token checks only |
+| mechanism | `pytest tests/` | compile / materialise / token checks only |
 | session | `runners/run_case.py`, `runners/run_claude_session.py` | what a real isolated Claude Code session produced |
 | judge | `judges/*` | semantic fidelity, runtime mechanics, tasks, contract, pairwise |
+
+The mechanism layer lives in the pytest suite (`tests/test_pipeline.py`, `tests/test_tokens.py`,
+`tests/test_canonical_ontology.py`), which drives `skills/spec-prototype/scripts` directly. It has
+no separate runner and no benchmark cases of its own.
 
 ## Flow
 
@@ -109,4 +113,6 @@ dashboard. Add them when a real failure needs them, not before.
 
 ## Plan of record
 
-`benchmarks/PLAN-automated-benchmark.md` is the source plan this harness implements.
+`openspec/changes/archive/2026-09-18-spec-prototype-benchmark-fidelity/` is the closed Change that
+built this harness. The pre-existing `PLAN-automated-benchmark.md` and the legacy `run_benchmark.py`
+mechanism driver were removed once `runners/` and `judges/` superseded them.

@@ -1,9 +1,0 @@
-# Discussion: editorial-reader
-- Energy: 3
-- Finish: editorial-paper
-- Density: sparse
-- Weight: regular
-- Seriousness: 3
-## Confirmed Decisions
-- bg-void: #faf8f3
-- accent-primary: #0284c7
