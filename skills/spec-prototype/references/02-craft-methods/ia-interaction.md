@@ -1,5 +1,8 @@
 # Objects, journeys, Surface Topology and interaction
 
+> **Pillars**: `Object` · `Journey` · `Topology` · `Interaction`  
+> **Core Invariants**: OOUX Entity Grounding · The Container Proximity Ladder · 3-Tier Wayfinding · Flow Continuity
+
 Read when defining product structure, navigation, pages/surfaces, task flows or
 state behavior. Enter with the current Product Thesis and sources. This reference
 owns structure and continuity; it does not turn product hypotheses into facts or

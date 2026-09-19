@@ -1,5 +1,8 @@
 # Components and prototype implementation
 
+> **Pillars**: `Interaction` · `Topology` · `Resilience`  
+> **Core Invariants**: Five Essential States · Physical Kinetic Grounding · Context Preservation
+
 Use during builder handoff and implementation. The Foundation owns visual language, the Contract owns interaction requirements, and the Builder owns component composition within those decisions. Component mapping is implementation evidence, not a new approval stage. A component limitation that changes required behavior or design returns to spec-prototype with the affected reference and an alternative.
 
 This reference is also the **canonical owner of detailed recovery focus-continuity mechanics**: the rules for reconciliation on a rebuilt surface, resolving a successor destination when a focused control retires, moving focus deliberately during a delayed recovery, and comparing the actual control identity/values to the specified successor. Those mechanics are defined here once; other references and leaf prompts point back here for the detail instead of re-restating it. If any context needs to describe focus-continuity behavior in this depth, cite this reference as the owner; do not maintain a competing authority. This is an owner declaration, not a second approval or workflow authority.

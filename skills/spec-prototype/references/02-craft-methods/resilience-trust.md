@@ -1,5 +1,8 @@
 # Craft reference — Resilience, trust and risk coverage
 
+> **Pillars**: `Resilience` · `Value`  
+> **Core Invariants**: Structural Resilience (The Break Protocol) · Temporal Error Recovery · Consequential Trust Boundaries
+
 Owns uncertainty, agency, collaboration, failure and critique: consequential actions, AI-assisted
 work, cross-role continuation, presence and concurrency, notification hierarchy, inclusive and
 locale adaptation, anti-pattern diagnosis and design audit. **Open lens:** how should uncertainty,
@@ -11,6 +14,19 @@ Sections in this pillar:
 - [Adapt the task to people, input and language](#adapt-the-task-to-people-input-and-language) - adaptation to people, input and language
 - [Diagnose generic or mismatched expression](#diagnose-generic-or-mismatched-expression) - diagnosing generic or mismatched expression
 - [Criticism that changes the design](#criticism-that-changes-the-design) - criticism that changes the design
+
+## The Organic Break Protocol (真实极限压测公理)
+
+The Break Protocol tests architectural resilience under extreme edge data. **Test vectors must be parasitic upon authentic domain entities, never synthetic UI litter**:
+
+1. **Zero Fake Hash Litter**:
+   - **NEVER** render artificial placeholder strings like `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000` into prominent UI surfaces, titles, or body prose to pass tests.
+   - Use real domain stress vectors: an authentic 45-character article headline, an unspaced 60-character chemical formula or URL path, or a complex compound surname.
+2. **CSS Containment Invariants**:
+   - Dynamic string containers MUST enforce `overflow-wrap: break-word`, `word-break: break-word`, or `text-overflow: ellipsis` with optical truncation.
+   - Containers must withstand 320px viewport folds without unmanaged horizontal window scroll.
+3. **Actionable Empty State Invariant**:
+   - Empty states must provide immediate, forward-looking recovery (e.g. "重置筛选", "载入预设", "新建条目"), never a dead-end blank canvas.
 
 ## Make consequential boundaries understandable
 
@@ -118,12 +134,12 @@ Prevent user notification fatigue and miscommunicated urgency using a 4-tier mat
 4. **Blocking Modal / Dialog:** Centered dialog with backdrop scrim. Reserved strictly
    for destructive, irreversible, or high-risk actions (e.g. permanent deletion, workspace
    transfer). Requires explicit affirmative and cancel actions. Its focus behavior follows
-   the recovery focus-continuity owner, [component implementation](../component-implementation.md).
+   the recovery focus-continuity owner, [component implementation](../02-craft-methods/component-implementation.md).
 
 ## Adapt the task to people, input and language
 
 Read when developing mobile/multi-input layouts, enlarged text, localized content,
-assistive access or degraded connectivity. design-floor.md owns applicable hard
+assistive access or degraded connectivity. [Quality floor](../03-verification/quality-floor.md) owns applicable hard
 accessibility requirements; this method develops usable alternatives within them.
 Use actual supported platforms and conditions, not every imaginable environment.
 
@@ -190,7 +206,7 @@ implementation pointers; a length stress fixture alone does not prove translatio
 
 **Enter with:** The actual output, raw product intent, intended language and available reference/evidence; not detector flags alone.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -204,7 +220,7 @@ Follow the shared execution/return rules in [the method library](../design-metho
 The craft methods below supply the choices and construction detail for this workflow.
 
 Read when a proposal or rendered result feels generic, noisy or overstyled.
-The [design floor](../design-floor.md) owns hard constraints. These are diagnostic
+The [design floor](../03-verification/quality-floor.md) owns hard constraints. These are diagnostic
 questions, not a blacklist of colors, fonts, genres or popular products.
 
 | Observed weakness | Diagnose at the owning layer | Direction for revision |
@@ -236,11 +252,11 @@ into a calm product merely to appear original. Fix the cause, not a forbidden hu
 
 **Enter with:** Original product source, actual target and scope, intended language after initial inspection, and permitted evidence tools.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
-| Discover — establish the task and examine the work | Derive the task, supported actions/objects and required contexts from the original source before the target. Then inspect composition before designer rationale; attempt core task, recovery and return where runnable. Sample relevant viewports/states and record what was actually observed, judging visual craft from rendered actual-size views as [Quality bar](../quality-bar.md) requires. An unrendered proposal has different evidence from a live interface. |
+| Discover — establish the task and examine the work | Derive the task, supported actions/objects and required contexts from the original source before the target. Then inspect composition before designer rationale; attempt core task, recovery and return where runnable. Sample relevant viewports/states and record what was actually observed, judging visual craft from rendered actual-size views as [Quality bar](../03-verification/quality-floor.md) requires. An unrendered proposal has different evidence from a live interface. |
 | Define — frame the important gaps | Account for applicable craft areas and the seven quality dimensions. Separate objective defects, expert judgments and preferences; identify consequential user impact and the owning decision without allowing a total score to hide a weak area. |
 | Develop — direct an owning revision | Recommend specific interventions and evidence that would show improvement, protecting the strongest idea. Main reconciles against original facts and dispatches the responsible design/Builder work; Critic does not edit or select on the user’s behalf. |
 | Deliver — verify the changed target | Reinspect the same task/frame and relevant transfer after repair. Retain first and revised evidence, resolved/unresolved claims and acceptance limits. Return to diagnosis when the intervention fails; the existing quality/lifecycle rules own the bounded cycle and final decision. |
@@ -250,7 +266,7 @@ Follow the shared execution/return rules in [the method library](../design-metho
 The craft methods below supply the choices and construction detail for this workflow.
 
 Read before visual and interaction proposals reach a human decision, and when
-reviewing runnable work. [Quality bar](../quality-bar.md) owns the cycle and
+reviewing runnable work. [Quality bar](../03-verification/quality-floor.md) owns the cycle and
 acceptance; this reference supplies diagnosis and intervention methods.
 
 First establish the task basis from the original product source. Inspect the work

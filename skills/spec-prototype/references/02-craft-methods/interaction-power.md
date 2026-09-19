@@ -1,5 +1,8 @@
 # Craft reference — Interaction and power use
 
+> **Pillars**: `Interaction` · `Attention` · `Resilience`  
+> **Core Invariants**: Action Verb Lifecycle · Platform Ergonomics (Space/Tab Sovereignty) · Ceremony Economy · Decisive 3-Frame
+
 Owns the operation model and its feel: conceptual model, decisive exchange, generative/agentic
 exchange, interruption and return paths, keyboard-first efficiency, latency choreography, motion
 and sensory feedback, component recipes and component sourcing. **Open lens:** which operation
@@ -20,7 +23,7 @@ Sections in this pillar:
 
 **Enter with:** Sourced tasks/operations, current objects and state constraints, audience/input context and actual content.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -211,7 +214,7 @@ For tools used daily or under time pressure, provide an ergonomic keyboard strea
   Display concise visual keycap badges near actions to teach shortcuts organically.
 - **Focus continuity:** A modal or drawer must return focus to its trigger when it
   closes. The detailed recovery focus-continuity mechanics are owned by
-  [component implementation](../component-implementation.md); cite that owner
+  [component implementation](../02-craft-methods/component-implementation.md); cite that owner
   rather than maintaining a competing statement of the rule here.
 
 ### Perceived performance and latency choreography
@@ -259,7 +262,7 @@ reason. Treat presets as hypotheses to tune, not craft credentials.
 
 **Enter with:** Authorized component transitions, selected spatial/material language, input methods and actual rendering runtime.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -407,7 +410,7 @@ share the same trigger rhythm, restraint, and accessibility requirements as visu
 
 **Enter with:** The current task/Contract, selected or provisional language/tokens, real content ranges and available primitives.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -520,7 +523,7 @@ On a smaller viewport, reorder or disclose by task priority while preserving
 the comparison the user needs; shrinking the desktop composition is insufficient.
 
 The Builder maps the recipe onto existing primitives following
-[component implementation](../component-implementation.md). Product state and
+[component implementation](../02-craft-methods/component-implementation.md). Product state and
 view state retain separate owners. If a primitive cannot preserve a required
 behavior, report the conflict before substituting another flow.
 
@@ -602,7 +605,7 @@ require a new renderer or dependency.
 
 **Enter with:** Actual repository/platform/stack, inherited assets, current component need and selected expression.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -617,7 +620,7 @@ The craft methods below supply the choices and construction detail for this work
 
 Read when pattern/component/platform uncertainty could change a design or its
 feasibility. [Research](../01-foundations/research.md) owns tool access and evidence handling;
-[component implementation](../component-implementation.md) owns runtime reuse.
+[component implementation](../02-craft-methods/component-implementation.md) owns runtime reuse.
 
 Form a query with **task + friction/state + platform**, adding the actual stack
 only for implementation questions. For instance: retaining comparison context

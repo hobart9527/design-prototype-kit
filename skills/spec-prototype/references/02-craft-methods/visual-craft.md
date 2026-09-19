@@ -1,9 +1,22 @@
 # Craft reference — Visual language and atmosphere
 
+> **Pillars**: `Expression` · `Attention` · `Value`  
+> **Core Invariants**: Five Axes Calibration · Optical Concentric Radii · Non-Generic Materiality
+
 Owns the perceptible language: material and metaphor, semantic tokens, typography, composition,
 imagery, entry composition and iconography. **Open lens:** which competing atmosphere, hierarchy
 or symbolic relationship could make this product's value perceptible? **Floor:** the retained
 Foundation, tokens and actual-content specimen must travel coherently across contrasting tasks.
+
+## Materiality Calibration: Anti-Default Palette Invariant (材质拟合与色彩反惰性)
+
+Never collapse all interfaces into dark-mode industrial grays. Palette, typography, and materiality MUST calibrate directly against the domain's reality anchors:
+
+| Domain Archetype | Material Substrate & Subservience | Primary Chromatic Calibration | Typographic Rhythm | Negative Pattern to Avoid |
+|---|---|---|---|---|
+| **Editorial & Long-form Reading** | Warm paper / vellum texture (`#faf8f3`, `#f5efe6`) | Monochromatic charcoal / ink, understated vermilion or lapis accents | Classical serif headings, generous line-height (`1.8~1.85`), measure $\le 68\text{ch}$ | Pitch black OLED backgrounds, cold cyber cyan, neon alerts |
+| **Engineering & SRE Workbench** | Dense cold titanium / dark graphite (`#0a0c10`, `#0f141c`) | High-contrast amber, phosphor green, or titanium status markers | Monospace digits (`tabular-nums`), mechanical 1px hairline borders | Soft pastel washes, decorative drop shadows, non-tabular digits |
+| **Internal Procurement & Audit** | Clean neutral daylight office ground (`#ffffff`, `#f8fafc`) | Trustworthy slate, navy, restrained semantic green/red for approval | Crisp sans-serif, dense form field alignment, clear visual anchors | High-contrast gaming dark mode, gratuitous gradient cards |
 
 Load the named section for the open question; do not read the whole pillar for a single decision.
 Values decided here are returned to the Foundation and token revision, not restated per page.
@@ -23,7 +36,7 @@ Sections in this pillar:
 
 **Enter with:** Product facts, audience/context evidence, inherited identity and the current opportunity.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -219,7 +232,7 @@ scope and transfer evidence in the existing design artifacts.
 
 **Enter with:** Product emotional/operational intent, inherited palette/theme scope, actual content and a representative composition.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -249,7 +262,7 @@ second and available on demand. Establish these relationships together:
 - **Color:** assign canvas, surface, text, subtle text, action, selected, focus
   and applicable status roles. Develop a meaningful relationship among them,
   including deliberate monochrome when earned. Check actual adjacent surfaces
-  and text/necessary control-state cues using the [design floor](../design-floor.md);
+  and text/necessary control-state cues using the [design floor](../03-verification/quality-floor.md);
   quiet copy is still normal text. Include the actual cue and adjacent field in
   paired specimens before freezing roles; distinguish interactive identification
   from decorative boundaries so one subtle separator token need not serve both.
@@ -366,7 +379,7 @@ table explains the system; the rendered relationships demonstrate its quality.
 
 **Enter with:** Real multilingual content/roles, available fonts, inherited language and target reading/scan tasks.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -544,7 +557,7 @@ Use retained page responsibilities from the Surface Topology when available; an
 early expression probe may use a provisional frame/task brief without freezing
 page boundaries.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -617,7 +630,7 @@ exception, mobile transformation and trade-off in the existing design artifacts.
 
 **Enter with:** Actual subject/content, truthful sources, available authorized asset tools, frame/role and intended visual language.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -687,7 +700,7 @@ rules, actual rendered evidence and unresolved asset quality in existing records
 
 **Enter with:** The actual entry surface job, current task/IA constraints, product proposition, available assets and viewport.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -739,7 +752,7 @@ with an ordinary, competent version to see what the expressive choice contribute
 
 **Enter with:** Actual actions/object meanings, existing icon assets/family, adjacent text and required states/sizes.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|

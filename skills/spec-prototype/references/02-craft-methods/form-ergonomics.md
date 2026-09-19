@@ -1,5 +1,8 @@
 # Craft reference — Form and input ergonomics
 
+> **Pillars**: `Interaction` · `Resilience` · `Attention`  
+> **Core Invariants**: In-situ Form Ergonomics · Inline Proximate Validation · Proportional Input Friction
+
 Owns how the product asks for input and how it speaks: orchestration of complex entry, validation
 timing, dirty-state protection and product voice. **Open lens:** which entry, validation and
 recovery model best fits the user's real tolerance for effort and correction? **Floor:** validation
@@ -18,7 +21,7 @@ Sections in this pillar:
 
 **Enter with:** Original product facts/terminology, desired relationship, current UI moments and content/locale constraints.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
