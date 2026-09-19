@@ -12,6 +12,20 @@
 - Dominant Baseline: `Baseline 1: Dense Workbench | Baseline 2: Modern SaaS | Baseline 3: Editorial Reading | Baseline 4: Mobile Touch-First`
 - Content Language (Locked at Stage 1): `zh-Hans | zh-Hant | en | ja | ...` (language of shipped copy and fixtures; may declare a secondary language for mixed-script products)
 
+## Target Platform Context
+
+Target runtime/OS, device and input context only. Source each fact or write
+`unknown`; only route-changing uncertainty needs a human question, and
+irrelevant dimensions need no matrix. The prototype medium and the actual
+verification environment are not product facts and are recorded elsewhere.
+
+```prototype-context
+record: product
+target-context:     # web | ios | android | ... | unknown
+device-context:     # e.g. desktop, 390px handset, shared terminal
+input-context:      # e.g. keyboard+mouse, touch, keyboard-only
+```
+
 ## Operational Scene & Consequence (使用场景与后果)
 
 - Target practitioner / user and operational setting: (lighting, distraction level, device, stress)
