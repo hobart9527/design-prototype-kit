@@ -237,6 +237,18 @@ Structure visual feedback according to operational latency thresholds:
 
 ### Choose motion behavior from the information exchange
 
+### Physical Metaphor & Somatic Kinetics (物理隐喻与体感动效工法)
+
+Digital interfaces for both consumer and professional products derive tactile delight from authentic physical world dynamics:
+
+1. **Spring & Damping Physics (物理弹簧与阻尼阻力)**:
+   - Use tuned cubic-bezier or spring physics (`cubic-bezier(0.16, 1, 0.3, 1)` for clean mechanical settling; `cubic-bezier(0.34, 1.56, 0.64, 1)` for subtle elastic catch).
+   - Avoid robotic linear interpolations. Physical materials possess inertia, mass, and friction.
+2. **Rotational & Scrubber Inertia (旋转刻度与波形刮擦)**:
+   - For audio/media/timing scrubbers, implement micro-detents (e.g. stepping increments with subtle visual tick or vibration cue) to provide physical feel.
+3. **Elastic Boundary Resistance (边缘橡皮筋与吸附)**:
+   - Sheet drawers and swipeable cards must demonstrate kinetic resistance as they reach dimensional boundaries, settling into definitive resting detents upon release.
+
 No easing curve, spring, press transform or stagger is a universal quality floor.
 First decide what the user must perceive: immediate acknowledgement, spatial
 continuity, changed hierarchy, causality, progress or expressive punctuation.
