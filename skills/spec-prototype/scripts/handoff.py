@@ -605,15 +605,22 @@ def freeze(root: Path, spec: str) -> dict:
     the frozen artifact manifest with immutable SHA256 digests.
 
     Approval is bound to an actual decision recorded in prototype/discussion.md.
-    There is no permissive bypass: a strict packet failure stays failed.
+    A spec-only approval retains the approved design scope without claiming a
+    build, so it freezes without a prototype entry artifact; a scope that claims
+    prototype implementation still requires its entry. There is no permissive
+    bypass: a strict packet failure stays failed.
     """
     root = root.resolve()
     spec_path = within(root, spec)
     if spec_path.parent.name == "briefs":
         raise HandoffError("Cannot freeze an exploration brief; formal Specification approval is required")
     pkt = packet(root, spec)
-    require_prototype_entry(root, pkt["prototype_write_scope"])
     binding = approval_binding(root, pkt["slice_id"], pkt["candidate_id"])
+    # The entry requirement guards a scope that claims prototype implementation.
+    # Every approval other than a spec-only one keeps that requirement, and an
+    # override never reaches this point because approval_binding refuses it.
+    if not binding["spec_only"]:
+        require_prototype_entry(root, pkt["prototype_write_scope"])
 
     spec_body = spec_path.read_text(encoding="utf-8")
     status_match = re.search(r"^-\s*(?:Compilation status|Authority status):\s*`?([a-zA-Z0-9_ -]+)`?", spec_body, re.M | re.IGNORECASE)
