@@ -661,6 +661,18 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 """
         path.write_text(content, encoding="utf-8")
         created[key] = str(path)
+
+    # Auto-synthesize baseline execution envelope for Builder
+    try:
+        from assemble_envelope import assemble
+        env = assemble(root, slice_id)
+        env_path = root / f"prototype/experiments/{slice_id}/envelope.json"
+        env_path.parent.mkdir(parents=True, exist_ok=True)
+        env_path.write_text(json.dumps(env, indent=2, ensure_ascii=False), encoding="utf-8")
+        created["envelope"] = str(env_path)
+    except Exception:
+        pass
+
     return created
 
 

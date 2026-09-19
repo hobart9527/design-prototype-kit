@@ -1015,7 +1015,7 @@ def generate_markdown(tokens: Dict[str, Any], foundation_rev: str = "f1", tokens
         "## Identity",
         f"- Foundation revision: {foundation_rev}",
         f"- Tokens revision: {tokens_rev}",
-        "- Status: frozen",
+        "- Status: sealed provisional",
         "- Generated at: machine-compiled from 5-dials",
         "",
         "## Breakpoints",

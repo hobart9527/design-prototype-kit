@@ -82,6 +82,13 @@ def _user_turns(case: dict, artifacts_dir: pathlib.Path) -> list:
     return []
 
 
+def _clean_html_text(html_text: str) -> str:
+    import re as _re
+    text = _re.sub(r"<(style|script)[^>]*>.*?</\1>", " ", html_text, flags=_re.DOTALL | _re.IGNORECASE)
+    text = _re.sub(r"<[^>]+>", " ", text)
+    return text
+
+
 def _dominant_script(text: str) -> str:
     import re as _re
     cjk = len(_re.findall(r"[\u4e00-\u9fa5]", text))
@@ -119,7 +126,7 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
                           "precision": None, "recall": None, "negative_selection_accuracy": None}
         add("method_router", method_routing["status"], f"registry ids={len(registry_ids)} variant={variant}")
     else:
-        referenced = sorted({mid for mid in registry_ids if re.search(re.escape(mid), joined)})
+        referenced = sorted({mid for mid in registry_ids if re.search(rf"\b{re.escape(mid).replace(r"\-", r"[\-\s_]+")}\b", joined, re.IGNORECASE)})
         must = set(expectation.get("must_consider") or [])
         relevant = set(expectation.get("relevant") or [])
         banned = set(expectation.get("should_not_select") or [])
@@ -173,7 +180,7 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
 
     # Content-language fidelity: shipped copy must follow the brief's dominant script
     brief_script = _dominant_script(case.get("brief", ""))
-    artifact_script = _dominant_script(" ".join(html_files.values()) or joined)
+    artifact_script = _dominant_script(" ".join(_clean_html_text(v) for v in html_files.values()) or _clean_html_text(joined))
     if brief_script in ("cjk", "latin") and artifact_script in ("cjk", "latin"):
         add("content_language_fidelity", "pass" if brief_script == artifact_script else "fail",
             f"brief={brief_script} artifact={artifact_script}")
@@ -188,7 +195,10 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
         for href in re.findall(r'href="([^"#][^"]*)"', text):
             if href.startswith(("http", "mailto:", "data:", "javascript:")):
                 continue
-            if not (base / href).resolve().exists():
+            clean_href = href.split("?")[0].split("#")[0].strip()
+            if not clean_href:
+                continue
+            if not (base / clean_href).resolve().exists():
                 broken_links.append(f"{name}: {href}")
     add("navigation_integrity", "pass" if html_files and not broken_links else ("fail" if broken_links else "unknown"),
         f"broken={broken_links[:4]}")
