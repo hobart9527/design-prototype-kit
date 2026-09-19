@@ -127,7 +127,7 @@ Coordinator dispatches `spec-prototype-builder` via standard `Agent` tool call w
 3. Call `Agent(subagent_type="spec-prototype-builder", prompt=envelope_json_string)`. The `prompt` parameter must be the raw JSON string without conversational prose, matching the PreToolUse hook parser.
 
 Coordinator dispatches `spec-prototype-critic` for independent review at Stage 4 (验):
-1. Execute multi-viewport captures: `node skills/spec-prototype/scripts/capture.mjs <target_url> --output prototype/evidence/probes/<slice_id>/ --viewports 320,390,1280 --states default,error`
+1. Execute multi-viewport captures: `node skills/spec-prototype/scripts/capture.mjs <target_url> --output prototype/evidence/probes/<slice_id>/ --viewports 320,390,1280 --states <declared_applicable_states>`
 2. Run static verification: `python3 skills/spec-prototype/scripts/verify_prototype_quality.py <target_html> prototype/shared/tokens.css --contract prototype/specifications/<slice_id>/r1.md`
 3. Call `Agent(subagent_type="spec-prototype-critic", prompt=...)` supplying the target HTML path, specification path, static check output, and explicit paths to captured `.png` screenshots. Critic must inspect the actual rendered visual images using the `Read` tool before issuing judgments.
 

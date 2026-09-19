@@ -68,11 +68,12 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
         if "Instant Operational Throughput vs Zero-Mistake Safety" in declared_tension and not is_ops_domain:
             errors.append(SpecLintError("E002_TENSION_CONTAMINATED", "product.md", "Default SRE fallback tension contaminated a non-ops product contract."))
 
-    # 3. Reality Anchors Check
+    # 3. Reality Anchors & Grounded Rationale Check (Consequential or grounded rationale required)
     combined_anchors_text = prod_text + "\n" + f1_text
     anchors_match = re.search(r"[-*+]?\s*(?:Reality\s+(?:Benchmark\s+)?Anchors?|Physical\s+Anchors?|对标|地锚)\s*[:=]\s*([^\n]+)", combined_anchors_text, re.IGNORECASE)
-    if not anchors_match or not anchors_match.group(1).strip():
-        errors.append(SpecLintError("E003_ANCHORS_MISSING", "product.md / f1.md", "Reality Benchmark Anchors declaration is missing."))
+    has_grounded_rationale = bool(re.search(r"(?:Grounding|Rationale|Physical Metaphor|Substrate|原创推导|物理隐喻|因果依据|设计理由)\s*[:=]\s*([^\n]+)", combined_anchors_text, re.IGNORECASE))
+    if not anchors_match and not has_grounded_rationale:
+        errors.append(SpecLintError("E003_ANCHORS_MISSING", "product.md / f1.md", "Neither Reality Benchmark Anchors nor grounded design rationale declared."))
 
     # 4. Content Language Check
     disc_path = root / "prototype/discussion.md"
@@ -86,12 +87,16 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
     if "Verifiable Design Assertions" not in r1_text and "Required screenshot checkpoints" not in r1_text:
         errors.append(SpecLintError("E005_ASSERTIONS_MISSING", "r1.md", "Verifiable Design Assertions section is missing."))
 
-    if "The Break Protocol" not in r1_text:
-        errors.append(SpecLintError("E006_BREAK_PROTOCOL_MISSING", "r1.md", "The Break Protocol Stress Checkpoints section is missing."))
+    has_break = "The Break Protocol" in r1_text
+    break_na = bool(re.search(r"The Break Protocol.*?(?:N/A|Not Applicable|无需破坏压测|不适用)", r1_text, re.IGNORECASE))
+    if not has_break and not break_na:
+        errors.append(SpecLintError("E006_BREAK_PROTOCOL_MISSING", "r1.md", "The Break Protocol Stress Checkpoints section is missing (must declare test vectors or explicit N/A with rationale)."))
 
-    # 6. Action Verb Lifecycle Check
-    if "Action Verb" not in c1_text:
-        errors.append(SpecLintError("E007_VERB_LIFECYCLE_MISSING", "c1.md", "Action Verb Lifecycle Table is missing from slice contract."))
+    # 6. Action Verb Lifecycle Check (Applicable -> Required, Not Applicable -> Explicit N/A)
+    has_verbs = "Action Verb" in c1_text
+    verbs_na = bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", c1_text, re.IGNORECASE))
+    if not has_verbs and not verbs_na:
+        errors.append(SpecLintError("E007_VERB_LIFECYCLE_MISSING", "c1.md", "Action Verb Lifecycle Table is missing from slice contract (must declare lifecycle table or explicit N/A with rationale)."))
 
     return errors
 

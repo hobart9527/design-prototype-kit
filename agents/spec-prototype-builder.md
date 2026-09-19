@@ -80,8 +80,9 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
   - Global shortcuts must use modifier keys (`Cmd/Ctrl+K`, `Alt+N`) to avoid collision with standard platform behavior.
 - **Responsive Graceful Degradation over Entity Amnesia**:
   On mobile (`max-width: 480px` / `390px`), never bluntly hide critical functional objects with `display: none`. Secondary entities (such as marginal notes or inspect panels) must fold into an accessible bottom sheet trigger or badge, retaining full entity reachability.
-- **Shared Shell & Multi-Surface Topology Navigation**:
-  Render the shared top navigation bar using `topology_context.shared_shell`. Include the brand title and render all `navigation_links` with their exact relative `href` and `active` status. This guarantees that all prototype surfaces form an interconnected product topology rather than disconnected silos.
+- **Shared Shell & Multi-Surface Topology Navigation (Declared-Only Protocol)**:
+  Only render a global top shell or navigation header if explicitly declared and meaningful in `topology_context.shared_shell` or the slice contract.
+  For focused reading sanctuaries, full-screen canvas editors, immersive creation tools, or mobile single-flow apps, DO NOT force an unauthored desktop navigation bar. Preserve true domain immersion over mechanical layout checklists.
 - **Declarative State Machine & Hash Routing**:
   Implement dynamic state transitions based on `interaction_spec.state_machine`:
   Listen to `window.addEventListener("hashchange", applyState)` and read `location.hash` using the declared `supported_states` (e.g. default, empty, error, or domain-specific states).
