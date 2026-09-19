@@ -92,8 +92,18 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
 - **Active Craft Methods Guidance**: Consult `active_methods` in the envelope for targeted experience invariants and candidate techniques (e.g. Action Verb Lifecycle, Context Preservation, Visual Rhythm) dynamically selected for this slice.
 
 - **Platform Rules and Consequential Task Exercise**:
-  Apply every applicable rule of the declared platform target (`target_platform` in the envelope) with
-  the platform's own idioms, not a generic web shell relabelled. Exercise each consequential task the
+  The formal envelope projects platform facts under `platform` — `platform.target_context`,
+  `platform.prototype_medium`, `platform.verification_environment` and
+  `platform.native_validation_pending` — and per-surface applicability under
+  `coverage.applicability`. Resolve one surface's applicable platform context as
+  `coverage.applicability[<surface_id>]`, the authored context IDs the Surface Map binds to that
+  surface; when that entry is absent, apply the global `platform` facts alone and state that the
+  surface's platform contract is unauthored rather than inventing a target. A
+  `platform.native_validation_pending` of true means the declared `platform.target_context` is
+  native while `platform.prototype_medium` is not: that target's validation stays `unverified`
+  until it is actually captured there.
+  Apply every applicable rule with the platform's own idioms, not a generic web shell relabelled.
+  Exercise each consequential task the
   Slice Contract names to a settled observable outcome before claiming coverage; a rendered screen that
   was never driven through its committed action is not coverage.
 

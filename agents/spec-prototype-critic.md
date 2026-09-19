@@ -51,6 +51,19 @@ stale, or bound to a different source/dependency revision, or when `capture_fail
 `browser_unavailable` is reported, state that consequence explicitly and withhold the affected visual
 claims instead of restating the producer's summary.
 
+Resolve the reviewed surface's platform context from the projected envelope facts alone. The
+formal envelope emits `platform.target_context`, `platform.prototype_medium`,
+`platform.verification_environment` and `platform.native_validation_pending`, plus the per-surface
+authored context IDs under `coverage.applicability[<surface_id>]`. Those five names are the whole
+platform contract; do not read a target from any other envelope key. Where that surface entry is
+absent, judge against the global `platform` facts and name the surface's platform contract
+unauthored rather than assuming a target. Compare the evidence's
+recorded capture metadata against the environment the projected field names: the metadata
+`environment.runtime` and `environment.browser_execution` must satisfy the
+`platform.verification_environment` the envelope declares, and where the metadata `target.platform`
+is non-web while `platform.native_validation_pending` is true, the declared target's validation
+stays `unverified`. A browser render never satisfies a native target.
+
 A metadata claim is still a claim: compare it against the bytes inspected and against the target's
 actual runner. Where metadata bound to a changed dependency no longer matches the inspected revision,
 mark that evidence unusable for this review and name which dependency change invalidated it.
