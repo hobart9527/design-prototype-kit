@@ -53,6 +53,19 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
 - **Action Verb Feedback Closure**:
   Every state-mutating Commit action declared in the Action Verb Lifecycle MUST produce immediate, visible UI feedback in the DOM.
   Always provide a container with `role="status"` or `class="toast"` (e.g. `<div id="toast" role="status" class="toast">...</div>`) and trigger explicit feedback on commit (e.g., displaying the exact declared feedback text like "已收录至书库", "已保存", "节点排空中"). Never leave a user commit action silent.
+- **The Container Proximity Ladder & Interaction Restraint**:
+  Match container weight strictly to operational hazard and input complexity:
+  - **Level 0/1 (Lightweight / Ephemeral)**: Text selection tools, inline highlights, bookmark toggles, and typography adjustments MUST be handled in-situ via floating popovers, inline detents, or localized flyouts. NEVER summon a full-height blocking drawer (`<aside class="drawer">`) or darkening backdrop (`.scrim`) for simple toggles or single-field actions.
+  - **Level 2 (Marginalia / Inspector)**: Associated metadata and paragraph annotations must live in a companion column co-planar with the main content, scrolling alongside it without obstructing the main view.
+  - **Level 3 (Structured Drawer)**: Drawers are reserved exclusively for dense multi-field creation forms (3+ input fields).
+  - **Level 4 (Blocking Modal)**: Modals are reserved exclusively for high-hazard, irreversible operations (e.g. cluster node drain, entity deletion).
+- **Platform Ergonomics & Reserved Key Discipline**:
+  NEVER hijack browser reserved keys:
+  - The **`Space` key** is permanently reserved for natural vertical scrolling. DO NOT bind single `Space` to open drawers or trigger actions.
+  - **`J`/`K` navigation** or single-character shortcuts must be ignored when typing inside `<input>`, `<textarea>`, or `<select>`.
+  - Global shortcuts must use modifier keys (`Cmd/Ctrl+K`, `Alt+N`) to avoid collision with standard platform behavior.
+- **Responsive Graceful Degradation over Entity Amnesia**:
+  On mobile (`max-width: 480px` / `390px`), never bluntly hide critical functional objects with `display: none`. Secondary entities (such as marginal notes or inspect panels) must fold into an accessible bottom sheet trigger or badge, retaining full entity reachability.
 - **Shared Shell & Multi-Surface Topology Navigation**:
   Render the shared top navigation bar using `topology_context.shared_shell`. Include the brand title and render all `navigation_links` with their exact relative `href` and `active` status. This guarantees that all prototype surfaces form an interconnected product topology rather than disconnected silos.
 - **Declarative State Machine & Hash Routing**:

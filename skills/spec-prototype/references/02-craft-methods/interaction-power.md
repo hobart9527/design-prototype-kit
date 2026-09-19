@@ -55,6 +55,18 @@ Explore the mechanism that fits the decision:
 | A quick reversible adjustment | Immediate local feedback and visible current value | Distinguish preview from committed change and provide allowed recovery |
 | Generated, suggested or agent-performed work | Deterministic frame with an editable generative interior, or a suggestion the person accepts | Partial output, overwritten input, and an abort that cannot reverse an already committed action |
 
+### Platform & Somatic Ergonomics (平台与物理工效铁律)
+
+1. **Browser Native Reserved Keys Invariant (原生按键主权不可侵犯)**:
+   - **`Space` (Spacebar)** is permanently reserved for natural vertical viewport scrolling and within-input typing. It MUST NEVER be hijacked as a single-key trigger to open drawers, commit actions, or trigger modals.
+   - **`Tab` / `Shift+Tab`** is permanently reserved for native sequential focus navigation. Focus rings must remain razor-sharp (`:focus-visible`).
+   - **Single-key triggers** (like `J`/`K` for list navigation or `/` for search) are permitted ONLY when user focus is NOT inside an active editable text field.
+   - **Global action shortcuts** must employ explicit modifier pairings (e.g. `Cmd/Ctrl + K`, `Alt + N`) or clearly disambiguated single keys that have zero collision with browser and platform navigation conventions.
+
+2. **Ceremony Economy & Feedback Friction**:
+   - **Reversibility dictates ceremony**: Low-hazard, reversible toggles (bookmarks, highlights, active filters) must commit in a single interaction without confirmation modals.
+   - **Toast austerity**: Toast notifications exist solely to broadcast asynchronous background status or off-screen mutations. When an action's result is immediately, physically perceivable within the user's primary field of view (e.g. text highlighted, item added to adjacent table), an intrusive Toast alert is redundant cognitive noise.
+
 Use signifiers that suggest the permitted action, map controls to their effects,
 and place feedback where attention already is. Familiar components carry learned
 behavior; alter their meaning only when the benefit survives a novice walkthrough.

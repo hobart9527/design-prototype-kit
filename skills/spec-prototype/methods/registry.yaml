@@ -186,3 +186,24 @@ methods:
       - "High-density telemetry balanced by generous negative space in cognitive zones"
       - "Atmospheric undertone avoids flat uncalibrated neutral dead grays"
     file: "references/02-craft-methods/visual-craft.md"
+
+  - id: container-proximity-ladder
+    name: "Container Proximity Ladder & Flow Preservation"
+    pillars:
+      - Topology
+      - Interaction
+    stages:
+      - 1
+      - 2
+      - 3
+    activate_when:
+      - action_model_selection
+      - modal_or_drawer_considered
+      - selection_action
+      - in_situ_editing
+      - keyboard_ergonomics
+    invariants:
+      - "Action hazard and input complexity strictly dictate container intrusion level"
+      - "Never deploy full-height blocking drawers or scrims for Level 0/1 in-situ or lightweight actions"
+      - "Browser native reserved keys (Space for scroll, Tab for focus chain) are strictly protected"
+    file: "references/02-craft-methods/ia-interaction.md"

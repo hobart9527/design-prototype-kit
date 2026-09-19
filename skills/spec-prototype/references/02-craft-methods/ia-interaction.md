@@ -15,6 +15,23 @@ Map object relationships to structural presentation. Start with the established 
 When the authentic domain context genuinely demands a specialized physical layout (e.g. continuous film strip, concentric radar, seismic trace stack), it may replace the conventional container — but must preserve 3-tier wayfinding and keyboard navigation.
 Never invent navigation containers before mapping this cardinality.
 
+## The Container Proximity Ladder (交互容器匹配阶梯与心流守则)
+
+Action hazard level and input complexity strictly dictate container intrusion level. Never deploy a heavier container than the action's consequence warrants:
+
+| Level | Action Hazard & Complexity | Target Interaction Container | Architectural Invariants & Behavior |
+|---|---|---|---|
+| **Level 0** | **In-situ ephemeral mark / state toggle**<br>(Text selection highlight, bookmark toggle, quick tag, status flick) | **In-situ Popover / Selection Detent / Direct Tap** | - Zero blocking backdrop/scrim.<br>- Single-interaction commit; zero redundant "Confirm/Submit" modal buttons.<br>- Never dismiss or displace reading/editing viewport context. |
+| **Level 1** | **Contextual tuning & auxiliary facets**<br>(Typography adjustments, quick sort/filter popover, inline preview) | **Anchored Flyout / Floating Dock / Popover Menu** | - Anchored relative to the trigger element.<br>- Light-dismiss on blur/outside click.<br>- Edits apply optimistically with immediate visual preview. |
+| **Level 2** | **Associated context & inspector panel**<br>(Paragraph marginalia, entity attribute inspector, audit thread) | **Sticky Marginalia / Companion Inspector Column** | - Sits co-planar alongside primary content.<br>- Scrolls in physical alignment with active entity.<br>- Never covers or darkens primary reading/canvas surface with a modal scrim. |
+| **Level 3** | **Dense multi-field form or workflow setup**<br>(Complex entity creation, multi-step filter builder, parameter config) | **Structured Drawer / Slide-over** | - Reserved strictly for operations requiring 3+ distinct input fields.<br>- Retains main surface state behind a non-modal or light-scrim partition.<br>- Draft inputs survive accidental dismissal. |
+| **Level 4** | **Destructive, hazardous, irreversible commit**<br>(Cluster node drain, database wipe, bulk delete, capital transfer) | **Blocking Modal / Confirmation Dialog** | - Mandatory explicit 2-step verification.<br>- Action buttons must use explicit action verbs (e.g., "Drain Node", "Revoke Key"), never generic "OK". |
+
+**Flow Preservation Principle (心流不被打断公理)**:
+1. **Reversibility dictates friction**: When an action can be trivially undone (e.g., untoggling a bookmark, removing a highlight), blocking confirmation modals or full-height drawers are strictly forbidden.
+2. **Single-field input remains in-situ**: Operations requiring only 1~2 fields (e.g., a quick note, rename, threshold value) must expand in-situ rather than summoning a full-height drawer.
+3. **Entity degradation over amnesia**: On mobile/narrow viewports, contextual entities (like annotations or inspectors) must fold into compact bottom-sheet or drawer triggers, never vanished completely via ungraceful `display: none`.
+
 ## 1. Model objects and content before containers
 
 OOUX/ORCA is the default object-and-action lens here: name first-class objects,
