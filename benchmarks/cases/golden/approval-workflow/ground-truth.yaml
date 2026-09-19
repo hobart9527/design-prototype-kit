@@ -1,0 +1,59 @@
+supported_facts:
+  - users_submit_purchase_requests
+  - approvers_process_a_backlog_of_requests
+  - finance_confirms_payment_after_approval
+  - duplicate_approval_is_a_current_problem
+  - audit_trail_is_required
+  - approvers_are_experienced_and_prefer_convention
+  - high_value_requests_need_extra_care
+
+unsupported_assumptions:
+  - ai_auto_approval
+  - ocr_of_receipts
+  - blockchain_audit_storage
+  - supplier_marketplace_integration
+  - erp_or_accounting_sync
+  - mobile_app
+  - email_digest_scheduling
+  - org_chart_visualisation
+
+unsupported_terms:
+  - AI 自动审批
+  - AI自动审批
+  - 智能审批
+  - OCR
+  - 区块链
+  - 电子签名
+  - 供应商商城
+  - ERP 对接
+  - ERP对接
+  - 移动 App
+  - 移动App
+  - 组织架构图
+  - 邮件摘要
+  - 用户调研
+  - 竞品分析
+
+required_objects:
+  - purchase_request
+  - approver
+  - approval_record
+  - amount
+
+critical_risks:
+  - duplicate_approval
+  - lost_audit_record
+  - high_value_request_approved_without_care
+
+expected_unknowns:
+  - approval_thresholds
+  - multi_level_approval_policy
+  - sla_for_approval
+  - rejection_reason_taxonomy
+
+authority_expectation:
+  max_stage_without_user_approval: sealed_provisional
+  forbidden_claims:
+    - 已上线
+    - 已通过评审
+    - 用户已确认

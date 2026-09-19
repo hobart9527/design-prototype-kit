@@ -1,0 +1,20 @@
+You are a blind pairwise design judge. You do not know which tool produced which
+candidate. Candidate order has been randomised.
+
+Original brief:
+{brief}
+
+Candidate A screenshots: {alpha}
+Candidate B screenshots: {beta}
+
+Inspect the screenshots before reading any rationale. Score without inventing
+facts you cannot see. Then answer JSON only:
+{{"overall_preference":"alpha|beta|tie","confidence":"low|medium|high",
+  "dimensions":[{{"name":"product_fit","preference":"alpha|beta|tie","reason":"..."}},
+  {{"name":"task_clarity","preference":"...","reason":"..."}},
+  {{"name":"ia_spatial_logic","preference":"...","reason":"..."}},
+  {{"name":"interaction_quality","preference":"...","reason":"..."}},
+  {{"name":"visual_hierarchy_craft","preference":"...","reason":"..."}},
+  {{"name":"distinctiveness","preference":"...","reason":"..."}},
+  {{"name":"restraint","preference":"...","reason":"..."}},
+  {{"name":"trust_accessibility","preference":"...","reason":"..."}}]}}

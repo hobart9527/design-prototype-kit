@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Task trace definitions",
+  "type": "object",
+  "required": ["tasks"],
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "goal", "required_outcomes"],
+        "properties": {
+          "id": {"type": "string"},
+          "critical": {"type": "boolean", "default": true},
+          "start": {"type": "object", "properties": {"state": {"type": "string"}, "viewport": {"type": "integer"}}},
+          "goal": {"type": "string"},
+          "required_outcomes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "check"],
+              "properties": {
+                "id": {"type": "string"},
+                "check": {"enum": ["text_present", "text_absent", "dialog_open", "no_horizontal_scroll", "min_touch_target", "element_count_min", "state_changed"]},
+                "pattern": {"type": "string"},
+                "selector": {"type": "string"},
+                "count": {"type": "integer"},
+                "px": {"type": "integer"}
+              }
+            }
+          },
+          "forbidden_outcomes": {
+            "type": "array",
+            "items": {"type": "object", "required": ["id", "check"], "properties": {"id": {"type": "string"}, "check": {"enum": ["text_present"]}, "pattern": {"type": "string"}}}
+          }
+        }
+      }
+    }
+  }
+}

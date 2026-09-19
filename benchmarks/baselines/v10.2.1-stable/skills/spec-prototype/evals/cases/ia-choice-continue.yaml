@@ -1,0 +1,15 @@
+{
+  "id": "ia-choice-continue",
+  "title": "一次IA选择后的继续",
+  "description": "检验真实执行的记录与写入边界；语义另做独立证据审查。",
+  "input": {
+    "prompt": "/spec-prototype 继续上次讨论。"
+  },
+  "context": {
+    "files": {
+      "PRD.md": "内部中文审校工具，审校员查找待处理稿件、对照正文与建议、作出裁决并返回队列。读稿和准确判断是核心价值。多人每日多批处理，不是营销产品。当前无已确认视觉语言。示例：稿件《城市与河流》第12段人名不一致。",
+      "prototype/tokens.css": ":root { --primary: #145b42; }",
+      "prototype/discussion.md": "# 设计讨论\n- Execution boundary: active\n- 用户原始意图（本次测试给定来源）：看看整体产品原型如何开始设计。\n- 已确认：2026-09-10 用户说“同意待办队列为主、流程链为辅”。这只确认 IA 组织原则。\n- 视觉：旧 tokens 是候选，尚无实际批准。\n- 下一个用户消息：继续。\n"
+    }
+  }
+}

@@ -5,3 +5,4 @@ __pycache__/
 .claude/
 benchmarks/spec-prototype/results/
 
+benchmarks/results/

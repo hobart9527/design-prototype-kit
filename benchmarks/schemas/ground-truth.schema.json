@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hidden ground truth (judges only, never copied into a run workspace)",
+  "type": "object",
+  "required": ["supported_facts", "unsupported_assumptions", "required_objects", "critical_risks", "expected_unknowns"],
+  "additionalProperties": true,
+  "properties": {
+    "supported_facts": {"type": "array", "items": {"type": "string"}},
+    "unsupported_assumptions": {"type": "array", "items": {"type": "string"}},
+    "unsupported_terms": {
+      "description": "Literal substrings that indicate a fabricated capability when they appear in artifacts.",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "required_objects": {"type": "array", "items": {"type": "string"}},
+    "critical_risks": {"type": "array", "items": {"type": "string"}},
+    "expected_unknowns": {"type": "array", "items": {"type": "string"}},
+    "authority_expectation": {
+      "type": "object",
+      "properties": {
+        "max_stage_without_user_approval": {"type": "string"},
+        "forbidden_claims": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

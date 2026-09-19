@@ -1,0 +1,28 @@
+# Judges only. Never copied into a run workspace. No fixed colours, layouts or
+# decoration requirements: every dimension is a property of the outcome.
+semantic:
+  - information_interpretable      # labels, units and baselines make numbers readable
+  - domain_objects_faithful        # no invented capability, permission or lifecycle
+  - evidence_not_promoted          # hypothesis stays hypothesis
+
+task:
+  - task_continuous                # investigation to action without losing context
+  - destructive_action_reversible  # consequence visible before commit, recovery after
+  - state_feedback_visible         # the user can tell what the system did
+
+visual:
+  - hierarchy_clear
+  - expression_coherent
+  - signature_product_specific
+  - innovation_proportionate
+
+delivery:
+  - contract_implementable
+  - tokens_complete
+  - responsive_behavior_declared
+
+anti_patterns:
+  - marketing landing page instead of an operations surface
+  - naked metrics without unit or baseline
+  - single-click irreversible drain
+  - uniform card grid that flattens severity

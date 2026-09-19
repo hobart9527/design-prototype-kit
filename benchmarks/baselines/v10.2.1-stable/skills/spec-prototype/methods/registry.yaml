@@ -1,0 +1,188 @@
+# Lightweight Craft Method Registry (按需加载元数据索引)
+# Purpose: Guide runtime lazy-loading of craft knowledge based on active Pillars, Stage, Context, and Risk.
+# Rule: Load 3–6 relevant methods per substantive task based on Pillar Gaps. Never load all methods into context at once.
+
+version: "1.0"
+
+methods:
+  - id: ooux-mapping
+    name: "Object-Oriented UX & Entity Topology"
+    pillars:
+      - Object
+      - Topology
+    stages:
+      - 1
+      - 2
+    activate_when:
+      - multi_entity_domain
+      - complex_cardinality
+      - relational_navigation
+    invariants:
+      - "Entity relationships constrain spatial candidate layouts"
+      - "Never map Cardinality directly to layout without considering task frequency"
+    file: "references/02-craft-methods/ia-interaction.md"
+
+  - id: context-preservation
+    name: "Context Preservation & Continuity"
+    pillars:
+      - Journey
+      - Topology
+    stages:
+      - 1
+      - 2
+      - 4
+    activate_when:
+      - interruption_likely
+      - multi_object_context
+      - resumable_work
+      - drawer_or_modal_interaction
+    invariants:
+      - "Working context and active inputs survive navigation or dismissal"
+      - "Scroll offsets and facet filters remain pinned upon return"
+    file: "references/02-craft-methods/ia-interaction.md"
+
+  - id: action-verb-lifecycle
+    name: "Action Verb 4-Phase Atomic Lifecycle"
+    pillars:
+      - Interaction
+      - Attention
+    stages:
+      - 1
+      - 2
+      - 3
+    activate_when:
+      - state_mutation
+      - destructive_operations
+      - multi_step_commit
+    invariants:
+      - "Trigger, modal header, commit action, and feedback toast share atomic terminology"
+      - "Zero near-synonym semantic drift across lifecycle"
+    file: "references/02-craft-methods/interaction-power.md"
+
+  - id: decisive-3-frame
+    name: "Decisive Exchange 3-Frame Inspection"
+    pillars:
+      - Interaction
+      - Attention
+    stages:
+      - 2
+      - 3
+      - 4
+    activate_when:
+      - tactile_feedback
+      - decisive_commit
+      - state_settlement
+    invariants:
+      - "Clear intent perceptibility on hover/focus"
+      - "Immediate physical or luminance detent on press/commit"
+      - "Deterministic state settlement and focus restoration"
+    file: "references/02-craft-methods/interaction-power.md"
+
+  - id: progressive-disclosure
+    name: "Progressive Disclosure & Cognitive Noise Budget"
+    pillars:
+      - Attention
+      - Topology
+    stages:
+      - 1
+      - 2
+      - 3
+    activate_when:
+      - dense_data_workbench
+      - advanced_parameters
+      - secondary_actions
+    invariants:
+      - "Primary operational workflow visible without clutter"
+      - "Secondary parameters revealed on-demand without context loss"
+    file: "references/02-craft-methods/ia-interaction.md"
+
+  - id: the-break-protocol
+    name: "The Break Protocol & Stress Testing"
+    pillars:
+      - Resilience
+      - Interaction
+    stages:
+      - 1
+      - 3
+      - 4
+    activate_when:
+      - edge_case_audit
+      - extreme_viewport_320px
+      - zero_one_thousand_data
+      - unbreakable_strings
+    invariants:
+      - "Zero container blowouts on extreme string lengths"
+      - "Primary actions remain reachable under 320px viewport fold"
+      - "Zero dead-end states without actionable recovery"
+    file: "references/02-craft-methods/resilience-trust.md"
+
+  - id: fault-tolerance-recovery
+    name: "Fault Tolerance & Temporal Error Recovery"
+    pillars:
+      - Resilience
+    stages:
+      - 1
+      - 4
+    activate_when:
+      - undoable_actions
+      - destructive_operations
+      - network_recovery
+    invariants:
+      - "Reversibility proportional to operational hazard level"
+      - "Temporal undo or recovery path available before terminal state"
+    file: "references/02-craft-methods/resilience-trust.md"
+
+  - id: data-context-metrics
+    name: "Data Floor & Contextual Metrics"
+    pillars:
+      - Expression
+      - Attention
+    stages:
+      - 1
+      - 2
+      - 3
+      - 4
+    activate_when:
+      - telemetry_display
+      - kpi_dashboard
+      - real_time_monitoring
+    invariants:
+      - "Zero naked metrics: measurements carry range, thresholds, or baseline markers"
+      - "Numeric tables maintain stable alignment without jitter"
+    file: "references/02-craft-methods/data-information.md"
+
+  - id: form-ergonomics
+    name: "Form Ergonomics & Inline Feedback"
+    pillars:
+      - Interaction
+      - Resilience
+    stages:
+      - 2
+      - 3
+      - 4
+    activate_when:
+      - multi_field_input
+      - inline_validation
+      - complex_form
+    invariants:
+      - "Errors display proximate to input with clear recovery instructions"
+      - "Tab order follows visual reading flow deterministically"
+    file: "references/02-craft-methods/form-ergonomics.md"
+
+  - id: visual-rhythm-density
+    name: "Visual Rhythm, Compression & Spatial Undertone"
+    pillars:
+      - Expression
+      - Attention
+    stages:
+      - 1
+      - 2
+      - 3
+    activate_when:
+      - hero_anchor_layout
+      - typographic_hierarchy
+      - spatial_composition
+    invariants:
+      - "High-density telemetry balanced by generous negative space in cognitive zones"
+      - "Atmospheric undertone avoids flat uncalibrated neutral dead grays"
+    file: "references/02-craft-methods/visual-craft.md"

@@ -184,16 +184,6 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             if not re.search(r"addEventListener\s*\(\s*['\"]key(?:down|up)['\"]|\bonkey(?:down|up)\s*=", source, re.IGNORECASE):
                 failures.append("ergonomics assertion: declared dual-channel keyboard shortcuts not bound (missing keydown/keyup listener)")
 
-        # Action Verb Lifecycle feedback closure: when commit mutations or toasts are declared
-        if "Action Verb Lifecycle" in contract_text or "Completion Feedback Toast" in contract_text:
-            has_feedback_hook = bool(re.search(
-                r'role=["\'](?:status|alert)["\']|class=["\'][^"\']*\b(?:toast|notification|feedback|alert-box|status-message|snackbar)\b[^"\']*["\']|id=["\'][^"\']*(?:toast|feedback|status-msg)[^"\']*["\']|data-(?:feedback|toast)=',
-                source,
-                re.IGNORECASE,
-            ))
-            if not has_feedback_hook:
-                failures.append("action-lifecycle assertion: Action Verb Lifecycle declared in contract but DOM lacks visible feedback container (role='status|alert', class='toast|feedback', or id='toast')")
-
         # Touch-first gesture detents check: when touch-first ergonomics are declared in contract
         if "Touch-First Ergonomics" in contract_text or "Gesture Detents" in contract_text:
             has_touch = bool(re.search(r"addEventListener\s*\(\s*['\"](?:touch|pointer|click)['\"]|\b(?:ontouchstart|ontouchend|onclick)\s*=", source, re.IGNORECASE))

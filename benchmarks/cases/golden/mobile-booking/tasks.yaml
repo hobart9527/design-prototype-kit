@@ -1,0 +1,36 @@
+tasks:
+  - id: pick-slot-and-confirm
+    critical: true
+    start:
+      state: service_selected
+      viewport: 390
+    goal: 选一个上门时段，确认定金金额，完成预约预约动作。
+    required_outcomes:
+      - id: timeslot_affordance
+        check: text_present
+        pattern: "时段|时间|预约|\\d{1,2}:\\d{2}|今天|明天"
+      - id: price_with_unit
+        check: text_present
+        pattern: "¥|￥|\\$|元"
+      - id: booking_commit_affordance
+        check: text_present
+        pattern: "确认|预约|支付|下单|提交"
+      - id: touch_targets
+        check: min_touch_target
+        px: 44
+      - id: no_horizontal_scroll
+        check: no_horizontal_scroll
+
+  - id: recover-from-conflict
+    critical: true
+    start:
+      state: timeslot_conflict
+      viewport: 390
+    goal: 遇到已被占用的时段时，找到可用的替代方案继续预约。
+    required_outcomes:
+      - id: conflict_message_visible
+        check: text_present
+        pattern: "已占用|已被预约|不可用|冲突|无空档|约满"
+      - id: alternative_offered
+        check: text_present
+        pattern: "改约|其他时段|推荐时段|最近可约|替代"

@@ -1,0 +1,48 @@
+id: editorial-reader
+category: content-reading
+difficulty: medium
+suite: [golden, daily]
+tension_class: signature_opportunity
+
+run_policy:
+  repeats: 3
+  timeout_seconds: 1500
+  max_turns: 20
+  max_budget_usd_per_turn: 6.0
+
+variants:
+  - no_skill
+  - stable_skill
+  - candidate_skill
+
+surfaces:
+  expected:
+    - desktop
+    - mobile
+
+viewports:
+  required: [390, 1280]
+
+capabilities_under_test:
+  - product_understanding
+  - reading_rhythm
+  - low_interruption_affordance
+  - accessibility
+  - responsive
+
+evaluation:
+  semantic: true
+  task_trace: true
+  visual_pairwise: true
+  frontend_reproduction: false
+
+method_expectation:
+  must_consider:
+    - context-preservation
+    - action-verb-lifecycle
+  relevant:
+    - editorial-rhythm
+    - progressive-disclosure
+  should_not_select:
+    - dense-operational-console
+    - somatic-touch-feedback

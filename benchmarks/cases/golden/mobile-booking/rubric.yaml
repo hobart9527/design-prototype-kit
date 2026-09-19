@@ -1,0 +1,25 @@
+semantic:
+  - domain_objects_faithful
+  - no_invented_membership_or_promotion
+  - evidence_not_promoted
+
+task:
+  - booking_flow_continuous     # picking a slot to paying the deposit without losing the selection
+  - conflict_recovery_available # a taken slot offers an immediate alternative
+  - payment_state_feedback
+
+visual:
+  - touch_ergonomics
+  - hierarchy_clear
+  - expression_coherent
+  - signature_product_specific
+
+delivery:
+  - contract_implementable
+  - responsive_behavior_declared
+
+anti_patterns:
+  - tiny tap targets
+  - banner or promotion occupying the first screen
+  - conflict error without an alternative slot
+  - deposit charged before the consequence is visible

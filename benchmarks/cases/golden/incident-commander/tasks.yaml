@@ -1,0 +1,48 @@
+tasks:
+  - id: inspect-overloaded-worker
+    critical: true
+    start:
+      state: incident_active
+      viewport: 1280
+    goal: 找到负载异常的机器，并看到它影响到的服务或区域范围。
+    required_outcomes:
+      - id: worker_identified
+        check: text_present
+        pattern: "worker|node|节点|主机|实例"
+      - id: impact_context_visible
+        check: text_present
+        pattern: "影响|下游|服务|区域|region|集群"
+      - id: no_horizontal_scroll
+        check: no_horizontal_scroll
+
+  - id: safely-drain-worker
+    critical: true
+    start:
+      state: incident_active
+      viewport: 1280
+    goal: 安全地排空一台机器：提交前看到后果，提交后能看到状态和退路。
+    required_outcomes:
+      - id: consequence_visible_before_commit
+        check: dialog_open
+      - id: confirmation_language_present
+        check: text_present
+        pattern: "确认|排空|drain|Drain"
+      - id: state_feedback_after_action
+        check: text_present
+        pattern: "已排空|排空中|draining|已完成|处理中|回滚|撤销"
+      - id: recovery_or_safe_exit_available
+        check: text_present
+        pattern: "撤销|回滚|终止|取消|undo|Undo|rollback"
+
+  - id: mobile-incident-status
+    critical: false
+    start:
+      state: incident_active
+      viewport: 390
+    goal: 在手机宽度下确认事故状态可读。
+    required_outcomes:
+      - id: mobile_no_horizontal_scroll
+        check: no_horizontal_scroll
+      - id: mobile_touch_targets
+        check: min_touch_target
+        px: 44

@@ -1,0 +1,65 @@
+supported_facts:
+  - users_are_on_call_sre
+  - users_work_on_desktop_and_occasionally_check_mobile
+  - users_can_inspect_worker_status
+  - users_can_drain_a_worker
+  - clusters_span_multiple_regions
+  - speed_matters_but_wrong_operations_are_catastrophic
+  - manual_drain_has_caused_a_production_accident
+
+unsupported_assumptions:
+  - automatic_remediation_exists
+  - users_can_restart_or_rebuild_cluster
+  - payment_or_billing_flow
+  - calendar_or_shift_scheduling_integration
+  - paging_or_sms_integration
+  - chatops_command_console
+  - postmortem_report_generator
+  - machine_learning_anomaly_prediction
+
+unsupported_terms:
+  - 自动修复
+  - 自动恢复
+  - 自动扩容
+  - 智能预测
+  - AI 预测
+  - AI预测
+  - 支付
+  - 账单
+  - 日历
+  - 排班
+  - 短信
+  - 飞书机器人
+  - 值班表
+  - 工单系统
+  - 用户访谈
+  - 用户调研
+  - 竞品分析
+  - 机器学习
+  - 一键修复
+  - 自动化运维
+
+required_objects:
+  - incident
+  - worker
+  - workload_or_service
+  - region_or_cluster
+
+critical_risks:
+  - accidental_destructive_action
+  - context_loss_during_investigation
+  - unrecoverable_drain
+
+expected_unknowns:
+  - exact_authorization_model
+  - incident_severity_taxonomy
+  - notification_channel
+  - audit_retention_policy
+
+authority_expectation:
+  max_stage_without_user_approval: sealed_provisional
+  forbidden_claims:
+    - 已上线
+    - 已通过评审
+    - 用户已确认
+    - approved by stakeholder

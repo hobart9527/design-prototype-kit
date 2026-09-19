@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Benchmark case",
+  "type": "object",
+  "required": ["id", "category", "difficulty", "run_policy", "variants", "evaluation"],
+  "additionalProperties": true,
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "category": {"type": "string"},
+    "difficulty": {"enum": ["low", "medium", "hard"]},
+    "run_policy": {
+      "type": "object",
+      "required": ["repeats", "timeout_seconds", "max_turns"],
+      "properties": {
+        "repeats": {"type": "integer", "minimum": 1},
+        "timeout_seconds": {"type": "integer", "minimum": 60},
+        "max_turns": {"type": "integer", "minimum": 1},
+        "max_budget_usd_per_turn": {"type": "number", "minimum": 0}
+      }
+    },
+    "variants": {"type": "array", "items": {"enum": ["no_skill", "stable_skill", "candidate_skill"]}, "minItems": 1},
+    "surfaces": {"type": "object", "properties": {"expected": {"type": "array", "items": {"type": "string"}}}},
+    "capabilities_under_test": {"type": "array", "items": {"type": "string"}},
+    "evaluation": {
+      "type": "object",
+      "properties": {
+        "semantic": {"type": "boolean"},
+        "task_trace": {"type": "boolean"},
+        "visual_pairwise": {"type": "boolean"},
+        "frontend_reproduction": {"type": "boolean"}
+      }
+    },
+    "viewports": {"type": "object", "properties": {"required": {"type": "array", "items": {"type": "integer"}}}},
+    "method_expectation": {
+      "type": "object",
+      "properties": {
+        "must_consider": {"type": "array", "items": {"type": "string"}},
+        "relevant": {"type": "array", "items": {"type": "string"}},
+        "should_not_select": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "tension_class": {"enum": ["low_innovation", "signature_opportunity", "experimental"]},
+    "suite": {"type": "array", "items": {"enum": ["daily", "golden", "calibration", "holdout", "release"]}}
+  }
+}

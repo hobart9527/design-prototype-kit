@@ -1,0 +1,47 @@
+id: mobile-booking
+category: consumer-service
+difficulty: medium
+suite: [golden, daily]
+tension_class: signature_opportunity
+
+run_policy:
+  repeats: 3
+  timeout_seconds: 1500
+  max_turns: 20
+  max_budget_usd_per_turn: 6.0
+
+variants:
+  - no_skill
+  - stable_skill
+  - candidate_skill
+
+surfaces:
+  expected:
+    - mobile
+
+viewports:
+  required: [390]
+
+capabilities_under_test:
+  - product_understanding
+  - touch_ergonomics
+  - error_recovery
+  - responsive
+  - frontend_contract
+
+evaluation:
+  semantic: true
+  task_trace: true
+  visual_pairwise: true
+  frontend_reproduction: false
+
+method_expectation:
+  must_consider:
+    - action-verb-lifecycle
+    - context-preservation
+  relevant:
+    - somatic-touch-feedback
+    - progressive-disclosure
+  should_not_select:
+    - dense-operational-console
+    - editorial-rhythm

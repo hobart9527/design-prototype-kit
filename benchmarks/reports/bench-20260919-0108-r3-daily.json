@@ -1,0 +1,489 @@
+{
+  "run_id": "bench-20260919-0108-r3",
+  "suite": "daily",
+  "generated_at": "20260919_084508",
+  "status": "REGRESSION",
+  "cases": [
+    "editorial-reader"
+  ],
+  "variants": [
+    "candidate_skill",
+    "no_skill",
+    "stable_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "editorial-reader",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 1,
+        "elapsed_seconds": 553.39,
+        "cost_usd": 6.2028
+      },
+      "notes": [
+        "rejudged from stored artifacts (no new session)"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "deepseek-flash,gemini,meta",
+        "router_host": "router360.duckdns.org",
+        "session_id": "a3343082-cc82-4fff-a828-b546503851a9",
+        "workspace": "/tmp/design-bench/editorial-reader/candidate_skill/20260919_005104-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    },
+    {
+      "case_id": "editorial-reader",
+      "variant": "no_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 3,
+        "elapsed_seconds": 449.71,
+        "cost_usd": 8.6925
+      },
+      "notes": [
+        "rejudged from stored artifacts (no new session)"
+      ],
+      "session_fidelity": {
+        "variant": "no_skill",
+        "model": "gemini,meta",
+        "router_host": "router360.duckdns.org",
+        "session_id": "231da209-5ac2-4474-890f-091f0213d953",
+        "workspace": "/tmp/design-bench/editorial-reader/no_skill/20260919_002046-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    },
+    {
+      "case_id": "editorial-reader",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 3,
+        "elapsed_seconds": 674.63,
+        "cost_usd": 16.2582
+      },
+      "notes": [
+        "rejudged from stored artifacts (no new session)"
+      ],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "deepseek-flash,gemini,meta",
+        "router_host": "router360.duckdns.org",
+        "session_id": "db4ab2c4-f758-494f-a50e-aa6797dc19c9",
+        "workspace": "/tmp/design-bench/editorial-reader/stable_skill/20260919_010845-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 2,
+    "authority_escape": 1,
+    "critical_task_break": 0,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 1,
+      "blocked": 0,
+      "task_success_rate": 1.0,
+      "method_recall": 0.5,
+      "method_precision": 0.333,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 1.0,
+      "cost_usd": 6.2028,
+      "elapsed_seconds": 553.4,
+      "inline_hex_failures": 0
+    },
+    "no_skill": {
+      "runs": 1,
+      "completed": 1,
+      "blocked": 0,
+      "task_success_rate": 1.0,
+      "method_recall": null,
+      "method_precision": null,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 4,
+      "artifact_turns": 3.0,
+      "cost_usd": 8.6925,
+      "elapsed_seconds": 449.7,
+      "inline_hex_failures": 0
+    },
+    "stable_skill": {
+      "runs": 1,
+      "completed": 1,
+      "blocked": 0,
+      "task_success_rate": 1.0,
+      "method_recall": 0.5,
+      "method_precision": 0.333,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 1,
+      "semantic_signals": 2,
+      "artifact_turns": 3.0,
+      "cost_usd": 16.2582,
+      "elapsed_seconds": 674.6,
+      "inline_hex_failures": 0
+    }
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_unverified": 2,
+    "design_reinterpretation_rate": 0.0,
+    "frontend_contract_gaps": 0
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "REGRESSION",
+    "pairs_compared": 1,
+    "regressions": [
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "semantic",
+        "stable": "unverified",
+        "candidate": "fail"
+      },
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "task",
+        "stable": "pass",
+        "candidate": "unverified"
+      }
+    ],
+    "improvements": [
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "fail",
+        "candidate": "pass"
+      }
+    ],
+    "missing_pairs": []
+  },
+  "pairwise": [
+    {
+      "judge": "pairwise",
+      "status": "unverified",
+      "alpha_files": [
+        "alpha-0-shot-1280-900.png"
+      ],
+      "beta_files": [
+        "beta-0-shot-1280-900.png"
+      ],
+      "result": null,
+      "raw": "",
+      "metrics": {
+        "elapsed_s": 28.65,
+        "cost_usd": 3.0134320000000003,
+        "model": "gemini,meta",
+        "status": "budget_exceeded"
+      },
+      "case_id": "editorial-reader",
+      "pair": "candidate_skill_vs_stable_skill",
+      "blind_manifest_path": "/Users/hobart/Codex/design-prototype-kit/benchmarks/results/bench-20260919-0108-r3/pairwise/editorial-reader-candidate_skill-vs-stable_skill/blind-manifest.json"
+    },
+    {
+      "judge": "pairwise",
+      "status": "unverified",
+      "alpha_files": [
+        "alpha-0-shot-1280-900.png"
+      ],
+      "beta_files": [
+        "beta-0-shot-1280-900.png"
+      ],
+      "result": null,
+      "raw": "",
+      "metrics": {
+        "elapsed_s": 16.96,
+        "cost_usd": 2.3758350000000004,
+        "model": "gemini",
+        "status": "budget_exceeded"
+      },
+      "case_id": "editorial-reader",
+      "pair": "stable_skill_vs_no_skill",
+      "blind_manifest_path": "/Users/hobart/Codex/design-prototype-kit/benchmarks/results/bench-20260919-0108-r3/pairwise/editorial-reader-stable_skill-vs-no_skill/blind-manifest.json"
+    }
+  ],
+  "frontend": [
+    {
+      "layer": "frontend_reproduction",
+      "case_id": "editorial-reader",
+      "design_run_dir": "benchmarks/results/bench-20260919-0108-r3/editorial-reader/stable_skill/run1",
+      "workspace": "benchmarks/results/bench-20260919-0108-r3/editorial-reader/stable_skill/frontend-reproduction/editorial-reader-run1/workspace",
+      "contract_paths": [
+        "contract/specifications/library/r1.md",
+        "contract/specifications/notebook/r1.md",
+        "contract/specifications/reader/r1.md",
+        "contract/contracts/foundation/f1.md",
+        "contract/contracts/slices/library/c1.md",
+        "contract/contracts/slices/library/frontend-contract.yaml",
+        "contract/contracts/slices/notebook/c1.md",
+        "contract/contracts/slices/notebook/frontend-contract.yaml",
+        "contract/contracts/slices/reader/c1.md",
+        "contract/contracts/slices/reader/frontend-contract.yaml",
+        "contract/contracts/surface-maps/m1.md",
+        "contract/contracts/tokens/t1.json",
+        "contract/contracts/tokens/t1.md",
+        "contract/contracts/tokens/t2.json",
+        "contract/contracts/tokens/t2.md",
+        "contract/evidence/reader/r1/freeze-manifest.json",
+        "contract/shared/tokens.css"
+      ],
+      "status": "FAIL",
+      "notes": [],
+      "session": {
+        "status": "completed",
+        "session_id": "2089d533-cc0e-461a-80ac-817a78a05fab",
+        "metrics": {
+          "elapsed_s": 162.73,
+          "cost_usd": 3.6106220000000007
+        },
+        "models": [
+          "gemini",
+          "meta"
+        ]
+      },
+      "task": {
+        "judge": "task",
+        "tasks": [
+          {
+            "task_id": "read-and-continue",
+            "critical": true,
+            "status": "pass",
+            "trace_status": "completed",
+            "required_outcomes": [
+              {
+                "id": "article_text_visible",
+                "check": "text_present",
+                "status": "pass",
+                "detail": "在算法喧嚣中构建智识岛屿"
+              },
+              {
+                "id": "no_horizontal_scroll",
+                "check": "no_horizontal_scroll",
+                "status": "pass",
+                "detail": "scrollWidth=1274 clientWidth=1274"
+              }
+            ],
+            "forbidden_outcomes": [],
+            "unmet": [],
+            "steps": 3
+          },
+          {
+            "task_id": "highlight-and-save",
+            "critical": true,
+            "status": "fail",
+            "trace_status": "completed",
+            "required_outcomes": [
+              {
+                "id": "highlight_affordance",
+                "check": "text_present",
+                "status": "pass",
+                "detail": "高亮"
+              },
+              {
+                "id": "library_affordance",
+                "check": "text_present",
+                "status": "pass",
+                "detail": "书库"
+              },
+              {
+                "id": "non_blocking_save",
+                "check": "text_absent",
+                "status": "pass",
+                "detail": "absent as required"
+              },
+              {
+                "id": "save_feedback",
+                "check": "text_present",
+                "status": "fail",
+                "detail": "pattern not found: 已收藏|已保存|已加入|saved|已存"
+              }
+            ],
+            "forbidden_outcomes": [],
+            "unmet": [
+              "save_feedback"
+            ],
+            "steps": 3
+          },
+          {
+            "task_id": "mobile-reading",
+            "critical": false,
+            "status": "pass",
+            "trace_status": "completed",
+            "required_outcomes": [
+              {
+                "id": "mobile_no_horizontal_scroll",
+                "check": "no_horizontal_scroll",
+                "status": "pass",
+                "detail": "scrollWidth=390 clientWidth=390"
+              },
+              {
+                "id": "mobile_body_text_present",
+                "check": "text_present",
+                "status": "pass",
+                "detail": "在算法喧嚣中构建智识岛屿"
+              }
+            ],
+            "forbidden_outcomes": [],
+            "unmet": [],
+            "steps": 1
+          }
+        ],
+        "critical_task_break": 1,
+        "critical_failures": [
+          "highlight-and-save"
+        ],
+        "unverified": [],
+        "success_rate": 0.667,
+        "status": "fail"
+      },
+      "contract": {
+        "judge": "contract",
+        "case_id": "editorial-reader",
+        "checks": [
+          {
+            "id": "impl_entry_present",
+            "status": "pass",
+            "detail": "entry=index.html"
+          },
+          {
+            "id": "receipt_present",
+            "status": "pass",
+            "detail": "receipt keys=['clarification_required', 'contract_gaps', 'inferred_design_decisions']"
+          },
+          {
+            "id": "token_coverage",
+            "status": "pass",
+            "detail": "coverage=1.0 missing=[]"
+          },
+          {
+            "id": "task_completability",
+            "status": "fail",
+            "detail": "task judge status=fail"
+          },
+          {
+            "id": "unspecified_decisions_declared",
+            "status": "unverified",
+            "detail": "gaps=0 inferred=0 clarification=0"
+          }
+        ],
+        "declared_tokens": [
+          "--accent-hover",
+          "--accent-primary",
+          "--accent-subtle",
+          "--action-ghost-hover",
+          "--action-primary",
+          "--action-primary-active",
+          "--action-primary-hover",
+          "--badge-bg",
+          "--badge-text",
+          "--bg-base",
+          "--bg-overlay",
+          "--bg-surface",
+          "--bg-surface-raised",
+          "--bg-void",
+          "--border-bright",
+          "--border-danger",
+          "--border-dim",
+          "--border-subtle",
+          "--border-warning",
+          "--card-bg",
+          "--card-bg-hover",
+          "--card-border",
+          "--card-border-active",
+          "--duration-fast",
+          "--duration-normal",
+          "--duration-slow",
+          "--ease-hud",
+          "--ease-out",
+          "--font-mono",
+          "--font-sans",
+          "--font-variant-numeric",
+          "--ink-primary",
+          "--ink-secondary",
+          "--input-bg",
+          "--input-border",
+          "--input-border-focus",
+          "--input-focus-ring",
+          "--line-height-body",
+          "--line-height-heading",
+          "--min-touch-target",
+          "--modal-backdrop",
+          "--modal-border",
+          "--modal-surface",
+          "--padding-panel",
+          "--paper-bg",
+          "--radius-btn",
+          "--radius-card",
+          "--radius-inner",
+          "--radius-outer",
+          "--radius-pill",
+          "--radius-sm",
+          "--reading-measure-max",
+          "--safe-area-inset-bottom",
+          "--space-1",
+          "--space-2",
+          "--space-3",
+          "--space-4",
+          "--space-5",
+          "--space-6",
+          "--space-8",
+          "--status-danger",
+          "--status-nominal",
+          "--status-ok",
+          "--status-p0",
+          "--status-p1",
+          "--status-running",
+          "--status-warning",
+          "--surface-base",
+          "--surface-elevated",
+          "--surface-overlay",
+          "--surface-sunken",
+          "--table-border",
+          "--table-row-hover",
+          "--text-inverse",
+          "--text-muted",
+          "--text-primary",
+          "--text-secondary",
+          "--text-tertiary"
+        ],
+        "missing_tokens": [],
+        "token_coverage": 1.0,
+        "contract_anchors": 55,
+        "contract_gaps": [],
+        "inferred_design_decisions": [],
+        "clarification_required": [],
+        "reinterpretation_rate": 0.0,
+        "reinterpretation_rate_note": "estimate: inferred decisions / (inferred + declared contract anchors)",
+        "status": "fail",
+        "failures": [
+          "task_completability"
+        ]
+      }
+    }
+  ],
+  "unverified": [
+    "editorial-reader/stable_skill: semantic judge unverified"
+  ]
+}

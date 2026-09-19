@@ -1,0 +1,25 @@
+semantic:
+  - domain_objects_faithful
+  - no_feed_or_social_invention
+  - evidence_not_promoted
+
+task:
+  - reading_continuity            # annotation and bookmarking never lose the reading position
+  - non_blocking_affordance       # saving does not interrupt with a modal
+  - resume_state_visible
+
+visual:
+  - reading_rhythm
+  - hierarchy_clear
+  - expression_coherent
+  - signature_product_specific    # typography and pacing, not decoration
+
+delivery:
+  - contract_implementable
+  - body_text_accessibility
+
+anti_patterns:
+  - instrument-panel metrics inside a reading surface
+  - recommendation carousel or feed
+  - blocking confirmation dialog for bookmarking
+  - low-contrast grey body text

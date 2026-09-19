@@ -1,0 +1,9 @@
+Use the `spec-prototype` skill to complete the following design request.
+Work inside the current working directory. Write all design records and runnable
+prototype output where the skill requires them.
+
+--- BEGIN USER REQUEST ---
+{brief}
+--- END USER REQUEST ---
+
+{protocol}

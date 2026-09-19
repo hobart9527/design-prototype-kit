@@ -1,0 +1,59 @@
+supported_facts:
+  - users_read_long_form_articles
+  - users_highlight_and_annotate
+  - users_save_articles_to_a_personal_library
+  - users_resume_reading_later
+  - reading_should_not_be_interrupted
+  - content_is_mostly_chinese_with_some_english
+  - long_reading_sessions_should_not_be_tiring
+
+unsupported_assumptions:
+  - social_feed_or_following
+  - recommendation_algorithm
+  - paid_subscription_or_payment
+  - comments_and_reactions
+  - audio_tts_playback
+  - translation_engine
+  - team_or_shared_library
+  - writing_and_publishing_tools
+
+unsupported_terms:
+  - 推荐算法
+  - 个性化推荐
+  - 关注流
+  - 订阅付费
+  - 会员付费
+  - 打赏
+  - 评论
+  - 点赞
+  - 语音朗读
+  - 听书
+  - 翻译引擎
+  - 团队协作
+  - 数据看板
+  - 留存率
+  - 用户调研
+  - 竞品分析
+
+required_objects:
+  - article
+  - highlight
+  - annotation
+  - library_item
+
+critical_risks:
+  - reading_interruption
+  - lost_reading_position
+  - unreadable_body_text
+
+expected_unknowns:
+  - annotation_sharing_scope
+  - library_organisation_scheme
+  - offline_availability
+  - typography_scale_settings
+
+authority_expectation:
+  max_stage_without_user_approval: sealed_provisional
+  forbidden_claims:
+    - 已上线
+    - 用户已确认

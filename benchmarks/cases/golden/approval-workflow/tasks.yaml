@@ -1,0 +1,33 @@
+tasks:
+  - id: review-and-approve-one-request
+    critical: true
+    start:
+      state: queue_loaded
+      viewport: 1280
+    goal: 从待办里挑一笔申请，看清楚它的内容和金额，然后完成审批。
+    required_outcomes:
+      - id: request_objects_visible
+        check: text_present
+        pattern: "采购|申请|金额|审批"
+      - id: amount_readable
+        check: text_present
+        pattern: "¥|￥|\\$|元|CNY|RMB"
+      - id: decision_affordance
+        check: text_present
+        pattern: "通过|同意|批准|拒绝|打回|驳回|approve|reject"
+      - id: no_horizontal_scroll
+        check: no_horizontal_scroll
+
+  - id: duplicate-approval-guard
+    critical: true
+    start:
+      state: queue_loaded
+      viewport: 1280
+    goal: 确认已经批过的申请不会再次被批，并且能看到审批记录。
+    required_outcomes:
+      - id: approval_record_visible
+        check: text_present
+        pattern: "已审批|审批记录|审批人|通过时间|history|记录"
+      - id: duplicate_state_discoverable
+        check: text_present
+        pattern: "已通过|已处理|已审批|已完成"

@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Single run result",
+  "type": "object",
+  "required": ["case_id", "variant", "run_id", "status", "layer", "metrics"],
+  "properties": {
+    "case_id": {"type": "string"},
+    "variant": {"enum": ["no_skill", "stable_skill", "candidate_skill", "human_reference"]},
+    "run_id": {"type": "string"},
+    "repeat": {"type": "integer"},
+    "status": {"enum": ["PASS", "REGRESSION", "BLOCKED", "INCONCLUSIVE", "FAIL"]},
+    "layer": {"type": "string"},
+    "workspace": {"type": "string"},
+    "session_id": {"type": "string"},
+    "model": {"type": "string"},
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "elapsed_seconds": {"type": "number"},
+        "turns": {"type": "integer"},
+        "cost_usd": {"type": "number"},
+        "tokens": {"type": "object"}
+      }
+    },
+    "artifacts": {"type": "object"},
+    "runtime": {"type": ["object", "null"]},
+    "semantic": {"type": ["object", "null"]},
+    "task": {"type": ["object", "null"]},
+    "visual": {"type": ["object", "null"]},
+    "contract": {"type": ["object", "null"]},
+    "friction": {"type": ["object", "null"]},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  }
+}

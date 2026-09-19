@@ -1,0 +1,46 @@
+tasks:
+  - id: read-and-continue
+    critical: true
+    start:
+      state: article_open
+      viewport: 1280
+    goal: 开始读这篇文章，并在阅读过程中保持位置不丢。
+    required_outcomes:
+      - id: article_text_visible
+        check: text_present
+        pattern: "[\\u4e00-\\u9fa5]{12,}"
+      - id: no_horizontal_scroll
+        check: no_horizontal_scroll
+
+  - id: highlight-and-save
+    critical: true
+    start:
+      state: article_open
+      viewport: 1280
+    goal: 高亮一段正文并把文章存进书库，过程中不要被打断。
+    required_outcomes:
+      - id: highlight_affordance
+        check: text_present
+        pattern: "高亮|划线|标注|highlight"
+      - id: library_affordance
+        check: text_present
+        pattern: "书库|收藏|保存|书签|bookmark|library"
+      - id: non_blocking_save
+        check: text_absent
+        pattern: "是否确定|确认要收藏|确定要保存吗"
+      - id: save_feedback
+        check: text_present
+        pattern: "已收藏|已保存|已加入|已收录|已存|saved"
+
+  - id: mobile-reading
+    critical: false
+    start:
+      state: article_open
+      viewport: 390
+    goal: 在手机宽度下确认正文仍然可读。
+    required_outcomes:
+      - id: mobile_no_horizontal_scroll
+        check: no_horizontal_scroll
+      - id: mobile_body_text_present
+        check: text_present
+        pattern: "[\\u4e00-\\u9fa5]{12,}"

@@ -1,0 +1,59 @@
+supported_facts:
+  - users_book_a_service_on_a_phone
+  - users_pick_a_technician_and_a_timeslot
+  - users_pay_a_deposit
+  - the_booking_enters_the_users_schedule
+  - timeslot_conflicts_are_the_main_dropoff_point
+  - one_handed_use
+  - users_have_a_wide_age_range_and_varying_dexterity
+
+unsupported_assumptions:
+  - subscription_membership
+  - coupon_or_loyalty_system
+  - in_app_chat_with_technician
+  - video_consultation
+  - insurance_or_claims
+  - multi_city_or_multi_currency
+  - review_and_rating_system
+  - referral_programme
+
+unsupported_terms:
+  - 会员
+  - 订阅
+  - 优惠券
+  - 积分
+  - 拼团
+  - 邀请好友
+  - 在线客服
+  - 视频咨询
+  - 保险
+  - 理赔
+  - 评价体系
+  - 打分
+  - 多币种
+  - 用户调研
+  - 竞品分析
+
+required_objects:
+  - service
+  - technician
+  - timeslot
+  - deposit
+  - booking
+
+critical_risks:
+  - timeslot_conflict_without_recovery
+  - accidental_deposit_payment
+  - unreachable_touch_target
+
+expected_unknowns:
+  - deposit_refund_policy
+  - technician_ranking_rule
+  - schedule_provider_integration
+  - cancellation_window
+
+authority_expectation:
+  max_stage_without_user_approval: sealed_provisional
+  forbidden_claims:
+    - 已上线
+    - 用户已确认

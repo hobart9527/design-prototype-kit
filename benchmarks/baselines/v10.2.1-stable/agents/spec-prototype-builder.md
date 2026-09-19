@@ -50,9 +50,6 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
   Do NOT redeclare or shadow `:root { ... }` custom properties in `<style>`! Consume standard tokens (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`, `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--space-*)`, etc.) directly from the linked stylesheet.
   Never use raw inline hex codes in `style="..."` attributes.
   Apply `font-variant-numeric: tabular-nums` to numeric metrics, telemetry streams, and timestamps when `data_stress_boundaries.tabular_numbers_required` is true to prevent scan jitter.
-- **Action Verb Feedback Closure**:
-  Every state-mutating Commit action declared in the Action Verb Lifecycle MUST produce immediate, visible UI feedback in the DOM.
-  Always provide a container with `role="status"` or `class="toast"` (e.g. `<div id="toast" role="status" class="toast">...</div>`) and trigger explicit feedback on commit (e.g., displaying the exact declared feedback text like "已收录至书库", "已保存", "节点排空中"). Never leave a user commit action silent.
 - **Shared Shell & Multi-Surface Topology Navigation**:
   Render the shared top navigation bar using `topology_context.shared_shell`. Include the brand title and render all `navigation_links` with their exact relative `href` and `active` status. This guarantees that all prototype surfaces form an interconnected product topology rather than disconnected silos.
 - **Declarative State Machine & Hash Routing**:

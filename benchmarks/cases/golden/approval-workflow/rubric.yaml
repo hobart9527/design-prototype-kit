@@ -1,0 +1,23 @@
+semantic:
+  - domain_objects_faithful
+  - no_invented_integration
+  - evidence_not_promoted
+
+task:
+  - review_queue_continuity       # process one request and return to the queue without losing place
+  - decision_reversible_until_commit
+  - audit_trail_visible
+
+visual:
+  - hierarchy_clear
+  - convention_respected          # low-innovation case: novelty is not the goal
+  - restraint
+
+delivery:
+  - contract_implementable
+  - tokens_complete
+
+anti_patterns:
+  - novelty for its own sake in a compliance surface
+  - decorative dashboards that do not affect approval decisions
+  - irreversible bulk approval

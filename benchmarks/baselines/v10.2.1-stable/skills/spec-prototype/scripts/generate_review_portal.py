@@ -132,15 +132,6 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       align-items: center;
       gap: 12px;
     }}
-    .portal-subtitle {{
-      font-family: var(--font-mono, monospace);
-      font-size: 11px;
-      color: var(--text-secondary);
-    }}
-    .vp-label {{
-      font-size: 11px;
-      color: var(--text-secondary);
-    }}
     .view-switcher {{
       display: flex;
       background: var(--bg-surface, #0f172a);
@@ -232,13 +223,13 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
   <div class="portal-nav">
     <div class="portal-title">
       <span>{title.upper()} // REVIEW PORTAL</span>
-      <span class="portal-subtitle">[CANONICAL SPEC HARNESS]</span>
+      <span style="font-family:var(--font-mono, monospace);font-size:11px;color:var(--text-secondary,#94a3b8)">[CANONICAL SPEC HARNESS]</span>
     </div>
     <div class="view-switcher">
       {btn_group_html}
     </div>
     <div class="viewport-tools">
-      <span class="vp-label">VIEWPORT:</span>
+      <span style="font-size:11px;color:var(--text-secondary,#94a3b8)">VIEWPORT:</span>
       <button class="vp-btn active" onclick="setViewport('100%')">FULL</button>
       <button class="vp-btn" onclick="setViewport('1280px')">1280px</button>
       <button class="vp-btn" onclick="setViewport('768px')">768px</button>

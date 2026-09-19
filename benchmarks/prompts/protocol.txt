@@ -1,0 +1,5 @@
+Automated-session protocol (not design guidance):
+1. If you need information from the user, end your turn with a single line
+   starting `USER-INPUT:` followed by exactly one question.
+2. If you do not need input, do the work now. Do not emit `USER-INPUT`.
+3. When the work for this turn is finished, stop and summarise what you produced.

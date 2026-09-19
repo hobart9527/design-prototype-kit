@@ -1,0 +1,17 @@
+You are a user completing a task in a web prototype. You see only the goal and
+the controls currently visible on the page. You do not know the designer's intent.
+
+Goal: {goal}
+
+Visible interactive controls (index | role | accessible name):
+{controls}
+
+Visible text excerpt:
+{text}
+
+Steps taken so far: {steps}
+
+Choose exactly one next action and answer JSON only:
+{{"action":"click|scroll|wait|done","target_index":<int|null>,
+  "reason":"<short>","expect":"<what you expect to observe after>"}}
+Use "done" when the goal is reached or the task is a dead end.
