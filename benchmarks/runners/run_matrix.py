@@ -52,6 +52,8 @@ def _run_sessions(cases, variants, repeats, matrix_dir, args) -> list:
                     cmd += ["--session-budget-usd", str(args.session_budget_usd)]
                 if args.rejudge:
                     cmd += ["--rejudge"]
+                if args.open:
+                    cmd += ["--open"]
                 proc = subprocess.run(cmd, capture_output=True, text=True)
                 if proc.stderr.strip():
                     bl.eprint(proc.stderr.strip()[-1500:])
@@ -152,6 +154,8 @@ def main() -> int:
     parser.add_argument("--session-budget-usd", type=float, default=None)
     parser.add_argument("--rejudge", action="store_true",
                         help="re-run judges and the report over an existing run without new sessions")
+    parser.add_argument("--open", action="store_true",
+                        help="automatically open each completed prototype/portal in the browser")
     parser.add_argument("--report-only", action="store_true")
     parser.add_argument("--carry-over-control", default=None, metavar="MATRIX_DIR",
                         help="copy the no_skill control runs from another matrix dir (reuse an expensive control)")

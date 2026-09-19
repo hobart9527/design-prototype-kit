@@ -579,7 +579,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 
 | Reality Breaker | Concrete Test Vector / Input | Expected Graceful Behavior | Observed Result |
 |---|---|---|---|
-| **Unbreakable String** | `unbreakable-entity-hash-00000000-0000-0000-0000-000000000000` | CSS ellipsis + title tooltip, zero container blowout | `pending` |
+| **Unbreakable String** | Domain-authentic extreme 45+ char title or compound path | CSS ellipsis / word-break + tooltip, zero container blowout, no artificial placeholder litter | `pending` |
 | **Zero-Item Empty State** | Filter: 0 results / empty list | Actionable empty card with reset filter button | `pending` |
 | **Extreme 320px Fold** | 320px viewport width test | Horizontal scroll or vertical reflow, primary action reachable | `pending` |
 | **Rapid Interruption** | Double-click / rapid Space hits | Debounced submission, single idempotency state transition | `pending` |

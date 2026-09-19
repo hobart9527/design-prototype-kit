@@ -43,7 +43,8 @@ def _capture_session_fidelity(session: dict, workspace: pathlib.Path) -> dict:
 def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *, model: str | None,
             max_turns: int | None, timeout_s: int | None, budget_usd: float | None,
             do_task_trace: bool, max_task_steps: int, do_visual: bool,
-            session_budget_usd: float | None = None, rejudge: bool = False) -> dict:
+            session_budget_usd: float | None = None, rejudge: bool = False,
+            auto_open: bool = False) -> dict:
     case = bl.load_case(case_id)
     policy = case["meta"].get("run_policy", {})
     out_dir = matrix_dir / case_id / variant / f"run{repeat}"
@@ -187,6 +188,17 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             result["status"] = "INCONCLUSIVE"
 
     bl.write_json(out_dir / "run-result.json", result)
+    if auto_open:
+        portal = artifacts_dir / "review-portal.html"
+        target = portal if portal.is_file() else (artifacts_dir / (manifest.get("entry") or "index.html"))
+        if target.is_file():
+            import subprocess, platform
+            cmd = ["open", str(target)] if platform.system() == "Darwin" else ["xdg-open", str(target)]
+            try:
+                subprocess.run(cmd, check=False)
+                bl.eprint(f"[browser] opened {target}")
+            except Exception as e:
+                bl.eprint(f"[browser] could not open {target}: {e}")
     bl.eprint(f"[case] {case_id}/{variant}/r{repeat} -> {result['status']}")
     return result
 
@@ -207,12 +219,15 @@ def main() -> int:
     parser.add_argument("--session-budget-usd", type=float, default=None)
     parser.add_argument("--rejudge", action="store_true",
                         help="re-run judges over already collected artifacts (no new session)")
+    parser.add_argument("--open", action="store_true",
+                        help="automatically open the review portal / prototype in browser upon completion")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
     result = run_one(args.case, args.variant, args.repeat, pathlib.Path(args.matrix_dir), model=args.model,
                      max_turns=args.max_turns, timeout_s=args.timeout, budget_usd=args.budget_usd,
                      do_task_trace=args.task_trace, max_task_steps=args.max_task_steps, do_visual=args.visual,
-                     session_budget_usd=args.session_budget_usd, rejudge=args.rejudge)
+                     session_budget_usd=args.session_budget_usd, rejudge=args.rejudge,
+                     auto_open=args.open)
     if args.out:
         bl.write_json(pathlib.Path(args.out), result)
     return 0 if result["status"] in ("PASS",) else (2 if result["status"] == "BLOCKED" else 1)

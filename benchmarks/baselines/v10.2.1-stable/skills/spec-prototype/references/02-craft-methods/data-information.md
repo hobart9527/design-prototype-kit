@@ -1,8 +1,21 @@
 # Craft reference — Data and complex information
 
+> **Pillars**: `Attention` · `Expression` · `Object`  
+> **Core Invariants**: Contextual Data Grounding (Zero Naked Metrics) · Numeric Stability · Meaningful Aggregation
+
 Owns representation choice, complete work patterns and responsive data grids. **Open lens:** which
 representation lets this user scan, compare and act on the actual attributes fastest? **Floor:**
 responsive collapse, filtering, sorting and batch/action state remain coordinated.
+
+## Contextual Semantic Registers: Telemetry vs Narrative (情境度量双规制)
+
+Data and metric presentation must match the reality anchor and domain context. Never apply telemetry instruments to narrative literature:
+
+| Domain Context | Metric Presentation Mode | Required Elements | Explicitly Forbidden Invariants (Negative List) |
+|---|---|---|---|
+| **Telemetry & Operations**<br>(SRE, trading, cluster, health) | **Telemetry Register** | - Concrete unit (`ms`, `req/s`, `%`, `MB`)<br>- Comparative baseline (vs normal / ceiling)<br>- Delta indicator (▲/▼ with semantic intent)<br>- Micro sparkline or compact trend line<br>- Monospace alignment (`font-variant-numeric: tabular-nums`) | - Naked scalars without unit or baseline.<br>- Unlabeled percentage numbers.<br>- Visual jitter on fluctuating numbers. |
+| **Content, Reading & Narrative**<br>(Editorial, essays, creative writing) | **Narrative Register** | - Literature-native contextual counts (`字数`, `预估读时`, `章/节/段`)<br>- Calm static progress representation (e.g. `34% · 4 200 / 12 000 字`)<br>- Optical breathing space and unobtrusive footnote anchors | - **Strictly FORBIDDEN to render SVG sparklines or fluctuation trends** in reading or focused writing surfaces.<br>- Highly volatile colored badges or dashboard-style delta arrows. |
+| **Governance & Finance**<br>(Audit, procurement, approval) | **Audit Register** | - Explicit currency/monetary notation (`¥`, `$`, `元`)<br>- Threshold indicators for high-hazard sums (`≥ ¥10,000 大额预警`)<br>- Exact timestamp with second/minute resolution | - Vague approximation without audit trail.<br>- Raw floating-point fractions without fixed precision. |
 
 Read this pillar when the decision is about the information itself, not only its styling.
 

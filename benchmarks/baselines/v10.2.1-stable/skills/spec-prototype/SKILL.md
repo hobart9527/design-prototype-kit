@@ -58,6 +58,8 @@ The system unifies all design operations into four orthogonal layers and one tra
 3. **Five Axes (HOW IT FEELS — 表达坐标寄存器)**: Density · Energy · Materiality · Rhythm · Character. Evaluates and calibrates sensory direction; optionally declared as needed, never forced as a mandatory CSS formula.
 4. **Craft Library (HOW TO CRAFT — 工法与参考库)**: General craft methods (OOUX, Action Verb Lifecycle, Context Preservation, Break Protocol, etc.) and composable reference patterns (Workbench, Canvas, Editorial, Touch). Subservient to Nine Pillars; techniques serve invariants and are never global rigid gates.
 5. **Evidence Protocol (横向证据治理)**: `explicit > observed > derived > hypothesis > unknown`. Every design decision must trace to empirical facts or declared hypotheses.
+   - **Strict Grounding Invariant**: Never invent unsupported product capabilities, third-party integrations, or user-research claims. When proposing user needs or architectural trade-offs not stated in the brief, strictly mark them as `[hypothesis]` or `[derived]`. Never cite unconducted user research (e.g., "眼动仪测试表明", "经用户调研反馈") as factual evidence.
+   - **Lean Stage 1 Invariant**: In Stage 1, focus cognitive budget strictly on unpacking the Core Tension and 1~2 high-risk core entities/journeys. Avoid speculative full-lifecycle matrix filling or generating bulky speculative copy across unselected surfaces. Target the minimal cohesive Core Anchor Slice directly.
 
 ## Canonical 5-Stage Design Workflow (五阶工序状态机)
 

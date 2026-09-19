@@ -196,6 +196,6 @@ may adapt without losing the relationship.
 - Decision: `approved | changes_requested | pending`
 - Evidence / notes:
 
-[Design floor](../references/design-floor.md) supplies contextual implementation
+[Quality floor](../references/03-verification/quality-floor.md) supplies contextual implementation
 integrity and inspection guidance; it does not override this product-specific
 design.

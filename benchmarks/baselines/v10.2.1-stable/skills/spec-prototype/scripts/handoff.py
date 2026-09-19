@@ -487,7 +487,20 @@ def pillar_packet(root: Path, spec_path: Path) -> dict:
     }
 
 
-def freeze(root: Path, spec: str) -> dict:
+def verify_freeze_approval(root: Path) -> bool:
+    """Verify explicit stakeholder signoff before promoting to frozen_approved."""
+    discussion_path = root / "prototype" / "discussion.md"
+    if not discussion_path.is_file():
+        return False
+    text = discussion_path.read_text(encoding="utf-8")
+    approval_markers = (
+        "用户明确批准", "用户批准", "确认封版", "确认冻结",
+        "stakeholder approved", "approved for freeze", "signoff: approved"
+    )
+    return any(marker in text.lower() for marker in approval_markers)
+
+
+def freeze(root: Path, spec: str, require_approval: bool = True) -> dict:
     """Freeze a specification and its transitively retained contracts into immutable state.
 
     Calculates SHA256 digests across all authoritative artifacts (Foundation,
@@ -497,6 +510,11 @@ def freeze(root: Path, spec: str) -> dict:
     """
     root = root.resolve()
     spec_path = within(root, spec)
+    if require_approval and not verify_freeze_approval(root):
+        raise HandoffError(
+            "Cannot freeze specification: missing explicit stakeholder approval evidence in prototype/discussion.md. "
+            "Specification remains in sealed provisional status."
+        )
     try:
         pkt = packet(root, spec)
     except HandoffError as error:
@@ -641,6 +659,7 @@ def main() -> int:
     frz = sub.add_parser("freeze")
     frz.add_argument("--root", type=Path, required=True)
     frz.add_argument("--spec", required=True)
+    frz.add_argument("--force", action="store_true", help="Bypass explicit approval check")
     man = sub.add_parser("manifest")
     man.add_argument("--dir", type=Path, required=True)
     man.add_argument("--output", type=Path)
@@ -656,7 +675,7 @@ def main() -> int:
         elif args.command == "packet":
             print(json.dumps(packet(args.root, args.spec), ensure_ascii=False, indent=2))
         elif args.command == "freeze":
-            print(json.dumps(freeze(args.root, args.spec), ensure_ascii=False, indent=2))
+            print(json.dumps(freeze(args.root, args.spec, require_approval=not args.force), ensure_ascii=False, indent=2))
         elif args.command == "gate":
             print(json.dumps(check_downstream_gate(args.root, args.slice), ensure_ascii=False, indent=2))
         elif args.command == "manifest":

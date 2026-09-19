@@ -1,5 +1,8 @@
 # Craft reference — Interaction and power use
 
+> **Pillars**: `Interaction` · `Attention` · `Resilience`  
+> **Core Invariants**: Action Verb Lifecycle · Platform Ergonomics (Space/Tab Sovereignty) · Ceremony Economy · Decisive 3-Frame
+
 Owns the operation model and its feel: conceptual model, decisive exchange, generative/agentic
 exchange, interruption and return paths, keyboard-first efficiency, latency choreography, motion
 and sensory feedback, component recipes and component sourcing. **Open lens:** which operation
@@ -20,7 +23,7 @@ Sections in this pillar:
 
 **Enter with:** Sourced tasks/operations, current objects and state constraints, audience/input context and actual content.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -54,6 +57,18 @@ Explore the mechanism that fits the decision:
 | A rare complex decision | Guided steps or staged disclosure | Hiding later constraints can create backtracking and recall work |
 | A quick reversible adjustment | Immediate local feedback and visible current value | Distinguish preview from committed change and provide allowed recovery |
 | Generated, suggested or agent-performed work | Deterministic frame with an editable generative interior, or a suggestion the person accepts | Partial output, overwritten input, and an abort that cannot reverse an already committed action |
+
+### Platform & Somatic Ergonomics (平台与物理工效铁律)
+
+1. **Browser Native Reserved Keys Invariant (原生按键主权不可侵犯)**:
+   - **`Space` (Spacebar)** is permanently reserved for natural vertical viewport scrolling and within-input typing. It MUST NEVER be hijacked as a single-key trigger to open drawers, commit actions, or trigger modals.
+   - **`Tab` / `Shift+Tab`** is permanently reserved for native sequential focus navigation. Focus rings must remain razor-sharp (`:focus-visible`).
+   - **Single-key triggers** (like `J`/`K` for list navigation or `/` for search) are permitted ONLY when user focus is NOT inside an active editable text field.
+   - **Global action shortcuts** must employ explicit modifier pairings (e.g. `Cmd/Ctrl + K`, `Alt + N`) or clearly disambiguated single keys that have zero collision with browser and platform navigation conventions.
+
+2. **Ceremony Economy & Feedback Friction**:
+   - **Reversibility dictates ceremony**: Low-hazard, reversible toggles (bookmarks, highlights, active filters) must commit in a single interaction without confirmation modals.
+   - **Toast austerity**: Toast notifications exist solely to broadcast asynchronous background status or off-screen mutations. When an action's result is immediately, physically perceivable within the user's primary field of view (e.g. text highlighted, item added to adjacent table), an intrusive Toast alert is redundant cognitive noise.
 
 Use signifiers that suggest the permitted action, map controls to their effects,
 and place feedback where attention already is. Familiar components carry learned
@@ -199,7 +214,7 @@ For tools used daily or under time pressure, provide an ergonomic keyboard strea
   Display concise visual keycap badges near actions to teach shortcuts organically.
 - **Focus continuity:** A modal or drawer must return focus to its trigger when it
   closes. The detailed recovery focus-continuity mechanics are owned by
-  [component implementation](../component-implementation.md); cite that owner
+  [component implementation](../02-craft-methods/component-implementation.md); cite that owner
   rather than maintaining a competing statement of the rule here.
 
 ### Perceived performance and latency choreography
@@ -247,7 +262,7 @@ reason. Treat presets as hypotheses to tune, not craft credentials.
 
 **Enter with:** Authorized component transitions, selected spatial/material language, input methods and actual rendering runtime.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -395,7 +410,7 @@ share the same trigger rhythm, restraint, and accessibility requirements as visu
 
 **Enter with:** The current task/Contract, selected or provisional language/tokens, real content ranges and available primitives.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -508,7 +523,7 @@ On a smaller viewport, reorder or disclose by task priority while preserving
 the comparison the user needs; shrinking the desktop composition is insufficient.
 
 The Builder maps the recipe onto existing primitives following
-[component implementation](../component-implementation.md). Product state and
+[component implementation](../02-craft-methods/component-implementation.md). Product state and
 view state retain separate owners. If a primitive cannot preserve a required
 behavior, report the conflict before substituting another flow.
 
@@ -590,7 +605,7 @@ require a new renderer or dependency.
 
 **Enter with:** Actual repository/platform/stack, inherited assets, current component need and selected expression.
 
-Follow the shared execution/return rules in [the method library](../design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
 | Phase | Work and concrete hand-back |
 |---|---|
@@ -605,7 +620,7 @@ The craft methods below supply the choices and construction detail for this work
 
 Read when pattern/component/platform uncertainty could change a design or its
 feasibility. [Research](../01-foundations/research.md) owns tool access and evidence handling;
-[component implementation](../component-implementation.md) owns runtime reuse.
+[component implementation](../02-craft-methods/component-implementation.md) owns runtime reuse.
 
 Form a query with **task + friction/state + platform**, adding the actual stack
 only for implementation questions. For instance: retaining comparison context

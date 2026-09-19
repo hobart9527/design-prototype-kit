@@ -1,8 +1,8 @@
 {
   "tag": "v10.2.1-stable",
-  "git_rev": "c4cd9b6a05b5efa4332fc73c67afd0f7e25b5716",
-  "frozen_at": "20260918_235601",
-  "skill_files": 74,
+  "git_rev": "a8f16b0d9c75cdd4fd824bf005d5d3c587291316",
+  "frozen_at": "20260919_122541",
+  "skill_files": 70,
   "hashes": {
     "scripts/assemble_envelope.py": {
       "sha256": "3107ddd5da7a0687d9f619f06c39603a071d452e40974c6fe69efebeb847bca0",
@@ -29,20 +29,20 @@
       "bytes": 8176
     },
     "scripts/generate_review_portal.py": {
-      "sha256": "d6bdd1f2d5f6ad3ccf8db646153448e1f2e3d2608ad93a8ace0937582bbfcd69",
-      "bytes": 11011
+      "sha256": "b9fc57dcf3f41d67d15747a6cb9c43437f9b015d9f00f548351ba08ecd85e9ec",
+      "bytes": 11115
     },
     "scripts/handoff.py": {
-      "sha256": "3782e88afe17cc88487bb91787c624320ac3d1ba9e05a7a3d74ac5bd78b72b71",
-      "bytes": 30867
+      "sha256": "cda9fbb5468c17722ba8dffb13ca4a552a642fb51db36e0ed43a50d0a5d16249",
+      "bytes": 31868
     },
     "scripts/materialize_contracts.py": {
-      "sha256": "c7f27b64804e25febc4630821bb3cbd898eb35fdb7cf5ebfaf3271630f79be2e",
-      "bytes": 33763
+      "sha256": "37a5726abfc165a3ab34e8eba90aa4ed555a584549d7d7ad5f961b9ddd933c3a",
+      "bytes": 33798
     },
     "scripts/verify_prototype_quality.py": {
-      "sha256": "88a5a682450602388a78a8c4b7c00ca4b18efa85e7b715fb1591e23ac7204c22",
-      "bytes": 18168
+      "sha256": "299080415e33c53543650c17d8e4f449e56e50cab24bbd45af57de7c1f323402",
+      "bytes": 18963
     },
     "scripts/capture.mjs": {
       "sha256": "80729f11ebefea9ff1fe1e116648c63311acbe52a501d53997e2a7a5db681e9e",
@@ -73,8 +73,8 @@
       "bytes": 5157
     },
     "SKILL.md": {
-      "sha256": "2c956a86d1b7ed4b35219e2f210670ba2afada93dfa10914a7b082a6f1d9ac20",
-      "bytes": 11976
+      "sha256": "d60d7b20256ce2b24524a4363e208485c8b780b1f4b7dbf471756ebd4101bd8c",
+      "bytes": 12676
     },
     "references/01-foundations/design-language.md": {
       "sha256": "72d23932699a45240514845dc8e34651edfabbdedc1d5dd7686ff33c6bed6246",
@@ -93,32 +93,32 @@
       "bytes": 9230
     },
     "references/02-craft-methods/component-implementation.md": {
-      "sha256": "8da9d209bb947ca6497730caf917071c13624fbce4fef2389606315cd1885fb8",
-      "bytes": 12579
+      "sha256": "4c519dea04b10b774d86cdf22ce6e2d5670f71af34be36c8a46d005599b9a143",
+      "bytes": 12740
     },
     "references/02-craft-methods/data-information.md": {
-      "sha256": "ffc7b5853a0c11f0d45b5492bc6b60903b21ac1abcdd08d36f74bd0fb027b5af",
-      "bytes": 7305
+      "sha256": "4cf24903a127a91561b73343ef5615aa27e84a2a486bd84b3a0af038ac204fe7",
+      "bytes": 9182
     },
     "references/02-craft-methods/form-ergonomics.md": {
-      "sha256": "32785b386408c37e4e8e94950b38a3d08b3d0dccd98a9f305534da917409556e",
-      "bytes": 6802
+      "sha256": "1b67a6872947faa43be3e6800260b9092cec4c99b58f639fd65e268e225a35ab",
+      "bytes": 6989
     },
     "references/02-craft-methods/ia-interaction.md": {
-      "sha256": "8f8c00bb5f2092247196b64a88b332f82039c9ef900cd9fc01a9adf39f9e5639",
-      "bytes": 9871
+      "sha256": "8bca7bc31feb091a62f711732032da006f8c9defa891458efa2839db6a4c189d",
+      "bytes": 12879
     },
     "references/02-craft-methods/interaction-power.md": {
-      "sha256": "110a34195600c9d28eccec7d42f3e15f99bc30d7c83a33eb7fe826afd2c9dd5c",
-      "bytes": 45571
+      "sha256": "91f67e552fabe730dd54dc12f6f4b4871b2cb9c08362044eca6e38555efae010",
+      "bytes": 47335
     },
     "references/02-craft-methods/resilience-trust.md": {
-      "sha256": "3c9f189f4b9cc0006db16c513dc66858ac192b044287fec2028a63f8184cdcde",
-      "bytes": 22683
+      "sha256": "818c1ab7c43a03d6fb88efc10cb1c876f08bd3b32902677e03da64d4f53b802d",
+      "bytes": 24079
     },
     "references/02-craft-methods/visual-craft.md": {
-      "sha256": "f2b6a4a814c9416c4f8333d5433a1bab807db1181c6afdfdde7badd492a9e20f",
-      "bytes": 56406
+      "sha256": "c68dd12fb6c22bec3d61441d02e5a841a1a683d84ca21ac1334d75df29fbce79",
+      "bytes": 58010
     },
     "references/03-verification/quality-floor.md": {
       "sha256": "d17fead9f7d4bed061779f48bee56c7fb581497c3a93b7cfed9b482b25fdea70",
@@ -148,25 +148,9 @@
       "sha256": "0a38ba6b08e4f37578bc67385f966843970164b0a6a974a599bd0ff10b1af7c4",
       "bytes": 8255
     },
-    "references/component-implementation.md": {
-      "sha256": "a7091a6f74722d996264d7f378a7ae1f473a6e68c4d2a1fb5551008e23b4636d",
-      "bytes": 470
-    },
     "references/core-workflow.md": {
       "sha256": "b914e50c7e03673f765c8659a662194b6d971ffb786e378f48dbf241ad7d51a9",
       "bytes": 33075
-    },
-    "references/design-floor.md": {
-      "sha256": "d2c57379e1026916e5bfe381979ca71c112bd74ef63e237da627730a55cf3ae1",
-      "bytes": 417
-    },
-    "references/design-methods.md": {
-      "sha256": "e7b9c802d9fecc55ca368a04fa5677d68ab4d45bdabac47dac87372dcb749e5b",
-      "bytes": 447
-    },
-    "references/quality-bar.md": {
-      "sha256": "40d2093a0dbece7c7855989be1ff019d00ba667dbb2e678ea9b86bb40299948f",
-      "bytes": 425
     },
     "templates/design-study.md": {
       "sha256": "cf5a8a0571bbdb47ba372f7e16b04c4983a498ec7312e8be9962d20d50eefa42",
@@ -177,8 +161,8 @@
       "bytes": 7582
     },
     "templates/experience-foundation.md": {
-      "sha256": "2474497ef8529ed2c43dfffd5eac96bd45563b8d1da6e0b6365a3c4447fcc904",
-      "bytes": 9607
+      "sha256": "8b40c971757b4fb615523311698d1f183e249d76ec6ca701b01cf12b694fc983",
+      "bytes": 9625
     },
     "templates/product.md": {
       "sha256": "050b3a2263a442cca8c26fdd6996811248f8697f5c52ebcadccb0816ed7ce544",
@@ -253,8 +237,8 @@
       "bytes": 863
     },
     "methods/registry.yaml": {
-      "sha256": "67e3c75f3295b9cff430e1954e69b92de1916fe6583adb372fb59079ae9936b5",
-      "bytes": 5365
+      "sha256": "2397e01b34b2e480c4a84617c858370f67066d1284004ee91bbc9454fd5e21fb",
+      "bytes": 6085
     }
   }
 }
