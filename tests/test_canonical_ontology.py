@@ -56,3 +56,50 @@ def test_quality_floor_separates_invariants_and_techniques():
     assert "The Floor (Absolute closure — zero tolerance)" in content
     assert "WCAG 2.2 AA" in content
     assert "Quality Criteria (Craft, conviction, and resonance)" in content
+
+
+BUILDER = REPO / "agents/spec-prototype-builder.md"
+
+
+def _builder_content() -> str:
+    return BUILDER.read_text(encoding="utf-8")
+
+
+def test_builder_defines_five_core_integrity_categories():
+    content = _builder_content()
+
+    # The five categories are the declared integrity boundaries.
+    assert "The Five Core Integrity Categories" in content
+    for category in (
+        "Semantic Integrity",
+        "Task Integrity",
+        "Accessibility Integrity",
+        "State & Recovery Integrity",
+        "Platform Integrity",
+    ):
+        assert category in content, f"missing integrity category: {category}"
+
+
+def test_builder_enforces_integrity_against_vacuous_passes():
+    content = _builder_content()
+
+    # Integrity is only met by exercised, observable behavior — not a clean render.
+    assert "Consequential Task Exercise" in content
+    assert "Declarative State Machine & Hash Routing" in content
+    assert "Feedback Closure" in content
+    assert "Required States" in content
+    # Platform facts that are unauthored stay unknown rather than invented.
+    assert "remain `unknown`" in content or "record such native validation as `unverified`" in content
+
+
+def test_builder_excludes_prescriptive_heuristics():
+    content = _builder_content()
+
+    # Categories are guidance to adapt, never a fixed checklist or mechanical mapping.
+    normalized = re.sub(r"\s+", " ", content)
+    assert "not a fixed aesthetic checklist" in normalized
+    assert "not compliance mandates" in normalized
+    assert "Do not turn an axis into a fixed pixel checklist" in normalized
+    # Target runtime must never be mechanically inferred from device/input signals.
+    assert "Touch interaction, mobile viewport dimensions" not in content
+    assert "Never edit OpenSpec" in content
