@@ -551,8 +551,13 @@ def test_materialize_contracts_high_fidelity_semantic_synthesis(tmp_path: Path):
     assert "Dual-Channel Ergonomics" in r1_text
     assert "The Break Protocol Stress Checkpoints" in r1_text
     assert "Verifiable Design Assertions" in r1_text
-    assert "Zero Naked Metrics" in r1_text
-    assert "Concentric Radii Formula" in r1_text
+    # Universal, truthful invariants only: no category heuristic may synthesize
+    # domain craft claims (SRE sparklines, touch floors, editorial columns) from
+    # the product's vocabulary.
+    assert "Declared product intent is represented" in r1_text
+    assert "High text-to-background contrast compliant with WCAG 2.2 AA" in r1_text
+    assert "Zero Naked Metrics" not in r1_text
+    assert "Concentric Radii Formula" not in r1_text
 
     # 4. Generate tokens to satisfy assemble_envelope dependencies
     tokens_css = tmp_path / "prototype/shared/tokens.css"

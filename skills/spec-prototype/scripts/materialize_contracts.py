@@ -489,68 +489,15 @@ input-context: {input_ctx}
     surfaces, declared_surfaces = extract_surfaces(disc_text, prod_text)
     action_verbs = extract_action_verbs(disc_text, slice_id)
 
-    # Determine profile-aware assertions and interaction patterns based on physical grounding
-    is_reading = bool(re.search(r"Baseline 3|Editorial|Reading|Article|阅读|排版|essay|reader", prod_text + " " + disc_text, re.IGNORECASE))
-    is_marketing = bool(re.search(r"Marketing|Product Landing|Landing|官网|宣传|介绍", prod_text + " " + disc_text, re.IGNORECASE))
-    is_mobile = bool(re.search(r"Baseline 4|Consumer|Mobile|Touch|Booking|移动|预约|触控", prod_text + " " + disc_text, re.IGNORECASE))
-    is_writer_canvas = (not is_reading) and bool(re.search(r"\b(?:Writing|Canvas|协同写作)\b|富文本编辑", prod_text + " " + disc_text, re.IGNORECASE))
-    is_telemetry_ops = bool(re.search(r"Baseline 1|Telemetry|Console|SRE|Operations|Cluster|运维|监控|控制台", prod_text + " " + disc_text, re.IGNORECASE))
-
-    if is_reading:
-        contract_assertions = """| Assertion | Expected | Observed |
+    # The compiler states only universally true invariants. Category matching
+    # (reading / marketing / mobile / writer-canvas / telemetry) used to synthesize
+    # craft assertions -- SRE sparklines, touch floors, editorial columns -- from a
+    # product's vocabulary, which promoted a domain guess into an authored claim.
+    # Craft adequacy belongs to the authored specification and Builder reasoning,
+    # never to a regex over words the author happened to use.
+    contract_assertions = """| Assertion | Expected | Observed |
 |---|---|---|
 | Declared product intent is represented | present | unverified |
-| Focused typography column: max-width constrained (65-75ch) | present | unverified |
-| Reading metric units present (e.g. min read, words) | present | unverified |
-| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Quiet feedback: non-blocking inline state updates, no intrusive modals | present | unverified |
-| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
-    elif is_writer_canvas:
-        contract_assertions = """| Assertion | Expected | Observed |
-|---|---|---|
-| Declared product intent is represented | present | unverified |
-| Document canvas clarity: distraction-free focus, content-first typography | present | unverified |
-| Inline state preservation: seamless revision and diff review flow | present | unverified |
-| Tabular Numerics: font-variant-numeric: tabular-nums on document metrics | present | unverified |
-| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Keyboard ergonomics: operable shortcuts (e.g. Esc, Cmd+K) | present | unverified |
-| Action Verb Lifecycle closure: trigger -> review/diff -> commit -> toast | present | unverified |
-| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
-    elif is_marketing:
-        contract_assertions = """| Assertion | Expected | Observed |
-|---|---|---|
-| Declared product intent is represented | present | unverified |
-| Hero visual anchor: clear value proposition and primary call-to-action | present | unverified |
-| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Action verb progression: clear engagement path | present | unverified |
-| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
-    elif is_mobile:
-        contract_assertions = """| Assertion | Expected | Observed |
-|---|---|---|
-| Declared product intent is represented | present | unverified |
-| Touch Target Floor: minimum 44x44px interactive tap zones | present | unverified |
-| Gesture Detents: ergonomic touch navigation or swipe dismissal | present | unverified |
-| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Tactile Action Feedback: perceptible interactive press state | present | unverified |
-| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
-    elif is_telemetry_ops:
-        contract_assertions = """| Assertion | Expected | Observed |
-|---|---|---|
-| Declared product intent is represented | present | unverified |
-| Zero Naked Metrics: every metric has reference baseline or micro sparkline | present | unverified |
-| Tabular Numerics: font-variant-numeric: tabular-nums on all metrics | present | unverified |
-| Concentric Radii Formula: outer radius >= inner radius + padding | present | unverified |
-| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Dual-channel keyboard shortcuts operable with focus restoration | present | unverified |
-| Action Verb Lifecycle closure: trigger -> context/review -> commit -> settlement | present | unverified |
-| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
-    else:
-        # Adaptive Workspace / General Application: Clean neutral invariants without forced SRE sparklines
-        contract_assertions = """| Assertion | Expected | Observed |
-|---|---|---|
-| Declared product intent is represented | present | unverified |
-| Contextual Data Grounding: key figures carry clear units or semantic bounds | present | unverified |
-| Concentric Radii Formula: outer radius >= inner radius + padding | present | unverified |
 | High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
 | Navigation and action affordances clear and reachable | present | unverified |
 | Action Verb Lifecycle closure: trigger -> context/review -> commit -> settlement | present | unverified |
@@ -704,7 +651,9 @@ invariants: concentric-radii, tabular-numerics, touch-target-floor, break-protoc
             )
         else:
             scope_suffix = "hero-anchor" if "hero-anchor" in disc_text else "anchor"
-            if is_mobile:
+            # Touch ergonomics follow an authored input-modality declaration, not a
+            # vocabulary guess; absent that declaration the keyboard channel stands.
+            if input_ctx == "touch":
                 ergonomics_section = """## Touch-First Ergonomics (Gesture Detents & Haptic Recovery)
 
 | Gesture Vector | Target Action / Interaction | Scope | Focus / State Settlement |
@@ -721,7 +670,7 @@ invariants: concentric-radii, tabular-numerics, touch-target-floor, break-protoc
 | `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |
 | `J` / `K` | Navigate primary items or table rows | Active collection or matrix | Active selection index |"""
 
-            proto_med = "touch-web" if is_mobile else "web"
+            proto_med = "web"
             content = f"""# Prototype Specification: {slice_id} / r1
 
 - Candidate revision: r1
