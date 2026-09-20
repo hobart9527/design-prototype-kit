@@ -5,16 +5,17 @@ Translates Stage 1 5-Dial registers and domain grounding into mathematical,
 DTCG-compliant CSS custom properties and JSON tokens.
 
 Eliminates manual CSS guesswork and enforces:
-1. Atmospheric Undertone: Chromatic darks/lights, zero flat sterile grays (#808080).
+1. Authored atmospheric undertone: when explicit dials/palette exist they are honored verbatim.
 2. Concentric Radii Mathematics: R_inner = max(0, R_outer - Padding).
 3. Density-calibrated Spacing Scales: Dense (4px), Normal (8px), Sparse (12px).
-4. Machined Industrial Finish: 1px layered edge hierarchy & tabular-nums.
-5. Tactile Physics Invariant: perceptible feedback micro-motion & cubic-bezier.
+4. Neutral Scaffold Fallback: undeclared dials compile to an un-opinionated grayscale base.
+5. Mode Separation: `formal` never infers aesthetics; `probe` may heuristic-infer.
 
 Usage:
   python3 compile_tokens.py [--discussion prototype/discussion.md]
                             [--output-css prototype/shared/tokens.css]
                             [--output-json prototype/contracts/tokens/t1.json]
+                            [--mode formal|probe]
 """
 from __future__ import annotations
 
@@ -296,7 +297,32 @@ CANONICAL_ATMOSPHERES = {
         "border_warning": "rgba(245, 158, 11, 0.4)",
     }
 }
-DARK_ATMOSPHERES = CANONICAL_ATMOSPHERES
+# Un-opinionated neutral scaffold: the compiler's default when no dials/palette are authored.
+# Grayscale surfaces, neutral gray accent, no chromatic brand tint, no machined finish.
+NEUTRAL_SCAFFOLD_NAME = "neutral-scaffold"
+NEUTRAL_SCAFFOLD = {
+    "bg_void": "#121212",
+    "bg_base": "#171717",
+    "bg_surface": "#1e1e1e",
+    "bg_surface_raised": "#262626",
+    "bg_overlay": "#2e2e2e",
+    "border_dim": "#262626",
+    "border_subtle": "#333333",
+    "border_bright": "#4a4a4a",
+    "text_primary": "#ededed",
+    "text_secondary": "#a3a3a3",
+    "text_tertiary": "#666666",
+    "accent_primary": "#737373",  # Neutral gray action; no brand hue
+    "accent_subtle": "rgba(115, 115, 115, 0.14)",
+    "accent_hover": "#8a8a8a",
+    "status_running": "#6b7280",
+    "status_warning": "#d97706",
+    "status_danger": "#dc2626",
+    "border_danger": "rgba(220, 38, 38, 0.4)",
+    "border_warning": "rgba(217, 119, 6, 0.4)",
+}
+
+DARK_ATMOSPHERES = {**CANONICAL_ATMOSPHERES, NEUTRAL_SCAFFOLD_NAME: NEUTRAL_SCAFFOLD}
 
 PALETTE_ALIASES = {
     "paper": "editorial-paper-warm",
@@ -396,10 +422,16 @@ def _extract_confirmed_section(text: str) -> str:
     return ""
 
 
-def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-graphite-lime") -> Dict[str, str]:
+def extract_dynamic_palette(
+    discussion_text: str,
+    fallback_palette: str = NEUTRAL_SCAFFOLD_NAME,
+    mode: str = "formal",
+) -> Dict[str, str]:
     """Dynamically extract authored chromatic tokens from Stage 1 discussion or synthesize mathematically.
 
     Prioritizes confirmed/selected decision sections over rejected candidate options.
+    In `formal` mode, absent any authored palette/token the neutral scaffold is returned rather
+    than a heuristic brand theme; `probe` mode permits domain-keyword inference.
     """
     token_keys = {
         "accent_primary": ["accent-primary", "accent_primary", "primary-accent", "accent"],
@@ -446,14 +478,15 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
                 break
 
     # Third priority: natural language heuristic extraction (e.g. "温润米白 `#F9F6F0` 纸感底色")
-    if "bg_void" not in extracted:
+    # Speculative in probe mode only; `formal` mode ignores ambient prose and stays neutral.
+    if mode == "probe" and "bg_void" not in extracted:
         bg_nl = re.search(r"`?(#[0-9a-fA-F]{6})`?[^#\n]{0,35}(?:底色|背景|纸感|基色|tone|palette|style|paper|undertone|background|snow|vinyl|slate|brown|dark|white)", discussion_text, re.IGNORECASE)
         if not bg_nl:
             bg_nl = re.search(r"(?:底色|背景|纸感|基色|tone|palette|style|paper|undertone|background|snow|vinyl|slate|brown|dark|white)[^#\n]{0,35}`?(#[0-9a-fA-F]{6})`?", discussion_text, re.IGNORECASE)
         if bg_nl:
             extracted["bg_void"] = bg_nl.group(1).strip()
 
-    if "text_primary" not in extracted:
+    if mode == "probe" and "text_primary" not in extracted:
         txt_nl = re.search(r"(?:字色|文字|正文|深石墨|primary-text)[^#\n]{0,20}`?(#[0-9a-fA-F]{6})`?", discussion_text, re.IGNORECASE)
         if not txt_nl:
             txt_nl = re.search(r"`?(#[0-9a-fA-F]{6})`?[^#\n]{0,20}(?:字色|文字|正文)", discussion_text, re.IGNORECASE)
@@ -463,7 +496,7 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
             if cand_hex.lower() != extracted.get("bg_void", "").lower():
                 extracted["text_primary"] = cand_hex
 
-    if "accent_primary" not in extracted:
+    if mode == "probe" and "accent_primary" not in extracted:
         acc_nl = re.search(r"`?(#[0-9a-fA-F]{6})`?[^#\n]{0,25}(?:强调色|主色|accent|点缀色)", discussion_text, re.IGNORECASE)
         if not acc_nl:
             acc_nl = re.search(r"(?:强调色|主色|accent|点缀色)[^#\n]{0,25}`?(#[0-9a-fA-F]{6})`?", discussion_text, re.IGNORECASE)
@@ -475,21 +508,22 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
         discussion_text,
         re.IGNORECASE,
     )
-    # Intelligent Reality Anchor Domain Routing:
-    # If no explicit named palette was authored, infer appropriate baseline atmosphere from domain keywords
-    inferred_domain_fallback = fallback_palette
+    # Reality Anchor Domain Routing (probe mode only):
+    # `formal` mode infers no aesthetic from keywords; it stays on the neutral scaffold.
     disc_lower = discussion_text.lower()
-    if any(k in disc_lower for k in ("reader", "reading", "editorial", "essay", "literature", "长文", "阅读", "书库", "专栏", "书籍", "出版", "人文")):
-        inferred_domain_fallback = "editorial-paper-warm"
-    elif any(k in disc_lower for k in ("procurement", "approval", "crm", "internal", "clean", "notion", "审批", "采购", "政务", "OA", "看板")):
-        inferred_domain_fallback = "clean-slate-pro"
-    elif any(k in disc_lower for k in ("sre", "cluster", "telemetry", "incident", "trading", "terminal", "ops", "运维", "事故", "监控")):
-        inferred_domain_fallback = "titanium-amber"
+    inferred_domain_fallback = fallback_palette
+    if mode == "probe":
+        if any(k in disc_lower for k in ("reader", "reading", "editorial", "essay", "literature", "长文", "阅读", "书库", "专栏", "书籍", "出版", "人文")):
+            inferred_domain_fallback = "editorial-paper-warm"
+        elif any(k in disc_lower for k in ("procurement", "approval", "crm", "internal", "clean", "notion", "审批", "采购", "政务", "OA", "看板")):
+            inferred_domain_fallback = "clean-slate-pro"
+        elif any(k in disc_lower for k in ("sre", "cluster", "telemetry", "incident", "trading", "terminal", "ops", "运维", "事故", "监控")):
+            inferred_domain_fallback = "titanium-amber"
 
     base_name = pal_match.group(1).lower() if pal_match else inferred_domain_fallback
     resolved_base = PALETTE_ALIASES.get(base_name, base_name)
     if resolved_base not in DARK_ATMOSPHERES:
-        resolved_base = inferred_domain_fallback if inferred_domain_fallback in DARK_ATMOSPHERES else "editorial-paper-warm"
+        resolved_base = inferred_domain_fallback if inferred_domain_fallback in DARK_ATMOSPHERES else NEUTRAL_SCAFFOLD_NAME
 
     base_colors = dict(DARK_ATMOSPHERES[resolved_base])
 
@@ -521,10 +555,16 @@ def extract_dynamic_palette(discussion_text: str, fallback_palette: str = "warm-
     return base_colors
 
 
-def compute_tokens(dials: Dict[str, str] | None = None, palette_or_colors: str | Dict[str, str] = "warm-graphite-lime") -> Dict[str, Any]:
+def compute_tokens(
+    dials: Dict[str, str] | None = None,
+    palette_or_colors: str | Dict[str, str] = NEUTRAL_SCAFFOLD_NAME,
+    mode: str = "formal",
+) -> Dict[str, Any]:
     """Derive full design token tree from optional Five Axes / dials and an explicit palette or dynamic color dict.
 
-    All axes are optional. Undeclared axes fall back gracefully to balanced defaults.
+    All axes are optional. Undeclared axes compile to an un-opinionated neutral scaffold.
+    In `formal` mode no aesthetic is inferred: absent dials yield neutral grayscale tokens.
+    In `probe` mode heuristic palette inference is permitted for exploration.
     """
     if dials is None:
         dials = {}
@@ -535,7 +575,7 @@ def compute_tokens(dials: Dict[str, str] | None = None, palette_or_colors: str |
         palette_name = str(palette_or_colors)
         resolved_palette = PALETTE_ALIASES.get(palette_name.lower(), palette_name.lower())
         if resolved_palette not in DARK_ATMOSPHERES:
-            resolved_palette = "warm-graphite-lime"
+            resolved_palette = "warm-graphite-lime" if mode == "probe" else NEUTRAL_SCAFFOLD_NAME
         colors = DARK_ATMOSPHERES[resolved_palette]
 
     # Density calibration (Density Axis)
@@ -569,8 +609,8 @@ def compute_tokens(dials: Dict[str, str] | None = None, palette_or_colors: str |
         "padding_panel": f"{padding_val}px",
     }
 
-    # Materiality / Finish Axis calibration
-    materiality = dials.get("materiality", dials.get("finish", "machined-industrial")).lower()
+    # Materiality / Finish Axis calibration. Undeclared materiality stays neutral: no machined finish.
+    materiality = dials.get("materiality", dials.get("finish", "")).lower()
     if any(k in materiality for k in ("editorial", "paper", "reading")):
         fonts = {
             "sans": 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
@@ -712,7 +752,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
 
     d = tokens.get("dials", {})
     energy_desc = d.get("energy", "balanced")
-    materiality_desc = d.get("materiality", d.get("finish", "machined-industrial"))
+    materiality_desc = d.get("materiality", d.get("finish", "neutral"))
     density_desc = d.get("density", "balanced")
 
     lines = [
@@ -1075,14 +1115,15 @@ def compile_tokens(
     output_css_path: str,
     output_json_path: str | None = None,
     output_md_path: str | None = None,
+    mode: str = "formal",
 ) -> None:
     disc_p = Path(discussion_path)
     disc_text = disc_p.read_text(encoding="utf-8") if disc_p.is_file() else ""
     dials = parse_5dials(disc_text)
 
-    # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or derives mathematically
-    dynamic_colors = extract_dynamic_palette(disc_text)
-    computed = compute_tokens(dials, dynamic_colors)
+    # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or neutral scaffold
+    dynamic_colors = extract_dynamic_palette(disc_text, mode=mode)
+    computed = compute_tokens(dials, dynamic_colors, mode=mode)
 
     has_confirmed = "## Confirmed Decisions" in disc_text or any(
         k in disc_text for k in ("--color-primary", "--accent-primary", "--bg-surface")
@@ -1176,6 +1217,7 @@ def main():
     parser.add_argument("--output-css", default="prototype/shared/tokens.css", help="Target CSS file")
     parser.add_argument("--output-json", default="prototype/contracts/tokens/t1.json", help="Target DTCG JSON file")
     parser.add_argument("--output-md", default="prototype/contracts/tokens/t1.md", help="Target Markdown contract file")
+    parser.add_argument("--mode", choices=("formal", "probe"), default="formal", help="formal: no inferred aesthetics (neutral scaffold); probe: permit heuristic palette inference")
     parser.add_argument("--reconcile-from-css", help="Reconcile human review edits from tokens.css back into discussion.md and contracts")
     args = parser.parse_args()
 
@@ -1183,7 +1225,7 @@ def main():
         reconcile_tokens_from_css(args.reconcile_from_css, args.discussion, args.output_json, args.output_md)
         return
 
-    compile_tokens(args.discussion, args.output_css, args.output_json, args.output_md)
+    compile_tokens(args.discussion, args.output_css, args.output_json, args.output_md, mode=args.mode)
 
 
 if __name__ == "__main__":

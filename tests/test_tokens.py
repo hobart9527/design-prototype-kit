@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import importlib.util
 
 import pytest
 
@@ -12,6 +13,24 @@ pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "skills/spec-prototype/scripts/export-tokens.py"
+COMPILE_SCRIPT = ROOT / "skills/spec-prototype/scripts/compile_tokens.py"
+
+
+def _load_compiler():
+    spec = importlib.util.spec_from_file_location("compile_tokens", COMPILE_SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _luma(hex_code: str) -> tuple[int, int, int]:
+    h = hex_code.lstrip("#")
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+
+def _is_gray(hex_code: str) -> bool:
+    r, g, b = _luma(hex_code)
+    return max(r, g, b) - min(r, g, b) == 0
 
 
 def _run(tokens_path: Path, output_path: Path | None = None) -> tuple[int, str, str]:
@@ -119,3 +138,31 @@ def test_export_tokens_parses_two_column_breakpoints(tmp_path: Path):
     assert set(data["breakpoints"].keys()) == {"mobile", "tablet", "desktop", "wide"}
     assert data["breakpoints"]["mobile"]["$value"] == "390px"
     assert data["breakpoints"]["wide"]["$value"] == "1600px"
+
+
+def test_compile_tokens_empty_dials_yield_neutral_scaffold():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({})
+    colors = tokens["colors"]
+
+    # Neutral grayscale surfaces; no acid-lime accent and no industrial near-black void.
+    assert _is_gray(colors["accent_primary"]), colors["accent_primary"]
+    assert _is_gray(colors["bg_void"]), colors["bg_void"]
+    assert _is_gray(colors["bg_surface"]), colors["bg_surface"]
+    assert colors["accent_primary"] != "#d6f56b"
+    assert colors["bg_void"] != "#080b0b"
+
+    css = ct.generate_css(tokens)
+    assert "machined-industrial" not in css
+    assert "#d6f56b" not in css
+
+
+def test_omitted_dials_palette_stays_neutral_in_formal_mode():
+    ct = _load_compiler()
+    palette = ct.extract_dynamic_palette("")
+    assert _is_gray(palette["accent_primary"]), palette["accent_primary"]
+    assert palette["bg_void"] != "#080b0b"
+
+    # Probe mode is the only path that may infer a themed accent from domain prose.
+    probed = ct.extract_dynamic_palette("SRE cluster telemetry incident ops", mode="probe")
+    assert not _is_gray(probed["accent_primary"])
