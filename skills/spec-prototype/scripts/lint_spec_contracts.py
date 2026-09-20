@@ -233,6 +233,22 @@ def lint_formal_entry(root: Path, slice_id: str) -> List[SpecLintError]:
     return errors
 
 
+def lint_formal_advisories(root: Path, slice_id: str) -> List[SpecLintError]:
+    """Non-blocking diagnostics for the formal entry.
+
+    The reader gates a differing logical revision, so a digest that drifted under a
+    matched revision is surfaced here as a WARNING: the caller sees the drift without
+    losing dispatch. Kept separate from `lint_formal_entry` so a refusal stays a
+    refusal and no advisory is ever read as one.
+    """
+    context = read_formal_context(root, slice_id)
+    return [SpecLintError("W010_ADVISORY_MAP_DIGEST", "m1.md",
+                          "Surface Map digest does not match the retained selection "
+                          f"(non-blocking; revision matches): {advisory['detail']}.",
+                          severity="WARNING")
+            for advisory in context["diagnostics"]]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Lint Stage 1 Design Spec Contracts")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Workspace root directory")

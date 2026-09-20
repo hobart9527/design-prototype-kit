@@ -24,6 +24,12 @@ from typing import Any, Dict, List, Optional
 
 _SECTION_RE = re.compile(r"^```prototype-context[ \t]*\n(.*?)^```[ \t]*$",
                          re.MULTILINE | re.DOTALL)
+# Authored context is hand-written Markdown, so keys arrive with bullet markers,
+# stray casing and inline explanations. Both are formatting, not facts.
+_BULLET_RE = re.compile(r"^[ \t]*(?:[-*+]|\d+[.)])[ \t]+")
+_COMMENT_RE = re.compile(r"(?:^|\s)#.*$")
+_WRAPPED_RE = re.compile(r"^(`{1,3}|_{1,3}|\*{1,3})(.*)\1$")
+_ITEMS_RE = re.compile(r"[,;|、]")
 
 _LIST_KEYS = ("surfaces", "selected_surfaces", "selected_dependencies",
               "journeys", "platform_contexts", "invariants", "preserves")
@@ -36,7 +42,15 @@ _NATIVE_TARGETS = ("ios", "android", "native")
 
 
 def _items(value: str) -> List[str]:
-    return [item.strip().strip("`") for item in value.split(",") if item.strip().strip("`")]
+    return [item.strip().strip("`") for item in _ITEMS_RE.split(value)
+            if item.strip().strip("`")]
+
+
+def _value(raw: str) -> str:
+    """Strip a trailing `# comment` and one layer of emphasis/backtick wrapping."""
+    value = _COMMENT_RE.sub("", raw).strip()
+    wrapped = _WRAPPED_RE.match(value)
+    return wrapped.group(2).strip() if wrapped else value
 
 
 def _blank(record: str) -> Dict[str, Any]:
@@ -56,12 +70,12 @@ def parse_section(text: str, record: Optional[str] = None) -> Optional[Dict[str,
         return None
     section = _blank(record or "")
     for raw in match.group(1).splitlines():
-        line = raw.strip()
+        line = _BULLET_RE.sub("", raw).strip()  # a list bullet is formatting, not a key
         if not line or ":" not in line:
             continue
         key, _, value = line.partition(":")
         # Authored keys are kebab-case; identifiers in values keep their hyphens.
-        key, value = key.strip().replace("-", "_"), value.partition(" #")[0].strip()
+        key, value = key.strip().lower().replace("-", "_"), _value(value)
         if key in _LIST_KEYS:
             section[key].extend(_items(value))
         elif key in _PAIR_KEYS:
@@ -128,13 +142,27 @@ def read_context(surface_map: str = "", product: str = "", foundation: str = "",
         if invariant not in foundation_section["invariants"]:
             errors.append({"code": "unknown_invariant", "detail": invariant})
 
-    if expected_map_revision is not None and expected_map_revision != map_section["revision"]:
-        errors.append({"code": "stale_map_identity",
+    # Identity is the logical revision. A digest that drifted under an unchanged
+    # revision is a non-semantic edit, so it is reported and never gated; a revision
+    # that moved (or a digest drift alongside it) is dispatched against a scope
+    # nobody selected, which stays a refusal.
+    revision_differs = bool(
+        expected_map_revision is not None and expected_map_revision != map_section["revision"])
+    if revision_differs:
+        errors.append({"code": "stale_map_identity", "identity": "revision",
                        "detail": f"revision {map_section['revision']!r} != {expected_map_revision!r}"})
+    diagnostics: List[Dict[str, str]] = []
     if expected_map_digest is not None:
         actual = hashlib.sha256((surface_map or "").encode("utf-8")).hexdigest()
         if actual != expected_map_digest:
-            errors.append({"code": "stale_map_identity", "detail": f"digest {actual}"})
+            if revision_differs or expected_map_revision is None:
+                # No expected revision was retained, so the digest is the only
+                # identity there is; it keeps its own strict check.
+                errors.append({"code": "stale_map_identity", "identity": "digest",
+                               "detail": f"digest {actual}"})
+            else:
+                diagnostics.append({"code": "advisory_map_digest",
+                                    "detail": f"digest {actual} != {expected_map_digest}"})
 
     target_context = product_section["target_context"]
     prototype_medium = spec_section["prototype_medium"]
@@ -172,6 +200,7 @@ def read_context(surface_map: str = "", product: str = "", foundation: str = "",
         "authorizes_full_product": coverage == "full-product",
         "recommendation_required": coverage in ("unresolved", "legacy"),
         "errors": errors,
+        "diagnostics": diagnostics,
     }
 
 
