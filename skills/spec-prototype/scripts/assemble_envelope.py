@@ -505,7 +505,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
 
     # `layout_profile` retained for backward compatibility with downstream consumers
     # (test_pipeline.py, test_v10_integrity.py); the Builder owns the final decision.
-    layout_profile = selected_pattern or (candidate_patterns[0] if candidate_patterns else "adaptive-workspace")
+    # Unselected patterns stay advisory: no candidate is promoted into a topology lock.
+    layout_profile = selected_pattern or "adaptive-workspace"
 
     # Extract verifiable assertions & Break Protocol
     assertions: List[str] = []

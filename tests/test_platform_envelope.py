@@ -131,7 +131,7 @@ def test_console_category_no_longer_locks_a_hardcoded_profile(tmp_path):
     env = assemble_to_file(root)
     assert env["selected_pattern"] is None  # category alone is not a confirmation
     assert env["candidate_patterns"][0] == "dense-console"
-    assert env["layout_profile"] == env["candidate_patterns"][0]  # compat field preserved
+    assert env["layout_profile"] == "adaptive-workspace"  # advisory stays neutral, no lock
 
 
 def test_saas_category_stays_advisory(tmp_path):
@@ -142,7 +142,7 @@ def test_saas_category_stays_advisory(tmp_path):
     env = assemble_to_file(root)
     assert env["selected_pattern"] is None
     assert "operational-canvas" in env["candidate_patterns"]
-    assert env["layout_profile"] == env["candidate_patterns"][0]
+    assert env["layout_profile"] == "adaptive-workspace"  # advisory stays neutral, no lock
 
 
 def test_explicit_authored_specification_confirms_one_pattern(tmp_path):
