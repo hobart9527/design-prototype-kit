@@ -19,6 +19,14 @@ def _mean(values):
     return round(statistics.fmean(clean), 3) if clean else None
 
 
+def _trips_hard_gate(run: dict) -> bool:
+    """Whether this run tripped one of the absolute gates, whichever arm it is."""
+    return bool((run.get("semantic") or {}).get("hard_gate") == "fail"
+                or (run.get("runtime") or {}).get("authority_escape")
+                or (run.get("task") or {}).get("critical_task_break")
+                or _critical_accessibility_violation(run))
+
+
 def _critical_accessibility_violation(run: dict) -> bool:
     """A critical accessibility failure, from whichever evidence the run actually stored.
 
@@ -49,11 +57,20 @@ def _provenance(runs: list) -> dict:
         "runs_missing_provenance": len(missing),
         "missing": sorted(missing),
         "identical_across_runs": len(identities) == 1 and None not in identities,
-        "source_identity": sorted({(r["provenance"].get("candidate") or {}).get("aggregate_sha256")
-                                   for r in recorded} - {None}),
+        # `source_identity` nests the skill tree one level down: the top-level
+        # aggregate is populated from `candidate.aggregate_sha256`, which
+        # `source_identity` leaves None (`bench_lib.source_identity`). Reading the
+        # top level therefore yields an empty set for every matrix and reports
+        # `source_identity: []` while real hashes sit one level deeper.
+        "source_identity": sorted({sha for r in recorded
+                                   for sha in [(r["provenance"].get("candidate") or {}).get("aggregate_sha256"),
+                                               ((r["provenance"].get("candidate") or {}).get("skill") or {})
+                                               .get("aggregate_sha256")] if sha} ),
         "disclosure": ("no run recorded source identity; provenance unknown for this matrix"
                        if not recorded else
-                       f"{len(missing)} of {len(runs)} runs recorded no provenance"),
+                       (f"{len(missing)} of {len(runs)} runs recorded no provenance"
+                        if missing else
+                        f"all {len(runs)} runs recorded provenance")),
     }
 
 
@@ -111,11 +128,21 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         if (run.get("semantic") or {}).get("hard_gate") == "unverified":
             unverified.append(f"{run.get('case_id')}/{run.get('variant')}: semantic judge unverified")
 
+    # Which arm tripped a hard gate, so the top-level status can say what it is
+    # about. A gate on the *control* arm is a broken control, not a candidate
+    # regression: it makes the run unusable as evidence, which is a different
+    # verdict from "the candidate regressed against stable". Reporting one
+    # headline for both is what let a report read REGRESSION at the top and
+    # `Regression vs stable — PASS` in the body with nothing reconciling them.
+    gate_arms = sorted({r.get("variant") for r in runs
+                        if _trips_hard_gate(r)})
+    gate_triggered = bool(gate_arms)
+    gate_is_candidate = "candidate_skill" in gate_arms
+
     if not runs:
         status = "BLOCKED"
-    elif (hard_gates["semantic_fabrication"] or hard_gates["authority_escape"]
-          or hard_gates["critical_task_break"] or hard_gates["critical_accessibility_violation"]):
-        status = "REGRESSION"
+    elif gate_triggered:
+        status = "REGRESSION" if gate_is_candidate else "INVALID_CONTROL"
     elif regression["verdict"] == "REGRESSION":
         status = "REGRESSION"
     elif all(r.get("status") == "BLOCKED" for r in runs):
@@ -125,11 +152,29 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
     else:
         status = "PASS"
 
+    # The two judgements are independent by construction — a hard gate is
+    # absolute, a regression verdict is paired against the control — so they may
+    # legitimately disagree. Disclose the disagreement and its reason rather than
+    # leaving a reader to find it; a silent mismatch reads as a broken report.
+    hard_gate_verdicts = {"REGRESSION", "INVALID_CONTROL"}
+    status_divergence = None
+    if status in hard_gate_verdicts and regression["verdict"] != "REGRESSION":
+        status_divergence = (
+            f"hard gate tripped on {', '.join(gate_arms)} while the paired verdict is "
+            f"{regression['verdict']}: the gate is absolute and fires on the artifacts "
+            "themselves, while the paired verdict only compares the candidate against the "
+            "control, so both stand.")
+    elif status == "PASS" and regression["verdict"] == "REGRESSION":
+        status_divergence = ("no hard gate tripped but the paired verdict regressed; "
+                             "the paired comparison is the more specific claim.")
+
     return {
         "run_id": run_id,
         "suite": suite,
         "generated_at": bl.now_stamp(),
         "status": status,
+        "status_divergence": status_divergence,
+        "hard_gate_arms": gate_arms,
         "cases": sorted({r.get("case_id") for r in runs}),
         "variants": variants,
         "runs": [{k: r.get(k) for k in ("case_id", "variant", "repeat", "status", "metrics", "notes",
@@ -154,8 +199,12 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
 
 def render_markdown(report: dict) -> str:
     lines = [f"# Benchmark report — {report['suite']} ({report['run_id']})", "",
-             f"Status: **{report['status']}**", "",
-             "## Hard gates", ""]
+             f"Status: **{report['status']}**", ""]
+    if report.get("hard_gate_arms"):
+        lines += [f"Hard gates tripped on: `{', '.join(report['hard_gate_arms'])}`", ""]
+    if report.get("status_divergence"):
+        lines += [f"Status note: {report['status_divergence']}", ""]
+    lines += ["## Hard gates", ""]
     for name, value in report["hard_gates"].items():
         lines.append(f"- `{name}`: {value}")
     provenance = report.get("provenance") or {}

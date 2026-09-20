@@ -108,7 +108,11 @@ What the specimen pins:
 - **Source and conditions.** The report's `## Candidate provenance` section records the sha256 of
   the candidate Skill/agent files that actually ran, dirty tree included, plus the judge inputs for
   the run. A reported Git revision alone does not identify a dirty candidate; compare
-  `source_identity` between arms before reading any preference.
+  `source_identity` between arms before reading any preference. `source_identity` is read from
+  `candidate.skill.aggregate_sha256`, where the skill tree hash is stored; the covering
+  `candidate.aggregate_sha256` is left unset, so comparing only the top level reports an empty set.
+  A run with no stored provenance contributes nothing here and is disclosed as unknown — a
+  re-judge never back-fills it, since the working tree at re-judge time is not the tree that ran.
 - **Cross-page state and return.** Trace the same state through the reviewed page, one step away
   from it, and back. A pass on the reviewed page does not carry; the return path is its own claim.
 - **Mobile adaptation.** Capture the required viewports (`--visual`) and judge them; a desktop-only
@@ -148,11 +152,21 @@ dashboard. Add them when a real failure needs them, not before.
   (`ANTHROPIC_BASE_URL` in `~/.claude/settings.json`), so `model` in run results is the gateway's
   model name, not an Anthropic model. `matrix-plan.json` records the router host for every run.
 - **Re-judging is free of sessions:** `run_matrix.py ... --rejudge` re-runs judges over collected
-  artifacts; previous results are kept as `run-result-prev<N>.json`.
+  artifacts; previous results are kept as `run-result-prev<N>.json`. A re-judge carries the
+  original session's outcome and provenance forward: a session that stopped `BLOCKED` stays
+  BLOCKED (it is not re-written as a judged FAIL), and the stored source identity is preserved
+  rather than recomputed, because hashing the working tree at re-judge time would stamp a
+  revision that postdates the artifacts onto bytes it never produced. A run with no stored
+  provenance stays disclosed as unknown.
 - **Judge strictness is calibrated, not neutral:** deterministic forbidden-term hits are recorded
   as signals for human review, negation-aware, and no longer force a gate on their own. The
-  authority check fails a run that declares `frozen`/`frozen_approved` when the case ceiling is
-  `sealed_provisional` and no user approval appears in the session transcript.
+  authority check fails a run that *claims* `frozen`/`frozen_approved` when the case ceiling is
+  `sealed_provisional` and no user approval appears in the session transcript. The claim is read
+  from the artifacts that can carry one — a freeze manifest, or a specification's
+  `Authority status:` line — so `Status: frozen` on a token or contract artifact is not one:
+  `draft -> frozen -> superseded` is the artifact lifecycle every contract carries, and reading
+  it as an authority claim failed a run for the words in the skill's own template. An escaped
+  claim with no recorded approval is refused whether or not it is worded as a ceiling breach.
 
 ## Plan of record
 

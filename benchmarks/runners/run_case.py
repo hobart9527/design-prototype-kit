@@ -109,6 +109,28 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             result["metrics"] = prior.get("metrics") or {}
             result["session_fidelity"] = prior.get("session_fidelity")
         result["notes"].append("rejudged from stored artifacts (no new session)")
+        # Provenance describes the bytes that produced these artifacts, and those
+        # bytes are whatever the *original* session ran — not the working tree at
+        # re-judge time. Recomputing it here would stamp a revision that postdates
+        # the run onto artifacts it never touched, which is a stronger claim than
+        # having no provenance at all. Keep the stored identity; disclose absence.
+        prior_provenance = bl.read_json(archived[-1]).get("provenance") if archived else None
+        result["provenance"] = prior_provenance or {
+            "candidate": None, "judge_inputs": None, "aggregate_sha256": None,
+            "notes": ["rejudged without stored provenance; source identity unknown for the "
+                      "session that produced these artifacts"],
+        }
+        result["notes"].append("provenance preserved from original run" if prior_provenance
+                               else "provenance unknown: not recorded by the original run")
+        # A re-judge evaluates artifacts; it cannot retract why the session that
+        # produced them stopped. Without this the run reaches the RESULT block
+        # below with its placeholder INCONCLUSIVE status and is written out as
+        # FAIL, so a blocked session is counted as a judged failure and
+        # `per_variant.blocked` reports zero for a matrix of blocked runs.
+        session_status = (result["session"] or {}).get("status")
+        if session_status and session_status != "COMPLETED":
+            result["status"] = "BLOCKED"
+            result["notes"].append(f"session {session_status} (from stored session summary)")
         artifacts_dir = pathlib.Path(manifest["artifacts_dir"]) / "prototype"
     else:
         # PREPARE + GENERATE
@@ -179,7 +201,10 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             result["notes"].append(f"visual capture error: {exc}")
 
     # PROVENANCE (what actually ran, archived result files excluded so re-judging is stable)
-    result["provenance"] = _run_provenance(variant, out_dir)
+    # A re-judge already preserved the original session's identity above; hashing
+    # the current tree here would replace it with a post-dated revision.
+    if not rejudge:
+        result["provenance"] = _run_provenance(variant, out_dir)
 
     # RESULT
     hard_fail = False
