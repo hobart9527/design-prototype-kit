@@ -141,10 +141,10 @@ Leave no state silent and lose no user work.
   domain-specific states — with authentic content, not placeholders.
 - **Centralized In-Memory State Store (零依赖内存状态存储)**: Route interactive state through
   ONE plain zero-dependency object, `window.__prototypeState` (or a tiny plain-function reducer
-  over it). Do not pull in any external state-management library, and do not name or endorse a
-  vendor library. The store holds at minimum: active tab, active table filter, each sub-modal
+  over it). Do not pull in any external state management library or other heavy
+  state-management library, and do not name or endorse a vendor library. The store holds at minimum: active tab, active table filter, each sub-modal
   and drawer open/close flag, and every in-progress form draft.
-- **Context Preservation (Method 5)**: Dismissing a secondary modal or drawer, or re-rendering a
+- **Context Preservation (Method 5 / Decisive 3-Frame)**: Dismissing a secondary modal or drawer, or re-rendering a
   table, preserves existing form drafts, scroll offsets, and active filters without loss. A
   deliberate reset must be an authored, explicit action — nothing resets silently.
 - **Break Protocol Resilience**: Ensure graceful layout under the checkpoints declared in
