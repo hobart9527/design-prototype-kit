@@ -1,6 +1,6 @@
 ## 1. Repair Gate Assertions and Align Contract Execution
 
-- [ ] T-01 Align quality assertions, execution boundary whitelist, and builder agent guidance
+- [x] T-01 Align quality assertions, execution boundary whitelist, and builder agent guidance
   - Depends on: none
   - Anchors: skills/spec-prototype/scripts/verify_prototype_quality.py:assert_quality, skills/spec-prototype/scripts/execution_boundary.py:shell_read, agents/spec-prototype-builder.md
   - Write scope: skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/scripts/execution_boundary.py, agents/spec-prototype-builder.md, tests/test_pipeline.py
