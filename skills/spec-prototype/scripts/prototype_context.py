@@ -39,6 +39,24 @@ _SCALAR_KEYS = ("record", "revision", "coverage", "selection_source",
                 "prototype_medium", "verification_environment")
 _COVERAGE_VALUES = ("selected", "full-product", "unresolved")
 _NATIVE_TARGETS = ("ios", "android", "native")
+# A target runtime names an operating system, nothing else. A device class, an
+# input modality, a viewport size or a consumer domain is a different fact:
+# keeping them apart is what stops a mobile booking flow from reading back as
+# an iOS mandate. Only an authored OS name survives as a target; everything
+# else is retained as `unknown`.
+_OS_TARGETS = frozenset({"ios", "ipados", "android", "harmonyos", "windows",
+                         "macos", "linux", "web", "browser", "native", "cross-platform"})
+def _target_truth(raw: str) -> str:
+    """Collapse an authored target value to a retained OS name or `unknown`.
+
+    Normalizes case and separators so `Target OS: iOS` and `target_os: ios/ipados`
+    are the same fact, while `target-context: mobile` stays a device claim and is
+    withheld rather than upgraded.
+    """
+    for token in _ITEMS_RE.split((raw or "").lower()):
+        if token.strip() in _OS_TARGETS:
+            return token.strip()
+    return "unknown"
 
 
 def _items(value: str) -> List[str]:
@@ -164,7 +182,9 @@ def read_context(surface_map: str = "", product: str = "", foundation: str = "",
                 diagnostics.append({"code": "advisory_map_digest",
                                     "detail": f"digest {actual} != {expected_map_digest}"})
 
-    target_context = product_section["target_context"]
+    # Only an authored OS name is a target runtime. A device class or an input
+    # modality in the same field is withheld as `unknown`, never promoted.
+    target_context = _target_truth(product_section["target_context"])
     prototype_medium = spec_section["prototype_medium"]
     return {
         "surface_map": {

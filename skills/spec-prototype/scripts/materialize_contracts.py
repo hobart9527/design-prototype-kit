@@ -20,6 +20,10 @@ except ImportError:
 # Marked text is machine-detectable so it can never read as an authored decision.
 UNSPECIFIED = "unspecified"
 NOT_YET_DECIDED = "Not yet decided"
+# A platform fact no source authored. Device class, input modality and target
+# runtime are independent: `unknown` is a retained fact, never a placeholder
+# the compiler is allowed to upgrade into a default OS.
+UNKNOWN = "unknown"
 
 # Contract keys that require an authored source in the discussion/product records.
 # Missing source => key is omitted, never defaulted.
@@ -431,9 +435,19 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
         content_lang = "zh-CN" if re.search(r"[一-鿿]", disc_text) else "en-US"
 
     is_mobile_intent = bool(re.search(r"Baseline 4|Consumer|Mobile|Touch|Booking|移动|预约|触控", disc_text, re.IGNORECASE))
-    target_ctx = "ios" if is_mobile_intent else "web"
-    device_ctx = "mobile" if is_mobile_intent else "desktop"
-    input_ctx = "touch" if is_mobile_intent else "keyboard-pointer"
+    # Platform truth is three independent facts. A device class or an input
+    # modality never promotes itself into an operating-system target: a consumer
+    # booking mention with a mobile viewport is exactly the case that used to
+    # fabricate an iOS runtime. Only an authored target statement sets the OS;
+    # without one it stays `unknown`.
+    target_ctx = (extract_section_by_patterns(
+        disc_text, ["Target OS", "Target Runtime", "Target Platform", "目标系统", "目标平台", "运行平台"]) or UNKNOWN).lower()
+    device_ctx = (extract_section_by_patterns(
+        disc_text, ["Device Class", "Device", "设备类型", "设备"]) or (
+        "mobile" if is_mobile_intent else UNKNOWN)).lower()
+    input_ctx = (extract_section_by_patterns(
+        disc_text, ["Input Modality", "Input Context", "输入方式", "输入模态"]) or (
+        "touch" if is_mobile_intent else UNKNOWN)).lower()
 
     # Support Phase 1 synthesis of product.md if missing or requested
     if not prod_path.is_file() or (force and phase.lower() in ("1", "product")):
