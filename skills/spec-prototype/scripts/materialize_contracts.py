@@ -95,6 +95,16 @@ def extract_surfaces(disc_text: str, prod_text: str) -> tuple[list[str], list[st
             if sid and sid not in surface_ids:
                 surface_ids.append(sid)
             continue
+        if "|" in clean_line and any(kw in clean_line for kw in ("Primary:", "Secondary:", "Supporting:", "Contextual:", "主工作区:", "次级:", "支撑:", "上下文:")):
+            parts = re.findall(r"(?:Primary|Secondary|Supporting|Contextual|主工作区|次级|支撑|上下文)[^:]*:\s*([^.|;\n]+)", clean_line, re.IGNORECASE)
+            for part in parts:
+                entry = part.strip()
+                if entry and entry not in declared_surfaces:
+                    declared_surfaces.append(entry)
+                sid = extract_surface_id(entry)
+                if sid and sid not in surface_ids:
+                    surface_ids.append(sid)
+            continue
         if re.search(r"\b(?:surfaces/|hero-anchor/|anchor/)[a-zA-Z0-9_-]+", clean_line):
             raw_entry = clean_line.lstrip("-*+ ")
             if raw_entry not in declared_surfaces:
@@ -431,10 +441,10 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
         # No inferred baseline, borrowed reference, tension or omission is synthesized here.
         # An absent authored field stays marked, never promoted to a domain claim.
         p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or UNSPECIFIED
-        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or "Domain-authentic operational workflow grounding"
-        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or "Operational Speed vs Systemic Safety"
+        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or UNSPECIFIED
+        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or UNSPECIFIED
         omissions = extract_ruthless_omissions(disc_text, "")
-        omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else "- Unspecified (preserve standard convention boundaries)"
+        omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else f"- {UNSPECIFIED} (preserve standard convention boundaries)"
         prod_content = f"""# Product Thesis: {p_title}
 
 - Dominant Baseline: {p_baseline}
@@ -589,12 +599,15 @@ surfaces: {surfaces_str}
             omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else "- Unspecified (no explicit omissions authored; preserve standard convention boundaries)"
             invariants = extract_material_invariants(disc_text, prod_text)
             invariants_md = "\n".join(f"- {inv}" for inv in invariants) if invariants else "- Unspecified (maintain semantic neutrality without forced material metaphors)"
+            grounding_rat = extract_section_by_patterns(disc_text, ["Grounding", "Rationale", "Physical Metaphor", "Substrate", "原创推导", "物理隐喻", "因果依据", "设计理由"]) or \
+                            extract_section_by_patterns(prod_text, ["Grounding", "Rationale", "Physical Metaphor", "Substrate", "原创推导", "物理隐喻", "因果依据", "设计理由"]) or \
+                            UNSPECIFIED
             content = f"""# Project Experience Foundation: f1
 
 - Product: {product_title}
 - Product source: `prototype/product.md`, {_digest(prod_path)}
 - Core tension: {tension}
-- Grounding Rationale: Operational workflow grounding and non-transfer boundaries
+- Grounding Rationale: {grounding_rat}
 - Status: sealed provisional
 
 ```prototype-context

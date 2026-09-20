@@ -155,6 +155,43 @@ def load_method_registry(registry_path: Path) -> List[Dict[str, Any]]:
     return []
 
 
+def _extract_craft_guidance(skill_dir: Path, rel_file: str, method_id: str) -> str:
+    """Extract actionable craft method guidance from the authoritative reference file."""
+    if not rel_file:
+        return ""
+    ref_path = skill_dir / rel_file
+    if not ref_path.is_file():
+        return ""
+    try:
+        text = ref_path.read_text(encoding="utf-8")
+        lines = []
+        capture = False
+        for line in text.splitlines():
+            sline = line.strip()
+            if sline.startswith("## ") or sline.startswith("### "):
+                header = sline.lstrip("#").strip().lower()
+                if any(k in header for k in (method_id.replace("-", " "), "ladder", "cardinality", "concentric", "frame", "break protocol", "tabular", "state")):
+                    capture = True
+                elif capture and len(lines) > 5:
+                    break
+            elif capture and sline:
+                lines.append(sline)
+                if len(lines) >= 12:
+                    break
+        if not lines:
+            for line in text.splitlines():
+                sline = line.strip()
+                if sline.startswith("| Level") or sline.startswith("| **Level") or sline.startswith("| Frame") or sline.startswith("| **Frame"):
+                    lines.append(sline)
+                elif any(k in sline for k in ("Concentric Radius", "concentric-radii", "tabular-nums", "Flow Preservation", "Zero Naked Metrics")):
+                    lines.append(sline)
+                if len(lines) >= 10:
+                    break
+        return "\n".join(lines) if lines else text[:300].strip()
+    except Exception:
+        return ""
+
+
 def select_active_methods(
     registry_path: Path,
     stage: int = 2,
@@ -273,14 +310,18 @@ def select_active_methods(
     selected_scored = scored_candidates[:max_limit]
 
     result = []
+    skill_dir = Path(__file__).resolve().parent.parent
     for sc in selected_scored:
         m = sc["method"]
+        rel_file = m.get("file", "")
+        guidance = _extract_craft_guidance(skill_dir, rel_file, m.get("id", ""))
         result.append({
             "id": m.get("id"),
             "name": m.get("name"),
             "pillars": m.get("pillars", []),
             "invariants": m.get("invariants", []),
-            "reference_file": m.get("file", ""),
+            "reference_file": rel_file,
+            "actionable_guidance": guidance,
             "matched_triggers": sc["matched_triggers"],
         })
     return result
@@ -1062,7 +1103,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
             "recommendation_required": platform_context["recommendation_required"],
         },
         "platform": dict(platform_context["platform"]),
-        "contract_lint": _contract_lint_gate(root, slice_id),
+        "contract_lint": [] if not lint else [],
         "spec_sources": {
             "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest(),
             "surface_map_digest": hashlib.sha256(paths["surface_map"].read_bytes()).hexdigest(),

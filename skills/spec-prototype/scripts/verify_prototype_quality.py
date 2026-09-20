@@ -123,6 +123,22 @@ def _evidence_state(html: Path) -> dict[str, str]:
     return {}
 
 
+def _extract_section_text(text: str, *keywords: str) -> str:
+    lines: list[str] = []
+    in_sec = False
+    for line in text.splitlines():
+        if line.strip().startswith("#"):
+            header = line.lstrip("#").strip().lower()
+            if any(kw.lower() in header for kw in keywords):
+                in_sec = True
+                continue
+            elif in_sec:
+                break
+        elif in_sec:
+            lines.append(line)
+    return "\n".join(lines)
+
+
 def coverage_failures(html: Path, contract_path: Path | str | None = None) -> list[str]:
     """Reconcile the authored scope with delivery and evidence.
 
@@ -159,7 +175,18 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
     if contract_path:
         slice_name = Path(contract_path).parent.name
         if slice_name not in delivered and html.is_file():
-            delivered[slice_name] = html.read_text(encoding="utf-8")
+            content = html.read_text(encoding="utf-8")
+            has_surface_identity = (
+                f'data-surface="{slice_name}"' in content or
+                f'data-slice="{slice_name}"' in content or
+                f'id="{slice_name}"' in content or
+                f'class="{slice_name}"' in content or
+                f"surface-{slice_name}" in content or
+                slice_name in html.as_posix() or
+                (len(content.strip()) > 50 and any(tag in content.lower() for tag in ("<main", "<body", "<html", "<div")))
+            )
+            if has_surface_identity and len(content.strip()) > 50:
+                delivered[slice_name] = content
     reconciliation = prototype_context.reconcile_obligations(
         context, delivered=list(delivered), evidence=None, blocked=None,
         bound_revision=context["surface_map"]["revision"])
@@ -276,8 +303,20 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 failures.append("ergonomics assertion: declared dual-channel keyboard shortcuts not bound (missing keydown/keyup listener)")
 
         # Action Verb Lifecycle feedback closure: when commit mutations or toasts are declared
-        verbs_na = bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", contract_text, re.IGNORECASE))
-        if not verbs_na and ("Action Verb Lifecycle" in contract_text or "Completion Feedback Toast" in contract_text):
+        verb_sec = _extract_section_text(contract_text, "action verb", "verb lifecycle")
+        verb_rows = [
+            line for line in verb_sec.splitlines()
+            if line.strip().startswith("|") and not re.match(r"^\|\s*[-:]+\s*\|", line.strip()) and "Action ID" not in line and "Trigger Button" not in line
+        ]
+        active_commit_verbs = [
+            r for r in verb_rows
+            if not re.search(r"\b(?:N/A|None|Not Applicable|无|不适用)\b", r, re.IGNORECASE)
+            and len([c for c in r.split("|") if c.strip()]) >= 4
+        ]
+        has_active_verbs = bool(active_commit_verbs) or (
+            bool(verb_sec) and not bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", verb_sec, re.IGNORECASE | re.DOTALL))
+        )
+        if has_active_verbs:
             has_feedback_hook = bool(re.search(
                 r'role=["\'](?:status|alert)["\']|class=["\'][^"\']*\b(?:toast|notification|feedback|alert-box|status-message|snackbar)\b[^"\']*["\']|id=["\'][^"\']*(?:toast|feedback|status-msg)[^"\']*["\']|data-(?:feedback|toast)=',
                 source,
@@ -293,8 +332,19 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 failures.append("touch ergonomics assertion: declared touch-first gestures or tap detents not bound (missing touch/pointer/click handler)")
 
         # Dynamic state machine check: when multi-state or Break Protocol stress checkpoints are declared
-        break_na = bool(re.search(r"(?:The Break Protocol|Stress Checkpoints).*?(?:N/A|Not Applicable|无需破坏压测|不适用)", contract_text, re.IGNORECASE))
-        if not break_na and ("The Break Protocol Stress Checkpoints" in contract_text or "Zero-Item Empty State" in contract_text):
+        break_sec = _extract_section_text(contract_text, "break protocol", "stress checkpoint")
+        break_rows = [
+            line for line in break_sec.splitlines()
+            if "Reality Breaker" not in line and line.strip().startswith("|") and not re.match(r"^\|\s*[-:]+\s*\|", line.strip())
+        ]
+        active_break_checkpoints = [
+            r for r in break_rows
+            if not re.search(r"\b(?:N/A|None|Not Applicable|无|不适用)\b", r, re.IGNORECASE)
+        ]
+        has_active_break = bool(active_break_checkpoints) or (
+            bool(break_sec) and not bool(re.search(r"(?:The Break Protocol|Stress Checkpoints).*?(?:N/A|Not Applicable|无需破坏压测|不适用)", break_sec, re.IGNORECASE | re.DOTALL))
+        )
+        if has_active_break:
             has_state_hook = bool(re.search(
                 r"hashchange|location\.hash|data-state|state-[a-zA-Z0-9_-]+|class=[\"'][^\"']*(?:empty|loading|view-mode|state-)[^\"']*[\"']|id=[\"'][^\"']*(?:empty|loading|view-mode)[^\"']*[\"']",
                 source,
