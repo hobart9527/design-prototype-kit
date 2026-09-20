@@ -13,6 +13,9 @@ import sys
 from typing import Dict, List, Tuple
 import json
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import prototype_context  # noqa: E402
+
 
 def _read_verification(root: Path) -> Dict[str, str]:
     manifest = root / "prototype/evidence/handoff-manifest.json"
@@ -78,6 +81,66 @@ def discover_surfaces(root: Path) -> List[Dict[str, str]]:
     return surfaces
 
 
+def read_coverage(root: Path) -> Dict[str, object] | None:
+    """Reconcile authored scope with on-disk delivery for the review view.
+
+    Declared-but-absent surfaces stay visible; review management statuses stay
+    out of the prototype's own navigation.
+    """
+    sources = {
+        "surface_map": root / "prototype/contracts/surface-maps/m1.md",
+        "product": root / "prototype/product.md",
+        "foundation": root / "prototype/contracts/foundation/f1.md",
+        "specification": None,
+    }
+    specs = sorted((root / "prototype/specifications").glob("*/r1.md"))
+    sources["specification"] = specs[0] if specs else None
+    texts = {}
+    for key, path in sources.items():
+        texts[key] = path.read_text(encoding="utf-8") if path and path.is_file() else ""
+    if not texts["surface_map"]:
+        return None
+    context = prototype_context.read_context(**texts)
+
+    delivered: Dict[str, str] = {}
+    for html in sorted((root / "prototype/surfaces").glob("*/index.html")) + sorted(
+            (root / "prototype/experiments").glob("*/**/index.html")):
+        name = html.parent.parent.name if html.parent.name in ("anchor", "hero-anchor") else html.parent.name
+        delivered[name] = html.relative_to(root).as_posix()
+
+    return prototype_context.reconcile_obligations(context, delivered=delivered)
+
+
+def build_coverage_html(reconciliation: Dict[str, object] | None) -> str:
+    if not reconciliation:
+        return ""
+    # An unusable scope never renders met: completion stays withheld and the
+    # governing scope error is named in the view.
+    completion = bool(reconciliation.get("completion")) and not reconciliation.get("governing_error")
+    governing = reconciliation.get("governing_error") or {}
+    rows = []
+    for obligation in reconciliation.get("obligations", []):
+        rows.append(
+            "<tr><td>{surface}</td><td>{scope}</td><td>{delivery}</td>"
+            "<td>{evidence}</td><td>{blocker}</td></tr>".format(
+                surface=obligation["surface"], scope=obligation["scope"],
+                delivery=obligation["delivery"], evidence=obligation["evidence"],
+                blocker=obligation["blocker"] or "-"))
+    return (
+        '<section id="coverage-reconciliation">'
+        f'<h2>Coverage: {reconciliation.get("coverage")} (rev {reconciliation.get("revision")})</h2>'
+        f'<p>In round: {", ".join(reconciliation.get("in_round") or []) or "none"}</p>'
+        f'<p>Outside this round: {", ".join(reconciliation.get("outside_round") or []) or "none"}</p>'
+        f'<p>Declared but absent: {", ".join(reconciliation.get("missing_delivery") or []) or "none"}</p>'
+        f'<p>Missing evidence: {", ".join(reconciliation.get("missing_evidence") or []) or "none"}</p>'
+        + (f'<p data-scope-error="{governing.get("code", "")}">Scope error: {governing["code"]}</p>'
+           if governing else "")
+        + f'<p data-completion="{str(completion).lower()}">'
+        f'Completion: {"met" if completion else "withheld"}</p>'
+        "<table><tr><th>Surface</th><th>Scope</th><th>Delivery</th><th>Evidence</th><th>Blocker</th></tr>"
+        + "".join(rows) + "</table></section>")
+
+
 def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Review Portal", verification: Dict[str, str] | None = None) -> str:
     default_url = surfaces[0]["url"] if surfaces else "about:blank"
     verification = verification or {}
@@ -97,6 +160,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
             f'<button class="view-btn{active_cls}" onclick="loadView(\'{s["url"]}\', this)">{s["name"]}</button>'
         )
     btn_group_html = "\n      ".join(btn_html_list)
+    default_url_json = json.dumps(default_url)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -242,18 +306,25 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     <div class="view-switcher">
       {btn_group_html}
     </div>
-    <div class="viewport-tools">
+    <div class="viewport-tools" data-viewport-rail>
       <span class="vp-label">VIEWPORT:</span>
-      <button class="vp-btn active" onclick="setViewport('100%')">FULL</button>
-      <button class="vp-btn" onclick="setViewport('1440px')">1440px (Wide)</button>
-      <button class="vp-btn" onclick="setViewport('1024px')">1024px (Compact)</button>
-      <button class="vp-btn" onclick="setViewport('768px')">768px</button>
-      <button class="vp-btn" onclick="setViewport('390px')">390px (Mobile)</button>
+      <button class="vp-btn active" data-viewport="100%" onclick="setViewport('100%', this)">FULL</button>
+      <button class="vp-btn" data-viewport="1440px" onclick="setViewport('1440px', this)">1440px (Desktop)</button>
+      <button class="vp-btn" data-viewport="768px" onclick="setViewport('768px', this)">768px (Tablet)</button>
+      <button class="vp-btn" data-viewport="390px" onclick="setViewport('390px', this)">390px (Mobile)</button>
+      <button class="vp-btn" data-break-protocol="off" onclick="setBreakProtocol(null, this)">BREAK: OFF</button>
+      <button class="vp-btn" data-break-protocol="overflow" data-stress="overflow" onclick="setBreakProtocol('overflow', this)">BREAK: OVERFLOW</button>
+      <button class="vp-btn" data-break-protocol="empty" data-stress="empty" onclick="setBreakProtocol('empty', this)">BREAK: EMPTY</button>
     </div>
   </div>
 
   <div class="portal-frame-box">
-    <iframe id="preview-frame" src="{default_url}"></iframe>
+    <div class="viewport-frame" data-viewport-frame="100%">
+      <iframe id="preview-frame" src="{default_url}"></iframe>
+    </div>
+    <div class="viewport-frame" data-viewport-frame="1440px" hidden></div>
+    <div class="viewport-frame" data-viewport-frame="768px" hidden></div>
+    <div class="viewport-frame" data-viewport-frame="390px" hidden></div>
   </div>
 
   <div class="portal-status-bar">
@@ -270,16 +341,49 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
   </div>
 
   <script>
-    function loadView(url, btn) {{
-      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('preview-frame').src = url;
+    var currentView = {default_url_json};
+    var currentStress = null;
+    var STRESS_QUERY = {{
+      overflow: '?stress=overflow',
+      empty: '?stress=empty'
+    }};
+
+    function frameUrl(url, stress) {{
+      var query = STRESS_QUERY[stress];
+      if (!query) return url;
+      return url + (url.indexOf('?') >= 0 ? '&' + query.slice(1) : query);
     }}
 
-    function setViewport(w) {{
-      document.querySelectorAll('.vp-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('preview-frame').style.width = w;
+    function loadView(url, btn) {{
+      currentView = url;
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      applyFrame();
+    }}
+
+    function setViewport(w, btn) {{
+      document.querySelectorAll('[data-viewport]').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.querySelectorAll('.viewport-frame').forEach(function (f) {{
+        f.hidden = f.getAttribute('data-viewport-frame') !== w;
+      }});
+      var frame = document.getElementById('preview-frame');
+      frame.style.width = w;
+    }}
+
+    function setBreakProtocol(stress, btn) {{
+      currentStress = stress;
+      document.querySelectorAll('[data-break-protocol]').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      applyFrame();
+    }}
+
+    function applyFrame() {{
+      document.getElementById('preview-frame').src = frameUrl(currentView, currentStress);
+    }}
+
+    function setViewportWidth(w) {{
+      setViewport(w, document.querySelector('[data-viewport="' + w + '"]'));
     }}
   </script>
 </body>
@@ -307,6 +411,13 @@ def main():
         except (json.JSONDecodeError, OSError):
             verification = {}
     html = build_portal_html(surfaces, verification=verification)
+    coverage_html = ""
+    reconciliation = read_coverage(root)
+    if reconciliation:
+        coverage_html = build_coverage_html(reconciliation)
+        marker = "  <div class=\"portal-frame-box\">"
+        if marker in html:
+            html = html.replace(marker, coverage_html + "\n" + marker, 1)
     out_path = root / args.output
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")

@@ -13,6 +13,9 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import prototype_context  # noqa: E402
+
 
 def _contract_items(path: Path | None) -> list[str]:
     """Extract verifiable entity names, action IDs, or button labels from contract markdown."""
@@ -120,6 +123,101 @@ def _evidence_state(html: Path) -> dict[str, str]:
     return {}
 
 
+def _extract_section_text(text: str, *keywords: str) -> str:
+    lines: list[str] = []
+    in_sec = False
+    for line in text.splitlines():
+        if line.strip().startswith("#"):
+            header = line.lstrip("#").strip().lower()
+            if any(kw.lower() in header for kw in keywords):
+                in_sec = True
+                continue
+            elif in_sec:
+                break
+        elif in_sec:
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def coverage_failures(html: Path, contract_path: Path | str | None = None) -> list[str]:
+    """Reconcile the authored scope with delivery and evidence.
+
+    Scope membership, delivery and evidence stay separate facts; a documented
+    blocker never discharges an obligation and a pending destination stays
+    href-free rather than becoming a broken link.
+    """
+    root = None
+    for parent in [html.parent, *html.parents]:
+        if (parent / "prototype/contracts/surface-maps/m1.md").is_file():
+            root = parent
+            break
+    if root is None:
+        return []
+    texts = {}
+    for key, path in (
+        ("surface_map", root / "prototype/contracts/surface-maps/m1.md"),
+        ("product", root / "prototype/product.md"),
+        ("foundation", root / "prototype/contracts/foundation/f1.md"),
+    ):
+        texts[key] = path.read_text(encoding="utf-8") if path.is_file() else ""
+    specs = sorted((root / "prototype/specifications").glob("*/r1.md"))
+    texts["specification"] = specs[0].read_text(encoding="utf-8") if specs else ""
+    if not texts["surface_map"]:
+        return []
+
+    context = prototype_context.read_context(**texts)
+    delivered = {}
+    pages = sorted((root / "prototype/surfaces").glob("*/index.html")) + sorted(
+        (root / "prototype/experiments").glob("*/**/index.html"))
+    for page in pages:
+        name = page.parent.parent.name if page.parent.name in ("anchor", "hero-anchor") else page.parent.name
+        delivered[name] = page.read_text(encoding="utf-8")
+    if contract_path:
+        slice_name = Path(contract_path).parent.name
+        if slice_name not in delivered and html.is_file():
+            content = html.read_text(encoding="utf-8")
+            has_surface_identity = (
+                f'data-surface="{slice_name}"' in content or
+                f'data-slice="{slice_name}"' in content or
+                f'id="{slice_name}"' in content or
+                f'class="{slice_name}"' in content or
+                f"surface-{slice_name}" in content or
+                slice_name in html.as_posix() or
+                (len(content.strip()) > 50 and any(tag in content.lower() for tag in ("<main", "<body", "<html", "<div")))
+            )
+            if has_surface_identity and len(content.strip()) > 50:
+                delivered[slice_name] = content
+    reconciliation = prototype_context.reconcile_obligations(
+        context, delivered=list(delivered), evidence=None, blocked=None,
+        bound_revision=context["surface_map"]["revision"])
+
+    failures: list[str] = []
+    # An unusable scope withholds completion rather than passing: the check fails
+    # and names the governing error instead of laundering a met completion.
+    if reconciliation["governing_error"]:
+        error = reconciliation["governing_error"]
+        failures.append(f"coverage assertion: resolved scope is unusable ({error['code']}); "
+                        "completion is withheld until the scope error is resolved")
+    if reconciliation["coverage"] == "unresolved" and context["surface_map"]["surfaces"]:
+        failures.append("coverage assertion: surface map declares surfaces without an explicit selected/full-product coverage")
+    if reconciliation["missing_delivery"]:
+        failures.append("coverage assertion: selected obligations undelivered ("
+                        + ", ".join(reconciliation["missing_delivery"][:5])
+                        + "); absent surfaces remain review-visible, not silently dropped")
+    if reconciliation["stale_revision"]:
+        failures.append("coverage assertion: delivered scope does not match the retained map revision")
+    for surface in reconciliation["in_round"]:
+        source = delivered.get(surface, "")
+        if not source:
+            continue
+        for sibling in reconciliation["in_round"]:
+            if sibling == surface or sibling in delivered:
+                continue
+            if re.search(rf"href=[\"'][^\"']*{re.escape(sibling)}[^\"']*[\"']", source):
+                failures.append(f"coverage assertion: pending sibling {sibling} linked from {surface} but not delivered (render a disabled affordance instead)")
+    return failures
+
+
 def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                    contract_path: str | None = None) -> bool:
     html = Path(html_path)
@@ -205,7 +303,20 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 failures.append("ergonomics assertion: declared dual-channel keyboard shortcuts not bound (missing keydown/keyup listener)")
 
         # Action Verb Lifecycle feedback closure: when commit mutations or toasts are declared
-        if "Action Verb Lifecycle" in contract_text or "Completion Feedback Toast" in contract_text:
+        verb_sec = _extract_section_text(contract_text, "action verb", "verb lifecycle")
+        verb_rows = [
+            line for line in verb_sec.splitlines()
+            if line.strip().startswith("|") and not re.match(r"^\|\s*[-:]+\s*\|", line.strip()) and "Action ID" not in line and "Trigger Button" not in line
+        ]
+        active_commit_verbs = [
+            r for r in verb_rows
+            if not re.search(r"\b(?:N/A|None|Not Applicable|无|不适用)\b", r, re.IGNORECASE)
+            and len([c for c in r.split("|") if c.strip()]) >= 4
+        ]
+        has_active_verbs = bool(active_commit_verbs) or (
+            bool(verb_sec) and not bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", verb_sec, re.IGNORECASE | re.DOTALL))
+        )
+        if has_active_verbs:
             has_feedback_hook = bool(re.search(
                 r'role=["\'](?:status|alert)["\']|class=["\'][^"\']*\b(?:toast|notification|feedback|alert-box|status-message|snackbar)\b[^"\']*["\']|id=["\'][^"\']*(?:toast|feedback|status-msg)[^"\']*["\']|data-(?:feedback|toast)=',
                 source,
@@ -221,7 +332,19 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 failures.append("touch ergonomics assertion: declared touch-first gestures or tap detents not bound (missing touch/pointer/click handler)")
 
         # Dynamic state machine check: when multi-state or Break Protocol stress checkpoints are declared
-        if "The Break Protocol Stress Checkpoints" in contract_text or "Zero-Item Empty State" in contract_text:
+        break_sec = _extract_section_text(contract_text, "break protocol", "stress checkpoint")
+        break_rows = [
+            line for line in break_sec.splitlines()
+            if "Reality Breaker" not in line and line.strip().startswith("|") and not re.match(r"^\|\s*[-:]+\s*\|", line.strip())
+        ]
+        active_break_checkpoints = [
+            r for r in break_rows
+            if not re.search(r"\b(?:N/A|None|Not Applicable|无|不适用)\b", r, re.IGNORECASE)
+        ]
+        has_active_break = bool(active_break_checkpoints) or (
+            bool(break_sec) and not bool(re.search(r"(?:The Break Protocol|Stress Checkpoints).*?(?:N/A|Not Applicable|无需破坏压测|不适用)", break_sec, re.IGNORECASE | re.DOTALL))
+        )
+        if has_active_break:
             has_state_hook = bool(re.search(
                 r"hashchange|location\.hash|data-state|state-[a-zA-Z0-9_-]+|class=[\"'][^\"']*(?:empty|loading|view-mode|state-)[^\"']*[\"']|id=[\"'][^\"']*(?:empty|loading|view-mode)[^\"']*[\"']",
                 source,
@@ -293,6 +416,8 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                     has_sibling_link = any(re.search(rf"href=[\"'][^\"']*{re.escape(sid)}[^\"']*[\"']", source) for sid in siblings)
                     if not has_sibling_link:
                         failures.append(f"topology assertion: multi-surface navigation links missing for sibling surfaces ({', '.join(siblings)})")
+
+    failures.extend(coverage_failures(html, contract_path=contract_path))
 
     if check_stale:
         if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", source, re.IGNORECASE):

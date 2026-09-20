@@ -41,6 +41,33 @@ when visual evidence exists. For a runnable target, inspect the real runner befo
 evidence. Screenshots establish appearance and responsive fold; interactive claims require a task
 trace. A storyboard is not runtime evidence.
 
+Read the capture metadata (`metadata`) emitted with the evidence before judging coverage. It binds each
+screenshot to the runner, `browser_execution`, runtime, target platform and dependency identity that
+produced it. Never infer native-platform validation from a requested viewport width, a target-platform
+label or a file name: a browser render on desktop Chromium is not Android or iOS validation. When the
+metadata shows `browser_execution: html-browser` against a non-web target platform, report that
+platform's validation as `unverified` rather than passed. When metadata or screenshots are absent,
+stale, or bound to a different source/dependency revision, or when `capture_failed` /
+`browser_unavailable` is reported, state that consequence explicitly and withhold the affected visual
+claims instead of restating the producer's summary.
+
+Resolve the reviewed surface's platform context from the projected envelope facts alone. The
+formal envelope emits `platform.target_context`, `platform.prototype_medium`,
+`platform.verification_environment` and `platform.native_validation_pending`, plus the per-surface
+authored context IDs under `coverage.applicability[<surface_id>]`. Those five names are the whole
+platform contract; do not read a target from any other envelope key. Where that surface entry is
+absent, judge against the global `platform` facts and name the surface's platform contract
+unauthored rather than assuming a target. Compare the evidence's
+recorded capture metadata against the environment the projected field names: the metadata
+`environment.runtime` and `environment.browser_execution` must satisfy the
+`platform.verification_environment` the envelope declares, and where the metadata `target.platform`
+is non-web while `platform.native_validation_pending` is true, the declared target's validation
+stays `unverified`. A browser render never satisfies a native target.
+
+A metadata claim is still a claim: compare it against the bytes inspected and against the target's
+actual runner. Where metadata bound to a changed dependency no longer matches the inspected revision,
+mark that evidence unusable for this review and name which dependency change invalidated it.
+
 Attempt the requested task from visible cues. Exercise the applicable dense,
 consequential, narrow, interrupted, recovery or return case named by the review
 question or source risk. Do not force a universal set of states. Stop when each
@@ -78,6 +105,28 @@ Judge the whole product experience, not only correctness or taste:
   and honest?
 - **Feasibility and evidence:** Does the design respect known platform/runtime
   constraints, and does each claim have evidence suited to it?
+
+### Somatic Craft Checks (Non-dilutable sensory floor)
+
+When the reviewed surface declares a touch target context, inspect the rendered
+evidence against these somatic rules and report each miss as a floor finding,
+never averaged away by ambient polish:
+
+- **Mobile safe-area insets:** fixed or edge-anchored chrome must pad with
+  `env(safe-area-inset-*)`; content hidden under a notch or the home indicator is
+  a defect, not a stylistic choice.
+- **Touch target floor:** every tappable control must present a minimum 44x44px
+  hit target. A visually smaller glyph with insufficient transparent padding
+  fails.
+- **Press feedback:** commit surfaces must give `:active` spring micro-feedback on
+  press, not a silent tap.
+- **Concentric nested radius:** nested rounded containers must satisfy the
+  optical geometry `R_in = max(0, R_out - P)`, where `R_out` is the outer radius
+  and `P` the gap between outer edge and inner element. Reused outer radii on an
+  inner child, or a negative subtraction, are DEFECT-level geometry misses.
+- **Numeric stability:** telemetry, timestamps, counters and financial/metric
+  figures must specify `font-variant-numeric: tabular-nums`; proportional digits
+  that jitter columns on update are a DEFECT.
 
 Light, dark, flat, layered, dense, spacious, immediate, animated, familiar and
 experimental work can all be excellent. Judge the supplied specification and target

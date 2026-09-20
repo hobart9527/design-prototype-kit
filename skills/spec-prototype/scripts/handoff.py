@@ -487,44 +487,140 @@ def pillar_packet(root: Path, spec_path: Path) -> dict:
     }
 
 
-def verify_freeze_approval(root: Path) -> bool:
-    """Verify explicit stakeholder signoff before promoting to frozen_approved."""
-    discussion_path = root / "prototype" / "discussion.md"
-    if not discussion_path.is_file():
-        return False
-    text = discussion_path.read_text(encoding="utf-8")
-    approval_markers = (
-        "用户明确批准", "用户批准", "确认封版", "确认冻结",
-        "stakeholder approved", "approved for freeze", "signoff: approved"
-    )
-    return any(marker in text.lower() for marker in approval_markers)
+APPROVAL_STATUSES = ("confirmed", "delegated")
+
+# A decision row that only announces a future approval binds nothing. Any of
+# these markers means no approval exists at freeze time.
+PLANNED_APPROVAL_MARKERS = (
+    "will approve", "to be approved", "plan to approve", "planned approval",
+    "planned", "would approve", "when approved", "once approved",
+    "after approval", "awaiting approval", "approval pending", "pending approval",
+    "not approved", "no approval", "never approved", "without approval",
+    "unapproved", "rejected", "declined",
+)
+
+# The row must cite an actual approval or explicit delegated-authority source.
+APPROVAL_SOURCE_MARKERS = (
+    "用户明确批准", "用户批准", "用户确认", "确认封版", "确认冻结",
+    "stakeholder approved", "approved for freeze", "signoff: approved",
+    "signoff approved", "explicit approval", "approval source",
+    "delegated authority", "prior delegation",
+)
+
+# ... and an actual locator for that decision, not an arbitrary phrase.
+APPROVAL_LOCATOR_MARKERS = (
+    "turn", "轮", "date", "日期", "quote", "原话", "引用", "locator", "定位",
+)
+
+# A spec-only approval retains the design scope without claiming that any
+# prototype, platform or production implementation was exercised.
+SPEC_ONLY_MARKERS = (
+    "spec-only", "spec only", "design-only", "design only", "仅规格", "仅设计",
+    "without prototype", "no prototype execution", "无原型",
+)
+
+# Downstream implementation validation that a freeze cannot claim on its own.
+PENDING_IMPLEMENTATION_DIMENSIONS = ("implementation", "platform", "production")
 
 
-def freeze(root: Path, spec: str, require_approval: bool = True) -> dict:
+def _decision_rows(text: str) -> list[list[str]]:
+    """Parse the discussion record's decision table rows (`| ID | … |`)."""
+    rows: list[list[str]] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = _split_row(stripped)
+        if len(cells) < 2 or _is_delimiter(cells):
+            continue
+        if _normalized(cells[0]) in ("id", ""):
+            continue
+        rows.append(cells)
+    return rows
+
+
+def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
+    """Bind a freeze to an actual recorded approval decision and its source.
+
+    A matching phrase inside free text is not approval. The binding requires one
+    decision row with status `confirmed | delegated` that cites an approval or
+    delegated-authority source plus a locator, and that is neither a planned nor
+    a negated statement. The row's retained digest and any source it names are
+    recorded so a later edit invalidates downstream admission.
+    """
+    record = root / "prototype" / "discussion.md"
+    if not record.is_file():
+        raise HandoffError(
+            "Cannot freeze specification: prototype/discussion.md is missing; "
+            "record the actual approval or delegated-authority decision first."
+        )
+    text = record.read_text(encoding="utf-8")
+    selected: list[str] | None = None
+    spec_only = False
+    sources: list[str] = []
+    for row in _decision_rows(text):
+        # Columns: ID | Decision | Status | Reason | quote + locator | affected artifacts.
+        status = _normalized(row[2]) if len(row) > 2 else ""
+        if status not in APPROVAL_STATUSES:
+            continue
+        evidence = " ".join(row[3:5]).lower()
+        if any(marker in evidence for marker in PLANNED_APPROVAL_MARKERS):
+            continue
+        if not any(marker.lower() in evidence for marker in APPROVAL_SOURCE_MARKERS):
+            continue
+        if not any(marker.lower() in evidence for marker in APPROVAL_LOCATOR_MARKERS):
+            continue
+        selected = row
+        spec_only = spec_only or any(m in evidence for m in SPEC_ONLY_MARKERS)
+        sources = [token for token in re.findall(r"`([^`]+)`", row[-1]) if "/" in token]
+    if selected is None:
+        raise HandoffError(
+            "Cannot freeze specification: no actual approval or delegated-authority decision "
+            f"for slice '{slice_id}' / '{candidate_id}'. A planned, negated or override-only "
+            "statement, or a bare matching phrase, does not authorize freeze. Record the "
+            "decision and its locator in prototype/discussion.md."
+        )
+    binding = {
+        "record": retained(root, "prototype/discussion.md"),
+        "decision_id": _clean(selected[0]),
+        "status": _normalized(selected[2]),
+        "scope": {"slice_id": slice_id, "candidate_id": candidate_id},
+        "spec_only": spec_only,
+    }
+    if sources:
+        source = within(root, sources[0])
+        if not source.is_file():
+            raise HandoffError(
+                f"Approval binding references a source that is not retained: {sources[0]}")
+        binding["source"] = retained(root, sources[0])
+    return binding
+
+
+def freeze(root: Path, spec: str) -> dict:
     """Freeze a specification and its transitively retained contracts into immutable state.
 
     Calculates SHA256 digests across all authoritative artifacts (Foundation,
     Tokens, Surface Map, Slice Contract, and the Specification itself), asserts
     that all internal references match their calculated digests, and returns
     the frozen artifact manifest with immutable SHA256 digests.
+
+    Approval is bound to an actual decision recorded in prototype/discussion.md.
+    A spec-only approval retains the approved design scope without claiming a
+    build, so it freezes without a prototype entry artifact; a scope that claims
+    prototype implementation still requires its entry. There is no permissive
+    bypass: a strict packet failure stays failed.
     """
     root = root.resolve()
     spec_path = within(root, spec)
-    if require_approval and not verify_freeze_approval(root):
-        raise HandoffError(
-            "Cannot freeze specification: missing explicit stakeholder approval evidence in prototype/discussion.md. "
-            "Specification remains in sealed provisional status."
-        )
-    try:
-        pkt = packet(root, spec)
-    except HandoffError as error:
-        # Direction briefs are exploration input, never formal freeze manifests.
-        if spec_path.parent.name == "briefs" or "direction-probe" in spec_path.read_text(encoding="utf-8"):
-            raise HandoffError("Cannot freeze an exploration brief; formal Specification approval is required") from error
-        pkt = pillar_packet(root, spec_path)
-    require_prototype_entry(root, pkt["prototype_write_scope"])
     if spec_path.parent.name == "briefs":
         raise HandoffError("Cannot freeze an exploration brief; formal Specification approval is required")
+    pkt = packet(root, spec)
+    binding = approval_binding(root, pkt["slice_id"], pkt["candidate_id"])
+    # The entry requirement guards a scope that claims prototype implementation.
+    # Every approval other than a spec-only one keeps that requirement, and an
+    # override never reaches this point because approval_binding refuses it.
+    if not binding["spec_only"]:
+        require_prototype_entry(root, pkt["prototype_write_scope"])
 
     spec_body = spec_path.read_text(encoding="utf-8")
     status_match = re.search(r"^-\s*(?:Compilation status|Authority status):\s*`?([a-zA-Z0-9_ -]+)`?", spec_body, re.M | re.IGNORECASE)
@@ -545,7 +641,12 @@ def freeze(root: Path, spec: str, require_approval: bool = True) -> dict:
     )
     if updated_spec_body != spec_body:
         spec_path.write_text(updated_spec_body, encoding="utf-8")
-        pkt["specification"] = retained(root, str(spec_path.relative_to(root)))
+    # Re-derive after the status transition: the manifest must record the bytes
+    # that actually exist at freeze time, or admission breaks on its own receipt.
+    spec_ref = str(spec_path.relative_to(root))
+    pkt["specification"] = retained(root, spec_ref)
+    if binding.get("source", {}).get("path") == spec_ref:
+        binding["source"] = retained(root, spec_ref)
 
     frozen_manifest = {
         "status": "frozen",
@@ -556,6 +657,10 @@ def freeze(root: Path, spec: str, require_approval: bool = True) -> dict:
         "evidence": evidence_record,
         "references": pkt["references"],
         "craft_reads": pkt["craft_reads"],
+        "approval": binding,
+        # Freezing a design scope never exercises implementation. These remain
+        # explicitly pending whether or not the approval is spec-only.
+        "implementation_validation": {name: "pending" for name in PENDING_IMPLEMENTATION_DIMENSIONS},
         "frozen_artifacts": [pkt["specification"], *pkt["required_reads"][1:]] + ([evidence_record] if evidence_record else [])
     }
     # Persist freeze-manifest.json to evidence scope
@@ -564,6 +669,40 @@ def freeze(root: Path, spec: str, require_approval: bool = True) -> dict:
     manifest_path = evidence_dir / "freeze-manifest.json"
     manifest_path.write_text(json.dumps(frozen_manifest, ensure_ascii=False, indent=2) + chr(10))
     return frozen_manifest
+
+
+def downstream_admission(root: Path, slice_id: str) -> dict:
+    """Re-verify the frozen manifest against the current sources.
+
+    Admission is bound to the exact bytes recorded at freeze time: a manifest
+    whose recorded revision, approval provenance or referenced source digest has
+    drifted is refused rather than admitted from the older receipt.
+    """
+    manifest = check_downstream_gate(root, slice_id)
+    binding = manifest.get("approval", {})
+    record = binding.get("record")
+    if "approval" in manifest and not record:
+        raise HandoffError(
+            "Downstream Gate Blocked: frozen manifest carries no approval binding; "
+            "re-freeze with an actual recorded approval decision.")
+    for ref in (record, binding.get("source")):
+        if not ref:
+            continue
+        current = retained(root, ref["path"])
+        if current["sha256"] != ref["sha256"]:
+            raise HandoffError(
+                f"Downstream Gate Blocked: {ref['path']} changed after freeze "
+                f"({current['sha256'][:8]} != {ref['sha256'][:8]}); re-freeze before admission.")
+    frozen = json.loads((root / manifest["manifest"]).read_text(encoding="utf-8"))
+    spec_ref = frozen.get("specification")
+    if spec_ref:
+        current = retained(root, spec_ref["path"])
+        if current["sha256"] != spec_ref["sha256"]:
+            raise HandoffError(
+                f"Downstream Gate Blocked: {spec_ref['path']} changed after freeze "
+                f"({current['sha256'][:8]} != {spec_ref['sha256'][:8]}); re-freeze before admission.")
+    manifest["admission"] = "bound_to_frozen_revision"
+    return manifest
 
 
 def check_downstream_gate(root: Path, slice_id: str) -> dict:
@@ -594,19 +733,36 @@ def check_downstream_gate(root: Path, slice_id: str) -> dict:
     spec_status = status_match.group(1).strip().lower() if status_match else "provisional"
 
     if manifest_path.is_file():
+        # Explicit format admission: a malformed manifest is a diagnostic, never a
+        # silent downgrade to the softer status-text branch below.
         try:
             m_data = json.loads(manifest_path.read_text(encoding="utf-8"))
-            if m_data.get("status") == "frozen" or m_data.get("authority_status") == "frozen_approved":
-                return {
-                    "gate": "passed",
-                    "authority_status": "frozen_approved",
-                    "slice_id": slice_id,
-                    "specification": str(spec_path.relative_to(root)),
-                    "manifest": str(manifest_path.relative_to(root)),
-                    "message": "Downstream Gate Passed: Specification is frozen approved and ready for Loom delivery.",
-                }
-        except Exception:
-            pass
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise HandoffError(
+                f"Downstream Gate Blocked: freeze manifest for slice '{slice_id}' is malformed "
+                f"({error}); re-run handoff.py freeze.") from error
+        if not isinstance(m_data, dict) or "status" not in m_data:
+            raise HandoffError(
+                f"Downstream Gate Blocked: freeze manifest for slice '{slice_id}' is not a retained "
+                "freeze record; re-run handoff.py freeze.")
+        if m_data.get("status") != "frozen" or m_data.get("authority_status") != "frozen_approved":
+            raise HandoffError(
+                f"Downstream Gate Blocked: freeze manifest for slice '{slice_id}' does not record "
+                "frozen_approved authority; re-run handoff.py freeze.")
+        if "approval" in m_data and not m_data["approval"]:
+            raise HandoffError(
+                f"Downstream Gate Blocked: freeze manifest for slice '{slice_id}' carries an empty "
+                "approval binding; re-run handoff.py freeze against an actual recorded approval.")
+        return {
+            "gate": "passed",
+            "authority_status": "frozen_approved",
+            "slice_id": slice_id,
+            "specification": str(spec_path.relative_to(root)),
+            "manifest": str(manifest_path.relative_to(root)),
+            "approval": m_data.get("approval"),
+            "implementation_validation": m_data.get("implementation_validation", {}),
+            "message": "Downstream Gate Passed: Specification is frozen approved and ready for Loom delivery.",
+        }
 
     if spec_status in ("draft", "provisional", "sealed provisional", "candidate"):
         raise HandoffError(
@@ -659,7 +815,6 @@ def main() -> int:
     frz = sub.add_parser("freeze")
     frz.add_argument("--root", type=Path, required=True)
     frz.add_argument("--spec", required=True)
-    frz.add_argument("--force", action="store_true", help="Bypass explicit approval check")
     man = sub.add_parser("manifest")
     man.add_argument("--dir", type=Path, required=True)
     man.add_argument("--output", type=Path)
@@ -675,9 +830,9 @@ def main() -> int:
         elif args.command == "packet":
             print(json.dumps(packet(args.root, args.spec), ensure_ascii=False, indent=2))
         elif args.command == "freeze":
-            print(json.dumps(freeze(args.root, args.spec, require_approval=not args.force), ensure_ascii=False, indent=2))
+            print(json.dumps(freeze(args.root, args.spec), ensure_ascii=False, indent=2))
         elif args.command == "gate":
-            print(json.dumps(check_downstream_gate(args.root, args.slice), ensure_ascii=False, indent=2))
+            print(json.dumps(downstream_admission(args.root, args.slice), ensure_ascii=False, indent=2))
         elif args.command == "manifest":
             data = directory_manifest(args.dir)
             formatted = json.dumps(data, ensure_ascii=False, indent=2) + "\n"

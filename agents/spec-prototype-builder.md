@@ -64,6 +64,15 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
   Do NOT redeclare or shadow `:root { ... }` custom properties in `<style>`! Consume standard tokens (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`, `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--space-*)`, etc.) directly from the linked stylesheet.
   Never use raw inline hex codes in `style="..."` attributes.
   Apply `font-variant-numeric: tabular-nums` to numeric metrics, telemetry streams, and timestamps when `data_stress_boundaries.tabular_numbers_required` is true to prevent scan jitter.
+- **Somatic Touch Ergonomics & Mobile Safe Areas**:
+  When the declared `platform.target_context` is a touch device (mobile/tablet), honor the physical thumb and the OS chrome:
+  - Pad all fixed or edge-anchored chrome with `env(safe-area-inset-*)` (e.g. `padding-bottom: env(safe-area-inset-bottom)`) so nothing hides under the home indicator or notch.
+  - Every tappable control — button, tab, chip, row affordance — MUST present a minimum 44x44px hit target, even when its visual glyph is smaller (expand with transparent padding, not a bigger icon).
+  - Commit surfaces MUST give `:active` spring micro-feedback (a short transform/scale spring on press) so a tap is felt before the commit resolves, paired with the declared commit feedback text.
+- **Concentric Nested Radius Geometry**:
+  Nested rounded containers MUST stay optically concentric, never concentric-by-accident. Given outer radius `R_out` and the gap/padding `P` between the outer edge and the inner element, the inner radius is `R_in = max(0, R_out - P)`. Recompute on every nesting level; do NOT reuse the outer radius on the inner child, and do NOT let the subtraction go negative (clamp to 0, i.e. square inside).
+- **Numeric Stability for Telemetry & Financial Metrics**:
+  Telemetry streams, timestamps, counters, and financial/monetary figures MUST specify `font-variant-numeric: tabular-nums` so digits hold their column on update and the eye does not jitter while scanning.
 - **Action Verb Feedback Closure**:
   Every state-mutating Commit action declared in the Action Verb Lifecycle MUST produce immediate, visible UI feedback in the DOM.
   Always provide a container with `role="status"` or `class="toast"` (e.g. `<div id="toast" role="status" class="toast">...</div>`) and trigger explicit feedback on commit (e.g., displaying the exact declared feedback text like "已收录至书库", "已保存", "节点排空中"). Never leave a user commit action silent.
@@ -91,11 +100,43 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
 - **The Break Protocol Resilience**: Ensure graceful layout under the stress checkpoints declared in `break_protocol_checkpoints` and verifiable assertions (e.g. long string wrapping, empty state recovery, narrow viewport fold, and input debouncing).
 - **Active Craft Methods Guidance**: Consult `active_methods` in the envelope for targeted experience invariants and candidate techniques (e.g. Action Verb Lifecycle, Context Preservation, Visual Rhythm) dynamically selected for this slice.
 
+- **Centralized In-Memory State Store (零依赖内存状态存储)**: Route every piece of interactive state through ONE centralized in-memory state object, `window.__prototypeState`. It is a plain zero-dependency JS object (or a tiny plain-function reducer over it); do NOT pull in any external state management library for a single-page prototype, and do not name or endorse a specific vendor library. The store MUST hold, at minimum: active tab selection, active table filter, each open/close sub-modal and drawer flag, and every in-progress form draft. Never let a dismissed drawer, sub-modal, or table re-render reset drafts, filters, or tab selection — nothing is allowed to silently reset, and any deliberate reset must be an authored, explicit action.
+- **Context Preservation Discipline (Method 5)**: This store is the concrete implementation of Craft Method 5 (Decisive 3-Frame Mapping & Context Preservation). Frame 1 (Intent Input) writes into the store, Frame 2 (Commitment and Perceptible Feedback) mutates it, Frame 3 (State Settlement & Return) reads it back without loss. Applying Context Preservation means dismissing a secondary modal or drawer preserves existing form drafts, scroll offsets, and active table filters without data loss; the store is what makes that preservation real rather than aspirational.
+
+- **Platform Rules and Consequential Task Exercise**:
+  The formal envelope projects platform facts under `platform` — `platform.target_context`,
+  `platform.prototype_medium`, `platform.verification_environment` and
+  `platform.native_validation_pending` — and per-surface applicability under
+  `coverage.applicability`. Resolve one surface's applicable platform context as
+  `coverage.applicability[<surface_id>]`, the authored context IDs the Surface Map binds to that
+  surface; when that entry is absent, apply the global `platform` facts alone and state that the
+  surface's platform contract is unauthored rather than inventing a target. A
+  `platform.native_validation_pending` of true means the declared `platform.target_context` is
+  native while `platform.prototype_medium` is not: that target's validation stays `unverified`
+  until it is actually captured there.
+  Apply every applicable rule with the platform's own idioms, not a generic web shell relabelled.
+  Exercise each consequential task the
+  Slice Contract names to a settled observable outcome before claiming coverage; a rendered screen that
+  was never driven through its committed action is not coverage.
+
+- **Capture Identity Binding (Revision-Specific Evidence)**:
+  Capture binds evidence to the environment, target and dependency identity actually used. Invoke the
+  capture script with the declared identity:
+  `node capture.mjs <url> --output <dir> --target-path <path> --target-platform <platform> --runtime <runtime> --source-revision <rev> [--dep <ref>=<digest>] [--repo-root <repo>]`.
+  Requested viewport widths, a filename, or a target-platform label are NOT native validation. A browser
+  render on desktop Chromium stays `browser_execution: html-browser` even when the target platform is
+  `android` or `ios`; record such native validation as `unverified` until it is actually captured on that
+  platform. A capture failure stays explicit (`capture_failed` / `browser_unavailable`) and is never
+  recorded as passing evidence. Evidence is written to the repository that owns the Skill; when none can
+  be resolved, report that no evidence was recorded rather than writing into an unrelated tree.
+
 ## 4. Receipt Format
 
 Return a concise receipt containing:
-- Target path and revision identity;
+- Target path and revision identity (path plus digest or equivalent revision identity);
 - Quality gate assertion results (`STATIC: pass`);
+- Capture metadata: runner, `browser_execution`, runtime, target platform, and the dependency identity
+  bound to the captured pixels; state any declared platform whose validation remains `unverified`;
 - State and interaction coverage actually exercised;
 - Visual evidence screenshot paths from `evidence_output_dir`;
 - Status: `code_verified_renderer_captured` only when all required static checks pass and multi-viewport screenshots are captured, otherwise `prototype_blocked`. Visual critique and human signoff remain explicitly decoupled.

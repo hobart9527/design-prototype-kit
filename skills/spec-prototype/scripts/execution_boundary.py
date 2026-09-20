@@ -20,6 +20,28 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def admits_lint_helper(args, root):
+    """Bounded admission for the contract lint helper: one slice, canonical project root.
+
+    The boundary authorizes the argument form only. It never approves the lint
+    result and creates no permission receipt.
+    """
+    require(args['script'].name == 'lint_spec_contracts.py',
+            'Only the installed contract lint helper is admitted through this seam.')
+    require('--root' in args['argv'] and '--slice' in args['argv'],
+            'Contract lint requires an explicit --root and a single --slice.')
+    root_index = args['argv'].index('--root')
+    slice_index = args['argv'].index('--slice')
+    require(root_index + 1 < len(args['argv']) and slice_index + 1 < len(args['argv']),
+            'Contract lint --root and --slice require a value.')
+    lint_root = Path(args['argv'][root_index + 1]).resolve()
+    require(lint_root == root.resolve(),
+            'Contract lint must target the active discussion repository root.')
+    slice_id = args['argv'][slice_index + 1]
+    require(re.fullmatch(r'[A-Za-z0-9_-]+', slice_id or ''),
+            'Contract lint accepts one bounded slice_id.')
+
+
 def probe(root, data):
     identity = data.get('probe_id', '')
     require(isinstance(identity, str) and re.fullmatch(r'[A-Za-z0-9_-]+', identity),
@@ -122,11 +144,17 @@ def shell_read(command, root):
                     'Token export belongs beside its source with the same revision name.')
             return
         permitted = {'node': {'detect-design-assets.mjs', 'resolve-change.mjs', 'preview.mjs', 'capture.mjs'},
-                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'generate_review_portal.py'},
-                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'generate_review_portal.py'}}
+                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'lint_spec_contracts.py', 'generate_review_portal.py'},
+                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'lint_spec_contracts.py', 'generate_review_portal.py'}}
         require(script.parent == SKILL/'scripts' and script.name in permitted[tool],
                 'Only installed helpers run in the main designer; use Builder for code/setup.')
+        if script.name == 'lint_spec_contracts.py':
+            admits_lint_helper({'script': script, 'argv': args[2:]}, root)
         if script.name == 'handoff.py' and 'freeze' in args:
+            # No admission flag can manufacture frozen-approved status: a failed
+            # approval binding is repaired at its authoring owner, not bypassed.
+            require(not any(arg == '--force' or arg.startswith('--force=') for arg in args),
+                    'Freeze has no force/permissive form; record the actual approval decision.')
             freeze_root = None
             if '--root' in args:
                 idx = args.index('--root')

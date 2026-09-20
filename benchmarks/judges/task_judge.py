@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import pathlib
 import re
 import sys
@@ -15,9 +16,20 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "runners"))
 import bench_lib as bl  # noqa: E402
 
+SCROLL_TOLERANCE_PX = 2
+
 
 def _merged_text(trace: dict) -> str:
     return "\n".join(snapshot.get("text") or "" for snapshot in trace.get("snapshots") or [])
+
+
+def _measurement(value):
+    """A recorded dimension or None. Booleans, non-finite and negative values are not measurements."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if not math.isfinite(value) or value < 0:
+        return None
+    return float(value)
 
 
 def evaluate_outcome(outcome: dict, trace: dict) -> dict:
@@ -38,18 +50,28 @@ def evaluate_outcome(outcome: dict, trace: dict) -> dict:
         verdict = "pass" if opened else "fail"
         detail = f"dialogs observed in {len(opened)}/{len(snapshots)} snapshots"
     elif check == "no_horizontal_scroll":
-        if last:
-            verdict = "pass" if not last.get("horizontal_scroll") else "fail"
-            detail = f"scrollWidth={last.get('scrollWidth')} clientWidth={last.get('clientWidth')}"
+        scroll_width = _measurement(last.get("scrollWidth"))
+        client_width = _measurement(last.get("clientWidth"))
+        if scroll_width is None or client_width is None:
+            detail = (f"no validated dimensions: scrollWidth={last.get('scrollWidth')!r} "
+                      f"clientWidth={last.get('clientWidth')!r}")
+        else:
+            verdict = "fail" if scroll_width > client_width + SCROLL_TOLERANCE_PX else "pass"
+            detail = f"scrollWidth={scroll_width:g} clientWidth={client_width:g}"
     elif check == "min_touch_target":
-        if last:
-            small = last.get("small_target_count")
+        small = _measurement(last.get("small_target_count"))
+        if small is None:
+            detail = f"small_target_count not recorded: {last.get('small_target_count')!r}"
+        else:
             verdict = "pass" if small == 0 else "fail"
-            detail = f"{small} control(s) below {outcome.get('px', 44)}px"
+            detail = f"{int(small)} control(s) below {outcome.get('px', 44)}px"
     elif check == "element_count_min":
-        count = len(last.get("controls") or [])
-        verdict = "pass" if count >= int(outcome.get("count") or 1) else "fail"
-        detail = f"{count} interactive controls visible"
+        if last.get("controls") is None:
+            detail = "controls not recorded"
+        else:
+            count = len(last.get("controls") or [])
+            verdict = "pass" if count >= int(outcome.get("count") or 1) else "fail"
+            detail = f"{count} interactive controls visible"
     elif check == "state_changed":
         texts = {(s.get("text") or "")[:400] for s in snapshots}
         verdict = "pass" if len(texts) > 1 else "fail"
@@ -66,18 +88,24 @@ def judge_task(task: dict, trace: dict) -> dict:
         forbidden.append({"id": outcome.get("id"), "status": "violated" if hit else "ok",
                           "detail": (hit.group(0)[:80] if hit else "absent")})
     trace_status = trace.get("status")
+    # `unmet` keeps its contract: every outcome that did not pass. Only `failed`
+    # decides the verdict, so a missing measurement can never be read as a pass.
     unmet = [r["id"] for r in required if r["status"] != "pass"]
+    failed = [r["id"] for r in required if r["status"] == "fail"]
+    unverified = [r["id"] for r in required if r["status"] == "unverified"]
     if trace_status == "blocked":
         status = "unverified"
     elif forbidden and any(f["status"] == "violated" for f in forbidden):
         status = "fail"
-    elif unmet:
+    elif failed:
         status = "fail"
+    elif unverified:
+        status = "unverified"
     else:
         status = "pass"
     return {"task_id": task.get("id"), "critical": task.get("critical", True), "status": status,
             "trace_status": trace_status, "required_outcomes": required, "forbidden_outcomes": forbidden,
-            "unmet": unmet, "steps": len(trace.get("steps") or [])}
+            "unmet": unmet, "unverified_outcomes": unverified, "steps": len(trace.get("steps") or [])}
 
 
 def judge(case: dict, traces: list) -> dict:

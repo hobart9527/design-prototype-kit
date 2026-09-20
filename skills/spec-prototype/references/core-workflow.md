@@ -77,6 +77,49 @@ Before entering Stage 1 or reopening design work, classify the requested change 
 | **L3 (Flow)** | Multi-surface task flow, user journey transitions, new major surface | Standard **5-Stage Engine** (Stage 1 to 5) | Full lifecycle execution across declared slice. |
 | **L4 (Product)** | Domain object model, core tension inversion, lifecycle or permissions | Full **5-Stage Engine** with Evidence Re-anchoring | Re-anchor all Nine Pillars from source truth. |
 
+### Coverage Selection before Stage 3 (制作范围决议与连续性)
+
+The Change Scope Router decides which stages run; it does not decide how much of the
+product those stages cover. Before Stage 3 expands beyond the validated anchor,
+resolve the requested implementation scope against the current Surface Map, task
+risks, probe results and applicable platform contexts:
+
+- **Resolve, do not interrogate**: when the map supports several defensible
+  combinations, present concrete recommended combinations — the surfaces and
+  journeys each includes, the verification purpose it serves, its dependencies on
+  surfaces outside the selection, and what is deliberately omitted — together with
+  the full-product option and its batch plan. Ask only when the choice genuinely
+  changes the route.
+- **Retain, do not re-ask**: an explicit prior selection (subset or full product) is
+  reused on continuation. A missing, invalid or revision-mismatched selection is
+  reconciled against the current map revision; it never silently defaults to
+  full-product.
+- **Selection is scope, not approval**: choosing a subset reduces the implementation
+  target only. It neither crops the product model nor approves the selected surfaces;
+  approval still follows the authority lifecycle.
+- **Preserve upstream meaning**: the full Surface Map, object model, permissions,
+  states, consequential rationale and applicable method outcomes remain authoritative
+  when a subset is selected. Unselected surfaces stay provisional — not deleted, and
+  not invented into the selection. A dependency needed outside the selection is
+  disclosed, never silently added.
+- **Lightweight routes stay valid**: a bounded direction probe, a spec-only request
+  or a local refinement keeps its existing route and is not forced through
+  full-product enumeration, implementation or approval; a formal candidate still
+  requires its applicable sealed provisional Spec.
+- **One obligation reconciler, two coverages**: selected and full-product coverage
+  execute and report through the same reconciler
+  (`prototype_context.reconcile_obligations`). Only a `full-product` selection
+  authorizes automatic continuation across further batches; a `selected` coverage
+  stops at its declared obligations. Scope membership, delivery and evidence remain
+  separate facts: a missing artifact or missing evidence withholds completion, and a
+  documented blocker or deferred label never discharges an obligation — only an
+  explicit scope change does. Review views reconcile the authored map with delivery
+  and evidence, listing declared-but-absent surfaces and separating in-round from
+  outside-round obligations. Pending destinations stay href-free rather than becoming
+  broken links; required navigation dependencies are disclosed. Product navigation is
+  never forced to display review-management statuses. A map revision change is
+  reconciled explicitly and neither auto-expands nor shrinks the retained set.
+
 ### Stage 1: Understand & Frame (破 - 魂立约：双钻收敛与全套契约密封暂行)
 - **Primary Goal**: Transition from user intent to a **complete, sealed provisional Design Specification (`spec`)** spanning problem ontology, topology, visual register, and interaction contracts.
 - **Cadence Principle**:
@@ -215,7 +258,7 @@ Before entering Stage 1 or reopening design work, classify the requested change 
 - **Headless Pipeline Execution**:
   1. `python3 skills/spec-prototype/scripts/export-tokens.py prototype/shared/tokens.css --output prototype/contracts/tokens/t1.json`: 将 `shared/tokens.css` 编译为 W3C DTCG 标准 `tokens.json`。
   2. `node skills/spec-prototype/scripts/wcag-check.js prototype/contracts/tokens/t1.json --level AA`: 静态色彩对比度预检，保障关键文字与图素符合 **WCAG 2.2 AA (4.5:1)** 标准底线；长期阅读与关键数据文字推荐追求 **WCAG AAA (7:1)** 静态对比度。注意此脚本仅为静态对比度预检（Static Contrast Preflight），不替代运行时的完整无障碍审查（键盘焦点管理、屏幕阅读器 Landmark、可达触控热区等）。
-  3. `python3 skills/spec-prototype/scripts/handoff.py freeze --root prototype --spec prototype/product.md`: 计算并冻结所有 HTML/CSS 资产的 SHA-256 指纹，输出不可变交付清册 (`prototype/evidence/handoff-manifest.json`)。
+  3. `python3 skills/spec-prototype/scripts/handoff.py freeze --root prototype --spec prototype/specifications/<slice_id>/r1.md`: 以不可变 candidate Specification 为冻结主体，计算并冻结所有 HTML/CSS 资产的 SHA-256 指纹，输出不可变交付清册 (`prototype/evidence/handoff-manifest.json`)。`product.md` 为可演进的运行记录，不得作为切片冻结契约。
 
 ---
 

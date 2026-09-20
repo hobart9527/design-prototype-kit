@@ -19,6 +19,21 @@ before compilation.
 - Decision/Discussion record reference:
 - Supersedes / selected from:
 
+## Platform adaptation and prototype medium
+
+Local adaptation for this slice: the medium actually built, the invariant
+IDs it preserves, and how it re-forms. `verification-environment` is an
+evidence fact — where the artifact was actually exercised — not a promise or
+a requirement.
+
+```prototype-context
+record: prototype-specification
+prototype-medium:    # HTML | ios | android | ... (the artifact actually built)
+adaptation:          # surface=adaptation ID, e.g. S2-detail=mobile-detail-route
+preserves:           # invariant IDs owned by the Foundation
+verification-environment:  # evidence fact; unknown when not yet exercised
+```
+
 ## Shared authority
 
 - Design Envelope: use the exact Slice Contract revision above.

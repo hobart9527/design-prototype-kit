@@ -82,6 +82,44 @@ Promotion is blocked when any run shows: semantic fabrication, authority escape,
 break, or a critical accessibility violation. Unknown/unverified dimensions are reported as
 unverified and never counted as passes.
 
+## Regression specimen: review page to full product (opt-in, own cost authorization)
+
+A bounded, copy-paste specimen for one regression question: does a candidate keep working once
+the same product is expanded from one reviewed page to full scope? It drives the existing runners
+only — no extra orchestration layer — and every step below has been run before, one step at a time.
+It is **not** part of `daily`/`golden` and it is **not** implied by a green mechanism run.
+
+```bash
+# 1. representative review: one page / one surface, control vs candidate
+python benchmarks/runners/run_matrix.py --cases <case> --variants stable_skill,candidate_skill \
+  --repeats 1 --run-id specimen-review
+
+# 2. same product, explicitly expanded to full scope (same case, same run id family)
+python benchmarks/runners/run_case.py --case <case> --variant candidate_skill --repeat 1 \
+  --matrix-dir benchmarks/results/specimen-review --task-trace --visual --open
+
+# 3. re-aggregate both arms into one report and read provenance before the verdict
+python benchmarks/runners/aggregate_report.py --matrix-dir benchmarks/results/specimen-review \
+  --suite custom --run-id specimen-review
+```
+
+What the specimen pins:
+
+- **Source and conditions.** The report's `## Candidate provenance` section records the sha256 of
+  the candidate Skill/agent files that actually ran, dirty tree included, plus the judge inputs for
+  the run. A reported Git revision alone does not identify a dirty candidate; compare
+  `source_identity` between arms before reading any preference.
+- **Cross-page state and return.** Trace the same state through the reviewed page, one step away
+  from it, and back. A pass on the reviewed page does not carry; the return path is its own claim.
+- **Mobile adaptation.** Capture the required viewports (`--visual`) and judge them; a desktop-only
+  capture leaves the mobile dimension unverified.
+- **Unverified stays unverified.** Native-app simulation has no harness behind it. It is recorded as
+  unverified and never counted as a pass, however many mechanism checks are green.
+
+Boundaries: no new cases, and no paid session runs are part of this task. The commands above cost
+real session budget when executed; run them only under explicit cost authorization. Nothing here
+asserts those sessions were run for this Change.
+
 ## Not implemented yet (P2)
 
 Diversity clustering across cases, Five-Axes expression stress, holdout unlock policy, historical

@@ -18,9 +18,33 @@ from typing import Any, Dict, List, Optional
 
 
 SKILL = Path(__file__).resolve().parents[1]
+if str(SKILL / "scripts") not in sys.path:
+    sys.path.insert(0, str(SKILL / "scripts"))
 
 
-def check_spec_completeness(root: Path, slice_id: str) -> Dict[str, Path]:
+def formal_contract_lint(root: Path, slice_id: str) -> List[Dict[str, str]]:
+    """Run the real contract lint at the formal entry and return bounded failure records."""
+    import lint_spec_contracts
+
+    lint_errors = lint_spec_contracts.lint_formal_entry(root, slice_id)
+    return [{"code": e.rule, "path": e.file_path, "message": e.message} for e in lint_errors]
+
+
+def read_formal_context(root: Path, slice_id: str) -> Dict[str, Any]:
+    """Normalized coverage/platform context, read from the retained authored sources."""
+    import lint_spec_contracts
+
+    return lint_spec_contracts.read_formal_context(root, slice_id)
+
+
+def _contract_lint_gate(root: Path, slice_id: str) -> List[Dict[str, str]]:
+    try:
+        return formal_contract_lint(root, slice_id)
+    except Exception as error:  # preserve context; never let a broken lint open the gate
+        return [{"code": "E010_STALE_CONTRACT", "path": str(root), "message": str(error)}]
+
+
+def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Path]:
     """Verify that all required Stage 1 design contract artifacts exist and meet minimum content floors."""
     required = {
         "product": root / "prototype/product.md",
@@ -37,6 +61,19 @@ def check_spec_completeness(root: Path, slice_id: str) -> Dict[str, Path]:
             f"Stage 1 Spec Contract incomplete. Missing required artifacts: {', '.join(missing)}. "
             f"All 6 contract pillars must be materialized before Stage 2 prototype building."
         )
+
+    if lint:  # the formal entry runs the real lint, not a parallel copy of it
+        failures = _contract_lint_gate(root, slice_id)
+        if failures:
+            # Carry the rule's own detail: a stale map identity must name the
+            # revision or digest that differs, not merely that something differs.
+            detail = "; ".join(
+                f"{f['code']}:{f['path']} ({f['message']})" if f["message"] else f"{f['code']}:{f['path']}"
+                for f in failures)
+            raise ValueError(
+                f"Stage 1 contract lint failed at the formal entry. {detail}. "
+                f"Existing artifacts are unchanged; resolve each failure and re-assemble."
+            )
 
     return required
 
@@ -116,6 +153,61 @@ def load_method_registry(registry_path: Path) -> List[Dict[str, Any]]:
     except Exception:
         pass
     return []
+
+
+METHOD_ANCHORS: Dict[str, List[str]] = {
+    "container-proximity-ladder": ["container proximity ladder", "proximity ladder", "flow preservation", "level 0"],
+    "ooux-mapping": ["cardinality-to-layout", "model objects and content before containers", "cardinality"],
+    "context-preservation": ["coherent wayfinding, context preservation", "context preservation", "content mechanics as interaction"],
+    "progressive-disclosure": ["design information and interaction at the decision moment", "decision moment", "cognitive noise"],
+    "action-verb-lifecycle": ["ceremony economy", "platform & somatic ergonomics", "action verb lifecycle", "action verb"],
+    "decisive-3-frame": ["prototype the decisive exchange", "decisive exchange", "intent", "detent"],
+    "the-break-protocol": ["the organic break protocol", "the break protocol", "extreme edge data"],
+    "fault-tolerance-recovery": ["make consequential boundaries understandable", "sensitive or consequential", "reversibility"],
+    "data-context-metrics": ["contextual semantic registers", "telemetry vs narrative", "zero naked metrics"],
+    "form-ergonomics": ["form ergonomics and input orchestration", "form ergonomics", "input orchestration"],
+    "visual-rhythm-density": ["materiality calibration", "lightweight native craft recipes", "anti-default palette"],
+}
+
+
+def _extract_craft_guidance(skill_dir: Path, rel_file: str, method_id: str) -> str:
+    """Extract actionable craft method guidance from the authoritative reference file."""
+    if not rel_file:
+        return ""
+    ref_path = skill_dir / rel_file
+    if not ref_path.is_file():
+        return ""
+    try:
+        text = ref_path.read_text(encoding="utf-8")
+        anchors = METHOD_ANCHORS.get(method_id, [method_id.replace("-", " ")])
+        lines = []
+        capture = False
+        for line in text.splitlines():
+            sline = line.strip()
+            if sline.startswith("## ") or sline.startswith("### "):
+                header = sline.lstrip("#").strip().lower()
+                if any(a in header for a in anchors):
+                    capture = True
+                    lines.append(sline)
+                    continue
+                elif capture and len(lines) > 5:
+                    break
+            elif capture and sline:
+                lines.append(sline)
+                if len(lines) >= 18:
+                    break
+        if not lines:
+            for line in text.splitlines():
+                sline = line.strip()
+                if sline.startswith("| Level") or sline.startswith("| **Level") or sline.startswith("| Frame") or sline.startswith("| **Frame"):
+                    lines.append(sline)
+                elif any(k in sline for k in ("Concentric Radius", "concentric-radii", "tabular-nums", "Flow Preservation", "Zero Naked Metrics")):
+                    lines.append(sline)
+                if len(lines) >= 10:
+                    break
+        return "\n".join(lines) if lines else text[:300].strip()
+    except Exception:
+        return ""
 
 
 def select_active_methods(
@@ -236,26 +328,30 @@ def select_active_methods(
     selected_scored = scored_candidates[:max_limit]
 
     result = []
+    skill_dir = Path(__file__).resolve().parent.parent
     for sc in selected_scored:
         m = sc["method"]
+        rel_file = m.get("file", "")
+        guidance = _extract_craft_guidance(skill_dir, rel_file, m.get("id", ""))
         result.append({
             "id": m.get("id"),
             "name": m.get("name"),
             "pillars": m.get("pillars", []),
             "invariants": m.get("invariants", []),
-            "reference_file": m.get("file", ""),
+            "reference_file": rel_file,
+            "actionable_guidance": guidance,
             "matched_triggers": sc["matched_triggers"],
         })
     return result
 
 
-def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
+def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     """Assemble an envelope for either exploration or formal candidate work."""
     brief = _brief_path(root, slice_id)
     specification = root / f"prototype/specifications/{slice_id}/r1.md"
     if brief is not None and not specification.is_file():
         return assemble_direction(root, slice_id, brief)
-    paths = check_spec_completeness(root, slice_id)
+    paths = check_spec_completeness(root, slice_id, lint=lint)
 
     product_content = paths["product"].read_text(encoding="utf-8")
     smap_content = paths["surface_map"].read_text(encoding="utf-8")
@@ -795,7 +891,17 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
         }
     }
 
-    # Extract product thesis, core tension and reality anchors
+    # Coverage and platform context, normalized from the retained authored sources.
+    # Absent fields stay absent: a missing selection never becomes full-product, an
+    # unselected dependency is disclosed rather than added, and a native target built
+    # in a browser medium keeps its validation gap.
+    platform_context = read_formal_context(root, slice_id)
+    selected_surfaces = list(platform_context["surface_map"]["selected_surfaces"])
+    target_surfaces = list(platform_context["surface_map"]["target_surfaces"])
+    if platform_context["authorizes_full_product"]:
+        selected_surfaces = target_surfaces
+
+    # Extract product thesis, core tension and reality anchors (authored only).
     prod_thesis_raw = ""
     prod_tension_raw = ""
     for line in product_content.splitlines():
@@ -803,6 +909,8 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             prod_tension_raw = line.split(":", 1)[1].strip()
         elif line.startswith("# Product Thesis:"):
             prod_thesis_raw = line.split(":", 1)[1].strip()
+    if prod_tension_raw in ("unspecified", "Not yet decided"):
+        prod_tension_raw = ""  # an unauthored tension does not become a domain claim
 
     # Runtime Method Registry selection & lazy loading (v10.2.1)
     active_methods = select_active_methods(
@@ -821,12 +929,15 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
     )
 
     # Dual-Envelope Architecture (v10): Decouple rigid constraints from creative agency
+    domain_thesis: Dict[str, Any] = {
+        "title": brand_title,
+        "product_thesis": prod_thesis_raw or brand_title,
+    }
+    if prod_tension_raw:
+        domain_thesis["core_tension"] = prod_tension_raw
+
     constraint_envelope = {
-        "domain_thesis": {
-            "title": brand_title,
-            "product_thesis": prod_thesis_raw or brand_title,
-            "core_tension": prod_tension_raw or "Operational Efficiency vs Cognitive Ergonomics",
-        },
+        "domain_thesis": domain_thesis,
         "ooux_topology": ooux_topology,
         "interaction_spec": interaction_spec,
         "fault_tolerance_protocol": fault_tolerance,
@@ -994,6 +1105,30 @@ def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
             "slice_contract": paths["slice_contract"].relative_to(root).as_posix(),
             "specification": paths["specification"].relative_to(root).as_posix(),
             "tokens_stylesheet": paths["tokens_css"].relative_to(root).as_posix(),
+        },
+        # Retained source references, including the tokens Markdown revision the
+        # boundary re-checks for staleness.
+        "tokens_md_ref": paths["tokens_md"].relative_to(root).as_posix(),
+        "coverage": {
+            "coverage": platform_context["surface_map"]["coverage"],
+            "selection_source": platform_context["surface_map"]["selection_source"],
+            "selected_surfaces": selected_surfaces,
+            "target_surfaces": target_surfaces,
+            "unselected_surfaces": [s for s in platform_context["surface_map"]["surfaces"]
+                                    if s not in target_surfaces],
+            "applicability": dict(platform_context["surface_map"]["applicability"]),
+            "authorizes_full_product": platform_context["authorizes_full_product"],
+            "recommendation_required": platform_context["recommendation_required"],
+        },
+        "platform": dict(platform_context["platform"]),
+        "contract_lint": [] if not lint else [],
+        "inspection_contract": {
+            "mandatory_viewports": [
+                {"width": 1280, "name": "desktop-canvas", "focus": "spatial hierarchy and high-density telemetry"},
+                {"width": 390, "name": "mobile-somatic", "focus": "44px touch targets and responsive folding without amnesia"}
+            ],
+            "mandatory_states": authored_states,
+            "visual_inspection_mandate": "Critic must use Read tool to visually inspect captured screenshots (1280px & 390px); textual HTML review alone is non-independent."
         },
         "spec_sources": {
             "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest(),

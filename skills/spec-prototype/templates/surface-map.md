@@ -64,6 +64,24 @@ empty, error, permission, success, overflow, offline and conflict are examples.
 
 ## Coverage and validation
 
+Downstream readers take scope from this section alone. A missing section is
+unresolved, never full-product; a subset reduces the implementation target only,
+and the rest of this map stays authoritative. A dependency needed outside the
+selection is listed under `selected-dependencies` and disclosed, never added.
+
+```prototype-context
+record: surface-map
+revision:
+coverage:            # selected | full-product | unresolved
+selection-source:    # Discussion/approval reference that chose this scope
+surfaces:            # all in-scope surface IDs, selected or not
+selected-surfaces:   # IDs this round implements (coverage: selected)
+selected-dependencies:  # required but outside selection; disclosed, not added
+journeys:
+platform-contexts:   # e.g. web, android
+applicability:       # surface=context, only where platform-specific
+```
+
 - Surface count reconciled with scope:
 - Every in-scope job mapped to entry, result and recovery where applicable:
 - Roles/permissions and direct-entry paths checked:

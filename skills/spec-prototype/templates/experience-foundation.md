@@ -173,6 +173,14 @@ may adapt without losing the relationship.
 
 ## Global experience invariants
 
+This is the shared invariant registry. A slice may only claim invariants named
+here; it cannot declare new ones of its own.
+
+```prototype-context
+record: experience-foundation
+invariants:          # invariant IDs every applicable slice must preserve
+```
+
 | Invariant | User value protected | Source/design owner | Evidence | How slices verify it |
 |---|---|---|---|---|
 | | | | | |
