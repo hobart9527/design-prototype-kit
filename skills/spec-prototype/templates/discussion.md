@@ -136,7 +136,7 @@ not a competing rule.
 ### Stage 5: Silent Governance Compilation (冻 - 静默封版与工件交付)
 - **DTCG Export (`prototype/dist/tokens.json`)**:
 - **WCAG Static Contrast Audit**:
-- **Handoff Manifest (`prototype/dist/manifest.json` / SHA-256 integrity)**:
+- **Handoff Manifest (`prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json` / SHA-256 integrity)**:
 
 ## Evidence and changes
 

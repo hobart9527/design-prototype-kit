@@ -17,6 +17,37 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prototype_context  # noqa: E402
 
 
+_ACTION_COLUMN_KEYS = (
+    ("action_id", ("action id", "action")),
+    ("trigger_btn", ("trigger button", "trigger")),
+    ("commit_btn", ("commit action", "commit")),
+    ("feedback_style", ("feedback style", "completion feedback", "feedback", "toast")),
+)
+
+
+def _action_column_map(header_cells: list[str]) -> dict[str, int]:
+    """Bind each action field to the header column that owns it.
+
+    Reading by column width cannot distinguish the canonical 7-column Proximity
+    ladder from a legacy 6-column table; the authored header can.
+    """
+    normalized = [re.sub(r"[\s*`]+", " ", cell).strip().lower() for cell in header_cells]
+    mapping: dict[str, int] = {}
+    for field, fragments in _ACTION_COLUMN_KEYS:
+        for index, header in enumerate(normalized):
+            if index in mapping.values():
+                continue
+            if any(fragment in header for fragment in fragments):
+                mapping[field] = index
+                break
+    return mapping
+
+
+def _action_cell(row_cells: list[str], columns: dict[str, int], field: str) -> str:
+    index = columns.get(field)
+    return row_cells[index].strip() if index is not None and index < len(row_cells) else ""
+
+
 def _contract_items(path: Path | None) -> list[str]:
     """Extract verifiable entity names, action IDs, or button labels from contract markdown."""
     if not path or not path.is_file():
@@ -42,9 +73,11 @@ def _contract_items(path: Path | None) -> list[str]:
     in_ledger = False
 
     for src in sources_to_scan:
+        action_columns: dict[str, int] | None = None
         for line in src.splitlines():
             if "Action Verb Lifecycle" in line:
                 in_actions = True
+                action_columns = None
                 in_assertions = False
                 in_shortcuts = False
                 in_ledger = False
@@ -80,6 +113,8 @@ def _contract_items(path: Path | None) -> list[str]:
                 continue
             first_lower = cells[0].lower()
             if first_lower in {"action id", "assertion", "reality breaker", "shortcut key", "token", "surface", "ledger zone", "---"}:
+                if in_actions and first_lower == "action id":
+                    action_columns = _action_column_map(cells)
                 continue
             if set(cells[0]) <= {"-", ":"}:
                 continue
@@ -91,9 +126,13 @@ def _contract_items(path: Path | None) -> list[str]:
                 if trigger_tuple:
                     items.append(trigger_tuple)
 
-                commit_lbl = cells[3].strip() if len(cells) > 3 else ""
-                toast_lbl = cells[4].strip() if len(cells) > 4 else ""
-                feedback_tuple = tuple(s for s in (commit_lbl, toast_lbl) if s and s not in ("-", "---", "N/A", "Commit Action Button", "Completion Feedback Toast"))
+                # Column identity comes from the authored header, so a 6- or 7-column
+                # table (or any column order) yields the real commit button and feedback.
+                cols = action_columns or _action_column_map(cells)
+                commit_lbl = _action_cell(cells, cols, "commit_btn")
+                toast_lbl = _action_cell(cells, cols, "feedback_style")
+
+                feedback_tuple = tuple(s for s in (commit_lbl, toast_lbl) if s and s not in ("-", "---", "N/A", "Commit Action Button", "Completion Feedback Toast", "Feedback Style", "Feedback Style (In-situ / Toast)"))
                 if feedback_tuple:
                     items.append(feedback_tuple)
             elif not in_assertions and not in_shortcuts and not in_ledger:
@@ -449,6 +488,8 @@ if __name__ == "__main__":
     if args.slice_id:
         slice_id = args.slice_id
         candidates = [
+            root / f"prototype/experiments/{slice_id}/r1/index.html",
+            root / f"prototype/experiments/{slice_id}/index.html",
             root / f"prototype/experiments/{slice_id}/anchor/index.html",
             root / f"prototype/experiments/{slice_id}/hero-anchor/index.html",
             root / f"prototype/surfaces/{slice_id}/index.html",

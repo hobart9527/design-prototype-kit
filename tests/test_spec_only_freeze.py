@@ -249,3 +249,53 @@ def test_valid_prototype_freeze_is_unchanged(tmp_path: Path):
     assert admitted["gate"] == "passed"
     assert admitted["admission"] == "bound_to_frozen_revision"
     assert admitted["implementation_validation"]["production"] == "pending"
+
+
+def test_freeze_preserves_spec_byte_immutability(tmp_path: Path):
+    """Specification bytes must remain 100% immutable across freeze operations."""
+    spec = _build_root(tmp_path)
+    before_bytes = spec.read_bytes()
+
+    manifest = handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+    assert manifest["status"] == "frozen"
+    assert spec.read_bytes() == before_bytes, "Freeze must not mutate candidate specification markdown in-place"
+
+
+def test_approval_must_bind_target_slice(tmp_path: Path):
+    """Approval row in discussion.md must bind the target slice, not another slice."""
+    other_slice_row = (
+        "| D-1 | Billing slice approval | confirmed | align on billing "
+        "| \"approved billing slice\" (turn 4, 2026-09-01) "
+        "| `prototype/specifications/billing/r1.md` |\n"
+    )
+    spec = _build_root(tmp_path, decision_row=other_slice_row)
+
+    with pytest.raises(handoff.HandoffError, match="no actual approval"):
+        handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+
+
+def test_freeze_projects_scope_and_platform_metadata(tmp_path: Path):
+    """Freeze manifest must project scope and platform metadata for downstream consumers."""
+    spec = _build_root(tmp_path)
+    manifest = handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+    assert manifest["scope_projection"]["coverage"]
+    # The reader marks an unexercised artifact 'unknown'; a None here means the
+    # projection read the wrong context section and silently lost the fact.
+    assert manifest["platform_projection"]["verification_environment"]
+
+
+def test_approval_does_not_bind_a_longer_slice_name(tmp_path: Path):
+    """A row naming slice 'readers-grid' must not authorize the 'reader' slice.
+
+    Slice names nest (`reader` inside `readers-grid`), so binding on a plain
+    substring would let one slice's approval freeze another's specification.
+    """
+    longer_slice_row = (
+        "| D-1 | Readers-grid slice approval | confirmed | align on readers-grid "
+        "| \"approved the readers-grid slice\" (turn 5, 2026-09-04) "
+        "| `prototype/specifications/readers-grid/r1.md` |\n"
+    )
+    spec = _build_root(tmp_path, decision_row=longer_slice_row)
+
+    with pytest.raises(handoff.HandoffError, match="no actual approval"):
+        handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())

@@ -489,7 +489,12 @@ record: prototype-specification
 
     env = assemble_mod.assemble(tmp_path, "slice_a")
     constraints = env["design_constraints"]
-    assert any(v["action_id"] == "isolate_node" for v in constraints["action_verb_lifecycle"])
+    # Column identity follows the authored header, not positional width: the legacy
+    # 6-column table must still yield the real commit button and feedback, never the
+    # container/header or impact columns that happen to sit at those positions.
+    isolate = next(v for v in constraints["action_verb_lifecycle"] if v["action_id"] == "isolate_node")
+    assert isolate["commit_btn"] == "Isolate Node"
+    assert isolate["feedback_style"] == "Node isolated"
     assert "Space" in constraints["dual_channel_shortcuts"]
     assert any("Unbreakable String" in c for c in constraints["break_protocol_checkpoints"])
 

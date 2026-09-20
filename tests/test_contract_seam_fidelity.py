@@ -1,8 +1,17 @@
+import importlib.util
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 import pytest
-from tests.test_pipeline import _load, SCRIPTS
+
+REPO = Path(__file__).resolve().parents[1]
+SCRIPTS = REPO / "skills/spec-prototype/scripts"
+
+def _load(name: str, filename: str):
+    spec = importlib.util.spec_from_file_location(name, SCRIPTS / filename)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 def test_materialize_and_assemble_seam_fidelity():
     """Verify that Stage 1 discussion faithfully projects into contracts and envelope without friction or loss."""
@@ -100,7 +109,7 @@ def test_materialize_and_assemble_seam_fidelity():
 
 def test_lint_spec_contracts_catches_contamination_and_passes_clean():
     """Verify that lint_spec_contracts catches SRE contamination and validates complete contracts."""
-    lint_mod = _load("lint_spec_contracts", SCRIPTS / "lint_spec_contracts.py")
+    lint_mod = _load("lint_spec_contracts", "lint_spec_contracts.py")
     mat_mod = _load("materialize_contracts", "materialize_contracts.py")
 
     with tempfile.TemporaryDirectory() as tmpdir:

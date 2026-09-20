@@ -570,6 +570,12 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
             continue
         if not any(marker.lower() in evidence for marker in APPROVAL_LOCATOR_MARKERS):
             continue
+        # Ensure the approval row actually binds the target slice. The match is
+        # token-bounded: a plain substring test would let an approval for slice
+        # 's10' authorize 's1', which is the cross-slice laundering this refuses.
+        row_content = " ".join(row).lower()
+        if not re.search(rf"(?<![a-z0-9_-]){re.escape(slice_id.lower())}(?![a-z0-9_-])", row_content):
+            continue
         selected = row
         spec_only = spec_only or any(m in evidence for m in SPEC_ONLY_MARKERS)
         sources = [token for token in re.findall(r"`([^`]+)`", row[-1]) if "/" in token]
@@ -632,21 +638,46 @@ def freeze(root: Path, spec: str) -> dict:
     evidence_path = root / "prototype" / "evidence" / pkt["slice_id"] / pkt["candidate_id"] / "prototype-evidence.md"
     evidence_record = retained(root, str(evidence_path.relative_to(root))) if evidence_path.is_file() else None
 
-    # Transition specification status to frozen approved upon freeze
-    updated_spec_body = re.sub(
-        r"^-\s*(?:Compilation status|Authority status):\s*`?[a-zA-Z0-9_ -]+`?",
-        "- Compilation status: frozen\n- Authority status: frozen approved",
-        spec_body,
-        flags=re.M | re.IGNORECASE
-    )
-    if updated_spec_body != spec_body:
-        spec_path.write_text(updated_spec_body, encoding="utf-8")
-    # Re-derive after the status transition: the manifest must record the bytes
-    # that actually exist at freeze time, or admission breaks on its own receipt.
+    # Specifications are immutable candidate contracts compiled from retained sources.
+    # Authority status and lifecycle transitions live exclusively in freeze-manifest.json
+    # and prototype/discussion.md — the specification bytes remain untouched.
     spec_ref = str(spec_path.relative_to(root))
     pkt["specification"] = retained(root, spec_ref)
     if binding.get("source", {}).get("path") == spec_ref:
         binding["source"] = retained(root, spec_ref)
+
+    # Project scope and platform context from surface map and contracts
+    scope_proj = None
+    platform_proj = None
+    map_file = root / "prototype/contracts/surface-maps/m1.md"
+    if map_file.is_file():
+        try:
+            import prototype_context
+            ctx = prototype_context.read_context(
+                map_file.read_text(encoding="utf-8"),
+                (root / "prototype/product.md").read_text(encoding="utf-8") if (root / "prototype/product.md").is_file() else "",
+                (root / "prototype/contracts/foundation/f1.md").read_text(encoding="utf-8") if (root / "prototype/contracts/foundation/f1.md").is_file() else "",
+                spec_body
+            )
+            smap = ctx.get("surface_map", {})
+            prod = ctx.get("product", {})
+            pspec = ctx.get("specification", {})
+            scope_proj = {
+                "coverage": smap.get("coverage"),
+                "target_surfaces": list(smap.get("target_surfaces", [])),
+                "selected_surfaces": list(smap.get("selected_surfaces", [])),
+            }
+            platform_proj = {
+                "platform_contexts": list(smap.get("platform_contexts", [])),
+                "target_context": prod.get("target_context"),
+                "device_context": prod.get("device_context"),
+                "input_context": prod.get("input_context"),
+                "prototype_medium": pspec.get("prototype_medium"),
+                "verification_environment": pspec.get("verification_environment"),
+            }
+        except Exception as error:  # unreadable map metadata must not abort a freeze
+            scope_proj = {"unavailable": str(error)}
+            platform_proj = {"unavailable": str(error)}
 
     frozen_manifest = {
         "status": "frozen",
@@ -658,6 +689,8 @@ def freeze(root: Path, spec: str) -> dict:
         "references": pkt["references"],
         "craft_reads": pkt["craft_reads"],
         "approval": binding,
+        "scope_projection": scope_proj,
+        "platform_projection": platform_proj,
         # Freezing a design scope never exercises implementation. These remain
         # explicitly pending whether or not the approval is spec-only.
         "implementation_validation": {name: "pending" for name in PENDING_IMPLEMENTATION_DIMENSIONS},
@@ -711,7 +744,9 @@ def check_downstream_gate(root: Path, slice_id: str) -> dict:
     Strictly gates production implementation:
     - Rejects 'draft', 'provisional', 'sealed provisional' specifications.
     - Rejects 'validated' specifications that have not been frozen.
-    - Strictly requires 'frozen' / 'frozen approved' status with valid freeze manifest.
+    - Admits only a valid freeze-manifest recording frozen_approved authority. A
+      specification declaring that status in its own text is never sufficient:
+      authority is certified by the manifest, not by the artifact's self-description.
     """
     root = root.resolve()
     spec_dir = root / "prototype/specifications" / slice_id
@@ -764,6 +799,8 @@ def check_downstream_gate(root: Path, slice_id: str) -> dict:
             "message": "Downstream Gate Passed: Specification is frozen approved and ready for Loom delivery.",
         }
 
+    # When freeze-manifest.json is absent, downstream implementation is blocked.
+    # Check authored spec_status to provide actionable diagnostic feedback.
     if spec_status in ("draft", "provisional", "sealed provisional", "candidate"):
         raise HandoffError(
             f"Downstream Gate Blocked: Specification for slice '{slice_id}' is in '{spec_status}' status. "
@@ -775,16 +812,13 @@ def check_downstream_gate(root: Path, slice_id: str) -> dict:
             f"Downstream Gate Blocked: Specification for slice '{slice_id}' is 'validated' but not yet frozen. "
             "Run Stage 5 silent packaging (python3 skills/spec-prototype/scripts/handoff.py freeze) to produce immutable frozen approved delivery."
         )
-    elif spec_status in ("frozen", "frozen approved", "frozen_approved"):
-        return {
-            "gate": "passed",
-            "authority_status": "frozen_approved",
-            "slice_id": slice_id,
-            "specification": str(spec_path.relative_to(root)),
-            "message": "Downstream Gate Passed: Specification is frozen approved.",
-        }
     else:
-        raise HandoffError(f"Downstream Gate Blocked: Unrecognized authority status '{spec_status}' for slice '{slice_id}'.")
+        raise HandoffError(
+            f"Downstream Gate Blocked: Specification for slice '{slice_id}' has not been frozen "
+            f"(missing freeze manifest at '{manifest_path.relative_to(root)}'). "
+            "Downstream engineering implementation (Loom Entry 2) strictly requires 'frozen approved' status. "
+            "Run Stage 5 packaging (python3 skills/spec-prototype/scripts/handoff.py freeze) to produce immutable frozen delivery."
+        )
 
 
 def directory_manifest(directory: Path) -> dict:

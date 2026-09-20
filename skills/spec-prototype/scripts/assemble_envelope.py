@@ -44,6 +44,68 @@ def _contract_lint_gate(root: Path, slice_id: str) -> List[Dict[str, str]]:
         return [{"code": "E010_STALE_CONTRACT", "path": str(root), "message": str(error)}]
 
 
+_VERB_COLUMN_KEYS = (
+    # (field, header fragments matched in priority order)
+    ("action_id", ("action id", "action")),
+    ("trigger_btn", ("trigger button", "trigger")),
+    ("proximity_level", ("proximity",)),
+    ("container_form", ("container form", "container", "modal / drawer", "drawer")),
+    ("commit_btn", ("commit action", "commit")),
+    ("feedback_style", ("feedback style", "completion feedback", "feedback", "toast")),
+    ("consequence", ("impact", "consequence")),
+)
+
+
+def _verb_column_map(header_cells: List[str]) -> Dict[str, int]:
+    """Bind each semantic field to the authored header column that owns it.
+
+    The authored table owns its schema: a legacy 6-column table and the canonical
+    7-column Proximity ladder both map correctly, and no column is read by position.
+    """
+    normalized = [re.sub(r"[\s*`]+", " ", cell).strip().lower() for cell in header_cells]
+    mapping: Dict[str, int] = {}
+    for field, fragments in _VERB_COLUMN_KEYS:
+        for index, header in enumerate(normalized):
+            if index in mapping.values():
+                continue
+            if any(fragment in header for fragment in fragments):
+                mapping[field] = index
+                break
+    return mapping
+
+
+def _verb_cells(row_cells: List[str], columns: Dict[str, int],
+                header_cells: Optional[List[str]] = None) -> Dict[str, str]:
+    def cell(field: str) -> str:
+        index = columns.get(field)
+        return row_cells[index].strip() if index is not None and index < len(row_cells) else ""
+
+    container = cell("container_form")
+    proximity = cell("proximity_level")
+    if not proximity:
+        # Legacy tables carry no Proximity column: infer the level from the
+        # authored container, falling back to the header that framed that column
+        # (a bare container value may name no container at all).
+        hint = container.lower()
+        index = columns.get("container_form")
+        if header_cells and index is not None and index < len(header_cells):
+            hint = f"{hint} {header_cells[index].lower()}"
+        proximity = ("Level 4" if "modal" in hint
+                     else "Level 3" if "drawer" in hint
+                     else "Level 2" if "inspector" in hint or "margin" in hint
+                     else "Level 1" if "flyout" in hint
+                     else "Level 0")
+    return {
+        "action_id": cell("action_id"),
+        "trigger_btn": cell("trigger_btn"),
+        "proximity_level": proximity,
+        "container_form": container,
+        "commit_btn": cell("commit_btn"),
+        "feedback_style": cell("feedback_style") or "Toast",
+        "consequence": cell("consequence"),
+    }
+
+
 def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Path]:
     """Verify that all required Stage 1 design contract artifacts exist and meet minimum content floors."""
     required = {
@@ -471,6 +533,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     in_frames = False
     in_rules = False
     in_fault = False
+    verb_columns: Optional[Dict[str, int]] = None
+    verb_header: List[str] = []
     fault_tolerance: List[Dict[str, str]] = []
     for line in contract_content.splitlines():
         if "Cognitive Budgeting & Energy Return Ledger" in line:
@@ -486,6 +550,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
             in_frames = False
             in_rules = False
             in_fault = False
+            verb_columns = None
             continue
         elif "Fault Tolerance & Error Recovery Contract" in line:
             in_ledger = False
@@ -538,13 +603,52 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
                     cognitive_ledger["repayment_settlement"] = parts[1]
         elif in_verbs and line.strip().startswith("|") and not line.strip().startswith("|---"):
             parts = [re.sub(r"[*`]", "", p).strip() for p in line.split("|") if p.strip()]
-            if parts and len(parts) >= 4 and parts[0] not in ("Action ID",):
+            if parts and len(parts) >= 4:
+                # Header-driven column mapping: the first row after the section
+                # heading is the authored header and owns the schema, so a 5/6/7-column
+                # table or any column order maps without positional crosstalk.
+                if verb_columns is None:
+                    verb_columns = _verb_column_map(parts)
+                    verb_header = parts
+                    continue
+                cells = _verb_cells(parts, verb_columns, verb_header)
+                if not cells["action_id"]:
+                    continue
+                act_id = cells["action_id"]
+                trig_btn = cells["trigger_btn"]
+                prox_level = cells["proximity_level"]
+                cont_form = cells["container_form"]
+                commit_btn = cells["commit_btn"]
+                fb_style = cells["feedback_style"]
+                consequence = cells["consequence"]
+
+                # Derive physical container implementation directive based on Proximity Level 0~4
+                prox_lower = prox_level.lower()
+                if "0" in prox_lower or "in-situ" in prox_lower or "popover" in cont_form.lower():
+                    physical_directive = "Level 0 (In-situ): use inline popover, tooltip, or dropdown; NEVER render blocking backdrop or modal."
+                elif "1" in prox_lower or "flyout" in cont_form.lower():
+                    physical_directive = "Level 1 (Anchored Flyout): render anchored floating card adjacent to trigger; background remains active."
+                elif "2" in prox_lower or "inspector" in cont_form.lower() or "margin" in cont_form.lower():
+                    physical_directive = "Level 2 (Inspector Column): render side margin column or collapsible dock; primary canvas stays focused."
+                elif "3" in prox_lower or "drawer" in cont_form.lower():
+                    physical_directive = "Level 3 (Contextual Drawer): render contextual slide-over drawer; preserve uncommitted draft state on dismiss."
+                elif "4" in prox_lower or "modal" in cont_form.lower():
+                    physical_directive = "Level 4 (Modal Dialog): render native <dialog> with paired Confirm/Cancel buttons and explicit ESC dismiss."
+                else:
+                    physical_directive = f"Container: render {cont_form} respecting non-blocking layout proximity."
+
                 verb_lifecycle.append({
-                    "action_id": parts[0],
-                    "trigger_btn": parts[1],
-                    "modal_header": parts[2],
-                    "commit_btn": parts[3],
-                    "toast": parts[4] if len(parts) > 4 else "",
+                    "action_id": act_id,
+                    "trigger_btn": trig_btn,
+                    "proximity_level": prox_level,
+                    "container_form": cont_form,
+                    "commit_btn": commit_btn,
+                    "feedback_style": fb_style,
+                    "consequence": consequence,
+                    "physical_directive": physical_directive,
+                    # Backward-compatibility alias keys
+                    "modal_header": cont_form,
+                    "toast": fb_style,
                 })
         elif in_frames and line.strip().startswith("- "):
             decisive_frames.append(line.strip()[2:].strip())
@@ -954,6 +1058,11 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "token_stylesheet_ref": token_rel_href,
         "verifiable_assertions": assertions,
         "content_language": content_language,
+        "interaction_affordance_integrity": (
+            "Every promised interaction verb (e.g. actions, toggles, navigation) must render visible, "
+            "directly clickable triggers and clear feedback in the declared content language. "
+            "Never leave core interactions as hidden stubs."
+        ),
         "a11y_floors": {
             "contrast": "WCAG 2.2 AA compliant (>4.5:1 text, >3:1 UI components)",
             "motion": "@media (prefers-reduced-motion: reduce) override required",
@@ -1056,6 +1165,11 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "envelope_version": "2.0",
         "envelope_architecture": "3.0-dual",
         "authority_status": "sealed_provisional",
+        "builder_guidance": {
+            "authority_ceiling": "Stage 2 prototypes remain 'sealed_provisional'; do not self-declare 'frozen approved'.",
+            "observable_affordances": "Render explicit visible controls and text for all declared interactive verbs.",
+            "responsive_folding": "Ensure fluid reflow down to 390px mobile viewport without horizontal overflow."
+        },
         "build_authority": build_authority,
         "has_hypothesis_actions": has_hypothesis_action,
         "active_methods": active_methods,
