@@ -107,8 +107,10 @@ Meet the declared accessibility floor; do not substitute generic web defaults fo
 
 - **Target Size (WCAG 2.2 AA)**: Interactive targets meet the 24px minimum with the standard
   inline and spacing exceptions the WCAG criterion permits.
-- **Somatic Touch Context**: When the declared `platform.target_context` is a touch device
-  (mobile/tablet), additionally honor the physical thumb and OS chrome:
+- **Somatic Touch Context**: When the declared `platform.device_context` is a touch device
+  (mobile/tablet) or `platform.input_context` is `touch`, additionally honor the physical
+  thumb and OS chrome (do not infer touch from `platform.target_context`, which names an
+  operating system, never a device class):
   - Pad fixed or edge-anchored chrome with `env(safe-area-inset-*)` (e.g.
     `padding-bottom: env(safe-area-inset-bottom)`) so nothing hides under the home indicator
     or notch.

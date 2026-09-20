@@ -75,6 +75,15 @@ def test_device_like_target_is_not_an_os_target():
     assert ctx["product"]["input_context"] == "touch"
 
 
+def test_platform_envelope_exposes_device_and_input_context():
+    product = ("```prototype-context\nrecord: product\ntarget-context: mobile\n"
+               "device-context: tablet\ninput-context: touch\n```\n")
+    ctx = prototype_context.read_context(product=product)
+    assert ctx["platform"]["device_context"] == "tablet"
+    assert ctx["platform"]["input_context"] == "touch"
+    assert ctx["platform"]["target_context"] == "unknown"
+
+
 # CPC-SCN-006: a native target with a browser prototype keeps its validation gap.
 
 def test_native_target_with_browser_medium_keeps_validation_gap():

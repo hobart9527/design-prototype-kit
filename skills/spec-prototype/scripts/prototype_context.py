@@ -212,6 +212,8 @@ def read_context(surface_map: str = "", product: str = "", foundation: str = "",
         },
         "platform": {
             "target_context": target_context,
+            "device_context": product_section["device_context"],
+            "input_context": product_section["input_context"],
             "prototype_medium": prototype_medium,
             "verification_environment": spec_section["verification_environment"] or "unknown",
             "native_validation_pending": bool(target_context in _NATIVE_TARGETS
