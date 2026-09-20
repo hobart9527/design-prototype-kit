@@ -1,6 +1,6 @@
 ## 1. Preserve the design spine
 
-- [ ] T-01 Amend the owning workflow with informed Stage 3 selection and continuity rules
+- [x] T-01 Amend the owning workflow with informed Stage 3 selection and continuity rules
   - Depends on: none
   - Anchors: skills/spec-prototype/SKILL.md, skills/spec-prototype/references/core-workflow.md, skills/spec-prototype/references/04-governance/usage.md, skills/spec-prototype/references/04-governance/handoff.md, tests/test_canonical_ontology.py
   - Write scope: skills/spec-prototype/SKILL.md, skills/spec-prototype/references/core-workflow.md, skills/spec-prototype/references/04-governance/usage.md, skills/spec-prototype/references/04-governance/handoff.md, tests/test_design_chain_continuity.py
@@ -12,7 +12,7 @@
 
 ## 2. Normalize authored scope and platform context
 
-- [ ] T-02 Add minimal authored selection and platform contracts with a deterministic reader
+- [x] T-02 Add minimal authored selection and platform contracts with a deterministic reader
   - Depends on: T-01
   - Anchors: skills/spec-prototype/templates/surface-map.md, skills/spec-prototype/templates/product.md, skills/spec-prototype/templates/experience-foundation.md, skills/spec-prototype/templates/prototype-specification.md, skills/spec-prototype/scripts/assemble_envelope.py
   - Write scope: skills/spec-prototype/templates/surface-map.md, skills/spec-prototype/templates/product.md, skills/spec-prototype/templates/experience-foundation.md, skills/spec-prototype/templates/prototype-specification.md, skills/spec-prototype/scripts/prototype_context.py, tests/test_prototype_context.py
@@ -24,7 +24,7 @@
 
 ## 3. Deliver lossless bounded Builder inputs
 
-- [ ] T-03 Wire normalized coverage and platform contracts into compilation and dispatch
+- [x] T-03 Wire normalized coverage and platform contracts into compilation and dispatch
   - Depends on: T-02
   - Anchors: skills/spec-prototype/scripts/materialize_contracts.py, skills/spec-prototype/scripts/assemble_envelope.py, skills/spec-prototype/scripts/execution_boundary.py, skills/spec-prototype/scripts/lint_spec_contracts.py
   - Write scope: skills/spec-prototype/scripts/materialize_contracts.py, skills/spec-prototype/scripts/assemble_envelope.py, skills/spec-prototype/scripts/execution_boundary.py, skills/spec-prototype/scripts/lint_spec_contracts.py, tests/test_platform_envelope.py
@@ -36,7 +36,7 @@
 
 ## 4. Prove platform behavior honestly
 
-- [ ] T-04 Bind Builder capture and Critic inputs to revision-specific platform evidence
+- [x] T-04 Bind Builder capture and Critic inputs to revision-specific platform evidence
   - Depends on: T-03
   - Anchors: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, skills/spec-prototype/scripts/capture.mjs, skills/spec-prototype/templates/prototype-evidence.md
   - Write scope: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, skills/spec-prototype/scripts/capture.mjs, skills/spec-prototype/templates/prototype-evidence.md, tests/test_platform_evidence.py
@@ -48,7 +48,7 @@
 
 ## 5. Complete exactly the promised scope
 
-- [ ] T-05 Reconcile selected coverage in quality checks and review portal
+- [x] T-05 Reconcile selected coverage in quality checks and review portal
   - Depends on: T-04
   - Anchors: skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/scripts/generate_review_portal.py, skills/spec-prototype/references/core-workflow.md, skills/spec-prototype/scripts/prototype_context.py
   - Write scope: skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/scripts/generate_review_portal.py, skills/spec-prototype/scripts/prototype_context.py, skills/spec-prototype/references/core-workflow.md, tests/test_prototype_coverage.py
@@ -60,7 +60,7 @@
 
 ## 6. Retain trustworthy freeze and downstream admission
 
-- [ ] T-06 Reject permissive freeze fallback and bind downstream admission to current sources
+- [x] T-06 Reject permissive freeze fallback and bind downstream admission to current sources
   - Depends on: T-05
   - Anchors: skills/spec-prototype/scripts/handoff.py, skills/spec-prototype/scripts/execution_boundary.py, skills/spec-prototype/references/04-governance/handoff.md
   - Write scope: skills/spec-prototype/scripts/handoff.py, skills/spec-prototype/scripts/execution_boundary.py, skills/spec-prototype/references/04-governance/handoff.md, tests/test_handoff_scope_integrity.py
@@ -72,7 +72,7 @@
 
 ## 7. Repair the measuring instrument
 
-- [ ] T-07 Reject unverified comparisons and numerical overflow false passes
+- [x] T-07 Reject unverified comparisons and numerical overflow false passes
   - Depends on: none
   - Anchors: benchmarks/judges/task_judge.py, benchmarks/judges/regression_judge.py, tests/test_benchmark_harness.py
   - Write scope: benchmarks/judges/task_judge.py, benchmarks/judges/regression_judge.py, tests/test_benchmark_measurement.py
@@ -82,7 +82,7 @@
   - Action: Evaluate horizontal overflow from validated available dimensions rather than a missing boolean default. Missing or invalid measurements remain unverified. Unverified-to-unverified is not a verified PASS; failed-to-unverified is not improvement. Preserve independent verified dimensions and explicit comparison limits instead of coercing an overall optimistic result. Align touch-field consumption with actual recorded evidence if needed within this task, without silently treating missing values as pass.
   - Proof: Tests cover 712/390 overflow, equal widths, absent/invalid measurements, both arms unverified, failed-to-unverified and genuine verified regressions/improvements. The old behavior must fail these tests. Do not modify historical reports or run paid judges.
 
-- [ ] T-08 Wire critical gates and actual candidate provenance into regression records
+- [x] T-08 Wire critical gates and actual candidate provenance into regression records
   - Depends on: T-07
   - Anchors: benchmarks/runners/aggregate_report.py, benchmarks/runners/run_case.py, benchmarks/runners/bench_lib.py, benchmarks/README.md, tests/test_benchmark_harness.py
   - Write scope: benchmarks/runners/aggregate_report.py, benchmarks/runners/run_case.py, benchmarks/runners/bench_lib.py, benchmarks/README.md, tests/test_benchmark_provenance.py
@@ -94,7 +94,7 @@
 
 ## 8. Independent continuity review
 
-- [ ] T-09 Review the integrated golden chain and focused regression results without edits
+- [x] T-09 Review the integrated golden chain and focused regression results without edits
   - Depends on: T-06, T-08
   - Anchors: openspec/changes/prototype-coverage-platform-continuity/design.md, skills/spec-prototype/SKILL.md, skills/spec-prototype/references/core-workflow.md, skills/spec-prototype/scripts/assemble_envelope.py, agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, tests/test_design_chain_continuity.py
   - Artifact inputs: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-08

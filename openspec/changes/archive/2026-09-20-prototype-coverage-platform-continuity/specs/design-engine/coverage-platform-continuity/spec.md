@@ -1,8 +1,55 @@
-# design-engine/coverage-platform-continuity Specification
-
 ## Purpose
-Correct the coverage, platform, evidence and handoff seams of the design engine so that an authored scope is admitted, verified, completed and frozen on the facts it actually declares.
-## Requirements
+
+Preserve the existing design engine's product reasoning and Spec authority while making prototype coverage, platform adaptation, evidence limits and conditional full-product rollout explicit and verifiable.
+
+## ADDED Requirements
+
+### Requirement: CPC-001 Preserve design reasoning and source authority
+The engine SHALL preserve Double Diamond decision-making, Nine Pillars problem ownership, Five Axes expression calibration, applicable reference methods, evidence hierarchy and the existing draft-to-approved lifecycle. Coverage selection SHALL NOT crop the product model or authorize approval. Formal candidates SHALL retain their required provisional specifications before implementation; direction probes SHALL retain their existing bounded exception. Method outcomes and consequential rationale SHALL remain traceable through source specifications, execution projection and review. Refinements SHALL update the owning source before dependent evidence is reused.
+
+#### Scenario: CPC-SCN-001 Selected pages retain product semantics
+- **WHEN** a product map contains ten surfaces and the user selects three
+- **THEN** the full map, relevant objects, permissions, states, rationale and applicable method outcomes remain authoritative; only the implementation target is reduced
+
+#### Scenario: CPC-SCN-002 Exploration and refinement keep their routes
+- **WHEN** a request is a bounded direction probe, specification-only request or local refinement
+- **THEN** it is not forced through full-product enumeration, implementation or approval; a formal candidate still requires its applicable provisional Spec and local refinement preserves unrelated decisions
+
+### Requirement: CPC-003 Author platform context and adaptation
+The engine SHALL distinguish target runtime/OS, device and input context, prototype medium and verification environment. Platform facts SHALL be sourced or marked unknown; only route-changing uncertainty requires clarification. Existing product/foundation/specification authorities SHALL express shared experience invariants and applicable platform differences in topology, navigation, input, viewport/keyboard behavior, accessibility and recovery. Irrelevant platform dimensions SHALL NOT require exhaustive matrices. Platform-specific surfaces SHALL have explicit applicability rather than an automatic platform-by-page Cartesian product.
+
+#### Scenario: CPC-SCN-005 Desktop and mobile preserve task meaning
+- **WHEN** one task uses a desktop split view and a mobile detail route
+- **THEN** adaptation preserves the object's meaning, permissions, selected context and required return behavior while allowing different layout and navigation structures
+
+#### Scenario: CPC-SCN-006 Native target with browser prototype
+- **WHEN** the intended product is an iOS or Android application but the artifact is HTML
+- **THEN** the specification distinguishes that target from the browser prototype and records simulated system behavior and outstanding native validation without inferring native fidelity
+
+### Requirement: CPC-004 Project constraints without semantic invention
+Formal Builder inputs SHALL be derived from retained selected scope and applicable platform contracts with source identity. Invalid surface/context references, paths outside authorized roots, missing required formal facts and stale source identities SHALL prevent dispatch. The compiler SHALL NOT invent product tensions, reality anchors, shortcuts, platform actions or approval to fill omissions. Optional exploration unknowns SHALL remain unknown. Builder inputs SHALL preserve relevant tasks, states, recovery, experience invariants, Signature relationships and method outcomes through accessible source references or direct projection.
+
+#### Scenario: CPC-SCN-007 Missing facts and conflicting defaults
+- **WHEN** a source leaves a platform shortcut or Core Tension undecided, or declares an action inconsistent with a legacy default
+- **THEN** the compiler does not synthesize the default; formal route-critical omissions are reported and authored valid behavior is preserved
+
+#### Scenario: CPC-SCN-008 Tampered or outside-scope dispatch
+- **WHEN** a selection names a missing surface, unauthorized path or changed source revision
+- **THEN** dispatch is rejected with the specific mismatch and no broader write authorization is inferred
+
+### Requirement: CPC-008 Keep regression results evidence-bounded
+Regression evaluation SHALL not convert missing measurements or unverified dimensions into passes or improvements. Observable viewport overflow SHALL be computed from valid available measurements or remain unverified. Every declared critical hard gate SHALL affect aggregate acceptance. New runs SHALL identify the actual Skill and judge source contents, including dirty candidate content, and preserve prior evidence. Mechanism tests and real-session evidence SHALL remain separate; real-session execution SHALL require its own cost authorization.
+
+#### Scenario: CPC-SCN-016 Missing evidence and overflow cannot pass
+- **WHEN** viewport measurements show scrollWidth 712 and clientWidth 390, measurements are absent, or both comparison arms are unverified
+- **THEN** overflow fails, absent measurements remain unverified, and unverified comparisons are not reported as verified passes or improvements
+
+#### Scenario: CPC-SCN-017 Hard gates and provenance remain visible
+- **WHEN** a candidate has a critical accessibility violation or a new candidate run uses modified Skill files
+- **THEN** the violation blocks acceptance and the actual source content identity is recorded rather than represented by an unrelated clean revision
+
+## MODIFIED Requirements
+
 ### Requirement: CPC-002 Choose coverage from an informed map
 The engine SHALL resolve the requested implementation scope from the current Surface Map and SHALL retain it with its map revision, selected surfaces and journeys, target contexts and its coverage mode. Formal entry SHALL admit a `full-product` selection as an authorization over every applicable surface of the bound map revision rather than treating its unlisted surfaces as a widened selection. Formal entry SHALL compare the retained map identity against the authored map so that a changed revision or content digest prevents dispatch. An empty selected coverage SHALL remain an error; missing, invalid or stale selections SHALL NOT default to full-product.
 
@@ -62,48 +109,3 @@ Freeze and downstream admission SHALL bind exact scope, source revisions and evi
 #### Scenario: CPC-SCN-024 Prototype claim still requires its entry
 - **WHEN** a frozen scope claims prototype implementation but no HTML entry exists
 - **THEN** the freeze is refused, and a refused freeze leaves existing artifacts intact
-
-### Requirement: CPC-001 Preserve design reasoning and source authority
-The engine SHALL preserve Double Diamond decision-making, Nine Pillars problem ownership, Five Axes expression calibration, applicable reference methods, evidence hierarchy and the existing draft-to-approved lifecycle. Coverage selection SHALL NOT crop the product model or authorize approval. Formal candidates SHALL retain their required provisional specifications before implementation; direction probes SHALL retain their existing bounded exception. Method outcomes and consequential rationale SHALL remain traceable through source specifications, execution projection and review. Refinements SHALL update the owning source before dependent evidence is reused.
-
-#### Scenario: CPC-SCN-001 Selected pages retain product semantics
-- **WHEN** a product map contains ten surfaces and the user selects three
-- **THEN** the full map, relevant objects, permissions, states, rationale and applicable method outcomes remain authoritative; only the implementation target is reduced
-
-#### Scenario: CPC-SCN-002 Exploration and refinement keep their routes
-- **WHEN** a request is a bounded direction probe, specification-only request or local refinement
-- **THEN** it is not forced through full-product enumeration, implementation or approval; a formal candidate still requires its applicable provisional Spec and local refinement preserves unrelated decisions
-
-### Requirement: CPC-003 Author platform context and adaptation
-The engine SHALL distinguish target runtime/OS, device and input context, prototype medium and verification environment. Platform facts SHALL be sourced or marked unknown; only route-changing uncertainty requires clarification. Existing product/foundation/specification authorities SHALL express shared experience invariants and applicable platform differences in topology, navigation, input, viewport/keyboard behavior, accessibility and recovery. Irrelevant platform dimensions SHALL NOT require exhaustive matrices. Platform-specific surfaces SHALL have explicit applicability rather than an automatic platform-by-page Cartesian product.
-
-#### Scenario: CPC-SCN-005 Desktop and mobile preserve task meaning
-- **WHEN** one task uses a desktop split view and a mobile detail route
-- **THEN** adaptation preserves the object's meaning, permissions, selected context and required return behavior while allowing different layout and navigation structures
-
-#### Scenario: CPC-SCN-006 Native target with browser prototype
-- **WHEN** the intended product is an iOS or Android application but the artifact is HTML
-- **THEN** the specification distinguishes that target from the browser prototype and records simulated system behavior and outstanding native validation without inferring native fidelity
-
-### Requirement: CPC-004 Project constraints without semantic invention
-Formal Builder inputs SHALL be derived from retained selected scope and applicable platform contracts with source identity. Invalid surface/context references, paths outside authorized roots, missing required formal facts and stale source identities SHALL prevent dispatch. The compiler SHALL NOT invent product tensions, reality anchors, shortcuts, platform actions or approval to fill omissions. Optional exploration unknowns SHALL remain unknown. Builder inputs SHALL preserve relevant tasks, states, recovery, experience invariants, Signature relationships and method outcomes through accessible source references or direct projection.
-
-#### Scenario: CPC-SCN-007 Missing facts and conflicting defaults
-- **WHEN** a source leaves a platform shortcut or Core Tension undecided, or declares an action inconsistent with a legacy default
-- **THEN** the compiler does not synthesize the default; formal route-critical omissions are reported and authored valid behavior is preserved
-
-#### Scenario: CPC-SCN-008 Tampered or outside-scope dispatch
-- **WHEN** a selection names a missing surface, unauthorized path or changed source revision
-- **THEN** dispatch is rejected with the specific mismatch and no broader write authorization is inferred
-
-### Requirement: CPC-008 Keep regression results evidence-bounded
-Regression evaluation SHALL not convert missing measurements or unverified dimensions into passes or improvements. Observable viewport overflow SHALL be computed from valid available measurements or remain unverified. Every declared critical hard gate SHALL affect aggregate acceptance. New runs SHALL identify the actual Skill and judge source contents, including dirty candidate content, and preserve prior evidence. Mechanism tests and real-session evidence SHALL remain separate; real-session execution SHALL require its own cost authorization.
-
-#### Scenario: CPC-SCN-016 Missing evidence and overflow cannot pass
-- **WHEN** viewport measurements show scrollWidth 712 and clientWidth 390, measurements are absent, or both comparison arms are unverified
-- **THEN** overflow fails, absent measurements remain unverified, and unverified comparisons are not reported as verified passes or improvements
-
-#### Scenario: CPC-SCN-017 Hard gates and provenance remain visible
-- **WHEN** a candidate has a critical accessibility violation or a new candidate run uses modified Skill files
-- **THEN** the violation blocks acceptance and the actual source content identity is recorded rather than represented by an unrelated clean revision
-
