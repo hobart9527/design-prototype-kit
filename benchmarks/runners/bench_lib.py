@@ -245,14 +245,21 @@ def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
     rev = str(manifest.get("git_rev") or "")
 
     def divergences() -> list[str]:
+        # An entry that is not a mapping carrying a string sha256 cannot be trusted
+        # as a match, so it is named as a divergence instead of raising KeyError.
         skill_root = base / "skills/spec-prototype"
-        return [rel for rel, meta in (manifest.get("hashes") or {}).items()
-                if sha256_file(skill_root / rel) != meta["sha256"]]
+        out = []
+        for rel, meta in (manifest.get("hashes") or {}).items():
+            recorded = meta.get("sha256") if isinstance(meta, dict) else None
+            if not isinstance(recorded, str) or sha256_file(skill_root / rel) != recorded:
+                out.append(rel)
+        return out
 
     if (base / "skills/spec-prototype").is_dir():
         # The tree is git-ignored, so nothing else guards it. Hashing 59 files costs ~2ms.
         stale = divergences()
         if not stale:
+            # Empty hashes prove nothing: the tree is still held to the shape contract.
             require_complete_skill(base / "skills/spec-prototype", f"baseline {tag} (cached)")
             return base
         shutil.rmtree(base / "skills", ignore_errors=True)
@@ -272,6 +279,8 @@ def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
     if divergent:
         raise BenchBlocked(f"baseline {tag}: {len(divergent)} file(s) diverge from MANIFEST "
                            f"at {rev[:12]}: {divergent[:3]}")
+    # The manifest pins the revision; it does not prove the revision revives a skill shape.
+    require_complete_skill(base / "skills/spec-prototype", f"baseline {tag} (restored {rev[:12]})")
     return base
 
 

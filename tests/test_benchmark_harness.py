@@ -1,7 +1,10 @@
 """Hermetic checks for the automated benchmark harness (no network, no LLM, no browser)."""
+import io
 import json
 import pathlib
+import subprocess
 import sys
+import tarfile
 
 import jsonschema
 import pytest
@@ -247,3 +250,79 @@ def test_frozen_baseline_restores_from_its_recorded_rev(tmp_path, monkeypatch):
     assert target.read_text(encoding="utf-8") != good
     bl.ensure_baseline()
     assert target.read_text(encoding="utf-8") == good, "tampered baseline was reused instead of rebuilt"
+
+
+
+def _frozen_baseline_fixture(tmp_path, git_rev="unknown"):
+    """A baseline whose manifest pins every file the cached tree actually carries."""
+    base = tmp_path / bl.STABLE_TAG
+    skill = _complete_skill(base / "skills/spec-prototype")
+    hashes = {rel: {"sha256": bl.sha256_file(skill / rel)}
+              for rel in bl.skill_contract_gaps(skill) or _skill_files(skill)}
+    if not hashes:
+        hashes = {str(p.relative_to(skill)): {"sha256": bl.sha256_file(p)}
+                  for p in sorted(skill.rglob("*")) if p.is_file()}
+    bl.write_json(base / "MANIFEST.json",
+                  {"tag": bl.STABLE_TAG, "git_rev": git_rev, "hashes": hashes})
+    return base, skill
+
+
+def _skill_files(skill):
+    return sorted(str(p.relative_to(skill)) for p in skill.rglob("*") if p.is_file())
+
+
+def test_cached_baseline_is_held_to_the_integrity_contract(tmp_path, monkeypatch):
+    """A cached tree is guarded by its shape, not by an empty hash map."""
+    base = tmp_path / bl.STABLE_TAG
+    skill = base / "skills/spec-prototype"
+    skill.mkdir(parents=True)
+    (skill / "CONTEXT.md").write_text("only one file", encoding="utf-8")
+    bl.write_json(base / "MANIFEST.json", {"tag": bl.STABLE_TAG, "git_rev": "unknown", "hashes": {}})
+    monkeypatch.setattr(bl, "BASELINES_DIR", tmp_path)
+    with pytest.raises(bl.BenchBlocked) as excinfo:
+        bl.ensure_baseline()
+    message = str(excinfo.value)
+    assert str(skill) in message and "SKILL.md" in message, message
+
+
+def test_malformed_hash_entry_is_a_named_divergence(tmp_path, monkeypatch):
+    """An unreadable hash entry is refused as a divergence, never a KeyError."""
+    # A present-but-unreadable entry must be named before the tree is discarded for rebuild.
+    real_rev = bl.read_json(bl.BASELINES_DIR / bl.STABLE_TAG / "MANIFEST.json")["git_rev"]
+    base, _ = _frozen_baseline_fixture(tmp_path, git_rev=real_rev)
+    bl.write_json(base / "MANIFEST.json", {"tag": bl.STABLE_TAG, "git_rev": real_rev,
+                                           "hashes": {"SKILL.md": "not-a-mapping"}})
+    monkeypatch.setattr(bl, "BASELINES_DIR", tmp_path)
+    with pytest.raises(bl.BenchBlocked) as excinfo:
+        bl.ensure_baseline()
+    message = str(excinfo.value)
+    assert "SKILL.md" in message and "diverge" in message, message
+
+
+def test_valid_cached_baseline_still_resolves(tmp_path, monkeypatch):
+    base, skill = _frozen_baseline_fixture(tmp_path)
+    monkeypatch.setattr(bl, "BASELINES_DIR", tmp_path)
+    assert bl.ensure_baseline() == base
+    assert (skill / "SKILL.md").is_file()
+
+
+def test_incomplete_restored_baseline_is_refused(tmp_path, monkeypatch):
+    """A recorded revision that revives an incomplete tree is refused, not adopted."""
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w") as tf:
+        data = b"skill"
+        info = tarfile.TarInfo("skills/spec-prototype/SKILL.md")
+        info.size = len(data)
+        tf.addfile(info, io.BytesIO(data))
+    archive = buf.getvalue()
+
+    base = tmp_path / bl.STABLE_TAG
+    base.mkdir()
+    bl.write_json(base / "MANIFEST.json", {"tag": bl.STABLE_TAG, "git_rev": "0" * 40, "hashes": {}})
+    monkeypatch.setattr(bl, "BASELINES_DIR", tmp_path)
+    monkeypatch.setattr(bl.subprocess, "run",
+                        lambda *a, **k: subprocess.CompletedProcess(a[0], 0, archive, b""))
+    with pytest.raises(bl.BenchBlocked) as excinfo:
+        bl.ensure_baseline()
+    message = str(excinfo.value)
+    assert "restored" in message and "CONTEXT.md" in message, message
