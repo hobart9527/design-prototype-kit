@@ -254,15 +254,15 @@ def test_spec_first_contract_formulation_and_lean_envelope(tmp_path: Path):
     # 2. Populate all 6 Stage 1 contract pillars in tmp_path
     product = tmp_path / "prototype/product.md"
     product.parent.mkdir(parents=True, exist_ok=True)
-    product.write_text("# Product\n- Core Tension: Speed vs Safety\n", encoding="utf-8")
+    product.write_text("# Product\n- Core Tension: Speed vs Safety\n- Reality Anchors: Linear\n- Content Language: en-US\n\n```prototype-context\nrecord: product\n```\n", encoding="utf-8")
 
     smap = tmp_path / "prototype/contracts/surface-maps/m1.md"
     smap.parent.mkdir(parents=True, exist_ok=True)
-    smap.write_text("# Surface Map\n- Scope: test\n", encoding="utf-8")
+    smap.write_text("# Surface Map\n\n```prototype-context\nrecord: surface-map\nrevision: m1\ncoverage: full-product\nsurfaces: test_slice\n```\n", encoding="utf-8")
 
     foundation = tmp_path / "prototype/contracts/foundation/f1.md"
     foundation.parent.mkdir(parents=True, exist_ok=True)
-    foundation.write_text("# Foundation\n- Foundation revision: f1\n", encoding="utf-8")
+    foundation.write_text("# Foundation\n- Foundation revision: f1\n- Grounding Rationale: Non-transfer boundaries\n\n```prototype-context\nrecord: experience-foundation\n```\n", encoding="utf-8")
 
     tokens_css = tmp_path / "prototype/shared/tokens.css"
     tokens_css.parent.mkdir(parents=True, exist_ok=True)
@@ -277,17 +277,33 @@ def test_spec_first_contract_formulation_and_lean_envelope(tmp_path: Path):
 
     slice_c = tmp_path / "prototype/contracts/slices/test_slice/c1.md"
     slice_c.parent.mkdir(parents=True, exist_ok=True)
-    slice_c.write_text("# Contract\n- Slice ID: test_slice\n", encoding="utf-8")
+    slice_c.write_text("# Contract\n- Slice ID: test_slice\n- Content Language: en-US\n\n## Action Verb Lifecycle Table\n| Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact |\n| a | b | c | d | e | f |\n", encoding="utf-8")
 
     spec = tmp_path / "prototype/specifications/test_slice/r1.md"
     spec.parent.mkdir(parents=True, exist_ok=True)
     spec.write_text("""# Spec
 - Prototype write scope: `prototype/experiments/test_slice/hero-anchor/`
 - Evidence write scope: `prototype/evidence/probes/test_slice/`
+- Content Language: en-US
+
+## Dual-Channel Ergonomics
+| Shortcut Key | Target Action | Scope | Focus Restoration Anchor |
+|---|---|---|---|
+| Space | Run | Selection | trigger |
+
+## The Break Protocol Stress Checkpoints
+| Reality Breaker | Test Vector | Expected Graceful Behavior | Observed |
+|---|---|---|---|
+| Unbreakable String | 64-char hash | Truncate with tooltip | pass |
+
 ## Verifiable Design Assertions
 | Assertion | Expected |
 |---|---|
 | Key shortcut Space triggers action | pass |
+
+```prototype-context
+record: prototype-specification
+```
 """, encoding="utf-8")
 
     # 3. Assemble generates complete pre-baked envelope
@@ -427,17 +443,19 @@ def test_seven_high_leverage_design_levers_and_template_slots(tmp_path: Path):
     assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
     # Setup mock slice
     (tmp_path / "prototype").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "prototype/product.md").write_text("# Product\n- Core Tension: A vs B\n", encoding="utf-8")
+    (tmp_path / "prototype/product.md").write_text("# Product\n- Core Tension: A vs B\n- Reality Anchors: Linear\n- Content Language: en-US\n\n```prototype-context\nrecord: product\n```\n", encoding="utf-8")
     (tmp_path / "prototype/shared").mkdir(parents=True, exist_ok=True)
     (tmp_path / "prototype/shared/tokens.css").write_text(":root {}\n", encoding="utf-8")
     (tmp_path / "prototype/contracts/tokens").mkdir(parents=True, exist_ok=True)
     (tmp_path / "prototype/contracts/tokens/t1.md").write_text("# Tokens\n", encoding="utf-8")
     (tmp_path / "prototype/contracts/surface-maps").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "prototype/contracts/surface-maps/m1.md").write_text("# Map\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/surface-maps/m1.md").write_text("# Map\n\n```prototype-context\nrecord: surface-map\nrevision: m1\ncoverage: full-product\nsurfaces: slice_a\n```\n", encoding="utf-8")
     (tmp_path / "prototype/contracts/foundation").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "prototype/contracts/foundation/f1.md").write_text("# Foundation\n", encoding="utf-8")
+    (tmp_path / "prototype/contracts/foundation/f1.md").write_text("# Foundation\n- Core Tension: A vs B\n- Grounding Rationale: Rationale\n\n```prototype-context\nrecord: experience-foundation\n```\n", encoding="utf-8")
     (tmp_path / "prototype/contracts/slices/slice_a").mkdir(parents=True, exist_ok=True)
     (tmp_path / "prototype/contracts/slices/slice_a/c1.md").write_text("""# Contract
+- Content Language: en-US
+
 ## Action Verb Lifecycle Table
 | Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact / Consequence |
 |---|---|---|---|---|---|
@@ -445,20 +463,28 @@ def test_seven_high_leverage_design_levers_and_template_slots(tmp_path: Path):
 """, encoding="utf-8")
     (tmp_path / "prototype/specifications/slice_a").mkdir(parents=True, exist_ok=True)
     (tmp_path / "prototype/specifications/slice_a/r1.md").write_text("""# Spec
+- Content Language: en-US
 - Prototype write scope: `prototype/experiments/slice_a/hero-anchor/`
 - Evidence write scope: `prototype/evidence/probes/slice_a/`
+
 ## Dual-Channel Ergonomics
 | Shortcut Key | Target Action | Scope | Focus Restoration Anchor |
 |---|---|---|---|
 | Space | Run | Selection | trigger |
+
 ## The Break Protocol Stress Checkpoints
 | Reality Breaker | Test Vector | Expected Graceful Behavior | Observed |
 |---|---|---|---|
 | Unbreakable String | 64-char hash | Truncate with tooltip | pass |
+
 ## Verifiable Design Assertions
 | Assertion | Expected |
 |---|---|
 | Key shortcut Space triggers action | pass |
+
+```prototype-context
+record: prototype-specification
+```
 """, encoding="utf-8")
 
     env = assemble_mod.assemble(tmp_path, "slice_a")
@@ -605,7 +631,11 @@ def test_topology_context_and_convention_cli(tmp_path: Path):
 
     product = tmp_path / "prototype/product.md"
     product.parent.mkdir(parents=True, exist_ok=True)
-    product.write_text("# Product\n- Core Tension: Speed vs Safety\n", encoding="utf-8")
+    product.write_text("# Product\n- Core Tension: Speed vs Safety\n- Reality Anchors: Linear\n- Content Language: en-US\n\n```prototype-context\nrecord: product\n```\n", encoding="utf-8")
+
+    disc = tmp_path / "prototype/discussion.md"
+    disc.parent.mkdir(parents=True, exist_ok=True)
+    disc.write_text("# Discussion\n- Content Language: en-US\n", encoding="utf-8")
 
     smap = tmp_path / "prototype/contracts/surface-maps/m1.md"
     smap.parent.mkdir(parents=True, exist_ok=True)
@@ -613,11 +643,20 @@ def test_topology_context_and_convention_cli(tmp_path: Path):
 - **主工作区 (Primary)**: `console/hero-anchor`（GPU 拓扑）
 - **上下文视图 (Contextual)**: `surfaces/incident-replay`（帧回放）
 - **支撑视图 (Supporting)**: `surfaces/capacity-matrix`（算力配额）
+
+```prototype-context
+record: surface-map
+revision: m1
+coverage: selected
+selection-source: prototype/discussion.md
+selected-surfaces: console
+surfaces: console, incident-replay, capacity-matrix
+```
 """, encoding="utf-8")
 
     foundation = tmp_path / "prototype/contracts/foundation/f1.md"
     foundation.parent.mkdir(parents=True, exist_ok=True)
-    foundation.write_text("# Foundation\n- Foundation revision: f1\n", encoding="utf-8")
+    foundation.write_text("# Foundation\n- Foundation revision: f1\n- Core Tension: Speed vs Safety\n- Grounding Rationale: Non-transfer\n\n```prototype-context\nrecord: experience-foundation\n```\n", encoding="utf-8")
 
     tokens_css = tmp_path / "prototype/shared/tokens.css"
     tokens_css.parent.mkdir(parents=True, exist_ok=True)
@@ -632,17 +671,32 @@ def test_topology_context_and_convention_cli(tmp_path: Path):
 
     slice_c = tmp_path / "prototype/contracts/slices/console/c1.md"
     slice_c.parent.mkdir(parents=True, exist_ok=True)
-    slice_c.write_text("# Contract\n- Slice ID: console\n", encoding="utf-8")
+    slice_c.write_text("""# Contract
+- Slice ID: console
+- Content Language: en-US
+
+## Action Verb Lifecycle Table
+- Action Verb: N/A (Not Applicable)
+""", encoding="utf-8")
 
     spec = tmp_path / "prototype/specifications/console/r1.md"
     spec.parent.mkdir(parents=True, exist_ok=True)
     spec.write_text("""# Spec
+- Content Language: en-US
 - Prototype write scope: `prototype/experiments/console/hero-anchor/`
 - Evidence write scope: `prototype/evidence/probes/console/`
+
+## The Break Protocol Stress Checkpoints
+- The Break Protocol: N/A (Not Applicable)
+
 ## Verifiable Design Assertions
 | Assertion | Expected |
 |---|---|
 | Space shortcut | pass |
+
+```prototype-context
+record: prototype-specification
+```
 """, encoding="utf-8")
 
     env = assemble_mod.assemble(tmp_path, "console")
@@ -748,7 +802,7 @@ def test_5_system_modern_industrial_derivation_and_rogue_root_blocking(tmp_path:
 | Space | pass |
 """, encoding="utf-8")
 
-    env = assemble_mod.assemble(tmp_path, "telemetry")
+    env = assemble_mod.assemble(tmp_path, "telemetry", lint=False)
     assert env["layout_profile"] == "dense-console"
     assert "app_shell_contract" in env
     assert "cognitive_ledger" in env
@@ -1186,7 +1240,7 @@ def test_dominant_baseline_preserved_against_casual_keyword_mentions(tmp_path: P
 Note: Avoid touch controls and consumer mobile paradigms.
 """, encoding="utf-8")
 
-    env = assemble_mod.assemble(tmp_path, "slice_console")
+    env = assemble_mod.assemble(tmp_path, "slice_console", lint=False)
     assert env["app_shell_blueprint"]["profile"] == "dense-console", "Profile must remain dense-console despite 'touch'/'mobile' mentions in omissions"
 
 

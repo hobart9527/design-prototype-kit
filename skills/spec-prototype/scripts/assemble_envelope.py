@@ -286,13 +286,13 @@ def select_active_methods(
     return result
 
 
-def assemble(root: Path, slice_id: str) -> Dict[str, Any]:
+def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     """Assemble an envelope for either exploration or formal candidate work."""
     brief = _brief_path(root, slice_id)
     specification = root / f"prototype/specifications/{slice_id}/r1.md"
     if brief is not None and not specification.is_file():
         return assemble_direction(root, slice_id, brief)
-    paths = check_spec_completeness(root, slice_id)
+    paths = check_spec_completeness(root, slice_id, lint=lint)
 
     product_content = paths["product"].read_text(encoding="utf-8")
     smap_content = paths["surface_map"].read_text(encoding="utf-8")

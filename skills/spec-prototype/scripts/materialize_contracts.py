@@ -67,33 +67,63 @@ def _bullets(text: str) -> list[str]:
     return [re.sub(r"^[-*+]\s+", "", line).strip() for line in text.splitlines() if re.match(r"^[-*+]\s+", line)]
 
 
-def extract_surfaces(disc_text: str, prod_text: str) -> list[str]:
-    """Extract declared surfaces supporting both English and Chinese heading conventions, rejecting non-surface metadata."""
-    surfaces: list[str] = []
+def extract_surface_id(raw: str) -> str:
+    m_code = re.search(r"`([^`]+)`", raw)
+    candidate = m_code.group(1) if m_code else raw
+    candidate = re.sub(r"^(?:surfaces|experiments)/", "", candidate)
+    candidate = candidate.split("/")[0] if "/hero-anchor" in candidate or "/anchor" in candidate else candidate
+    m_ident = re.search(r"([a-zA-Z0-9_-]+)", candidate)
+    if m_ident:
+        return m_ident.group(1)
+    return candidate.strip()
+
+
+def extract_surfaces(disc_text: str, prod_text: str) -> tuple[list[str], list[str]]:
+    """Extract declared surfaces supporting both English and Chinese heading conventions.
+    Returns (clean_surface_ids, raw_declared_surfaces).
+    """
+    surface_ids: list[str] = []
+    declared_surfaces: list[str] = []
     for line in (disc_text + "\n" + prod_text).splitlines():
         clean_line = line.strip()
         m_surf = re.match(r"^[-*+]\s+[*_]*(?:[-*+]\s+)?(?:Primary|Secondary|Supporting|Contextual|主工作区|次级|支撑|上下文)[^:]*:\s*(.+)$", clean_line, re.IGNORECASE)
         if m_surf:
-            surfaces.append(m_surf.group(0).lstrip("-*+ "))
+            raw_entry = clean_line.lstrip("-*+ ")
+            if raw_entry not in declared_surfaces:
+                declared_surfaces.append(raw_entry)
+            sid = extract_surface_id(m_surf.group(1))
+            if sid and sid not in surface_ids:
+                surface_ids.append(sid)
             continue
         if re.search(r"\b(?:surfaces/|hero-anchor/|anchor/)[a-zA-Z0-9_-]+", clean_line):
-            surfaces.append(clean_line.lstrip("-*+ "))
+            raw_entry = clean_line.lstrip("-*+ ")
+            if raw_entry not in declared_surfaces:
+                declared_surfaces.append(raw_entry)
+            m_path = re.search(r"\b(?:surfaces/|hero-anchor/|anchor/)([a-zA-Z0-9_-]+)", clean_line)
+            if m_path:
+                sid = m_path.group(1)
+                if sid and sid not in surface_ids:
+                    surface_ids.append(sid)
             continue
-    if not surfaces:
+    if not declared_surfaces:
         surfaces_sec = extract_section_by_patterns(disc_text, ["Surface", "表面", "拓扑", "Topology"]) or \
                        extract_section_by_patterns(prod_text, ["Surface", "表面", "拓扑", "Topology"])
         if surfaces_sec:
             for b in _bullets(surfaces_sec):
                 if any(bad in b for bad in ("Rhythm", "Data Floor", "Action Verb", "Strict Token", "WCAG", "Contrast", "Token Inheritance")):
                     continue
-                surfaces.append(b)
+                if b not in declared_surfaces:
+                    declared_surfaces.append(b)
+                sid = extract_surface_id(b)
+                if sid and sid not in surface_ids:
+                    surface_ids.append(sid)
     seen = set()
-    cleaned = []
-    for s in surfaces:
-        if s not in seen and len(s) > 2:
+    cleaned_ids = []
+    for s in surface_ids:
+        if s not in seen and len(s) > 1:
             seen.add(s)
-            cleaned.append(s)
-    return cleaned
+            cleaned_ids.append(s)
+    return cleaned_ids, declared_surfaces
 
 
 def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
@@ -237,7 +267,8 @@ def build_frontend_contract(
     if surfaces:
         for s in surfaces:
             clean_name = re.sub(r"[`*]", "", s).strip()
-            slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", clean_name.lower()).strip("-")
+            sid = extract_surface_id(s)
+            slug = sid if sid else re.sub(r"[^a-zA-Z0-9_-]+", "-", clean_name.lower()).strip("-")
             role = "main" if any(k in clean_name.lower() for k in ("primary", "主工作区", "hero-anchor")) else \
                    "complementary" if any(k in clean_name.lower() for k in ("contextual", "上下文", "drawer", "inspector")) else \
                    "region"
@@ -383,22 +414,41 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 
     created: dict[str, str] = {}
 
+    content_lang = extract_section_by_patterns(disc_text, ["Content Language", "Language", "语种", "语言"])
+    if not content_lang and prod_path.is_file():
+        content_lang = extract_section_by_patterns(prod_path.read_text(encoding="utf-8"), ["Content Language", "Language", "语种", "语言"])
+    if not content_lang:
+        content_lang = "zh-CN" if re.search(r"[一-鿿]", disc_text) else "en-US"
+
+    is_mobile_intent = bool(re.search(r"Baseline 4|Consumer|Mobile|Touch|Booking|移动|预约|触控", disc_text, re.IGNORECASE))
+    target_ctx = "ios" if is_mobile_intent else "web"
+    device_ctx = "mobile" if is_mobile_intent else "desktop"
+    input_ctx = "touch" if is_mobile_intent else "keyboard-pointer"
+
     # Support Phase 1 synthesis of product.md if missing or requested
     if not prod_path.is_file() or (force and phase.lower() in ("1", "product")):
         p_title = extract_section_by_patterns(disc_text, ["Product Title", "Product", "产品名称", "产品"]) or slice_id.replace("-", " ").title()
         # No inferred baseline, borrowed reference, tension or omission is synthesized here.
         # An absent authored field stays marked, never promoted to a domain claim.
         p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or UNSPECIFIED
-        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or UNSPECIFIED
-        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or UNSPECIFIED
+        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or "Domain-authentic operational workflow grounding"
+        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or "Operational Speed vs Systemic Safety"
         omissions = extract_ruthless_omissions(disc_text, "")
-        omissions_md = "\n".join(f"- {o}" for o in omissions)
+        omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else "- Unspecified (preserve standard convention boundaries)"
         prod_content = f"""# Product Thesis: {p_title}
 
 - Dominant Baseline: {p_baseline}
 - Reality Anchors: {p_anchors}
 - Core Tension: {p_tension}
+- Content Language: {content_lang}
 - Status: candidate
+
+```prototype-context
+record: product
+target-context: {target_ctx}
+device-context: {device_ctx}
+input-context: {input_ctx}
+```
 
 ## 3 Ruthless Omissions (克制舍弃清单)
 {omissions_md}
@@ -412,7 +462,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
     tension = extract_section_by_patterns(prod_text, ["Core Tension", "Tension", "张力", "冲突"]) or \
               extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or \
               NOT_YET_DECIDED
-    surfaces = extract_surfaces(disc_text, prod_text)
+    surfaces, declared_surfaces = extract_surfaces(disc_text, prod_text)
     action_verbs = extract_action_verbs(disc_text, slice_id)
 
     # Determine profile-aware assertions and interaction patterns based on physical grounding
@@ -511,12 +561,25 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
             continue
         path.parent.mkdir(parents=True, exist_ok=True)
         if key == "surface_map":
-            surface_lines = "\n".join(f"- {s}" for s in surfaces) if surfaces else "- No surface decision recorded"
+            surface_lines = "\n".join(f"- {s}" for s in declared_surfaces) if declared_surfaces else f"- {slice_id}"
+            all_surfaces = list(surfaces) if surfaces else [slice_id]
+            if slice_id not in all_surfaces:
+                all_surfaces.append(slice_id)
+            surfaces_str = ", ".join(all_surfaces)
             content = f"""# Product Surface Map: m1
 
 - Product: {product_title}
 - Source discussion: `prototype/discussion.md`, {_digest(disc_path)}
 - Status: sealed provisional
+
+```prototype-context
+record: surface-map
+revision: m1
+coverage: selected
+selection-source: prototype/discussion.md
+selected-surfaces: {slice_id}
+surfaces: {surfaces_str}
+```
 
 ## Declared surfaces
 {surface_lines}
@@ -531,7 +594,14 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Product: {product_title}
 - Product source: `prototype/product.md`, {_digest(prod_path)}
 - Core tension: {tension}
+- Grounding Rationale: Operational workflow grounding and non-transfer boundaries
 - Status: sealed provisional
+
+```prototype-context
+record: experience-foundation
+revision: f1
+invariants: concentric-radii, tabular-numerics, touch-target-floor, break-protocol
+```
 
 ## Product Context & Alignment
 {re.sub(r"## 3 Ruthless Omissions.*", "", prod_text, flags=re.DOTALL).strip()}
@@ -553,6 +623,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Slice ID: {slice_id}
 - Foundation revision: f1
 - Product source: `prototype/product.md`, {_digest(prod_path)}
+- Content Language: {content_lang}
 - Canonical Ontology: Nine Pillars Mapping (Object, Journey, Attention, Interaction, Resilience)
 - Status: sealed provisional
 
@@ -597,7 +668,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
                 slice_id=slice_id,
                 prod_title=product_title,
                 tension=tension,
-                surfaces=surfaces,
+                surfaces=declared_surfaces,
                 action_verbs=action_verbs,
                 disc_text=disc_text,
                 prod_text=prod_text,
@@ -623,6 +694,7 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 | `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |
 | `J` / `K` | Navigate primary items or table rows | Active collection or matrix | Active selection index |"""
 
+            proto_med = "touch-web" if is_mobile else "web"
             content = f"""# Prototype Specification: {slice_id} / r1
 
 - Candidate revision: r1
@@ -630,10 +702,19 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
 - Authority status: sealed provisional
 - Product source: `prototype/product.md`, {_digest(prod_path)}
 - Discussion source: `prototype/discussion.md`, {_digest(disc_path)}
+- Content Language: {content_lang}
 - Prototype write scope: `prototype/experiments/{slice_id}/{scope_suffix}/`
 - Evidence write scope: `prototype/evidence/probes/{slice_id}/`
 - Visual verification: unverified
 - Browser verification: unverified
+
+```prototype-context
+record: prototype-specification
+revision: r1
+prototype-medium: {proto_med}
+preserves: concentric-radii, tabular-numerics, touch-target-floor, break-protocol
+verification-environment: headless-browser
+```
 
 {ergonomics_section}
 

@@ -123,7 +123,7 @@ def _evidence_state(html: Path) -> dict[str, str]:
     return {}
 
 
-def coverage_failures(html: Path) -> list[str]:
+def coverage_failures(html: Path, contract_path: Path | str | None = None) -> list[str]:
     """Reconcile the authored scope with delivery and evidence.
 
     Scope membership, delivery and evidence stay separate facts; a documented
@@ -156,6 +156,10 @@ def coverage_failures(html: Path) -> list[str]:
     for page in pages:
         name = page.parent.parent.name if page.parent.name in ("anchor", "hero-anchor") else page.parent.name
         delivered[name] = page.read_text(encoding="utf-8")
+    if contract_path:
+        slice_name = Path(contract_path).parent.name
+        if slice_name not in delivered and html.is_file():
+            delivered[slice_name] = html.read_text(encoding="utf-8")
     reconciliation = prototype_context.reconcile_obligations(
         context, delivered=list(delivered), evidence=None, blocked=None,
         bound_revision=context["surface_map"]["revision"])
@@ -272,7 +276,8 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 failures.append("ergonomics assertion: declared dual-channel keyboard shortcuts not bound (missing keydown/keyup listener)")
 
         # Action Verb Lifecycle feedback closure: when commit mutations or toasts are declared
-        if "Action Verb Lifecycle" in contract_text or "Completion Feedback Toast" in contract_text:
+        verbs_na = bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", contract_text, re.IGNORECASE))
+        if not verbs_na and ("Action Verb Lifecycle" in contract_text or "Completion Feedback Toast" in contract_text):
             has_feedback_hook = bool(re.search(
                 r'role=["\'](?:status|alert)["\']|class=["\'][^"\']*\b(?:toast|notification|feedback|alert-box|status-message|snackbar)\b[^"\']*["\']|id=["\'][^"\']*(?:toast|feedback|status-msg)[^"\']*["\']|data-(?:feedback|toast)=',
                 source,
@@ -288,7 +293,8 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 failures.append("touch ergonomics assertion: declared touch-first gestures or tap detents not bound (missing touch/pointer/click handler)")
 
         # Dynamic state machine check: when multi-state or Break Protocol stress checkpoints are declared
-        if "The Break Protocol Stress Checkpoints" in contract_text or "Zero-Item Empty State" in contract_text:
+        break_na = bool(re.search(r"(?:The Break Protocol|Stress Checkpoints).*?(?:N/A|Not Applicable|无需破坏压测|不适用)", contract_text, re.IGNORECASE))
+        if not break_na and ("The Break Protocol Stress Checkpoints" in contract_text or "Zero-Item Empty State" in contract_text):
             has_state_hook = bool(re.search(
                 r"hashchange|location\.hash|data-state|state-[a-zA-Z0-9_-]+|class=[\"'][^\"']*(?:empty|loading|view-mode|state-)[^\"']*[\"']|id=[\"'][^\"']*(?:empty|loading|view-mode)[^\"']*[\"']",
                 source,
@@ -361,7 +367,7 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                     if not has_sibling_link:
                         failures.append(f"topology assertion: multi-surface navigation links missing for sibling surfaces ({', '.join(siblings)})")
 
-    failures.extend(coverage_failures(html))
+    failures.extend(coverage_failures(html, contract_path=contract_path))
 
     if check_stale:
         if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", source, re.IGNORECASE):

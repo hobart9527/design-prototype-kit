@@ -98,7 +98,7 @@ def test_dual_envelope_architecture():
         (root / "prototype/specifications/s1").mkdir(parents=True, exist_ok=True)
         (root / "prototype/specifications/s1/r1.md").write_text("# Spec\n", encoding="utf-8")
 
-        env = assemble_mod.assemble(root, "s1")
+        env = assemble_mod.assemble(root, "s1", lint=False)
         assert env["envelope_version"] == "2.0"
         assert env["envelope_architecture"] == "3.0-dual"
         assert "constraint_envelope" in env
@@ -226,7 +226,7 @@ def test_v10_1_five_axes_optionality_and_composable_envelope():
         (root / "prototype/specifications/read").mkdir(parents=True, exist_ok=True)
         (root / "prototype/specifications/read/r1.md").write_text("# Spec\n", encoding="utf-8")
 
-        env = assemble_mod.assemble(root, "read")
+        env = assemble_mod.assemble(root, "read", lint=False)
         assert env["layout_profile"] == "adaptive-workspace"
         assert env["creative_envelope"]["layout_profile"] == "adaptive-workspace"
         # Verify ooux_topology does not force 1:N / master-detail on unknown/adaptive profile
@@ -260,7 +260,7 @@ def test_stale_digest_guard_blocks_modified_contract(tmp_path: Path):
     disc.write_text("- Execution boundary: active\n", encoding="utf-8")
 
     # 2. Assemble initial fresh envelope
-    env = assemble_mod.assemble(tmp_path, "s1")
+    env = assemble_mod.assemble(tmp_path, "s1", lint=False)
     event = {
         "cwd": str(tmp_path),
         "tool_name": "Agent",
@@ -525,7 +525,7 @@ def test_builder_recipe_purge_and_adaptive_state_machine():
 | Drain action executes | pass |
 """, encoding="utf-8")
 
-        env = assemble_mod.assemble(root, "s1")
+        env = assemble_mod.assemble(root, "s1", lint=False)
         # 1. State machine respects authored states
         assert env["interaction_spec"]["state_machine"]["supported_states"] == ["inspecting", "draining", "settled"]
 

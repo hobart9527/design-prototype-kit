@@ -172,7 +172,7 @@ def test_changed_map_revision_fails_with_the_specific_mismatch(tmp_path):
 def test_changed_map_digest_fails_with_the_specific_mismatch(tmp_path):
     retained = hashlib.sha256(b"# some other retained map revision\n").hexdigest()
     root = build_repo(tmp_path, retained_identity=(
-        "- Surface Map revision: r7\n- Surface Map digest: sha256:" + retained + "\n"))
+        "- Surface Map digest: sha256:" + retained + "\n"))
     message = refusal(root, "E010_STALE_CONTRACT")
     actual = hashlib.sha256(
         (root / "prototype/contracts/surface-maps/m1.md").read_bytes()).hexdigest()
