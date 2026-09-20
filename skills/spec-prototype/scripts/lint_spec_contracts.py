@@ -97,6 +97,21 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
     verbs_na = bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", c1_text, re.IGNORECASE))
     if not has_verbs and not verbs_na:
         errors.append(SpecLintError("E007_VERB_LIFECYCLE_MISSING", "c1.md", "Action Verb Lifecycle Table is missing from slice contract c1.md (declare atomic Trigger->Context->Commit->Feedback verbs or explicit N/A with rationale)."))
+    elif has_verbs:
+        # A declared Proximity level must be a real level: the ladder is the
+        # contract the Builder translates into a container, so an out-of-range
+        # value silently becomes a wrong interaction shape downstream. Scoped to
+        # the verb table so a "Level 5" elsewhere in the contract cannot trip it,
+        # and only a table that opted into the column is checked; a legacy table
+        # without it stays valid, its level inferred from the container.
+        section = re.search(r"##[^\n]*Action Verb Lifecycle[^\n]*\n(.*?)(?=\n##|\Z)", c1_text, re.S)
+        if section and "proximity" in section.group(1).lower():
+            invalid = sorted({int(level) for level in re.findall(r"\bLevel\s*([0-9]+)\b", section.group(1))
+                              if int(level) > 4})
+            if invalid:
+                errors.append(SpecLintError("E015_PROXIMITY_LEVEL_INVALID", "c1.md",
+                                            f"Container Proximity Level(s) {invalid} are outside the defined 0~4 ladder. "
+                                            "Levels above 4 have no container form; state the level that matches the hazard."))
 
     return errors
 
