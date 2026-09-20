@@ -166,3 +166,32 @@ def test_omitted_dials_palette_stays_neutral_in_formal_mode():
     # Probe mode is the only path that may infer a themed accent from domain prose.
     probed = ct.extract_dynamic_palette("SRE cluster telemetry incident ops", mode="probe")
     assert not _is_gray(probed["accent_primary"])
+
+
+def test_formal_empty_dials_yield_steady_motion_not_kinetic_hud():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({})
+    motion = tokens["motion"]
+
+    # Undeclared energy must not silently compile to a kinetic HUD detent.
+    assert motion["ease_hud"] != "cubic-bezier(0.16, 1, 0.3, 1)"
+    assert motion["duration_fast"] == "150ms"
+    assert motion["duration_normal"] == "250ms"
+    assert motion["duration_slow"] == "400ms"
+
+    css = ct.generate_css(tokens)
+    assert ".btn-tactile:active" not in css
+    assert not motion["tactile_active"]
+
+
+def test_explicit_kinetic_energy_restores_hud_motion_and_detent():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({"energy": "kinetic"})
+    motion = tokens["motion"]
+
+    assert motion["ease_hud"] == "cubic-bezier(0.16, 1, 0.3, 1)"
+    assert motion["duration_fast"] == "80ms"
+    assert motion["tactile_active"]
+
+    css = ct.generate_css(tokens)
+    assert ".btn-tactile:active" in css

@@ -644,15 +644,20 @@ def compute_tokens(
 
     # Energy & Rhythm Axis calibration (temporal physics & rhythm)
     # v10.1: Rhythm and Energy are distinct; rhythm affects pacing scale, energy affects duration speed
+    # Energy is opt-in: undeclared energy compiles to neutral steady motion, never an implicit kinetic detent.
     rhythm = dials.get("rhythm", "steady").lower()
-    energy = dials.get("energy", "kinetic").lower()
+    energy = dials.get("energy", "steady").lower()
 
-    if any(k in energy for k in ("calm", "serene", "quiet")):
+    if any(k in energy for k in ("kinetic", "snappy", "aggressive", "driven", "hud")):
+        base_fast, base_norm, base_slow = 80, 180, 320
+        ease_hud = "cubic-bezier(0.16, 1, 0.3, 1)"
+    elif any(k in energy for k in ("calm", "serene", "quiet")):
         base_fast, base_norm, base_slow = 120, 240, 400
         ease_hud = "cubic-bezier(0.2, 0.8, 0.2, 1)"
     else:
-        base_fast, base_norm, base_slow = 80, 180, 320
-        ease_hud = "cubic-bezier(0.16, 1, 0.3, 1)"
+        # Steady / undeclared: balanced durations with a standard ease-out, no HUD snap.
+        base_fast, base_norm, base_slow = 150, 250, 400
+        ease_hud = "cubic-bezier(0, 0, 0.2, 1)"
 
     # Rhythm modifier: measured/stately lengthens transitions slightly; rapid/brisk tightens
     if any(k in rhythm for k in ("measured", "stately", "deliberate", "relaxed")):
@@ -664,6 +669,13 @@ def compute_tokens(
         base_norm = max(100, int(base_norm * 0.75))
         base_slow = max(200, int(base_slow * 0.75))
 
+    # Tactile `:active` detent is opt-in: only explicit kinetic energy or dense-tactile
+    # weight author it. Undeclared/formal dials stay inert rather than imposing a HUD press.
+    tactile_active = (
+        ("energy" in dials and any(k in energy for k in ("kinetic", "snappy", "aggressive", "driven", "hud")))
+        or ("weight" in dials and "dense-tactile" in weight)
+    )
+
     motion = {
         "duration_fast": f"{base_fast}ms",
         "duration_normal": f"{base_norm}ms",
@@ -671,6 +683,7 @@ def compute_tokens(
         "ease_hud": ease_hud,
         "ease_out": "cubic-bezier(0, 0, 0.2, 1)",
         "active_scale": tactile_scale,
+        "tactile_active": tactile_active,
     }
 
     # Character Axis calibration (affects typography tone, density feel, and feedback prominence)
@@ -879,12 +892,19 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         "  font-variant-numeric: tabular-nums;",
         "}",
         "",
-        "/* Mechanical Tactile Feedback (:active detent) */",
-        f".btn-tactile:active, button:active, [role=\"button\"]:active {{",
-        f"  transform: scale({m['active_scale']});",
-        f"  transition: transform {m['duration_fast']} {m['ease_hud']};",
-        "}",
-        "",
+    ])
+
+    if m.get("tactile_active"):
+        lines.extend([
+            "/* Mechanical Tactile Feedback (:active detent) */",
+            f".btn-tactile:active, button:active, [role=\"button\"]:active {{",
+            f"  transform: scale({m['active_scale']});",
+            f"  transition: transform {m['duration_fast']} {m['ease_hud']};",
+            "}",
+            "",
+        ])
+
+    lines.extend([
         "/* High-Density Scrollbars */",
         "::-webkit-scrollbar {",
         "  width: 6px;",
