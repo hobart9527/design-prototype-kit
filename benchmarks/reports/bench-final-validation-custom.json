@@ -1,7 +1,7 @@
 {
   "run_id": "bench-final-validation",
   "suite": "custom",
-  "generated_at": "20260919_171945",
+  "generated_at": "20260920_144428",
   "status": "REGRESSION",
   "cases": [
     "editorial-reader"
@@ -38,14 +38,14 @@
       "case_id": "editorial-reader",
       "variant": "stable_skill",
       "repeat": 1,
-      "status": "BLOCKED",
+      "status": "FAIL",
       "metrics": {
         "turns": 4,
         "elapsed_seconds": 1499.76,
         "cost_usd": 12.6699
       },
       "notes": [
-        "session BLOCKED: turn 4 timeout: timeout after 636s"
+        "rejudged from stored artifacts (no new session)"
       ],
       "session_fidelity": {
         "variant": "stable_skill",
@@ -59,7 +59,7 @@
     }
   ],
   "hard_gates": {
-    "semantic_fabrication": 1,
+    "semantic_fabrication": 2,
     "authority_escape": 2,
     "critical_task_break": 2,
     "critical_accessibility_violation": 0
@@ -69,12 +69,12 @@
       "runs": 1,
       "completed": 1,
       "blocked": 0,
-      "task_success_rate": 0.667,
-      "method_recall": 0.5,
-      "method_precision": 0.333,
+      "task_success_rate": 0.333,
+      "method_recall": 0.75,
+      "method_precision": 0.375,
       "semantic_gate_pass": 0,
-      "semantic_gate_fail": 0,
-      "semantic_gate_unverified": 1,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
       "semantic_signals": 0,
       "artifact_turns": 3.0,
       "cost_usd": 21.8488,
@@ -83,11 +83,11 @@
     },
     "stable_skill": {
       "runs": 1,
-      "completed": 0,
-      "blocked": 1,
+      "completed": 1,
+      "blocked": 0,
       "task_success_rate": 0.667,
-      "method_recall": 0.5,
-      "method_precision": 0.333,
+      "method_recall": 0.75,
+      "method_precision": 0.375,
       "semantic_gate_pass": 0,
       "semantic_gate_fail": 1,
       "semantic_gate_unverified": 0,
@@ -97,6 +97,14 @@
       "elapsed_seconds": 1499.8,
       "inline_hex_failures": 0
     }
+  },
+  "provenance": {
+    "runs_with_provenance": 2,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [],
+    "disclosure": "0 of 2 runs recorded no provenance"
   },
   "metrics": {
     "pairwise_preference": {
@@ -113,22 +121,36 @@
     "judge": "regression",
     "verdict": "PASS",
     "pairs_compared": 1,
-    "regressions": [],
-    "improvements": [
+    "compared_dimensions": 3,
+    "verified_dimensions": [
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "fail",
+        "candidate": "fail"
+      },
       {
         "case_id": "editorial-reader",
         "repeat": 1,
         "dimension": "semantic",
         "stable": "fail",
-        "candidate": "unverified"
+        "candidate": "fail"
+      },
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "task",
+        "stable": "fail",
+        "candidate": "fail"
       }
     ],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [],
     "missing_pairs": []
   },
   "pairwise": [],
   "frontend": [],
-  "unverified": [
-    "editorial-reader/candidate_skill: semantic judge unverified",
-    "editorial-reader/stable_skill: session blocked"
-  ]
+  "unverified": []
 }
