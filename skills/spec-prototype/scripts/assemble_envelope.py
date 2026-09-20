@@ -461,31 +461,51 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     anchors_match = re.search(r"^[-*+]?\s*(?:Reality\s+(?:Benchmark\s+)?Anchors?|Physical\s+Anchors?|Reality\s+Anchors?|对标|地锚)\s*[:=]?\s*([^\n]+)", product_content + "\n" + spec_content, re.MULTILINE | re.IGNORECASE)
     reality_anchors = anchors_match.group(1).strip() if anchors_match else ""
 
-    # Determine layout profile & composable context
-    # Reference patterns are composable archetypes derived naturally from physical domain properties, not rigid silos
-    baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线|Reference\s+Pattern)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
+    # ── Advisory pattern candidates (CPC-004) ──
+    # Product category is a weak signal, not a lock: it only orders advisory candidates.
+    # Layout and component topology remain the Builder's decision unless an upstream
+    # authored design specification explicitly names one pattern.
+    PATTERN_SIGNALS = (
+        ("dense-console", r"Baseline 1|Console|Control|工作台|控制台|运维|telemetry|dense-console|telemetry-grid|datadog|bloomberg"),
+        ("operational-canvas", r"Baseline 2|SaaS|Commerce|Project|画布|业务|交易|canvas|operational-canvas|master-detail"),
+        ("editorial-reading", r"Baseline 3|Editorial|Reading|阅读|文章|出版|editorial-reading|long-form|new\s+yorker|readwise"),
+        ("somatic-touchflow", r"Baseline 4|Consumer|Mobile|Touch|消费|移动|触控|somatic|touch-friendly|mobile-first"),
+    )
+    # Narrow fallback: explicit pattern names only, so incidental prose stays adaptive.
+    FALLBACK_SIGNALS = (
+        ("somatic-touchflow", r"\bBaseline 4\b|mobile-first|touch-friendly"),
+        ("editorial-reading", r"\bBaseline 3\b|editorial-reading|long-form|ia\s+writer|new\s+yorker|readwise"),
+        ("operational-canvas", r"\bBaseline 2\b|operational-canvas|master-detail"),
+        ("dense-console", r"\bBaseline 1\b|dense-console|telemetry-grid|datadog|bloomberg"),
+    )
+    all_spec_text = product_content + " " + spec_content + " " + reality_anchors
+
+    baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
     declared_baseline = baseline_match.group(1).strip() if baseline_match else ""
 
-    if re.search(r"Baseline 4|Consumer|Mobile|Touch|消费|移动|触控|somatic", declared_baseline, re.IGNORECASE):
-        layout_profile = "somatic-touchflow"
-    elif re.search(r"Baseline 3|Editorial|Reading|阅读|文章|出版|editorial", declared_baseline, re.IGNORECASE):
-        layout_profile = "editorial-reading"
-    elif re.search(r"Baseline 2|SaaS|Commerce|Project|画布|业务|交易|canvas", declared_baseline, re.IGNORECASE):
-        layout_profile = "operational-canvas"
-    elif re.search(r"Baseline 1|Console|Control|工作台|控制台|运维|telemetry", declared_baseline, re.IGNORECASE):
-        layout_profile = "dense-console"
-    else:
-        all_spec_text = product_content + " " + spec_content + " " + reality_anchors
-        if re.search(r"\bBaseline 4\b|mobile-first|touch-friendly", all_spec_text, re.IGNORECASE):
-            layout_profile = "somatic-touchflow"
-        elif re.search(r"\bBaseline 3\b|editorial-reading|long-form|ia\s+writer|new\s+yorker|readwise", all_spec_text, re.IGNORECASE):
-            layout_profile = "editorial-reading"
-        elif re.search(r"\bBaseline 2\b|operational-canvas|master-detail", all_spec_text, re.IGNORECASE):
-            layout_profile = "operational-canvas"
-        elif re.search(r"\bBaseline 1\b|dense-console|telemetry-grid|datadog|bloomberg", all_spec_text, re.IGNORECASE):
-            layout_profile = "dense-console"
-        else:
-            layout_profile = "adaptive-workspace"
+    candidate_patterns: List[str] = []
+    if declared_baseline:
+        for name, signal in PATTERN_SIGNALS:
+            if re.search(signal, declared_baseline, re.IGNORECASE):
+                candidate_patterns.append(name)
+                break
+    for name, signal in FALLBACK_SIGNALS:
+        if name not in candidate_patterns and re.search(signal, all_spec_text, re.IGNORECASE):
+            candidate_patterns.append(name)
+
+    # An explicit authored declaration is the only confirmation route.
+    explicit_match = re.search(
+        r"^[-*+]?\s*(?:Layout\s+Profile|Selected\s+Pattern|Confirmed\s+Pattern)\s*[:=]\s*([^\n]+)",
+        product_content + "\n" + spec_content, re.MULTILINE | re.IGNORECASE)
+    selected_pattern: Optional[str] = None
+    if explicit_match:
+        declared_pattern = explicit_match.group(1).strip().lower()
+        selected_pattern = next(
+            (name for name, _ in PATTERN_SIGNALS if name == declared_pattern), None)
+
+    # `layout_profile` retained for backward compatibility with downstream consumers
+    # (test_pipeline.py, test_v10_integrity.py); the Builder owns the final decision.
+    layout_profile = selected_pattern or (candidate_patterns[0] if candidate_patterns else "adaptive-workspace")
 
     # Extract verifiable assertions & Break Protocol
     assertions: List[str] = []
@@ -1124,6 +1144,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
 
     creative_envelope = {
         "layout_profile": layout_profile,
+        "candidate_patterns": candidate_patterns,
+        "selected_pattern": selected_pattern,
         "five_axes": five_axes,
         "spatial_composition_agency": "Builder owns layout rhythm, panel proportions, and responsive flow. No pre-baked rigid HTML scaffolding mandated.",
         "attention_routing": {
@@ -1180,6 +1202,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "slice_id": slice_id,
         "mode": "lean-builder-envelope",
         "layout_profile": layout_profile,
+        "candidate_patterns": candidate_patterns,
+        "selected_pattern": selected_pattern,
         "constraint_envelope": constraint_envelope,
         "creative_envelope": creative_envelope,
         "domain_thesis": constraint_envelope["domain_thesis"],

@@ -121,6 +121,40 @@ def test_absent_optional_facts_do_not_become_fixed_domain_claims(tmp_path):
     assert env["platform"]["verification_environment"] == "headless-chromium-120"  # evidence kept
 
 
+# CPC-SCN-024: product category yields advisory candidates; selection stays open.
+
+def test_console_category_no_longer_locks_a_hardcoded_profile(tmp_path):
+    root = build_repo(tmp_path)
+    product = root / "prototype/product.md"
+    product.write_text(product.read_text(encoding="utf-8")
+                       + "\n- Dominant Baseline: Baseline 1: Dense Data Workbench\n", encoding="utf-8")
+    env = assemble_to_file(root)
+    assert env["selected_pattern"] is None  # category alone is not a confirmation
+    assert env["candidate_patterns"][0] == "dense-console"
+    assert env["layout_profile"] == env["candidate_patterns"][0]  # compat field preserved
+
+
+def test_saas_category_stays_advisory(tmp_path):
+    root = build_repo(tmp_path)
+    product = root / "prototype/product.md"
+    product.write_text(product.read_text(encoding="utf-8")
+                       + "\n- Dominant Baseline: Baseline 2: SaaS Commerce\n", encoding="utf-8")
+    env = assemble_to_file(root)
+    assert env["selected_pattern"] is None
+    assert "operational-canvas" in env["candidate_patterns"]
+    assert env["layout_profile"] == env["candidate_patterns"][0]
+
+
+def test_explicit_authored_specification_confirms_one_pattern(tmp_path):
+    root = build_repo(tmp_path)
+    spec = root / f"prototype/specifications/{SLICE}/r1.md"
+    spec.write_text(spec.read_text(encoding="utf-8") + "\n- Layout Profile: editorial-reading\n",
+                    encoding="utf-8")
+    env = assemble_to_file(root)
+    assert env["selected_pattern"] == "editorial-reading"
+    assert env["layout_profile"] == "editorial-reading"
+
+
 def test_native_target_in_browser_medium_keeps_its_validation_gap(tmp_path):
     root = build_repo(tmp_path, target="android", medium="HTML")
     env = assemble_to_file(root)
