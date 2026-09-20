@@ -1,6 +1,6 @@
 ## 1. Relax contract linting with fault-tolerant parsing
 
-- [ ] T-01 Allow format tolerance and advisory digest matching in context reader and contract linter
+- [x] T-01 Allow format tolerance and advisory digest matching in context reader and contract linter
   - Depends on: none
   - Anchors: skills/spec-prototype/scripts/prototype_context.py, skills/spec-prototype/scripts/lint_spec_contracts.py
   - Write scope: skills/spec-prototype/scripts/prototype_context.py, skills/spec-prototype/scripts/lint_spec_contracts.py, tests/test_contract_fault_tolerance.py
@@ -12,7 +12,7 @@
 
 ## 2. In-memory state store for context preservation
 
-- [ ] T-02 Instruct Builder on zero-dependency in-memory state store and context preservation
+- [x] T-02 Instruct Builder on zero-dependency in-memory state store and context preservation
   - Depends on: none
   - Anchors: agents/spec-prototype-builder.md, skills/spec-prototype/references/01-foundations/design-methods.md
   - Write scope: agents/spec-prototype-builder.md, tests/test_builder_state_store_contract.py
@@ -24,7 +24,7 @@
 
 ## 3. Somatic touch ergonomics and optical geometry
 
-- [ ] T-03 Mandate somatic mobile ergonomics and concentric geometry in Builder and Critic contracts
+- [x] T-03 Mandate somatic mobile ergonomics and concentric geometry in Builder and Critic contracts
   - Depends on: none
   - Anchors: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md
   - Write scope: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, tests/test_platform_craft_rules.py
@@ -36,7 +36,7 @@
 
 ## 4. Dual-view review portal with Break Protocol toggles
 
-- [ ] T-04 Add viewport switching and Break Protocol data injection controls to review portal
+- [x] T-04 Add viewport switching and Break Protocol data injection controls to review portal
   - Depends on: T-01
   - Anchors: skills/spec-prototype/scripts/generate_review_portal.py
   - Write scope: skills/spec-prototype/scripts/generate_review_portal.py, tests/test_review_portal_views.py
