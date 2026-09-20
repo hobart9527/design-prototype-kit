@@ -769,8 +769,14 @@ verification-environment: headless-browser
         env_path.parent.mkdir(parents=True, exist_ok=True)
         env_path.write_text(json.dumps(env, indent=2, ensure_ascii=False), encoding="utf-8")
         created["envelope"] = str(env_path)
-    except Exception:
-        pass
+    except Exception as exc:
+        # Envelope synthesis is a best-effort side artifact; surface the cause so a
+        # missing envelope is diagnosable rather than silently unexplained.
+        print(
+            f"warning: envelope assembly skipped for slice {slice_id!r}: "
+            f"{type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
 
     return created
 

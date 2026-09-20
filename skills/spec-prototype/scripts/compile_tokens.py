@@ -21,15 +21,15 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
 import re
 import sys
-from typing import Any, Dict
-
-
 from typing import Any, Dict, Tuple
-import math
+
+
+def _warn(context: str, exc: BaseException) -> None:
+    """Preserve failure context at gate boundaries instead of silently swallowing it."""
+    print(f"warning: {context}: {type(exc).__name__}: {exc}", file=sys.stderr)
 
 
 def _srgb_to_linear(v: float) -> float:
@@ -322,7 +322,9 @@ NEUTRAL_SCAFFOLD = {
     "border_warning": "rgba(217, 119, 6, 0.4)",
 }
 
-DARK_ATMOSPHERES = {**CANONICAL_ATMOSPHERES, NEUTRAL_SCAFFOLD_NAME: NEUTRAL_SCAFFOLD}
+ATMOSPHERES = {**CANONICAL_ATMOSPHERES, NEUTRAL_SCAFFOLD_NAME: NEUTRAL_SCAFFOLD}
+# Compatibility alias retained for existing callers/tests.
+DARK_ATMOSPHERES = ATMOSPHERES
 
 PALETTE_ALIASES = {
     "paper": "editorial-paper-warm",
@@ -403,7 +405,8 @@ def _is_light_color(hex_code: str) -> bool:
         r, g, b = _hex_to_rgb(hex_code)
         # Perceived brightness according to ITU-R BT.601
         return (r * 299 + g * 587 + b * 114) / 1000 > 160
-    except Exception:
+    except Exception as exc:
+        _warn(f"unparseable color {hex_code!r}; treating as dark", exc)
         return False
 
 
@@ -536,8 +539,8 @@ def extract_dynamic_palette(
             for k, v in oklab_scale.items():
                 # Autonomously project perceptual steps unless explicitly overridden by authored tokens
                 base_colors[k] = extracted.get(k) or v
-        except Exception:
-            pass
+        except Exception as exc:
+            _warn(f"perceptual surface derivation failed for seed {seed_bg!r}; keeping authored base colors", exc)
 
     # If custom accent was authored, derive interactive and hover variants
     if "accent_primary" in extracted and extracted["accent_primary"].startswith("#"):
@@ -546,8 +549,8 @@ def extract_dynamic_palette(
             base_colors["accent_primary"] = extracted["accent_primary"]
             base_colors["accent_subtle"] = extracted.get("accent_subtle", f"rgba({ar}, {ag}, {ab}, 0.14)")
             base_colors["accent_hover"] = extracted.get("accent_hover", _rgb_to_hex(min(255, int(ar * 1.15)), min(255, int(ag * 1.15)), min(255, int(ab * 1.15))))
-        except Exception:
-            pass
+        except Exception as exc:
+            _warn(f"accent variant derivation failed for {extracted['accent_primary']!r}; keeping authored accent verbatim", exc)
 
     for k, v in extracted.items():
         base_colors[k] = v
