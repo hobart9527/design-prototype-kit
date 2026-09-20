@@ -155,6 +155,21 @@ def load_method_registry(registry_path: Path) -> List[Dict[str, Any]]:
     return []
 
 
+METHOD_ANCHORS: Dict[str, List[str]] = {
+    "container-proximity-ladder": ["container proximity ladder", "proximity ladder", "flow preservation", "level 0"],
+    "ooux-mapping": ["cardinality-to-layout", "model objects and content before containers", "cardinality"],
+    "context-preservation": ["coherent wayfinding, context preservation", "context preservation", "content mechanics as interaction"],
+    "progressive-disclosure": ["design information and interaction at the decision moment", "decision moment", "cognitive noise"],
+    "action-verb-lifecycle": ["ceremony economy", "platform & somatic ergonomics", "action verb lifecycle", "action verb"],
+    "decisive-3-frame": ["prototype the decisive exchange", "decisive exchange", "intent", "detent"],
+    "the-break-protocol": ["the organic break protocol", "the break protocol", "extreme edge data"],
+    "fault-tolerance-recovery": ["make consequential boundaries understandable", "sensitive or consequential", "reversibility"],
+    "data-context-metrics": ["contextual semantic registers", "telemetry vs narrative", "zero naked metrics"],
+    "form-ergonomics": ["form ergonomics and input orchestration", "form ergonomics", "input orchestration"],
+    "visual-rhythm-density": ["materiality calibration", "lightweight native craft recipes", "anti-default palette"],
+}
+
+
 def _extract_craft_guidance(skill_dir: Path, rel_file: str, method_id: str) -> str:
     """Extract actionable craft method guidance from the authoritative reference file."""
     if not rel_file:
@@ -164,19 +179,22 @@ def _extract_craft_guidance(skill_dir: Path, rel_file: str, method_id: str) -> s
         return ""
     try:
         text = ref_path.read_text(encoding="utf-8")
+        anchors = METHOD_ANCHORS.get(method_id, [method_id.replace("-", " ")])
         lines = []
         capture = False
         for line in text.splitlines():
             sline = line.strip()
             if sline.startswith("## ") or sline.startswith("### "):
                 header = sline.lstrip("#").strip().lower()
-                if any(k in header for k in (method_id.replace("-", " "), "ladder", "cardinality", "concentric", "frame", "break protocol", "tabular", "state")):
+                if any(a in header for a in anchors):
                     capture = True
+                    lines.append(sline)
+                    continue
                 elif capture and len(lines) > 5:
                     break
             elif capture and sline:
                 lines.append(sline)
-                if len(lines) >= 12:
+                if len(lines) >= 18:
                     break
         if not lines:
             for line in text.splitlines():
@@ -1104,6 +1122,14 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         },
         "platform": dict(platform_context["platform"]),
         "contract_lint": [] if not lint else [],
+        "inspection_contract": {
+            "mandatory_viewports": [
+                {"width": 1280, "name": "desktop-canvas", "focus": "spatial hierarchy and high-density telemetry"},
+                {"width": 390, "name": "mobile-somatic", "focus": "44px touch targets and responsive folding without amnesia"}
+            ],
+            "mandatory_states": authored_states,
+            "visual_inspection_mandate": "Critic must use Read tool to visually inspect captured screenshots (1280px & 390px); textual HTML review alone is non-independent."
+        },
         "spec_sources": {
             "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest(),
             "surface_map_digest": hashlib.sha256(paths["surface_map"].read_bytes()).hexdigest(),

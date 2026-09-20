@@ -58,22 +58,22 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
     combined_tension_text = prod_text + "\n" + f1_text
     tension_match = re.search(r"[-*+]?\s*(?:Core\s+Tension|Tension|张力)\s*[:=]\s*([^\n]+)", combined_tension_text, re.IGNORECASE)
     if not tension_match or not tension_match.group(1).strip():
-        errors.append(SpecLintError("E002_TENSION_MISSING", "product.md / f1.md", "Core Tension declaration is missing."))
+        errors.append(SpecLintError("E002_TENSION_MISSING", "product.md / f1.md", "Core Tension declaration is missing. Define an authentic domain tension (e.g. 'Operational Throughput vs Incident Safety' or 'Frictionless Onboarding vs Deep Orchestration') in prototype/discussion.md before entering Stage 2."))
     else:
         declared_tension = tension_match.group(1).strip()
         if declared_tension.lower().startswith("not yet") or declared_tension.lower().startswith("unresolved"):
-            errors.append(SpecLintError("E002_TENSION_UNRESOLVED", "product.md", f"Core Tension '{declared_tension}' is unresolved."))
+            errors.append(SpecLintError("E002_TENSION_UNRESOLVED", "product.md", f"Core Tension '{declared_tension}' is unresolved. As a P9 design copilot, establish a definitive business/UX tension in prototype/discussion.md to drive trade-off decisions."))
         # Detect SRE ops fallback contaminating non-ops products
         is_ops_domain = any(kw in (prod_text + " " + c1_text).lower() for kw in ("sre", "telemetry", "incident", "ops", "console", "cluster"))
         if "Instant Operational Throughput vs Zero-Mistake Safety" in declared_tension and not is_ops_domain:
-            errors.append(SpecLintError("E002_TENSION_CONTAMINATED", "product.md", "Default SRE fallback tension contaminated a non-ops product contract."))
+            errors.append(SpecLintError("E002_TENSION_CONTAMINATED", "product.md", "Default SRE fallback tension ('Instant Operational Throughput vs Zero-Mistake Safety') contaminated a non-ops product contract. Formulate a domain-specific tension authentic to this product."))
 
     # 3. Reality Anchors & Grounded Rationale Check (Consequential or grounded rationale required)
     combined_anchors_text = prod_text + "\n" + f1_text
     anchors_match = re.search(r"[-*+]?\s*(?:Reality\s+(?:Benchmark\s+)?Anchors?|Physical\s+Anchors?|对标|地锚)\s*[:=]\s*([^\n]+)", combined_anchors_text, re.IGNORECASE)
     has_grounded_rationale = bool(re.search(r"(?:Grounding|Rationale|Physical Metaphor|Substrate|原创推导|物理隐喻|因果依据|设计理由)\s*[:=]\s*([^\n]+)", combined_anchors_text, re.IGNORECASE))
     if not anchors_match and not has_grounded_rationale:
-        errors.append(SpecLintError("E003_ANCHORS_MISSING", "product.md / f1.md", "Neither Reality Benchmark Anchors nor grounded design rationale declared."))
+        errors.append(SpecLintError("E003_ANCHORS_MISSING", "product.md / f1.md", "Neither Reality Benchmark Anchors nor grounded design rationale declared. Anchor the interface to real-world industrial or lifeworld baselines (e.g. Linear, Datadog, iA Writer, physical detents) in prototype/product.md."))
 
     # 4. Content Language Check
     disc_path = root / "prototype/discussion.md"
@@ -81,7 +81,7 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
     combined_lang_text = prod_text + "\n" + c1_text + "\n" + r1_text + "\n" + disc_text
     lang_match = re.search(r"(?:Content\s+Language|语种|语言)(?:\s*\([^)]*\))?\s*[:=]?\s*`?([a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*)`?", combined_lang_text, re.IGNORECASE)
     if not lang_match or not lang_match.group(1).strip():
-        errors.append(SpecLintError("E004_LANGUAGE_UNLOCKED", "discussion.md / r1.md", "Content language is not explicitly declared or locked."))
+        errors.append(SpecLintError("E004_LANGUAGE_UNLOCKED", "discussion.md / r1.md", "Content language is not explicitly declared or locked. Declare Content Language (e.g. 'zh-CN', 'en-US') in discussion.md or product.md to ensure copy consistency."))
 
     # 5. Verifiable Assertions & Break Protocol Check
     if "Verifiable Design Assertions" not in r1_text and "Required screenshot checkpoints" not in r1_text:
@@ -90,13 +90,13 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
     has_break = "The Break Protocol" in r1_text
     break_na = bool(re.search(r"The Break Protocol.*?(?:N/A|Not Applicable|无需破坏压测|不适用)", r1_text, re.IGNORECASE))
     if not has_break and not break_na:
-        errors.append(SpecLintError("E006_BREAK_PROTOCOL_MISSING", "r1.md", "The Break Protocol Stress Checkpoints section is missing (must declare test vectors or explicit N/A with rationale)."))
+        errors.append(SpecLintError("E006_BREAK_PROTOCOL_MISSING", "r1.md", "The Break Protocol Stress Checkpoints section is missing from r1.md (declare stress vectors such as 0/1/1000 items, long string overflows, 320px fold, or explicit N/A with rationale)."))
 
     # 6. Action Verb Lifecycle Check (Applicable -> Required, Not Applicable -> Explicit N/A)
     has_verbs = "Action Verb" in c1_text
     verbs_na = bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", c1_text, re.IGNORECASE))
     if not has_verbs and not verbs_na:
-        errors.append(SpecLintError("E007_VERB_LIFECYCLE_MISSING", "c1.md", "Action Verb Lifecycle Table is missing from slice contract (must declare lifecycle table or explicit N/A with rationale)."))
+        errors.append(SpecLintError("E007_VERB_LIFECYCLE_MISSING", "c1.md", "Action Verb Lifecycle Table is missing from slice contract c1.md (declare atomic Trigger->Context->Commit->Feedback verbs or explicit N/A with rationale)."))
 
     return errors
 
