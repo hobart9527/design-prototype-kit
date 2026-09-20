@@ -283,7 +283,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         return False
     source = html.read_text(encoding="utf-8")
     token_source = tokens.read_text(encoding="utf-8")
+    # Fatal only: task completion, contract conformance, contrast/a11y, state
+    # handling. Subjective aesthetic craft lands in `advisories` instead.
     failures: list[str] = []
+    advisories: list[str] = []
 
     # DOM and interaction assertions use semantic hooks, never domain names.
     entities = re.findall(r"(?:data-(?:entity|contract|item)|id|class)=[\"'][^\"']+[\"']", source)
@@ -430,15 +433,17 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             if not (has_svg or has_html5_data or has_context_modifier or has_metric_with_unit or (is_narrative and has_narrative_units)):
                 failures.append("data-craft assertion: Zero Naked Metrics violation (metrics must carry reference baseline, unit context, delta trend, visual sparkline/meter/canvas, or authentic narrative units)")
 
-        # Tactile Detents / Interactive feedback check
+        # Tactile Detents / Interactive feedback: advisory craft, not a build blocker.
+        # A specific press-physics recipe is a subjective craft choice; a functional
+        # prototype is never failed for choosing different motion.
         if "Cognitive Budgeting" in contract_text or "Decisive Exchange 3-Frame" in contract_text or "Tactile Detents" in contract_text:
-            has_active = bool(re.search(r":active\s*\{[^}]*(?:transform|scale|translate|filter|box-shadow|inset|opacity|background|border)", source, re.IGNORECASE))
+            has_active = bool(re.search(r":active\s*\{[^}]*(?:transform|scale|translate|filter|box-shadow|inset|opacity|background|border|color|duration|transition|motion|ease|cubic|rgb)", source, re.IGNORECASE))
             has_tailwind_active = bool(re.search(r"active:(?:scale|translate|bg|shadow|opacity)-", source))
             has_focus_visible = bool(re.search(r":focus-visible\s*\{", source, re.IGNORECASE))
-            has_transition = bool(re.search(r"transition\s*:\s*[^;]+(?:transform|all|ease|cubic)", source, re.IGNORECASE))
+            has_transition = bool(re.search(r"transition\s*:\s*[^;]+(?:transform|all|ease|cubic|duration|opacity|color)", source, re.IGNORECASE))
             has_pointer_mutation = bool(re.search(r"addEventListener\s*\(\s*['\"](?:pointerdown|touchstart|mousedown)['\"].*?(?:classList|style|scale|active|transform)", source, re.DOTALL | re.IGNORECASE))
             if not (has_active or has_tailwind_active) and not (has_focus_visible and has_transition) and not has_pointer_mutation:
-                failures.append("tactile physics assertion: interactive controls missing tactile response states (:active { transform/filter/shadow/... }, :focus-visible with transition, or pointerdown with state mutation)")
+                advisories.append("craft advisory (non-blocking): interactive controls use no detected press/motion response; consider :active physics, :focus-visible transition, or pointer state mutation")
 
         # Multi-surface topology navigation check: when surface map m1.md declares sibling surfaces
         smap_candidates = []
@@ -496,6 +501,8 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     print("BROWSER: " + states.get("browser", "unverified"))
     print("VISUAL: " + states.get("visual", "unverified"))
     print("HUMAN: " + states.get("human", "unverified"))
+    for advisory in advisories:
+        print(f"  [advisory] {advisory}")
     if failures:
         for i, failure in enumerate(failures, 1):
             print(f"  [{i}] {failure}")

@@ -106,11 +106,15 @@ Judge the whole product experience, not only correctness or taste:
 - **Feasibility and evidence:** Does the design respect known platform/runtime
   constraints, and does each claim have evidence suited to it?
 
-### Somatic Craft Checks (Non-dilutable sensory floor)
+### Somatic Craft Checks (advisory sensory guidance)
 
 When the reviewed surface declares a touch target context, inspect the rendered
-evidence against these somatic rules and report each miss as a floor finding,
-never averaged away by ambient polish:
+evidence against these somatic rules and report each miss as a finding. This is
+expert critique, not a build gate: only accessibility breaches (contrast, focus,
+pointer-target minimums, safe-area occlusion) rise to a Floor `VIOLATION`.
+Stylistic geometry such as a concentric radius ratio, press-feedback recipe, or
+numeric-stability rule is reported as advisory craft feedback and SHALL NOT fail a
+build on its own.
 
 - **Mobile safe-area insets:** fixed or edge-anchored chrome must pad with
   `env(safe-area-inset-*)`; content hidden under a notch or the home indicator is
