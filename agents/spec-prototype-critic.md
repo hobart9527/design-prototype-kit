@@ -106,6 +106,28 @@ Judge the whole product experience, not only correctness or taste:
 - **Feasibility and evidence:** Does the design respect known platform/runtime
   constraints, and does each claim have evidence suited to it?
 
+### Somatic Craft Checks (Non-dilutable sensory floor)
+
+When the reviewed surface declares a touch target context, inspect the rendered
+evidence against these somatic rules and report each miss as a floor finding,
+never averaged away by ambient polish:
+
+- **Mobile safe-area insets:** fixed or edge-anchored chrome must pad with
+  `env(safe-area-inset-*)`; content hidden under a notch or the home indicator is
+  a defect, not a stylistic choice.
+- **Touch target floor:** every tappable control must present a minimum 44x44px
+  hit target. A visually smaller glyph with insufficient transparent padding
+  fails.
+- **Press feedback:** commit surfaces must give `:active` spring micro-feedback on
+  press, not a silent tap.
+- **Concentric nested radius:** nested rounded containers must satisfy the
+  optical geometry `R_in = max(0, R_out - P)`, where `R_out` is the outer radius
+  and `P` the gap between outer edge and inner element. Reused outer radii on an
+  inner child, or a negative subtraction, are DEFECT-level geometry misses.
+- **Numeric stability:** telemetry, timestamps, counters and financial/metric
+  figures must specify `font-variant-numeric: tabular-nums`; proportional digits
+  that jitter columns on update are a DEFECT.
+
 Light, dark, flat, layered, dense, spacious, immediate, animated, familiar and
 experimental work can all be excellent. Judge the supplied specification and target
 on their own terms; there is no mandatory page count, component chassis, turn budget,

@@ -64,6 +64,15 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
   Do NOT redeclare or shadow `:root { ... }` custom properties in `<style>`! Consume standard tokens (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`, `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--space-*)`, etc.) directly from the linked stylesheet.
   Never use raw inline hex codes in `style="..."` attributes.
   Apply `font-variant-numeric: tabular-nums` to numeric metrics, telemetry streams, and timestamps when `data_stress_boundaries.tabular_numbers_required` is true to prevent scan jitter.
+- **Somatic Touch Ergonomics & Mobile Safe Areas**:
+  When the declared `platform.target_context` is a touch device (mobile/tablet), honor the physical thumb and the OS chrome:
+  - Pad all fixed or edge-anchored chrome with `env(safe-area-inset-*)` (e.g. `padding-bottom: env(safe-area-inset-bottom)`) so nothing hides under the home indicator or notch.
+  - Every tappable control — button, tab, chip, row affordance — MUST present a minimum 44x44px hit target, even when its visual glyph is smaller (expand with transparent padding, not a bigger icon).
+  - Commit surfaces MUST give `:active` spring micro-feedback (a short transform/scale spring on press) so a tap is felt before the commit resolves, paired with the declared commit feedback text.
+- **Concentric Nested Radius Geometry**:
+  Nested rounded containers MUST stay optically concentric, never concentric-by-accident. Given outer radius `R_out` and the gap/padding `P` between the outer edge and the inner element, the inner radius is `R_in = max(0, R_out - P)`. Recompute on every nesting level; do NOT reuse the outer radius on the inner child, and do NOT let the subtraction go negative (clamp to 0, i.e. square inside).
+- **Numeric Stability for Telemetry & Financial Metrics**:
+  Telemetry streams, timestamps, counters, and financial/monetary figures MUST specify `font-variant-numeric: tabular-nums` so digits hold their column on update and the eye does not jitter while scanning.
 - **Action Verb Feedback Closure**:
   Every state-mutating Commit action declared in the Action Verb Lifecycle MUST produce immediate, visible UI feedback in the DOM.
   Always provide a container with `role="status"` or `class="toast"` (e.g. `<div id="toast" role="status" class="toast">...</div>`) and trigger explicit feedback on commit (e.g., displaying the exact declared feedback text like "已收录至书库", "已保存", "节点排空中"). Never leave a user commit action silent.
