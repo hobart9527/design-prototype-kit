@@ -737,11 +737,34 @@ record: prototype-specification
     sibling.parent.mkdir(parents=True, exist_ok=True)
     sibling.write_text("<!DOCTYPE html><html><body>Incident Replay</body></html>", encoding="utf-8")
     test_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="../../../shared/tokens.css"></head><body>
-<nav><a href="../../../surfaces/incident-replay/index.html">Incident</a></nav>
+<nav><a href="../../../surfaces/incident-replay/index.html">Incident</a>
+<button disabled aria-disabled="true" data-sibling="capacity-matrix">Capacity Matrix (undelivered)</button></nav>
 <main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;"><button>Go</button></main>
 <script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
 </body></html>""", encoding="utf-8")
     assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is True
+
+    # 7. Undelivered sibling surfaces: a live href is a 404 defect, a disabled
+    # affordance keeps the destination review-visible without a broken link.
+    sibling.unlink()
+    sibling.parent.rmdir()
+    assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is False
+    test_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="../../../shared/tokens.css"></head><body>
+<nav><button disabled aria-disabled="true" data-sibling="incident-replay">Incident Replay (undelivered)</button>
+<button disabled aria-disabled="true" data-sibling="capacity-matrix">Capacity Matrix (undelivered)</button></nav>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;"><button>Go</button></main>
+<script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is True
+
+
+def test_execution_boundary_admits_craft_helpers():
+    """wcag-check.js and check-assertions.py are installed read helpers."""
+    boundary.shell_read("node skills/spec-prototype/scripts/wcag-check.js --slice console", Path("/tmp/root"))
+    boundary.shell_read("python3 skills/spec-prototype/scripts/check-assertions.py a b", Path("/tmp/root"))
+    boundary.shell_read("python3.14 skills/spec-prototype/scripts/check-assertions.py a b", Path("/tmp/root"))
+    with pytest.raises(ValueError):
+        boundary.shell_read("python3 skills/spec-prototype/scripts/rogue.py a", Path("/tmp/root"))
 
 
 def test_5_system_modern_industrial_derivation_and_rogue_root_blocking(tmp_path: Path):

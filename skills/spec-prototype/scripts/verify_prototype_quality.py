@@ -257,6 +257,23 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
     return failures
 
 
+def _pending_sibling_marked(source: str, surface_id: str) -> bool:
+    """True when an undelivered sibling is represented without a live href.
+
+    An unreachable surface may not be linked, but it must not vanish from the
+    shell either: a disabled affordance or an explicit text/data representation
+    keeps the destination review-visible without producing a 404.
+    """
+    for tag in re.findall(r"<[^>]+>", source):
+        if surface_id in tag and re.search(
+                r'aria-disabled\s*=\s*["\']true["\']|(?:^|\s)disabled(?:\s|>|$)|data-disabled',
+                tag, re.IGNORECASE):
+            return True
+    return bool(re.search(
+        rf'data-(?:sibling|pending|surface)\s*=\s*["\']{re.escape(surface_id)}["\']',
+        source, re.IGNORECASE))
+
+
 def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                    contract_path: str | None = None) -> bool:
     html = Path(html_path)
@@ -451,10 +468,22 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             # Only enforce topology sibling navigation if current_id is an actual declared member of this surface map
             if current_id in declared_surfaces:
                 siblings = [sid for sid in declared_surfaces if sid != current_id]
-                if siblings:
-                    has_sibling_link = any(re.search(rf"href=[\"'][^\"']*{re.escape(sid)}[^\"']*[\"']", source) for sid in siblings)
-                    if not has_sibling_link:
-                        failures.append(f"topology assertion: multi-surface navigation links missing for sibling surfaces ({', '.join(siblings)})")
+                # Sibling navigation follows delivery: a delivered sibling must be
+                # reachable by live href, an undelivered one must stay visible as a
+                # disabled affordance or text without a link (a link would 404).
+                prototype_root = smap_file.parent
+                while prototype_root.name != "prototype" and prototype_root != prototype_root.parent:
+                    prototype_root = prototype_root.parent
+                for sid in siblings:
+                    delivered_sibling = prototype_root.name == "prototype" and any(
+                        prototype_root.rglob(f"{sid}/**/index.html"))
+                    has_link = re.search(rf"href=[\"'][^\"']*{re.escape(sid)}[^\"']*[\"']", source)
+                    if delivered_sibling and not has_link:
+                        failures.append(f"topology assertion: delivered sibling {sid} is not reachable by navigation link from {current_id}")
+                    if not delivered_sibling and has_link:
+                        failures.append(f"topology assertion: undelivered sibling {sid} linked by live href from {current_id} (404); render a disabled affordance instead")
+                    if not delivered_sibling and not _pending_sibling_marked(source, sid):
+                        failures.append(f"topology assertion: undelivered sibling {sid} is neither linked nor represented as a disabled affordance from {current_id}")
 
     failures.extend(coverage_failures(html, contract_path=contract_path))
 
