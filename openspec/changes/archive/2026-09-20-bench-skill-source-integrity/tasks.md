@@ -1,6 +1,6 @@
 ## 1. Refuse an incomplete skill source
 
-- [ ] T-01 Refuse an incomplete skill source in the variant resolver and the baseline restore
+- [x] T-01 Refuse an incomplete skill source in the variant resolver and the baseline restore
   - Depends on: none
   - Anchors: benchmarks/runners/bench_lib.py:variant_sources, benchmarks/runners/bench_lib.py:ensure_baseline, benchmarks/runners/bench_lib.py:prepare_workspace
   - Write scope: benchmarks/runners/bench_lib.py, tests/test_benchmark_harness.py
