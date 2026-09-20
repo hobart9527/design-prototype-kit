@@ -1,6 +1,6 @@
 ## 1. Hold both baseline exits to the integrity contract
 
-- [ ] T-01 Refuse an incomplete or malformed baseline on every restore exit
+- [x] T-01 Refuse an incomplete or malformed baseline on every restore exit
   - Depends on: none
   - Anchors: benchmarks/runners/bench_lib.py:ensure_baseline, benchmarks/runners/bench_lib.py:skill_contract_gaps, benchmarks/runners/bench_lib.py:divergences
   - Write scope: benchmarks/runners/bench_lib.py, tests/test_benchmark_harness.py
