@@ -199,6 +199,37 @@ def extract_user_input(text: str) -> str | None:
 
 # -- variants and workspaces --------------------------------------------------
 
+# The minimum shape that makes a resolved skill source measurable. Read from the
+# skill, never from benchmarks/baselines/*/MANIFEST.json: a complete baseline
+# legitimately ships no method-manifest.json or surface-map-manifest.json, so a
+# manifest-shaped check would refuse the valid control arm.
+REQUIRED_SKILL_ENTRIES = ("SKILL.md", "CONTEXT.md", "references/core-workflow.md")
+REQUIRED_SKILL_TEMPLATE_DIR = "templates"
+
+
+def skill_contract_gaps(skill_root) -> list[str]:
+    """Required entries a resolved skill source is missing."""
+    root = pathlib.Path(skill_root)
+    gaps = [rel for rel in REQUIRED_SKILL_ENTRIES if not (root / rel).is_file()]
+    templates = root / REQUIRED_SKILL_TEMPLATE_DIR
+    if not (templates.is_dir() and any(p.is_file() for p in templates.iterdir())):
+        gaps.append(f"{REQUIRED_SKILL_TEMPLATE_DIR}/*")
+    return gaps
+
+
+def require_complete_skill(skill_root, origin: str) -> None:
+    """Refuse an incomplete resolved source before a workspace is built from it.
+
+    Names the resolved path and every missing entry so an operator learns which
+    contract member failed without inspecting the tree. The source is never
+    repaired here: a refused tree is left exactly as found.
+    """
+    gaps = skill_contract_gaps(skill_root)
+    if gaps:
+        raise BenchBlocked(f"{origin}: incomplete skill source {skill_root}, "
+                           f"missing {', '.join(gaps)}")
+
+
 def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
     """Restore a frozen baseline's file tree on demand, verifying it against MANIFEST.json.
 
@@ -208,6 +239,8 @@ def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
     is refused rather than silently used as a control condition.
     """
     base = BASELINES_DIR / tag
+    if not (base / "MANIFEST.json").is_file():
+        raise BenchBlocked(f"baseline {tag}: no MANIFEST.json at {base}, cannot restore a control tree")
     manifest = read_json(base / "MANIFEST.json")
     rev = str(manifest.get("git_rev") or "")
 
@@ -220,6 +253,7 @@ def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
         # The tree is git-ignored, so nothing else guards it. Hashing 59 files costs ~2ms.
         stale = divergences()
         if not stale:
+            require_complete_skill(base / "skills/spec-prototype", f"baseline {tag} (cached)")
             return base
         shutil.rmtree(base / "skills", ignore_errors=True)
         shutil.rmtree(base / "agents", ignore_errors=True)
@@ -248,17 +282,20 @@ def variant_sources(variant: str) -> dict:
         base = ensure_baseline()
         return {"skill": base / "skills/spec-prototype", "agents": base / "agents"}
     if variant == "candidate_skill":
+        require_complete_skill(ROOT / "skills/spec-prototype", "candidate_skill")
         return {"skill": ROOT / "skills/spec-prototype", "agents": ROOT / "agents"}
     raise BenchBlocked(f"unknown variant: {variant}")
 
 
 def prepare_workspace(case: dict, variant: str, run_id: str) -> pathlib.Path:
+    # Resolve and check the source before the workspace exists: a refused source
+    # must precede any workspace mutation.
+    src = variant_sources(variant)
     workspace = WORKSPACE_ROOT / case["id"] / variant / run_id
     if workspace.exists():
         raise BenchBlocked(f"workspace already exists, refusing to reuse: {workspace}")
     workspace.mkdir(parents=True)
     (workspace / "brief.md").write_text(case["brief"], encoding="utf-8")
-    src = variant_sources(variant)
     if src["skill"]:
         # Copy, never symlink: a symlinked skill resolves `__file__` back into
         # the repo, so the session's own helper scripts would write repo files

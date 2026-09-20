@@ -153,6 +153,74 @@ def test_aggregate_report_blocks_promotion_on_a_hard_gate(tmp_path):
     assert "task behaviour unverified" in " ".join(report["unverified"])
 
 
+def _complete_skill(root):
+    (root / "references").mkdir(parents=True, exist_ok=True)
+    (root / "templates").mkdir(parents=True, exist_ok=True)
+    (root / "SKILL.md").write_text("skill", encoding="utf-8")
+    (root / "CONTEXT.md").write_text("context", encoding="utf-8")
+    (root / "references/core-workflow.md").write_text("workflow", encoding="utf-8")
+    (root / "templates/slice.md").write_text("t", encoding="utf-8")
+    return root
+
+
+def test_incomplete_skill_source_is_refused_and_named(tmp_path, monkeypatch):
+    monkeypatch.setattr(bl, "ROOT", tmp_path)
+    monkeypatch.setattr(bl, "WORKSPACE_ROOT", tmp_path / "ws")
+    complete = _complete_skill(tmp_path / "skills/spec-prototype")
+    assert bl.variant_sources("candidate_skill")["skill"] == complete
+
+    missing = {"SKILL.md": "SKILL.md", "CONTEXT.md": "CONTEXT.md",
+               "references/core-workflow.md": "references/core-workflow.md"}
+    for name, rel in missing.items():
+        complete.joinpath(rel).unlink()
+        with pytest.raises(bl.BenchBlocked) as excinfo:
+            bl.variant_sources("candidate_skill")
+        message = str(excinfo.value)
+        assert str(complete) in message and name in message, message
+        _complete_skill(tmp_path / "skills/spec-prototype")
+
+    # A templates/ dir with no file member is not a template set.
+    (tmp_path / "skills/spec-prototype/templates/slice.md").unlink()
+    with pytest.raises(bl.BenchBlocked) as excinfo:
+        bl.prepare_workspace(bl.load_case("editorial-reader"), "candidate_skill", "r1")
+    assert "templates/*" in str(excinfo.value)
+    assert not (tmp_path / "ws").exists(), "refusal must precede workspace mutation"
+
+    # A complete source still prepares a workspace whose SKILL.md is a regular file.
+    _complete_skill(tmp_path / "skills/spec-prototype")
+    workspace = bl.prepare_workspace(bl.load_case("editorial-reader"), "candidate_skill", "r2")
+    copied = workspace / ".claude/skills/spec-prototype/SKILL.md"
+    assert copied.is_file() and not copied.is_symlink()
+
+
+def test_truncated_and_absent_baselines_fail_named(tmp_path, monkeypatch):
+    def write_manifest(base):
+        base.mkdir(parents=True, exist_ok=True)
+        bl.write_json(base / "MANIFEST.json", {"tag": bl.STABLE_TAG, "git_rev": "unknown",
+                                               "hashes": {}})
+
+    absent = tmp_path / bl.STABLE_TAG
+    absent.mkdir()
+    monkeypatch.setattr(bl, "BASELINES_DIR", tmp_path)
+    with pytest.raises(bl.BenchBlocked) as excinfo:
+        bl.ensure_baseline()
+    assert "MANIFEST.json" in str(excinfo.value) and str(absent) in str(excinfo.value)
+
+    truncated = tmp_path / bl.STABLE_TAG
+    write_manifest(truncated)
+    skill = truncated / "skills/spec-prototype"
+    skill.mkdir(parents=True)
+    (skill / "CONTEXT.md").write_text("only one file", encoding="utf-8")
+    with pytest.raises(bl.BenchBlocked) as excinfo:
+        bl.ensure_baseline()
+    message = str(excinfo.value)
+    assert str(skill) in message and "SKILL.md" in message, message
+
+
+def test_no_skill_variant_resolves_without_a_skill():
+    assert bl.variant_sources("no_skill") == {"skill": None, "agents": None}
+
+
 def test_frozen_baseline_restores_from_its_recorded_rev(tmp_path, monkeypatch):
     """The baseline tree is git-ignored derived data: it must rebuild, verified, from MANIFEST.json."""
     base = bl.BASELINES_DIR / bl.STABLE_TAG
