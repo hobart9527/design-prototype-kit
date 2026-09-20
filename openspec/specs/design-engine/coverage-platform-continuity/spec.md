@@ -75,7 +75,7 @@ The engine SHALL preserve Double Diamond decision-making, Nine Pillars problem o
 - **THEN** it is not forced through full-product enumeration, implementation or approval; a formal candidate still requires its applicable provisional Spec and local refinement preserves unrelated decisions
 
 ### Requirement: CPC-003 Author platform context and adaptation
-The engine SHALL distinguish target runtime/OS, device and input context, prototype medium and verification environment. Platform facts SHALL be sourced or marked unknown; only route-changing uncertainty requires clarification. Existing product/foundation/specification authorities SHALL express shared experience invariants and applicable platform differences in topology, navigation, input, viewport/keyboard behavior, accessibility and recovery. Irrelevant platform dimensions SHALL NOT require exhaustive matrices. Platform-specific surfaces SHALL have explicit applicability rather than an automatic platform-by-page Cartesian product.
+The engine SHALL distinguish target runtime/OS, device and input context, prototype medium and verification environment. Platform facts SHALL be sourced or marked unknown; only route-changing uncertainty requires clarification. Touch interaction, mobile viewport dimensions, and consumer product domains SHALL NOT be mechanically mapped to an iOS target runtime. When the target runtime is undeclared, it SHALL remain `unknown`.
 
 #### Scenario: CPC-SCN-005 Desktop and mobile preserve task meaning
 - **WHEN** one task uses a desktop split view and a mobile detail route
@@ -85,8 +85,12 @@ The engine SHALL distinguish target runtime/OS, device and input context, protot
 - **WHEN** the intended product is an iOS or Android application but the artifact is HTML
 - **THEN** the specification distinguishes that target from the browser prototype and records simulated system behavior and outstanding native validation without inferring native fidelity
 
+#### Scenario: CPC-SCN-022 Unspecified mobile touch remains target unknown
+- **WHEN** a product discussion specifies mobile viewport, touch interaction, or booking flows without naming an operating system
+- **THEN** the materialized target context records target runtime as `unknown` while preserving device class `mobile` and input modality `touch`, without fabricating an iOS or Android platform
+
 ### Requirement: CPC-004 Project constraints without semantic invention
-Formal Builder inputs SHALL be derived from retained selected scope and applicable platform contracts with source identity. Invalid surface/context references, paths outside authorized roots, missing required formal facts and stale source identities SHALL prevent dispatch. The compiler SHALL NOT invent product tensions, reality anchors, shortcuts, platform actions or approval to fill omissions. Optional exploration unknowns SHALL remain unknown. Builder inputs SHALL preserve relevant tasks, states, recovery, experience invariants, Signature relationships and method outcomes through accessible source references or direct projection.
+Formal Builder inputs SHALL be derived from retained selected scope and applicable platform contracts with source identity. The compiler SHALL NOT invent product tensions, reality anchors, shortcuts, platform actions, aesthetic themes, or layout locks to fill omissions. When Five Axes dials are omitted or empty, the token compiler SHALL emit neutral geometric scaffolds without opinionated palette defaults. The assembled execution envelope SHALL emit candidate layout patterns and keep selected pattern open unless explicitly authored.
 
 #### Scenario: CPC-SCN-007 Missing facts and conflicting defaults
 - **WHEN** a source leaves a platform shortcut or Core Tension undecided, or declares an action inconsistent with a legacy default
@@ -95,6 +99,14 @@ Formal Builder inputs SHALL be derived from retained selected scope and applicab
 #### Scenario: CPC-SCN-008 Tampered or outside-scope dispatch
 - **WHEN** a selection names a missing surface, unauthorized path or changed source revision
 - **THEN** dispatch is rejected with the specific mismatch and no broader write authorization is inferred
+
+#### Scenario: CPC-SCN-023 Token compiler emits neutral tokens on empty dials
+- **WHEN** Five Axes dials are undeclared or empty
+- **THEN** the compiler produces a neutral, balanced token set without injecting lime accents or industrial materiality defaults
+
+#### Scenario: CPC-SCN-024 Envelope preserves candidate patterns without layout lock
+- **WHEN** a product baseline or category is supplied without an explicit layout profile decision
+- **THEN** the envelope emits candidate patterns as advisory options and sets selected pattern to null, allowing Builder to choose the optimal topology
 
 ### Requirement: CPC-008 Keep regression results evidence-bounded
 Regression evaluation SHALL not convert missing measurements or unverified dimensions into passes or improvements. Observable viewport overflow SHALL be computed from valid available measurements or remain unverified. Every declared critical hard gate SHALL affect aggregate acceptance. New runs SHALL identify the actual Skill and judge source contents, including dirty candidate content, and preserve prior evidence. Mechanism tests and real-session evidence SHALL remain separate; real-session execution SHALL require its own cost authorization.
