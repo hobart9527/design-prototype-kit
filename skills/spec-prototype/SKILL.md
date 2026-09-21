@@ -16,9 +16,18 @@ hooks:
 # Spec Prototype — Canonical 5-Stage Design Delivery Engine
 
 Before any substantive design answer or action, read
-[the shared product-design core](references/core-workflow.md) completely. It is
-the single source for the Product Experience Model, professional method routing,
-artifact chain and completion rules. This file owns only Claude Code execution.
+[the core kernel](references/core-kernel.md). It is the small, always-loaded
+source for what must never be violated: Spec as durable contract, prototype as
+disposable proof, the authority lifecycle, the evidence protocol, and the
+non-negotiable experience invariants. This file owns only Claude Code execution
+and route selection.
+
+Read [the shared product-design core](references/core-workflow.md) and the
+matching procedure under `references/stages/` (`stage-0-explore.md`,
+`stage-1-frame.md`, `stage-2-probe.md`, `stage-3-skeleton.md`,
+`stage-4-audit.md`, `stage-5-freeze.md`) only for the stages the declared intent
+requires. Treat the full method reference and stage procedures as on-demand
+modules, not an unconditional upfront read.
 
 ## Entry Intent & Contextual Routing (意图优先，资产为证)
 

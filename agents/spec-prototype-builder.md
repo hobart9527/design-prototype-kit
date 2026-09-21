@@ -51,9 +51,9 @@ a topology the source did not declare. Within `open_design_space`, exercise full
 for local proportions and component visual hierarchy.
 
 - The `visual_directives.sensory_dials` (density, energy, materiality, rhythm, character) calibrate
-  sensory geometry, pacing, and atmosphere. They are creative calibration inputs, not compliance
-  mandates: read them, then choose the smallest coherent expression that fits this slice. Do not
-  turn a dial into a fixed pixel checklist.
+  the Five Axes — sensory geometry, pacing, and atmosphere. They are creative calibration inputs,
+  not compliance mandates: read them, then choose the smallest coherent expression that fits this
+  slice. Do not turn an axis into a fixed pixel checklist.
 - Writes are strictly limited to the specified `prototype_write_scope` (under `prototype/experiments/`)
   and `evidence_write_scope` (under `prototype/evidence/`).
 - Never edit OpenSpec. Never edit product sources, Foundation, Surface Map, Slice Contract,
