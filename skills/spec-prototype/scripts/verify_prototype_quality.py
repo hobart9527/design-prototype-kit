@@ -359,17 +359,39 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     # it is strictly forbidden on draft, pending, secondary, ghost, or cancel affordances.
     if "--accent-seal" in token_source or "--accent-seal" in source:
         accent_leak_patterns = [
-            r'<(?:button|a|span|div|p)\b[^>]*class=["\'][^"\']*(?:draft|pending|secondary|ghost|cancel|subtle)[^"\']*["\'][^>]*style=["\'][^"\']*--accent-seal[^"\']*["\']',
-            r'\.[a-zA-Z0-9_-]*(?:draft|pending|secondary|ghost|cancel|subtle)[a-zA-Z0-9_-]*[^{}]*\{[^}]*var\(--accent-seal\)',
+            r'<(?:button|a|span|div|p)\b[^>]*class=["\'][^"\']*(?:draft|pending|secondary|ghost|cancel|subtle|base|zero-borrow)[^"\']*["\'][^>]*style=["\'][^"\']*--accent-seal[^"\']*["\']',
+            r'\.[a-zA-Z0-9_-]*(?:draft|pending|secondary|ghost|cancel|subtle|base|zero-borrow)[a-zA-Z0-9_-]*[^{}]*\{[^}]*var\(--accent-seal\)',
         ]
         for alp in accent_leak_patterns:
             if re.search(alp, source, re.IGNORECASE):
                 failures.append(
                     "token-discipline assertion: Signature Accent Leak detected. "
                     "var(--accent-seal) is strictly reserved for authoritative gate, seal imprint, or fatal collision; "
-                    "forbidden on draft, pending, secondary, ghost, or cancel elements."
+                    "forbidden on draft, pending, secondary, ghost, cancel, or zero-borrow base elements."
                 )
                 break
+
+    # Cognitive Budgeting & Energy Return Ledger (借贷法则门禁):
+    # 1. Base UI must remain zero-friction (zero cognitive overhead, no rogue infinite animations)
+    # 2. Dynamic visual energy is reserved for high-yield zones; non-high-yield areas must settle back
+    if contract_path and Path(contract_path).is_file():
+        contract_text = Path(contract_path).read_text(encoding="utf-8")
+        if "Cognitive Budgeting" in contract_text or "借贷法则" in contract_text or "Energy Return Ledger" in contract_text:
+            # Check for unauthorized rogue infinite animations in the base UI
+            has_infinite_anim = bool(re.search(r"animation\s*:\s*[^;}]*\binfinite\b", source, re.IGNORECASE))
+            if has_infinite_anim:
+                # Infinite animations are only permitted if explicitly tagged within high-yield or pulse indicators
+                has_high_yield_container = bool(re.search(
+                    r'(?:class|id|data-zone)=["\'][^"\']*\b(?:high-yield|pulse|heartbeat|beacon|live-indicator|radar)\b[^"\']*["\']',
+                    source,
+                    re.IGNORECASE
+                ))
+                if not has_high_yield_container:
+                    failures.append(
+                        "cognitive-budget assertion: Energy leak in zero-borrow base UI. "
+                        "Continuous infinite animations are forbidden outside explicit high-yield/pulse containers; "
+                        "routine UI must settle to baseline calm equilibrium."
+                    )
 
     # Dual-channel keyboard ergonomics check: when declared in contract, ensure event listener exists
     if contract_path and Path(contract_path).is_file():

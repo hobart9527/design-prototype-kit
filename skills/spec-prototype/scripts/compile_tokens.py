@@ -512,22 +512,27 @@ def extract_dynamic_palette(
         discussion_text,
         re.IGNORECASE,
     )
-    # Reality Anchor Domain Routing (probe mode only):
-    # `formal` mode infers no aesthetic from keywords; it stays on the neutral scaffold.
-    disc_lower = discussion_text.lower()
-    inferred_domain_fallback = fallback_palette
-    if mode == "probe":
-        if any(k in disc_lower for k in ("reader", "reading", "editorial", "essay", "literature", "长文", "阅读", "书库", "专栏", "书籍", "出版", "人文")):
-            inferred_domain_fallback = "editorial-paper-warm"
-        elif any(k in disc_lower for k in ("procurement", "approval", "crm", "internal", "clean", "notion", "审批", "采购", "政务", "OA", "看板")):
-            inferred_domain_fallback = "clean-slate-pro"
-        elif any(k in disc_lower for k in ("sre", "cluster", "telemetry", "incident", "trading", "terminal", "ops", "运维", "事故", "监控")):
-            inferred_domain_fallback = "titanium-amber"
+    if pal_match:
+        base_name = pal_match.group(1).lower()
+    elif mode == "probe":
+        # In exploratory probe mode only, infer atmospheric palette baseline if domain hints exist
+        lowered = discussion_text.lower()
+        if any(w in lowered for w in ["sre", "telemetry", "incident", "cluster", "devops"]):
+            base_name = "titanium-amber"
+        elif any(w in lowered for w in ["editorial", "reading", "paper", "article", "publication"]):
+            base_name = "editorial-paper-warm"
+        elif any(w in lowered for w in ["procurement", "erp", "crm", "enterprise", "ledger"]):
+            base_name = "clean-slate-pro"
+        else:
+            base_name = fallback_palette
+    else:
+        # Pure compiler discipline in formal mode: Never infer palette from domain keywords.
+        # Require explicit palette declaration or explicit tokens; fallback to neutral scaffold.
+        base_name = fallback_palette
 
-    base_name = pal_match.group(1).lower() if pal_match else inferred_domain_fallback
     resolved_base = PALETTE_ALIASES.get(base_name, base_name)
     if resolved_base not in DARK_ATMOSPHERES:
-        resolved_base = inferred_domain_fallback if inferred_domain_fallback in DARK_ATMOSPHERES else NEUTRAL_SCAFFOLD_NAME
+        resolved_base = fallback_palette if fallback_palette in DARK_ATMOSPHERES else NEUTRAL_SCAFFOLD_NAME
 
     base_colors = dict(DARK_ATMOSPHERES[resolved_base])
 

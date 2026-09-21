@@ -872,9 +872,13 @@ invariants: {invariants_str}
 
             proto_med = "web"
             falsification_test = extract_section_by_patterns(disc_text, ["Perceptual Falsification Criteria", "Falsification Criteria", "Falsification", "5-Second", "证伪判据", "5秒", "5s_test"])
-            falsification_section = ""
-            if falsification_test:
-                falsification_section = f"""## Perceptual Falsification Criteria (5-Second Viewport Test)
+            if not falsification_test:
+                # Default baseline 5-second perceptual falsification test
+                falsification_test = (
+                    "Within 5 seconds across 320px/390px/1280px viewports, an observer must identify the core tension "
+                    "and primary action trigger without reading secondary body prose or scanning help documentation."
+                )
+            falsification_section = f"""## Perceptual Falsification Criteria (5-Second Viewport Test)
 
 - {falsification_test}
 
@@ -902,6 +906,7 @@ invariants: {invariants_str}
 - Prototype write scope: `prototype/experiments/{slice_id}/{scope_suffix}/`
 - Evidence write scope: `prototype/evidence/{slice_id}/{scope_suffix}/`
 - Skill root / evidence template path for this dispatch: `{skill_root}`
+- Required craft reads: `references/03-verification/quality-floor.md`, sha256:{hashlib.sha256((Path(skill_root)/'references/03-verification/quality-floor.md').read_bytes()).hexdigest()}
 - Start command: `python3 -m http.server 8000`
 - Verification command(s): `pytest -q`
 - Visual verification: not_required
@@ -940,6 +945,15 @@ verification-environment: headless-browser
 """
         path.write_text(content, encoding="utf-8")
         created[key] = str(path)
+
+    # Atomic Compile Gate: If all key pillars are requested, ensure mandatory quality criteria
+    if "specification" in active_keys and "specification" in created:
+        r1_content = Path(created["specification"]).read_text(encoding="utf-8")
+        if "Perceptual Falsification Criteria" not in r1_content:
+            # Check if discussion contained explicit falsification criteria
+            disc_falsify = extract_section_by_patterns(disc_text, ["Perceptual Falsification Criteria", "Falsification Criteria", "Falsification", "5-Second", "证伪判据", "5秒", "5s_test"])
+            if not disc_falsify:
+                raise ValueError("Atomic Compile Blocked: Stage 1 requires explicit 5-Second Perceptual Falsification Criteria before contracts can be sealed.")
 
     # Post-materialize auto-healing pass: rebind digests across c1 and r1 if downstream files were created or modified
     try:

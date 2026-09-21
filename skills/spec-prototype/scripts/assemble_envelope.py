@@ -1084,20 +1084,18 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         },
         "break_protocol_checkpoints": break_checkpoints,
     }
+    # Dynamic interaction spec projection based on profile and authored rules
+    interaction_spec["dual_channel_shortcuts"] = shortcuts
+    interaction_spec["action_verb_lifecycle"] = verb_lifecycle
+    interaction_spec["decisive_exchange_frames"] = decisive_frames
+    interaction_spec["context_preservation_rules"] = context_rules
+
     if _is_dense:
-        # Full rich interaction contract for workbench/console profiles
-        if shortcuts:
-            interaction_spec["dual_channel_shortcuts"] = shortcuts
-        interaction_spec["action_verb_lifecycle"] = verb_lifecycle
-        interaction_spec["decisive_exchange_frames"] = decisive_frames
-        interaction_spec["context_preservation_rules"] = context_rules
         interaction_spec["profile_notes"] = (
             "dense-console: implement Action Verb Lifecycle (trigger→drawer/modal→commit→toast), "
             "declared keyboard shortcuts (if any), tabular-nums telemetry where comparative data is displayed, and SVG micro-sparklines."
         )
     elif _is_editorial:
-        # Reading profile: quiet interactions, no intrusive modals
-        # Sanitize verb lifecycle for reading profile: purge drawer/modal instructions so Builder receives unambiguous in-situ commands
         sanitized_verbs = []
         for v in verb_lifecycle:
             v_clean = dict(v)
@@ -1120,7 +1118,6 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
             "selection_container": "in_situ_popover",
         }
     elif _is_touch:
-        # Touch/mobile: thumb-zone ergonomics, spring physics
         interaction_spec["profile_notes"] = (
             "somatic-touchflow: implement 44px thumb-zone touch targets, spring physics gesture hints, "
             "bottom-sheet action trays. Desktop keyboard shortcuts are NOT required."
@@ -1130,17 +1127,11 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
             "action_tray": "bottom-sheet",
             "gesture_hints": True,
         }
-        interaction_spec["context_preservation_rules"] = context_rules
     else:
-        # adaptive-workspace / custom-composite
         interaction_spec["profile_notes"] = (
             "adaptive-workspace: composable layout guided by product context and task requirements. "
             "Implement responsive hierarchy, clear state transitions, and accessible semantic interactions."
         )
-        interaction_spec["dual_channel_shortcuts"] = shortcuts
-        interaction_spec["action_verb_lifecycle"] = verb_lifecycle
-        interaction_spec["decisive_exchange_frames"] = decisive_frames
-        interaction_spec["context_preservation_rules"] = context_rules
 
     app_shell_blueprints = {
         "adaptive-workspace": {
