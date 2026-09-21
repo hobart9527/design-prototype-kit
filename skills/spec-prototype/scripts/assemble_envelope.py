@@ -146,6 +146,18 @@ def extract_field(content: str, label: str, default: str = "") -> str:
     return match.group(1).strip() if match else default
 
 
+def parse_reality_anchors(raw: str) -> List[str]:
+    """Split an authored Reality Anchors line into discrete anchor strings.
+
+    The authored field is a comma/semicolon separated list ("Linear, Stripe
+    Dashboard"), never a single string to be iterated character by character.
+    An absent declaration yields [] rather than a fabricated anchor.
+    """
+    if not raw:
+        return []
+    return [part.strip() for part in re.split(r"[,;、]", raw) if part.strip()]
+
+
 def _brief_path(root: Path, slice_id: str) -> Optional[Path]:
     """Find the retained direction brief without treating it as a formal spec."""
     candidates = (
@@ -500,7 +512,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     # ── Universal Physical Grounding & Reality Anchor Extraction ──
     # Rather than rigid 4-baseline silos, extract authored Reality Anchors and physical lifeworld analogies
     anchors_match = re.search(r"^[-*+]?\s*(?:Reality\s+(?:Benchmark\s+)?Anchors?|Physical\s+Anchors?|Reality\s+Anchors?|对标|地锚)\s*[:=]?\s*([^\n]+)", product_content + "\n" + spec_content, re.MULTILINE | re.IGNORECASE)
-    reality_anchors = anchors_match.group(1).strip() if anchors_match else ""
+    reality_anchors_raw = anchors_match.group(1).strip() if anchors_match else ""
+    reality_anchors = parse_reality_anchors(reality_anchors_raw)
 
     # ── Advisory pattern candidates (CPC-004) ──
     # Product category is a weak signal, not a lock: it only orders advisory candidates.
@@ -519,7 +532,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         ("operational-canvas", r"\bBaseline 2\b|operational-canvas|master-detail"),
         ("dense-console", r"\bBaseline 1\b|dense-console|telemetry-grid|datadog|bloomberg"),
     )
-    all_spec_text = product_content + " " + spec_content + " " + reality_anchors
+    all_spec_text = product_content + " " + spec_content + " " + reality_anchors_raw
 
     baseline_match = re.search(r"^[-*+]?\s*(?:Dominant\s+Baseline|Baseline|基线)\s*[:=]\s*([^\n]+)", product_content, re.MULTILINE | re.IGNORECASE)
     declared_baseline = baseline_match.group(1).strip() if baseline_match else ""
@@ -892,33 +905,48 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     _is_editorial = layout_profile == "editorial-reading"
     _is_touch = layout_profile == "somatic-touchflow"
 
-    # Extract authored states from spec or contract if present; otherwise default to minimal standard states
-    authored_states: List[str] = []
+    # Domain states are authoritative only when a literal States / Supported
+    # States line is declared in c1/r1. Absence stays absent: the IR must not
+    # promote discovered behavior into the explicit domain layer.
+    explicit_domain_states: List[str] = []
     for line in spec_content.splitlines() + contract_content.splitlines():
         m_st = re.search(r"(?:Supported States|States|状态流转|支持状态)\s*[:=]\s*([^\n]+)", line, re.IGNORECASE)
         if m_st:
             raw_states = [s.strip("`'\" ") for s in re.split(r"[,/|;]", m_st.group(1)) if s.strip("`'\" ")]
             if raw_states:
-                authored_states = raw_states
+                explicit_domain_states = raw_states
                 break
-    if not authored_states:
-        found_states = []
-        for a in assertions + break_checkpoints:
-            a_lower = a.lower()
-            if "empty" in a_lower and "empty" not in found_states:
-                found_states.append("empty")
-            if ("error" in a_lower or "alert" in a_lower) and "error" not in found_states:
-                found_states.append("error")
-            if ("select" in a_lower or "highlight" in a_lower) and "selecting" not in found_states:
-                found_states.append("selecting")
-            if ("note" in a_lower or "annotate" in a_lower) and "annotating" not in found_states:
-                found_states.append("annotating")
-            if ("undo" in a_lower or "recover" in a_lower) and "undo_pending" not in found_states:
-                found_states.append("undo_pending")
-        if found_states:
-            authored_states = ["default"] + found_states
-        else:
-            authored_states = ["default"]
+
+    # Experience states are derived from assertions and break-protocol
+    # checkpoints; they carry derived authority, never explicit.
+    derived_experience_states: List[str] = []
+    for a in assertions + break_checkpoints:
+        a_lower = a.lower()
+        if "empty" in a_lower and "empty" not in derived_experience_states:
+            derived_experience_states.append("empty")
+        if ("error" in a_lower or "alert" in a_lower) and "error" not in derived_experience_states:
+            derived_experience_states.append("error")
+        if ("select" in a_lower or "highlight" in a_lower) and "selecting" not in derived_experience_states:
+            derived_experience_states.append("selecting")
+        if ("note" in a_lower or "annotate" in a_lower) and "annotating" not in derived_experience_states:
+            derived_experience_states.append("annotating")
+        if ("undo" in a_lower or "recover" in a_lower) and "undo_pending" not in derived_experience_states:
+            derived_experience_states.append("undo_pending")
+
+    # UI transient states exist only when c1 genuinely names them; otherwise [].
+    derived_transient_states: List[str] = [
+        kw for kw in ("submitting", "failed", "loading", "saving", "pending")
+        if re.search(r"\b" + kw + r"\b", contract_content, re.IGNORECASE)
+    ]
+
+    # Legacy interaction_spec keeps a usable default; the explicit domain layer
+    # above stays strictly authored.
+    if explicit_domain_states:
+        authored_states = list(explicit_domain_states)
+    elif derived_experience_states:
+        authored_states = ["default"] + list(derived_experience_states)
+    else:
+        authored_states = ["default"]
 
     interaction_spec: Dict[str, Any] = {
         "state_machine": {
@@ -1159,11 +1187,14 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         l2_inspect = "Contextual entity inspection, inline details, or adaptive drawer"
         l3_diag = "Complete entity audit, auxiliary parameters, or secondary flow"
 
-    # Five Axes Calibration & DTCG token extraction
+    # Five Axes Calibration & DTCG token extraction.
+    # Axes resolve strictly from materialized foundation (f1) plus the slice
+    # specification (r1); the unmaterialized discussion is not a source of the
+    # sealed executable IR.
     from compile_tokens import parse_five_axes
     discussion_path = root / "prototype/discussion.md"
     discussion_text = discussion_path.read_text(encoding="utf-8") if discussion_path.is_file() else ""
-    five_axes = parse_five_axes(discussion_text + "\n" + spec_content)
+    five_axes = parse_five_axes(f1_text + "\n" + spec_content)
 
     dtcg_tokens: Dict[str, Any] = {}
     t1_json_path = root / "prototype/contracts/tokens/t1.json"
@@ -1244,23 +1275,21 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "authority": "explicit"
     }
 
-    ir_domain_states = authored_states if authored_states else ["initial", "active"]
+    # Each authored anchor becomes one structured record; an absent or empty
+    # declaration yields [] with no fabricated grounding.
+    anchor_objects = [
+        {"source": anchor, "transfer": [], "non_transfer": [], "authority": "explicit",
+         "source_ref": "product.md#reality-anchors"}
+        for anchor in reality_anchors
+    ]
+
     ir_semantic_contract = {
         "domain_thesis": domain_thesis.get("product_thesis", brand_title),
         "primary_entities": [e.get("name", "entity") for e in ooux_entities] if ooux_entities else [slice_id],
-        "domain_states": [{"name": s, "type": "domain_state", "authority": "explicit", "source": "c1.md#states"} for s in ir_domain_states],
-        "anchors": [
-            {
-                "source": a.get("anchor", "Unknown"),
-                "transfer": a.get("borrow", []),
-                "non_transfer": a.get("omit", []),
-                "authority": "explicit",
-                "source_ref": "f1.md#reality-anchors"
-            }
-            for a in reality_anchors if isinstance(a, dict)
-        ] if reality_anchors and isinstance(reality_anchors[0], dict) else [
-            {"source": str(a), "transfer": [], "non_transfer": [], "authority": "derived"} for a in reality_anchors
-        ]
+        "domain_states": [{"name": s, "type": "domain_state", "authority": "explicit", "source": "c1.md#states"} for s in explicit_domain_states],
+        "experience_states": [{"name": s, "type": "experience_state", "authority": "derived", "source": "r1.md#assertions"} for s in derived_experience_states],
+        "ui_transient_states": [{"name": s, "type": "ui_transient_state", "authority": "derived", "source": "c1.md#actions"} for s in derived_transient_states],
+        "anchors": anchor_objects
     }
 
     ir_regions = []
@@ -1284,11 +1313,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
             "authority": "explicit",
             "source": "m1.md#topology"
         })
-    if not ir_regions:
-        ir_regions = [
-            {"id": "primary_workspace", "role": "primary", "relation": "primary-focus", "scroll_owner": "self", "authority": "derived", "source": "m1.md"},
-            {"id": "contextual_inspector", "role": "contextual", "relation": "adjacent-to-primary", "scroll_owner": "self", "authority": "derived", "source": "m1.md"}
-        ]
+    # No synthetic topology: an undeclared region set stays empty and the
+    # spatial decision is disclosed as open design space instead.
 
     ir_layout_directives = {
         "viewport_strategy": "100vh-locked" if layout_profile in ("dense-console", "operational-canvas") else "natural-flow",
@@ -1303,7 +1329,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "sensory_dials": five_axes,
         "density_calibration": {
             "base_spacing": "var(--space-2)",
-            "typography": "var(--text-base)",
+            "typography": "var(--font-sans)",
             "tabular_numbers": requires_tabular,
             "authority": "derived",
             "source": "f1.md#five-axes"
@@ -1315,20 +1341,35 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         act_id = v.get("action_id", f"action-{idx}")
         act_verb = v.get("verb", act_id)
         trig_label = v.get("trigger_btn", act_verb)
+        # Trigger role follows authored semantics, never list position.
+        if re.search(r"\bprimary\b", trig_label, re.IGNORECASE):
+            trig_role = "primary-action"
+        elif re.search(r"\bsecondary\b", trig_label, re.IGNORECASE):
+            trig_role = "secondary-action"
+        else:
+            trig_role = "action"
+        # Transient states exist only when c1 authored them for this action.
+        action_transients = [
+            kw for kw in ("submitting", "failed", "loading", "saving", "pending")
+            if re.search(r"\b" + kw + r"\b", contract_content, re.IGNORECASE)
+        ]
+        feedback_message = v.get("toast", "")
+        feedback: Dict[str, Any] = {"continuity": "preserve-context"}
+        if feedback_message:
+            feedback["visible"] = True
+            feedback["message"] = feedback_message
+        else:
+            feedback["visible"] = False
         ir_action_contracts.append({
             "id": act_id,
             "verb": act_verb,
             "trigger": {
-                "role": "primary-action" if idx == 0 else "secondary-action",
+                "role": trig_role,
                 "semantic_label": trig_label
             },
             "consequence": v.get("impact", "state-mutation"),
-            "ui_transient_states": ["submitting", "failed"],
-            "feedback": {
-                "visible": True,
-                "message": v.get("toast", "Action completed"),
-                "continuity": "preserve-context"
-            },
+            "ui_transient_states": action_transients,
+            "feedback": feedback,
             "authority": "explicit",
             "source": "c1.md#actions"
         })
@@ -1344,15 +1385,29 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
             "source": "r1.md#assertions",
             "authority": "explicit"
         })
+    # Real projection ledger: each source section is listed with the IR target
+    # it actually compiled into. Absent sources are reported as unmapped rather
+    # than asserted "none".
+    projection_sources = [
+        ("f1#foundation", "visual_directives", bool(f1_text.strip())),
+        ("m1#topology", "layout_directives", bool(ooux_topology)),
+        ("c1#behavior", "action_contracts", bool(verb_lifecycle)),
+        ("r1#specification", "verification_contract", bool(assertions)),
+        ("t1#tokens", "visual_directives", bool(dtcg_tokens)),
+    ]
+    sources_mapped = [
+        {"source": source, "target": target,
+         "status": "compiled" if present else "unmapped"}
+        for source, target, present in projection_sources
+    ]
+    unmapped_sections = [e["source"] for e in sources_mapped if e["status"] != "compiled"]
+
     ir_verification_contract = {
         "negative_bounds": ir_negative_bounds,
         "command": verification_cmd,
         "projection_digest": {
-            "f1_foundation": "compiled",
-            "m1_topology": "compiled",
-            "c1_behavior": "compiled",
-            "r1_specification": "compiled",
-            "unmapped_sections": "none"
+            "sources_mapped": sources_mapped,
+            "unmapped_sections": unmapped_sections,
         }
     }
 
@@ -1363,6 +1418,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "container-elevation-subtlety",
         "transient-animation-timings-within-tokens"
     ]
+    if not ir_regions:
+        ir_open_design_space.append("spatial-topology")
 
     envelope = {
         # 7-Field Executable Design IR Canonical Interface
