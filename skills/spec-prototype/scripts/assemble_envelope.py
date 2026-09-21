@@ -460,6 +460,116 @@ def select_active_methods(
     return result
 
 
+# ── Lean Builder Payload ──
+# The builder prompt carries the compiled executable IR plus the execution
+# context it needs to run. Legacy intermediate blobs stay available on the
+# in-memory envelope for downstream tooling, but are demoted out of the prompt
+# so they stop competing with the IR for the Builder's attention.
+_IR_FIELDS = (
+    "identity",
+    "semantic_contract",
+    "layout_directives",
+    "visual_directives",
+    "action_contracts",
+    "verification_contract",
+    "open_design_space",
+)
+_PAYLOAD_CONTEXT_FIELDS = (
+    "envelope_version",
+    "envelope_architecture",
+    "authority_status",
+    "build_authority",
+    "has_hypothesis_actions",
+    "builder_guidance",
+    "mode",
+    "repository_root",
+    "skill_root",
+    "slice_id",
+    "platform",
+    "coverage",
+    "target_html_path",
+    "evidence_output_dir",
+    "verification_command",
+    "capture_command",
+    "inspection_contract",
+    "spec_sources",
+    "spec_references",
+    "token_stylesheet_ref",
+    "token_link_tag",
+)
+# Intermediate synthesis products retained for diagnostics and downstream
+# consumers; they are not part of the Builder's authored authority.
+_DEBUG_CONTEXT_FIELDS = (
+    "constraint_envelope",
+    "creative_envelope",
+    "available_tokens",
+    "app_shell_blueprint",
+    "app_shell_contract",
+    "ooux_topology",
+    "cognitive_ledger",
+    "fault_tolerance_protocol",
+    "interaction_spec",
+    "design_constraints",
+    "verifiable_assertions",
+    "domain_thesis",
+    "attention_routing",
+    "data_stress_boundaries",
+    "active_methods",
+    "five_axes",
+    "dtcg_tokens",
+    "layout_profile",
+    "candidate_patterns",
+    "selected_pattern",
+    "reality_anchors",
+    "topology_context",
+    "specification",
+    "tokens_md_ref",
+)
+
+
+def build_builder_payload(envelope: Dict[str, Any], *, include_debug: bool = False) -> Dict[str, Any]:
+    """Project an assembled envelope onto the lean prompt the Builder receives.
+
+    The default payload keeps the 7-field executable IR and the execution context
+    only. `include_debug=True` re-attaches the demoted intermediate blobs under
+    `debug_context` for inspection, keeping the lean view intact.
+    """
+    payload = {
+        field: envelope[field]
+        for field in _IR_FIELDS + _PAYLOAD_CONTEXT_FIELDS
+        if field in envelope
+    }
+    if include_debug:
+        payload["debug_context"] = {
+            field: envelope[field] for field in _DEBUG_CONTEXT_FIELDS if field in envelope}
+    return payload
+
+
+def _mandatory_viewports(platform: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Derive the inspection viewports from the authored device fact.
+
+    A mismatched viewport gate is a false negative, not a stricter one: a
+    desktop-only console has no authored mobile contract to violate, and a
+    touch-primary flow has no authored desktop one. An undeclared device keeps
+    both extremes rather than inventing a restricted set.
+    """
+    device = str(platform.get("device_context") or "").strip().lower()
+    desktop = {"width": 1280, "name": "desktop-canvas",
+               "focus": "spatial hierarchy and high-density telemetry"}
+    mobile = {"width": 390, "name": "mobile-somatic",
+              "focus": "44px touch targets and responsive folding without amnesia"}
+    tablet = {"width": 768, "name": "tablet-canvas",
+              "focus": "adaptive reflow and touch-reachable controls without amnesia"}
+    if device == "desktop":
+        return [desktop]
+    if device in ("mobile", "phone", "handheld"):
+        return [mobile]
+    if device in ("tablet", "ipad"):
+        return [tablet]
+    # responsive / hybrid / undeclared: both authored extremes stay checked.
+    return [desktop, mobile]
+
+
 def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     """Assemble an envelope for either exploration or formal candidate work."""
     brief = _brief_path(root, slice_id)
@@ -1509,12 +1619,9 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "platform": dict(platform_context["platform"]),
         "contract_lint": [] if not lint else [],
         "inspection_contract": {
-            "mandatory_viewports": [
-                {"width": 1280, "name": "desktop-canvas", "focus": "spatial hierarchy and high-density telemetry"},
-                {"width": 390, "name": "mobile-somatic", "focus": "44px touch targets and responsive folding without amnesia"}
-            ],
+            "mandatory_viewports": _mandatory_viewports(dict(platform_context["platform"])),
             "mandatory_states": authored_states,
-            "visual_inspection_mandate": "Critic must use Read tool to visually inspect captured screenshots (1280px & 390px); textual HTML review alone is non-independent."
+            "visual_inspection_mandate": "Critic must use Read tool to visually inspect captured screenshots at every mandatory viewport; textual HTML review alone is non-independent."
         },
         "spec_sources": {
             "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest(),
@@ -1536,6 +1643,8 @@ def main():
     parser.add_argument("--slice", type=str, required=True, help="Slice ID (e.g. console, cockpit)")
     parser.add_argument("--check-spec", action="store_true", help="Only verify Spec completeness")
     parser.add_argument("--output", type=Path, help="Write envelope JSON to file")
+    parser.add_argument("--full-envelope", action="store_true",
+                        help="Emit the full diagnostic envelope instead of the lean builder payload")
 
     args = parser.parse_args()
     root = args.root.resolve()
@@ -1551,7 +1660,10 @@ def main():
 
     try:
         env = assemble(root, args.slice)
-        out_json = json.dumps(env, indent=2, ensure_ascii=False)
+        # The written artifact is the Builder's prompt: lean by default, with the
+        # full diagnostic envelope available behind an explicit flag.
+        emitted = env if args.full_envelope else build_builder_payload(env)
+        out_json = json.dumps(emitted, indent=2, ensure_ascii=False)
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(out_json, encoding="utf-8")
