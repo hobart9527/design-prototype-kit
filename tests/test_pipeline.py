@@ -525,7 +525,11 @@ def test_materialize_contracts_high_fidelity_semantic_synthesis(tmp_path: Path):
 - **支撑视图 (Supporting)**: `surfaces/capacity-matrix`（矩阵）
 """
     (proto_dir / "discussion.md").write_text(disc_text, encoding="utf-8")
-    (proto_dir / "product.md").write_text("# SRE Platform\n## Core Tension\n- 秒级排空 vs 误杀风险\n", encoding="utf-8")
+    (proto_dir / "product.md").write_text(
+        "# SRE Platform\n## Core Tension\n- 秒级排空 vs 误杀风险\n"
+        "- Reality Anchors: Bloomberg terminal density, Tokyo rail dispatch boards\n",
+        encoding="utf-8",
+    )
 
     # Materialize contracts
     res = mat_mod.materialize(tmp_path, "console", force=True)
@@ -576,6 +580,18 @@ def test_materialize_contracts_high_fidelity_semantic_synthesis(tmp_path: Path):
     assert len(constraints["decisive_exchange_frames"]) > 0
     assert len(constraints["context_preservation_rules"]) > 0
     assert len(env["verifiable_assertions"]) >= 5
+
+    # 6. Reality anchors survive into both creative and root envelope: the
+    #    Builder must read the authored real-world grounding, not a search string.
+    assert "Bloomberg terminal density" in env["reality_anchors"]
+    assert env["creative_envelope"]["reality_anchors"] == env["reality_anchors"]
+
+    # 7. Craft guidance is captured whole: the legacy 18-line cutoff truncated
+    #    authored sections before their closing rules reached the Builder.
+    form_method = next(m for m in env["active_methods"] if m["id"] == "form-ergonomics")
+    guidance = form_method["actionable_guidance"]
+    assert "Form orchestration containers" in guidance
+    assert len(guidance.splitlines()) > 18
     assert len(env["available_tokens"]) > 0
     assert "--radius-outer" in env["available_tokens"]
 

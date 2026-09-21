@@ -232,6 +232,49 @@ METHOD_ANCHORS: Dict[str, List[str]] = {
 }
 
 
+def extract_labeled_entries(text: str, label_pattern: str) -> List[Dict[str, str]]:
+    """Parse a labeled section body into term/definition pairs.
+
+    Accepts a Markdown table (`| Term | Definition |`) or bullet lines
+    (`- Term: Definition`). Returns [] when the label is absent so an unauthored
+    section stays unrepresented rather than fabricated.
+    """
+    lines = text.splitlines()
+    start = None
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        label = stripped.lstrip("#").strip()
+        if re.match(label_pattern, label, re.IGNORECASE) and (stripped.startswith("#") or ":" in stripped):
+            start = i + 1
+            break
+    if start is None:
+        return []
+    entries: List[Dict[str, str]] = []
+    for line in lines[start:]:
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            break
+        if not stripped:
+            continue
+        if stripped.startswith("|"):
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
+            if len(cells) >= 2 and not set(cells[0]) <= set("-: "):
+                entries.append({"term": cells[0].strip("`* "), "definition": cells[1].strip("`* ")})
+            continue
+        bullet = re.match(r"^[-*+]\s*(.+)$", stripped)
+        if bullet:
+            body = bullet.group(1)
+            if ":" in body:
+                term, _, definition = body.partition(":")
+                entries.append({"term": term.strip("`* "), "definition": definition.strip()})
+            else:
+                entries.append({"term": body.strip("`* "), "definition": ""})
+    # Discard a textual table header row such as `| Term | Definition |`.
+    if entries and entries[0]["term"].lower() in ("term", "terminology", "token", "component", "constraint"):
+        entries = entries[1:]
+    return entries
+
+
 def _extract_craft_guidance(skill_dir: Path, rel_file: str, method_id: str) -> str:
     """Extract actionable craft method guidance from the authoritative reference file."""
     if not rel_file:
@@ -243,21 +286,21 @@ def _extract_craft_guidance(skill_dir: Path, rel_file: str, method_id: str) -> s
         text = ref_path.read_text(encoding="utf-8")
         anchors = METHOD_ANCHORS.get(method_id, [method_id.replace("-", " ")])
         lines = []
-        capture = False
+        capture_level: Optional[int] = None
         for line in text.splitlines():
             sline = line.strip()
-            if sline.startswith("## ") or sline.startswith("### "):
+            if sline.startswith("#"):
+                level = len(sline) - len(sline.lstrip("#"))
+                # A same-or-higher-level header closes the captured section.
+                if capture_level is not None and level <= capture_level:
+                    break
                 header = sline.lstrip("#").strip().lower()
                 if any(a in header for a in anchors):
-                    capture = True
+                    capture_level = level
                     lines.append(sline)
-                    continue
-                elif capture and len(lines) > 5:
-                    break
-            elif capture and sline:
+                continue
+            elif capture_level is not None and sline:
                 lines.append(sline)
-                if len(lines) >= 18:
-                    break
         if not lines:
             for line in text.splitlines():
                 sline = line.strip()
@@ -717,6 +760,10 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
             "Visual indicators and state badges deliver calibrated operational signals."
         ],
     }
+    # Authored component constraints travel with the constraint envelope so the
+    # Builder reads declared component boundaries instead of guessing them.
+    constraints["component_constraints"] = extract_labeled_entries(
+        spec_content, r"Component\s+Constraints?|组件约束")
     explicit_turns = extract_field(spec_content, "Maximum operational repair attempts")
     if explicit_turns:
         constraints["maximum_operational_repair_attempts"] = explicit_turns
@@ -1142,12 +1189,15 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
                         "attributes": e_match.group(2).strip() if e_match.group(2) else ""
                     })
     ooux_topology["entities"] = ooux_entities
+    ooux_topology["terminology"] = extract_labeled_entries(
+        contract_content, r"OOUX\s+Terminology|(?:^|\W)Terminology\b|术语")
 
     creative_envelope = {
         "layout_profile": layout_profile,
         "candidate_patterns": candidate_patterns,
         "selected_pattern": selected_pattern,
         "five_axes": five_axes,
+        "reality_anchors": reality_anchors,
         "spatial_composition_agency": "Builder owns layout rhythm, panel proportions, and responsive flow. No pre-baked rigid HTML scaffolding mandated.",
         "attention_routing": {
             "primary_visual_anchor": f"Primary {slice_id} focal workspace & status indicator",
@@ -1207,6 +1257,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "selected_pattern": selected_pattern,
         "constraint_envelope": constraint_envelope,
         "creative_envelope": creative_envelope,
+        "reality_anchors": reality_anchors,
         "domain_thesis": constraint_envelope["domain_thesis"],
         "ooux_topology": ooux_topology,
         "attention_routing": creative_envelope["attention_routing"],
