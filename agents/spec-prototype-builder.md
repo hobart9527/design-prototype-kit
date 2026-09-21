@@ -173,11 +173,17 @@ Leave no state silent and lose no user work.
 
 - **Required States**: Render every state the envelope declares — loading, empty, error, and
   domain-specific states — with authentic content, not placeholders.
-- **Centralized In-Memory State Store (零依赖内存状态存储)**: Route interactive state through
-  ONE plain zero-dependency object, `window.__prototypeState` (or a tiny plain-function reducer
-  over it). Do not pull in any external state management library or other heavy
-  state-management library, and do not name or endorse a vendor library. The store holds at minimum: active tab, active table filter, each sub-modal
-  and drawer open/close flag, and every in-progress form draft.
+- **Demand-Driven In-Memory State Store (按需零依赖内存状态存储)**: When the authored slice
+  carries persistent interactive state — an active tab, an active table filter, a sub-modal or
+  drawer open/close flag, or an in-progress form draft — route that state through ONE plain
+  zero-dependency object, `window.__prototypeState` (or a tiny plain-function reducer over it).
+  Do not pull in any external state management library or other heavy state-management library,
+  and do not name or endorse a vendor library. The store holds exactly the state the slice
+  authors: active tab, active table filter, each sub-modal and drawer open/close flag, and every
+  in-progress form draft. When the slice carries no such persistent interactive state — a static
+  editorial reading surface, a marketing page, or a purely visual probe — do NOT fabricate a
+  store or invent a state schema the source never declared; stay neutral rather than
+  manufacturing entities the slice does not have.
 - **Context Preservation (Method 5 / Decisive 3-Frame)**: Dismissing a secondary modal or drawer, or re-rendering a
   table, preserves existing form drafts, scroll offsets, and active filters without loss. A
   deliberate reset must be an authored, explicit action — nothing resets silently.
