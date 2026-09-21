@@ -52,10 +52,10 @@ stale, or bound to a different source/dependency revision, or when `capture_fail
 claims instead of restating the producer's summary.
 
 Resolve the reviewed surface's platform context from the projected envelope facts alone. The
-formal envelope emits `platform.target_context`, `platform.prototype_medium`,
-`platform.verification_environment` and `platform.native_validation_pending`, plus the per-surface
-authored context IDs under `coverage.applicability[<surface_id>]`. Those five names are the whole
-platform contract; do not read a target from any other envelope key. Where that surface entry is
+formal envelope emits `platform.target_context`, `platform.device_context`, `platform.input_context`,
+`platform.prototype_medium`, `platform.verification_environment` and `platform.native_validation_pending`,
+plus the per-surface authored context IDs under `coverage.applicability[<surface_id>]`. Those seven names
+are the whole platform contract; do not read a target from any other envelope key. Where that surface entry is
 absent, judge against the global `platform` facts and name the surface's platform contract
 unauthored rather than assuming a target. Compare the evidence's
 recorded capture metadata against the environment the projected field names: the metadata

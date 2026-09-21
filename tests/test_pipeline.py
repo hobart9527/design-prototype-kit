@@ -858,12 +858,12 @@ def test_5_system_modern_industrial_derivation_and_rogue_root_blocking(tmp_path:
 """, encoding="utf-8")
 
     env = assemble_mod.assemble(tmp_path, "telemetry", lint=False)
-    assert env["layout_profile"] == "dense-console"
+    assert env["layout_profile"] == "adaptive-workspace"
     assert "app_shell_contract" in env
     assert "cognitive_ledger" in env
     assert "zero_borrow_base" in env["cognitive_ledger"]
     assert "high_yield_borrow_zone" in env["cognitive_ledger"]
-    assert env["app_shell_contract"]["profile"] == "dense-console"
+    assert env["app_shell_contract"]["profile"] == "adaptive-workspace"
     assert env["target_html_path"] == "prototype/experiments/telemetry/anchor/index.html"
 
     # Also verify materialize_contracts generates Cognitive Budgeting Ledger
@@ -964,9 +964,9 @@ def test_operationalized_design_techniques_across_stages(tmp_path: Path):
 
     env = assemble_mod.assemble(tmp_path, "cluster-node")
     assert "app_shell_blueprint" in env
-    assert env["app_shell_blueprint"]["profile"] == "dense-console"
-    assert "operational_viewport" in env["app_shell_blueprint"]["spatial_roles"]
-    assert "tabular-nums" in env["app_shell_blueprint"]["density_rules"]
+    assert env["app_shell_blueprint"]["profile"] == "adaptive-workspace"
+    assert "primary_workspace" in env["app_shell_blueprint"]["spatial_roles"]
+    assert "semantic spacing scale" in env["app_shell_blueprint"]["density_rules"]
     assert "ruthless_omissions" in env["design_constraints"]
     assert len(env["design_constraints"]["ruthless_omissions"]) >= 3
     assert "material_non_transfer_boundaries" in env["design_constraints"]
@@ -1154,10 +1154,10 @@ def test_multi_archetype_adaptation_and_flexible_verification(tmp_path: Path):
     f1_text = (proto / "contracts/foundation/f1.md").read_text(encoding="utf-8")
     assert "reading" in f1_text.lower() or "editorial" in f1_text.lower() or "omissions" in f1_text.lower()
 
-    # Assemble envelope: must select editorial-reading layout profile
+    # Assemble envelope: unselected pattern stays adaptive-workspace
     env = env_mod.assemble(tmp_path, "story-reader")
-    assert env["layout_profile"] == "editorial-reading"
-    assert env["app_shell_contract"]["profile"] == "editorial-reading"
+    assert env["layout_profile"] == "adaptive-workspace"
+    assert env["app_shell_contract"]["profile"] == "adaptive-workspace"
     assert env["topology_context"]["shared_shell"]["brand_title"] == "Dispatch Longform Reader"
 
     # Verify that a minimalist editorial prototype passes quality checks
@@ -1296,7 +1296,7 @@ Note: Avoid touch controls and consumer mobile paradigms.
 """, encoding="utf-8")
 
     env = assemble_mod.assemble(tmp_path, "slice_console", lint=False)
-    assert env["app_shell_blueprint"]["profile"] == "dense-console", "Profile must remain dense-console despite 'touch'/'mobile' mentions in omissions"
+    assert env["app_shell_blueprint"]["profile"] == "adaptive-workspace", "Unselected profile stays neutral adaptive-workspace"
 
 
 def test_verify_quality_negative_checks_block_goodhart_loopholes(tmp_path: Path):

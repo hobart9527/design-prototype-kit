@@ -58,8 +58,13 @@ derivable rather than inventing a target.
 Honor the product's real domain, not a generic web shell.
 
 - **OOUX Core Objects & Actions**: Model the declared core objects, their attributes,
-  and their declared actions faithfully. Do not invent unauthored entities, actions, or
+  and their declared actions faithfully using the canonical `semantic_contract` and
+  `action_contracts` (or `constraint_envelope`). Do not invent unauthored entities, actions, or
   states, and do not drop declared ones. Product vocabulary is contractual.
+- **Spatial Hierarchy & Topology**: Construct layout grid and viewports from
+  `layout_directives` (Spatial Relationship Graph) rather than assuming a rigid app shell.
+  Respect declared region boundaries, scroll ownership, and continuity invariants. Within
+  `open_design_space`, exercise full creative freedom for local proportions and component visual hierarchy.
 - **Content Language Lock (绝对语种锁定)**: Read `constraint_envelope.content_language.tag`
   (or `envelope.content_language.tag`). Set `<html lang="{tag}">` matching the declared
   tag exactly. All primary titles, helper text, placeholders, aria labels, and synthetic

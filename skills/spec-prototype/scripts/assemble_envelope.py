@@ -1232,7 +1232,148 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     if has_hypothesis_action:
         build_authority = "probe_only"
 
+    # -------------------------------------------------------------
+    # 7-Field Executable Design IR (Stage 2B / 2C)
+    # -------------------------------------------------------------
+    ir_identity = {
+        "slice_id": slice_id,
+        "authority_lifecycle": "sealed_provisional",
+        "build_authority": build_authority,
+        "target_html": target_html,
+        "source": "contracts/slices/" + slice_id + "/c1.md",
+        "authority": "explicit"
+    }
+
+    ir_domain_states = authored_states if authored_states else ["initial", "active"]
+    ir_semantic_contract = {
+        "domain_thesis": domain_thesis.get("product_thesis", brand_title),
+        "primary_entities": [e.get("name", "entity") for e in ooux_entities] if ooux_entities else [slice_id],
+        "domain_states": [{"name": s, "type": "domain_state", "authority": "explicit", "source": "c1.md#states"} for s in ir_domain_states],
+        "anchors": [
+            {
+                "source": a.get("anchor", "Unknown"),
+                "transfer": a.get("borrow", []),
+                "non_transfer": a.get("omit", []),
+                "authority": "explicit",
+                "source_ref": "f1.md#reality-anchors"
+            }
+            for a in reality_anchors if isinstance(a, dict)
+        ] if reality_anchors and isinstance(reality_anchors[0], dict) else [
+            {"source": str(a), "transfer": [], "non_transfer": [], "authority": "derived"} for a in reality_anchors
+        ]
+    }
+
+    ir_regions = []
+    if ooux_topology.get("primary_region"):
+        ir_regions.append({
+            "id": ooux_topology["primary_region"].get("id", "primary_workspace"),
+            "role": "primary",
+            "relation": "primary-focus",
+            "scroll_owner": "self",
+            "continuity": "preserve-primary-context",
+            "authority": "explicit",
+            "source": "m1.md#topology"
+        })
+    if ooux_topology.get("context_region"):
+        ir_regions.append({
+            "id": ooux_topology["context_region"].get("id", "contextual_inspector"),
+            "role": "contextual",
+            "relation": "adjacent-to-primary",
+            "scroll_owner": "self",
+            "continuity": "preserve-during-mutation",
+            "authority": "explicit",
+            "source": "m1.md#topology"
+        })
+    if not ir_regions:
+        ir_regions = [
+            {"id": "primary_workspace", "role": "primary", "relation": "primary-focus", "scroll_owner": "self", "authority": "derived", "source": "m1.md"},
+            {"id": "contextual_inspector", "role": "contextual", "relation": "adjacent-to-primary", "scroll_owner": "self", "authority": "derived", "source": "m1.md"}
+        ]
+
+    ir_layout_directives = {
+        "viewport_strategy": "100vh-locked" if layout_profile in ("dense-console", "operational-canvas") else "natural-flow",
+        "regions": ir_regions,
+        "navigation": nav_links,
+        "authority": "explicit",
+        "source": "m1.md"
+    }
+
+    ir_visual_directives = {
+        "token_baseline": token_rel_href,
+        "sensory_dials": five_axes,
+        "density_calibration": {
+            "base_spacing": "var(--space-2)",
+            "typography": "var(--text-base)",
+            "tabular_numbers": requires_tabular,
+            "authority": "derived",
+            "source": "f1.md#five-axes"
+        }
+    }
+
+    ir_action_contracts = []
+    for idx, v in enumerate(verb_lifecycle):
+        act_id = v.get("action_id", f"action-{idx}")
+        act_verb = v.get("verb", act_id)
+        trig_label = v.get("trigger_btn", act_verb)
+        ir_action_contracts.append({
+            "id": act_id,
+            "verb": act_verb,
+            "trigger": {
+                "role": "primary-action" if idx == 0 else "secondary-action",
+                "semantic_label": trig_label
+            },
+            "consequence": v.get("impact", "state-mutation"),
+            "ui_transient_states": ["submitting", "failed"],
+            "feedback": {
+                "visible": True,
+                "message": v.get("toast", "Action completed"),
+                "continuity": "preserve-context"
+            },
+            "authority": "explicit",
+            "source": "c1.md#actions"
+        })
+
+    ir_negative_bounds = []
+    for i, bound in enumerate(assertions):
+        ir_negative_bounds.append({
+            "id": f"assertion-{i+1}",
+            "scope": "quality-contract",
+            "rule": bound,
+            "severity": "blocking",
+            "verification": "static" if "token" in bound.lower() else "runtime",
+            "source": "r1.md#assertions",
+            "authority": "explicit"
+        })
+    ir_verification_contract = {
+        "negative_bounds": ir_negative_bounds,
+        "command": verification_cmd,
+        "projection_digest": {
+            "f1_foundation": "compiled",
+            "m1_topology": "compiled",
+            "c1_behavior": "compiled",
+            "r1_specification": "compiled",
+            "unmapped_sections": "none"
+        }
+    }
+
+    ir_open_design_space = [
+        "exact-region-proportions",
+        "local-spacing-rhythm",
+        "iconography-and-micro-graphics",
+        "container-elevation-subtlety",
+        "transient-animation-timings-within-tokens"
+    ]
+
     envelope = {
+        # 7-Field Executable Design IR Canonical Interface
+        "identity": ir_identity,
+        "semantic_contract": ir_semantic_contract,
+        "layout_directives": ir_layout_directives,
+        "visual_directives": ir_visual_directives,
+        "action_contracts": ir_action_contracts,
+        "verification_contract": ir_verification_contract,
+        "open_design_space": ir_open_design_space,
+
         "envelope_version": "2.0",
         "envelope_architecture": "3.0-dual",
         "authority_status": "sealed_provisional",

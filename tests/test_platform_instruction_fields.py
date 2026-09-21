@@ -45,6 +45,8 @@ def role_text(name: str) -> str:
 def test_projection_emits_exactly_the_named_platform_fields():
     assert PROJECTED_PLATFORM_FIELDS == {
         "target_context",
+        "device_context",
+        "input_context",
         "prototype_medium",
         "verification_environment",
         "native_validation_pending",

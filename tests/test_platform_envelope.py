@@ -346,3 +346,26 @@ def test_authored_invariants_are_the_only_ones_emitted(tmp_path):
     for token in LEGACY_UNIVERSAL_INVARIANTS:
         assert token not in f1
         assert token not in r1
+
+
+def test_envelope_contains_7_field_executable_design_ir(tmp_path):
+    root = build_repo(tmp_path)
+    env = assemble_to_file(root)
+    
+    # 7 canonical top-level fields
+    for field in (
+        "identity",
+        "semantic_contract",
+        "layout_directives",
+        "visual_directives",
+        "action_contracts",
+        "verification_contract",
+        "open_design_space"
+    ):
+        assert field in env, f"Missing canonical IR field: {field}"
+        
+    assert env["identity"]["authority_lifecycle"] == "sealed_provisional"
+    assert "regions" in env["layout_directives"]
+    assert "negative_bounds" in env["verification_contract"]
+    assert "projection_digest" in env["verification_contract"]
+    assert len(env["open_design_space"]) >= 3
