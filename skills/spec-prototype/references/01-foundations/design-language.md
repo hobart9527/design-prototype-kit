@@ -167,7 +167,8 @@ A robust design proposition must be verified against authentic, messy, and extre
 
 ## Production-Grade Scenario Baseline Palettes & Tokens
 
-To avoid repetitive generic aesthetics, spec-prototype equips three concrete industrial design system baselines. Builders and Designers select the baseline matching the product's primary operational mode and adapt tokens accordingly:
+> **Subservience & Open Archetypes Notice**:
+> The 4 baselines below are illustrative starting points and composable patterns, **not** rigid silos or compulsory templates. As defined in [`design-methods.md`](design-methods.md#4-open-physical-substrates--composable-patterns-开放物理地质场与参考模式), real products synthesize open Physical Lifeworld Substrates and domain tensions orthogonally. Designers and Builders may adapt or completely override these tokens to serve the product's authentic domain substrate.
 
 ### Baseline 1: Dense Data & Engineering Workbench (High Cognitive Efficiency)
 - **Primary Use Case**: Observability, telemetry dashboards, developer tools, financial trading terminals.

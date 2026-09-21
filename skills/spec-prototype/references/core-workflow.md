@@ -58,8 +58,8 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
 ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ 【第一钻：问题空间与方案契约 (Problem & Solution Spec)】                                                          │
 │  Stage 1 (破): Understand & Frame       ──> Reality Anchors, OOUX, Surface Topology, Five Axes & Spec Contracts    │
-│                                             (product.md, surface-maps/m1.md, foundation/f1.md, tokens.css,         │
-│                                              slices/<slice_id>/c1.md, specifications/<slice_id>/r1.md)            │
+│                                             (prototype/product.md, prototype/contracts/surface-maps/m1.md, prototype/contracts/foundation/f1.md, prototype/shared/tokens.css, │
+│                                              prototype/contracts/slices/<slice_id>/c1.md, prototype/specifications/<slice_id>/r1.md) │
 ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ 【第二钻：解空间实证物化 (Solution Materialization & Proof)】                                                     │
 │  Stage 2 (立): Proposition & Hero Probe  ──> Materialize Hero Anchor Chassis under Spec Contract via Dual Envelope│
@@ -140,9 +140,9 @@ tabular and form surface is a **Convention Surfaces** following established
 industry interaction patterns.
 
 **Sealed Provisional Baseline Closure**: Stage 1 ends only when the six sealed
-provisional baseline contracts are materialized — `product.md`, `surface-maps/m1.md`,
-`foundation/f1.md`, `tokens.css`, `slices/<slice_id>/c1.md` and
-`specifications/<slice_id>/r1.md` (authority status: sealed provisional).
+provisional baseline contracts are materialized — `prototype/product.md`, `prototype/contracts/surface-maps/m1.md`,
+`prototype/contracts/foundation/f1.md`, `prototype/shared/tokens.css`, `prototype/contracts/slices/<slice_id>/c1.md` and
+`prototype/specifications/<slice_id>/r1.md` (authority status: sealed provisional).
 
 Full procedure: [`stages/stage-1-frame.md`](stages/stage-1-frame.md).
 

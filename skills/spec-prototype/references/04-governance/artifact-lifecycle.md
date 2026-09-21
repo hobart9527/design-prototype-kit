@@ -20,6 +20,17 @@ Experience Model; they are not a second product database. The Builder owns only
 low-level implementation choices inside its experiment scope. Downstream delivery
 owns production implementation.
 
+## Authority Lifecycle vs. Artifact File Lifecycle Mapping
+
+The system defines two closely coordinated lifecycle models: the **Authority Lifecycle** (governing design trust and admissibility across the 5 stages) and the **Artifact File Lifecycle** (governing filesystem mutability, hashing, and version supersession). They map unambiguously:
+
+| Authority Lifecycle (`authority status`) | Applicable Stage | Artifact File Lifecycle | Mutability & Handoff Semantics |
+|---|---|---|---|
+| **Draft** | Stage 0 (Explore), Stage 1 in-progress | `draft` | Mutable exploration. Relative paths, no cryptographic hash-locks. Bi-directional iterative updates allowed. |
+| **Sealed Provisional** | Stage 1 baseline closure, Stage 2 (Probe), Stage 3 (Skeleton) | `draft` (sealed baseline) | Gate baseline. Contracts materialized (`c1.md`, `r1.md`, `m1.md`, `f1.md`). Probes and skeletons are authorized against this baseline. Code experiments may falsify and reopen it. |
+| **Validated** | Stage 4 (Audit / Tuning) | `draft` (evidence-cleared) | Evidence-absorbed. Engineering DOM, Break Protocol, and visual captures pass. Defect deltas applied; awaiting human signoff. |
+| **Frozen Approved** | Stage 5 (Silent Governance) | `frozen` | Immutable delivery. Bound by SHA-256 digests via `handoff.py freeze`. Downstream engineering delivery (Loom Entry 2) admission state. Any subsequent modification requires an explicit successor revision (`superseded`). |
+
 ## Dual-track artifact lifecycle: Exploration vs Formal Delivery
 
 To prevent cryptographic hash-locks from freezing creative discovery while maintaining

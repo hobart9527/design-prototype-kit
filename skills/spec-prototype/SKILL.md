@@ -78,7 +78,7 @@ Execute the stages matching declared intent and required evidence. The stages re
 [Stage 1: 破 - Understand & Frame (问题空间与设计契约定义)]
   │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, derive Surface Topology, calibrate Five-Axis register & initial tokens, and establish sealed provisional baseline Spec Contracts.
   │  Alignment Cadence: Coalesce inquiries when intent or delegation is clear. AskUserQuestion only when genuine forks exist (e.g. Direction A vs B or unresolved core tension).
-  │  Sealed Provisional Spec Artifacts: prototype/product.md, surface-maps/m1.md, foundation/f1.md, tokens.css (via compile_tokens.py), slices/<slice_id>/c1.md, specifications/<slice_id>/r1.md (authority status: sealed provisional).
+  │  Sealed Provisional Spec Artifacts: prototype/product.md, prototype/contracts/surface-maps/m1.md, prototype/contracts/foundation/f1.md, prototype/shared/tokens.css (via compile_tokens.py), prototype/contracts/slices/<slice_id>/c1.md, prototype/specifications/<slice_id>/r1.md (authority status: sealed provisional).
   │  Gate Rule: ZERO Prototype Code without a complete sealed provisional Spec Contract (for formal candidate delivery; establishes sealed provisional baseline under the authority lifecycle `Draft → Sealed Provisional → Validated → Frozen Approved` before Stage 2 probe validation).
   ▼
 [Stage 2: 立 - Proposition & High-Risk Probe (解空间主干物化与探针验证)]

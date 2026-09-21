@@ -53,15 +53,23 @@ or physical instruments) rather than invented rationale.
 - **Material Non-transfer Boundaries**: define exactly where physical metaphor may
   migrate. Tactile detents, layered light, and clear feedback transfer; pseudo-
   materiality detached from the digital medium is forbidden.
-- **Derived Surface Topology**: name Primary, Contextual, and Supporting surfaces;
-  resist page-count inflation.
+- **Derived Surface Topology & Surface Evidence Gate**: derive the candidate surface topology,
+  strictly validating each candidate against the 5-point Surface Evidence criteria
+  ([`interpretation-rules.md`](../04-governance/interpretation-rules.md#5-surface-evidence):
+  `UI actor`, `User task`, `Entry point`, `Observable outcome`, `Interaction authority`).
+  Surfaces lacking explicit or derived evidence remain `unknown` or `backend_only` and
+  SHALL NOT generate speculative frontend contracts.
+  Name Primary, Contextual, and Supporting surfaces; resist page-count inflation.
 - **Gated Output**: `prototype/contracts/surface-maps/m1.md` after human consensus.
 
 ### Develop — Pillars: Attention, Expression / Five Axes
-- **5-Dial Style Register**: under Expression, set Density, Energy, Materiality,
-  Rhythm, and Character. Apply the Vague-Word Firewall (banned: "高级", "现代")
-  and emit a concrete proposal with exact hex palette (`--accent-primary`,
-  `--bg-void`), axis orientation, and trade-off notes.
+- **5-Dial Style Register (Optional Calibration)**: under the Expression pillar, calibrate
+  Density, Energy, Materiality, Rhythm, and Character when the sensory direction has genuine
+  ambiguity or requires contrasting proposals. The Five Axes serve as an evaluative coordinate
+  register, not a compulsory checklist. Apply the Qualitative-Adjective Translation Protocol
+  (ban bare buzzwords like "高级", "现代"; expand into `[dimension] + [boundary] + [counter-example]`)
+  and emit a concrete proposal with initial palette anchors (`--accent-primary`, `--bg-void`),
+  axis orientation, and trade-off notes.
 - **LLM Dynamic Chromatics**: once the proposal is chosen, `compile_tokens.py`
   derives a 16-step physical elevation matrix by luminance delta and generates
   `prototype/shared/tokens.css` (plus `prototype/contracts/tokens/t1.json`).
@@ -82,9 +90,10 @@ or physical instruments) rather than invented rationale.
 ## Sealed Provisional Baseline Closure
 
 Stage 1 ends only when all six sealed provisional baseline contracts are fully
-materialized: `product.md`, `surface-maps/m1.md`, `foundation/f1.md`,
-`tokens.css`, `slices/<slice_id>/c1.md`, and `specifications/<slice_id>/r1.md`
-(authority status: sealed provisional). The baseline is then sealed and passes
+materialized: `prototype/product.md`, `prototype/contracts/surface-maps/m1.md`,
+`prototype/contracts/foundation/f1.md`, `prototype/shared/tokens.css`,
+`prototype/contracts/slices/<slice_id>/c1.md`, and
+`prototype/specifications/<slice_id>/r1.md` (authority status: sealed provisional). The baseline is then sealed and passes
 directly to [Stage 2](stage-2-probe.md) probe falsification.
 
 ## Exit

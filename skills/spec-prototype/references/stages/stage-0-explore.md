@@ -12,10 +12,9 @@ brief plus evidence, never a sealed contract and never an approved artifact.
 
 ## Entry Conditions
 
-- Intent classified as **Explore** by the entry router in [SKILL.md](../../SKILL.md).
+- Intent classified as **Explore** by the entry router in [SKILL.md](../../SKILL.md) (e.g. user seeks alternatives, aesthetic direction probes, or visual falsification).
 - No sealed provisional Spec exists yet, and none is being claimed.
-- The requested change sits at L0/L1 in the Change Scope Router in
-  [`../core-workflow.md`](../core-workflow.md).
+- Greenfield or high-uncertainty exploration prior to formal candidate delivery; distinct from the Change Scope Router's L0/L1 fast-tracks (which operate on an existing, post-spec codebase).
 
 ## Operating Rules
 

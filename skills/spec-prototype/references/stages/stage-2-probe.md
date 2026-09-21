@@ -20,22 +20,31 @@ owned by [`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craf
 and [`../03-verification/quality-floor.md`](../03-verification/quality-floor.md);
 this stage selects a chassis and never restates the numbers.
 
-## Canonical Executable IR & Lean Builder Payload
+## Canonical Executable IR & Lean Builder Envelope Architecture
 
-The dispatch path is IR-first. The Coordinator runs the canonical pipeline before
-dispatching `spec-prototype-builder`:
+The dispatch path is IR-first and uses the canonical Dual-Envelope Architecture (`mode: "lean-builder-envelope"`). The Coordinator runs the canonical pipeline before dispatching `spec-prototype-builder`:
 
 1. `materialize` — compile the Stage 1 discussions into structured contracts
    (`materialize_contracts.py`).
 2. `compile` — derive physical tokens from the Five-Axis register
    (`compile_tokens.py` → `tokens.css` / `t1.json` / `t1.md`).
 3. `assemble lean payload` — assemble the pre-baked Lean Builder Envelope
-   (`assemble_envelope.py`), carrying the constraint set, the authored creative
-   space, and the retained spec digests.
-4. `dispatch builder` — hand the lean payload to `spec-prototype-builder`.
+   (`assemble_envelope.py`), synthesizing the 7-field Executable Design IR alongside the decoupled `constraint_envelope` (binding invariants) and `creative_envelope` (agency parameters).
+4. `dispatch builder` — pass the synthesized envelope JSON directly to `spec-prototype-builder`.
 
-Legacy envelope projections (`envelope.json` dual-envelope form) are retained for
-diagnostics and debugging only; the lean payload is the production dispatch route.
+### Envelope Semantic Contract (Constraint vs Creative)
+The synthesized envelope strictly enforces the separation of non-negotiable constraints from layout creativity:
+- **`constraint_envelope` (Binding Invariants · 绝不妥协)**:
+  - `domain_thesis`: Product thesis and authentic core tension.
+  - `ooux_topology`: Object entity boundaries and cardinality constraints.
+  - `interaction_spec`: Exact Action Verb Lifecycle, state machine hooks, and required shortcut affordances.
+  - `fault_tolerance_protocol`: The Break Protocol stress floors (extreme strings, empty state recovery, 320px fold).
+  - `token_stylesheet_ref` & `a11y_floors`: 100% token inheritance, zero inline hex, WCAG 2.2 AA contrast.
+- **`creative_envelope` (Creative Agency · 创意空间)**:
+  - Layout composition within the chosen chassis (workbench / canvas / reading / touchflow).
+  - Spatial padding rhythm, typographic ladder contrast, and container elevation subtlety.
+  - Micro-interactions, transient hover detents, and spring deceleration curves within token bounds.
+- **Legacy Envelope Notice**: Legacy single-contract projections without the 7-field IR are retained for backward-compatibility diagnostics only; `mode: "lean-builder-envelope"` emitted by `assemble_envelope.py` is the sole production dispatch format.
 See [`../04-governance/execution-boundary.md`](../04-governance/execution-boundary.md)
 for the dispatch admission rules.
 

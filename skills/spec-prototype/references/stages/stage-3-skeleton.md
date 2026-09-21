@@ -49,6 +49,12 @@ rigid naming:
 - *Supporting & Administrative Surfaces* — settings, audit history, environment
   status.
 
+### Signature vs. Convention Discipline across Surfaces
+Preserve strict expression hierarchy when expanding beyond the hero anchor:
+- **Signature Surface**: Only the hero operational screen carries the product's distinctive Signature Relationship, bespoke spatial layout, and custom kinetic detents.
+- **Convention Surfaces**: Every supporting, settings, administrative, tabular, or form surface MUST default to established, familiar industry patterns (clean tables, standard tabs, predictable form fields).
+- **Anti-Plagiarism & Anti-Motif Invariant**: Never indiscriminately stamp the hero screen's signature micro-motion or visual motifs onto secondary utility surfaces. Doing so introduces cognitive noise and violates the noise budget.
+
 Multi-surface continuity: inherit the established product thesis, tokens, and
 navigation model. Reopen only a changed owner and its direct dependents; never
 restart the whole workflow because the session restarted.
