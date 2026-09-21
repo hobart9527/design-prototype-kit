@@ -492,8 +492,8 @@ def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "al
         p_title = extract_section_by_patterns(disc_text, ["Product Title", "Product", "产品名称", "产品"]) or slice_id.replace("-", " ").title()
         # No inferred baseline, borrowed reference, tension or omission is synthesized here.
         # An absent authored field stays marked, never promoted to a domain claim.
-        p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准"]) or UNSPECIFIED
-        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标"]) or UNSPECIFIED
+        p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准", "Dominant Baseline"]) or UNSPECIFIED
+        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标", "Reality Benchmark Anchors"]) or UNSPECIFIED
         p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or UNSPECIFIED
         omissions = extract_ruthless_omissions(disc_text, "")
         omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else f"- {UNSPECIFIED} (preserve standard convention boundaries)"
@@ -807,6 +807,15 @@ invariants: {invariants_str}
             skill_root = str(Path(__file__).resolve().parents[1])
 
             proto_med = "web"
+            falsification_test = extract_section_by_patterns(disc_text, ["Perceptual Falsification Criteria", "Falsification Criteria", "Falsification", "5-Second", "证伪判据", "5秒", "5s_test"])
+            falsification_section = ""
+            if falsification_test:
+                falsification_section = f"""## Perceptual Falsification Criteria (5-Second Viewport Test)
+
+- {falsification_test}
+
+"""
+
             content = f"""# Prototype Specification: {slice_id} / r1
 
 ## Identity and source digests
@@ -861,7 +870,7 @@ verification-environment: headless-browser
 | **Extreme 320px Fold** | 320px viewport width test | Horizontal scroll or vertical reflow, primary action reachable | `pending` |
 | **Rapid Interruption** | Double-click / rapid trigger activations | Debounced submission, single idempotency state transition | `pending` |
 
-## Verifiable Design Assertions
+{falsification_section}## Verifiable Design Assertions
 
 {contract_assertions}
 """

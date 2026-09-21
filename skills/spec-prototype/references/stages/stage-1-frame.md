@@ -38,7 +38,7 @@ Stage 1 is a progressive, guided design conversation driven by a **Dynamic Topol
    - Round N consumes and parameterizes the settled consensus of Round N-1.
    - Topology inherits the settled Metaphor; Sensory Palette inherits the settled Topology; Falsification Stress inherits the settled Palette discipline.
 3. **Ratchet Settlement & Decision Map**:
-   - Each confirmed round ratchets shut (locks into `.state.json`). It is not reopened unless the user explicitly requests an overrule.
+   - Each confirmed round ratchets shut (recorded in prototype/discussion.md Decision Record). It is not reopened unless the user explicitly requests an overrule.
    - Display the concise 4-line Decision Map at the end of each round:
      ```text
      Design Frontier:

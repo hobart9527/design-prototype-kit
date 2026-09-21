@@ -354,6 +354,23 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             failures.append("token assertion: rogue :root color tokens declared in <style> (shadows tokens.css; must consume tokens from tokens.css)")
             break
 
+    # Signature Accent Discipline: enforce strict negative boundary for --accent-seal
+    # var(--accent-seal) is reserved for authority seals, decisive commits, and fatal collisions;
+    # it is strictly forbidden on draft, pending, secondary, ghost, or cancel affordances.
+    if "--accent-seal" in token_source or "--accent-seal" in source:
+        accent_leak_patterns = [
+            r'<(?:button|a|span|div|p)\b[^>]*class=["\'][^"\']*(?:draft|pending|secondary|ghost|cancel|subtle)[^"\']*["\'][^>]*style=["\'][^"\']*--accent-seal[^"\']*["\']',
+            r'\.[a-zA-Z0-9_-]*(?:draft|pending|secondary|ghost|cancel|subtle)[a-zA-Z0-9_-]*[^{}]*\{[^}]*var\(--accent-seal\)',
+        ]
+        for alp in accent_leak_patterns:
+            if re.search(alp, source, re.IGNORECASE):
+                failures.append(
+                    "token-discipline assertion: Signature Accent Leak detected. "
+                    "var(--accent-seal) is strictly reserved for authoritative gate, seal imprint, or fatal collision; "
+                    "forbidden on draft, pending, secondary, ghost, or cancel elements."
+                )
+                break
+
     # Dual-channel keyboard ergonomics check: when declared in contract, ensure event listener exists
     if contract_path and Path(contract_path).is_file():
         contract_text = Path(contract_path).read_text(encoding="utf-8")

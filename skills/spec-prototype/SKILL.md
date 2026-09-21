@@ -71,7 +71,7 @@ Execute the stages matching declared intent and required evidence. The stages re
 ```text
 [Stage 1: 破 - Understand & Frame (问题空间与设计契约定义 · Grilling & Brainstorming Engine)]
   │  Core Objective: Progressive design co-creation via Dynamic Topological Collapse Spine across 4 bundled rounds (Metaphor -> Topology -> Sensory -> Falsification/Compile).
-  │  Alignment Cadence: Agent finds facts silently; User decides trade-offs. Present 2~3 concrete options with trade-offs and a strong recommendation (`➡️`). Ratchet confirmed rounds into .state.json.
+  │  Alignment Cadence: Agent finds facts silently; User decides trade-offs. Present 2~3 concrete options with trade-offs and a strong recommendation (`➡️`). Ratchet confirmed rounds into prototype/discussion.md Decision Record.
   │  Micro-slice Lazy Loading: Dynamically load only the matching rule slice for the active frontier:
   │    - Round 1: references/dialectic/01-metaphor-benchmark.md (<80 lines)
   │    - Round 2: references/dialectic/02-topology-scaffolding.md (<60 lines)
