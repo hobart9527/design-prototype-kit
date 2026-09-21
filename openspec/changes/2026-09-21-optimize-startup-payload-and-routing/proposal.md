@@ -1,32 +1,36 @@
-# Proposal: Optimize Startup Payload and Stage-based Progressive Disclosure
+# Proposal: Optimize Startup Payload via 5-Layer Progressive Disclosure
 
 ## Why
 
-The current `spec-prototype` skill incurs a severe token and latency penalty at startup:
-1. `SKILL.md` (138 lines, ~13.5KB) unconditionally mandates: `"Before any substantive design answer or action, read [the shared product-design core](references/core-workflow.md) completely"`. Reading `core-workflow.md` (368 lines, ~36.2KB) injects ~50KB (~12,000+ tokens) into the context window before any design inquiry is even formulated.
-2. Even for a lightweight intent such as `Explore` (seeking a direction probe or discussing an idea) or L0/L1 scope tweaks, the agent is forced to ingest the full 5-stage engine, Nine Pillars, walking skeleton rollout, 4-dimensional audit gates, and silent freeze packaging.
-3. Backend governance and compilation tooling (`assemble_envelope.py`, `capture.mjs`, `verify_prototype_quality.py`, `handoff.py`) are detailed upfront in `SKILL.md`, burdening early design reasoning with execution details relevant only to Stage 2, 4, or 5.
+The current `spec-prototype` skill incurs a severe startup latency and token tax:
+1. `SKILL.md` unconditionally mandates reading `references/core-workflow.md` completely, dumping ~50KB (~12,000+ tokens) into the context window before any design intent is classified.
+2. Lightweight requests (`Explore`, direction probes, L0/L1 scope adjustments) are forced to ingest the entire 5-stage engine, full craft methods, and headless governance machinery.
+3. Over time, `core-workflow.md` has accumulated process logic, craft guidelines, governance scripts, and stage instructions, creating cognitive friction and overlapping authority.
 
-## What Changes
+## What Changes (5-Layer Modular Architecture)
 
-1. **Progressive Disclosure Intent Router**:
-   - Replace the unconditional upfront `core-workflow.md` reading directive in `SKILL.md` with an intent-driven routing table.
-   - Instruct the agent to read only the specific stage reference matching active intent and stage:
-     - `Explore`: loads `references/stages/stage-0-explore.md` (direction probe, falsifiable hypothesis, no-build discussion rules).
-     - `Stage 1 (破)`: loads `references/stages/stage-1-frame.md` (Nine Pillars, OOUX, Surface Topology, sealed provisional contract formulation).
-     - `Stage 2 (立)`: loads `references/stages/stage-2-probe.md` and `references/04-governance/execution-boundary.md` (hero probe, lean envelope assembly, builder dispatch).
-     - `Stage 3 (拓)`: loads `references/stages/stage-3-skeleton.md` (Coverage Selection, surface expansion, walking skeleton).
-     - `Stage 4 (验)`: loads `references/stages/stage-4-review.md` (Four-Dimensional Evidence, `capture.mjs`, `verify_prototype_quality.py`, critic dispatch).
-     - `Stage 5 (冻)`: loads `references/stages/stage-5-freeze.md` (token export, WCAG 2.2 AA check, `handoff.py` freeze).
-   - Retain `core-workflow.md` as the authoritative global design reference, accessible on demand rather than on every invocation.
+We refactor the skill documentation from a monolithic manual into a clean, 5-layer progressive disclosure architecture without adding redundant methodology or inflating markdown volume:
 
-2. **Modular Stage References (`references/stages/`)**:
-   - Create `references/stages/stage-0-explore.md` through `stage-5-freeze.md`, encapsulating stage objectives, inputs/outputs, craft guidelines, and execution recipes.
-   - Move script invocation commands (`assemble_envelope.py`, `capture.mjs`, `verify_prototype_quality.py`, `handoff.py`) into their respective stage references, deferring governance mechanics until their actual execution stage.
+### 1. Layer Responsibilities (Answer Only One Question Per Layer)
+- **Layer 1: Thin Router (`SKILL.md`)** — *"Which route do I take right now?"*
+  - Entry intent classification (`Explore`, `Specify`, `Prototype`, `Review/Repair`), negative trigger boundary, storage discipline, and pointer to stage references.
+  - Removes the unconditional upfront read of `core-workflow.md`.
+- **Layer 2: Small Kernel (`references/core-kernel.md` / `references/core-workflow.md`)** — *"What must never be violated under any circumstance?"*
+  - Spec as durable contract, prototype as disposable proof.
+  - Authority lifecycle (`Draft → Sealed Provisional → Validated → Frozen Approved`).
+  - Evidence protocol (`explicit > observed > derived > hypothesis > unknown`), semantic preservation, and non-negotiable experience invariants.
+- **Layer 3: Stage Procedures (`references/stages/*.md`)** — *"How does this specific stage operate?"*
+  - `stage-0-explore.md`: Direction probes, falsifiable brief, lightweight exploration, no-build discussion rules.
+  - `stage-1-frame.md`: Understand & Frame, multi-dimensional **Design Driver** (`tension`, `constraint`, `failure mode`, `opportunity`, `uncertainty`), OOUX entities, Surface Topology, and sealed provisional contract formulation.
+  - `stage-2-probe.md`: Proposition & Hero Probe via **Canonical Executable IR** and Lean Builder Payload dispatch (`materialize` → `compile` → `assemble lean payload` → `dispatch builder`). Legacy envelope projections are noted as debug-only.
+  - `stage-3-skeleton.md`: Walking skeleton rollout, Coverage Selection before expansion, and multi-surface task continuity.
+  - `stage-4-audit.md`: Runtime, visual, interaction, and semantic audit procedure; headless capture, static verification, Critic dispatch, and surgical in-place targeted refinement. References `03-verification/quality-floor.md` rather than duplicating it.
+  - `stage-5-freeze.md`: Silent governance & handoff — final token reconciliation, DTCG authority validation, SHA-256 asset identity binding, and freeze manifest.
+- **Layer 4: Domain Knowledge & Floors (`references/01/`, `02/`, `03/`)** — *"What craft techniques and quality floors apply?"*
+  - Retain `03-verification/quality-floor.md` and evidence semantics as cross-cutting invariants across Stage 2–5.
+  - Stages cite 01/02/03 knowledge modules on demand; stages never copy-paste floor rules.
+- **Layer 5: Governance Rules (`references/04-governance/`)** — *"How are permissions, lifecycles, and execution boundaries enforced?"*
+  - Host execution boundaries, role separation, discussion index discipline, and artifact handoff.
 
-3. **Slim `SKILL.md`**:
-   - Keep `SKILL.md` focused on entry intent routing, negative trigger boundary, canonical architecture overview, storage discipline, and native role boundaries.
-   - Ensure all invariant contracts (`Draft → Sealed Provisional → Validated → Frozen Approved`, Coverage Selection rules, zero broken markdown links) remain strictly intact.
-
-4. **Reconcile Builder Prompt Invariant**:
-   - Restore "Do not turn an axis into a fixed pixel checklist" in `agents/spec-prototype-builder.md` so that sensory dial calibration and ontology invariants are harmonized.
+### 2. Builder & Critic Invariant Harmonization
+- Harmonize `agents/spec-prototype-builder.md` so that sensory dial calibration explicitly retains the non-prescriptive rule: `"Do not turn an axis into a fixed pixel checklist"`.
