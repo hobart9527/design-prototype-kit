@@ -56,12 +56,21 @@ def test_materialize_and_assemble_seam_fidelity():
         assert "Instant Operational Throughput" not in prod_text
         assert "Deep Contemplation vs Digital Attention Economy" in prod_text
 
-        # Assertion check: must be editorial reading assertions, NOT writer canvas or telemetry ops
+        # Assertion check: contract assertions must be authored/neutral, NOT regex-minted craft claims
         spec_text = spec_path.read_text(encoding="utf-8")
-        assert "Focused typography column: max-width constrained" in spec_text
-        assert "Reading metric units present" in spec_text
+        assert "Declared product intent is represented" in spec_text
+        assert "Focused typography column" not in spec_text
+        assert "Reading metric units present" not in spec_text
         assert "diff review flow" not in spec_text
         assert "tabular-nums on document metrics" not in spec_text
+
+        # Ergonomics neutrality: no domain-specific or shortcut assumptions leak
+        assert "reservation card" not in spec_text
+        assert "historical booking steps" not in spec_text
+        assert "Space` or `P" not in spec_text
+        assert "`J` / `K`" not in spec_text
+        assert "rapid Space hits" not in spec_text
+        assert "rapid trigger activations" in spec_text
 
         # f1.md deduplication check: 3 Ruthless Omissions must not be duplicated
         f1_text = f1_path.read_text(encoding="utf-8")

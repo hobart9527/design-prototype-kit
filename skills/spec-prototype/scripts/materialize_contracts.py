@@ -711,17 +711,16 @@ invariants: {invariants_str}
 
 | Gesture Vector | Target Action / Interaction | Scope | Focus / State Settlement |
 |---|---|---|---|
-| `Tap` / `Press` | Direct manipulation of reservation card / action trigger | Active card or action slot | Immediate perceptible feedback (e.g. tactile scale or highlight) |
+| `Tap` / `Press` | Direct manipulation of primary action trigger | Active card or action slot | Immediate perceptible feedback (e.g. tactile scale or highlight) |
 | `Swipe Down` | Dismiss modal sheet / parameter drawer | Bottom sheet overlay | Restore viewport to originating card |
-| `Edge Swipe` | Navigate back through historical booking steps | Global screen edge | Settle immediately into previous step |"""
+| `Edge Swipe` | Navigate back through prior step | Global screen edge | Settle immediately into previous step |"""
             else:
                 ergonomics_section = """## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)
 
 | Shortcut Key | Target Action / Interaction | Scope | Focus Restoration Anchor |
 |---|---|---|---|
-| `Space` or `P` | Activate primary operational trigger / toggle inspector drawer | Active operational item or selection | Active selection anchor |
-| `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |
-| `J` / `K` | Navigate primary items or table rows | Active collection or matrix | Active selection index |"""
+| `unspecified` | Activate primary action trigger / toggle inspector drawer | Active operational item or selection | Active selection anchor |
+| `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |"""
 
             proto_med = "web"
             content = f"""# Prototype Specification: {slice_id} / r1
@@ -754,7 +753,7 @@ verification-environment: headless-browser
 | **Unbreakable String** | Domain-authentic extreme 45+ char title or compound path | CSS ellipsis / word-break + tooltip, zero container blowout, no artificial placeholder litter | `pending` |
 | **Zero-Item Empty State** | Filter: 0 results / empty list | Actionable empty card with reset filter button | `pending` |
 | **Extreme 320px Fold** | 320px viewport width test | Horizontal scroll or vertical reflow, primary action reachable | `pending` |
-| **Rapid Interruption** | Double-click / rapid Space hits | Debounced submission, single idempotency state transition | `pending` |
+| **Rapid Interruption** | Double-click / rapid trigger activations | Debounced submission, single idempotency state transition | `pending` |
 
 ## Verifiable Design Assertions
 
