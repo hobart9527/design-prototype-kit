@@ -94,7 +94,7 @@ def _contract_items(path: Path | None) -> list[str]:
                 in_shortcuts = True
                 in_ledger = False
                 continue
-            elif "Cognitive Budgeting" in line or "Ledger" in line or "Omissions" in line or "Boundaries" in line or "Fault Tolerance" in line or "Error Recovery" in line:
+            elif "Cognitive Budgeting" in line or "Ledger" in line or "Omissions" in line or "Boundaries" in line or "Fault Tolerance" in line or "Error Recovery" in line or "Component constraints" in line or "Spec packet" in line or "Contract readiness" in line:
                 in_actions = False
                 in_assertions = False
                 in_shortcuts = False

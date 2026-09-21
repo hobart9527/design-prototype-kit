@@ -61,7 +61,7 @@ def probe(root, data):
 def dispatch(args, active):
     require(args.get('isolation') != 'worktree',
             'Prototype helpers use the current project and exact packet scopes. Omit worktree isolation.')
-    if args.get('subagent_type') == 'spec-prototype-critic':
+    if args.get('subagent_type') in {'spec-prototype-critic', 'Explore', 'feature-dev:code-explorer'}:
         return
     require(args.get('subagent_type') == 'spec-prototype-builder',
             'Use the bounded spec-prototype-builder or spec-prototype-critic for this design work.')

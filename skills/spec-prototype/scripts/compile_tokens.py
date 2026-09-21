@@ -453,6 +453,7 @@ def extract_dynamic_palette(
         "status_running": ["status-running", "status_running"],
         "status_warning": ["status-warning", "status_warning"],
         "status_danger": ["status-danger", "status_danger"],
+        "accent_seal": ["accent-seal", "accent_seal", "seal-color", "seal_color"],
     }
 
     confirmed_block = _extract_confirmed_section(discussion_text)
@@ -806,6 +807,13 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --status-running: {c['status_running']};",
         f"  --status-warning: {c['status_warning']};",
         f"  --status-danger: {c['status_danger']};",
+    ]
+    if "accent_seal" in c:
+        lines.append(f"  --accent-seal: {c['accent_seal']};")
+        lines.append("  --seal-imprint-duration: 160ms;")
+        lines.append("  --seal-imprint-ease: cubic-bezier(.16, 1, .3, 1);")
+
+    lines.extend([
         "",
         "  /* Domain-Specific Semantic Extension Variables */",
         f"  --status-p0: {c.get('status_p0', c['status_danger'])};",
@@ -821,7 +829,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         "  --safe-area-inset-bottom: env(safe-area-inset-bottom, 16px);",
         "",
         "  /* Spacing Hierarchy */",
-    ]
+    ])
     for k, v in sorted(s.items()):
         lines.append(f"  --space-{k}: {v};")
 

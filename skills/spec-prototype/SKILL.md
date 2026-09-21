@@ -15,19 +15,13 @@ hooks:
 
 # Spec Prototype — Canonical 5-Stage Design Delivery Engine
 
-Before any substantive design answer or action, read
-[the core kernel](references/core-kernel.md). It is the small, always-loaded
-source for what must never be violated: Spec as durable contract, prototype as
-disposable proof, the authority lifecycle, the evidence protocol, and the
-non-negotiable experience invariants. This file owns only Claude Code execution
-and route selection.
+Before any substantive design answer or action, read [the core kernel](references/core-kernel.md).
+It is the small, always-loaded source (<100 lines) for fundamental guardrails: Spec as durable contract, prototype as disposable proof, the authority lifecycle, the evidence protocol, and non-negotiable experience invariants.
 
-Read [the shared product-design core](references/core-workflow.md) and the
-matching procedure under `references/stages/` (`stage-0-explore.md`,
-`stage-1-frame.md`, `stage-2-probe.md`, `stage-3-skeleton.md`,
-`stage-4-audit.md`, `stage-5-freeze.md`) only for the stages the declared intent
-requires. Treat the full method reference and stage procedures as on-demand
-modules, not an unconditional upfront read.
+**Lazy Loading Invariant (按需加载纪律)**:
+Do NOT unconditionally read `core-workflow.md` or all stage procedures at launch.
+Treat `core-workflow.md` and `references/stages/` (`stage-0-explore.md` ~ `stage-5-freeze.md`) as strictly on-demand reference modules.
+Only read the specific stage file matching the currently active stage or frontier.
 
 ## Entry Intent & Contextual Routing (意图优先，资产为证)
 

@@ -26,6 +26,41 @@ implicit becomes an ungrounded aesthetic preference. Record one or more:
 Base the driver on Reality Benchmark Anchors (Linear, Datadog, iA Writer, Stripe,
 or physical instruments) rather than invented rationale.
 
+## Stage 1 Design Co-creation Dialectic (渐进式设计共创四重奏)
+
+Stage 1 is a progressive, guided design conversation — NOT an opaque questionnaire or bulk document generator. The Agent acts as an experienced design partner, projecting the Five Axes and Nine Pillars into concrete, visual, and experiential choices across four rounds:
+
+### Round 1: Physical Reality & Mental Metaphor (隐喻与物理心智 · Character)
+- **Pillars**: Value, Research, Object, Interaction Resistance.
+- **Axes**: Character, Rhythm.
+- **Method**: Never ask the user for abstract dial numbers. Project 2~3 concrete physical metaphors derived from the domain:
+  - *Archetype A (Precision Caliper / Interlock Gate)*: High resistance, strict validation before entry, zero ambiguous commit.
+  - *Archetype B (Customs Inspection Desk / Clearance)*: Tiered resistance, green channel for standard ops, manual escalate-and-stamp for exceptions.
+  - *Archetype C (Editorial Proofing Table)*: Low resistance, concurrent markups, focus on diff collation and consensus seal.
+- **Output**: Confirm primary/secondary metaphors, core tension, and focal object.
+
+### Round 2: Spatial Density & Information Fabric (空间拓扑与信息骨架 · Density)
+- **Pillars**: Topology, Journey, Layout Scaffolding.
+- **Axes**: Density, Rhythm.
+- **Method**: Present layout and view hierarchy via lightweight ASCII wireframes or structural cards before touching color:
+  - *Topology A (Dense Multi-column Workbench)*: High density, synchronized 3-pane inspection (source, matrix, gate).
+  - *Topology B (Focused Workflow Drawer / Linear-style)*: Balanced density, shortcut-driven, drawer disclosure.
+  - *Topology C (Card Overview & Deep Dive / Stripe-style)*: Relaxed density, explicit card boundaries, lowest cognitive friction.
+- **Output**: Lock layout topology, centroid of attention, and primary/secondary action flow.
+
+### Round 3: Materiality, Palette & Signature Moments (材质、色彩与签名印落 · Materiality, Energy)
+- **Pillars**: Attention, Expression, Micro-timing.
+- **Axes**: Materiality, Energy.
+- **Method**: Present tangible material moodboards and decisive action feedback mechanics:
+  - *Expression A (Obsidian & Cinnabar)*: Void dark slate base, hairline borders, zero floating shadow. Action is quiet until the decisive commit, which strikes with an authentic seal cinnabar (`--accent-seal`), 160ms zero-rebound imprint.
+  - *Expression B (Warm Paper & Ink)*: Organic off-white parchment base, deep charcoal typography, gentle diffuse shadow, smooth element repositioning on commit.
+- **Output**: Lock domain tokens (`--accent-seal` separation from functional `--action-primary`), kinetic timing, and signature relationship.
+
+### Round 4: Boundary Invariants & Stress Contract (容错边界与证伪判据 · Resilience)
+- **Pillars**: Resilience, Interaction Lifecycle.
+- **Method**: Define fault tolerance, irreversible state gates, and the explicit 5-second falsification criteria for the Stage 2 probe.
+- **Output**: Establish explicit write scopes, invariants, and execute automated single-direction compilation via `materialize_contracts.py`.
+
 ## Macro Double Diamond
 
 ### Discover — Pillars: Value, Research

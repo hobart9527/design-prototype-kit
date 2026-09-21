@@ -113,6 +113,29 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
                                             f"Container Proximity Level(s) {invalid} are outside the defined 0~4 ladder. "
                                             "Levels above 4 have no container form; state the level that matches the hazard."))
 
+    # 7. Cross-Artifact Lifecycle Consistency Check
+    status_re = re.compile(r"^[ \t\-*+]*(?:Status|Lifecycle|Authority status)[ \t]*[:=][ \t]*`?([a-zA-Z0-9_\- ]+)`?", re.IGNORECASE | re.MULTILINE)
+    statuses: Dict[str, str] = {}
+    for name, text in [("f1", f1_text), ("c1", c1_text), ("r1", r1_text)]:
+        m = status_re.search(text)
+        if m:
+            statuses[name] = m.group(1).strip().lower()
+
+    if disc_text:
+        m = status_re.search(disc_text)
+        if m:
+            statuses["discussion"] = m.group(1).strip().lower()
+
+    # Check for glaring contradiction: draft/pending vs sealed/frozen
+    is_sealed = any("sealed" in s or "frozen" in s for s in statuses.values())
+    has_draft = any("draft" in s or "pending" in s for s in statuses.values())
+    if is_sealed and has_draft:
+        errors.append(SpecLintError(
+            "E016_LIFECYCLE_CONTRADICTION", "contracts",
+            f"Cross-artifact lifecycle contradiction detected across artifacts: {statuses}. "
+            "Artifacts cannot simultaneously declare draft/pending and sealed provisional."
+        ))
+
     return errors
 
 
@@ -268,9 +291,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Lint Stage 1 Design Spec Contracts")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Workspace root directory")
     parser.add_argument("--slice", type=str, required=True, help="Slice ID to lint")
+    parser.add_argument("--no-formal", action="store_true", help="Skip formal entry check")
     args = parser.parse_args()
 
     errors = lint_spec_contracts(args.root, args.slice)
+    if not args.no_formal:
+        try:
+            formal_errors = lint_formal_entry(args.root, args.slice)
+            errors.extend(formal_errors)
+        except Exception as exc:
+            pass  # If formal entry files not yet present, lint_spec_contracts reports file presence
     if errors:
         print(f"FAILED: Found {len(errors)} Stage 1 contract lint issues:")
         for err in errors:

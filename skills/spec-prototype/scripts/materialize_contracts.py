@@ -551,6 +551,7 @@ input-context: {input_ctx}
     targets = {
         "surface_map": root / "prototype/contracts/surface-maps/m1.md",
         "foundation": root / "prototype/contracts/foundation/f1.md",
+        "tokens": root / "prototype/contracts/tokens/t1.md",
         "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
         "specification": root / f"prototype/specifications/{slice_id}/r1.md",
         "frontend_contract": root / f"prototype/contracts/slices/{slice_id}/frontend-contract.yaml",
@@ -561,12 +562,12 @@ input-context: {input_ctx}
         "product": ["product"],
         "2": ["surface_map"],
         "surface_map": ["surface_map"],
-        "3": ["foundation"],
-        "foundation": ["foundation"],
+        "3": ["foundation", "tokens"],
+        "foundation": ["foundation", "tokens"],
         "4": ["slice_contract", "specification", "frontend_contract"],
         "slice": ["slice_contract", "specification", "frontend_contract"],
         "frontend": ["frontend_contract"],
-        "all": ["product", "surface_map", "foundation", "slice_contract", "specification", "frontend_contract"],
+        "all": ["product", "surface_map", "foundation", "tokens", "slice_contract", "specification", "frontend_contract"],
     }
     active_keys = set(phase_map.get(phase.lower(), phase_map["all"]))
 
@@ -653,20 +654,80 @@ invariants: {invariants_str}
 ## Seed Palette / Color Register (种子色板 / 色彩寄存器)
 {seed_palette}
 """
+        elif key == "tokens":
+            f1_path = root / "prototype/contracts/foundation/f1.md"
+            t1_md = f"""# Design Tokens Revision: t1
+
+- Foundation revision: f1
+- Tokens revision: t1
+- Status: sealed provisional
+- Token source: authored
+
+## Breakpoints
+| Token | Value |
+|---|---|
+| `--bp-mobile` | 390px |
+| `--bp-tablet` | 768px |
+| `--bp-desktop` | 1280px |
+"""
+            path.write_text(t1_md, encoding="utf-8")
+            created[key] = str(path)
+            # Compile CSS tokens and DTCG json
+            try:
+                import compile_tokens
+                comp_dials = {dial.lower(): (extract_dial_value(disc_text, dial) or extract_dial_value(prod_text, dial) or "balanced") for dial in ("density", "energy", "materiality", "rhythm", "character")}
+                css_tokens = compile_tokens.compute_tokens(dials=comp_dials, mode="formal")
+                css_out = compile_tokens.generate_css(css_tokens)
+                css_file = root / "prototype/shared/tokens.css"
+                css_file.parent.mkdir(parents=True, exist_ok=True)
+                css_file.write_text(css_out, encoding="utf-8")
+                created["tokens_css"] = str(css_file)
+
+                dtcg_json = compile_tokens.generate_dtcg_json(css_tokens)
+                json_file = root / "prototype/contracts/tokens/t1.json"
+                json_file.write_text(json.dumps(dtcg_json, indent=2, ensure_ascii=False), encoding="utf-8")
+                created["tokens_json"] = str(json_file)
+            except Exception as exc:
+                print(f"warning: token compilation skipped: {exc}", file=sys.stderr)
         elif key == "slice_contract":
             c_ledger = extract_cognitive_ledger(disc_text, slice_id)
             verb_table = "\n".join(
                 f"| `{v['action_id']}` | `{v['trigger_btn']}` | `{v['modal_header']}` | `{v['commit_btn']}` | `{v['toast']}` | {v['impact']} |"
                 for v in action_verbs
             )
+            smap_path = root / "prototype/contracts/surface-maps/m1.md"
+            smap_digest = _digest(smap_path) if smap_path.is_file() else "unknown"
             content = f"""# Prototype Slice Contract: {slice_id}
 
 - Slice ID: {slice_id}
+- Contract revision: c1
 - Foundation revision: f1
-- Product source: `prototype/product.md`, {_digest(prod_path)}
-- Content Language: {content_lang}
+- Product source references (including Change ID when applicable): `prototype/product.md`, {_digest(prod_path)}
+- Retained surface-map path, revision and digest: `prototype/contracts/surface-maps/m1.md`, {smap_digest}
+- In-scope surface IDs and connected task: {slice_id}
+- Content language (locked): {content_lang}
 - Canonical Ontology: Nine Pillars Mapping (Object, Journey, Attention, Interaction, Resilience)
 - Status: sealed provisional
+
+## Verifiable Design Assertions
+
+{contract_assertions}
+
+## Spec packet
+
+| Anchor | Verbatim evidence | Role | Source path |
+|---|---|---|---|
+
+## Contract readiness
+
+| Dimension | Statement | Status | Evidence / reasoning |
+|---|---|---|---|
+
+## Component constraints
+
+| Surface / interaction | Existing asset | Disposition | Constraint | Verification checkpoint |
+|---|---|---|---|---|
+
 
 ## Intent & Value Anchor
 {tension}
@@ -736,19 +797,50 @@ invariants: {invariants_str}
 | `unspecified` | Activate primary action trigger / toggle inspector drawer | Active operational item or selection | Active selection anchor |
 | `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |"""
 
+            # Resolve upstream digests dynamically for packet compatibility
+            f1_path = root / "prototype/contracts/foundation/f1.md"
+            t1_path = root / "prototype/contracts/tokens/t1.md"
+            c1_path = root / f"prototype/contracts/slices/{slice_id}/c1.md"
+            f1_digest = _digest(f1_path) if f1_path.is_file() else "unknown"
+            t1_digest = _digest(t1_path) if t1_path.is_file() else "unknown"
+            c1_digest = _digest(c1_path) if c1_path.is_file() else "unknown"
+            skill_root = str(Path(__file__).resolve().parents[1])
+
             proto_med = "web"
             content = f"""# Prototype Specification: {slice_id} / r1
 
-- Candidate revision: r1
-- Compilation status: sealed provisional
+## Identity and source digests
+
+- Candidate / selected revision: r1
+- Compilation status: candidate
+- Product source references (including Change ID when applicable): `prototype/product.md`, {_digest(prod_path)}
+- Product record revision and digest: `prototype/product.md`, {_digest(prod_path)}
+- Foundation revision and digest: `prototype/contracts/foundation/f1.md`, {f1_digest}
+- Token artifact path, revision, and digest: `prototype/contracts/tokens/t1.md`, {t1_digest}
+- Slice Contract revision and digest: `prototype/contracts/slices/{slice_id}/c1.md`, {c1_digest}
+- Decision/Discussion record reference: `prototype/discussion.md`, {_digest(disc_path)}
 - Authority status: sealed provisional
-- Product source: `prototype/product.md`, {_digest(prod_path)}
-- Discussion source: `prototype/discussion.md`, {_digest(disc_path)}
 - Content Language: {content_lang}
+- Content language: {content_lang}
+
+## Builder contract
+
+- Repository root: `{root}`
 - Prototype write scope: `prototype/experiments/{slice_id}/{scope_suffix}/`
-- Evidence write scope: `prototype/evidence/probes/{slice_id}/`
-- Visual verification: unverified
-- Browser verification: unverified
+- Evidence write scope: `prototype/evidence/{slice_id}/{scope_suffix}/`
+- Skill root / evidence template path for this dispatch: `{skill_root}`
+- Start command: `python3 -m http.server 8000`
+- Verification command(s): `pytest -q`
+- Visual verification: not_required
+- Required screenshot checkpoints:
+- Page/flow coverage and shared data references: {slice_id}
+- Delegated implementation freedoms: HTML/CSS styling
+- Required reachable-control closure: all interactive triggers and state actions
+- Component constraints:
+
+| Surface / interaction | Existing asset | Disposition | Constraint | Verification checkpoint |
+|---|---|---|---|---|
+| {slice_id} workspace | native HTML | delegated | Semantic layout | manual visual inspection |
 
 ```prototype-context
 record: prototype-specification

@@ -27,11 +27,16 @@ def fail(message: str) -> int:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        return fail("usage: check-discussion.py <repository-root>")
-    record = Path(sys.argv[1]).resolve() / "prototype/discussion.md"
+    if len(sys.argv) < 2:
+        return fail("usage: check-discussion.py <repository-root or discussion.md path>")
+    target = Path(sys.argv[1]).resolve()
+    if target.is_file() and target.name == "discussion.md":
+        record = target
+    else:
+        record = target / "prototype/discussion.md"
+
     if not record.is_file() or record.is_symlink():
-        return fail("prototype/discussion.md must be a regular file")
+        return fail(f"{record} must be a regular file")
     text = record.read_text(encoding="utf-8")
     if "## Resume" not in text:
         return fail("missing `## Resume`")
