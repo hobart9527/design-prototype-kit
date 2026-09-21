@@ -1133,6 +1133,23 @@ def generate_markdown(tokens: Dict[str, Any], foundation_rev: str = "f1", tokens
     return "\n".join(lines)
 
 
+def _resolve_token_source(discussion_path: str) -> str:
+    """Read the authored token source: an f1.md foundation record takes precedence.
+
+    Accepts either an explicit `f1.md` path or a discussion path whose sibling
+    `prototype/contracts/foundation/f1.md` carries the 5-dial register and palette.
+    The discussion text is appended so authored confirmed-decision blocks still win.
+    """
+    disc_p = Path(discussion_path)
+    foundation_p = disc_p if disc_p.name == "f1.md" else disc_p.parent / "contracts/foundation/f1.md"
+    parts: list[str] = []
+    if foundation_p.is_file():
+        parts.append(foundation_p.read_text(encoding="utf-8"))
+    if disc_p.is_file() and disc_p != foundation_p:
+        parts.append(disc_p.read_text(encoding="utf-8"))
+    return "\n".join(parts)
+
+
 def compile_tokens(
     discussion_path: str,
     output_css_path: str,
@@ -1140,8 +1157,7 @@ def compile_tokens(
     output_md_path: str | None = None,
     mode: str = "formal",
 ) -> None:
-    disc_p = Path(discussion_path)
-    disc_text = disc_p.read_text(encoding="utf-8") if disc_p.is_file() else ""
+    disc_text = _resolve_token_source(discussion_path)
     dials = parse_5dials(disc_text)
 
     # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or neutral scaffold

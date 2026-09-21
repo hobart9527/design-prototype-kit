@@ -195,3 +195,50 @@ def test_explicit_kinetic_energy_restores_hud_motion_and_detent():
 
     css = ct.generate_css(tokens)
     assert ".btn-tactile:active" in css
+
+
+def test_compile_tokens_reads_f1_foundation_dials_and_palette(tmp_path: Path):
+    ct = _load_compiler()
+    foundation = tmp_path / "prototype/contracts/foundation/f1.md"
+    foundation.parent.mkdir(parents=True)
+    foundation.write_text("""# Project Experience Foundation: f1
+
+## 5-Dial Style Register (五刻度风格寄存器)
+- Energy: kinetic
+- Density: dense
+
+## Reality Benchmark Anchors
+- Operational Reference: Datadog
+
+## Seed Palette / Color Register
+- --accent-primary: #d6f56b
+- --bg-surface: #080b0b
+""", encoding="utf-8")
+    discussion = tmp_path / "prototype/discussion.md"
+    discussion.write_text("# Discussion\n\n## Confirmed Decisions\n", encoding="utf-8")
+
+    out_css = tmp_path / "tokens.css"
+    ct.compile_tokens(str(discussion), str(out_css))
+    css = out_css.read_text(encoding="utf-8")
+
+    # Dials and palette authored in f1.md reach the compiler through the discussion path.
+    assert "#d6f56b" in css
+    assert "--bg-surface: #080b0b" in css
+    assert "Energy: kinetic" in css
+
+
+def test_compile_tokens_accepts_explicit_f1_path(tmp_path: Path):
+    ct = _load_compiler()
+    foundation = tmp_path / "f1.md"
+    foundation.write_text("""# Project Experience Foundation: f1
+
+## 5-Dial Style Register
+- Energy: kinetic
+
+## Seed Palette / Color Register
+- --accent-primary: #d6f56b
+""", encoding="utf-8")
+
+    out_css = tmp_path / "tokens.css"
+    ct.compile_tokens(str(foundation), str(out_css))
+    assert "#d6f56b" in out_css.read_text(encoding="utf-8")

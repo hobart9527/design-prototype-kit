@@ -563,6 +563,19 @@ surfaces: {surfaces_str}
             grounding_rat = extract_section_by_patterns(disc_text, ["Grounding", "Rationale", "Physical Metaphor", "Substrate", "原创推导", "物理隐喻", "因果依据", "设计理由"]) or \
                             extract_section_by_patterns(prod_text, ["Grounding", "Rationale", "Physical Metaphor", "Substrate", "原创推导", "物理隐喻", "因果依据", "设计理由"]) or \
                             UNSPECIFIED
+            # Token-compiler inputs are carried onto the foundation record so
+            # `compile_tokens.py` can read f1.md directly instead of re-parsing
+            # the free-form discussion. Absent authored values stay marked.
+            anchors_md = extract_section_by_patterns(disc_text, ["Reality Benchmark Anchors", "Reality Anchors", "Anchors", "地锚", "对标"]) or \
+                         extract_section_by_patterns(prod_text, ["Reality Benchmark Anchors", "Reality Anchors", "Anchors", "地锚", "对标"]) or \
+                         UNSPECIFIED
+            seed_palette = extract_section_by_patterns(disc_text, ["Seed Palette", "Color Register", "Palette", "色板", "色彩寄存器"]) or \
+                           extract_section_by_patterns(prod_text, ["Seed Palette", "Color Register", "Palette", "色板", "色彩寄存器"]) or \
+                           UNSPECIFIED
+            five_dials_md = "\n".join(
+                f"- {dial}: {extract_section_by_patterns(disc_text, [dial]) or extract_section_by_patterns(prod_text, [dial]) or UNSPECIFIED}"
+                for dial in ("Density", "Energy", "Materiality", "Rhythm", "Character")
+            )
             content = f"""# Project Experience Foundation: f1
 
 - Product: {product_title}
@@ -585,6 +598,15 @@ invariants: concentric-radii, tabular-numerics, touch-target-floor, break-protoc
 
 ## Material Non-Transfer Boundaries (材质不可跨界定律)
 {invariants_md}
+
+## 5-Dial Style Register (五刻度风格寄存器)
+{five_dials_md}
+
+## Reality Benchmark Anchors (现实基准锚点)
+{anchors_md}
+
+## Seed Palette / Color Register (种子色板 / 色彩寄存器)
+{seed_palette}
 """
         elif key == "slice_contract":
             c_ledger = extract_cognitive_ledger(disc_text, slice_id)
