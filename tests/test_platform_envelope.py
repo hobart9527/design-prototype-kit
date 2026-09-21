@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -19,6 +20,7 @@ sys.path.insert(0, str(SCRIPTS))
 import assemble_envelope  # noqa: E402
 import execution_boundary  # noqa: E402
 import lint_spec_contracts  # noqa: E402
+import materialize_contracts  # noqa: E402
 
 SLICE = "console"
 TEN = "surfaces: " + ", ".join(
@@ -306,3 +308,41 @@ def test_brief_only_probe_route_still_assembles(tmp_path):
     assert env["mode"] == "direction-probe"
     assert env["brief"]["sha256"] == hashlib.sha256(brief.read_bytes()).hexdigest()
     assert "coverage" not in env  # the formal contract gate does not touch probes
+
+
+# CPC-SCN-007: f1/r1 context records carry authored invariants only.
+
+LEGACY_UNIVERSAL_INVARIANTS = (
+    "concentric-radii", "tabular-numerics", "touch-target-floor", "break-protocol")
+
+
+def minimal_discussion(tmp_path: Path, extra: str = "") -> Path:
+    root = tmp_path
+    write(root / "prototype/discussion.md",
+          "# Discussion\n- Core Tension: Operational Density vs Reading Calm\n"
+          "- Content Language: en-US\n" + extra)
+    return root
+
+
+def test_unauthored_invariants_are_not_fabricated_in_f1_and_r1(tmp_path):
+    root = minimal_discussion(tmp_path)
+    materialize_contracts.materialize(root, SLICE, force=True)
+    f1 = (root / "prototype/contracts/foundation/f1.md").read_text(encoding="utf-8")
+    r1 = (root / f"prototype/specifications/{SLICE}/r1.md").read_text(encoding="utf-8")
+    for token in LEGACY_UNIVERSAL_INVARIANTS:
+        assert token not in f1, f"unauthored invariant {token} fabricated into f1"
+        assert token not in r1, f"unauthored invariant {token} fabricated into r1"
+    assert re.search(r"^invariants:[ \t]*$", f1, re.MULTILINE)
+    assert re.search(r"^preserves:[ \t]*$", r1, re.MULTILINE)
+
+
+def test_authored_invariants_are_the_only_ones_emitted(tmp_path):
+    root = minimal_discussion(tmp_path, "- Experience Invariants: reading-focus, margin-notes\n")
+    materialize_contracts.materialize(root, SLICE, force=True)
+    f1 = (root / "prototype/contracts/foundation/f1.md").read_text(encoding="utf-8")
+    r1 = (root / f"prototype/specifications/{SLICE}/r1.md").read_text(encoding="utf-8")
+    assert "invariants: reading-focus, margin-notes\n" in f1
+    assert "preserves: reading-focus, margin-notes\n" in r1
+    for token in LEGACY_UNIVERSAL_INVARIANTS:
+        assert token not in f1
+        assert token not in r1

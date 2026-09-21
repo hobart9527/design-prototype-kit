@@ -262,6 +262,30 @@ def extract_material_invariants(disc_text: str, prod_text: str) -> list[str]:
     return []
 
 
+def extract_declared_invariants(disc_text: str, prod_text: str) -> list[str]:
+    """Authored invariant tokens only. No universal baseline list is fabricated.
+
+    An invariant reaches f1/r1 solely because the author wrote it. Absent an
+    authored declaration the list stays empty, so downstream records carry no
+    borrowed `concentric-radii` / `tabular-numerics` / `touch-target-floor` /
+    `break-protocol` claim the author never made.
+    """
+    for text in (disc_text, prod_text):
+        if not text:
+            continue
+        for pat in ("Experience Invariants", "Material Invariants", "Invariants", "Preserves"):
+            m = re.search(
+                rf"^\s*[-*+]?\s*[*_]*(?:{pat})[*_]*\s*[:=]\s*([^\n]+)",
+                text, re.MULTILINE | re.IGNORECASE)
+            if not m:
+                continue
+            items = [tok.strip().strip("`*_ ") for tok in re.split(r"[,;|、]", m.group(1))]
+            items = [tok for tok in items if tok]
+            if items:
+                return items
+    return []
+
+
 def build_frontend_contract(
     slice_id: str,
     prod_title: str,
@@ -489,6 +513,13 @@ input-context: {input_ctx}
     surfaces, declared_surfaces = extract_surfaces(disc_text, prod_text)
     action_verbs = extract_action_verbs(disc_text, slice_id)
 
+    # Authored invariant tokens only. f1 and r1 context records used to mint a
+    # universal baseline list (`concentric-radii, tabular-numerics,
+    # touch-target-floor`, defaulting to `break-protocol`) that no author wrote.
+    # The same list now feeds both records, and stays empty when unauthored.
+    declared_invariants = extract_declared_invariants(disc_text, prod_text)
+    invariants_str = ", ".join(declared_invariants)
+
     # The compiler states only universally true invariants. Category matching
     # (reading / marketing / mobile / writer-canvas / telemetry) used to synthesize
     # craft assertions -- SRE sparklines, touch floors, editorial columns -- from a
@@ -587,7 +618,7 @@ surfaces: {surfaces_str}
 ```prototype-context
 record: experience-foundation
 revision: f1
-invariants: concentric-radii, tabular-numerics, touch-target-floor, break-protocol
+invariants: {invariants_str}
 ```
 
 ## Product Context & Alignment
@@ -710,7 +741,7 @@ invariants: concentric-radii, tabular-numerics, touch-target-floor, break-protoc
 record: prototype-specification
 revision: r1
 prototype-medium: {proto_med}
-preserves: concentric-radii, tabular-numerics, touch-target-floor, break-protocol
+preserves: {invariants_str}
 verification-environment: headless-browser
 ```
 

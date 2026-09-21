@@ -306,8 +306,6 @@ def _extract_craft_guidance(skill_dir: Path, rel_file: str, method_id: str) -> s
                 sline = line.strip()
                 if sline.startswith("| Level") or sline.startswith("| **Level") or sline.startswith("| Frame") or sline.startswith("| **Frame"):
                     lines.append(sline)
-                elif any(k in sline for k in ("Concentric Radius", "concentric-radii", "tabular-nums", "Flow Preservation", "Zero Naked Metrics")):
-                    lines.append(sline)
                 if len(lines) >= 10:
                     break
         return "\n".join(lines) if lines else text[:300].strip()
