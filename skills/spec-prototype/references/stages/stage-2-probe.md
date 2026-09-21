@@ -9,11 +9,16 @@ surface or direction probe under the Stage 1 sealed provisional contracts.
 Stage 2 refuses one templated doctrine. The core prototype adapts its chassis to
 the Stage 1 product context:
 
-1. *Dense Workbench Pattern*: high-density data bench — 4px micro-grid, multi-pane instrumentation, monospaced numerics.
-2. *Operational Canvas Pattern*: business board — 8px rhythm, master-detail hierarchy, progressive disclosure.
+1. *Dense Workbench Pattern*: high-density data bench — micro-grid rhythm, multi-pane instrumentation, monospaced numerics.
+2. *Operational Canvas Pattern*: business board — structural rhythm, master-detail hierarchy, progressive disclosure.
 3. *Editorial Reading Pattern*: immersive text — character-measure control, quiet margins, paper contrast.
-4. *Somatic Touchflow Pattern*: mobile touch — 44px thumb-zone targets, fluid curves, high responsiveness.
+4. *Somatic Touchflow Pattern*: mobile touch — thumb-zone targets, fluid curves, high responsiveness.
 5. *Adaptive Workspace Pattern*: adaptive workspace — compose space to the unique business model.
+
+The numeric grid, rhythm, and touch-target parameters behind each pattern are
+owned by [`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md)
+and [`../03-verification/quality-floor.md`](../03-verification/quality-floor.md);
+this stage selects a chassis and never restates the numbers.
 
 ## Canonical Executable IR & Lean Builder Payload
 
@@ -45,17 +50,15 @@ The Builder is strictly constrained by the payload:
   self-repair attempts. Unbounded filesystem roaming and CSS ping-pong tuning are
   forbidden.
 
-## Design Engineering Floor & Candidate Techniques
+## Design Engineering Floor
 
-Craft serves the experience invariants and is selected by scenario:
-
-- **Concentric Border Radius**: nested containers follow $R_{inner} = \max(0, R_{outer} - padding)$.
-- **Optical Alignment**: manually offset asymmetric glyphs (play triangle, chevron, magnifier) 1-2px from geometric center for visual balance.
-- **Tabular Numerics**: counters, telemetry, and financial figures use `font-variant-numeric: tabular-nums` to stop horizontal jitter.
-- **Atmospheric Undertone**: pure dead gray (`#808080`) is forbidden; inject a subtle ambient cast.
-
-Full floors live in [`../03-verification/quality-floor.md`](../03-verification/quality-floor.md);
-this module cites them and never restates them.
+Craft serves the experience invariants and is selected by scenario. The craft
+techniques and their numeric parameters — concentric radii, optical alignment,
+tabular numerics, atmospheric undertone — are owned by
+[`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md), and
+the binding floors live in
+[`../03-verification/quality-floor.md`](../03-verification/quality-floor.md).
+This stage cites those authorities and never restates their numbers.
 
 ## Native-First vs Production Handoff
 
@@ -66,9 +69,10 @@ for downstream Loom Entry 2 engineering delivery.
 
 ## Stage 2 Anchor Approval Gate
 
-Once the first surface is materialized, present real viewport screenshots (1280px
-desktop and 390px mobile). Only after the user confirms the visual tone and token
-base may later surfaces expand.
+Once the first surface is materialized, present real viewport screenshots at the
+runtime-derived `inspection_contract.mandatory_viewports` carried by the assembled
+payload — never a hardcoded viewport list. Only after the user confirms the visual
+tone and token base may later surfaces expand.
 
 ## Exit
 

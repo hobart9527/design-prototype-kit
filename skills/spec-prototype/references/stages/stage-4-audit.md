@@ -8,8 +8,10 @@ interaction, visual, and human dimensions.
 
 Run `python3 skills/spec-prototype/scripts/generate_review_portal.py` to produce a
 panoramic multi-viewport review board (`review-portal.html`) embedding every page
-iframe, responsive viewport switching (390px, 768px, 1280px, 1600px), and
-interaction state triggers.
+iframe, viewport switching over the runtime-derived
+`inspection_contract.mandatory_viewports`, and the authored interaction state
+triggers (`inspection_contract.mandatory_states`). The viewport set is never a
+hardcoded list.
 
 ## Decisive Exchange 3-Frame Inspection
 

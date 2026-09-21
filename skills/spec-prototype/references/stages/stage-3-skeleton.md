@@ -55,9 +55,11 @@ restart the whole workflow because the session restarted.
 
 ## Compression & Release
 
-Refuse the uniform card grid. Aggregate high-density telemetry operation zones
-tightly, and reserve generous negative space in contemplation/reading zones to
-establish a visual breathing rhythm.
+Refuse the uniform card grid: aggregate high-density operation zones tightly and
+reserve generous negative space in contemplation/reading zones. The concrete
+density metrics behind this rhythm are owned by
+[`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md);
+this stage states the intent and delegates the numbers.
 
 ## Data Floor & Reference Benchmarks
 

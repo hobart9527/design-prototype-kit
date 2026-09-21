@@ -32,7 +32,9 @@ or physical instruments) rather than invented rationale.
 - **Reference Benchmarks**: select high-persuasion industry anchors as the shared
   consensus fulcrum; refuse inventive fabrication.
 - **Tension Triad & Inversions**: dig the product's deep-water contradictions and
-  declare Core Tension plus non-goal boundaries in `prototype/product.md`.
+  record the applicable Design Drivers plus non-goal boundaries in
+  `prototype/product.md`. A declared tension is one valid driver, not a mandatory
+  one; a constraint- or opportunity-driven product records that driver instead.
 - **Signature vs Convention Discipline**: reserve design tension, tactile
   character, and signature micro-motion for the single core interaction surface;
   every supporting, settings, tabular, and form surface follows established
