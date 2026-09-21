@@ -51,6 +51,16 @@ stale, or bound to a different source/dependency revision, or when `capture_fail
 `browser_unavailable` is reported, state that consequence explicitly and withhold the affected visual
 claims instead of restating the producer's summary.
 
+Judge the projected envelope through its **7-field canonical IR** first — `identity`,
+`semantic_contract`, `layout_directives`, `visual_directives`, `action_contracts`,
+`verification_contract`, `open_design_space` — and treat the legacy `constraint_envelope` /
+`creative_envelope` projections as advisory mirrors, never as a competing authority. Read the
+separated state structure as authored: `semantic_contract.domain_states` is explicit-authored
+(contractual), while `experience_states` (empty, error) and `ui_transient_states` stay derived.
+Do not fault a prototype for omitting a state the source never declared, and do not demand a
+synthesized topology when `layout_directives.regions` is empty — an empty region set is disclosed
+in `open_design_space`, where spatial composition is deliberately the Builder's, not a defect.
+
 Resolve the reviewed surface's platform context from the projected envelope facts alone. The
 formal envelope emits `platform.target_context`, `platform.device_context`, `platform.input_context`,
 `platform.prototype_medium`, `platform.verification_environment` and `platform.native_validation_pending`,

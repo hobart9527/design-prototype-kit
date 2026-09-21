@@ -369,3 +369,103 @@ def test_envelope_contains_7_field_executable_design_ir(tmp_path):
     assert "negative_bounds" in env["verification_contract"]
     assert "projection_digest" in env["verification_contract"]
     assert len(env["open_design_space"]) >= 3
+
+
+# CPC-SCN-007: the canonical 7-field IR carries authored semantics, not synthesis.
+
+def test_reality_anchors_normalize_into_structured_entries(tmp_path):
+    """A comma-separated anchor line yields discrete structured records, never character iteration."""
+    root = build_repo(tmp_path)
+    env = assemble_to_file(root)
+
+    assert env["reality_anchors"] == ["Linear", "Stripe Dashboard"]
+    anchors = env["semantic_contract"]["anchors"]
+    assert [a["source"] for a in anchors] == ["Linear", "Stripe Dashboard"]
+    for anchor in anchors:
+        assert anchor["authority"] == "explicit"
+        assert anchor["source_ref"] == "product.md#reality-anchors"
+    # The failure mode this guards against: iterating the line per character.
+    assert "L" not in env["reality_anchors"]
+    assert len(anchors) == len(env["reality_anchors"])
+
+
+def test_states_split_by_authentic_authority(tmp_path):
+    """domain_states are explicit-authored; experience/ui_transient states stay derived."""
+    root = build_repo(tmp_path)
+    contract = root / f"prototype/contracts/slices/{SLICE}/c1.md"
+    contract.write_text(
+        contract.read_text(encoding="utf-8")
+        + "\n- Supported States: idle, drained, quarantined\n"
+          "- The submitting draft is held while the request is in flight.\n",
+        encoding="utf-8")
+    spec = root / f"prototype/specifications/{SLICE}/r1.md"
+    spec.write_text(
+        spec.read_text(encoding="utf-8")
+        + "| Empty queue state | visible | unverified |\n"
+          "| Error banner | visible | unverified |\n",
+        encoding="utf-8")
+
+    env = assemble_to_file(root)
+    semantic = env["semantic_contract"]
+
+    assert [s["name"] for s in semantic["domain_states"]] == ["idle", "drained", "quarantined"]
+    assert {s["authority"] for s in semantic["domain_states"]} == {"explicit"}
+    assert [s["name"] for s in semantic["experience_states"]] == ["empty", "error"]
+    assert {s["authority"] for s in semantic["experience_states"]} == {"derived"}
+    assert "submitting" in [s["name"] for s in semantic["ui_transient_states"]]
+    assert {s["authority"] for s in semantic["ui_transient_states"]} == {"derived"}
+
+
+def test_undeclared_states_stay_absent_not_fabricated(tmp_path):
+    """An envelope without a declared States line keeps an empty explicit domain layer."""
+    root = build_repo(tmp_path)
+    env = assemble_to_file(root)
+    assert env["semantic_contract"]["domain_states"] == []
+    assert env["semantic_contract"]["experience_states"] == []
+    assert env["semantic_contract"]["ui_transient_states"] == []
+
+
+def test_no_synthetic_topology_when_regions_undeclared(tmp_path):
+    """m1.md declaring no regions yields [] regions and discloses spatial topology as open."""
+    root = build_repo(tmp_path)
+    env = assemble_to_file(root)
+    assert env["layout_directives"]["regions"] == []
+    assert "spatial-topology" in env["open_design_space"]
+
+
+def test_action_contracts_carry_no_hardcoded_purity_state_or_role(tmp_path):
+    """Actions project authored values only: no injected transient list or index-based role."""
+    root = build_repo(tmp_path)
+    env = assemble_to_file(root)
+    actions = env["action_contracts"]
+    assert actions, "the authored Action Verb Lifecycle must compile into action contracts"
+    action = actions[0]
+    assert action["id"] == "act-1"
+    assert action["ui_transient_states"] == []  # c1 authored none: no ["submitting", "failed"]
+    assert action["trigger"]["role"] == "action"  # label "Retry" is neither primary nor secondary
+    assert action["trigger"]["role"] != "primary-action"
+    assert action["authority"] == "explicit"
+
+
+def test_projection_digest_records_a_real_ledger(tmp_path):
+    """projection_digest lists genuine compiled sources and honestly names unmapped ones."""
+    root = build_repo(tmp_path)
+    env = assemble_to_file(root)
+    digest = env["verification_contract"]["projection_digest"]
+
+    mapped = digest["sources_mapped"]
+    assert mapped
+    for entry in mapped:
+        assert set(entry) == {"source", "target", "status"}
+        assert "#" in entry["source"]
+        assert entry["status"] in ("compiled", "unmapped")
+    by_source = {e["source"]: e for e in mapped}
+    assert by_source["c1#behavior"]["target"] == "action_contracts"
+    assert by_source["c1#behavior"]["status"] == "compiled"
+    assert by_source["r1#specification"]["target"] == "verification_contract"
+
+    unmapped = digest["unmapped_sections"]
+    assert isinstance(unmapped, list)
+    # No t1.json in the fixture: the token source is disclosed as unmapped, not asserted compiled.
+    assert "t1#tokens" in unmapped
+    assert {e["source"] for e in mapped if e["status"] == "unmapped"} == set(unmapped)
