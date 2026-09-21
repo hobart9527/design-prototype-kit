@@ -69,10 +69,15 @@ The system unifies all design operations into four orthogonal layers and one tra
 Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
 
 ```text
-[Stage 1: 破 - Understand & Frame (问题空间与设计契约定义)]
-  │  Core Objective: Unpack Core Tension, map genuine domain Objects & Journeys, derive Surface Topology, calibrate Five-Axis register & initial tokens, and establish sealed provisional baseline Spec Contracts.
-  │  Alignment Cadence: Coalesce inquiries when intent or delegation is clear. AskUserQuestion only when genuine forks exist (e.g. Direction A vs B or unresolved core tension).
-  │  Sealed Provisional Spec Artifacts: prototype/product.md, prototype/contracts/surface-maps/m1.md, prototype/contracts/foundation/f1.md, prototype/shared/tokens.css (via compile_tokens.py), prototype/contracts/slices/<slice_id>/c1.md, prototype/specifications/<slice_id>/r1.md (authority status: sealed provisional).
+[Stage 1: 破 - Understand & Frame (问题空间与设计契约定义 · Grilling & Brainstorming Engine)]
+  │  Core Objective: Progressive design co-creation via Dynamic Topological Collapse Spine across 4 bundled rounds (Metaphor -> Topology -> Sensory -> Falsification/Compile).
+  │  Alignment Cadence: Agent finds facts silently; User decides trade-offs. Present 2~3 concrete options with trade-offs and a strong recommendation (`➡️`). Ratchet confirmed rounds into .state.json.
+  │  Micro-slice Lazy Loading: Dynamically load only the matching rule slice for the active frontier:
+  │    - Round 1: references/dialectic/01-metaphor-benchmark.md (<80 lines)
+  │    - Round 2: references/dialectic/02-topology-scaffolding.md (<60 lines)
+  │    - Round 3: references/dialectic/03-sensory-kinetic.md (<100 lines)
+  │    - Round 4: references/dialectic/04-falsification-compile.md (<60 lines)
+  │  Sealed Provisional Spec Artifacts: prototype/product.md, prototype/contracts/surface-maps/m1.md, prototype/contracts/foundation/f1.md, prototype/shared/tokens.css (via compile_tokens.py), prototype/contracts/slices/<slice_id>/c1.md, prototype/specifications/<slice_id>/r1.md (authority status: sealed provisional via materialize_contracts.py).
   │  Gate Rule: ZERO Prototype Code without a complete sealed provisional Spec Contract (for formal candidate delivery; establishes sealed provisional baseline under the authority lifecycle `Draft → Sealed Provisional → Validated → Frozen Approved` before Stage 2 probe validation).
   ▼
 [Stage 2: 立 - Proposition & High-Risk Probe (解空间主干物化与探针验证)]

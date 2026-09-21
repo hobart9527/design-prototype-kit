@@ -26,40 +26,59 @@ implicit becomes an ungrounded aesthetic preference. Record one or more:
 Base the driver on Reality Benchmark Anchors (Linear, Datadog, iA Writer, Stripe,
 or physical instruments) rather than invented rationale.
 
-## Stage 1 Design Co-creation Dialectic (渐进式设计共创四重奏)
+## Stage 1 Design Co-creation Dialectic (渐进式设计共创四重奏 · Grilling & Brainstorming Engine)
 
-Stage 1 is a progressive, guided design conversation — NOT an opaque questionnaire or bulk document generator. The Agent acts as an experienced design partner, projecting the Five Axes and Nine Pillars into concrete, visual, and experiential choices across four rounds:
+Stage 1 is a progressive, guided design conversation driven by a **Dynamic Topological Collapse Spine** — NOT an opaque questionnaire or bulk document generator. The Agent acts as an experienced design partner, projecting the Five Axes and Nine Pillars into concrete, visual, and experiential choices across four bundled rounds:
 
-### Round 1: Physical Reality & Mental Metaphor (隐喻与物理心智 · Character)
-- **Pillars**: Value, Research, Object, Interaction Resistance.
-- **Axes**: Character, Rhythm.
-- **Method**: Never ask the user for abstract dial numbers. Project 2~3 concrete physical metaphors derived from the domain:
-  - *Archetype A (Precision Caliper / Interlock Gate)*: High resistance, strict validation before entry, zero ambiguous commit.
-  - *Archetype B (Customs Inspection Desk / Clearance)*: Tiered resistance, green channel for standard ops, manual escalate-and-stamp for exceptions.
-  - *Archetype C (Editorial Proofing Table)*: Low resistance, concurrent markups, focus on diff collation and consensus seal.
-- **Output**: Confirm primary/secondary metaphors, core tension, and focal object.
+### Interaction Principles (Grilling & Brainstorming Protocol)
+1. **Agent Fact-Finding vs Human Decision**:
+   - Facts belong to the Agent: search repository sources (`product.md`, PRDs, code models) silently via read-only tools. NEVER ask the user what the codebase already tells you.
+   - Trade-offs belong to the User: present 2~3 concrete options with trade-offs, then give a clear recommended choice marked with `➡️`.
+2. **Dynamic Topological Collapse (动态拓扑坍缩)**:
+   - Round N consumes and parameterizes the settled consensus of Round N-1.
+   - Topology inherits the settled Metaphor; Sensory Palette inherits the settled Topology; Falsification Stress inherits the settled Palette discipline.
+3. **Ratchet Settlement & Decision Map**:
+   - Each confirmed round ratchets shut (locks into `.state.json`). It is not reopened unless the user explicitly requests an overrule.
+   - Display the concise 4-line Decision Map at the end of each round:
+     ```text
+     Design Frontier:
+       ✓ [Metaphor & Benchmark] <Settled choice>
+       ◐ [Topology & Scaffolding] <Active question>
+       ○ [Sensory & Kinetic Imprint] (Awaiting Topology)
+       ○ [Falsification & Auto-Compile] (Awaiting Sensory)
+     ```
 
-### Round 2: Spatial Density & Information Fabric (空间拓扑与信息骨架 · Density)
-- **Pillars**: Topology, Journey, Layout Scaffolding.
-- **Axes**: Density, Rhythm.
-- **Method**: Present layout and view hierarchy via lightweight ASCII wireframes or structural cards before touching color:
-  - *Topology A (Dense Multi-column Workbench)*: High density, synchronized 3-pane inspection (source, matrix, gate).
-  - *Topology B (Focused Workflow Drawer / Linear-style)*: Balanced density, shortcut-driven, drawer disclosure.
-  - *Topology C (Card Overview & Deep Dive / Stripe-style)*: Relaxed density, explicit card boundaries, lowest cognitive friction.
-- **Output**: Lock layout topology, centroid of attention, and primary/secondary action flow.
+### Bundled Frontier Rounds
 
-### Round 3: Materiality, Palette & Signature Moments (材质、色彩与签名印落 · Materiality, Energy)
-- **Pillars**: Attention, Expression, Micro-timing.
-- **Axes**: Materiality, Energy.
-- **Method**: Present tangible material moodboards and decisive action feedback mechanics:
-  - *Expression A (Obsidian & Cinnabar)*: Void dark slate base, hairline borders, zero floating shadow. Action is quiet until the decisive commit, which strikes with an authentic seal cinnabar (`--accent-seal`), 160ms zero-rebound imprint.
-  - *Expression B (Warm Paper & Ink)*: Organic off-white parchment base, deep charcoal typography, gentle diffuse shadow, smooth element repositioning on commit.
-- **Output**: Lock domain tokens (`--accent-seal` separation from functional `--action-primary`), kinetic timing, and signature relationship.
+#### Round 1: Physical Reality & Modern Benchmark (Frontier: Metaphor & Character)
+- **Lazy Module**: `references/dialectic/01-metaphor-benchmark.md` (<80 lines).
+- **Pillars & Axes**: 9-Pillar: Mental Model & Resistance; 5-Axis: Character.
+- **Method**: Project 2~3 real-world physical mechanisms (e.g. Precision Caliper vs Customs Clearance vs Editorial Proofing Table), each paired with modern digital benchmarks (Linear, Bloomberg, Stripe, GitHub PR) stating what to adopt and what to refuse.
+- **Question Format**:
+  ```markdown
+  ❓ **Q1** - **Physical Reality Metaphor & Product Character**: <exposition of domain tension and 2~3 candidate archetypes with trade-offs>
 
-### Round 4: Boundary Invariants & Stress Contract (容错边界与证伪判据 · Resilience)
-- **Pillars**: Resilience, Interaction Lifecycle.
-- **Method**: Define fault tolerance, irreversible state gates, and the explicit 5-second falsification criteria for the Stage 2 probe.
-- **Output**: Establish explicit write scopes, invariants, and execute automated single-direction compilation via `materialize_contracts.py`.
+  ➡️ <recommended archetype with justification>
+  ```
+- **Settlement**: Lock primary metaphor, core tension, and Character profile.
+
+#### Round 2: Spatial Density & Layout Scaffolding (Frontier: Topology & Resistance)
+- **Lazy Module**: `references/dialectic/02-topology-scaffolding.md` (<60 lines).
+- **Pillars & Axes**: 9-Pillar: Topology & Journey; 5-Axis: Density & Rhythm.
+- **Method**: Present 2~3 structural layouts via pure text ASCII wireframes (NO COLOR, ONLY STRUCTURE). Clarify Container Proximity Ladder (Level 0~4) for hazardous vs routine actions.
+- **Settlement**: Lock layout profile (`adaptive-workspace` or `editorial-dossier`), visual centroid, and Density/Rhythm values.
+
+#### Round 3: Material Substrate, Palette Discipline & Kinetic Imprint (Frontier: Materiality & Energy)
+- **Lazy Module**: `references/dialectic/03-sensory-kinetic.md` (<100 lines).
+- **Pillars & Axes**: 9-Pillar: Color Semantics & Micro-timing; 5-Axis: Materiality & Energy.
+- **Method**: Present tangible material moodboards (Void Slate vs Organic Bone) with exact hex tokens. Define the Signature Accent (`--accent-seal`) alongside its strict Negative List (草稿与日常操作绝不带朱). Specify the 160ms Decisive Exchange 3-Frame kinetic response.
+- **Settlement**: Lock `--accent-seal`, substrate tokens, and kinetic timing.
+
+#### Round 4: Falsification Boundary & Automated Contract Compilation (Frontier: Resilience & Gate)
+- **Lazy Module**: `references/dialectic/04-falsification-compile.md` (<60 lines).
+- **Pillars & Axes**: 9-Pillar: Resilience & Interaction Lifecycle.
+- **Method**: Establish the 5-second perceptual falsification test and 4-dimensional reality breakers (Unbreakable string, 0-item state, 320px fold, rapid interruption).
+- **Execution**: Trigger `materialize_contracts.py --slice <slice-id> --phase all`. Contracts, tokens, and SHA-256 DAG are automatically sealed without manual Markdown editing. Set status to `sealed_provisional`.
 
 ## Macro Double Diamond
 
