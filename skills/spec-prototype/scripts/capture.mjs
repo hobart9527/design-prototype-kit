@@ -344,6 +344,8 @@ async function main() {
   let outputDir = null;
   let viewports = ["320", "390", "1280"];
   let states = ["default"];
+  let viewportsExplicit = false;
+  let statesExplicit = false;
   let autoOpen = true;
   let targetPath = null;
   let targetPlatform = "web";
@@ -383,16 +385,20 @@ async function main() {
       const matched = candidatePaths.find((p) => fs.existsSync(p)) || candidatePaths[0];
       url = `file://${matched}`;
       outputDir = path.join(repoRoot, `prototype/evidence/probes/${sliceId}/`);
-      states = ["ideal", "empty", "error"];
-      viewports = ["320", "390", "768", "1280"];
+      // Slice defaults are a fallback: an explicit --viewports/--states wins
+      // regardless of argument order, so the envelope's derived gates survive.
+      if (!statesExplicit) states = ["ideal", "empty", "error"];
+      if (!viewportsExplicit) viewports = ["320", "390", "768", "1280"];
     } else if (args[i] === "--output" || args[i] === "-o") {
       outputDir = args[++i];
     } else if (args[i] === "--target" || args[i] === "-t") {
       url = args[++i];
     } else if (args[i] === "--viewports" || args[i] === "-v") {
       viewports = (args[++i] || "").split(",").map((s) => s.trim()).filter(Boolean);
+      viewportsExplicit = true;
     } else if (args[i] === "--states" || args[i] === "-s") {
       states = (args[++i] || "").split(",").map((s) => s.trim()).filter(Boolean);
+      statesExplicit = true;
     } else if (!url && !args[i].startsWith("-")) {
       url = args[i];
     }

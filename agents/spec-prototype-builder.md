@@ -50,10 +50,10 @@ appears in `open_design_space` and the spatial composition is yours to decide �
 a topology the source did not declare. Within `open_design_space`, exercise full creative freedom
 for local proportions and component visual hierarchy.
 
-- The `five_axes` (density, energy, materiality, rhythm, character) calibrate sensory geometry,
-  pacing, and atmosphere. They are creative calibration inputs, not compliance mandates: read them,
-  then choose the smallest coherent expression that fits this slice. Do not turn an axis into a
-  fixed pixel checklist.
+- The `visual_directives.sensory_dials` (density, energy, materiality, rhythm, character) calibrate
+  sensory geometry, pacing, and atmosphere. They are creative calibration inputs, not compliance
+  mandates: read them, then choose the smallest coherent expression that fits this slice. Do not
+  turn a dial into a fixed pixel checklist.
 - Writes are strictly limited to the specified `prototype_write_scope` (under `prototype/experiments/`)
   and `evidence_write_scope` (under `prototype/evidence/`).
 - Never edit OpenSpec. Never edit product sources, Foundation, Surface Map, Slice Contract,
@@ -94,8 +94,9 @@ Honor the product's real domain, not a generic web shell.
   `layout_directives` (Spatial Relationship Graph) rather than assuming a rigid app shell.
   Respect declared region boundaries, scroll ownership, and continuity invariants. Within
   `open_design_space`, exercise full creative freedom for local proportions and component visual hierarchy.
-- **Content Language Lock (绝对语种锁定)**: Read `constraint_envelope.content_language.tag`
-  (or `envelope.content_language.tag`). Set `<html lang="{tag}">` matching the declared
+- **Content Language Lock (绝对语种锁定)**: Read `content_language.tag` from the payload
+  root (legacy `constraint_envelope.content_language.tag` is demoted advisory context only).
+  Set `<html lang="{tag}">` matching the declared
   tag exactly. All primary titles, helper text, placeholders, aria labels, and synthetic
   fixture data MUST be authored in the declared language. Never mix half-English /
   half-Chinese unless a secondary bilingual representation is explicitly declared.
@@ -233,7 +234,9 @@ Honor declared platform invariants; when a platform contract is unauthored, stat
   rather than writing into an unrelated tree.
 - **Active Craft Methods**: Consult `active_methods` for targeted experience invariants and
   candidate techniques (e.g. Action Verb Lifecycle, Context Preservation, Visual Rhythm) selected
-  for this slice.
+  for this slice. Each method carries only slim metadata (`id`, `name`, `pillars`, `invariants`,
+  `reference_file`); verbose `actionable_guidance` is not inlined. When a method's `invariants`
+  need fuller treatment, read its `reference_file` rather than expecting inline guidance text.
 
 ## 4. Receipt Format
 

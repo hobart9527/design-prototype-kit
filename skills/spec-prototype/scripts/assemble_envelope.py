@@ -969,6 +969,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
             nav_links.append(entry)
 
     verification_cmd = f"python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice {slice_id}"
+    # The capture command is assembled after the authored viewport and state
+    # contracts resolve, so the derived gates actually reach capture.mjs.
     capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
 
     # Extract OOUX Cardinality & Spatial Mapping from surface map or profile defaults
@@ -1545,6 +1547,19 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     ]
     if not ir_regions:
         ir_open_design_space.append("spatial-topology")
+
+    # The derived inspection contract must actually reach capture.mjs, otherwise
+    # the authored device fact has no consumer. A declared device forwards its
+    # derived viewports and states; an undeclared one leaves capture.mjs's own
+    # device discovery intact rather than inventing a restricted set.
+    mandatory_viewports = _mandatory_viewports(dict(platform_context["platform"]))
+    device_declared = bool(str(platform_context["platform"].get("device_context") or "").strip())
+    if device_declared:
+        capture_cmd = (
+            f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
+            f" --viewports {','.join(str(v['width']) for v in mandatory_viewports)}"
+            f" --states {','.join(authored_states)}"
+        )
 
     envelope = {
         # 7-Field Executable Design IR Canonical Interface
