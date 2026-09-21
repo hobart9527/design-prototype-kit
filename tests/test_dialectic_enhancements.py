@@ -111,3 +111,85 @@ def test_topology_scaffolding_includes_canvas():
     assert "Option A: Synchronized Multi-Column Workbench" in topo_doc
     assert "Option B: Focused Progressive Flow with Drawer" in topo_doc
     assert "Option C: Infinite Canvas & Contextual Inspector" in topo_doc
+
+
+def test_applicability_driven_cognitive_budget_gate(tmp_path: Path):
+    """Verify cognitive budget gate triggers only with concrete non-placeholder borrow declarations."""
+    tokens = tmp_path / "tokens.css"
+    tokens.write_text(":root { --action-primary: #334155; --radius-outer: 8px; font-variant-numeric: tabular-nums; }", encoding="utf-8")
+
+    # 1. HTML with infinite animation on legitimate loading spinner should PASS even with generic contract
+    html_spinner = tmp_path / "spinner.html"
+    html_spinner.write_text("""<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="tokens.css">
+<style>
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.loading-spinner { animation: spin 1s infinite linear; }
+</style>
+</head>
+<body>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;">
+<div class="loading-spinner" aria-busy="true">Loading...</div>
+<button>Action</button>
+</main>
+<script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
+</body>
+</html>""", encoding="utf-8")
+
+    unconfigured_contract = tmp_path / "r1_unconf.md"
+    unconfigured_contract.write_text("# Spec\n## Cognitive Budgeting\n- High-Yield: unspecified\n", encoding="utf-8")
+
+    # Should pass because contract borrow zone is unspecified
+    passed_unconf = verify_prototype_quality.assert_quality(str(html_spinner), str(tokens), contract_path=str(unconfigured_contract))
+    assert passed_unconf is True
+
+    # 2. Configured contract with concrete borrow zone: rogue infinite animation outside authorized zone should FAIL
+    html_rogue = tmp_path / "rogue.html"
+    html_rogue.write_text("""<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="tokens.css">
+<style>
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+@keyframes pulse-banner { 100% { opacity: 0.5; } }
+.marketing-banner { animation: pulse-banner 1s infinite; }
+</style>
+</head>
+<body>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;">
+<div class="marketing-banner">Buy now!</div>
+<button>Action</button>
+</main>
+<script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
+</body>
+</html>""", encoding="utf-8")
+
+    configured_contract = tmp_path / "r1_conf.md"
+    configured_contract.write_text("# Spec\n## Cognitive Budgeting\n- High-Yield Borrow Zone: Primary telemetry grid\n", encoding="utf-8")
+
+    passed_rogue = verify_prototype_quality.assert_quality(str(html_rogue), str(tokens), contract_path=str(configured_contract))
+    assert passed_rogue is False
+
+
+def test_lint_spec_contracts_fail_closed_on_internal_error(tmp_path: Path, monkeypatch):
+    """Verify lint_spec_contracts fails closed with E099 on unexpected validator crashes."""
+    import lint_spec_contracts
+
+    def crash_lint_formal_entry(root, slice_id):
+        raise RuntimeError("Simulated internal AST parser error")
+
+    monkeypatch.setattr(lint_spec_contracts, "lint_formal_entry", crash_lint_formal_entry)
+    monkeypatch.setattr(lint_spec_contracts, "lint_spec_contracts", lambda root, slice_id: [])
+
+    # Simulate main invocation
+    test_args = ["lint_spec_contracts.py", "--root", str(tmp_path), "--slice", "test-slice"]
+    monkeypatch.setattr("sys.argv", test_args)
+
+    with pytest.raises(SystemExit) as exc_info:
+        lint_spec_contracts.main()
+    assert exc_info.value.code == 1
+
+

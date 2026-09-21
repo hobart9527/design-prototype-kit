@@ -973,16 +973,15 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
     # contracts resolve, so the derived gates actually reach capture.mjs.
     capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
 
-    # Extract OOUX Cardinality & Spatial Mapping from surface map or profile defaults
-    # v10.1: Cardinality constrains candidate structures; task/device/context determine layout mode.
-    # Default is adaptive rather than forced master-detail.
+    # Extract OOUX Cardinality & Spatial Mapping from authored surface map or spec contract.
+    # Authority invariant: Object Cardinality -> Topology Constraints -> Layout Candidate.
+    # Inverse inference (Layout Profile -> Object Cardinality) is strictly prohibited.
     cardinality_match = re.search(r"(?:Cardinality|OOUX|实体基数|基数映射)[^\n]*[:=]?\s*(1:1|1:N|N:M)", smap_content + " " + spec_content, re.IGNORECASE)
     if cardinality_match:
         ooux_cardinality = cardinality_match.group(1).upper()
         if ooux_cardinality == "1:1":
             ooux_layout_mode = "focused-cockpit"
         elif ooux_cardinality == "1:N":
-            # Adapt layout mode: master-detail for dense workbenches, feed/stream for reading and mobile touch
             if layout_profile in ("editorial-reading", "somatic-touchflow"):
                 ooux_layout_mode = "stream-feed"
             else:
@@ -992,23 +991,10 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         else:
             ooux_layout_mode = "adaptive"
     else:
-        # Context/Profile-driven heuristics without forcing master-detail on unknown profiles
-        if layout_profile == "dense-console":
-            ooux_cardinality = "1:N"
-            ooux_layout_mode = "split-master-detail"
-        elif layout_profile == "editorial-reading":
-            ooux_cardinality = "1:1"
-            ooux_layout_mode = "focused-column"
-        elif layout_profile == "operational-canvas":
-            ooux_cardinality = "N:M"
-            ooux_layout_mode = "interactive-workspace"
-        elif layout_profile == "somatic-touchflow":
-            ooux_cardinality = "1:N"
-            ooux_layout_mode = "card-stream"
-        else:
-            # v10.1: adaptive topology for unknown products
-            ooux_cardinality = "adaptive"
-            ooux_layout_mode = "adaptive-flow"
+        # Without explicit authoring, cardinality stays adaptive; layout mode remains adaptive-flow
+        # No reverse inference from layout profile (e.g. dense-console -> 1:N)
+        ooux_cardinality = "adaptive"
+        ooux_layout_mode = "adaptive-flow"
 
     ooux_topology = {
         "cardinality": ooux_cardinality,

@@ -300,7 +300,7 @@ def main() -> None:
             formal_errors = lint_formal_entry(args.root, args.slice)
             errors.extend(formal_errors)
         except Exception as exc:
-            pass  # If formal entry files not yet present, lint_spec_contracts reports file presence
+            errors.append(SpecLintError("E099_INTERNAL_VALIDATOR_ERROR", "linter", f"Internal validator unexpected error: {type(exc).__name__}: {exc}"))
     if errors:
         print(f"FAILED: Found {len(errors)} Stage 1 contract lint issues:")
         for err in errors:

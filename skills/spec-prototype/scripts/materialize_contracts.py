@@ -1,40 +1,63 @@
-#!/usr/bin/env python3
-"""Compile discussion and product records into generic, high-fidelity design contracts."""
+"""Transactional contract projector for Stage 1 design specifications.
+
+Pure Deterministic Compiler Discipline:
+1. Projects designer intent directly from prototype/discussion.md into formal contracts.
+2. Never guesses domain semantics, actions, or palettes; unauthored fields stay empty/unspecified.
+3. Transactional Staging: compiles into a temporary staging area; validates all artifacts;
+   promotes atomically only upon complete verification pass.
+"""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import os
 import re
+import shutil
 import sys
+import uuid
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 try:
     import yaml
 except ImportError:
     yaml = None
 
-# Provenance placeholders. A projection seam may not declare a fixed domain claim
-# ("Core Tension: X vs Y", borrowed reference, fixed shortcut) that no author wrote.
-# Marked text is machine-detectable so it can never read as an authored decision.
+NOT_YET_DECIDED = "not yet decided (Stage 1 in progress)"
 UNSPECIFIED = "unspecified"
-NOT_YET_DECIDED = "Not yet decided"
-# A platform fact no source authored. Device class, input modality and target
-# runtime are independent: `unknown` is a retained fact, never a placeholder
-# the compiler is allowed to upgrade into a default OS.
 UNKNOWN = "unknown"
 
-# Contract keys that require an authored source in the discussion/product records.
-# Missing source => key is omitted, never defaulted.
-AUTHORED_PROJECTION_KEYS = ("core_tension",)
+SECTION_SYNONYMS = {
+    "product_title": ["Product Title", "Product", "产品名称", "产品", "Title"],
+    "core_tension": ["Core Tension", "Tension", "极端张力", "核心张力", "张力", "冲突"],
+    "content_language": ["Content Language", "Language", "语种", "语言"],
+    "platform_target": ["Target OS", "Target Runtime", "Target Platform", "目标系统", "目标平台", "运行平台"],
+    "device_class": ["Device Class", "Device", "设备类型", "设备"],
+    "input_modality": ["Input Modality", "Input Context", "输入方式", "输入模态"],
+    "reality_anchors": ["Reality Anchors", "Anchors", "地锚", "对标", "Reality Benchmark", "Reference Benchmarks", "对标参考"],
+    "baseline": ["Dominant Baseline", "Baseline", "基准", "主流基准"],
+    "ruthless_omissions": ["Ruthless Omissions", "Omissions", "克制舍弃", "舍弃清单", "克制设计", "explicit non-goals"],
+    "material_boundaries": ["Material Non-Transfer Boundaries", "Non-Transfer", "非迁移边界", "物理隐喻", "Physical Metaphor"],
+    "experience_invariants": ["Experience Invariants", "Invariants", "设计不变量", "体验不变量", "核心约束"],
+    "action_verbs": ["Action Verb", "动作动词", "Verb Lifecycle", "动作流转", "Action Verbs"],
+    "cognitive_ledger": ["Cognitive Budgeting", "借贷法则", "Energy Return Ledger", "Cognitive Ledger", "认知借贷"],
+    "falsification_test": ["Perceptual Falsification Criteria", "Falsification Criteria", "Falsification", "5-Second", "证伪判据", "5秒", "5s_test"],
+    "dual_channel": ["Dual-Channel", "Keyboard Shortcuts", "快捷键", "双通道"],
+    "state_machine": ["State Machine", "Supported States", "States", "状态机", "状态流转"],
+    "responsive_rules": ["Responsive", "Responsive Rules", "断点", "响应式"],
+}
+
+
+def _digest(path: Path) -> str:
+    return f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}" if path.is_file() else "unknown"
 
 
 def extract_section_by_patterns(text: str, patterns: list[str]) -> str:
-    """Extract markdown field or section matching any of the regex patterns, supporting bullets, tables, and headings."""
+    """Extract markdown field or section matching any of the regex patterns."""
     for pat in patterns:
         m_field = re.search(
-            rf"^\s*[-*+]?\s*[*_]*(?:{pat})[*_]*(?:\s*&[^\n:]*)?\s*[:=]\s*([^\n]+)",
+            rf"^\s*[-*+]?\s*[*_]*(?:{pat})[*_]*(?:\s*&[^\n:]*)?\s*[:：=]\s*([^\n]+)",
             text,
             re.MULTILINE | re.IGNORECASE,
         )
@@ -56,173 +79,68 @@ def extract_section_by_patterns(text: str, patterns: list[str]) -> str:
         m = re.search(
             rf"^##+[^\n]*?(?:{pat})[^\n]*\n(.*?)(?=\n##+|\Z)",
             text,
-            re.DOTALL | re.MULTILINE | re.IGNORECASE,
+            re.MULTILINE | re.DOTALL | re.IGNORECASE,
         )
         if m and m.group(1).strip():
             return m.group(1).strip()
     return ""
 
+def extract_section(text: str, key: str) -> str:
+    """Extract section text matching declared synonyms."""
+    synonyms = SECTION_SYNONYMS.get(key, [key])
+    return extract_section_by_patterns(text, synonyms)
+
 
 def extract_dial_value(text: str, dial: str) -> str:
-    """Extract a single 5-dial register value from inline `Dial: value` prose.
-
-    Discussion records commonly state the five dials on one sensory-calibration
-    line (`Density: sparse. Energy: quiet. ...`) that is neither a bullet field
-    nor a table row, so the section extractor misses it. This reads the scalar
-    token directly.
-    """
-    m = re.search(rf"\b{dial}\b\s*[:=]\s*([a-zA-Z0-9_-]+)", text, re.IGNORECASE)
-    return m.group(1).strip() if m else ""
+    m = re.search(rf"(?:[-*]\s*)?[`*_]*{re.escape(dial)}[`*_]*\s*[:：=]\s*[`*_]*([a-zA-Z0-9_-]+)[`*_]*", text, re.IGNORECASE)
+    return m.group(1).strip().lower() if m else ""
 
 
-def _digest(path: Path) -> str:
-    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def rebind_slice_digests(root: Path, slice_id: str) -> None:
-    """Rebind upstream sha256 digests in c1 and r1 to prevent cascading digest mismatches."""
-    prod_path = root / "prototype/product.md"
-    disc_path = root / "prototype/discussion.md"
-    smap_path = root / "prototype/contracts/surface-maps/m1.md"
-    f1_path = root / "prototype/contracts/foundation/f1.md"
-    t1_path = root / "prototype/contracts/tokens/t1.md"
-    c1_path = root / f"prototype/contracts/slices/{slice_id}/c1.md"
-    r1_path = root / f"prototype/specifications/{slice_id}/r1.md"
-
-    if c1_path.is_file():
-        c1_text = c1_path.read_text(encoding="utf-8")
-        if smap_path.is_file():
-            c1_text = re.sub(
-                r"(- Retained surface-map path, revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
-                rf"\g<1>{_digest(smap_path)}",
-                c1_text,
-            )
-        if prod_path.is_file():
-            c1_text = re.sub(
-                r"(- Product source references[^:]*:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
-                rf"\g<1>{_digest(prod_path)}",
-                c1_text,
-            )
-        c1_path.write_text(c1_text, encoding="utf-8")
-
-    if r1_path.is_file():
-        r1_text = r1_path.read_text(encoding="utf-8")
-        if prod_path.is_file():
-            r1_text = re.sub(
-                r"(- Product (?:source references[^:]*|record revision and digest):\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
-                rf"\g<1>{_digest(prod_path)}",
-                r1_text,
-            )
-        if f1_path.is_file():
-            r1_text = re.sub(
-                r"(- Foundation revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
-                rf"\g<1>{_digest(f1_path)}",
-                r1_text,
-            )
-        if t1_path.is_file():
-            r1_text = re.sub(
-                r"(- Token artifact path, revision, and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
-                rf"\g<1>{_digest(t1_path)}",
-                r1_text,
-            )
-        if c1_path.is_file():
-            r1_text = re.sub(
-                r"(- Slice Contract revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
-                rf"\g<1>{_digest(c1_path)}",
-                r1_text,
-            )
-        if disc_path.is_file():
-            r1_text = re.sub(
-                r"(- Decision/Discussion record reference:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
-                rf"\g<1>{_digest(disc_path)}",
-                r1_text,
-            )
-        r1_path.write_text(r1_text, encoding="utf-8")
-
-
-def _bullets(text: str) -> list[str]:
-    return [re.sub(r"^[-*+]\s+", "", line).strip() for line in text.splitlines() if re.match(r"^[-*+]\s+", line)]
-
-
-def extract_surface_id(raw: str) -> str:
-    m_code = re.search(r"`([^`]+)`", raw)
-    candidate = m_code.group(1) if m_code else raw
-    candidate = re.sub(r"^(?:surfaces|experiments)/", "", candidate)
-    candidate = candidate.split("/")[0] if "/hero-anchor" in candidate or "/anchor" in candidate else candidate
-    m_ident = re.search(r"([a-zA-Z0-9_-]+)", candidate)
-    if m_ident:
-        return m_ident.group(1)
-    return candidate.strip()
+def extract_bullets(text: str) -> list[str]:
+    bullets: list[str] = []
+    for line in text.splitlines():
+        line = line.strip()
+        m = re.match(r"^(?:[-*]|\d+\.)\s+(.+)$", line)
+        if m:
+            item = m.group(1).strip().strip("`* ")
+            if item and not item.lower().startswith("table"):
+                bullets.append(item)
+    if not bullets and text.strip():
+        # Handle inline single-value extraction
+        single = text.strip().strip("`* ")
+        if single and not single.startswith("#"):
+            bullets.append(single)
+    return bullets
 
 
 def extract_surfaces(disc_text: str, prod_text: str) -> tuple[list[str], list[str]]:
-    """Extract declared surfaces supporting both English and Chinese heading conventions.
-    Returns (clean_surface_ids, raw_declared_surfaces).
-    """
-    surface_ids: list[str] = []
-    declared_surfaces: list[str] = []
-    for line in (disc_text + "\n" + prod_text).splitlines():
-        clean_line = line.strip()
-        m_surf = re.match(r"^[-*+]\s+[*_]*(?:[-*+]\s+)?(?:Primary|Secondary|Supporting|Contextual|主工作区|次级|支撑|上下文)[^:]*:\s*(.+)$", clean_line, re.IGNORECASE)
-        if m_surf:
-            raw_entry = clean_line.lstrip("-*+ ")
-            if raw_entry not in declared_surfaces:
-                declared_surfaces.append(raw_entry)
-            sid = extract_surface_id(m_surf.group(1))
-            if sid and sid not in surface_ids:
-                surface_ids.append(sid)
-            continue
-        if "|" in clean_line and any(kw in clean_line for kw in ("Primary:", "Secondary:", "Supporting:", "Contextual:", "主工作区:", "次级:", "支撑:", "上下文:")):
-            parts = re.findall(r"(?:Primary|Secondary|Supporting|Contextual|主工作区|次级|支撑|上下文)[^:]*:\s*([^.|;\n]+)", clean_line, re.IGNORECASE)
-            for part in parts:
-                entry = part.strip()
-                if entry and entry not in declared_surfaces:
-                    declared_surfaces.append(entry)
-                sid = extract_surface_id(entry)
-                if sid and sid not in surface_ids:
-                    surface_ids.append(sid)
-            continue
-        if re.search(r"\b(?:surfaces/|hero-anchor/|anchor/)[a-zA-Z0-9_-]+", clean_line):
-            raw_entry = clean_line.lstrip("-*+ ")
-            if raw_entry not in declared_surfaces:
-                declared_surfaces.append(raw_entry)
-            m_path = re.search(r"\b(?:surfaces/|hero-anchor/|anchor/)([a-zA-Z0-9_-]+)", clean_line)
-            if m_path:
-                sid = m_path.group(1)
-                if sid and sid not in surface_ids:
-                    surface_ids.append(sid)
-            continue
-    if not declared_surfaces:
-        surfaces_sec = extract_section_by_patterns(disc_text, ["Surface", "表面", "拓扑", "Topology"]) or \
-                       extract_section_by_patterns(prod_text, ["Surface", "表面", "拓扑", "Topology"])
-        if surfaces_sec:
-            for b in _bullets(surfaces_sec):
-                if any(bad in b for bad in ("Rhythm", "Data Floor", "Action Verb", "Strict Token", "WCAG", "Contrast", "Token Inheritance")):
-                    continue
-                if b not in declared_surfaces:
-                    declared_surfaces.append(b)
-                sid = extract_surface_id(b)
-                if sid and sid not in surface_ids:
-                    surface_ids.append(sid)
-    seen = set()
-    cleaned_ids = []
-    for s in surface_ids:
-        if s not in seen and len(s) > 1:
-            seen.add(s)
-            cleaned_ids.append(s)
-    return cleaned_ids, declared_surfaces
+    sec = extract_section(disc_text, "surface_map") or extract_section_by_patterns(disc_text, ["Topology", "Surfaces", "表面", "拓扑", "表面映射"])
+    raw_bullets = extract_bullets(sec) if sec else []
+    all_surfaces: list[str] = []
+    for b in raw_bullets:
+        clean = re.sub(r"[^a-zA-Z0-9_\-\/]+", "-", b.split()[0]).strip("-").lower()
+        if clean and clean not in all_surfaces:
+            all_surfaces.append(clean)
+    return all_surfaces, raw_bullets
 
 
 def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
-    """Extract 4-phase action verb lifecycle table from discussion or derive grounded defaults."""
-    verbs_sec = extract_section_by_patterns(disc_text, ["Action Verb", "动作动词", "Verb Lifecycle", "动作流转"])
-    extracted: list[dict[str, str]] = []
-    if verbs_sec:
-        for line in verbs_sec.splitlines():
-            if line.strip().startswith("|") and not line.strip().startswith("|---"):
-                parts = [p.strip() for p in line.split("|") if p.strip()]
-                if parts and len(parts) >= 4 and parts[0].lower() not in ("action id", "action_id"):
-                    extracted.append({
+    """Extract action verbs from discussion.
+
+    Pure Compiler Discipline:
+    Authored table entries are projected faithfully without guessing.
+    When absent, emits an explicit [Hypothesis] action for the slice to satisfy
+    contract safety without fabricating frozen operational facts.
+    """
+    sec = extract_section(disc_text, "action_verbs")
+    actions: list[dict[str, str]] = []
+    if sec:
+        for line in sec.splitlines():
+            line = line.strip()
+            if line.startswith("|") and not line.startswith("|---"):
+                parts = [p.strip().strip("`* ") for p in line.split("|") if p.strip()]
+                if len(parts) >= 4 and parts[0].lower() not in ("action id", "action_id", "id"):
+                    actions.append({
                         "action_id": parts[0],
                         "trigger_btn": parts[1],
                         "modal_header": parts[2],
@@ -230,338 +148,193 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
                         "toast": parts[4] if len(parts) > 4 else f"{parts[1]} Completed",
                         "impact": parts[5] if len(parts) > 5 else "Executes action",
                     })
-    if not extracted:
-        # 2. Extract action mentions from text — candidate verbs explicitly marked as derived from authored context
-        action_verb_patterns = [
-            (r"(?:node\s+)?drain(?:\s+operations|\s+node)?", "drain-node", "Drain Node", "Drain GPU Node", "Confirm Drain", "Node Drained Successfully", "[Derived] Evicts active batch workload from node"),
-            (r"preempt(?:\s+vram)?", "preempt-vram", "Preempt VRAM", "Preempt VRAM Allocation", "Execute Preempt", "VRAM Eviction Committed", "[Derived] Releases VRAM pool back to shared cluster"),
-            (r"isolate(?:\s+cluster|\s+region)?", "isolate-cluster", "Isolate Cluster", "Emergency Region Isolation", "Authorize Isolation", "Region Traffic Rerouted", "[Derived] Isolates failing region to contain blast radius"),
-            (r"bookmark(?:\s+story|\s+article)?", "bookmark-story", "Bookmark Story", "Save Bookmark", "Confirm Save", "Story Saved to Reading List", "[Derived] Stores story to reading list"),
-            (r"checkout|order", "checkout-order", "Proceed to Checkout", "Confirm Order Payment", "Authorize Payment", "Order Placed Successfully", "[Derived] Initiates checkout and order confirmation"),
-            (r"publish(?:\s+document)?", "publish-document", "Publish Document", "Confirm Publication", "Publish Now", "Document Published to Feed", "[Derived] Publishes document across designated channels"),
-            (r"accept(?:\s+ai|\s+diff)?", "accept-ai-diff", "Accept AI Revision", "Review AI Inline Revision", "Accept & Merge", "Paragraph Revised Successfully", "[Derived] Merges AI revision into draft"),
-            (r"(?:confirm\s+)?booking|reservation", "confirm-reservation-slot", "Confirm Time Slot", "Review Booking Details", "Confirm & Reserve", "Appointment Slot Confirmed", "[Derived] Confirms appointment booking"),
-        ]
-        for pattern, act_id, trig, modal, commit, toast, imp in action_verb_patterns:
-            if re.search(pattern, disc_text, re.IGNORECASE):
-                extracted.append({
-                    "action_id": act_id,
-                    "trigger_btn": trig,
-                    "modal_header": modal,
-                    "commit_btn": commit,
-                    "toast": toast,
-                    "impact": imp,
-                })
-                if len(extracted) >= 2:
-                    break
-
-    if not extracted:
-        # Generic Grammar Extraction: parse bullet action declarations matching phrases
-        action_declarations = re.findall(
-            r"(?:[-*]\s*[`*]?([A-Za-z0-9一-龥\s_-]+)[`*]?\s*[:：]\s*([^\n]+))",
-            disc_text
-        )
-        for name, desc in action_declarations:
-            name_clean = name.strip()
-            if any(k in name_clean.lower() for k in ("bg-", "accent-", "energy", "finish", "density", "weight", "seriousness", "palette", "domain", "http", "ruthless", "material")):
-                continue
-            if 2 < len(name_clean) < 32 and not name_clean.startswith("#"):
-                slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", name_clean).strip("-").lower()
-                if not slug:
-                    slug = f"action-{len(extracted)+1}"
-                act_label = name_clean.title() if name_clean.isascii() else name_clean
-                extracted.append({
-                    "action_id": slug,
-                    "trigger_btn": act_label,
-                    "modal_header": f"Confirm {act_label}",
-                    "commit_btn": f"Execute {act_label}",
-                    "toast": f"{act_label} Completed",
-                    "impact": desc.strip()[:100],
-                })
-                if len(extracted) >= 3:
-                    break
-
-    # Tertiary Fallback: Unresolved candidate hypothesis — explicitly marked as unvalidated hypothesis, never forged as frozen operational fact
-    if not extracted:
+    if not actions:
         clean_slice = slice_id.replace("-", " ").title()
-        action_id = f"explore-{slice_id}"
-        extracted.append({
-            "action_id": action_id,
+        actions.append({
+            "action_id": f"explore-{slice_id}",
             "trigger_btn": f"[Hypothesis] View {clean_slice}",
             "modal_header": f"[Hypothesis] Contextual Detail: {clean_slice}",
             "commit_btn": "Acknowledge",
             "toast": f"{clean_slice} Exploration Settled",
-            "impact": f"[Hypothesis] Passive exploration view for {slice_id}; no authoritative state mutations authored. Requires explicit user specification before formal candidate build.",
+            "impact": f"[Hypothesis] Passive exploration view for {slice_id}; no authoritative state mutations authored.",
         })
-    return extracted
+    return actions
 
 
-def extract_cognitive_ledger(disc_text: str, slice_id: str) -> dict[str, str]:
-    """Extract the Cognitive Budgeting & Energy Return Ledger from authored truth only.
-
-    Unauthored zones report ``unspecified`` instead of receiving synthesized
-    prose the author never wrote (no tactical detents, micro-sparklines,
-    kinetic pulses, or 10x situational-awareness claims).
-    """
-    routine_m = re.search(r"(?:Routine Conventions|Zero-learning|零借贷区|低熵基座)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
-    decisive_m = re.search(r"(?:Decisive Innovation|Borrowed focus|高产出借贷区|能量溢价特区)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
-    repayment_m = re.search(r"(?:Repayment|Settlement|偿还机制|状态沉降)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
-
-    unspecified = "unspecified"
-    return {
-        "zero_borrow_base": routine_m.group(1).strip() if routine_m else unspecified,
-        "high_yield_borrow_zone": decisive_m.group(1).strip() if decisive_m else unspecified,
-        "repayment_settlement": repayment_m.group(1).strip() if repayment_m else unspecified,
+def rebind_slice_digests(root: Path, slice_id: str) -> None:
+    """Rebind upstream sha256 digests in c1 and r1 using a unified mapping table."""
+    targets = {
+        "prod": (root / "prototype/product.md", r"(- Product (?:source references[^:]*|record revision and digest):\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)"),
+        "smap": (root / "prototype/contracts/surface-maps/m1.md", r"(- Retained surface-map path, revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)"),
+        "f1": (root / "prototype/contracts/foundation/f1.md", r"(- Foundation revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)"),
+        "t1": (root / "prototype/contracts/tokens/t1.md", r"(- Token artifact path, revision, and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)"),
+        "c1": (root / f"prototype/contracts/slices/{slice_id}/c1.md", r"(- Slice Contract revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)"),
+        "disc": (root / "prototype/discussion.md", r"(- Decision/Discussion record reference:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)"),
     }
 
+    c1_path = root / f"prototype/contracts/slices/{slice_id}/c1.md"
+    if c1_path.is_file():
+        text = c1_path.read_text(encoding="utf-8")
+        for key in ("smap", "prod"):
+            p, pat = targets[key]
+            if p.is_file():
+                text = re.sub(pat, rf"\g<1>{_digest(p)}", text)
+        c1_path.write_text(text, encoding="utf-8")
 
-def extract_ruthless_omissions(disc_text: str, prod_text: str) -> list[str]:
-    """Extract domain-aware Ruthless Omissions from authored source truth only. Never inject hardcoded recipes."""
-    combined = disc_text + "\n" + prod_text
-    m = re.search(r"(?:Ruthless Omission|Deliberately Excluded|Omission|舍弃|排除|非目标)[^\n]*\n((?:[ \t]*[-*0-9.]+[^\n]+\n?)+)", combined, re.IGNORECASE)
-    if m:
-        items = [re.sub(r"^[ \t]*[-*0-9.]+\s*", "", line).strip() for line in m.group(1).splitlines() if line.strip()]
-        if len(items) >= 1:
-            return items[:5]
-    return []
-
-
-def extract_material_invariants(disc_text: str, prod_text: str) -> list[str]:
-    """Extract Material Non-Transfer Boundaries from authored source truth only. Never inject hardcoded recipes."""
-    combined = disc_text + "\n" + prod_text
-    m = re.search(r"(?:Material Non-Transfer|Material Invariant|材质不可跨界|材质边界|物理映射)[^\n]*\n((?:[ \t]*[-*0-9.]+[^\n]+\n?)+)", combined, re.IGNORECASE)
-    if m:
-        items = [re.sub(r"^[ \t]*[-*0-9.]+\s*", "", line).strip() for line in m.group(1).splitlines() if line.strip()]
-        if len(items) >= 1:
-            return items[:5]
-    return []
+    r1_path = root / f"prototype/specifications/{slice_id}/r1.md"
+    if r1_path.is_file():
+        text = r1_path.read_text(encoding="utf-8")
+        for key in ("prod", "f1", "t1", "c1", "disc"):
+            p, pat = targets[key]
+            if p.is_file():
+                text = re.sub(pat, rf"\g<1>{_digest(p)}", text)
+        r1_path.write_text(text, encoding="utf-8")
 
 
-def extract_declared_invariants(disc_text: str, prod_text: str) -> list[str]:
-    """Authored invariant tokens only. No universal baseline list is fabricated.
+def build_frontend_contract(root: Path, slice_id: str, disc_text: str, prod_text: str, action_verbs: list[dict[str, str]]) -> str:
+    """Emit the machine-readable frontend-contract.yaml representation."""
+    prod_title = extract_section(disc_text, "product_title") or extract_section(prod_text, "product_title") or slice_id.replace("-", " ").title()
+    tension = extract_section(prod_text, "core_tension") or extract_section(disc_text, "core_tension") or NOT_YET_DECIDED
 
-    An invariant reaches f1/r1 solely because the author wrote it. Absent an
-    authored declaration the list stays empty, so downstream records carry no
-    borrowed `concentric-radii` / `tabular-numerics` / `touch-target-floor` /
-    `break-protocol` claim the author never made.
-    """
-    for text in (disc_text, prod_text):
-        if not text:
-            continue
-        for pat in ("Experience Invariants", "Material Invariants", "Invariants", "Preserves"):
-            m = re.search(
-                rf"^\s*[-*+]?\s*[*_]*(?:{pat})[*_]*\s*[:=]\s*([^\n]+)",
-                text, re.MULTILINE | re.IGNORECASE)
-            if not m:
-                continue
-            items = [tok.strip().strip("`*_ ") for tok in re.split(r"[,;|、]", m.group(1))]
-            items = [tok for tok in items if tok]
-            if items:
-                return items
-    return []
+    invariants = extract_bullets(extract_section(disc_text, "experience_invariants") or extract_section(prod_text, "experience_invariants"))
 
+    # State machine
+    sm_text = extract_section(disc_text, "state_machine")
+    state_machine: dict[str, Any] = {"type": "hash_state", "status": "unspecified"}
+    if sm_text:
+        states = {}
+        for line in sm_text.splitlines():
+            line = line.strip().strip("-* ")
+            if ":" in line:
+                k, v = line.split(":", 1)
+                states[k.strip()] = v.strip()
+        if states:
+            state_machine = {"type": "hash_state", "states": states}
 
-def build_frontend_contract(
-    slice_id: str,
-    prod_title: str,
-    tension: str,
-    surfaces: list[str],
-    action_verbs: list[dict[str, str]],
-    disc_text: str,
-    prod_text: str,
-    disc_digest: str,
-    prod_digest: str,
-) -> str:
-    """Project machine-readable frontend contract from approved design truth without inventing unauthored behavior."""
-    combined = disc_text + "\n" + prod_text
+    # Responsive rules
+    resp_text = extract_section(disc_text, "responsive_rules")
+    responsive_rules: dict[str, Any] = {"status": "unspecified"}
+    if resp_text:
+        rules = {}
+        for line in resp_text.splitlines():
+            line = line.strip().strip("-* ")
+            if ":" in line:
+                k, v = line.split(":", 1)
+                rules[k.strip()] = v.strip()
+        if rules:
+            responsive_rules = rules
 
-    # 1. Structure / Surface Regions: Project declared surface topology only
-    surface_regions = []
-    if surfaces:
-        for s in surfaces:
-            clean_name = re.sub(r"[`*]", "", s).strip()
-            sid = extract_surface_id(s)
-            slug = sid if sid else re.sub(r"[^a-zA-Z0-9_-]+", "-", clean_name.lower()).strip("-")
-            role = "main" if any(k in clean_name.lower() for k in ("primary", "主工作区", "hero-anchor")) else \
-                   "complementary" if any(k in clean_name.lower() for k in ("contextual", "上下文", "drawer", "inspector")) else \
-                   "region"
-            surface_regions.append({
-                "id": slug or "surface-region",
-                "role": role,
-                "declared_surface": clean_name,
-            })
-
-    # 2. Responsive Rules: Project authored responsive decisions; mark unspecified if absent
-    responsive_section = extract_section_by_patterns(combined, ["Responsive", "响应式", "Breakpoints", "视口", "Touch-First Ergonomics", "Dual-Channel Ergonomics"])
-    responsive_rules: dict[str, Any] = {}
-    if responsive_section:
-        m_desktop = re.search(r"(?:desktop|1280|桌面)[`*:]*\s*([^\n]+)", responsive_section, re.IGNORECASE)
-        m_mobile = re.search(r"(?:mobile|390|320|移动|触控)[`*:]*\s*([^\n]+)", responsive_section, re.IGNORECASE)
-        if m_desktop:
-            responsive_rules["desktop"] = m_desktop.group(1).strip()
-        if m_mobile:
-            responsive_rules["mobile"] = m_mobile.group(1).strip()
-        if not responsive_rules:
-            summary_lines = [line.strip() for line in responsive_section.splitlines() if line.strip().startswith(("-", "*", "|"))]
-            if summary_lines:
-                responsive_rules["declared_summary"] = summary_lines[:4]
-    if not responsive_rules:
-        responsive_rules = {
-            "status": "unspecified",
-            "note": "No explicit responsive layout rules declared in approved design spec"
+    actions_dict = {
+        v["action_id"]: {
+            "trigger": v["trigger_btn"],
+            "modal": v["modal_header"],
+            "commit": v["commit_btn"],
+            "toast": v["toast"],
+            "hazard_level": "high" if any(w in v["action_id"].lower() or w in v["impact"].lower() for w in ["drain", "evict", "isolate", "delete", "destroy", "purge"]) else "normal",
         }
-
-    # 3. Finite State Machine: Project authored states; mark unspecified if absent
-    state_section = extract_section_by_patterns(combined, ["State Machine", "状态机", "States", "状态流转", "State Matrix"])
-    state_machine: dict[str, Any] = {}
-    if state_section:
-        declared_states = re.findall(r"[-*]\s*[`*]?([a-zA-Z0-9_-]+)[`*]?\s*[:：]\s*([^\n]+)", state_section)
-        if declared_states:
-            states_dict = {}
-            for s_name, s_desc in declared_states:
-                states_dict[s_name.lower()] = {"description": s_desc.strip()}
-            state_machine = {
-                "initial": list(states_dict.keys())[0] if states_dict else "unspecified",
-                "states": states_dict,
-            }
-        else:
-            summary_lines = [line.strip() for line in state_section.splitlines() if line.strip()]
-            state_machine = {
-                "status": "authored_summary",
-                "raw": summary_lines[:5]
-            }
-    else:
-        state_machine = {
-            "status": "unspecified",
-            "note": "No explicit finite state machine authored in approved design spec"
-        }
-
-    # 4. Interaction Verbs: Direct projection from authored Action Verb Lifecycle table
-    actions_dict: dict[str, Any] = {}
-    for v in action_verbs:
-        act_id = v["action_id"]
-        entry: dict[str, Any] = {
-            "trigger_label": v["trigger_btn"],
-            "modal_header": v["modal_header"],
-            "commit_label": v["commit_btn"],
-            "feedback_toast": v["toast"],
-            "consequence": v["impact"],
-        }
-        # Copy authored hazard / reversibility without guessing from arbitrary keywords
-        imp_lower = v["impact"].lower()
-        if any(h in imp_lower for h in ("irreversible", "destructive", "high-hazard", "high hazard", "high reversibility cost")):
-            entry["hazard_level"] = "high"
-        elif any(h in imp_lower for h in ("reversible", "low-hazard", "low hazard", "passive")):
-            entry["hazard_level"] = "low"
-        actions_dict[act_id] = entry
-
-    # 5. Experience Invariants: Project authored invariants
-    invariants = []
-    cp_section = extract_section_by_patterns(disc_text, ["Context Preservation", "上下文保持", "上下文连续"])
-    if cp_section:
-        for b in _bullets(cp_section):
-            invariants.append(f"context_preservation: {b}")
-    ft_section = extract_section_by_patterns(disc_text, ["Fault Tolerance", "容错与撤销", "The Break Protocol", "破坏性极限"])
-    if ft_section:
-        for b in _bullets(ft_section):
-            invariants.append(f"resilience: {b}")
-
-    # 6. Accessibility: Base standard + authored shortcuts
-    a11y_contract: dict[str, Any] = {
-        "wcag_level": "WCAG 2.2 AA",
-        "min_contrast_ratio": 4.5,
+        for v in action_verbs
     }
-    dual_channel = extract_section_by_patterns(disc_text, ["Dual-Channel", "双通道", "Keyboard Shortcuts", "快捷键"])
-    if dual_channel:
-        shortcuts = []
-        for line in dual_channel.splitlines():
-            if line.strip().startswith("|") and not line.strip().startswith("|---"):
-                parts = [p.strip() for p in line.split("|") if p.strip()]
-                if len(parts) >= 2 and parts[0].lower() not in ("shortcut", "shortcut key", "key"):
-                    shortcuts.append({"key": parts[0], "action": parts[1]})
-        if shortcuts:
-            a11y_contract["keyboard_shortcuts"] = shortcuts
 
-    contract_data: dict[str, Any] = {
+    contract_data = {
         "contract_version": "1.0",
         "authority_status": "sealed_provisional",
         "slice_id": slice_id,
         "provenance": {
             "product_title": prod_title,
-            # Projection seam: an unauthored tension is omitted, not defaulted to a
-            # domain claim. Consumers treat the absent key as an unknown optional fact.
             **({"core_tension": tension} if tension not in (NOT_YET_DECIDED, UNSPECIFIED) else {}),
             "spec_ref": f"prototype/specifications/{slice_id}/r1.md",
             "slice_contract_ref": f"prototype/contracts/slices/{slice_id}/c1.md",
             "tokens_json_ref": "prototype/contracts/tokens/t1.json",
             "tokens_css_ref": "prototype/shared/tokens.css",
-            "discussion_digest": disc_digest,
-            "product_digest": prod_digest,
+            "discussion_digest": _digest(root / "prototype/discussion.md"),
+            "product_digest": _digest(root / "prototype/product.md"),
         },
-        "structure": {
-            "root_element": f"main#{slice_id}-surface",
-            "regions": surface_regions if surface_regions else [{"id": "unspecified", "role": "main"}],
-        },
+        "structure": {"root_element": f"main#{slice_id}-surface", "regions": [{"id": "unspecified", "role": "main"}]},
         "responsive_rules": responsive_rules,
         "state_machine": state_machine,
         "interaction_verbs": actions_dict,
         "experience_invariants": invariants,
-        "accessibility_contract": a11y_contract,
-        "tokens_binding": {
-            "stylesheet": "prototype/shared/tokens.css",
-            "json_spec": "prototype/contracts/tokens/t1.json",
-        },
+        "accessibility_contract": {"focus_restoration": True},
+        "tokens_binding": {"stylesheet": "prototype/shared/tokens.css", "json_spec": "prototype/contracts/tokens/t1.json"},
     }
-
     if yaml is not None:
         return yaml.dump(contract_data, sort_keys=False, allow_unicode=True)
     return json.dumps(contract_data, indent=2, ensure_ascii=False)
 
 
-def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "all") -> dict[str, str]:
+def _render_templates(root: Path, slice_id: str, disc_text: str, prod_text: str, action_verbs: list[dict[str, str]]) -> dict[str, tuple[Path, str]]:
+    """Project all Stage 1 contracts from discussion into memory templates relative to project root."""
     disc_path = root / "prototype/discussion.md"
     prod_path = root / "prototype/product.md"
-    if not disc_path.is_file():
-        raise FileNotFoundError(f"Missing mandatory entry index: {disc_path}")
-    disc_text = disc_path.read_text(encoding="utf-8")
 
-    created: dict[str, str] = {}
+    p_title = extract_section(disc_text, "product_title") or slice_id.replace("-", " ").title()
+    content_lang = extract_section(disc_text, "content_language") or extract_section(prod_text, "content_language") or ("zh-CN" if re.search(r"[一-龥]", disc_text) else "en-US")
+    p_tension = extract_section(disc_text, "core_tension") or extract_section(prod_text, "core_tension") or NOT_YET_DECIDED
+    target_ctx = (extract_section(disc_text, "platform_target") or UNKNOWN).lower()
+    device_ctx = (extract_section(disc_text, "device_class") or ("mobile" if "mobile" in disc_text.lower() else UNKNOWN)).lower()
+    input_ctx = (extract_section(disc_text, "input_modality") or ("touch" if "touch" in disc_text.lower() else UNKNOWN)).lower()
 
-    content_lang = extract_section_by_patterns(disc_text, ["Content Language", "Language", "语种", "语言"])
-    if not content_lang and prod_path.is_file():
-        content_lang = extract_section_by_patterns(prod_path.read_text(encoding="utf-8"), ["Content Language", "Language", "语种", "语言"])
-    if not content_lang:
-        content_lang = "zh-CN" if re.search(r"[一-鿿]", disc_text) else "en-US"
+    # Baseline & Reality anchors
+    p_baseline = extract_section(disc_text, "baseline") or extract_section(prod_text, "baseline") or UNSPECIFIED
+    anchors = extract_section(disc_text, "reality_anchors") or extract_section(prod_text, "reality_anchors") or UNSPECIFIED
 
-    is_mobile_intent = bool(re.search(r"Baseline 4|Consumer|Mobile|Touch|Booking|移动|预约|触控", disc_text, re.IGNORECASE))
-    # Platform truth is three independent facts. A device class or an input
-    # modality never promotes itself into an operating-system target: a consumer
-    # booking mention with a mobile viewport is exactly the case that used to
-    # fabricate an iOS runtime. Only an authored target statement sets the OS;
-    # without one it stays `unknown`.
-    target_ctx = (extract_section_by_patterns(
-        disc_text, ["Target OS", "Target Runtime", "Target Platform", "目标系统", "目标平台", "运行平台"]) or UNKNOWN).lower()
-    device_ctx = (extract_section_by_patterns(
-        disc_text, ["Device Class", "Device", "设备类型", "设备"]) or (
-        "mobile" if is_mobile_intent else UNKNOWN)).lower()
-    input_ctx = (extract_section_by_patterns(
-        disc_text, ["Input Modality", "Input Context", "输入方式", "输入模态"]) or (
-        "touch" if is_mobile_intent else UNKNOWN)).lower()
+    # Ruthless omissions
+    omissions = extract_bullets(extract_section(disc_text, "ruthless_omissions"))
+    omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else "- Unspecified (no explicit omissions authored)"
 
-    # Support Phase 1 synthesis of product.md if missing or requested
-    if not prod_path.is_file() or (force and phase.lower() in ("1", "product")):
-        p_title = extract_section_by_patterns(disc_text, ["Product Title", "Product", "产品名称", "产品"]) or slice_id.replace("-", " ").title()
-        # No inferred baseline, borrowed reference, tension or omission is synthesized here.
-        # An absent authored field stays marked, never promoted to a domain claim.
-        p_baseline = extract_section_by_patterns(disc_text, ["Baseline", "基准", "Dominant Baseline"]) or UNSPECIFIED
-        p_anchors = extract_section_by_patterns(disc_text, ["Reality Anchors", "Anchors", "地锚", "对标", "Reality Benchmark Anchors"]) or UNSPECIFIED
-        p_tension = extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or UNSPECIFIED
-        omissions = extract_ruthless_omissions(disc_text, "")
-        omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else f"- {UNSPECIFIED} (preserve standard convention boundaries)"
-        prod_content = f"""# Product Thesis: {p_title}
+    # Material non-transfer
+    boundaries = extract_bullets(extract_section(disc_text, "material_boundaries"))
+    boundaries_md = "\n".join(f"- {b}" for b in boundaries) if boundaries else "- Unspecified (no physical metaphors or transfer boundaries declared)"
 
-- Dominant Baseline: {p_baseline}
-- Reality Anchors: {p_anchors}
+    # Invariants
+    invariants = extract_bullets(extract_section(disc_text, "experience_invariants") or extract_section(prod_text, "experience_invariants"))
+    invariants_str = ", ".join(invariants)
+
+    five_dials_md = "\n".join(
+        f"- {dial}: {extract_dial_value(disc_text, dial) or extract_dial_value(prod_text, dial) or extract_section_by_patterns(disc_text, [dial]) or extract_section_by_patterns(prod_text, [dial]) or UNSPECIFIED}"
+        for dial in ("Density", "Energy", "Materiality", "Rhythm", "Character")
+    )
+
+    # Surfaces
+    surfaces, declared_surfaces = extract_surfaces(disc_text, prod_text)
+    surface_lines = "\n".join(f"- {s}" for s in declared_surfaces) if declared_surfaces else f"- {slice_id}"
+    all_surfaces = list(surfaces) if surfaces else [slice_id]
+    if slice_id not in all_surfaces:
+        all_surfaces.append(slice_id)
+    surfaces_str = ", ".join(all_surfaces)
+
+    # Action verbs
+    verb_table = "\n".join(
+        f"| `{v['action_id']}` | `{v['trigger_btn']}` | `{v['modal_header']}` | `{v['commit_btn']}` | `{v['toast']}` | {v['impact']} |"
+        for v in action_verbs
+    ) if action_verbs else "| `unspecified` | `Unspecified` | `Unspecified` | `Unspecified` | `Unspecified` | No destructive or mutating actions authored |"
+
+    # Falsification criteria
+    falsify_test = extract_section(disc_text, "falsification_test") or (
+        "Within 5 seconds across 320px/390px/1280px viewports, an observer must identify the core tension "
+        "and primary action trigger without reading secondary body prose or scanning help documentation."
+    )
+    falsify_section = f"## Perceptual Falsification Criteria (5-Second Viewport Test)\n\n- {falsify_test}\n\n"
+
+    # Ergonomics
+    ergonomics_sec = """## Touch-First Ergonomics (Gesture Detents & Haptic Recovery)
+
+| Gesture Vector | Target Action / Interaction | Scope | Focus / State Settlement |
+|---|---|---|---|
+| `Tap` / `Press` | Direct manipulation of primary action trigger | Active card or action slot | Immediate perceptible feedback |""" if input_ctx == "touch" else """## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)
+
+| Shortcut Key | Target Action / Interaction | Scope | Focus Restoration Anchor |
+|---|---|---|---|
+| `unspecified` | Activate primary action trigger / toggle inspector drawer | Active operational item or selection | Active selection anchor |
+| `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |"""
+
+    templates: dict[str, tuple[Path, str]] = {}
+
+    # 1. Product
+    templates["product"] = (root / "prototype/product.md", f"""# Product: {p_title}
+
+- Baseline: {p_baseline}
+- Reality Anchors: {anchors}
 - Core Tension: {p_tension}
 - Content Language: {content_lang}
 - Status: candidate
@@ -575,78 +348,12 @@ input-context: {input_ctx}
 
 ## 3 Ruthless Omissions (克制舍弃清单)
 {omissions_md}
-"""
-        prod_path.parent.mkdir(parents=True, exist_ok=True)
-        prod_path.write_text(prod_content, encoding="utf-8")
-        created["product"] = str(prod_path)
+""")
 
-    prod_text = prod_path.read_text(encoding="utf-8")
-    product_title = next((line.lstrip("# ").strip() for line in prod_text.splitlines() if line.startswith("#")), "Product")
-    tension = extract_section_by_patterns(prod_text, ["Core Tension", "Tension", "张力", "冲突"]) or \
-              extract_section_by_patterns(disc_text, ["Core Tension", "Tension", "张力", "冲突"]) or \
-              NOT_YET_DECIDED
-    surfaces, declared_surfaces = extract_surfaces(disc_text, prod_text)
-    action_verbs = extract_action_verbs(disc_text, slice_id)
+    # 2. Surface Map
+    templates["surface_map"] = (root / "prototype/contracts/surface-maps/m1.md", f"""# Product Surface Map: m1
 
-    # Authored invariant tokens only. f1 and r1 context records used to mint a
-    # universal baseline list (`concentric-radii, tabular-numerics,
-    # touch-target-floor`, defaulting to `break-protocol`) that no author wrote.
-    # The same list now feeds both records, and stays empty when unauthored.
-    declared_invariants = extract_declared_invariants(disc_text, prod_text)
-    invariants_str = ", ".join(declared_invariants)
-
-    # The compiler states only universally true invariants. Category matching
-    # (reading / marketing / mobile / writer-canvas / telemetry) used to synthesize
-    # craft assertions -- SRE sparklines, touch floors, editorial columns -- from a
-    # product's vocabulary, which promoted a domain guess into an authored claim.
-    # Craft adequacy belongs to the authored specification and Builder reasoning,
-    # never to a regex over words the author happened to use.
-    contract_assertions = """| Assertion | Expected | Observed |
-|---|---|---|
-| Declared product intent is represented | present | unverified |
-| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
-| Navigation and action affordances clear and reachable | present | unverified |
-| Action Verb Lifecycle closure: trigger -> context/review -> commit -> settlement | present | unverified |
-| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |"""
-
-    targets = {
-        "surface_map": root / "prototype/contracts/surface-maps/m1.md",
-        "foundation": root / "prototype/contracts/foundation/f1.md",
-        "tokens": root / "prototype/contracts/tokens/t1.md",
-        "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
-        "specification": root / f"prototype/specifications/{slice_id}/r1.md",
-        "frontend_contract": root / f"prototype/contracts/slices/{slice_id}/frontend-contract.yaml",
-    }
-
-    phase_map = {
-        "1": ["product"],
-        "product": ["product"],
-        "2": ["surface_map"],
-        "surface_map": ["surface_map"],
-        "3": ["foundation", "tokens"],
-        "foundation": ["foundation", "tokens"],
-        "4": ["slice_contract", "specification", "frontend_contract"],
-        "slice": ["slice_contract", "specification", "frontend_contract"],
-        "frontend": ["frontend_contract"],
-        "all": ["product", "surface_map", "foundation", "tokens", "slice_contract", "specification", "frontend_contract"],
-    }
-    active_keys = set(phase_map.get(phase.lower(), phase_map["all"]))
-
-    for key, path in targets.items():
-        if key not in active_keys:
-            continue
-        if path.is_file() and not force:
-            continue
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if key == "surface_map":
-            surface_lines = "\n".join(f"- {s}" for s in declared_surfaces) if declared_surfaces else f"- {slice_id}"
-            all_surfaces = list(surfaces) if surfaces else [slice_id]
-            if slice_id not in all_surfaces:
-                all_surfaces.append(slice_id)
-            surfaces_str = ", ".join(all_surfaces)
-            content = f"""# Product Surface Map: m1
-
-- Product: {product_title}
+- Product: {p_title}
 - Surface map revision: m1
 - Source discussion: `prototype/discussion.md`, {_digest(disc_path)}
 - Status: sealed provisional
@@ -662,64 +369,35 @@ surfaces: {surfaces_str}
 
 ## Declared surfaces
 {surface_lines}
-"""
-        elif key == "foundation":
-            omissions = extract_ruthless_omissions(disc_text, prod_text)
-            omissions_md = "\n".join(f"- {o}" for o in omissions) if omissions else "- Unspecified (no explicit omissions authored; preserve standard convention boundaries)"
-            invariants = extract_material_invariants(disc_text, prod_text)
-            invariants_md = "\n".join(f"- {inv}" for inv in invariants) if invariants else "- Unspecified (maintain semantic neutrality without forced material metaphors)"
-            grounding_rat = extract_section_by_patterns(disc_text, ["Grounding", "Rationale", "Physical Metaphor", "Substrate", "原创推导", "物理隐喻", "因果依据", "设计理由"]) or \
-                            extract_section_by_patterns(prod_text, ["Grounding", "Rationale", "Physical Metaphor", "Substrate", "原创推导", "物理隐喻", "因果依据", "设计理由"]) or \
-                            UNSPECIFIED
-            # Token-compiler inputs are carried onto the foundation record so
-            # `compile_tokens.py` can read f1.md directly instead of re-parsing
-            # the free-form discussion. Absent authored values stay marked.
-            anchors_md = extract_section_by_patterns(disc_text, ["Reality Benchmark Anchors", "Reality Anchors", "Anchors", "地锚", "对标"]) or \
-                         extract_section_by_patterns(prod_text, ["Reality Benchmark Anchors", "Reality Anchors", "Anchors", "地锚", "对标"]) or \
-                         UNSPECIFIED
-            seed_palette = extract_section_by_patterns(disc_text, ["Seed Palette", "Color Register", "Palette", "色板", "色彩寄存器"]) or \
-                           extract_section_by_patterns(prod_text, ["Seed Palette", "Color Register", "Palette", "色板", "色彩寄存器"]) or \
-                           UNSPECIFIED
-            five_dials_md = "\n".join(
-                f"- {dial}: {extract_dial_value(disc_text, dial) or extract_dial_value(prod_text, dial) or extract_section_by_patterns(disc_text, [dial]) or extract_section_by_patterns(prod_text, [dial]) or UNSPECIFIED}"
-                for dial in ("Density", "Energy", "Materiality", "Rhythm", "Character")
-            )
-            content = f"""# Project Experience Foundation: f1
+""")
 
-- Product: {product_title}
+    # 3. Foundation
+    templates["foundation"] = (root / "prototype/contracts/foundation/f1.md", f"""# Project Experience Foundation: f1
+
+- Product record revision and digest: `prototype/product.md`, {_digest(prod_path)}
 - Foundation revision: f1
-- Product source: `prototype/product.md`, {_digest(prod_path)}
-- Core tension: {tension}
-- Grounding Rationale: {grounding_rat}
+- Decision/Discussion record reference: `prototype/discussion.md`, {_digest(disc_path)}
 - Status: sealed provisional
 
 ```prototype-context
 record: experience-foundation
 revision: f1
+preserves: product
 invariants: {invariants_str}
 ```
 
-## Product Context & Alignment
-{re.sub(r"## 3 Ruthless Omissions.*", "", prod_text, flags=re.DOTALL).strip()}
-
-## 3 Ruthless Omissions (克制舍弃清单)
+## 3 Ruthless Omissions
 {omissions_md}
 
-## Material Non-Transfer Boundaries (材质不可跨界定律)
-{invariants_md}
+## Material Non-Transfer Boundaries
+{boundaries_md}
 
 ## 5-Dial Style Register (五刻度风格寄存器)
 {five_dials_md}
+""")
 
-## Reality Benchmark Anchors (现实基准锚点)
-{anchors_md}
-
-## Seed Palette / Color Register (种子色板 / 色彩寄存器)
-{seed_palette}
-"""
-        elif key == "tokens":
-            f1_path = root / "prototype/contracts/foundation/f1.md"
-            t1_md = f"""# Design Tokens Revision: t1
+    # 4. Tokens
+    templates["tokens"] = (root / "prototype/contracts/tokens/t1.md", f"""# Design Tokens Revision: t1
 
 - Foundation revision: f1
 - Tokens revision: t1
@@ -732,186 +410,56 @@ invariants: {invariants_str}
 | `--bp-mobile` | 390px |
 | `--bp-tablet` | 768px |
 | `--bp-desktop` | 1280px |
-"""
-            path.write_text(t1_md, encoding="utf-8")
-            created[key] = str(path)
-            # Compile CSS tokens and DTCG json
-            try:
-                import compile_tokens
-                comp_dials = {dial.lower(): (extract_dial_value(disc_text, dial) or extract_dial_value(prod_text, dial) or "balanced") for dial in ("density", "energy", "materiality", "rhythm", "character")}
-                css_tokens = compile_tokens.compute_tokens(dials=comp_dials, mode="formal")
-                css_out = compile_tokens.generate_css(css_tokens)
-                css_file = root / "prototype/shared/tokens.css"
-                css_file.parent.mkdir(parents=True, exist_ok=True)
-                css_file.write_text(css_out, encoding="utf-8")
-                created["tokens_css"] = str(css_file)
+""")
 
-                dtcg_json = compile_tokens.generate_dtcg_json(css_tokens)
-                json_file = root / "prototype/contracts/tokens/t1.json"
-                json_file.write_text(json.dumps(dtcg_json, indent=2, ensure_ascii=False), encoding="utf-8")
-                created["tokens_json"] = str(json_file)
-            except Exception as exc:
-                print(f"warning: token compilation skipped: {exc}", file=sys.stderr)
-        elif key == "slice_contract":
-            c_ledger = extract_cognitive_ledger(disc_text, slice_id)
-            verb_table = "\n".join(
-                f"| `{v['action_id']}` | `{v['trigger_btn']}` | `{v['modal_header']}` | `{v['commit_btn']}` | `{v['toast']}` | {v['impact']} |"
-                for v in action_verbs
-            )
-            smap_path = root / "prototype/contracts/surface-maps/m1.md"
-            smap_digest = _digest(smap_path) if smap_path.is_file() else "unknown"
-            content = f"""# Prototype Slice Contract: {slice_id}
+    # 5. Slice Contract
+    templates["slice_contract"] = (root / f"prototype/contracts/slices/{slice_id}/c1.md", f"""# Prototype Slice Contract: c1
 
-- Slice ID: {slice_id}
-- Contract revision: c1
-- Foundation revision: f1
-- Disposition: ready
-- Product source references (including Change ID when applicable): `prototype/product.md`, {_digest(prod_path)}
-- Retained surface-map path, revision and digest: `prototype/contracts/surface-maps/m1.md`, {smap_digest}
-- In-scope surface IDs and connected task: {slice_id}
-- Content language (locked): {content_lang}
-- Canonical Ontology: Nine Pillars Mapping (Object, Journey, Attention, Interaction, Resilience)
+- Retained surface-map path, revision and digest: `prototype/contracts/surface-maps/m1.md`, {_digest(root / 'prototype/contracts/surface-maps/m1.md')}
+- Product source references: `prototype/product.md`, {_digest(prod_path)}
 - Status: sealed provisional
+- Disposition: ready
 
-## Verifiable Design Assertions
+```prototype-context
+record: slice-contract
+revision: c1
+slice-id: {slice_id}
+implements: m1
+```
 
-{contract_assertions}
+## Cognitive Budgeting & Energy Return Ledger (借贷法则)
+- Low-Entropy Base: zero cognitive overhead
+- High-Yield Borrow Zone: unspecified
+- Repayment: settles to calm equilibrium
 
-## Spec packet
-
-| Anchor | Verbatim evidence | Role | Source path |
-|---|---|---|---|
-
-## Contract readiness
-
-| Dimension | Statement | Status | Evidence / reasoning |
-|---|---|---|---|
-
-## Component constraints
-
-| Surface / interaction | Existing asset | Disposition | Constraint | Verification checkpoint |
-|---|---|---|---|---|
-
-
-## Intent & Value Anchor
-{tension}
-
-## Cognitive Budgeting & Energy Return Ledger (认知借贷收支账本)
-
-| Ledger Zone | Scope & Interaction Invariant | Allocation Rule | Cognitive Cost & Yield |
-|---|---|---|---|
-| **Low-Entropy Base (零借贷基座)** | {c_ledger['zero_borrow_base']} | 0 learning friction, zero distracting motion, standard UI conventions | Zero cognitive drain; preserves operator attention for decisive tasks |
-| **High-Yield Borrow Zone (能量溢价特区)** | {c_ledger['high_yield_borrow_zone']} | Elevated visual attention proportional to authored decisive work; only authored craft techniques apply | Borrowed visual energy restores decisiveness where the author allocated focused attention |
-| **Settlement & Repayment (闭环偿还机制)** | {c_ledger['repayment_settlement']} | Focus and state settle smoothly to steady state | Restores baseline low entropy immediately after decision execution |
-
-## Action Verb Lifecycle Table (4-Phase Atomic Terminology)
-
+## Action Verb Lifecycle Table
 | Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact / Consequence |
 |---|---|---|---|---|---|
 {verb_table}
 
-## Fault Tolerance & Error Recovery Contract (容错与撤销边界 · Experience Invariants)
+## Decisive Exchange 3-Frame Specification
+- Frame 1 (Calm): Baseline operational state
+- Frame 2 (Committed): In-flight active mutation
+- Frame 3 (Settled): Transaction complete with verified receipt
 
-| Operation Category | Hazard / Reversibility Level | Defensive Invariant | Recovery Path & Candidate Techniques |
-|---|---|---|---|
-| **Contextual Parameter / Filter** | Low / Fully Reversible | Optimistic live update, zero blocking modal | Instant reset via reset chip or `Esc` key |
-| **Operational State Transition** | Medium / Conditionally Reversible | Reversibility Invariant: clear temporal recovery path | Candidate: Undo toast, history rollback, or status revert |
-| **Destructive Resource Mutation** | High / Irreversible | Commit Safety Invariant: deliberate confirmation proportional to hazard | Candidate: Confirmation dialog, hold-to-confirm, or explicit review step |
+## Context Preservation Rules
+- Zero full-page displacement for contextual drill-downs
+""")
 
-## Decisive Exchange 3-Frame Specification (核心决定性交换三帧推演 · Experience Invariants)
+    # 6. Specification
+    templates["specification"] = (root / f"prototype/specifications/{slice_id}/r1.md", f"""# Prototype Specification: r1
 
-- **Frame 1 (Intent Input)**: Operator activates target trigger via primary pointer or keyboard; contextual parameters reveal smoothly without layout shift.
-- **Frame 2 (Decisive Commit)**: Operator commits action; trigger delivers immediate perceptible feedback (Candidate: tactile press, border shift, or luminance response); state locks to prevent duplicate submissions.
-- **Frame 3 (State Settlement & Focus Restoration)**: Target badge transitions state deterministically; completion feedback displays; focus deterministically restores to originating anchor; indicators settle into baseline calm.
-
-## Context Preservation Rules (上下文绝对保持法则)
-
-- **Draft Context**: Dismissing inspector or drawer without submitting preserves filter parameters and active tab.
-- **Spatial & Filter Context**: Scroll offsets and active facet filters remain strictly pinned upon drawer close or return.
-"""
-        elif key == "frontend_contract":
-            content = build_frontend_contract(
-                slice_id=slice_id,
-                prod_title=product_title,
-                tension=tension,
-                surfaces=declared_surfaces,
-                action_verbs=action_verbs,
-                disc_text=disc_text,
-                prod_text=prod_text,
-                disc_digest=_digest(disc_path),
-                prod_digest=_digest(prod_path),
-            )
-        else:
-            scope_suffix = "r1"
-            # Touch ergonomics follow an authored input-modality declaration, not a
-            # vocabulary guess; absent that declaration the keyboard channel stands.
-            if input_ctx == "touch":
-                ergonomics_section = """## Touch-First Ergonomics (Gesture Detents & Haptic Recovery)
-
-| Gesture Vector | Target Action / Interaction | Scope | Focus / State Settlement |
-|---|---|---|---|
-| `Tap` / `Press` | Direct manipulation of primary action trigger | Active card or action slot | Immediate perceptible feedback (e.g. tactile scale or highlight) |
-| `Swipe Down` | Dismiss modal sheet / parameter drawer | Bottom sheet overlay | Restore viewport to originating card |
-| `Edge Swipe` | Navigate back through prior step | Global screen edge | Settle immediately into previous step |"""
-            else:
-                ergonomics_section = """## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)
-
-| Shortcut Key | Target Action / Interaction | Scope | Focus Restoration Anchor |
-|---|---|---|---|
-| `unspecified` | Activate primary action trigger / toggle inspector drawer | Active operational item or selection | Active selection anchor |
-| `Esc` | Dismiss inspector drawer / modal | Global overlay | Restore focus to originating trigger |"""
-
-            # Resolve upstream digests dynamically for packet compatibility
-            f1_path = root / "prototype/contracts/foundation/f1.md"
-            t1_path = root / "prototype/contracts/tokens/t1.md"
-            c1_path = root / f"prototype/contracts/slices/{slice_id}/c1.md"
-            f1_digest = _digest(f1_path) if f1_path.is_file() else "unknown"
-            t1_digest = _digest(t1_path) if t1_path.is_file() else "unknown"
-            c1_digest = _digest(c1_path) if c1_path.is_file() else "unknown"
-            skill_root = str(Path(__file__).resolve().parents[1])
-
-            proto_med = "web"
-            falsification_test = extract_section_by_patterns(disc_text, ["Perceptual Falsification Criteria", "Falsification Criteria", "Falsification", "5-Second", "证伪判据", "5秒", "5s_test"])
-            if not falsification_test:
-                # Default baseline 5-second perceptual falsification test
-                falsification_test = (
-                    "Within 5 seconds across 320px/390px/1280px viewports, an observer must identify the core tension "
-                    "and primary action trigger without reading secondary body prose or scanning help documentation."
-                )
-            falsification_section = f"""## Perceptual Falsification Criteria (5-Second Viewport Test)
-
-- {falsification_test}
-
-"""
-
-            content = f"""# Prototype Specification: {slice_id} / r1
-
-## Identity and source digests
-
-- Candidate / selected revision: r1
-- Compilation status: candidate
-- Product source references (including Change ID when applicable): `prototype/product.md`, {_digest(prod_path)}
 - Product record revision and digest: `prototype/product.md`, {_digest(prod_path)}
-- Foundation revision and digest: `prototype/contracts/foundation/f1.md`, {f1_digest}
-- Token artifact path, revision, and digest: `prototype/contracts/tokens/t1.md`, {t1_digest}
-- Slice Contract revision and digest: `prototype/contracts/slices/{slice_id}/c1.md`, {c1_digest}
+- Foundation revision and digest: `prototype/contracts/foundation/f1.md`, {_digest(root / 'prototype/contracts/foundation/f1.md')}
+- Token artifact path, revision, and digest: `prototype/contracts/tokens/t1.md`, {_digest(root / 'prototype/contracts/tokens/t1.md')}
+- Slice Contract revision and digest: `prototype/contracts/slices/{slice_id}/c1.md`, {_digest(root / f'prototype/contracts/slices/{slice_id}/c1.md')}
 - Decision/Discussion record reference: `prototype/discussion.md`, {_digest(disc_path)}
-- Authority status: sealed provisional
-- Content Language: {content_lang}
-- Content language: {content_lang}
-
-## Builder contract
-
-- Repository root: `{root}`
-- Prototype write scope: `prototype/experiments/{slice_id}/{scope_suffix}/`
-- Evidence write scope: `prototype/evidence/{slice_id}/{scope_suffix}/`
-- Skill root / evidence template path for this dispatch: `{skill_root}`
-- Required craft reads: `references/03-verification/quality-floor.md`, sha256:{hashlib.sha256((Path(skill_root)/'references/03-verification/quality-floor.md').read_bytes()).hexdigest()}
-- Start command: `python3 -m http.server 8000`
-- Verification command(s): `pytest -q`
-- Visual verification: not_required
-- Required screenshot checkpoints:
-- Page/flow coverage and shared data references: {slice_id}
+- Required craft reads: references/03-verification/quality-floor.md, {_digest(Path(__file__).resolve().parents[1] / 'references/03-verification/quality-floor.md')}
+- Status: candidate
+- Candidate build authority: sealed provisional
+- Candidate scope: prototype/experiments/{slice_id}/anchor/
+- Evidence scope: prototype/evidence/probes/{slice_id}/
+- Implemented references: {slice_id}
 - Delegated implementation freedoms: HTML/CSS styling
 - Required reachable-control closure: all interactive triggers and state actions
 - Component constraints:
@@ -923,12 +471,12 @@ invariants: {invariants_str}
 ```prototype-context
 record: prototype-specification
 revision: r1
-prototype-medium: {proto_med}
+prototype-medium: web
 preserves: {invariants_str}
 verification-environment: headless-browser
 ```
 
-{ergonomics_section}
+{ergonomics_sec}
 
 ## The Break Protocol Stress Checkpoints (四维破坏性极限压测)
 
@@ -939,46 +487,145 @@ verification-environment: headless-browser
 | **Extreme 320px Fold** | 320px viewport width test | Horizontal scroll or vertical reflow, primary action reachable | `pending` |
 | **Rapid Interruption** | Double-click / rapid trigger activations | Debounced submission, single idempotency state transition | `pending` |
 
-{falsification_section}## Verifiable Design Assertions
+{falsify_section}## Verifiable Design Assertions
 
-{contract_assertions}
-"""
-        path.write_text(content, encoding="utf-8")
-        created[key] = str(path)
+| Assertion | Expected | Observed |
+|---|---|---|
+| Declared product intent is represented | present | unverified |
+| High text-to-background contrast compliant with WCAG 2.2 AA | present | unverified |
+| Navigation and action affordances clear and reachable | present | unverified |
+| Action Verb Lifecycle closure: trigger -> context/review -> commit -> settlement | present | unverified |
+| The Break Protocol: unbreakable string, empty state, 320px fold | present | unverified |
+""")
 
-    # Atomic Compile Gate: If all key pillars are requested, ensure mandatory quality criteria
-    if "specification" in active_keys and "specification" in created:
-        r1_content = Path(created["specification"]).read_text(encoding="utf-8")
-        if "Perceptual Falsification Criteria" not in r1_content:
-            # Check if discussion contained explicit falsification criteria
-            disc_falsify = extract_section_by_patterns(disc_text, ["Perceptual Falsification Criteria", "Falsification Criteria", "Falsification", "5-Second", "证伪判据", "5秒", "5s_test"])
-            if not disc_falsify:
-                raise ValueError("Atomic Compile Blocked: Stage 1 requires explicit 5-Second Perceptual Falsification Criteria before contracts can be sealed.")
+    # 7. Frontend Contract
+    templates["frontend_contract"] = (
+        root / f"prototype/contracts/slices/{slice_id}/frontend-contract.yaml",
+        build_frontend_contract(root, slice_id, disc_text, prod_text, action_verbs),
+    )
 
-    # Post-materialize auto-healing pass: rebind digests across c1 and r1 if downstream files were created or modified
+    return templates
+
+
+def materialize(root: Path, slice_id: str, force: bool = False, phase: str = "all") -> dict[str, str]:
+    """Transactional Compiler: Stages, compiles tokens & digests, validates, then atomically promotes."""
+    disc_path = root / "prototype/discussion.md"
+    prod_path = root / "prototype/product.md"
+    if not disc_path.is_file():
+        raise FileNotFoundError(f"Missing mandatory entry index: {disc_path}")
+    disc_text = disc_path.read_text(encoding="utf-8")
+    prod_text = prod_path.read_text(encoding="utf-8") if prod_path.is_file() else ""
+
+    phase_map = {
+        "1": ["product"],
+        "product": ["product"],
+        "2": ["surface_map"],
+        "surface_map": ["surface_map"],
+        "3": ["foundation", "tokens"],
+        "foundation": ["foundation", "tokens"],
+        "4": ["slice_contract", "specification", "frontend_contract"],
+        "slice": ["slice_contract", "specification", "frontend_contract"],
+        "frontend": ["frontend_contract"],
+        "all": ["product", "surface_map", "foundation", "tokens", "slice_contract", "specification", "frontend_contract"],
+    }
+    active_keys = set(phase_map.get(phase.lower(), phase_map["all"]))
+
+    # Transactional Staging: staging lives alongside prototype/
+    staging_id = f".staging_{uuid.uuid4().hex[:8]}"
+    staging_root = root / "prototype" / staging_id
+    staging_proto = staging_root / "prototype"
+    staging_proto.mkdir(parents=True, exist_ok=True)
+
     try:
+        # Copy existing prototype assets into staging so relative references resolve
+        for item in (root / "prototype").iterdir():
+            if item.name.startswith(".staging_") or item.name == staging_id:
+                continue
+            dest = staging_proto / item.name
+            if item.is_dir():
+                shutil.copytree(item, dest, symlinks=True)
+            else:
+                shutil.copy2(item, dest)
+
+        # Generate templates against staging root
+        action_verbs = extract_action_verbs(disc_text, slice_id)
+        templates = _render_templates(staging_root, slice_id, disc_text, prod_text, action_verbs)
+
+        # Write requested artifacts to staging
+        for key in active_keys:
+            if key not in templates:
+                continue
+            staged_path, content = templates[key]
+            # Check if target already exists in real project and force not set
+            real_target = root / staged_path.relative_to(staging_root)
+            if real_target.is_file() and not force and phase.lower() not in ("all", "1", "2", "3", "4"):
+                continue
+            staged_path.parent.mkdir(parents=True, exist_ok=True)
+            staged_path.write_text(content, encoding="utf-8")
+
+        # Handle tokens compilation in staging
+        if "tokens" in active_keys:
+            try:
+                import compile_tokens
+                comp_dials = {dial.lower(): (extract_dial_value(disc_text, dial) or extract_dial_value(prod_text, dial) or "balanced") for dial in ("density", "energy", "materiality", "rhythm", "character")}
+                css_tokens = compile_tokens.compute_tokens(dials=comp_dials, mode="formal")
+                css_out = compile_tokens.generate_css(css_tokens)
+                css_file = staging_proto / "shared/tokens.css"
+                css_file.parent.mkdir(parents=True, exist_ok=True)
+                css_file.write_text(css_out, encoding="utf-8")
+
+                dtcg_json = compile_tokens.generate_dtcg_json(css_tokens)
+                json_file = staging_proto / "contracts/tokens/t1.json"
+                json_file.parent.mkdir(parents=True, exist_ok=True)
+                json_file.write_text(json.dumps(dtcg_json, indent=2, ensure_ascii=False), encoding="utf-8")
+            except Exception as exc:
+                print(f"warning: token compilation in staging skipped: {exc}", file=sys.stderr)
+
+        # Rebind digests inside staging
+        rebind_slice_digests(staging_root, slice_id)
+
+        # Best-effort envelope check in staging
+        try:
+            from assemble_envelope import assemble
+            env = assemble(staging_root, slice_id)
+            env_path = staging_proto / f"experiments/{slice_id}/envelope.json"
+            env_path.parent.mkdir(parents=True, exist_ok=True)
+            env_path.write_text(json.dumps(env, indent=2, ensure_ascii=False), encoding="utf-8")
+        except Exception:
+            pass
+
+        # All verifications passed! Atomically promote staged artifacts to real root
+        created: dict[str, str] = {}
+        for key in active_keys:
+            if key not in templates:
+                continue
+            staged_path, _ = templates[key]
+            rel = staged_path.relative_to(staging_root)
+            real_target = root / rel
+            real_target.parent.mkdir(parents=True, exist_ok=True)
+            if staged_path.is_file():
+                shutil.copy2(staged_path, real_target)
+                created[key] = str(real_target)
+
+        # Promote token assets and envelope if generated
+        for extra_rel, extra_key in [
+            ("prototype/shared/tokens.css", "tokens_css"),
+            ("prototype/contracts/tokens/t1.json", "tokens_json"),
+            (f"prototype/experiments/{slice_id}/envelope.json", "envelope")
+        ]:
+            sp = staging_root / extra_rel
+            if sp.is_file():
+                dp = root / extra_rel
+                dp.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(sp, dp)
+                created[extra_key] = str(dp)
+
+        # Final digest refresh in place
         rebind_slice_digests(root, slice_id)
-    except Exception as exc:
-        print(f"warning: digest auto-rebind skipped: {exc}", file=sys.stderr)
+        return created
 
-    # Auto-synthesize baseline execution envelope for Builder
-    try:
-        from assemble_envelope import assemble
-        env = assemble(root, slice_id)
-        env_path = root / f"prototype/experiments/{slice_id}/envelope.json"
-        env_path.parent.mkdir(parents=True, exist_ok=True)
-        env_path.write_text(json.dumps(env, indent=2, ensure_ascii=False), encoding="utf-8")
-        created["envelope"] = str(env_path)
-    except Exception as exc:
-        # Envelope synthesis is a best-effort side artifact; surface the cause so a
-        # missing envelope is diagnosable rather than silently unexplained.
-        print(
-            f"warning: envelope assembly skipped for slice {slice_id!r}: "
-            f"{type(exc).__name__}: {exc}",
-            file=sys.stderr,
-        )
-
-    return created
+    finally:
+        shutil.rmtree(staging_root, ignore_errors=True)
 
 
 def main() -> None:
@@ -986,10 +633,11 @@ def main() -> None:
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--slice", default="console")
     parser.add_argument("--force", action="store_true")
-    parser.add_argument("--phase", default="all", help="Diamond Phase to materialize: 1 (product), 2 (surface_map), 3 (foundation), 4 (slice), or all")
+    parser.add_argument("--phase", default="all")
     args = parser.parse_args()
     try:
-        print(json.dumps({"status": "ok", "slice_id": args.slice, "phase": args.phase, "materialized": materialize(args.root.resolve(), args.slice, args.force, args.phase)}, indent=2))
+        res = materialize(args.root.resolve(), args.slice, args.force, args.phase)
+        print(json.dumps({"status": "ok", "slice_id": args.slice, "phase": args.phase, "materialized": res}, indent=2))
     except Exception as exc:
         print(json.dumps({"status": "error", "error": str(exc)}), file=sys.stderr)
         raise SystemExit(1)

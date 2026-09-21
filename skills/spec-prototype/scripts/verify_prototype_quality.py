@@ -121,8 +121,12 @@ def _contract_items(path: Path | None) -> list[str]:
 
             if in_actions:
                 act_id = cells[0].strip()
+                if act_id.lower() in ("unspecified", "none", "n/a") or act_id.startswith("explore-"):
+                    continue
                 trig_lbl = cells[1].strip() if len(cells) > 1 else ""
-                trigger_tuple = tuple(s for s in (act_id, trig_lbl) if s and s not in ("-", "---", "N/A", "Action ID", "Trigger Button Label"))
+                if "[hypothesis]" in trig_lbl.lower():
+                    continue
+                trigger_tuple = tuple(s for s in (act_id, trig_lbl) if s and s not in ("-", "---", "N/A", "Action ID", "Trigger Button Label", "unspecified", "Unspecified"))
                 if trigger_tuple:
                     items.append(trigger_tuple)
 
@@ -131,8 +135,10 @@ def _contract_items(path: Path | None) -> list[str]:
                 cols = action_columns or _action_column_map(cells)
                 commit_lbl = _action_cell(cells, cols, "commit_btn")
                 toast_lbl = _action_cell(cells, cols, "feedback_style")
+                if commit_lbl.lower() == "acknowledge" or "exploration settled" in toast_lbl.lower():
+                    continue
 
-                feedback_tuple = tuple(s for s in (commit_lbl, toast_lbl) if s and s not in ("-", "---", "N/A", "Commit Action Button", "Completion Feedback Toast", "Feedback Style", "Feedback Style (In-situ / Toast)"))
+                feedback_tuple = tuple(s for s in (commit_lbl, toast_lbl) if s and s not in ("-", "---", "N/A", "Commit Action Button", "Completion Feedback Toast", "Feedback Style", "Feedback Style (In-situ / Toast)", "unspecified", "Unspecified"))
                 if feedback_tuple:
                     items.append(feedback_tuple)
             elif not in_assertions and not in_shortcuts and not in_ledger:
@@ -372,24 +378,27 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 break
 
     # Cognitive Budgeting & Energy Return Ledger (借贷法则门禁):
-    # 1. Base UI must remain zero-friction (zero cognitive overhead, no rogue infinite animations)
-    # 2. Dynamic visual energy is reserved for high-yield zones; non-high-yield areas must settle back
+    # 1. Applicability-driven: triggers only when contract explicitly declares non-placeholder borrow zones.
+    # 2. Exempts legitimate transient loading states (aria-busy, role="progressbar", spinner).
+    # 3. Dynamic visual energy is reserved for high-yield zones; non-high-yield areas must settle back.
     if contract_path and Path(contract_path).is_file():
         contract_text = Path(contract_path).read_text(encoding="utf-8")
-        if "Cognitive Budgeting" in contract_text or "借贷法则" in contract_text or "Energy Return Ledger" in contract_text:
+        has_ledger_decl = bool(re.search(r"(?:Cognitive Budgeting|借贷法则|Energy Return Ledger)", contract_text, re.IGNORECASE))
+        has_concrete_ledger = bool(re.search(r"(?:high_yield_borrow_zone|High-Yield|Borrow Zone|借贷区)[^\n]*[:=]\s*(?![`*_]*(?:unspecified|none|n/a|not declared)\b)[^\n]+", contract_text, re.IGNORECASE))
+        if has_ledger_decl and has_concrete_ledger:
             # Check for unauthorized rogue infinite animations in the base UI
             has_infinite_anim = bool(re.search(r"animation\s*:\s*[^;}]*\binfinite\b", source, re.IGNORECASE))
             if has_infinite_anim:
-                # Infinite animations are only permitted if explicitly tagged within high-yield or pulse indicators
-                has_high_yield_container = bool(re.search(
-                    r'(?:class|id|data-zone)=["\'][^"\']*\b(?:high-yield|pulse|heartbeat|beacon|live-indicator|radar)\b[^"\']*["\']',
+                # Infinite animations are permitted for high-yield containers, live indicators, or standard accessibility loading states
+                is_authorized_animation = bool(re.search(
+                    r'(?:class|id|data-zone)=["\'][^"\']*\b(?:high-yield|pulse|heartbeat|beacon|live-indicator|radar|spinner|loading|loader|progress)\b[^"\']*["\']|aria-busy=["\']true["\']|role=["\']progressbar["\']',
                     source,
                     re.IGNORECASE
                 ))
-                if not has_high_yield_container:
+                if not is_authorized_animation:
                     failures.append(
                         "cognitive-budget assertion: Energy leak in zero-borrow base UI. "
-                        "Continuous infinite animations are forbidden outside explicit high-yield/pulse containers; "
+                        "Continuous infinite animations are forbidden outside explicit high-yield/pulse containers or loading states; "
                         "routine UI must settle to baseline calm equilibrium."
                     )
 
