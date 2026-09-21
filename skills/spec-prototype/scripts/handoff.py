@@ -67,10 +67,11 @@ def within(root: Path, value: str) -> Path:
     return path
 
 
-def field(body: str, label: str) -> str:
+def field(body: str, label: str, source_hint: str = "") -> str:
     values = re.findall(r"^- " + re.escape(label) + r":[ \t]*(.+)$", body, re.MULTILINE)
     if len(values) != 1:
-        raise HandoffError(f"Expected one populated field: {label}")
+        loc = f" in {source_hint}" if source_hint else ""
+        raise HandoffError(f"Expected one populated field: {label}{loc}")
     return values[0]
 
 
@@ -88,21 +89,23 @@ def retained(root: Path, value: str) -> dict:
             "sha256": hashlib.sha256(data).hexdigest()}
 
 
-def reference(root: Path, body: str, label: str) -> dict:
-    value = field(body, label)
+def reference(root: Path, body: str, label: str, source_hint: str = "") -> dict:
+    value = field(body, label, source_hint)
     expected = re.findall(r"\bsha256:([0-9a-fA-F]{64})\b", value)
     if len(expected) != 1:
-        raise HandoffError(f"Expected one sha256 digest: {label}")
+        loc = f" in {source_hint}" if source_hint else ""
+        raise HandoffError(f"Expected one sha256 digest: {label}{loc}")
     result = retained(root, quoted_path(value))
     if result["sha256"] != expected[0].lower():
         raise HandoffError(f"Digest mismatch: {result['path']}; expected {expected[0]}, actual {result['sha256']}")
     return result
 
 
-def identity(body: str, label: str, expected: str) -> None:
-    actual = field(body, label).strip().strip('`')
+def identity(body: str, label: str, expected: str, source_hint: str = "") -> None:
+    actual = field(body, label, source_hint).strip().strip('`')
     if actual != expected:
-        raise HandoffError(f"Identity mismatch: {label}; expected {expected}, actual {actual}")
+        loc = f" in {source_hint}" if source_hint else ""
+        raise HandoffError(f"Identity mismatch: {label}{loc}; expected {expected}, actual {actual}")
 
 
 def associations(root: Path, spec_path: Path, body: str, refs: dict, contract: str) -> None:
@@ -111,19 +114,19 @@ def associations(root: Path, spec_path: Path, body: str, refs: dict, contract: s
     contract_path = within(root, refs["slice_contract"]["path"])
     if contract_path.parent != root / "prototype/contracts/slices" / slice_id:
         raise HandoffError("Slice path mismatch between Specification and Contract")
-    identity(contract, "Slice ID", slice_id)
-    identity(contract, "Contract revision", contract_path.stem)
+    identity(contract, "Slice ID", slice_id, "Slice Contract")
+    identity(contract, "Contract revision", contract_path.stem, "Slice Contract")
     foundation_path = within(root, refs["foundation"]["path"])
     for kind, folder in (("foundation", "foundation"), ("tokens", "tokens"), ("surface_map", "surface-maps")):
         if within(root, refs[kind]["path"]).parent != root / "prototype/contracts" / folder:
             raise HandoffError(f"Retained {kind} path mismatch with its owning directory")
     foundation_revision = foundation_path.stem
-    identity(foundation_path.read_text(), "Foundation revision", foundation_revision)
-    identity(contract, "Foundation revision", foundation_revision)
+    identity(foundation_path.read_text(), "Foundation revision", foundation_revision, f"{foundation_path.name}")
+    identity(contract, "Foundation revision", foundation_revision, "Slice Contract")
     token_path = within(root, refs["tokens"]["path"])
     token_body = token_path.read_text()
-    identity(token_body, "Foundation revision", foundation_revision)
-    identity(token_body, "Tokens revision", token_path.stem)
+    identity(token_body, "Foundation revision", foundation_revision, f"{token_path.name}")
+    identity(token_body, "Tokens revision", token_path.stem, f"{token_path.name}")
     if "breakpoint" not in token_body.lower() and "media" not in token_body.lower():
         raise HandoffError("Token artifact missing responsive breakpoints: mobile, tablet, desktop")
     map_path = within(root, refs["surface_map"]["path"])
@@ -380,14 +383,14 @@ def packet(root: Path, spec: str) -> dict:
     declared_root = field(body, "Repository root").strip().strip('`')
     if Path(declared_root).resolve() != root:
         raise HandoffError("Specification repository root mismatch")
-    refs = {key: reference(root, body, label) for key, label in (
+    refs = {key: reference(root, body, label, "Specification") for key, label in (
         ("product", "Product record revision and digest"),
         ("foundation", "Foundation revision and digest"),
         ("tokens", "Token artifact path, revision, and digest"),
         ("slice_contract", "Slice Contract revision and digest"),
     )}
     contract = within(root, refs["slice_contract"]["path"]).read_text()
-    refs["surface_map"] = reference(root, contract, "Retained surface-map path, revision and digest")
+    refs["surface_map"] = reference(root, contract, "Retained surface-map path, revision and digest", "Slice Contract")
     associations(root, path, body, refs, contract)
     scopes = {}
     for key, kind, label in (

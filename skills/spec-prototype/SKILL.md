@@ -130,10 +130,10 @@ writes Markdown design records. Only `spec-prototype-builder` writes executable
 prototype output, from the exact retained direction brief or handoff packet and
 within its bounded prototype/evidence scopes.
 
-Coordinator dispatches `spec-prototype-builder` via standard `Agent` tool call with the exact envelope JSON string:
+Coordinator dispatches `spec-prototype-builder` (or fallback `general-purpose` / `claude` if host agent registry lacks specialized builder) via standard `Agent` tool call with the exact envelope JSON string:
 1. Synthesize envelope: `python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json`
 2. Read the resulting JSON file.
-3. Call `Agent(subagent_type="spec-prototype-builder", prompt=envelope_json_string)`. The `prompt` parameter must be the raw JSON string without conversational prose, matching the PreToolUse hook parser.
+3. Call `Agent(subagent_type="spec-prototype-builder", prompt=envelope_json_string)`. If `spec-prototype-builder` is unavailable in the host agent environment, fall back to `Agent(subagent_type="general-purpose", prompt=envelope_json_string)`. The `prompt` parameter must be the raw JSON string without conversational prose, matching the PreToolUse hook parser.
 
 Coordinator dispatches `spec-prototype-critic` for independent review at Stage 4 (验):
 1. Execute multi-viewport captures: `node skills/spec-prototype/scripts/capture.mjs <target_url> --output prototype/evidence/probes/<slice_id>/ --viewports 320,390,1280 --states <declared_applicable_states>`

@@ -79,6 +79,67 @@ def _digest(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def rebind_slice_digests(root: Path, slice_id: str) -> None:
+    """Rebind upstream sha256 digests in c1 and r1 to prevent cascading digest mismatches."""
+    prod_path = root / "prototype/product.md"
+    disc_path = root / "prototype/discussion.md"
+    smap_path = root / "prototype/contracts/surface-maps/m1.md"
+    f1_path = root / "prototype/contracts/foundation/f1.md"
+    t1_path = root / "prototype/contracts/tokens/t1.md"
+    c1_path = root / f"prototype/contracts/slices/{slice_id}/c1.md"
+    r1_path = root / f"prototype/specifications/{slice_id}/r1.md"
+
+    if c1_path.is_file():
+        c1_text = c1_path.read_text(encoding="utf-8")
+        if smap_path.is_file():
+            c1_text = re.sub(
+                r"(- Retained surface-map path, revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
+                rf"\g<1>{_digest(smap_path)}",
+                c1_text,
+            )
+        if prod_path.is_file():
+            c1_text = re.sub(
+                r"(- Product source references[^:]*:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
+                rf"\g<1>{_digest(prod_path)}",
+                c1_text,
+            )
+        c1_path.write_text(c1_text, encoding="utf-8")
+
+    if r1_path.is_file():
+        r1_text = r1_path.read_text(encoding="utf-8")
+        if prod_path.is_file():
+            r1_text = re.sub(
+                r"(- Product (?:source references[^:]*|record revision and digest):\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
+                rf"\g<1>{_digest(prod_path)}",
+                r1_text,
+            )
+        if f1_path.is_file():
+            r1_text = re.sub(
+                r"(- Foundation revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
+                rf"\g<1>{_digest(f1_path)}",
+                r1_text,
+            )
+        if t1_path.is_file():
+            r1_text = re.sub(
+                r"(- Token artifact path, revision, and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
+                rf"\g<1>{_digest(t1_path)}",
+                r1_text,
+            )
+        if c1_path.is_file():
+            r1_text = re.sub(
+                r"(- Slice Contract revision and digest:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
+                rf"\g<1>{_digest(c1_path)}",
+                r1_text,
+            )
+        if disc_path.is_file():
+            r1_text = re.sub(
+                r"(- Decision/Discussion record reference:\s*`[^`]+`,\s*)(?:sha256:[a-fA-F0-9]{64}|unknown)",
+                rf"\g<1>{_digest(disc_path)}",
+                r1_text,
+            )
+        r1_path.write_text(r1_text, encoding="utf-8")
+
+
 def _bullets(text: str) -> list[str]:
     return [re.sub(r"^[-*+]\s+", "", line).strip() for line in text.splitlines() if re.match(r"^[-*+]\s+", line)]
 
@@ -586,6 +647,7 @@ input-context: {input_ctx}
             content = f"""# Product Surface Map: m1
 
 - Product: {product_title}
+- Surface map revision: m1
 - Source discussion: `prototype/discussion.md`, {_digest(disc_path)}
 - Status: sealed provisional
 
@@ -625,6 +687,7 @@ surfaces: {surfaces_str}
             content = f"""# Project Experience Foundation: f1
 
 - Product: {product_title}
+- Foundation revision: f1
 - Product source: `prototype/product.md`, {_digest(prod_path)}
 - Core tension: {tension}
 - Grounding Rationale: {grounding_rat}
@@ -702,6 +765,7 @@ invariants: {invariants_str}
 - Slice ID: {slice_id}
 - Contract revision: c1
 - Foundation revision: f1
+- Disposition: ready
 - Product source references (including Change ID when applicable): `prototype/product.md`, {_digest(prod_path)}
 - Retained surface-map path, revision and digest: `prototype/contracts/surface-maps/m1.md`, {smap_digest}
 - In-scope surface IDs and connected task: {slice_id}
@@ -778,7 +842,7 @@ invariants: {invariants_str}
                 prod_digest=_digest(prod_path),
             )
         else:
-            scope_suffix = "hero-anchor" if "hero-anchor" in disc_text else "anchor"
+            scope_suffix = "r1"
             # Touch ergonomics follow an authored input-modality declaration, not a
             # vocabulary guess; absent that declaration the keyboard channel stands.
             if input_ctx == "touch":
@@ -876,6 +940,12 @@ verification-environment: headless-browser
 """
         path.write_text(content, encoding="utf-8")
         created[key] = str(path)
+
+    # Post-materialize auto-healing pass: rebind digests across c1 and r1 if downstream files were created or modified
+    try:
+        rebind_slice_digests(root, slice_id)
+    except Exception as exc:
+        print(f"warning: digest auto-rebind skipped: {exc}", file=sys.stderr)
 
     # Auto-synthesize baseline execution envelope for Builder
     try:

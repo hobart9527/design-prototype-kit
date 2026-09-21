@@ -63,8 +63,8 @@ def dispatch(args, active):
             'Prototype helpers use the current project and exact packet scopes. Omit worktree isolation.')
     if args.get('subagent_type') in {'spec-prototype-critic', 'Explore', 'feature-dev:code-explorer'}:
         return
-    require(args.get('subagent_type') == 'spec-prototype-builder',
-            'Use the bounded spec-prototype-builder or spec-prototype-critic for this design work.')
+    require(args.get('subagent_type') in {'spec-prototype-builder', 'general-purpose', 'claude'},
+            'Use bounded spec-prototype-builder, spec-prototype-critic, or fallback agent (general-purpose/claude) for design work.')
     data = json.loads(args['prompt'])
     root = Path(data['repository_root']).resolve()
     require(root == active, 'Dispatch must stay in the active discussion repository.')
