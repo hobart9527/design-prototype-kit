@@ -63,6 +63,18 @@ def extract_section_by_patterns(text: str, patterns: list[str]) -> str:
     return ""
 
 
+def extract_dial_value(text: str, dial: str) -> str:
+    """Extract a single 5-dial register value from inline `Dial: value` prose.
+
+    Discussion records commonly state the five dials on one sensory-calibration
+    line (`Density: sparse. Energy: quiet. ...`) that is neither a bullet field
+    nor a table row, so the section extractor misses it. This reads the scalar
+    token directly.
+    """
+    m = re.search(rf"\b{dial}\b\s*[:=]\s*([a-zA-Z0-9_-]+)", text, re.IGNORECASE)
+    return m.group(1).strip() if m else ""
+
+
 def _digest(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -606,7 +618,7 @@ surfaces: {surfaces_str}
                            extract_section_by_patterns(prod_text, ["Seed Palette", "Color Register", "Palette", "色板", "色彩寄存器"]) or \
                            UNSPECIFIED
             five_dials_md = "\n".join(
-                f"- {dial}: {extract_section_by_patterns(disc_text, [dial]) or extract_section_by_patterns(prod_text, [dial]) or UNSPECIFIED}"
+                f"- {dial}: {extract_dial_value(disc_text, dial) or extract_dial_value(prod_text, dial) or extract_section_by_patterns(disc_text, [dial]) or extract_section_by_patterns(prod_text, [dial]) or UNSPECIFIED}"
                 for dial in ("Density", "Energy", "Materiality", "Rhythm", "Character")
             )
             content = f"""# Project Experience Foundation: f1
