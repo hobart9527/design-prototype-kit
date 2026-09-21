@@ -549,6 +549,12 @@ def test_materialize_contracts_high_fidelity_semantic_synthesis(tmp_path: Path):
     assert "Action Verb Lifecycle Table" in c1_text
     assert "Decisive Exchange 3-Frame Specification" in c1_text
     assert "Context Preservation Rules" in c1_text
+    # Unauthored cognitive ledger zones must stay semantically neutral: the
+    # materializer reports `unspecified` rather than fabricating ungrounded
+    # craft prose (tactile detents, micro-sparklines, kinetic pulses, 10x claims).
+    assert "unspecified" in c1_text
+    for buzzword in ("tactile detents", "micro-sparklines", "kinetic pulses", "10x situational awareness"):
+        assert buzzword not in c1_text
 
     # 3. Specification contains Dual-Channel & Break Protocol & Verifiable Assertions
     r1_text = Path(res["specification"]).read_text(encoding="utf-8")

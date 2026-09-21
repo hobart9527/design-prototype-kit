@@ -224,19 +224,21 @@ def extract_action_verbs(disc_text: str, slice_id: str) -> list[dict[str, str]]:
 
 
 def extract_cognitive_ledger(disc_text: str, slice_id: str) -> dict[str, str]:
-    """Extract or synthesize the Cognitive Budgeting & Energy Return Ledger."""
+    """Extract the Cognitive Budgeting & Energy Return Ledger from authored truth only.
+
+    Unauthored zones report ``unspecified`` instead of receiving synthesized
+    prose the author never wrote (no tactical detents, micro-sparklines,
+    kinetic pulses, or 10x situational-awareness claims).
+    """
     routine_m = re.search(r"(?:Routine Conventions|Zero-learning|零借贷区|低熵基座)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
     decisive_m = re.search(r"(?:Decisive Innovation|Borrowed focus|高产出借贷区|能量溢价特区)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
     repayment_m = re.search(r"(?:Repayment|Settlement|偿还机制|状态沉降)[`*:]*\s*([^\n]+)", disc_text, re.IGNORECASE)
 
-    zero_base = routine_m.group(1).strip() if routine_m else "Standard top navigation, breadcrumbs, and filter facets strictly follow established conventions with zero learning curve and zero distracting motion."
-    borrow_zone = decisive_m.group(1).strip() if decisive_m else f"Primary operational {slice_id} workspace is allocated focused attention: tactile feedback and clear state transitions."
-    repayment = repayment_m.group(1).strip() if repayment_m else "Upon action completion or contextual panel dismissal, focus and transient indicators settle smoothly into calm baseline equilibrium."
-
+    unspecified = "unspecified"
     return {
-        "zero_borrow_base": zero_base,
-        "high_yield_borrow_zone": borrow_zone,
-        "repayment_settlement": repayment,
+        "zero_borrow_base": routine_m.group(1).strip() if routine_m else unspecified,
+        "high_yield_borrow_zone": decisive_m.group(1).strip() if decisive_m else unspecified,
+        "repayment_settlement": repayment_m.group(1).strip() if repayment_m else unspecified,
     }
 
 
@@ -662,7 +664,7 @@ invariants: {invariants_str}
 | Ledger Zone | Scope & Interaction Invariant | Allocation Rule | Cognitive Cost & Yield |
 |---|---|---|---|
 | **Low-Entropy Base (零借贷基座)** | {c_ledger['zero_borrow_base']} | 0 learning friction, zero distracting motion, standard UI conventions | Zero cognitive drain; preserves operator attention for decisive tasks |
-| **High-Yield Borrow Zone (能量溢价特区)** | {c_ledger['high_yield_borrow_zone']} | High-tension visual craft: tactile detents, micro-sparklines, kinetic pulses | Borrowed visual energy delivers 10x situational awareness and commit certainty |
+| **High-Yield Borrow Zone (能量溢价特区)** | {c_ledger['high_yield_borrow_zone']} | Elevated visual attention proportional to authored decisive work; only authored craft techniques apply | Borrowed visual energy restores decisiveness where the author allocated focused attention |
 | **Settlement & Repayment (闭环偿还机制)** | {c_ledger['repayment_settlement']} | Focus and state settle smoothly to steady state | Restores baseline low entropy immediately after decision execution |
 
 ## Action Verb Lifecycle Table (4-Phase Atomic Terminology)
