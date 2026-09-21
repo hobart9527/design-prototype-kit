@@ -141,7 +141,10 @@ def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> 
 
 
 def extract_field(content: str, label: str, default: str = "") -> str:
-    pattern = rf"^- {re.escape(label)}:[ \t]*(.+)$"
+    # The authored line may carry an annotation between the label and its value,
+    # e.g. `- Content language (locked): en-US`. The annotation is descriptive
+    # prose, not part of the value, so it is matched and discarded.
+    pattern = rf"^- {re.escape(label)}(?: \([^)]*\))?:[ \t]*(.+)$"
     match = re.search(pattern, content, re.MULTILINE)
     return match.group(1).strip() if match else default
 
@@ -496,7 +499,14 @@ _PAYLOAD_CONTEXT_FIELDS = (
     "spec_references",
     "token_stylesheet_ref",
     "token_link_tag",
+    # Authored/derived contracts the Builder must read directly: the content
+    # language lock, the shared navigation shell, and the state machine were
+    # demoted with the legacy blobs and became unreadable downstream.
+    "content_language",
+    "topology_context",
+    "interaction_spec",
 )
+_PAYLOAD_METHOD_FIELDS = ("id", "name", "pillars", "invariants", "reference_file")
 # Intermediate synthesis products retained for diagnostics and downstream
 # consumers; they are not part of the Builder's authored authority.
 _DEBUG_CONTEXT_FIELDS = (
@@ -508,7 +518,6 @@ _DEBUG_CONTEXT_FIELDS = (
     "ooux_topology",
     "cognitive_ledger",
     "fault_tolerance_protocol",
-    "interaction_spec",
     "design_constraints",
     "verifiable_assertions",
     "domain_thesis",
@@ -521,7 +530,6 @@ _DEBUG_CONTEXT_FIELDS = (
     "candidate_patterns",
     "selected_pattern",
     "reality_anchors",
-    "topology_context",
     "specification",
     "tokens_md_ref",
 )
@@ -539,6 +547,13 @@ def build_builder_payload(envelope: Dict[str, Any], *, include_debug: bool = Fal
         for field in _IR_FIELDS + _PAYLOAD_CONTEXT_FIELDS
         if field in envelope
     }
+    # Slim craft-method metadata rides along with the payload; the verbose
+    # `actionable_guidance` duplicate is reachable through `reference_file`.
+    if "active_methods" in envelope:
+        payload["active_methods"] = [
+            {field: method[field] for field in _PAYLOAD_METHOD_FIELDS if field in method}
+            for method in envelope["active_methods"]
+        ]
     if include_debug:
         payload["debug_context"] = {
             field: envelope[field] for field in _DEBUG_CONTEXT_FIELDS if field in envelope}
@@ -1571,6 +1586,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
         "app_shell_blueprint": creative_envelope["suggested_blueprints"],
         "app_shell_contract": creative_envelope["reference_pattern_guidance"],
         "target_html_path": target_html,
+        "content_language": content_language,
         "evidence_output_dir": evidence_scope,
         "token_stylesheet_ref": token_rel_href,
         "token_link_tag": token_link_tag,

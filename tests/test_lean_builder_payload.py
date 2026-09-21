@@ -42,7 +42,13 @@ CONTEXT_FIELDS = (
     "spec_sources",
     "spec_references",
     "token_link_tag",
+    "content_language",
+    "topology_context",
+    "interaction_spec",
+    "active_methods",
 )
+
+SLIM_METHOD_FIELDS = ("id", "name", "pillars", "invariants", "reference_file")
 
 LEGACY_FIELDS = (
     "constraint_envelope",
@@ -56,17 +62,14 @@ LEGACY_FIELDS = (
     "domain_thesis",
     "attention_routing",
     "data_stress_boundaries",
-    "interaction_spec",
     "design_constraints",
     "verifiable_assertions",
-    "active_methods",
     "five_axes",
     "dtcg_tokens",
     "layout_profile",
     "candidate_patterns",
     "selected_pattern",
     "reality_anchors",
-    "topology_context",
     "specification",
     "tokens_md_ref",
 )
@@ -125,6 +128,51 @@ def test_payload_preserves_dispatch_critical_identity(tmp_path):
     assert payload["slice_id"] == SLICE
     assert payload["spec_sources"] == env["spec_sources"]
     assert payload["target_html_path"] == env["target_html_path"]
+
+
+def test_authored_content_language_reaches_the_payload_root(tmp_path):
+    env = assemble(build_repo(tmp_path))
+    payload = assemble_envelope.build_builder_payload(env)
+    assert payload["content_language"] == env["content_language"]
+    assert payload["content_language"]["tag"] == "en-US"
+    assert "content_language" not in payload.get("debug_context", {})
+
+
+def test_content_language_annotation_is_tolerated(tmp_path):
+    root = build_repo(tmp_path)
+    spec = root / f"prototype/specifications/{SLICE}/r1.md"
+    spec.write_text(
+        spec.read_text(encoding="utf-8").replace(
+            "- Content language: en-US", "- Content language (locked): en-US"),
+        encoding="utf-8")
+    contract = root / f"prototype/contracts/slices/{SLICE}/c1.md"
+    contract.write_text(
+        contract.read_text(encoding="utf-8").replace(
+            "- Content language: en-US", "- Content language (locked): en-US"),
+        encoding="utf-8")
+    env = assemble(root)
+    assert env["content_language"]["tag"] == "en-US"
+
+
+def test_topology_and_interaction_contracts_are_readable(tmp_path):
+    env = assemble(build_repo(tmp_path))
+    payload = assemble_envelope.build_builder_payload(env)
+    assert payload["topology_context"] == env["topology_context"]
+    assert payload["interaction_spec"] == env["interaction_spec"]
+    # The Builder reads these from the payload root, not a demoted copy.
+    debug = assemble_envelope.build_builder_payload(env, include_debug=True)["debug_context"]
+    for field in ("topology_context", "interaction_spec"):
+        assert field not in debug
+
+
+def test_slim_methods_ride_along_without_verbose_guidance(tmp_path):
+    env = assemble(build_repo(tmp_path))
+    payload = assemble_envelope.build_builder_payload(env)
+    assert payload["active_methods"], "fixture no longer activates any craft method"
+    assert len(payload["active_methods"]) == len(env["active_methods"])
+    for method in payload["active_methods"]:
+        assert set(method) == set(SLIM_METHOD_FIELDS)
+        assert "actionable_guidance" not in method
 
 
 def test_output_file_carries_the_lean_payload(tmp_path, monkeypatch, capsys):
