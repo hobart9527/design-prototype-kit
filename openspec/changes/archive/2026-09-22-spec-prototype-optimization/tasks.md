@@ -2,7 +2,7 @@
 
 ## 1. Verify and publish the current spec-prototype optimization revision
 
-- [ ] T-01 Verify and publish the current spec-prototype optimization revision
+- [x] T-01 Verify and publish the current spec-prototype optimization revision
   - Depends on: none
   - Anchors: skills/spec-prototype/scripts/assemble_envelope.py:_canonical_contract_lint, skills/spec-prototype/scripts/compile_spec_ir.py:compile_canonical_ir, skills/spec-prototype/scripts/lint_spec_contracts.py:lint_canonical_spec_ir, skills/spec-prototype/scripts/execution_boundary.py:check
   - Write scope: skills/spec-prototype/scripts/assemble_envelope.py, skills/spec-prototype/scripts/compile_spec_ir.py, skills/spec-prototype/scripts/lint_spec_contracts.py, skills/spec-prototype/scripts/execution_boundary.py, prototype/contracts/compiled/sample-gate/state_model.slice.json, tests/test_canonical_spec_ir.py
