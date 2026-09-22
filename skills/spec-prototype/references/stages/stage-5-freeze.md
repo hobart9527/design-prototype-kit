@@ -7,12 +7,10 @@ handoff.
 
 ## Headless Pipeline Execution
 
-1. **Token reconciliation / DTCG compilation**:
+1. **DTCG compilation & export**:
    `python3 skills/spec-prototype/scripts/export-tokens.py prototype/shared/tokens.css --output prototype/contracts/tokens/t1.json`
-   compiles `shared/tokens.css` into a W3C DTCG standard `tokens.json`. Any human
-   review edit captured in `tokens.css` is first reconciled back into
-   `discussion.md` and the contracts via `compile_tokens.py` (`reconcile_tokens_from_css`)
-   so no reviewed value is lost.
+   compiles `shared/tokens.css` into a W3C DTCG standard `tokens.json`.
+   *Note on token flow discipline*: `--reconcile-from-css` is strictly an exploratory Stage 1~2 utility. In Stage 5, token definitions are frozen and immutable; bidirectional writebacks to discussion.md are prohibited to preserve upstream SHA-256 seal integrity.
 2. **WCAG static preflight**:
    `node skills/spec-prototype/scripts/wcag-check.js prototype/contracts/tokens/t1.json --level AA`
    checks critical text and figures against **WCAG 2.2 AA (4.5:1)**; long-reading

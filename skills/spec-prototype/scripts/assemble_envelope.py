@@ -107,7 +107,32 @@ def _verb_cells(row_cells: List[str], columns: Dict[str, int],
 
 
 def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Path]:
-    """Verify that all required Stage 1 design contract artifacts exist and meet minimum content floors."""
+    """Verify that required Stage 1 design contract artifacts exist and meet minimum content floors.
+
+    Supports both:
+    1. Modern Canonical IR: `prototype/contracts/compiled/<slice_id>/r1.spec.json`
+       and `prototype/specifications/<slice_id>/r1.spec.md`
+    2. Legacy 6-piece files: product.md, m1.md, f1.md, t1.md, c1.md, r1.md
+    """
+    canonical_ir = root / f"prototype/contracts/compiled/{slice_id}/r1.spec.json"
+    canonical_md = root / f"prototype/specifications/{slice_id}/r1.spec.md"
+    tokens_css = root / "prototype/shared/tokens.css"
+
+    # If canonical IR is present, it serves as the single source of truth alongside tokens.css
+    if canonical_ir.is_file() and tokens_css.is_file():
+        return {
+            "canonical_ir": canonical_ir,
+            "canonical_md": canonical_md,
+            "tokens_css": tokens_css,
+            # Backwards compatibility fallbacks if legacy files exist alongside
+            "product": root / "prototype/product.md" if (root / "prototype/product.md").is_file() else canonical_md,
+            "surface_map": root / "prototype/contracts/surface-maps/m1.md" if (root / "prototype/contracts/surface-maps/m1.md").is_file() else canonical_md,
+            "foundation": root / "prototype/contracts/foundation/f1.md" if (root / "prototype/contracts/foundation/f1.md").is_file() else canonical_md,
+            "tokens_md": root / "prototype/contracts/tokens/t1.md" if (root / "prototype/contracts/tokens/t1.md").is_file() else canonical_md,
+            "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md" if (root / f"prototype/contracts/slices/{slice_id}/c1.md").is_file() else canonical_md,
+            "specification": root / f"prototype/specifications/{slice_id}/r1.md" if (root / f"prototype/specifications/{slice_id}/r1.md").is_file() else canonical_md,
+        }
+
     required = {
         "product": root / "prototype/product.md",
         "surface_map": root / "prototype/contracts/surface-maps/m1.md",
@@ -121,7 +146,7 @@ def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> 
     if missing:
         raise ValueError(
             f"Stage 1 Spec Contract incomplete. Missing required artifacts: {', '.join(missing)}. "
-            f"All 6 contract pillars must be materialized before Stage 2 prototype building."
+            f"Either compile canonical IR (compile_spec_ir.py) or materialize legacy contract pillars."
         )
 
     if lint:  # the formal entry runs the real lint, not a parallel copy of it

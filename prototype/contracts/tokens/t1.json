@@ -1,162 +1,555 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
-  "$description": "Machine-compiled from spec-prototype 5-dial state machine.",
+  "$description": "Machine-compiled 3-Tier DTCG token specification with authority provenance.",
+  "$extensions": {
+    "design-prototype-kit": {
+      "authority": "derived",
+      "provenance": "spec-prototype v10.1",
+      "format_version": "2025.10"
+    }
+  },
+  "primitives": {
+    "color": {
+      "primary": {
+        "$value": "#00f0ff",
+        "$type": "color",
+        "$description": "Primary action and key interactive state",
+        "authority": "derived"
+      },
+      "primary-hover": {
+        "$value": "#38bdf8",
+        "$type": "color",
+        "$description": "Hover state of primary",
+        "authority": "derived"
+      },
+      "surface": {
+        "$value": "#111622",
+        "$type": "color",
+        "$description": "Card, panel, and workbench base surface",
+        "authority": "derived"
+      },
+      "surface-raised": {
+        "$value": "#182030",
+        "$type": "color",
+        "$description": "Elevated modal, sheet, or popover",
+        "authority": "derived"
+      },
+      "surface-overlay": {
+        "$value": "#1f293d",
+        "$type": "color",
+        "$description": "Top-tier fly-by-wire controls and overlay",
+        "authority": "derived"
+      },
+      "border": {
+        "$value": "#28334a",
+        "$type": "color",
+        "$description": "Default component boundary",
+        "authority": "derived"
+      },
+      "border-strong": {
+        "$value": "#3b4b6e",
+        "$type": "color",
+        "$description": "Active or emphasized component boundary",
+        "authority": "derived"
+      },
+      "border-dim": {
+        "$value": "#1e2638",
+        "$type": "color",
+        "$description": "Subtle hairline divider",
+        "authority": "derived"
+      },
+      "text-primary": {
+        "$value": "#e6edf3",
+        "$type": "color",
+        "$description": "Primary high-contrast typography",
+        "authority": "derived"
+      },
+      "text-secondary": {
+        "$value": "#8b949e",
+        "$type": "color",
+        "$description": "Supplementary metadata and labels",
+        "authority": "derived"
+      },
+      "text-tertiary": {
+        "$value": "#484f58",
+        "$type": "color",
+        "$description": "De-emphasized or disabled controls and copy",
+        "authority": "derived"
+      },
+      "status-running": {
+        "$value": "#22c55e",
+        "$type": "color",
+        "$description": "Nominal operational state",
+        "authority": "derived"
+      },
+      "status-warning": {
+        "$value": "#eab308",
+        "$type": "color",
+        "$description": "Warning state or capacity threshold",
+        "authority": "derived"
+      },
+      "status-danger": {
+        "$value": "#ef4444",
+        "$type": "color",
+        "$description": "Critical failure or thermal alert",
+        "authority": "derived"
+      },
+      "bg-void": {
+        "$value": "#05070a",
+        "$type": "color",
+        "$description": "Deepest atmospheric background",
+        "authority": "derived"
+      },
+      "bg-base": {
+        "$value": "#0a0d14",
+        "$type": "color",
+        "$description": "App foundation background chassis",
+        "authority": "derived"
+      }
+    },
+    "spacing": {
+      "1": {
+        "$value": "4px",
+        "$type": "dimension",
+        "$description": "Spacing unit 1",
+        "authority": "derived"
+      },
+      "2": {
+        "$value": "8px",
+        "$type": "dimension",
+        "$description": "Spacing unit 2",
+        "authority": "derived"
+      },
+      "3": {
+        "$value": "12px",
+        "$type": "dimension",
+        "$description": "Spacing unit 3",
+        "authority": "derived"
+      },
+      "4": {
+        "$value": "16px",
+        "$type": "dimension",
+        "$description": "Spacing unit 4",
+        "authority": "derived"
+      },
+      "5": {
+        "$value": "20px",
+        "$type": "dimension",
+        "$description": "Spacing unit 5",
+        "authority": "derived"
+      },
+      "6": {
+        "$value": "24px",
+        "$type": "dimension",
+        "$description": "Spacing unit 6",
+        "authority": "derived"
+      },
+      "8": {
+        "$value": "32px",
+        "$type": "dimension",
+        "$description": "Spacing unit 8",
+        "authority": "derived"
+      }
+    },
+    "radius": {
+      "outer": {
+        "$value": "8px",
+        "$type": "dimension",
+        "$description": "Outer container boundary",
+        "authority": "derived"
+      },
+      "inner": {
+        "$value": "4px",
+        "$type": "dimension",
+        "$description": "Concentric inner child boundary",
+        "authority": "derived"
+      },
+      "card": {
+        "$value": "6px",
+        "$type": "dimension",
+        "$description": "Card entity radius",
+        "authority": "derived"
+      },
+      "btn": {
+        "$value": "4px",
+        "$type": "dimension",
+        "$description": "Interactive control radius",
+        "authority": "derived"
+      },
+      "pill": {
+        "$value": "9999px",
+        "$type": "dimension",
+        "$description": "Status badge pill radius",
+        "authority": "derived"
+      }
+    },
+    "typography": {
+      "font-sans": {
+        "$value": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
+        "$type": "fontFamily",
+        "$description": "Primary UI font family",
+        "authority": "derived"
+      },
+      "font-mono": {
+        "$value": "\"JetBrains Mono\", \"SF Mono\", \"Fira Code\", Menlo, monospace",
+        "$type": "fontFamily",
+        "$description": "Telemetry and code font family",
+        "authority": "derived"
+      }
+    },
+    "motion": {
+      "duration-fast": {
+        "$value": "120ms",
+        "$type": "duration",
+        "$description": "Fast tactile duration",
+        "authority": "derived"
+      },
+      "duration-normal": {
+        "$value": "240ms",
+        "$type": "duration",
+        "$description": "Normal transition duration",
+        "authority": "derived"
+      },
+      "ease-hud": {
+        "$value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "$type": "cubicBezier",
+        "$description": "HUD snappy curve",
+        "authority": "derived"
+      }
+    }
+  },
+  "semantics": {
+    "surface": {
+      "base": {
+        "$value": "{primitives.color.surface.$value}",
+        "$type": "color",
+        "$description": "Base canvas and container surface",
+        "authority": "derived"
+      },
+      "elevated": {
+        "$value": "{primitives.color.surface-raised.$value}",
+        "$type": "color",
+        "$description": "Elevated modal, sheet, or popover",
+        "authority": "derived"
+      },
+      "sunken": {
+        "$value": "{primitives.color.bg-base.$value}",
+        "$type": "color",
+        "$description": "Sunken instrument well or canvas backdrop",
+        "authority": "derived"
+      }
+    },
+    "text": {
+      "primary": {
+        "$value": "{primitives.color.text-primary.$value}",
+        "$type": "color",
+        "$description": "Primary high-contrast typography",
+        "authority": "derived"
+      },
+      "secondary": {
+        "$value": "{primitives.color.text-secondary.$value}",
+        "$type": "color",
+        "$description": "Supplementary metadata and labels",
+        "authority": "derived"
+      },
+      "muted": {
+        "$value": "{primitives.color.text-tertiary.$value}",
+        "$type": "color",
+        "$description": "De-emphasized or disabled controls",
+        "authority": "derived"
+      }
+    },
+    "action": {
+      "primary": {
+        "$value": "{primitives.color.primary.$value}",
+        "$type": "color",
+        "$description": "Primary action trigger",
+        "authority": "derived"
+      },
+      "primary-hover": {
+        "$value": "{primitives.color.primary-hover.$value}",
+        "$type": "color",
+        "$description": "Primary hover state",
+        "authority": "derived"
+      }
+    },
+    "status": {
+      "nominal": {
+        "$value": "{primitives.color.status-running.$value}",
+        "$type": "color",
+        "$description": "Nominal operational state",
+        "authority": "derived"
+      },
+      "warning": {
+        "$value": "{primitives.color.status-warning.$value}",
+        "$type": "color",
+        "$description": "Warning state or capacity threshold",
+        "authority": "derived"
+      },
+      "danger": {
+        "$value": "{primitives.color.status-danger.$value}",
+        "$type": "color",
+        "$description": "Critical failure or alert",
+        "authority": "derived"
+      }
+    }
+  },
+  "components": {
+    "input": {
+      "bg": {
+        "$value": "{primitives.color.bg-base.$value}",
+        "$type": "color",
+        "$description": "Input field background",
+        "authority": "derived"
+      },
+      "border": {
+        "$value": "{primitives.color.border.$value}",
+        "$type": "color",
+        "$description": "Input field boundary",
+        "authority": "derived"
+      },
+      "focus": {
+        "$value": "{primitives.color.primary.$value}",
+        "$type": "color",
+        "$description": "Input focus ring color",
+        "authority": "derived"
+      }
+    },
+    "card": {
+      "bg": {
+        "$value": "{primitives.color.surface.$value}",
+        "$type": "color",
+        "$description": "Card surface background",
+        "authority": "derived"
+      },
+      "border": {
+        "$value": "{primitives.color.border.$value}",
+        "$type": "color",
+        "$description": "Card boundary",
+        "authority": "derived"
+      }
+    },
+    "table": {
+      "row-hover": {
+        "$value": "{primitives.color.surface-raised.$value}",
+        "$type": "color",
+        "$description": "Table row hover highlight",
+        "authority": "derived"
+      },
+      "border": {
+        "$value": "{primitives.color.border-dim.$value}",
+        "$type": "color",
+        "$description": "Table divider hairline",
+        "authority": "derived"
+      }
+    }
+  },
   "color": {
     "primary": {
       "$value": "#00f0ff",
       "$type": "color",
-      "$description": "Primary action and key interactive state"
+      "$description": "Primary action and key interactive state",
+      "authority": "derived"
     },
     "primary-hover": {
       "$value": "#38bdf8",
       "$type": "color",
-      "$description": "Hover state of primary"
+      "$description": "Hover state of primary",
+      "authority": "derived"
     },
     "surface": {
       "$value": "#111622",
       "$type": "color",
-      "$description": "Card, panel, and workbench base surface"
+      "$description": "Card, panel, and workbench base surface",
+      "authority": "derived"
     },
     "surface-raised": {
       "$value": "#182030",
       "$type": "color",
-      "$description": "Elevated modal, sheet, or popover"
+      "$description": "Elevated modal, sheet, or popover",
+      "authority": "derived"
     },
     "surface-overlay": {
       "$value": "#1f293d",
       "$type": "color",
-      "$description": "Top-tier fly-by-wire controls and overlay"
+      "$description": "Top-tier fly-by-wire controls and overlay",
+      "authority": "derived"
     },
     "border": {
       "$value": "#28334a",
       "$type": "color",
-      "$description": "Default component boundary"
+      "$description": "Default component boundary",
+      "authority": "derived"
     },
     "border-strong": {
       "$value": "#3b4b6e",
       "$type": "color",
-      "$description": "Active or emphasized component boundary"
+      "$description": "Active or emphasized component boundary",
+      "authority": "derived"
     },
     "border-dim": {
       "$value": "#1e2638",
       "$type": "color",
-      "$description": "Subtle hairline divider"
+      "$description": "Subtle hairline divider",
+      "authority": "derived"
     },
     "text-primary": {
       "$value": "#e6edf3",
       "$type": "color",
-      "$description": "Primary high-contrast typography"
+      "$description": "Primary high-contrast typography",
+      "authority": "derived"
     },
     "text-secondary": {
       "$value": "#8b949e",
       "$type": "color",
-      "$description": "Supplementary metadata and labels"
+      "$description": "Supplementary metadata and labels",
+      "authority": "derived"
     },
     "text-tertiary": {
       "$value": "#484f58",
       "$type": "color",
-      "$description": "De-emphasized or disabled controls and copy"
+      "$description": "De-emphasized or disabled controls and copy",
+      "authority": "derived"
     },
     "status-running": {
       "$value": "#22c55e",
       "$type": "color",
-      "$description": "Nominal operational state"
+      "$description": "Nominal operational state",
+      "authority": "derived"
     },
     "status-warning": {
       "$value": "#eab308",
       "$type": "color",
-      "$description": "Warning state or capacity threshold"
+      "$description": "Warning state or capacity threshold",
+      "authority": "derived"
     },
     "status-danger": {
       "$value": "#ef4444",
       "$type": "color",
-      "$description": "Critical failure or thermal alert"
+      "$description": "Critical failure or thermal alert",
+      "authority": "derived"
     },
     "bg-void": {
       "$value": "#05070a",
       "$type": "color",
-      "$description": "Deepest atmospheric background"
+      "$description": "Deepest atmospheric background",
+      "authority": "derived"
     },
     "bg-base": {
       "$value": "#0a0d14",
       "$type": "color",
-      "$description": "App foundation background chassis"
+      "$description": "App foundation background chassis",
+      "authority": "derived"
     }
   },
   "spacing": {
     "1": {
       "$value": "4px",
       "$type": "dimension",
-      "$description": "Spacing unit 1"
+      "$description": "Spacing unit 1",
+      "authority": "derived"
     },
     "2": {
       "$value": "8px",
       "$type": "dimension",
-      "$description": "Spacing unit 2"
+      "$description": "Spacing unit 2",
+      "authority": "derived"
     },
     "3": {
       "$value": "12px",
       "$type": "dimension",
-      "$description": "Spacing unit 3"
+      "$description": "Spacing unit 3",
+      "authority": "derived"
     },
     "4": {
       "$value": "16px",
       "$type": "dimension",
-      "$description": "Spacing unit 4"
+      "$description": "Spacing unit 4",
+      "authority": "derived"
     },
     "5": {
       "$value": "20px",
       "$type": "dimension",
-      "$description": "Spacing unit 5"
+      "$description": "Spacing unit 5",
+      "authority": "derived"
     },
     "6": {
       "$value": "24px",
       "$type": "dimension",
-      "$description": "Spacing unit 6"
+      "$description": "Spacing unit 6",
+      "authority": "derived"
     },
     "8": {
       "$value": "32px",
       "$type": "dimension",
-      "$description": "Spacing unit 8"
+      "$description": "Spacing unit 8",
+      "authority": "derived"
     }
   },
   "radius": {
     "outer": {
       "$value": "8px",
       "$type": "dimension",
-      "$description": "Outer container boundary"
+      "$description": "Outer container boundary",
+      "authority": "derived"
     },
     "inner": {
       "$value": "4px",
       "$type": "dimension",
-      "$description": "Concentric inner child boundary"
+      "$description": "Concentric inner child boundary",
+      "authority": "derived"
     },
     "card": {
       "$value": "6px",
       "$type": "dimension",
-      "$description": "Card entity radius"
+      "$description": "Card entity radius",
+      "authority": "derived"
     },
     "btn": {
       "$value": "4px",
       "$type": "dimension",
-      "$description": "Interactive control radius"
+      "$description": "Interactive control radius",
+      "authority": "derived"
     },
     "pill": {
       "$value": "9999px",
       "$type": "dimension",
-      "$description": "Status badge pill radius"
+      "$description": "Status badge pill radius",
+      "authority": "derived"
     }
   },
   "typography": {
     "font-sans": {
       "$value": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
       "$type": "fontFamily",
-      "$description": "Primary UI font family"
+      "$description": "Primary UI font family",
+      "authority": "derived"
     },
     "font-mono": {
-      "$value": "\"SF Mono\", \"Fira Code\", \"Roboto Mono\", Menlo, monospace",
+      "$value": "\"JetBrains Mono\", \"SF Mono\", \"Fira Code\", Menlo, monospace",
       "$type": "fontFamily",
-      "$description": "Telemetry and code font family"
+      "$description": "Telemetry and code font family",
+      "authority": "derived"
+    }
+  },
+  "motion": {
+    "duration-fast": {
+      "$value": "120ms",
+      "$type": "duration",
+      "$description": "Fast tactile duration",
+      "authority": "derived"
+    },
+    "duration-normal": {
+      "$value": "240ms",
+      "$type": "duration",
+      "$description": "Normal transition duration",
+      "authority": "derived"
+    },
+    "ease-hud": {
+      "$value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "$type": "cubicBezier",
+      "$description": "HUD snappy curve",
+      "authority": "derived"
     }
   }
 }

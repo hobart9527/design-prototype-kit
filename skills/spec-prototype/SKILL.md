@@ -77,7 +77,7 @@ Execute the stages matching declared intent and required evidence. The stages re
   │    - Round 2: references/dialectic/02-topology-scaffolding.md (<60 lines)
   │    - Round 3: references/dialectic/03-sensory-kinetic.md (<100 lines)
   │    - Round 4: references/dialectic/04-falsification-compile.md (<60 lines)
-  │  Sealed Provisional Spec Artifacts: prototype/product.md, prototype/contracts/surface-maps/m1.md, prototype/contracts/foundation/f1.md, prototype/shared/tokens.css (via compile_tokens.py), prototype/contracts/slices/<slice_id>/c1.md, prototype/specifications/<slice_id>/r1.md (authority status: sealed provisional via materialize_contracts.py).
+  │  Sealed Provisional Spec Artifacts: prototype/contracts/compiled/<slice_id>/r1.spec.json (Strict Machine IR via compile_spec_ir.py), prototype/specifications/<slice_id>/r1.spec.md (Single-file human RFC Spec view), and prototype/shared/tokens.css (via compile_tokens.py) (authority status: sealed provisional). Legacy 6-piece artifacts (foundation/f1.md, surface-maps/m1.md, etc.) remain supported for backwards compatibility.
   │  Gate Rule: ZERO Prototype Code without a complete sealed provisional Spec Contract (for formal candidate delivery; establishes sealed provisional baseline under the authority lifecycle `Draft → Sealed Provisional → Validated → Frozen Approved` before Stage 2 probe validation).
   ▼
 [Stage 2: 立 - Proposition & High-Risk Probe (解空间主干物化与探针验证)]

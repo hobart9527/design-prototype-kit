@@ -418,6 +418,12 @@ def packet(root: Path, spec: str) -> dict:
     screenshots = raw_field(body, "Required screenshot checkpoints")
     if visual == "required" and (not screenshots.strip() or _is_placeholder(screenshots)):
         raise HandoffError("Incomplete Builder contract field: Required screenshot checkpoints")
+
+    # If tokens.css exists, it is an essential visual contract artifact that must be bound
+    tokens_css_path = root / "prototype/shared/tokens.css"
+    if tokens_css_path.is_file():
+        refs["tokens_css"] = str(tokens_css_path.relative_to(root))
+
     obligations = component_obligations(body)
     specification = retained(root, spec)
     required_reads = [
@@ -428,6 +434,8 @@ def packet(root: Path, spec: str) -> dict:
         refs["surface_map"],
         refs["tokens"],
     ]
+    if "tokens_css" in refs:
+        required_reads.append(retained(root, refs["tokens_css"]))
     return {"repository_root": str(root), "specification": specification,
             "slice_id": path.parent.name, "candidate_id": path.stem,
             "references": refs, **scopes,
@@ -580,7 +588,8 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
         if not re.search(rf"(?<![a-z0-9_-]){re.escape(slice_id.lower())}(?![a-z0-9_-])", row_content):
             continue
         selected = row
-        spec_only = spec_only or any(m in evidence for m in SPEC_ONLY_MARKERS)
+        # Direct assignment from current matching row, never accumulated across prior rows
+        spec_only = any(m in evidence for m in SPEC_ONLY_MARKERS)
         sources = [token for token in re.findall(r"`([^`]+)`", row[-1]) if "/" in token]
     if selected is None:
         raise HandoffError(
@@ -638,8 +647,36 @@ def freeze(root: Path, spec: str) -> dict:
         if status not in ("candidate", "provisional", "sealed provisional", "validated", "frozen", "frozen approved"):
             raise HandoffError(f"Specification compilation status must be candidate, provisional, validated, or frozen to freeze, got: {status}")
 
-    evidence_path = root / "prototype" / "evidence" / pkt["slice_id"] / pkt["candidate_id"] / "prototype-evidence.md"
-    evidence_record = retained(root, str(evidence_path.relative_to(root))) if evidence_path.is_file() else None
+    # Harmonize evidence discovery across standard locations:
+    # 1. candidate folder: prototype/evidence/<slice>/<candidate>/prototype-evidence.md
+    # 2. probe folder: prototype/evidence/probes/<slice>/
+    evidence_candidates = [
+        root / "prototype" / "evidence" / pkt["slice_id"] / pkt["candidate_id"] / "prototype-evidence.md",
+        root / "prototype" / "evidence" / "probes" / pkt["slice_id"] / "prototype-evidence.md",
+        root / "prototype" / "evidence" / pkt["slice_id"] / "prototype-evidence.md",
+    ]
+    evidence_path = next((p for p in evidence_candidates if p.is_file()), None)
+    evidence_record = retained(root, str(evidence_path.relative_to(root))) if evidence_path else None
+
+    # If no standalone markdown exists, inspect probe screenshots folder
+    if not evidence_record:
+        probe_dir = root / "prototype" / "evidence" / "probes" / pkt["slice_id"]
+        if not probe_dir.is_dir():
+            probe_dir = root / "prototype" / "evidence" / pkt["slice_id"] / pkt["candidate_id"]
+        if probe_dir.is_dir():
+            pngs = sorted(probe_dir.glob("*.png"))
+            if pngs:
+                # Compute composite digest of screenshot evidence
+                h = hashlib.sha256()
+                for p in pngs:
+                    h.update(p.name.encode("utf-8"))
+                    h.update(p.read_bytes())
+                evidence_record = {
+                    "path": str(probe_dir.relative_to(root)),
+                    "type": "screenshot_evidence_bundle",
+                    "count": len(pngs),
+                    "sha256": f"sha256:{h.hexdigest()}",
+                }
 
     # Specifications are immutable candidate contracts compiled from retained sources.
     # Authority status and lifecycle transitions live exclusively in freeze-manifest.json
@@ -737,6 +774,16 @@ def downstream_admission(root: Path, slice_id: str) -> dict:
             raise HandoffError(
                 f"Downstream Gate Blocked: {spec_ref['path']} changed after freeze "
                 f"({current['sha256'][:8]} != {spec_ref['sha256'][:8]}); re-freeze before admission.")
+    # Also verify frozen artifacts if listed in manifest (fail-closed integrity check)
+    for frozen_art in frozen.get("frozen_artifacts", []):
+        art_path = frozen_art.get("path")
+        expected_sha = frozen_art.get("sha256")
+        if art_path and expected_sha:
+            curr_art = retained(root, art_path)
+            if curr_art["sha256"] != expected_sha:
+                raise HandoffError(
+                    f"Downstream Gate Blocked: Frozen artifact {art_path} changed after freeze "
+                    f"({curr_art['sha256'][:8]} != {expected_sha[:8]}); re-freeze before admission.")
     manifest["admission"] = "bound_to_frozen_revision"
     return manifest
 

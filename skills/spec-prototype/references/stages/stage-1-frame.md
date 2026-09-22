@@ -78,7 +78,7 @@ Stage 1 is a progressive, guided design conversation driven by a **Dynamic Topol
 - **Lazy Module**: `references/dialectic/04-falsification-compile.md` (<60 lines).
 - **Pillars & Axes**: 9-Pillar: Resilience & Interaction Lifecycle.
 - **Method**: Establish the 5-second perceptual falsification test and 4-dimensional reality breakers (Unbreakable string, 0-item state, 320px fold, rapid interruption).
-- **Execution**: Trigger `materialize_contracts.py --slice <slice-id> --phase all`. Contracts, tokens, and SHA-256 DAG are automatically sealed without manual Markdown editing. Set status to `sealed_provisional`.
+- **Execution**: Trigger `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice-id>` to compile canonical machine IR (`.spec.json`) and single-file RFC view (`.spec.md`), followed by `compile_tokens.py`. Status is sealed as `sealed_provisional`. (Legacy `materialize_contracts.py` remains available for multi-file backwards compatibility).
 
 ## Macro Double Diamond
 

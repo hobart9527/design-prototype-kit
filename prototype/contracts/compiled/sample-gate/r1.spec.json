@@ -1,0 +1,199 @@
+{
+  "schema_version": "prototype-spec/v1",
+  "identity": {
+    "product_id": "diffusion-gpu-cluster-orchestration-desk",
+    "slice_id": "sample-gate",
+    "contract_revision": "c1",
+    "candidate_revision": "r1",
+    "authority_status": "sealed_provisional",
+    "title": "Diffusion GPU Cluster Orchestration Desk"
+  },
+  "sources": {
+    "discussion_ref": "prototype/discussion.md",
+    "discussion_sha256": "sha256:59fa9e955ddf14f79dbb3c9f8ac35ed8ad12b26e3399ca7f292f47c9501658fb",
+    "requirements": [
+      {
+        "id": "REQ-SAMPLE-GATE",
+        "scenarios": [
+          "SCN-01",
+          "SCN-02"
+        ]
+      }
+    ],
+    "reality_anchors": [
+      "**业务地锚 (Operational Anchor)**: `NVIDIA DCGM Telemetry & Run:ai Console`（高频张量显存热图、NVLink 吞吐拓扑、多租户配额排队）。",
+      "**物理地锚 (Kinetic / Physical Anchor)**: `Aircraft Fly-by-wire Detent & Machined Vernier Caliper`（电传操纵磁吸阻尼位移、卡尺游标微动、绝无虚饰）。",
+      "**舍弃消费级发光拟态卡片**: 杜绝多重弥散阴影和无意义彩色图表，全屏采用 1px 细线发丝级边界与深渊哑光黑背景。",
+      "**舍弃裸指标数据展示 (Zero Naked Metrics)**: 所有 VRAM 容量与利用率数值强制附带 60 秒内联微时序走势图（Micro Sparklines）与集群基准分位线。",
+      "**舍弃多步繁复确认模态**: 核心排空动作遵循动作动词四态闭环，支持 `Space` 键瞬时检视、`Enter` 键机械压感提交。",
+      "`Energy`: `quiet` (深渊哑光黑 `#05070a`，等离子青高亮，杜绝一切光污染)。",
+      "`Finish`: `machined-industrial` (1px 锐利边框、`tabular-nums` 等宽防抖数值)。",
+      "`Density`: `dense` (4,096 节点单屏高信噪比点阵矩阵)。",
+      "`Weight`: `dense-tactile` (`:active scale(0.97)` 机械微动压感)。",
+      "`Seriousness`: `solemn` (超算严谨工业仪器，零娱乐花哨动效)。",
+      "`Palette`: `plasma-cyan`",
+      "**主工作区 (Primary)**: `console/hero-anchor`（4,096 GPU 拓扑阵列总览 + 显存抢占检视抽屉）。",
+      "**上下文视图 (Contextual)**: `surfaces/incident-replay`（CUDA Bus Hang 故障微秒级帧回放）。",
+      "**支撑视图 (Supporting)**: `surfaces/capacity-matrix`（算力配额矩阵与跨节点分流配置）。"
+    ],
+    "core_tension": "- **业务后果**: 4,096 卡 H100 SXM5 超大规模集群实时进行 Diffusion 并行反向传播与 KV-Cache 渲染。一旦单机 NVLink 发生 Bus Hang 或显存 OOM 浪涌，每秒产生超算排队损耗。\n- **操作者冲突**: SRE 操作员必须在 **2 秒内** 从 4,096 块 GPU 中秒级定位故障节点并执行确定的**显存抢占/节点排空**；但误排空健康作业将导致整批训练权重回滚。\n\n### 2. 现实双地锚 (Reality Benchmark Anchors)\n- **业务地锚 (Operational Anchor)**: `NVIDIA DCGM Telemetry & Run:ai Console`（高频张量显存热图、NVLink 吞吐拓扑、多租户配额排队）。\n- **物理地锚 (Kinetic / Physical Anchor)**: `Aircraft Fly-by-wire Detent & Machined Vernier Caliper`（电传操纵磁吸阻尼位移、卡尺游标微动、绝无虚饰）。\n\n### 3. 三大冷酷舍弃 (Ruthless Omissions)\n1. **舍弃消费级发光拟态卡片**: 杜绝多重弥散阴影和无意义彩色图表，全屏采用 1px 细线发丝级边界与深渊哑光黑背景。\n2. **舍弃裸指标数据展示 (Zero Naked Metrics)**: 所有 VRAM 容量与利用率数值强制附带 60 秒内联微时序走势图（Micro Sparklines）与集群基准分位线。\n3. **舍弃多步繁复确认模态**: 核心排空动作遵循动作动词四态闭环，支持 `Space` 键瞬时检视、`Enter` 键机械压感提交。\n\n### 4. 5-Dial 风格寄存器 (5-Dial Style Register)\n- `Energy`: `quiet` (深渊哑光黑 `#05070a`，等离子青高亮，杜绝一切光污染)。\n- `Finish`: `machined-industrial` (1px 锐利边框、`tabular-nums` 等宽防抖数值)。\n- `Density`: `dense` (4,096 节点单屏高信噪比点阵矩阵)。\n- `Weight`: `dense-tactile` (`:active scale(0.97)` 机械微动压感)。\n- `Seriousness`: `solemn` (超算严谨工业仪器，零娱乐花哨动效)。\n- `Palette`: `plasma-cyan`\n\n### 5. OOUX 实体拓扑与表面分配\n- **主工作区 (Primary)**: `console/hero-anchor`（4,096 GPU 拓扑阵列总览 + 显存抢占检视抽屉）。\n- **上下文视图 (Contextual)**: `surfaces/incident-replay`（CUDA Bus Hang 故障微秒级帧回放）。\n- **支撑视图 (Supporting)**: `surfaces/capacity-matrix`（算力配额矩阵与跨节点分流配置）。"
+  },
+  "scope": {
+    "topology_scope": {
+      "coverage": "key-journey",
+      "declared_surfaces": [
+        "hero-anchor",
+        "incident-replay",
+        "capacity-matrix"
+      ],
+      "primary_surface": "hero-anchor",
+      "navigation_topology": "workspace-inspector"
+    },
+    "build_scope": {
+      "stage": "hero_probe",
+      "selected_surfaces": [
+        "hero-anchor"
+      ],
+      "context_surfaces": [
+        "incident-replay",
+        "capacity-matrix"
+      ]
+    },
+    "verification_scope": {
+      "viewports": [
+        320,
+        390,
+        1280
+      ],
+      "required_states": [
+        "draft",
+        "sealed",
+        "zero-feedback",
+        "long-string"
+      ]
+    }
+  },
+  "foundation": {
+    "five_axes": {
+      "density": "dense",
+      "energy": "solemn",
+      "materiality": "machined-industrial",
+      "rhythm": "fluid",
+      "character": "dense-tactile"
+    },
+    "palette_discipline": {
+      "accent_seal": "var(--accent-seal, #D93829)",
+      "accent_policy": "Forbidden in draft/pending states; reserved exclusively for irreversible authority seals."
+    }
+  },
+  "state_model": {
+    "domain_states": [
+      {
+        "id": "draft",
+        "label": "Draft Unsealed",
+        "description": "Mutable operational working state"
+      },
+      {
+        "id": "sealed",
+        "label": "Sealed Baseline",
+        "description": "Immutable verified authoritative state"
+      }
+    ],
+    "interaction_states": [
+      "idle",
+      "hovering",
+      "inspecting",
+      "confirming",
+      "committing",
+      "settled"
+    ],
+    "data_scenarios": [
+      {
+        "id": "zero-feedback",
+        "description": "Empty state with zero prior data or alerts"
+      },
+      {
+        "id": "peak-load",
+        "description": "High density saturated cluster state"
+      }
+    ],
+    "stress_fixtures": [
+      {
+        "id": "long-string",
+        "vector": "1000-char unbroken token string",
+        "expected_behavior": "Truncate with ellipsis and tooltip, no container blow-out"
+      },
+      {
+        "id": "rapid-commit",
+        "vector": "10 repeated clicks in 200ms",
+        "expected_behavior": "Single idempotent commit execution with locked button"
+      },
+      {
+        "id": "viewport-320",
+        "vector": "320px narrow mobile viewport",
+        "expected_behavior": "Horizontal overflow suppressed, critical actions stacked or drawer-accessible"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "id": "inspect-entity",
+      "verb": "检视实体",
+      "trigger": "Row click / Space key",
+      "proximity_level": 1,
+      "commit_action": "Open contextual inspector drawer",
+      "feedback": "Highlight border and display details",
+      "consequence": "Read-only inspection without state mutation"
+    },
+    {
+      "id": "commit-drain",
+      "verb": "确定隔离排空",
+      "trigger": "Drain Button / Enter key in modal",
+      "proximity_level": 2,
+      "commit_action": "Execute irreversible node drain",
+      "feedback": "Display seal badge and transition node to drained state",
+      "consequence": "State permanently sealed and marked offline"
+    }
+  ],
+  "invariants": [
+    {
+      "id": "SAMPLE-GATE-A1",
+      "upstream_ref": "REQ-PERCEPTUAL-01",
+      "statement": "Operator must distinguish fault state vs normal telemetry within 2 seconds of screen load.",
+      "severity": "blocking",
+      "applies_to": [
+        "draft",
+        "sealed"
+      ],
+      "verification_method": "screenshot_review"
+    },
+    {
+      "id": "SAMPLE-GATE-A2",
+      "upstream_ref": "REQ-SAFETY-02",
+      "statement": "Action verification: high-hazard commits require Proximity Level >= 2 dedicated confirmation.",
+      "severity": "blocking",
+      "applies_to": [
+        "confirming",
+        "committing"
+      ],
+      "verification_method": "dom_query"
+    },
+    {
+      "id": "SAMPLE-GATE-A3",
+      "upstream_ref": "REQ-PALETTE-03",
+      "statement": "Signature accent seal color (--accent-seal) is strictly forbidden on draft, pending, or secondary controls.",
+      "severity": "blocking",
+      "applies_to": [
+        "draft",
+        "idle"
+      ],
+      "verification_method": "computed_style"
+    }
+  ],
+  "artifacts_binding": {
+    "tokens_css": "prototype/shared/tokens.css",
+    "tokens_json": "prototype/contracts/tokens/t1.json",
+    "human_spec_md": "prototype/specifications/sample-gate/r1.spec.md",
+    "prototype_html": "prototype/experiments/sample-gate/r1/index.html"
+  }
+}

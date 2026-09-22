@@ -1147,7 +1147,7 @@ def generate_markdown(tokens: Dict[str, Any], foundation_rev: str = "f1", tokens
 
 
 def _resolve_token_source(discussion_path: str, mode: str = "formal") -> str:
-    """Read the authored token source: an f1.md foundation record takes precedence.
+    """Read the authored token source: an f1.md foundation record takes precedence in formal mode.
 
     Accepts either an explicit `f1.md` path or a discussion path whose sibling
     `prototype/contracts/foundation/f1.md` carries the 5-dial register and palette.

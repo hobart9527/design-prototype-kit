@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specs.codex.internal/prototype-spec.v1.json",
+  "title": "Canonical Prototype Specification IR",
+  "description": "Strict machine-readable Intermediate Representation for prototype specification, binding authority, IA topology, state models, design invariants, and verifiable evidence.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "identity",
+    "sources",
+    "scope",
+    "foundation",
+    "state_model",
+    "invariants",
+    "actions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "prototype-spec/v1"
+    },
+    "identity": {
+      "type": "object",
+      "required": ["product_id", "slice_id", "contract_revision", "candidate_revision", "authority_status"],
+      "properties": {
+        "product_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "slice_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "contract_revision": { "type": "string", "pattern": "^c[0-9]+$" },
+        "candidate_revision": { "type": "string", "pattern": "^r[0-9]+$" },
+        "authority_status": {
+          "type": "string",
+          "enum": ["draft", "sealed_provisional", "validated", "frozen_approved"]
+        },
+        "created_at": { "type": "string" },
+        "title": { "type": "string" }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "required": ["discussion_ref"],
+      "properties": {
+        "discussion_ref": { "type": "string" },
+        "discussion_sha256": { "type": "string" },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "type": "string" },
+              "scenarios": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "reality_anchors": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "core_tension": { "type": "string" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": ["topology_scope", "build_scope", "verification_scope"],
+      "properties": {
+        "topology_scope": {
+          "type": "object",
+          "required": ["declared_surfaces"],
+          "properties": {
+            "coverage": {
+              "type": "string",
+              "enum": ["slice-isolated", "key-journey", "full-product"]
+            },
+            "declared_surfaces": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "primary_surface": { "type": "string" },
+            "navigation_topology": {
+              "type": "string",
+              "enum": ["hub-and-spoke", "linear-stepper", "workspace-inspector", "infinite-canvas"]
+            }
+          }
+        },
+        "build_scope": {
+          "type": "object",
+          "required": ["stage", "selected_surfaces"],
+          "properties": {
+            "stage": {
+              "type": "string",
+              "enum": ["hero_probe", "walking_skeleton", "surface_slice", "full_product"]
+            },
+            "selected_surfaces": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "context_surfaces": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "verification_scope": {
+          "type": "object",
+          "required": ["viewports", "required_states"],
+          "properties": {
+            "viewports": {
+              "type": "array",
+              "items": { "type": "integer" }
+            },
+            "required_states": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "foundation": {
+      "type": "object",
+      "required": ["five_axes", "palette_discipline"],
+      "properties": {
+        "five_axes": {
+          "type": "object",
+          "required": ["density", "energy", "materiality", "rhythm", "character"],
+          "properties": {
+            "density": { "type": "string" },
+            "energy": { "type": "string" },
+            "materiality": { "type": "string" },
+            "rhythm": { "type": "string" },
+            "character": { "type": "string" }
+          }
+        },
+        "palette_discipline": {
+          "type": "object",
+          "properties": {
+            "accent_seal": { "type": "string" },
+            "accent_policy": { "type": "string" }
+          }
+        }
+      }
+    },
+    "state_model": {
+      "type": "object",
+      "required": ["domain_states", "interaction_states", "data_scenarios", "stress_fixtures"],
+      "properties": {
+        "domain_states": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label"],
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "interaction_states": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "data_scenarios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "description"],
+            "properties": {
+              "id": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "stress_fixtures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "vector", "expected_behavior"],
+            "properties": {
+              "id": { "type": "string" },
+              "vector": { "type": "string" },
+              "expected_behavior": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "verb", "trigger", "commit_action"],
+        "properties": {
+          "id": { "type": "string" },
+          "verb": { "type": "string" },
+          "trigger": { "type": "string" },
+          "proximity_level": { "type": "integer", "minimum": 0, "maximum": 4 },
+          "commit_action": { "type": "string" },
+          "feedback": { "type": "string" },
+          "consequence": { "type": "string" }
+        }
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "statement", "severity"],
+        "properties": {
+          "id": { "type": "string" },
+          "upstream_ref": { "type": "string" },
+          "statement": { "type": "string" },
+          "severity": { "type": "string", "enum": ["blocking", "warning", "advisory"] },
+          "applies_to": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "verification_method": {
+            "type": "string",
+            "enum": ["computed_style", "dom_query", "screenshot_review", "manual"]
+          }
+        }
+      }
+    },
+    "artifacts_binding": {
+      "type": "object",
+      "properties": {
+        "tokens_css": { "type": "string" },
+        "tokens_json": { "type": "string" },
+        "human_spec_md": { "type": "string" },
+        "prototype_html": { "type": "string" }
+      }
+    }
+  }
+}
