@@ -610,11 +610,30 @@ def _mandatory_viewports(platform: Dict[str, Any]) -> List[Dict[str, str]]:
     return [desktop, mobile]
 
 
-def assemble(root: Path, slice_id: str, *, lint: bool = True) -> Dict[str, Any]:
+def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool = False) -> Dict[str, Any]:
     """Assemble an envelope for either exploration or formal candidate work."""
     brief = _brief_path(root, slice_id)
     specification = root / f"prototype/specifications/{slice_id}/r1.md"
-    if brief is not None and not specification.is_file():
+    canonical_ir = root / f"prototype/contracts/compiled/{slice_id}/r1.spec.json"
+
+    # If exploratory mode is requested, synthesize direction brief from discussion.md
+    if exploratory and not (specification.is_file() or canonical_ir.is_file()):
+        disc_path = root / "prototype/discussion.md"
+        if disc_path.is_file() and brief is None:
+            # Auto-synthesize a dynamic exploratory brief from discussion
+            brief_dir = root / "prototype/briefs"
+            brief_dir.mkdir(parents=True, exist_ok=True)
+            synthetic_brief = brief_dir / f"{slice_id}.md"
+            if not synthetic_brief.is_file():
+                synthetic_brief.write_text(f"""# Direction Brief: {slice_id}
+- Probe ID: `{slice_id}`
+- Core design thesis: Exploratory direction probe derived from prototype/discussion.md
+- Probe target path: `prototype/experiments/probes/{slice_id}/index.html`
+- Evidence write scope: `prototype/evidence/probes/{slice_id}/`
+""", encoding="utf-8")
+            brief = synthetic_brief
+
+    if brief is not None and not (specification.is_file() or canonical_ir.is_file()):
         return assemble_direction(root, slice_id, brief)
     paths = check_spec_completeness(root, slice_id, lint=lint)
 
@@ -1679,6 +1698,11 @@ def main():
     parser.add_argument("--full-envelope", action="store_true",
                         help="Emit the full diagnostic envelope instead of the lean builder payload")
 
+    parser.add_argument(
+        "--exploratory",
+        action="store_true",
+        help="Permit synthesizing an exploratory direction probe directly from discussion.md before formal spec completion",
+    )
     args = parser.parse_args()
     root = args.root.resolve()
 
@@ -1692,7 +1716,7 @@ def main():
             sys.exit(1)
 
     try:
-        env = assemble(root, args.slice)
+        env = assemble(root, args.slice, exploratory=args.exploratory)
         # The written artifact is the Builder's prompt: lean by default, with the
         # full diagnostic envelope available behind an explicit flag.
         emitted = env if args.full_envelope else build_builder_payload(env)
