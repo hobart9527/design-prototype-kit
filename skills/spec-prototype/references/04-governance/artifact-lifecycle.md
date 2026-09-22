@@ -27,7 +27,7 @@ The system defines two closely coordinated lifecycle models: the **Authority Lif
 | Authority Lifecycle (`authority status`) | Applicable Stage | Artifact File Lifecycle | Mutability & Handoff Semantics |
 |---|---|---|---|
 | **Draft** | Stage 0 (Explore), Stage 1 in-progress | `draft` | Mutable exploration. Relative paths, no cryptographic hash-locks. Bi-directional iterative updates allowed. |
-| **Sealed Provisional** | Stage 1 baseline closure, Stage 2 (Probe), Stage 3 (Skeleton) | `draft` (sealed baseline) | Gate baseline. Contracts materialized (`c1.md`, `r1.md`, `m1.md`, `f1.md`). Probes and skeletons are authorized against this baseline. Code experiments may falsify and reopen it. |
+| **Sealed Provisional** | Stage 1 baseline closure, Stage 2 (Probe), Stage 3 (Skeleton) | `draft` (sealed baseline) | Gate baseline. Canonical artifacts materialized (`prototype/contracts/compiled/<slice_id>/r1.spec.json`, `prototype/specifications/<slice_id>/r1.spec.md`, `prototype/shared/tokens.css`). Probes and skeletons are authorized against this baseline. Code experiments may falsify and reopen it. |
 | **Validated** | Stage 4 (Audit / Tuning) | `draft` (evidence-cleared) | Evidence-absorbed. Engineering DOM, Break Protocol, and visual captures pass. Defect deltas applied; awaiting human signoff. |
 | **Frozen Approved** | Stage 5 (Silent Governance) | `frozen` | Immutable delivery. Bound by SHA-256 digests via `handoff.py freeze`. Downstream engineering delivery (Loom Entry 2) admission state. Any subsequent modification requires an explicit successor revision (`superseded`). |
 
@@ -57,14 +57,28 @@ absolute handoff integrity, artifacts operate in two explicit tracks:
 ## Canonical paths
 
 ```text
-prototype/contracts/foundation/<foundation-revision>.md
-prototype/contracts/tokens/<tokens-revision>.md
-prototype/contracts/surface-maps/<surface-map-revision>.md
-prototype/contracts/slices/<slice-id>/<contract-revision>.md
-prototype/specifications/<slice-id>/<prototype-revision>.md
+prototype/contracts/compiled/<slice-id>/r1.spec.json
+prototype/specifications/<slice-id>/r1.spec.md
+prototype/shared/tokens.css
+prototype/contracts/tokens/t1.json
 prototype/experiments/<slice-id>/<prototype-revision>/
 prototype/evidence/<slice-id>/<prototype-revision>/
 prototype/reviews/<slice-id>/<prototype-revision>.md
+```
+
+### Legacy compatibility paths
+
+These are the fixed multi-file artifacts emitted only by the legacy
+`materialize_contracts.py` path; they are readable compatibility inputs, not the
+canonical baseline:
+
+```text
+prototype/product.md
+prototype/contracts/surface-maps/m1.md
+prototype/contracts/foundation/f1.md
+prototype/contracts/tokens/t1.md
+prototype/contracts/slices/<slice-id>/c1.md
+prototype/specifications/<slice-id>/r1.md
 ```
 
 ## Session intent and retained design
@@ -92,7 +106,7 @@ or product constraints. Keep current execution instructions out of frozen design
   A candidate based on draft sources is exploratory, not a frozen baseline.
 - Do not copy source prose when a stable anchor and digest preserve the authority boundary.
 - A product-source revision requires reconsideration only of artifacts whose cited meaning changed. Foundation owns integrated expression; Surface Map owns topology/journeys/coverage. Mark affected dependents in the discussion record and preserve unrelated approvals.
-- Retain a surface-map snapshot before compiling a candidate. Slice Contracts cite its exact path/revision/digest. `prototype/surface-map.md` remains the working index; status updates do not rewrite retained structure.
+- Retain the surface topology inside the canonical compiled spec before compiling a candidate. The slice specification cites its exact path/digest. `prototype/discussion.md` remains the working decision index; status updates do not rewrite retained structure.
 - User-confirmed Foundation, IA and Specification decisions may precede runnable evidence; validation remains explicitly pending. Prototype execution never supplies user approval.
 - The discussion record owns pending decisions and rationale, not a second copy of formal rules; research records own observations, not product truth.
 
@@ -100,16 +114,17 @@ Direction probes are a bounded exception: one viewport from an explicit probe
 brief, no full interaction or delivery qualification. They do not require the
 formal Slice Contract/Specification chain and cannot replace its evidence.
 
-Token snapshots name their owning Foundation revision and retain exact bytes; token and Foundation revision identifiers need not be equal. Specifications name
-the token path and digest; the current `prototype/tokens.md` copy is not an
-immutable identity. Preserve the prior snapshot before updating the current copy.
-At token freeze, immediately export the retained revision with
-`python3 <skill-home>/scripts/export-tokens.py <repository-root>/prototype/contracts/tokens/<revision>.md --output <repository-root>/prototype/contracts/tokens/<revision>.json`.
-The main designer may invoke this bounded installed helper through the execution
-adapter; JSON is derived packaging, not design authority. A successor uses its own
-revision filename. Preserve existing output on failure; never overwrite a different
-export or rewrite frozen Markdown to fix packaging. Report a missing export as an
-execution limitation until the permitted helper succeeds.
+Token snapshots name their owning Foundation revision and retain exact bytes; token
+and Foundation revision identifiers need not be equal. The canonical token artifact
+is `prototype/shared/tokens.css` compiled by `compile_tokens.py`, which also emits
+the DTCG `prototype/contracts/tokens/t1.json`; the JSON is derived packaging, not
+design authority. Specifications name the token path and digest. At token freeze,
+run the contrast preflight against the compiled `t1.json`, which carries the flat
+`color` group consumed by `wcag-check.js`. A `export-tokens.py` re-export does not
+carry that group, so pointing `wcag-check.js` at it yields an empty set and a
+falsely passing preflight. Preserve existing output on failure; never overwrite a
+different export or rewrite frozen artifacts to fix packaging. Report a missing
+export as an execution limitation until the permitted helper succeeds.
 
 ## Legacy migration
 

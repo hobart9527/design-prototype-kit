@@ -7,10 +7,17 @@ handoff.
 
 ## Headless Pipeline Execution
 
-1. **DTCG compilation & export**:
-   `python3 skills/spec-prototype/scripts/export-tokens.py prototype/shared/tokens.css --output prototype/contracts/tokens/t1.json`
-   compiles `shared/tokens.css` into a W3C DTCG standard `tokens.json`.
+1. **DTCG compilation**:
+   `python3 skills/spec-prototype/scripts/compile_tokens.py` (default
+   `--output-json prototype/contracts/tokens/t1.json`) compiles
+   `shared/tokens.css` into a W3C DTCG standard `tokens.json`. The compiled output
+   carries the flat `color` group that the contrast preflight consumes.
    *Note on token flow discipline*: `--reconcile-from-css` is strictly an exploratory Stage 1~2 utility. In Stage 5, token definitions are frozen and immutable; bidirectional writebacks to discussion.md are prohibited to preserve upstream SHA-256 seal integrity.
+   **Do not substitute `export-tokens.py` for this step.** Its re-export omits the
+   `color` group, so `wcag-check.js` reads an empty set and exits 0 with
+   `allPass: true` — a false pass. `export-tokens.py` is retained only as a legacy
+   DTCG exporter for tokens.md input and carries no role in the Stage 5 freeze
+   preflight.
 2. **WCAG static preflight**:
    `node skills/spec-prototype/scripts/wcag-check.js prototype/contracts/tokens/t1.json --level AA`
    checks critical text and figures against **WCAG 2.2 AA (4.5:1)**; long-reading

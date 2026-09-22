@@ -47,8 +47,16 @@ screens, styling or prototype code.
   to a decision; not user research unless people were actually studied.
 - **Slice Contract**: scoped, testable experience obligations under exact product,
   topology and Foundation references.
+- **Spec IR**: the canonical machine-readable intermediate representation compiled
+  by `compile_spec_ir.py` to `prototype/contracts/compiled/<slice-id>/r1.spec.json`;
+  it is the single source consumed by downstream envelope assembly.
+- **Compiled Specification View**: the single-file human RFC rendering of the Spec
+  IR at `prototype/specifications/<slice-id>/r1.spec.md`; it is a view of the IR,
+  not a second authority.
 - **Prototype Specification**: immutable generation contract compiled from exact
-  source revisions; it creates no new design meaning.
+  source revisions; it creates no new design meaning. Canonical form is the Spec
+  IR plus its compiled `.spec.md` view; the legacy multi-file `r1.md` / `c1.md`
+  set is compatibility output only.
 - **Discussion Prototype**: runnable evidence generated from one brief or
   Specification revision.
 - **Prototype Evidence**: observed run, task, state, responsive and accessibility
@@ -84,7 +92,11 @@ They do not prescribe order, weight, page count, state count or style.
 ## Ownership
 
 - Cited product sources and native OpenSpec own product facts and behavior.
-- `product.md` owns the reconciled design synthesis, not source truth.
+- `prototype/discussion.md` owns the reconciled design synthesis and every
+  approval decision, not source truth.
+- `product.md` is a legacy compatibility record compiled by
+  `materialize_contracts.py`; it mirrors the discussion synthesis and is not
+  itself the canonical or authoritative source.
 - Surface Map owns topology, routes, journeys and coverage.
 - Foundation owns the integrated Design Proposition and project-wide language.
 - Slice Contract owns scoped experience obligations and pins exact upstream

@@ -43,24 +43,134 @@ if (args.length === 0) {
   process.exit(1);
 }
 
+/**
+ * Resolve the color group across the two incompatible token schemas that write
+ * the same repository path.
+ *
+ * - `compile_tokens.py` writes a flat top-level `color` group plus a 3-tier
+ *   `primitives.color` mirror.
+ * - `export-tokens.py` (CSS path) groups tokens by CSS custom-property prefix,
+ *   so `--bg-void` becomes group `bg`, never `color`.
+ *
+ * Both are adapted explicitly. Neither is inferred: a schema this tool does not
+ * recognize yields no colors, which is a failure below rather than a pass.
+ */
+function isHex(v) {
+  return typeof v === 'string' && v.startsWith('#');
+}
+
+/**
+ * Walk a token tree, adopting every `$value`-bearing leaf whose value is a hex
+ * color. Literal hexes and DTCG aliases (`{primitives.color.surface.$value}`) are
+ * both kept; alias resolution happens against the flattened name map.
+ */
+function walkColors(node, colors, path) {
+  if (!node || typeof node !== 'object') return;
+  const value = node.$value;
+  if (typeof value === 'string' && (isHex(value) || value.startsWith('{'))) {
+    const name = node.$type === 'color'
+      ? (path.filter(seg => seg !== 'color').join('-') || path.join('-'))
+      : path.join('-');
+    if (name && !(name in colors)) colors[name] = node;
+  }
+  for (const [key, child] of Object.entries(node)) {
+    if (key.startsWith('$')) continue;
+    if (child && typeof child === 'object' && !Array.isArray(child)) {
+      walkColors(child, colors, [...path, key]);
+    }
+  }
+}
+
+function collectColors(content) {
+  const colors = {};
+  if (!content || typeof content !== 'object') return colors;
+  // `compile_tokens.py` owns a flat top-level `color` group; it is the effective
+  // contrast target set (its 3-tier mirror aliases the same hexes). Prefer it.
+  if (content.color && typeof content.color === 'object' && !Array.isArray(content.color)) {
+    walkColors(content.color, colors, ['color']);
+    return colors;
+  }
+  // Fallback for the CSS-prefix schema (`bg`, `text`, `accent`, `status`, …)
+  // emitted by export-tokens.py. Non-color groups yield no hex leaf and are
+  // simply not adopted.
+  for (const [key, value] of Object.entries(content)) {
+    if (key.startsWith('$')) continue;
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      walkColors(value, colors, [key]);
+    }
+  }
+  return colors;
+}
+
+/** Follow one `{a.b.c.$value}` alias to the literal hex it points at, or null. */
+function resolveAlias(value, colors, seen = new Set()) {
+  if (typeof value !== 'string') return null;
+  const m = /^\{(.+?)\}$/.exec(value.trim());
+  if (!m || seen.has(value)) return null;
+  seen.add(value);
+  const parts = m[1].split('.').filter(p => p !== '$value' && p !== 'color');
+  const candidate = colors[parts.join('-')];
+  if (candidate && isHex(candidate.$value)) return candidate.$value;
+  if (candidate && typeof candidate.$value === 'string') return resolveAlias(candidate.$value, colors, seen);
+  return null;
+}
+
+/** The literal hex a token resolves to: itself, or its alias target. */
+function tokenHex(def, colors) {
+  if (isHex(def?.$value)) return def.$value;
+  return resolveAlias(def?.$value, colors);
+}
+
+/** The backdrop every other color is measured against, or an explicit null. */
+function resolveSurface(colors) {
+  // `surface` is the compiled name in `color`; `bg` is the compiled name in the
+  // 3-tier mirror. Both describe the same backdrop token, so pick the one that
+  // actually resolves to a hex rather than merging distinct names.
+  for (const name of ['surface', 'background', 'bg-base', 'bg-void', 'bg', 'canvas']) {
+    const def = colors[name];
+    if (!def) continue;
+    const hex = tokenHex(def, colors);
+    if (hex) return hex;
+  }
+  return null;
+}
+
 if (args[0].endsWith('.json') || fs.existsSync(args[0])) {
   const content = JSON.parse(fs.readFileSync(args[0], 'utf-8'));
-  const colors = content.color || {};
-  const surface = colors.surface?.$value || colors.background?.$value || '#ffffff';
+  const colors = collectColors(content);
+  const surface = resolveSurface(colors);
   const targetLevel = args.includes('--level') ? args[args.indexOf('--level') + 1] : 'AA';
   const threshold = targetLevel === 'AAA' ? 7.0 : 4.5;
   const results = [];
   let allPass = true;
 
+  const SURFACE_NAMES = new Set(['surface', 'background', 'bg-base', 'bg-void', 'bg', 'canvas']);
   for (const [name, def] of Object.entries(colors)) {
-    if (name === 'surface' || name === 'background') continue;
-    const val = def.$value;
-    if (typeof val === 'string' && val.startsWith('#')) {
-      const ratio = getContrast(val, surface);
-      const pass = ratio >= threshold;
-      if (!pass) allPass = false;
-      results.push({ token: name, value: val, surface, ratio: Number(ratio.toFixed(2)), pass });
-    }
+    if (SURFACE_NAMES.has(name)) continue;
+    const val = tokenHex(def, colors);
+    if (!val || !surface) continue;
+    const ratio = getContrast(val, surface);
+    const pass = ratio >= threshold;
+    if (!pass) allPass = false;
+    results.push({ token: name, value: val, surface, ratio: Number(ratio.toFixed(2)), pass });
+  }
+
+  // "No colors to check" is not "passed accessibility". A token file this tool
+  // cannot measure is refused (non-zero exit) so an empty or unfamiliar schema
+  // can never masquerade as a WCAG AA/AAA pass.
+  if (!surface || results.length === 0) {
+    allPass = false;
+    console.log(JSON.stringify({
+      targetLevel,
+      threshold,
+      surface,
+      allPass,
+      results,
+      error: surface
+        ? 'No color tokens with a hex `$value` were found to contrast against the surface.'
+        : 'No surface/background color token was found; contrast cannot be measured.',
+    }, null, 2));
+    process.exit(1);
   }
 
   console.log(JSON.stringify({ targetLevel, threshold, surface, allPass, results }, null, 2));

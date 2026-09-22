@@ -16,7 +16,7 @@ Design DNA, optional Real-World Mapping and Signature Craft synopsis while the
 full causal proposition remains authoritative. Finish source writes before compilation. Use
 `python3 <skill-home>/scripts/handoff.py digests --root <repository-root> <paths...>`
 to obtain exact reference lines from final bytes. Retain those bytes; later
-changes follow the artifact lifecycle. Hashes prove identity, not approval. `prototype/surface-map.md` is a working index; retain the candidate structure with its draft/approval status at `prototype/contracts/surface-maps/<revision>.md` before compilation. Progress-only changes update the working index, not old snapshots.
+changes follow the artifact lifecycle. Hashes prove identity, not approval. `prototype/discussion.md` is the working decision index; retain the candidate structure with its draft/approval status inside the canonical compiled spec at `prototype/contracts/compiled/<slice-id>/r1.spec.json` before freeze. Progress-only changes update the working index, not retained snapshots.
 
 Product sources own facts and object/lifecycle meaning; Foundation owns the
 integrated Design Proposition and expression system; Surface Map owns topology and
@@ -86,6 +86,21 @@ those invariants, stop with `prototype_blocked`; do not rewrite the packet,
 initialize Git, or weaken scope to work around it.
 
 ## Freeze approval binding
+
+The freeze command routes by specification shape, and the two paths carry
+different field constraints:
+
+- **Canonical path** — `handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.spec.md`
+  routes to `pillar_packet()`. It emits `contract_disposition: ready` without the
+  legacy `Delegated implementation freedoms` disposition machinery, treats the
+  multi-file references as optional, and strictly requires only
+  `prototype/shared/tokens.css` alongside the specification itself.
+- **Legacy path** — `handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.md`
+  routes to `packet()`, which resolves the six-piece references, requires the Slice
+  Contract `Disposition: ready`, and validates per-candidate write scopes.
+
+Both routes then run the same approval binding below against the discussion
+record's decision rows; the canonical path is not exempt.
 
 Freeze binds an actual approval decision, not a matching phrase. The retained
 record must carry one decision row with status `confirmed | delegated` that names

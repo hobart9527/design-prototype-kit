@@ -75,7 +75,7 @@ this module cites them and never copies floor rules.
 
 - **Surgical In-Place Patching**:
   - Global visual and rhythm feedback flows back to
-    `prototype/contracts/foundation/f1.md` / `discussion.md` and is recompiled
+    `prototype/discussion.md` (the single decision authority) and is recompiled
     through `compile_tokens.py` into `prototype/shared/tokens.css`; island
     overrides are forbidden.
   - Page-local structural or micro-interaction defects are fixed directly in the

@@ -109,10 +109,12 @@
           "properties": {
             "viewports": {
               "type": "array",
+              "minItems": 1,
               "items": { "type": "integer" }
             },
             "required_states": {
               "type": "array",
+              "minItems": 1,
               "items": { "type": "string" }
             }
           }
@@ -149,6 +151,7 @@
       "properties": {
         "domain_states": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "object",
             "required": ["id", "label"],
@@ -161,10 +164,12 @@
         },
         "interaction_states": {
           "type": "array",
+          "minItems": 1,
           "items": { "type": "string" }
         },
         "data_scenarios": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "object",
             "required": ["id", "description"],
@@ -176,6 +181,7 @@
         },
         "stress_fixtures": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "object",
             "required": ["id", "vector", "expected_behavior"],

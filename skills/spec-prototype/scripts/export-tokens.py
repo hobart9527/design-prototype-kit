@@ -16,6 +16,15 @@ import tempfile
 from typing import Any
 
 
+# `compile_tokens.py` owns the canonical machine token artifact
+# (`prototype/contracts/tokens/t1.json`, a 3-tier `primitives/semantics/
+# components` schema). This exporter emits a different, flat CSS-prefix schema
+# and must never overwrite that file: two producers writing one path leaves the
+# reader with whichever schema ran last. The canonical path is refused here so
+# the conflict is surfaced instead of silently resolved.
+CANONICAL_TOKENS_JSON = "prototype/contracts/tokens/t1.json"
+
+
 SECTION_TYPE_MAP = {
     "color": "color",
     "spacing": "dimension",
@@ -175,6 +184,33 @@ def parse_tokens_css(content: str) -> dict[str, Any]:
     return tokens
 
 
+def _refuse_canonical_collision(output: Path) -> None:
+    """Refuse the output path the canonical token compiler owns.
+
+    Two producers must not write one path: the flat CSS-prefix schema below and
+    the 3-tier `primitives/semantics/components` schema are not interchangeable
+    readers. The collision is reported, never silently resolved by last-writer.
+    """
+    resolved = output.resolve()
+    posix = resolved.as_posix().lstrip("./")
+    if posix == CANONICAL_TOKENS_JSON or posix.endswith("/" + CANONICAL_TOKENS_JSON):
+        raise ValueError(
+            f"Refusing to overwrite the canonical machine token artifact "
+            f"'{CANONICAL_TOKENS_JSON}' (owned by compile_tokens.py); write this "
+            "CSS-derived export to a distinct path such as "
+            "'prototype/contracts/tokens/t1.dtcg.json'.")
+    if resolved.is_file():
+        try:
+            existing = json.loads(resolved.read_text(encoding="utf-8"))
+        except (OSError, ValueError, UnicodeError):
+            return
+        if isinstance(existing, dict) and (
+                {"primitives", "semantics", "components"} & set(existing)):
+            raise ValueError(
+                f"Refusing to overwrite '{output}': the existing file is the canonical "
+                "3-tier token schema, incompatible with this flat export.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Export tokens.md or tokens.css to W3C DTCG format.")
     parser.add_argument("tokens_file", type=Path, help="Path to tokens.md or tokens.css")
@@ -195,6 +231,7 @@ def main() -> int:
         if args.output:
             if args.output.suffix != '.json' or args.output.is_symlink():
                 raise ValueError('Export requires a regular .json destination.')
+            _refuse_canonical_collision(args.output)
             args.output.parent.mkdir(parents=True, exist_ok=True)
             with tempfile.NamedTemporaryFile(dir=args.output.parent, delete=False) as temporary:
                 temporary_path = Path(temporary.name)

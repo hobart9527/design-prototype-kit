@@ -139,10 +139,14 @@ micro-motion for the single **Signature Surface**; every supporting, settings,
 tabular and form surface is a **Convention Surfaces** following established
 industry interaction patterns.
 
-**Sealed Provisional Baseline Closure**: Stage 1 ends only when the six sealed
-provisional baseline contracts are materialized — `prototype/product.md`, `prototype/contracts/surface-maps/m1.md`,
-`prototype/contracts/foundation/f1.md`, `prototype/shared/tokens.css`, `prototype/contracts/slices/<slice_id>/c1.md` and
-`prototype/specifications/<slice_id>/r1.md` (authority status: sealed provisional).
+**Sealed Provisional Baseline Closure**: Stage 1 ends only when the canonical
+sealed provisional baseline is materialized — `prototype/contracts/compiled/<slice_id>/r1.spec.json`
+(machine IR), `prototype/specifications/<slice_id>/r1.spec.md` (single-file human RFC) and
+`prototype/shared/tokens.css` (authority status: sealed provisional). The legacy
+multi-file set (`prototype/product.md`, `prototype/contracts/surface-maps/m1.md`,
+`prototype/contracts/foundation/f1.md`, `prototype/contracts/slices/<slice_id>/c1.md`,
+`prototype/specifications/<slice_id>/r1.md`) is optional `materialize_contracts.py`
+compatibility output, not a closure requirement.
 
 Full procedure: [`stages/stage-1-frame.md`](stages/stage-1-frame.md).
 

@@ -40,7 +40,7 @@ root-level ad-hoc files such as `DESIGN.md` or left unpersisted in terminal outp
 For Bash use one command: `pwd`, `ls`, `cat`, `head`, `tail`, `wc`, `rg` (without a
 preprocessor), `git status --short`, `git status --short --branch`, or
 `git rev-parse --show-toplevel`. Installed scripts may run by their absolute path:
-Node for detect-design-assets, resolve-change and preview; Python for
+Node for preview; Python for
 check-discussion and handoff.
 The bounded token export command in [artifact lifecycle](artifact-lifecycle.md)
 is also permitted: absolute retained token source and same-revision JSON output

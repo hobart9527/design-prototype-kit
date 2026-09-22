@@ -143,11 +143,13 @@ def shell_read(command, root):
             require(not output.is_symlink() and output.resolve() == source.resolve().with_suffix('.json'),
                     'Token export belongs beside its source with the same revision name.')
             return
-        permitted = {'node': {'detect-design-assets.mjs', 'resolve-change.mjs', 'preview.mjs', 'capture.mjs', 'wcag-check.js'},
-                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'},
-                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'}}
+        permitted = {'node': {'preview.mjs', 'capture.mjs', 'wcag-check.js'},
+                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'compile_spec_ir.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'},
+                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'compile_spec_ir.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'}}
         require(script.parent == SKILL/'scripts' and script.name in permitted[tool],
                 'Only installed helpers run in the main designer; use Builder for code/setup.')
+        if script.name == 'compile_spec_ir.py':
+            require(any(arg == '--slice' for arg in args), 'compile_spec_ir.py requires an explicit --slice.')
         if script.name == 'lint_spec_contracts.py':
             admits_lint_helper({'script': script, 'argv': args[2:]}, root)
         if script.name == 'handoff.py' and 'freeze' in args:

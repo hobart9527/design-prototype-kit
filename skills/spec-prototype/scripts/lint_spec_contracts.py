@@ -271,6 +271,45 @@ def lint_formal_entry(root: Path, slice_id: str) -> List[SpecLintError]:
     return errors
 
 
+def lint_canonical_spec_ir(root: Path, slice_id: str, candidate_id: str = "r1") -> List[SpecLintError]:
+    """Validate canonical specification IR against JSON Schema Draft 2020-12 and boundary gates."""
+    errors: List[SpecLintError] = []
+    schema_path = root / "skills/spec-prototype/schemas/prototype-spec.v1.json"
+    if not schema_path.is_file():
+        # Fallback to relative from script
+        schema_path = Path(__file__).resolve().parent.parent / "schemas/prototype-spec.v1.json"
+    ir_path = root / f"prototype/contracts/compiled/{slice_id}/{candidate_id}.spec.json"
+
+    if not ir_path.is_file():
+        errors.append(SpecLintError("E001_FILE_MISSING", str(ir_path),
+                                    f"Canonical Spec IR for slice '{slice_id}' does not exist."))
+        return errors
+
+    try:
+        data = json.loads(ir_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        errors.append(SpecLintError("E010_MALFORMED_JSON", str(ir_path), f"JSON parse error: {exc}"))
+        return errors
+
+    try:
+        import jsonschema
+        if schema_path.is_file():
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+            jsonschema.validate(instance=data, schema=schema)
+    except ImportError:
+        pass
+    except Exception as exc:
+        errors.append(SpecLintError("E020_SCHEMA_VALIDATION_FAILED", str(ir_path), f"Schema validation error: {exc}"))
+
+    # Boundary and integrity checks
+    coverage = data.get("scope", {}).get("topology_scope", {}).get("coverage")
+    if not coverage or coverage in ("unresolved", "legacy"):
+        errors.append(SpecLintError("E008_COVERAGE_UNRESOLVED", str(ir_path),
+                                    f"Canonical IR coverage is {coverage!r}; valid topology coverage must be selected."))
+
+    return errors
+
+
 def lint_formal_advisories(root: Path, slice_id: str) -> List[SpecLintError]:
     """Non-blocking diagnostics for the formal entry.
 
@@ -291,16 +330,22 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Lint Stage 1 Design Spec Contracts")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Workspace root directory")
     parser.add_argument("--slice", type=str, required=True, help="Slice ID to lint")
+    parser.add_argument("--candidate", type=str, default="r1", help="Candidate revision (e.g. r1)")
+    parser.add_argument("--canonical-only", action="store_true", help="Validate canonical IR schema and boundary only")
     parser.add_argument("--no-formal", action="store_true", help="Skip formal entry check")
     args = parser.parse_args()
 
-    errors = lint_spec_contracts(args.root, args.slice)
-    if not args.no_formal:
-        try:
-            formal_errors = lint_formal_entry(args.root, args.slice)
-            errors.extend(formal_errors)
-        except Exception as exc:
-            errors.append(SpecLintError("E099_INTERNAL_VALIDATOR_ERROR", "linter", f"Internal validator unexpected error: {type(exc).__name__}: {exc}"))
+    if args.canonical_only or (args.root / f"prototype/contracts/compiled/{args.slice}/{args.candidate}.spec.json").is_file():
+        # When canonical IR is present or explicitly selected, run canonical IR schema and boundary lint
+        errors = lint_canonical_spec_ir(args.root, args.slice, args.candidate)
+    else:
+        errors = lint_spec_contracts(args.root, args.slice)
+        if not args.no_formal:
+            try:
+                formal_errors = lint_formal_entry(args.root, args.slice)
+                errors.extend(formal_errors)
+            except Exception as exc:
+                errors.append(SpecLintError("E099_INTERNAL_VALIDATOR_ERROR", "linter", f"Internal validator unexpected error: {type(exc).__name__}: {exc}"))
     if errors:
         print(f"FAILED: Found {len(errors)} Stage 1 contract lint issues:")
         for err in errors:

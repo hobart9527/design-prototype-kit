@@ -22,10 +22,15 @@ Specify concrete test vectors:
 ## 4. Single-Direction Contract Compilation Trigger
 Do NOT write Markdown files manually. Execute:
 ```bash
-python3 skills/spec-prototype/scripts/materialize_contracts.py --slice <slice-id> --phase all
+python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice-id>
+python3 skills/spec-prototype/scripts/compile_tokens.py
 ```
 Verify pipeline:
-1. `tokens.css` & `t1.json` compiled with domain tokens preserved.
-2. Upstream digests cryptographically sealed in `r1.md`.
-3. Strict semantic validation PASS (`lint_spec_contracts.py`).
+1. `r1.spec.json` compiled and schema-validated (canonical machine IR).
+2. `r1.spec.md` rendered as the single-file human RFC view.
+3. `tokens.css` compiled with domain tokens preserved (plus `t1.json`).
 4. Stage 1 lifecycle advances to `sealed_provisional`.
+
+Legacy compatibility only: `materialize_contracts.py --slice <slice-id> --phase all`
+still emits the multi-file `c1.md` / `r1.md` set for backwards-compatible readers;
+it is not the canonical compilation path.

@@ -70,7 +70,7 @@ def _contract_lint_gate(root: Path, slice_id: str) -> List[Dict[str, str]]:
 # Rules whose evidence is a legacy pillar (m1/f1/c1/r1). A canonical-IR entry
 # owns those facts in compiled form, so on that path they are not actionable; the
 # rules that read canonical paths, coverage, or map identity still apply.
-_LEGACY_PRESENCE_RULES = ("E001", "E002", "E003", "E004", "E005", "E006", "E007", "E008")
+_LEGACY_PRESENCE_RULES = ("E001", "E002", "E003", "E004", "E005", "E006", "E007")
 
 
 def _canonical_contract_lint(root: Path, slice_id: str) -> List[Dict[str, str]]:
@@ -79,6 +79,15 @@ def _canonical_contract_lint(root: Path, slice_id: str) -> List[Dict[str, str]]:
     The lint reads the authored legacy pillars when they exist and stays silent
     when they do not, so a canonical-only repository still enforces every rule
     whose evidence it actually owns instead of skipping the lint wholesale.
+
+    `_LEGACY_PRESENCE_RULES` (E001-E007) each read a legacy pillar file
+    (product/m1/f1/c1/r1); with the canonical IR owning those facts they are not
+    actionable on this path.
+
+    E008_COVERAGE_UNRESOLVED evaluates whether coverage has been resolved.
+    When Canonical Spec IR exists for the slice and defines explicit coverage,
+    that machine authority governs and E008 is discharged. Otherwise, it
+    evaluates against the retained surface map m1.md.
     """
     try:
         import lint_spec_contracts
@@ -86,11 +95,183 @@ def _canonical_contract_lint(root: Path, slice_id: str) -> List[Dict[str, str]]:
         errors = lint_spec_contracts.lint_formal_entry(root, slice_id)
     except (OSError, ValueError) as error:
         return [{"code": "E010_STALE_CONTRACT", "path": str(root), "message": str(error)}]
+    surface_map = root / "prototype/contracts/surface-maps/m1.md"
+    canonical_ir_path = root / f"prototype/contracts/compiled/{slice_id}/r1.spec.json"
+    canonical_has_coverage = False
+    if canonical_ir_path.is_file():
+        try:
+            ir_data = json.loads(canonical_ir_path.read_text(encoding="utf-8"))
+            ir_cov = ir_data.get("scope", {}).get("topology_scope", {}).get("coverage")
+            if ir_cov and ir_cov not in ("unresolved", "legacy"):
+                canonical_has_coverage = True
+        except (OSError, ValueError):
+            pass
+
     return [
         {"code": e.rule, "path": e.file_path, "message": e.message}
         for e in errors
         if not e.rule.startswith(_LEGACY_PRESENCE_RULES)
+        and not (e.rule.startswith("E008") and (not surface_map.is_file() or canonical_has_coverage))
     ]
+
+
+def _load_canonical_ir(paths: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Read the Canonical Spec IR JSON, or None when absent/unreadable."""
+    canonical_ir = paths.get("canonical_ir")
+    if not canonical_ir or not Path(canonical_ir).is_file():
+        return None
+    try:
+        data = json.loads(Path(canonical_ir).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _ir_pointer(ref: str, pointer: str) -> str:
+    return f"{ref}#/{pointer.lstrip('/')}"
+
+
+def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
+    """Project the Canonical Spec IR into the 7-field Executable Design IR.
+
+    Every value is taken from `r1.spec.json`'s structured content and names that
+    file (with a JSON pointer) as its `source`. Nothing is re-parsed from the
+    legacy Markdown pillars, and a canonical section that is absent or empty
+    stays empty rather than being back-filled from those pillars: the canonical
+    IR is the single machine authority, and a mixed-authority envelope would
+    misreport where a fact came from.
+    """
+    ident = ir.get("identity") or {}
+    sources = ir.get("sources") or {}
+    scope = ir.get("scope") or {}
+    topology = scope.get("topology_scope") or {}
+    verification_scope = scope.get("verification_scope") or {}
+    foundation = ir.get("foundation") or {}
+    state_model = ir.get("state_model") or {}
+
+    def state_entries(raw: Any, kind: str, pointer: str) -> List[Dict[str, Any]]:
+        entries: List[Dict[str, Any]] = []
+        for index, item in enumerate(raw or []):
+            name = item.get("id") or item.get("name") or item.get("label") if isinstance(item, dict) else str(item)
+            if not name:
+                continue
+            entries.append({
+                "name": name,
+                "type": kind,
+                "authority": item.get("authority", "explicit") if isinstance(item, dict) else "explicit",
+                "source": _ir_pointer(ref, f"{pointer}/{index}"),
+            })
+        return entries
+
+    semantic_contract = {
+        "domain_thesis": sources.get("core_tension"),
+        "primary_entities": list(topology.get("declared_surfaces") or []),
+        "domain_states": state_entries(state_model.get("domain_states"), "domain_state",
+                                       "state_model/domain_states"),
+        "experience_states": state_entries(state_model.get("data_scenarios"), "experience_state",
+                                           "state_model/data_scenarios"),
+        "ui_transient_states": state_entries(state_model.get("interaction_states"), "ui_transient_state",
+                                             "state_model/interaction_states"),
+        "anchors": [
+            {"source": anchor, "transfer": [], "non_transfer": [],
+             "authority": "explicit", "source_ref": _ir_pointer(ref, f"sources/reality_anchors/{index}")}
+            for index, anchor in enumerate(sources.get("reality_anchors") or [])
+        ],
+    }
+
+    declared = list(topology.get("declared_surfaces") or [])
+    primary = topology.get("primary_surface")
+    regions: List[Dict[str, Any]] = []
+    if primary:
+        regions.append({
+            "id": primary,
+            "role": "primary",
+            "relation": "primary-focus",
+            "scroll_owner": "self",
+            "continuity": "preserve-primary-context",
+            "authority": "explicit",
+            "source": _ir_pointer(ref, "scope/topology_scope/primary_surface"),
+        })
+    for surface in declared:
+        if surface == primary:
+            continue
+        regions.append({
+            "id": surface,
+            "role": "contextual",
+            "relation": "adjacent-to-primary",
+            "scroll_owner": "self",
+            "continuity": "preserve-during-mutation",
+            "authority": "explicit",
+            "source": _ir_pointer(ref, "scope/topology_scope/declared_surfaces"),
+        })
+
+    layout_directives = {
+        "viewport_strategy": ("100vh-locked" if topology.get("navigation_topology") == "workspace-inspector"
+                              else "natural-flow"),
+        "regions": regions,
+        "navigation": list(topology.get("declared_surfaces") or []),
+        "authority": "explicit",
+        "source": _ir_pointer(ref, "scope/topology_scope"),
+    }
+
+    visual_directives = {
+        "token_baseline": "prototype/shared/tokens.css",
+        "sensory_dials": dict(foundation.get("five_axes") or {}),
+        "density_calibration": {
+            "base_spacing": "var(--space-2)",
+            "typography": "var(--font-sans)",
+            "authority": "explicit",
+            "source": _ir_pointer(ref, "foundation/five_axes"),
+        },
+    }
+
+    action_contracts: List[Dict[str, Any]] = []
+    for index, action in enumerate(ir.get("actions") or []):
+        trigger = action.get("trigger") or action.get("verb") or action.get("id") or ""
+        if re.search(r"\bprimary\b", str(trigger), re.IGNORECASE):
+            role = "primary-action"
+        elif re.search(r"\bsecondary\b", str(trigger), re.IGNORECASE):
+            role = "secondary-action"
+        else:
+            role = "action"
+        feedback_message = action.get("feedback") or ""
+        action_contracts.append({
+            "id": action.get("id"),
+            "verb": action.get("verb") or action.get("commit_action") or action.get("id"),
+            "trigger": {"role": role, "semantic_label": trigger},
+            "consequence": action.get("consequence") or action.get("commit_action") or "state-mutation",
+            "ui_transient_states": [],
+            "feedback": {"continuity": "preserve-context", "visible": bool(feedback_message),
+                         **({"message": feedback_message} if feedback_message else {})},
+            "authority": action.get("authority", "inferred"),
+            "source": _ir_pointer(ref, f"actions/{index}"),
+        })
+
+    negative_bounds = [
+        {"id": invariant.get("id"),
+         "scope": "quality-contract",
+         "rule": invariant.get("statement"),
+         "severity": invariant.get("severity", "blocking"),
+         "verification": invariant.get("verification_method", "runtime"),
+         "source": _ir_pointer(ref, f"invariants/{index}"),
+         "authority": invariant.get("authority", "inferred")}
+        for index, invariant in enumerate(ir.get("invariants") or [])
+    ]
+
+    return {
+        "identity": ident,
+        "semantic_contract": semantic_contract,
+        "layout_directives": layout_directives,
+        "visual_directives": visual_directives,
+        "action_contracts": action_contracts,
+        "negative_bounds": negative_bounds,
+        "verification_scope": {
+            "viewports": list(verification_scope.get("viewports") or []),
+            "required_states": list(verification_scope.get("required_states") or []),
+            "source": _ir_pointer(ref, "scope/verification_scope"),
+        },
+        "regions_empty": not regions,
+    }
 
 
 _VERB_COLUMN_KEYS = (
@@ -706,6 +887,14 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
     smap_content = paths["surface_map"].read_text(encoding="utf-8")
     contract_content = paths["slice_contract"].read_text(encoding="utf-8")
     spec_content = paths["specification"].read_text(encoding="utf-8")
+
+    # The Canonical Spec IR is the declared single machine authority. When it is
+    # present the seven executable IR fields are projected from its structured
+    # content, not re-parsed from the legacy Markdown pillars (whose paths the
+    # canonical branch above may already have redirected to `spec.md`). Legacy
+    # parsing remains the fallback for a pillar-only assembly.
+    canonical_ir_data: Optional[Dict[str, Any]] = _load_canonical_ir(paths)
+    canonical_ref = f"prototype/contracts/compiled/{slice_id}/r1.spec.json"
 
     # Target scopes: support both neutral anchor/ and legacy hero-anchor/
     default_scope = f"prototype/experiments/{slice_id}/anchor/"
@@ -1667,6 +1856,59 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         if paths.get("canonical_ir") and paths["canonical_ir"].is_file()
         else _contract_lint_gate(root, slice_id)
     ) if lint else []
+
+    # When the Canonical Spec IR owns the machine truth, the 7 fields are its
+    # structured projection. The legacy Markdown parse above still runs (its
+    # blobs and receipts feed the demoted debug context), but it must not speak
+    # for the canonical fields: doing so would re-derive facts from pillars and
+    # label them with sources that no longer describe where they came from.
+    if canonical_ir_data is not None:
+        canonical_ir_ir = _canonical_ir_fields(canonical_ir_data, canonical_ref)
+        ir_identity = {
+            "slice_id": slice_id,
+            "candidate_revision": (canonical_ir_data.get("identity") or {}).get("candidate_revision", "r1"),
+            "authority_lifecycle": ((canonical_ir_data.get("identity") or {}).get("authority_status")
+                                    or "sealed_provisional"),
+            "build_authority": build_authority,
+            "target_html": target_html,
+            "source": canonical_ref,
+            "authority": "explicit",
+        }
+        ir_semantic_contract = canonical_ir_ir["semantic_contract"]
+        ir_layout_directives = canonical_ir_ir["layout_directives"]
+        ir_visual_directives = canonical_ir_ir["visual_directives"]
+        ir_visual_directives["token_baseline"] = token_rel_href
+        ir_action_contracts = canonical_ir_ir["action_contracts"]
+        ir_negative_bounds = canonical_ir_ir["negative_bounds"]
+        ir_regions = ir_layout_directives["regions"]
+        ir_verification_contract = {
+            "negative_bounds": ir_negative_bounds,
+            "command": verification_cmd,
+            "projection_digest": {
+                "sources_mapped": [
+                    {"source": _ir_pointer(canonical_ref, "state_model"),
+                     "target": "semantic_contract", "status": "compiled"},
+                    {"source": _ir_pointer(canonical_ref, "scope/topology_scope"),
+                     "target": "layout_directives", "status": "compiled"},
+                    {"source": _ir_pointer(canonical_ref, "foundation/five_axes"),
+                     "target": "visual_directives", "status": "compiled"},
+                    {"source": _ir_pointer(canonical_ref, "actions"),
+                     "target": "action_contracts", "status": "compiled"},
+                    {"source": _ir_pointer(canonical_ref, "invariants"),
+                     "target": "verification_contract", "status": "compiled"},
+                ],
+                "unmapped_sections": [],
+            },
+        }
+        ir_open_design_space = [
+            "exact-region-proportions",
+            "local-spacing-rhythm",
+            "iconography-and-micro-graphics",
+            "container-elevation-subtlety",
+            "transient-animation-timings-within-tokens",
+        ]
+        if not ir_regions:
+            ir_open_design_space.append("spatial-topology")
 
     envelope = {
         # 7-Field Executable Design IR Canonical Interface

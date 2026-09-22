@@ -24,10 +24,12 @@ this stage selects a chassis and never restates the numbers.
 
 The dispatch path is IR-first and uses the canonical Dual-Envelope Architecture (`mode: "lean-builder-envelope"`). The Coordinator runs the canonical pipeline before dispatching `spec-prototype-builder`:
 
-1. `materialize` — compile the Stage 1 discussions into structured contracts
-   (`materialize_contracts.py`).
+1. `compile_spec_ir` — compile the Stage 1 discussions into the canonical machine
+   IR (`r1.spec.json`) plus the single-file human RFC view (`r1.spec.md`)
+   (`compile_spec_ir.py`). Legacy compatibility only: `materialize_contracts.py`
+   still emits the multi-file `c1.md` / `r1.md` set.
 2. `compile` — derive physical tokens from the Five-Axis register
-   (`compile_tokens.py` → `tokens.css` / `t1.json` / `t1.md`).
+   (`compile_tokens.py` → `tokens.css` / `t1.json`; `t1.md` is legacy-only).
 3. `assemble lean payload` — assemble the pre-baked Lean Builder Envelope
    (`assemble_envelope.py`), synthesizing the 7-field Executable Design IR alongside the decoupled `constraint_envelope` (binding invariants) and `creative_envelope` (agency parameters).
 4. `dispatch builder` — pass the synthesized envelope JSON directly to `spec-prototype-builder`.

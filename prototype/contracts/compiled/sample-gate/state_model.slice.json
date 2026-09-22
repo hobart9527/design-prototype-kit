@@ -1,0 +1,39 @@
+{
+  "domain_states": [
+    {
+      "id": "domain/cluster-nominal",
+      "label": "Cluster Nominal",
+      "description": "All nodes healthy and KV-cache rendered within SLA."
+    },
+    {
+      "id": "domain/nvlink-bus-hang",
+      "label": "Bus Hang Detected",
+      "description": "Hardware bus stall or telemetry freeze."
+    }
+  ],
+  "interaction_states": [
+    "interaction/inspecting",
+    "interaction/committing-drain"
+  ],
+  "data_scenarios": [
+    {
+      "id": "data/high-vram-churn",
+      "description": "4096 GPU micro-sparkline telemetry updates at 60Hz."
+    }
+  ],
+  "stress_fixtures": [
+    {
+      "id": "stress/nvlink-bus-hang",
+      "vector": "NVLink hardware stall for 6 seconds",
+      "expected_behavior": "Isolate faulty node within 2s and display degraded indicator."
+    }
+  ],
+  "viewports": [
+    390,
+    1280
+  ],
+  "required_states": [
+    "draft",
+    "sealed"
+  ]
+}

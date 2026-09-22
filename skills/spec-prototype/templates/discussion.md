@@ -88,7 +88,8 @@ not a competing rule.
     - Container level & form (Level 0 Popover / Level 1 Flyout / Level 2 Margin / Level 3 Drawer / Level 4 Modal):
     - Commit button label:
     - Completion feedback (In-situ / Toast):
-  - *Materialized Spec Artifacts*: `prototype/contracts/foundation/f1.md`, `prototype/shared/tokens.css` (`t1.json`, `t1.md`), `prototype/contracts/slices/<slice_id>/c1.md`, `prototype/specifications/<slice_id>/r1.md`
+  - *Materialized Spec Artifacts* (canonical): `prototype/contracts/compiled/<slice_id>/r1.spec.json`, `prototype/specifications/<slice_id>/r1.spec.md`, `prototype/shared/tokens.css` (`t1.json`)
+  - *Legacy compatibility artifacts*: `prototype/contracts/foundation/f1.md`, `prototype/contracts/slices/<slice_id>/c1.md`, `prototype/specifications/<slice_id>/r1.md`, `prototype/contracts/tokens/t1.md`
 - **Gate Status (`confirmed` | `delegated`)**:
 
 ### Stage 2: Proposition & Probe (立 - 核心主交互物化)

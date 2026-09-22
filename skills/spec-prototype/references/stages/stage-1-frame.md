@@ -137,18 +137,27 @@ Stage 1 is a progressive, guided design conversation driven by a **Dynamic Topol
   → Feedback; one atomic verb, no synonym drift.
 - **The Break Protocol**: predefine long-string truncation, 0/1/1000 states, and
   viewport fold limits.
-- **Automated Contract Materialization**: run `python3 skills/spec-prototype/scripts/materialize_contracts.py`
-  to compile structured contracts into `prototype/contracts/slices/<slice_id>/c1.md`
-  and `prototype/specifications/<slice_id>/r1.md`.
+- **Automated Contract Compilation**: run `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice-id>`
+  to compile the canonical machine IR (`prototype/contracts/compiled/<slice_id>/r1.spec.json`)
+  plus its single-file human RFC view (`prototype/specifications/<slice_id>/r1.spec.md`),
+  then `compile_tokens.py` for `prototype/shared/tokens.css`. Legacy compatibility
+  alternative: `python3 skills/spec-prototype/scripts/materialize_contracts.py`
+  still emits the multi-file `c1.md` / `r1.md` set for backwards-compatible readers.
 
 ## Sealed Provisional Baseline Closure
 
-Stage 1 ends only when all six sealed provisional baseline contracts are fully
-materialized: `prototype/product.md`, `prototype/contracts/surface-maps/m1.md`,
-`prototype/contracts/foundation/f1.md`, `prototype/shared/tokens.css`,
-`prototype/contracts/slices/<slice_id>/c1.md`, and
-`prototype/specifications/<slice_id>/r1.md` (authority status: sealed provisional). The baseline is then sealed and passes
-directly to [Stage 2](stage-2-probe.md) probe falsification.
+Stage 1 ends only when the canonical sealed provisional baseline is fully
+materialized: `prototype/contracts/compiled/<slice_id>/r1.spec.json` (machine IR),
+`prototype/specifications/<slice_id>/r1.spec.md` (single-file human RFC), and
+`prototype/shared/tokens.css` (authority status: sealed provisional). The baseline
+is then sealed and passes directly to [Stage 2](stage-2-probe.md) probe falsification.
+
+Optional legacy compatibility: the multi-file `prototype/product.md`,
+`prototype/contracts/surface-maps/m1.md`, `prototype/contracts/foundation/f1.md`,
+`prototype/contracts/slices/<slice_id>/c1.md` and
+`prototype/specifications/<slice_id>/r1.md` set may still be materialized via
+`materialize_contracts.py` for legacy readers; it is not a Stage 1 closure
+requirement.
 
 ## Exit
 

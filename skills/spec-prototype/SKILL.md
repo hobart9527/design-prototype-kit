@@ -137,7 +137,7 @@ Coordinator dispatches `spec-prototype-builder` (or fallback `general-purpose` /
 
 Coordinator dispatches `spec-prototype-critic` for independent review at Stage 4 (验):
 1. Execute multi-viewport captures: `node skills/spec-prototype/scripts/capture.mjs <target_url> --output prototype/evidence/probes/<slice_id>/ --viewports 320,390,1280 --states <declared_applicable_states>`
-2. Run static verification: `python3 skills/spec-prototype/scripts/verify_prototype_quality.py <target_html> prototype/shared/tokens.css --contract prototype/specifications/<slice_id>/r1.md`
+2. Run static verification: `python3 skills/spec-prototype/scripts/verify_prototype_quality.py <target_html> prototype/shared/tokens.css --contract prototype/specifications/<slice_id>/r1.spec.md` (legacy multi-file trees use `r1.md`)
 3. Call `Agent(subagent_type="spec-prototype-critic", prompt=...)` supplying the target HTML path, specification path, static check output, and explicit paths to captured `.png` screenshots. Critic must inspect the actual rendered visual images using the `Read` tool before issuing judgments.
 
 The native Hook enforces tool shape and write ownership only while the nearest
