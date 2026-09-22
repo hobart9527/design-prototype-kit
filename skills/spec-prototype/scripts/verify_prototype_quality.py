@@ -58,14 +58,18 @@ def _contract_items(path: Path | None) -> list[str]:
     in_shortcuts = False
     text = path.read_text(encoding="utf-8")
 
-    # If this is a specification r1.md, also inspect paired slice contract c1.md if present
+    # A legacy specification `r1.md` pairs with a slice contract `c1.md`. A
+    # canonical `.spec.md` is a self-contained single-file RFC view with no paired
+    # c1.md, so pairing is skipped on that path rather than reaching for a
+    # contract the canonical layout does not author.
     sources_to_scan = [text]
-    try:
-        paired_c1 = path.parents[2] / "contracts/slices" / path.parent.name / "c1.md"
-        if paired_c1.is_file():
-            sources_to_scan.append(paired_c1.read_text(encoding="utf-8"))
-    except Exception:
-        pass
+    if not path.name.endswith(".spec.md"):
+        try:
+            paired_c1 = path.parents[2] / "contracts/slices" / path.parent.name / "c1.md"
+            if paired_c1.is_file():
+                sources_to_scan.append(paired_c1.read_text(encoding="utf-8"))
+        except (OSError, IndexError):
+            pass
 
     in_actions = False
     in_assertions = False
@@ -184,6 +188,11 @@ def _extract_section_text(text: str, *keywords: str) -> str:
     return "\n".join(lines)
 
 
+# Last coverage run's structured flags, published so the report can surface an
+# absent spec instead of letting empty-string matching pass silently.
+LAST_COVERAGE_RESULTS: dict[str, object] = {}
+
+
 def coverage_failures(html: Path, contract_path: Path | str | None = None) -> list[str]:
     """Reconcile the authored scope with delivery and evidence.
 
@@ -191,6 +200,8 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
     blocker never discharges an obligation and a pending destination stays
     href-free rather than becoming a broken link.
     """
+    results: dict[str, object] = {}
+    LAST_COVERAGE_RESULTS.clear()
     root = None
     for parent in [html.parent, *html.parents]:
         if (parent / "prototype/contracts/surface-maps/m1.md").is_file():
@@ -205,8 +216,22 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
         ("foundation", root / "prototype/contracts/foundation/f1.md"),
     ):
         texts[key] = path.read_text(encoding="utf-8") if path.is_file() else ""
-    specs = sorted((root / "prototype/specifications").glob("*/r1.md"))
-    texts["specification"] = specs[0].read_text(encoding="utf-8") if specs else ""
+    # The canonical single-file RFC view is `*.spec.md`; the legacy multi-file
+    # path authors `r1.md`. Glob both, canonical wins per slice, so a migrated
+    # repository is never silently read through a stale legacy file.
+    spec_files_legacy = sorted((root / "prototype/specifications").glob("*/r1.md"))
+    spec_files_canonical = sorted((root / "prototype/specifications").glob("*/*.spec.md"))
+    spec_by_slice: dict[str, Path] = {}
+    for p in spec_files_legacy:
+        spec_by_slice[p.parent.name] = p
+    for p in spec_files_canonical:
+        spec_by_slice[p.parent.name] = p  # canonical overrides legacy
+    spec_files = list(spec_by_slice.values())
+    texts["specification"] = spec_files[0].read_text(encoding="utf-8") if spec_files else ""
+    if not str(texts["specification"]).strip():
+        # An absent or empty spec is recorded rather than read as a clean pass:
+        # downstream identity checks would otherwise match against "".
+        results["specification_missing"] = True
     if not texts["surface_map"]:
         return []
 
@@ -260,6 +285,8 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
                 continue
             if re.search(rf"href=[\"'][^\"']*{re.escape(sibling)}[^\"']*[\"']", source):
                 failures.append(f"coverage assertion: pending sibling {sibling} linked from {surface} but not delivered (render a disabled affordance instead)")
+    LAST_COVERAGE_RESULTS.clear()
+    LAST_COVERAGE_RESULTS.update(results)
     return failures
 
 
@@ -546,6 +573,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
 
     states = _evidence_state(html)
     print("STATIC: " + ("pass" if not failures else "fail"))
+    if LAST_COVERAGE_RESULTS.get("specification_missing"):
+        # Surfaces to the operator that no spec text was found, so a pass was
+        # not earned against an empty string.
+        print("SPECIFICATION: missing")
     print("BROWSER: " + states.get("browser", "unverified"))
     print("VISUAL: " + states.get("visual", "unverified"))
     print("HUMAN: " + states.get("human", "unverified"))

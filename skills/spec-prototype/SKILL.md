@@ -102,7 +102,7 @@ Execute the stages matching declared intent and required evidence. The stages re
   │  Controlled Absorption Loop: Critique absorbed into tokens.css / HTML slices -> Re-verify.
   ▼
 [Stage 5: 冻 - Silent Packaging & Frozen Approved Delivery (静默封版与工件交付)]
-     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (WCAG 2.2 AA floor / AAA static tokens), and `python3 skills/spec-prototype/scripts/handoff.py freeze --root prototype --spec prototype/specifications/<slice_id>/r1.md` (SHA-256 integrity manifest). Freeze binds the immutable candidate Specification, never a mutable product record.
+     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (WCAG 2.2 AA floor / AAA static tokens), and `python3 skills/spec-prototype/scripts/handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.spec.md` (canonical IR path) or `--spec prototype/specifications/<slice_id>/r1.md` (legacy path). `--root` must be the repository root (containing `prototype/`). Freeze binds the immutable candidate Specification, never a mutable product record.
 ```
 
 ## Dual-Engine Architecture: Sharp Exploration vs Silent Governance

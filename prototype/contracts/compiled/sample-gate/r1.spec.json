@@ -17,7 +17,9 @@
         "scenarios": [
           "SCN-01",
           "SCN-02"
-        ]
+        ],
+        "authority": "inferred",
+        "source": "discussion.md"
       }
     ],
     "reality_anchors": [
@@ -76,10 +78,10 @@
   "foundation": {
     "five_axes": {
       "density": "dense",
-      "energy": "solemn",
-      "materiality": "machined-industrial",
+      "energy": "quiet",
+      "materiality": "dense-tactile",
       "rhythm": "fluid",
-      "character": "dense-tactile"
+      "character": "solemn"
     },
     "palette_discipline": {
       "accent_seal": "var(--accent-seal, #D93829)",
@@ -158,7 +160,7 @@
   "invariants": [
     {
       "id": "SAMPLE-GATE-A1",
-      "upstream_ref": "REQ-PERCEPTUAL-01",
+      "authority": "inferred",
       "statement": "Operator must distinguish fault state vs normal telemetry within 2 seconds of screen load.",
       "severity": "blocking",
       "applies_to": [
@@ -169,7 +171,7 @@
     },
     {
       "id": "SAMPLE-GATE-A2",
-      "upstream_ref": "REQ-SAFETY-02",
+      "authority": "inferred",
       "statement": "Action verification: high-hazard commits require Proximity Level >= 2 dedicated confirmation.",
       "severity": "blocking",
       "applies_to": [
@@ -180,7 +182,7 @@
     },
     {
       "id": "SAMPLE-GATE-A3",
-      "upstream_ref": "REQ-PALETTE-03",
+      "authority": "inferred",
       "statement": "Signature accent seal color (--accent-seal) is strictly forbidden on draft, pending, or secondary controls.",
       "severity": "blocking",
       "applies_to": [

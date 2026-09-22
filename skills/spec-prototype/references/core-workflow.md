@@ -194,7 +194,7 @@ Full procedure: [`stages/stage-4-audit.md`](stages/stage-4-audit.md).
 Headless compilation of durable specifications, design tokens and verifiable
 asset digests for downstream handoff: export W3C DTCG tokens, run the static WCAG
 2.2 AA contrast preflight, and freeze the slice Specification with its SHA-256
-manifest (`prototype/evidence/handoff-manifest.json`). `product.md` is an evolving
+manifest (`prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json`). `product.md` is an evolving
 running record and is never the slice freeze subject.
 
 Full pipeline, exact commands and the WCAG caveat:

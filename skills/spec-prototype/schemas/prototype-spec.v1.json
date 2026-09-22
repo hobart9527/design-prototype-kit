@@ -59,7 +59,7 @@
           "type": "array",
           "items": { "type": "string" }
         },
-        "core_tension": { "type": "string" }
+        "core_tension": { "type": ["string", "null"] }
       }
     },
     "scope": {

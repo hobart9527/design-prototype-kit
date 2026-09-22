@@ -37,11 +37,60 @@ def read_formal_context(root: Path, slice_id: str) -> Dict[str, Any]:
     return lint_spec_contracts.read_formal_context(root, slice_id)
 
 
+# `prototype_context` normalizes authored facts with its own persisted vocabulary
+# (`selected | full-product | legacy | unresolved`; `legacy`/`unresolved` are the
+# absent-scope states, never buildable). The compiled envelope reports the shared
+# `prototype-spec/v1` coverage enum instead: `key-journey` is the bounded,
+# explicitly selected journey the runtime calls `selected`.
+_ENVELOPE_COVERAGE = {
+    "selected": "key-journey",
+    "full-product": "full-product",
+    "slice-isolated": "slice-isolated",
+    "legacy": "legacy",
+    "unresolved": "unresolved",
+}
+
+
+def _envelope_coverage(value: Any) -> Any:
+    """Map a runtime coverage value onto the compiled envelope vocabulary."""
+    return _ENVELOPE_COVERAGE.get(value, value)
+
+
 def _contract_lint_gate(root: Path, slice_id: str) -> List[Dict[str, str]]:
     try:
         return formal_contract_lint(root, slice_id)
-    except Exception as error:  # preserve context; never let a broken lint open the gate
+    except (OSError, ValueError) as error:
+        # An unreadable artifact or an authored contract violation is a bounded
+        # lint outcome. Programmer errors (ImportError, SyntaxError, TypeError,
+        # AttributeError) are not: they propagate so a broken linter is never
+        # silently reported as a stale contract.
         return [{"code": "E010_STALE_CONTRACT", "path": str(root), "message": str(error)}]
+
+
+# Rules whose evidence is a legacy pillar (m1/f1/c1/r1). A canonical-IR entry
+# owns those facts in compiled form, so on that path they are not actionable; the
+# rules that read canonical paths, coverage, or map identity still apply.
+_LEGACY_PRESENCE_RULES = ("E001", "E002", "E003", "E004", "E005", "E006", "E007", "E008")
+
+
+def _canonical_contract_lint(root: Path, slice_id: str) -> List[Dict[str, str]]:
+    """Run the formal lint on a canonical-IR entry, dropping legacy-presence rules.
+
+    The lint reads the authored legacy pillars when they exist and stays silent
+    when they do not, so a canonical-only repository still enforces every rule
+    whose evidence it actually owns instead of skipping the lint wholesale.
+    """
+    try:
+        import lint_spec_contracts
+
+        errors = lint_spec_contracts.lint_formal_entry(root, slice_id)
+    except (OSError, ValueError) as error:
+        return [{"code": "E010_STALE_CONTRACT", "path": str(root), "message": str(error)}]
+    return [
+        {"code": e.rule, "path": e.file_path, "message": e.message}
+        for e in errors
+        if not e.rule.startswith(_LEGACY_PRESENCE_RULES)
+    ]
 
 
 _VERB_COLUMN_KEYS = (
@@ -120,6 +169,16 @@ def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> 
 
     # If canonical IR is present, it serves as the single source of truth alongside tokens.css
     if canonical_ir.is_file() and tokens_css.is_file():
+        if lint:  # the canonical entry runs the real lint
+            failures = _canonical_contract_lint(root, slice_id)
+            if failures:
+                detail = "; ".join(
+                    f"{f['code']}:{f['path']} ({f['message']})" if f["message"] else f"{f['code']}:{f['path']}"
+                    for f in failures)
+                raise ValueError(
+                    f"Stage 1 contract lint failed at the formal entry. {detail}. "
+                    f"Existing artifacts are unchanged; resolve each failure and re-assemble."
+                )
         return {
             "canonical_ir": canonical_ir,
             "canonical_md": canonical_md,
@@ -614,10 +673,16 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
     """Assemble an envelope for either exploration or formal candidate work."""
     brief = _brief_path(root, slice_id)
     specification = root / f"prototype/specifications/{slice_id}/r1.md"
+    # A canonical build authors `r1.spec.md` (and usually the compiled IR) instead
+    # of `r1.md`; either form means a specification exists and must not be routed
+    # into the direction-probe path.
+    canonical_md = root / f"prototype/specifications/{slice_id}/r1.spec.md"
     canonical_ir = root / f"prototype/contracts/compiled/{slice_id}/r1.spec.json"
+    has_specification = (
+        specification.is_file() or canonical_ir.is_file() or canonical_md.is_file())
 
     # If exploratory mode is requested, synthesize direction brief from discussion.md
-    if exploratory and not (specification.is_file() or canonical_ir.is_file()):
+    if exploratory and not has_specification:
         disc_path = root / "prototype/discussion.md"
         if disc_path.is_file() and brief is None:
             # Auto-synthesize a dynamic exploratory brief from discussion
@@ -633,7 +698,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
 """, encoding="utf-8")
             brief = synthetic_brief
 
-    if brief is not None and not (specification.is_file() or canonical_ir.is_file()):
+    if brief is not None and not has_specification:
         return assemble_direction(root, slice_id, brief)
     paths = check_spec_completeness(root, slice_id, lint=lint)
 
@@ -1487,8 +1552,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
     ir_action_contracts = []
     for idx, v in enumerate(verb_lifecycle):
         act_id = v.get("action_id", f"action-{idx}")
-        act_verb = v.get("verb", act_id)
-        trig_label = v.get("trigger_btn", act_verb)
+        act_verb = v.get("verb") or v.get("action_id") or v.get("trigger_btn") or act_id
+        trig_label = v.get("trigger_btn") or act_verb
         # Trigger role follows authored semantics, never list position.
         if re.search(r"\bprimary\b", trig_label, re.IGNORECASE):
             trig_role = "primary-action"
@@ -1515,7 +1580,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
                 "role": trig_role,
                 "semantic_label": trig_label
             },
-            "consequence": v.get("impact", "state-mutation"),
+            "consequence": v.get("consequence") or v.get("impact") or "state-mutation",
             "ui_transient_states": action_transients,
             "feedback": feedback,
             "authority": "explicit",
@@ -1538,7 +1603,9 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
     # than asserted "none".
     projection_sources = [
         ("f1#foundation", "visual_directives", bool(f1_text.strip())),
-        ("m1#topology", "layout_directives", bool(ooux_topology)),
+        # Report compiled only when regions were actually derived into the IR; an
+        # authored topology that produced no region would be a false receipt.
+        ("m1#topology", "layout_directives", bool(ir_regions)),
         ("c1#behavior", "action_contracts", bool(verb_lifecycle)),
         ("r1#specification", "verification_contract", bool(assertions)),
         ("t1#tokens", "visual_directives", bool(dtcg_tokens)),
@@ -1582,6 +1649,25 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
             f" --states {','.join(authored_states)}"
         )
 
+    # `--status` records its ruling inside the canonical IR. Carry that authored
+    # status forward rather than flattening every build back to the default; the
+    # fallback remains for a legacy pillar-only assembly with no canonical IR.
+    _ir_status = "sealed_provisional"
+    if "canonical_ir" in paths and paths["canonical_ir"].is_file():
+        try:
+            _ir_data = json.loads(paths["canonical_ir"].read_text(encoding="utf-8"))
+            _ir_status = _ir_data.get("identity", {}).get("authority_status") or "sealed_provisional"
+        except (OSError, ValueError):
+            pass
+
+    # Surface the same lint evidence the gate already enforced: an empty list
+    # must mean "lint clean", never "lint never ran".
+    contract_lint = (
+        _canonical_contract_lint(root, slice_id)
+        if paths.get("canonical_ir") and paths["canonical_ir"].is_file()
+        else _contract_lint_gate(root, slice_id)
+    ) if lint else []
+
     envelope = {
         # 7-Field Executable Design IR Canonical Interface
         "identity": ir_identity,
@@ -1594,7 +1680,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
 
         "envelope_version": "2.0",
         "envelope_architecture": "3.0-dual",
-        "authority_status": "sealed_provisional",
+        "authority_status": _ir_status,
         "builder_guidance": {
             "authority_ceiling": "Stage 2 prototypes remain 'sealed_provisional'; do not self-declare 'frozen approved'.",
             "observable_affordances": "Render explicit visible controls and text for all declared interactive verbs.",
@@ -1658,7 +1744,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         # boundary re-checks for staleness.
         "tokens_md_ref": paths["tokens_md"].relative_to(root).as_posix(),
         "coverage": {
-            "coverage": platform_context["surface_map"]["coverage"],
+            "coverage": _envelope_coverage(platform_context["surface_map"]["coverage"]),
             "selection_source": platform_context["surface_map"]["selection_source"],
             "selected_surfaces": selected_surfaces,
             "target_surfaces": target_surfaces,
@@ -1669,7 +1755,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
             "recommendation_required": platform_context["recommendation_required"],
         },
         "platform": dict(platform_context["platform"]),
-        "contract_lint": [] if not lint else [],
+        "contract_lint": contract_lint,
         "inspection_contract": {
             "mandatory_viewports": _mandatory_viewports(dict(platform_context["platform"])),
             "mandatory_states": authored_states,

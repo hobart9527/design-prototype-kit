@@ -18,11 +18,14 @@ handoff.
    preflight only — it does not replace full runtime accessibility review
    (keyboard focus management, screen-reader landmarks, reachable touch targets).
 3. **SHA-256 asset identity binding / freeze**:
-   `python3 skills/spec-prototype/scripts/handoff.py freeze --root prototype --spec prototype/specifications/<slice_id>/r1.md`
-   takes the immutable candidate Specification as the freeze subject, computes and
-   freezes SHA-256 fingerprints of every HTML/CSS asset, and emits the immutable
-   handoff manifest (`prototype/evidence/handoff-manifest.json`). `product.md` is
-   the evolvable runtime record and must not be used as a slice freeze contract.
+
+   **Canonical IR path** (Stage 1 compiled via `compile_spec_ir.py`):
+   `python3 skills/spec-prototype/scripts/handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.spec.md`
+
+   **Legacy 6-piece path** (Stage 1 compiled via `materialize_contracts.py`):
+   `python3 skills/spec-prototype/scripts/handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.md`
+
+   `--root` must point to the repository root (the directory containing `prototype/`), not to `prototype/` itself. The freeze command takes the Specification as its subject, computes SHA-256 fingerprints of every retained artifact, and writes the immutable freeze manifest to `prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json`. `product.md` is the evolvable runtime record and must not be used as a slice freeze contract.
 
 ## Authority State
 

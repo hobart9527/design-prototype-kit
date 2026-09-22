@@ -8,6 +8,14 @@ and deterministically renders the single-file human RFC Specification view
 
 This replaces the 6-file scatter (product.md, m1.md, f1.md, t1.md, c1.md, r1.md)
 and eliminates bidirectional/circular SHA-256 hash rebinding.
+
+Machine authority layers (two distinct schemas with disjoint field sets; do not conflate them):
+- Canonical Spec IR (`prototype-spec/v1`): `r1.spec.json` - schema-validated,
+  discussion-derived, the single source of machine-truth spec content. Produced
+  by this script.
+- Executable Design IR: embedded inside `envelope.json` - produced by
+  `assemble_envelope.py`, consumed by the Builder. Derived from the Canonical
+  Spec IR and the legacy 6-piece contracts.
 """
 
 from __future__ import annotations
@@ -78,12 +86,14 @@ def parse_5_dial_register(text: str) -> Dict[str, str]:
             val = m.group(2).strip().lower()
             if key in dials:
                 dials[key] = val
+            # Legacy dial aliases mirror compile_tokens.LEGACY_DIAL_MAP exactly;
+            # the same key never maps to two different axes.
             elif key == "finish":
                 dials["materiality"] = val
             elif key == "weight":
-                dials["character"] = val
+                dials["materiality"] = val
             elif key == "seriousness":
-                dials["energy"] = val
+                dials["character"] = val
     return dials
 
 
@@ -95,6 +105,7 @@ def compile_canonical_ir(
     authority_status: str = "sealed_provisional",
     stage: str = "hero_probe",
     selected_surfaces: Optional[List[str]] = None,
+    viewports: Optional[List[int]] = None,
 ) -> Dict[str, Any]:
     """Compile prototype/discussion.md into Canonical Specification IR."""
     disc_path = root / "prototype/discussion.md"
@@ -108,8 +119,10 @@ def compile_canonical_ir(
 
     # Extract Core Tension
     tension_text = extract_section(disc_text, r"###?\s*.*(?:Core Tension|张力|极端张力)")
+    # Absent authored tension stays None: never fabricate a domain claim that
+    # would propagate downstream as a real constraint.
     if not tension_text:
-        tension_text = "Throughput vs Verification safety"
+        tension_text = None
 
     # Extract Reality Anchors
     anchors_text = extract_section(disc_text, r"###?\s*.*(?:Reality.*Anchors|现实双地锚|地锚)")
@@ -170,11 +183,13 @@ def compile_canonical_ir(
         {"id": "viewport-320", "vector": "320px narrow mobile viewport", "expected_behavior": "Horizontal overflow suppressed, critical actions stacked or drawer-accessible"},
     ]
 
-    # Invariants (Design Rules)
+    # Invariants (Design Rules). Compiler-inferred template rules, not authored
+    # requirements: authority=inferred and no upstream_ref (the former REQ-*
+    # identifiers were fictional and must not masquerade as traced authority).
     invariants = [
         {
             "id": f"{slice_id.upper()}-A1",
-            "upstream_ref": "REQ-PERCEPTUAL-01",
+            "authority": "inferred",
             "statement": "Operator must distinguish fault state vs normal telemetry within 2 seconds of screen load.",
             "severity": "blocking",
             "applies_to": ["draft", "sealed"],
@@ -182,7 +197,7 @@ def compile_canonical_ir(
         },
         {
             "id": f"{slice_id.upper()}-A2",
-            "upstream_ref": "REQ-SAFETY-02",
+            "authority": "inferred",
             "statement": "Action verification: high-hazard commits require Proximity Level >= 2 dedicated confirmation.",
             "severity": "blocking",
             "applies_to": ["confirming", "committing"],
@@ -190,7 +205,7 @@ def compile_canonical_ir(
         },
         {
             "id": f"{slice_id.upper()}-A3",
-            "upstream_ref": "REQ-PALETTE-03",
+            "authority": "inferred",
             "statement": "Signature accent seal color (--accent-seal) is strictly forbidden on draft, pending, or secondary controls.",
             "severity": "blocking",
             "applies_to": ["draft", "idle"],
@@ -198,7 +213,8 @@ def compile_canonical_ir(
         },
     ]
 
-    # Actions
+    # Actions: compiler-inferred defaults carrying no authority field, so downstream
+    # consumers read them as inferred rather than authored facts.
     actions = [
         {
             "id": "inspect-entity",
@@ -233,7 +249,14 @@ def compile_canonical_ir(
         "sources": {
             "discussion_ref": "prototype/discussion.md",
             "discussion_sha256": disc_digest,
-            "requirements": [{"id": f"REQ-{slice_id.upper()}", "scenarios": ["SCN-01", "SCN-02"]}],
+            # Requirement ids are compiler-derived placeholders, not traced upstream
+            # authority; mark them inferred and point provenance at discussion.md.
+            "requirements": [{
+                "id": f"REQ-{slice_id.upper()}",
+                "scenarios": ["SCN-01", "SCN-02"],
+                "authority": "inferred",
+                "source": "discussion.md",
+            }],
             "reality_anchors": anchors,
             "core_tension": tension_text,
         },
@@ -250,7 +273,10 @@ def compile_canonical_ir(
                 "context_surfaces": context_surfaces,
             },
             "verification_scope": {
-                "viewports": [320, 390, 1280],
+                # Single viewport authority: callers (e.g. assemble_envelope's
+                # _mandatory_viewports) may inject the authored device set; only
+                # an absent injection falls back to this default.
+                "viewports": list(viewports) if viewports else [320, 390, 1280],
                 "required_states": ["draft", "sealed", "zero-feedback", "long-string"],
             },
         },
@@ -303,7 +329,10 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
     md.append("")
     md.append("## 1. Product & Architecture Context (Pillars: Value · Research)")
     md.append(f"- **Product ID**: `{ident['product_id']}`")
-    md.append(f"- **Core Tension**: {src['core_tension']}")
+    if src.get("core_tension"):
+        md.append(f"- **Core Tension**: {src['core_tension']}")
+    else:
+        md.append("- **Core Tension**: *(未从 discussion.md 提取到——请在 discussion 中明确描述核心张力)*")
     md.append("- **Reality Anchors**:")
     for a in src["reality_anchors"]:
         md.append(f"  - {a}")
@@ -361,6 +390,12 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
     md.append(f"- **Target Viewports**: {', '.join(f'{vp}px' for vp in vscope['viewports'])}")
     md.append(f"- **Mandatory Test States**: {', '.join(f'`{st}`' for st in vscope['required_states'])}")
     md.append(f"- **Prototype Implementation**: `{ir['artifacts_binding']['prototype_html']}`")
+    proto_html = ir["artifacts_binding"]["prototype_html"]
+    proto_scope = str(Path(proto_html).parent) + "/"
+    evidence_scope = f"prototype/evidence/{ident['slice_id']}/{ident['candidate_revision']}/"
+    md.append(f"- **Prototype write scope**: `{proto_scope}`")
+    md.append(f"- **Evidence write scope**: `{evidence_scope}`")
+    md.append(f"- **Authority status**: `{ident['authority_status']}`")
     md.append("")
 
     return "\n".join(md)

@@ -459,20 +459,32 @@ def pillar_packet(root: Path, spec_path: Path) -> dict:
         "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
     }
     refs = {}
+    # For pillar_packet (canonical .spec.md path), only tokens.css is strictly
+    # required; the legacy 6-piece contracts are optional — include them when
+    # present so the freeze manifest is as rich as possible.
     for key, path in required.items():
-        if not path.is_file():
-            raise HandoffError(f"Missing required 6-pillar contract: {path.relative_to(root)}")
-        refs[key] = retained(root, str(path.relative_to(root)))
+        if path.is_file():
+            refs[key] = retained(root, str(path.relative_to(root)))
+        elif key == "tokens_css":
+            raise HandoffError(f"Missing required token stylesheet: {path.relative_to(root)}")
+        # legacy contracts absent → omit silently (canonical IR is the authority)
 
     spec_retained = retained(root, str(spec_path.relative_to(root)))
 
-    proto_scope = f"prototype/experiments/{slice_id}/{candidate_id}/"
-    if not (root / proto_scope).is_dir():
-        proto_scope = f"prototype/experiments/{slice_id}/hero-anchor/"
-    if not (root / proto_scope).is_dir():
-        proto_scope = f"prototype/experiments/{slice_id}/"
+    # Read declared scopes from spec.md fields if present; else probe filesystem.
+    spec_body = spec_path.read_text(encoding="utf-8")
+    proto_scope_values = re.findall(r"^- \*?\*?Prototype write scope\*?\*?:[ \t]*`([^`]+)`", spec_body, re.MULTILINE | re.IGNORECASE)
+    if proto_scope_values:
+        proto_scope = proto_scope_values[0].rstrip("/") + "/"
+    else:
+        proto_scope = f"prototype/experiments/{slice_id}/{candidate_id}/"
+        if not (root / proto_scope).is_dir():
+            proto_scope = f"prototype/experiments/{slice_id}/hero-anchor/"
+        if not (root / proto_scope).is_dir():
+            proto_scope = f"prototype/experiments/{slice_id}/"
 
-    evidence_scope = f"prototype/evidence/{slice_id}/{candidate_id}/"
+    evidence_scope_values = re.findall(r"^- \*?\*?Evidence write scope\*?\*?:[ \t]*`([^`]+)`", spec_body, re.MULTILINE | re.IGNORECASE)
+    evidence_scope = evidence_scope_values[0].rstrip("/") + "/" if evidence_scope_values else f"prototype/evidence/{slice_id}/{candidate_id}/"
 
     return {
         "repository_root": str(root),
@@ -488,11 +500,9 @@ def pillar_packet(root: Path, spec_path: Path) -> dict:
         "component_obligations": [],
         "required_reads": [
             spec_retained,
-            refs["product"],
-            refs["slice_contract"],
-            refs["foundation"],
-            refs["surface_map"],
-            refs["tokens"],
+            *([refs["tokens_css"]] if "tokens_css" in refs else []),
+            *([refs["tokens"]] if "tokens" in refs else []),
+            *([refs["foundation"]] if "foundation" in refs else []),
         ],
         "skill_root": str(Path(__file__).resolve().parents[1]),
     }
@@ -632,7 +642,11 @@ def freeze(root: Path, spec: str) -> dict:
     spec_path = within(root, spec)
     if spec_path.parent.name == "briefs":
         raise HandoffError("Cannot freeze an exploration brief; formal Specification approval is required")
-    pkt = packet(root, spec)
+    # Route canonical IR spec (.spec.md) to pillar_packet(); legacy r1.md uses packet().
+    if spec_path.suffix == ".md" and spec_path.stem.endswith(".spec"):
+        pkt = pillar_packet(root, spec_path)
+    else:
+        pkt = packet(root, spec)
     binding = approval_binding(root, pkt["slice_id"], pkt["candidate_id"])
     # The entry requirement guards a scope that claims prototype implementation.
     # Every approval other than a spec-only one keeps that requirement, and an
@@ -641,7 +655,12 @@ def freeze(root: Path, spec: str) -> dict:
         require_prototype_entry(root, pkt["prototype_write_scope"])
 
     spec_body = spec_path.read_text(encoding="utf-8")
-    status_match = re.search(r"^-\s*(?:Compilation status|Authority status):\s*`?([a-zA-Z0-9_ -]+)`?", spec_body, re.M | re.IGNORECASE)
+    # Match both legacy bullet format (- Authority status: `x`) and canonical
+    # blockquote format (> **Authority Status**: `x`)
+    status_match = re.search(
+        r"(?:^-\s*(?:Compilation status|Authority status):|>\s*\*\*Authority Status\*\*:)\s*`?([a-zA-Z0-9_ -]+)`?",
+        spec_body, re.M | re.IGNORECASE
+    )
     if status_match:
         status = status_match.group(1).strip().lower()
         if status not in ("candidate", "provisional", "sealed provisional", "validated", "frozen", "frozen approved"):
@@ -802,11 +821,13 @@ def check_downstream_gate(root: Path, slice_id: str) -> dict:
     spec_dir = root / "prototype/specifications" / slice_id
     if not spec_dir.is_dir():
         raise HandoffError(f"Downstream Gate Blocked: Specification directory missing for slice '{slice_id}'")
-    spec_files = list(spec_dir.glob("*.md"))
+    spec_files = sorted(spec_dir.glob("*.md"))
     if not spec_files:
         raise HandoffError(f"Downstream Gate Blocked: No specification markdown found for slice '{slice_id}'")
 
-    spec_path = spec_files[0]
+    # Prefer canonical .spec.md over legacy r1.md when both exist.
+    canonical_files = [f for f in spec_files if f.stem.endswith(".spec")]
+    spec_path = canonical_files[0] if canonical_files else spec_files[0]
     spec_body = spec_path.read_text(encoding="utf-8")
 
     # Check for freeze manifest
@@ -912,7 +933,12 @@ def main() -> int:
             for item in results:
                 print(f"`{item['path']}`, sha256:{item['sha256']}")
         elif args.command == "packet":
-            print(json.dumps(packet(args.root, args.spec), ensure_ascii=False, indent=2))
+            spec_p = (args.root.resolve() / args.spec) if not Path(args.spec).is_absolute() else Path(args.spec)
+            if spec_p.stem.endswith(".spec"):
+                result = pillar_packet(args.root.resolve(), spec_p)
+            else:
+                result = packet(args.root, args.spec)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
         elif args.command == "freeze":
             print(json.dumps(freeze(args.root, args.spec), ensure_ascii=False, indent=2))
         elif args.command == "gate":
