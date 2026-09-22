@@ -57,9 +57,9 @@ The five stages represent an adaptive **capability set**, not a mandatory sequen
 ```text
 ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ 【第一钻：问题空间与方案契约 (Problem & Solution Spec)】                                                          │
-│  Stage 1 (破): Understand & Frame       ──> Reality Anchors, OOUX, Surface Topology, Five Axes & Spec Contracts    │
-│                                             (prototype/product.md, prototype/contracts/surface-maps/m1.md, prototype/contracts/foundation/f1.md, prototype/shared/tokens.css, │
-│                                              prototype/contracts/slices/<slice_id>/c1.md, prototype/specifications/<slice_id>/r1.md) │
+│  Stage 1 (破): Understand & Frame       ──> Reality Anchors, OOUX, Surface Topology, Five Axes & Canonical Spec IR │
+│                                             (prototype/contracts/compiled/<slice>/r1.spec.json, r1.spec.md, tokens.css)│
+│  *Fractal Probe*: Brief-driven visual micro-probes permitted at Stage 1/2 frontier to inform sensory decisions.   │
 ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ 【第二钻：解空间实证物化 (Solution Materialization & Proof)】                                                     │
 │  Stage 2 (立): Proposition & Hero Probe  ──> Materialize Hero Anchor Chassis under Spec Contract via Dual Envelope│
