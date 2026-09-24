@@ -2,7 +2,7 @@
 
 ## 1. Integrate orthogonal 4-axis modern craft stack and verify pipeline continuity
 
-- [ ] T-01 Integrate orthogonal 4-axis modern craft stack across schema, compilation, agents, and tokens
+- [x] T-01 Integrate orthogonal 4-axis modern craft stack across schema, compilation, agents, and tokens
   - Depends on: none
   - Anchors: skills/spec-prototype/scripts/compile_spec_ir.py:compile_canonical_ir, skills/spec-prototype/scripts/compile_tokens.py:generate_css, skills/spec-prototype/scripts/assemble_envelope.py:assemble_envelope
   - Write scope: skills/spec-prototype/schemas/prototype-spec.v1.json, skills/spec-prototype/scripts/compile_spec_ir.py, skills/spec-prototype/scripts/compile_tokens.py, skills/spec-prototype/scripts/assemble_envelope.py, agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, skills/spec-prototype/references/stages/stage-1-frame.md, skills/spec-prototype/references/dialectic/03-sensory-kinetic.md, tests/test_tokens.py, tests/test_craft_stack.py
