@@ -1,0 +1,32 @@
+{
+  "known_files": [
+    "skills/spec-prototype/schemas/prototype-spec.v1.json",
+    "skills/spec-prototype/scripts/compile_spec_ir.py",
+    "skills/spec-prototype/scripts/compile_tokens.py",
+    "skills/spec-prototype/scripts/assemble_envelope.py",
+    "skills/spec-prototype/agents/spec-prototype-builder.md",
+    "skills/spec-prototype/agents/spec-prototype-critic.md",
+    "skills/spec-prototype/references/stages/stage-1-frame.md",
+    "skills/spec-prototype/references/dialectic/03-sensory-kinetic.md",
+    "tests/test_tokens.py"
+  ],
+  "known_symbols": [
+    "compile_canonical_ir",
+    "parse_5_dial_register",
+    "generate_css",
+    "compute_tokens",
+    "assemble_envelope",
+    "_canonical_contract_lint"
+  ],
+  "intent_summary": "Integrate orthogonal 4-axis modern craft stack (surface_optics, spatial_geometry, micro_typography, data_marks) as concrete micro-physical manifestations under Nine Pillars Expression and Interaction, upgrading token compilation, IR schemas, builder recipes, and critic assertions without losing physical anchor dialectics or breaking existing contracts.",
+  "non_goals": [
+    "Replacing Nine Pillars or Five Axes ontology",
+    "Hardcoding rigid monolithic template bundles",
+    "Removing Stage 1 physical anchor exploration",
+    "Breaking existing canonical IR schema validation for legacy slices"
+  ],
+  "code_specimens": [
+    "\"craft_stack\": {\"surface_optics\": \"matte_pigment_wash\", \"spatial_geometry\": \"soft_bento_pill\", \"micro_typography\": \"tight_display_polarized\", \"data_marks\": \"hatching_dither\"}",
+    "--pattern-hatch-45: url(\"data:image/svg+xml,...\");\n--font-display-tracking: -0.04em;\n--radius-outer: 24px;\n--radius-pill: 9999px;"
+  ]
+}
