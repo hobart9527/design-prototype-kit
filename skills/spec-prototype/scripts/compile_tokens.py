@@ -764,6 +764,23 @@ def compute_tokens(
     }
 
 
+def _surface_tint(colors: Dict[str, str], is_light: bool) -> str:
+    """Derive a subtle tonal wash rgba() for the orthogonal craft stack.
+
+    Light surfaces take a dark wash (to shade beneath the top highlight);
+    dark surfaces take a white wash (to lift the base). The base surface's own
+    chroma is honored when it is parseable as hex, so a warm paper stays warm.
+    """
+    try:
+        r, g, b = _hex_to_rgb(colors.get("bg_surface", "#1e1e1e"))
+    except Exception as exc:
+        _warn(f"surface tint derivation failed for {colors.get('bg_surface')!r}; using neutral", exc)
+        r, g, b = 30, 30, 30
+    if is_light:
+        return f"rgba({max(0, r - 24)}, {max(0, g - 24)}, {max(0, b - 24)}, 0.06)"
+    return f"rgba({min(255, r + 24)}, {min(255, g + 24)}, {min(255, b + 24)}, 0.05)"
+
+
 def generate_css(tokens: Dict[str, Any]) -> str:
     """Render CSS variables and physical craft classes."""
     c = tokens["colors"]
@@ -771,6 +788,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
     r = tokens["radii"]
     f = tokens["fonts"]
     m = tokens["motion"]
+    is_light = _is_light_color(c.get("bg_void", "#080b0b"))
 
     d = tokens.get("dials", {})
     energy_desc = d.get("energy", "balanced")
@@ -855,6 +873,13 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --duration-slow: {m['duration_slow']};",
         f"  --ease-hud: {m['ease_hud']};",
         f"  --ease-out: {m['ease_out']};",
+        "",
+        "  /* Orthogonal Craft Stack (Surface Optics, Spatial Geometry, Micro-Typography, Data Marks) */",
+        f"  --surface-tint: {_surface_tint(c, is_light)};",
+        "  --surface-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.15);",
+        "  --pattern-hatch-45: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M-2,10 L10,-2 M-2,4 L4,-2 M2,10 L10,2' stroke='%23888' stroke-width='1' fill='none'/%3E%3C/svg%3E\");",
+        "  --font-display-tracking: -0.04em;",
+        "  --font-display-weight: 800;",
         "",
         "  /* ==========================================================================",
         "     Layer 2: Semantic Tokens (Functional Roles & Expressive Intent)",

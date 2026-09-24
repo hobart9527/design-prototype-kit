@@ -106,6 +106,22 @@ Honor the product's real domain, not a generic web shell.
   (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`,
   `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--space-*)`, etc.)
   directly, and never use raw inline hex codes in `style="..."` attributes.
+- **Orthogonal Craft Stack (visual_directives.craft_stack)**: honor the four orthogonal
+  craft axes compiled into `visual_directives.craft_stack` (`surface_optics`,
+  `spatial_geometry`, `micro_typography`, `data_marks`) and their pre-baked token
+  counterparts:
+  - Micro-Typography: display numerals carry tight tracking
+    (`letter-spacing: var(--font-display-tracking, -0.04em); font-variant-numeric: tabular-nums`),
+    with headline weights reading through `var(--font-display-weight, 800)`.
+  - Spatial Geometry: soft bento container geometry with generous padding
+    (minimum 20px interior padding on card/bento surfaces) and pill-shaped action
+    triggers (`border-radius: var(--radius-pill, 9999px)`).
+  - Data Marks: render status and metric distributions with SVG pattern hatching
+    (`var(--pattern-hatch-45)`) or segmented bars rather than flat native progress
+    bars, so data texture carries the product's material identity.
+  - Surface Optics: layer the tonal wash and top-edge highlight
+    (`var(--surface-tint)`, `var(--surface-specular)`) on elevated surfaces per the
+    declared `surface_optics` axis; do not paint raw gradients over the token baseline.
 
 ### 3.2 Task Integrity — the critical journey actually works
 
@@ -167,6 +183,17 @@ Meet the declared accessibility floor; do not substitute generic web defaults fo
   or qualifier in the same optical unit (e.g. `128 ms`, `3 nodes`, `42 %`), labels the quantity
   it measures, and states its comparison basis when one is implied. A bare digit with no unit,
   label, or context is a static-quality failure.
+- **Craft Stack Micro-Typography Floor**: Display numerals and headline figures compile with
+  tight tracking and stable digits — `letter-spacing: var(--font-display-tracking, -0.04em)` and
+  `font-variant-numeric: tabular-nums` — so polarized display type reads as a deliberate optical
+  decision, not a browser default.
+- **Craft Stack Spatial Geometry Floor**: Compose container surfaces as soft bento geometry with
+  generous interior padding (minimum 20px) and pill-shaped action triggers
+  (`border-radius: var(--radius-pill, 9999px)`); generic equal-width card grids without the bento
+  weight hierarchy fail this floor.
+- **Craft Stack Data Marks Floor**: Render status and metric distributions with SVG pattern
+  hatching (`var(--pattern-hatch-45)`) or segmented bars instead of flat native bars, so data
+  texture carries the declared `data_marks` axis rather than shipping a stock `<progress>` look.
 
 ### 3.4 State & Recovery Integrity — loading, empty, error, recovery
 

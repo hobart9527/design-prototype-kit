@@ -31,5 +31,21 @@ Specify the physical response of the decisive commit action:
 - *Frame 2 (Commit)*: Immediate state freeze; prevents double submission.
 - *Frame 3 (Settlement)*: Badge transitions deterministically; focus deterministically restores to originating trigger.
 
-## 5. Ratchet Settlement
-Lock `--accent-seal`, substrate tokens, and kinetic timing. Proceed to Frontier 4.
+## 5. Orthogonal 4-Axis Craft Stack (Physical Anchor Mapping)
+Translate the settled substrate and anchor metaphor into four orthogonal craft axes
+compiled into `foundation.craft_stack` (and projected into `visual_directives.craft_stack`):
+- **surface_optics** — from the substrate choice in Section 2: Void Slate reads as
+  `coated_instrument_dark` (specular top edge via `--surface-specular`); Organic Bone
+  reads as `matte_pigment_wash` (tonal `--surface-tint` over warm paper).
+- **spatial_geometry** — from the metaphor's massing: default `soft_bento_pill`
+  (generous bento padding, pill-shaped triggers via `--radius-pill`).
+- **micro_typography** — from the instrument dial anchor: default
+  `tight_display_polarized` (`--font-display-tracking: -0.04em`,
+  `--font-display-weight: 800`, `font-variant-numeric: tabular-nums`).
+- **data_marks** — from the physical texture anchor: default `hatching_dither`
+  (SVG `--pattern-hatch-45` hatching or segmented bars for status/metrics).
+Explicit `surface_optics: ...`-style declarations in the 5-Dial register override
+these compiled defaults.
+
+## 6. Ratchet Settlement
+Lock `--accent-seal`, substrate tokens, craft stack axes, and kinetic timing. Proceed to Frontier 4.

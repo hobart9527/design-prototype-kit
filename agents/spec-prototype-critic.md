@@ -142,6 +142,33 @@ build on its own.
   figures must specify `font-variant-numeric: tabular-nums`; proportional digits
   that jitter columns on update are a DEFECT.
 
+### Anti-Generic Craft Stack Verification (advisory anti-template checks)
+
+When the envelope's `visual_directives.craft_stack` declares the four orthogonal
+craft axes (`surface_optics`, `spatial_geometry`, `micro_typography`, `data_marks`),
+inspect the rendered evidence against each axis and report misses as craft findings:
+
+- **Micro-typography texture:** display numerals and headline figures should read
+  with tight tracking (`--font-display-tracking`, default `-0.04em`) and
+  `tabular-nums` stability. Browser-default proportional tracking on polarized
+  display figures is a generic-work signal, not a craft decision.
+- **Non-generic bento layout:** container surfaces should compose as soft bento
+  geometry with generous padding (min 20px) and pill-shaped action triggers
+  (`--radius-pill`, default `9999px`). An interchangeable equal-width card grid
+  with default corner radii is the generic-shell fingerprint to flag.
+- **Data mark textures:** status and metric distributions should carry SVG pattern
+  hatching (`--pattern-hatch-45`) or segmented bars. Flat native progress bars and
+  stock `<progress>` elements are a generic-work signal when `data_marks` is
+  declared as textured.
+- **Surface optics coherence:** the declared `surface_optics` axis should be
+  visible as a tonal wash plus top-edge specular highlight
+  (`--surface-tint`, `--surface-specular`) on elevated surfaces, not a flat
+  token color with no material treatment.
+
+These are expert critique signals, not a build gate: report each miss as craft
+feedback under the classification protocol, and only accessibility breaches or
+confirmed `DEFECT`-grade spec drift rise to blocking findings.
+
 Light, dark, flat, layered, dense, spacious, immediate, animated, familiar and
 experimental work can all be excellent. Judge the supplied specification and target
 on their own terms; there is no mandatory page count, component chassis, turn budget,

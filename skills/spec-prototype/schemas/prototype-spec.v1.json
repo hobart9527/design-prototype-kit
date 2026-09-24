@@ -142,6 +142,15 @@
             "accent_seal": { "type": "string" },
             "accent_policy": { "type": "string" }
           }
+        },
+        "craft_stack": {
+          "type": "object",
+          "properties": {
+            "surface_optics": { "type": "string" },
+            "spatial_geometry": { "type": "string" },
+            "micro_typography": { "type": "string" },
+            "data_marks": { "type": "string" }
+          }
         }
       }
     },

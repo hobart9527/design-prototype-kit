@@ -217,6 +217,7 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
     visual_directives = {
         "token_baseline": "prototype/shared/tokens.css",
         "sensory_dials": dict(foundation.get("five_axes") or {}),
+        "craft_stack": dict(foundation.get("craft_stack") or {}),
         "density_calibration": {
             "base_spacing": "var(--space-2)",
             "typography": "var(--font-sans)",

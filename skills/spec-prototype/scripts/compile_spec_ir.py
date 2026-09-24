@@ -400,6 +400,38 @@ def parse_required_states(text: str) -> List[str]:
     return out
 
 
+def parse_craft_stack(text: str, five_axes: Dict[str, str]) -> Dict[str, str]:
+    """Extract the orthogonal 4-axis craft stack from discussion text, or derive defaults.
+
+    Authored `surface_optics: ...`-style bullets are taken verbatim (lowercased,
+    first match wins per axis). Absent axes compile from physical anchors: a
+    light or energy-restrained register reads as a matte pigment wash, otherwise
+    a coated instrument dark; the remaining three axes default to the soft bento
+    pill, tight polarized display, and hatching-dither data marks.
+    """
+    axes = ("surface_optics", "spatial_geometry", "micro_typography", "data_marks")
+    stack: Dict[str, str] = {}
+    for line in text.splitlines():
+        m = re.search(r"[`*]*(surface_optics|spatial_geometry|micro_typography|data_marks)[`*]*\s*[:：]\s*[`*]*([^`\n]+)[`*]*", line, re.IGNORECASE)
+        if m:
+            key = m.group(1).strip().lower()
+            val = m.group(2).strip().lower().rstrip("`* \t")
+            if val and key not in stack:
+                stack[key] = val
+
+    if "surface_optics" not in stack:
+        lowered = text.lower()
+        if "light" in lowered or five_axes.get("energy") == "restrained":
+            stack["surface_optics"] = "matte_pigment_wash"
+        else:
+            stack["surface_optics"] = "coated_instrument_dark"
+    stack.setdefault("spatial_geometry", "soft_bento_pill")
+    stack.setdefault("micro_typography", "tight_display_polarized")
+    stack.setdefault("data_marks", "hatching_dither")
+    # Deterministic axis order regardless of authored bullet order.
+    return {axis: stack[axis] for axis in axes}
+
+
 def compile_canonical_ir(
     root: Path,
     slice_id: str,
@@ -463,6 +495,9 @@ def compile_canonical_ir(
     # Extract 5-Dial Register
     style_text = extract_section(disc_text, r"###?\s*.*(?:5-Dial|风格寄存器|Style Register)")
     five_axes = parse_5_dial_register(style_text or disc_text)
+
+    # Orthogonal 4-axis craft stack: authored declarations or physical-anchor defaults.
+    craft_stack = parse_craft_stack(style_text or disc_text, five_axes)
 
     # Extract OOUX / Surfaces
     surfaces_text = extract_section(disc_text, r"###?\s*.*(?:OOUX|实体拓扑|Surfaces|表面分配)")
@@ -587,6 +622,7 @@ def compile_canonical_ir(
         },
         "foundation": {
             "five_axes": five_axes,
+            "craft_stack": craft_stack,
             "palette_discipline": {
                 "accent_seal": "var(--accent-seal, #D93829)",
                 "accent_policy": "Forbidden in draft/pending states; reserved exclusively for irreversible authority seals.",
@@ -697,6 +733,9 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
     for k, v in fnd["five_axes"].items():
         md.append(f"  - `{k}`: `{v}`")
     md.append(f"- **Signature Accent Policy**: {fnd['palette_discipline'].get('accent_policy', 'Strict')}")
+    md.append("- **Orthogonal Craft Stack**:")
+    for k, v in (fnd.get("craft_stack") or {}).items():
+        md.append(f"  - `{k}`: `{v}`")
     md.append(f"- **Tokens Stylesheet**: `{ir['artifacts_binding']['tokens_css']}`")
     md.append("")
     md.append("---")

@@ -124,6 +124,25 @@ Stage 1 is a progressive, guided design conversation driven by a **Dynamic Topol
   (ban bare buzzwords like "高级", "现代"; expand into `[dimension] + [boundary] + [counter-example]`)
   and emit a concrete proposal with initial palette anchors (`--accent-primary`, `--bg-void`),
   axis orientation, and trade-off notes.
+- **Orthogonal 4-Axis Craft Stack (Physical Anchor Mapping)**: alongside the Five Axes,
+  map the physical anchors into four orthogonal craft axes that travel with the sealed
+  foundation and envelope as `craft_stack`:
+  - `surface_optics` — from the Materiality axis and reality grounding anchor: a
+    light or restrained register compiles to `matte_pigment_wash`; a dark
+    instrumentation register compiles to `coated_instrument_dark`. Surfaces then
+    consume `--surface-tint` and `--surface-specular` rather than raw gradients.
+  - `spatial_geometry` — from the Density axis and the physical metaphor's massing:
+    default `soft_bento_pill` (generous bento padding, pill triggers via
+    `--radius-pill`).
+  - `micro_typography` — from the Character axis and the measuring-instrument
+    anchor: default `tight_display_polarized` (`--font-display-tracking: -0.04em`,
+    `--font-display-weight: 800`, tabular numerals).
+  - `data_marks` — from the physical texture anchor: default `hatching_dither`
+    (`--pattern-hatch-45` SVG hatching or segmented bars instead of flat bars).
+  Explicit `surface_optics: ...`-style declarations in the 5-Dial register override
+  the compiled defaults; `compile_spec_ir.py` emits the resolved stack into
+  `foundation.craft_stack` and `assemble_envelope.py` projects it into
+  `visual_directives.craft_stack`.
 - **LLM Dynamic Chromatics**: once the proposal is chosen, `compile_tokens.py`
   derives a 16-step physical elevation matrix by luminance delta and generates
   `prototype/shared/tokens.css` (plus `prototype/contracts/tokens/t1.json`).
