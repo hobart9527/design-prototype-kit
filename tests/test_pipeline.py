@@ -596,10 +596,20 @@ def test_materialize_contracts_high_fidelity_semantic_synthesis(tmp_path: Path):
     assert "Bloomberg terminal density" in env["reality_anchors"]
     assert env["creative_envelope"]["reality_anchors"] == env["reality_anchors"]
 
-    # 7. Craft guidance is captured whole: the legacy 18-line cutoff truncated
-    #    authored sections before their closing rules reached the Builder.
-    form_method = next(m for m in env["active_methods"] if m["id"] == "form-ergonomics")
-    guidance = form_method["actionable_guidance"]
+    # 7. Craft guidance is captured whole: methods activate only via
+    #    Spec-declared method ids, and the reference file's full section
+    #    reaches the Builder (the legacy 18-line cutoff truncated authored
+    #    sections before their closing rules reached the Builder).
+    assert [m["id"] for m in env["active_methods"]] == []  # Spec declares no method ids: no heuristic injection
+
+    spec_path = Path(res["specification"])
+    spec_path.write_text(
+        spec_path.read_text(encoding="utf-8") + "\n- Craft methods: `form-ergonomics`\n",
+        encoding="utf-8",
+    )
+    env = assemble_mod.assemble(tmp_path, "console")
+    assert [m["id"] for m in env["active_methods"]] == ["form-ergonomics"]
+    guidance = env["active_methods"][0]["actionable_guidance"]
     assert "Form orchestration containers" in guidance
     assert len(guidance.splitlines()) > 18
     assert len(env["available_tokens"]) > 0

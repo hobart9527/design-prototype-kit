@@ -462,11 +462,12 @@ def test_method_registry_and_craft_guidelines_hygiene():
 
 
 def test_method_registry_runtime_selection_and_negative_selection():
-    """v10.2.1 Task 1: Verify Method Registry runtime selection, lazy load, and negative selection."""
+    """Declared-method-id selection: only Spec-declared methods reach the Builder."""
     assemble_mod = _load("assemble_envelope", SCRIPTS / "assemble_envelope.py")
     registry_path = REPO / "skills/spec-prototype/methods/registry.yaml"
 
-    # Case 1: Positive selection for dense telemetry console
+    # Boundary: a Spec naming no method ids yields an empty advisory list —
+    # heuristic trigger words never inject a method on their own.
     selected = assemble_mod.select_active_methods(
         registry_path=registry_path,
         stage=2,
@@ -476,17 +477,30 @@ def test_method_registry_runtime_selection_and_negative_selection():
         product_text="Cluster telemetry monitor",
         slice_id="telemetry-slice",
     )
-    assert 3 <= len(selected) <= 6
+    assert selected == []
+
+    # Positive selection: methods declared in the Spec text are selected.
+    selected = assemble_mod.select_active_methods(
+        registry_path=registry_path,
+        stage=2,
+        layout_profile="dense-console",
+        spec_text="Telemetry metrics console. Craft methods: `data-context-metrics`, "
+        "`action-verb-lifecycle`, `form-ergonomics`",
+        contract_text="action verb: quarantine-node",
+        product_text="Cluster telemetry monitor",
+        slice_id="telemetry-slice",
+    )
     selected_ids = [m["id"] for m in selected]
     assert "data-context-metrics" in selected_ids
     assert "action-verb-lifecycle" in selected_ids
+    assert "form-ergonomics" in selected_ids
     # Invariant lazy loading verification
     for m in selected:
         assert "invariants" in m and len(m["invariants"]) > 0
         assert "reference_file" in m
 
-    # Case 2: Negative selection for editorial reader
-    # (pure reading, no forms, no telemetry, no destructive operations)
+    # Negative selection: unnamed heuristics are not activated even when their
+    # trigger words appear in the contract text.
     editorial_selected = assemble_mod.select_active_methods(
         registry_path=registry_path,
         stage=2,
@@ -496,12 +510,21 @@ def test_method_registry_runtime_selection_and_negative_selection():
         product_text="Literary journal reader",
         slice_id="reader-slice",
     )
-    editorial_ids = [m["id"] for m in editorial_selected]
-    assert "visual-rhythm-density" in editorial_ids
-    # Negative selection assertions: non-relevant methods MUST be excluded
-    assert "data-context-metrics" not in editorial_ids, "Telemetry metrics must NOT be selected for pure reading"
-    assert "form-ergonomics" not in editorial_ids, "Form ergonomics must NOT be selected without inputs"
-    assert "fault-tolerance-recovery" not in editorial_ids, "Fault tolerance must NOT be selected without destructive operations"
+    assert editorial_selected == []
+
+    undeclared_heuristics = assemble_mod.select_active_methods(
+        registry_path=registry_path,
+        stage=2,
+        layout_profile="dense-console",
+        spec_text="Craft methods: `data-context-metrics`",
+        contract_text="form fields, validation, multi-step wizard, destructive operations",
+        product_text="form inputs and destructive workflows",
+        slice_id="form-slice",
+    )
+    undeclared_ids = [m["id"] for m in undeclared_heuristics]
+    assert "form-ergonomics" not in undeclared_ids, "Form ergonomics must not activate without a Spec declaration"
+    assert "fault-tolerance-recovery" not in undeclared_ids, "Fault tolerance must not activate without a Spec declaration"
+    assert undeclared_ids == ["data-context-metrics"]
 
 
 def test_builder_recipe_purge_and_adaptive_state_machine():
