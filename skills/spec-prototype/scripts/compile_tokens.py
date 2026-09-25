@@ -10,6 +10,11 @@ Eliminates manual CSS guesswork and enforces:
 3. Density-calibrated Spacing Scales: Dense (4px), Normal (8px), Sparse (12px).
 4. Neutral Scaffold Fallback: undeclared dials compile to an un-opinionated grayscale base.
 5. Mode Separation: `formal` never infers aesthetics; `probe` may heuristic-infer.
+6. Uni-directional Freshness Fuse: derivation flows one way (source → tokens.css).
+   Each compile stamps a sha256 source digest into tokens.css; hand edits that
+   disagree with the digest mark the tokens `out_of_sync` and downstream
+   consumption is hard-rejected with the drift named. The reverse reconciliation
+   entry (CSS → discussion) is retired.
 
 Usage:
   python3 compile_tokens.py [--discussion prototype/discussion.md]
@@ -20,6 +25,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -564,10 +570,68 @@ def extract_dynamic_palette(
     return base_colors
 
 
+CRAFT_AXES = ("surface_optics", "spatial_geometry", "micro_typography", "data_marks")
+
+# Display typography per authored micro-typography axis; undeclared values fall
+# back to the tight polarized display default.
+CRAFT_TYPOGRAPHY = {
+    "tight_display_polarized": ("-0.04em", "800"),
+    "open_body_humanist": ("-0.01em", "600"),
+}
+
+HATCH_PATTERN = (
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'"
+    "%3E%3Cpath d='M-2,10 L10,-2 M-2,4 L4,-2 M2,10 L10,2' stroke='%23888' stroke-width='1' fill='none'/%3E%3C/svg%3E\")"
+)
+
+
+def parse_craft_stack(text: str, dials: Dict[str, str] | None = None) -> Dict[str, str]:
+    """Extract the authored 4-axis craft stack, or derive physical-anchor defaults.
+
+    Authored `surface_optics: ...`-style bullets are taken verbatim (lowercased).
+    Undeclared axes default deterministically: a light or restrained register
+    compiles matte_pigment_wash; everything else compiles the coated-instrument
+    dark set. Mirrors compile_spec_ir.parse_craft_stack so the tokens compiler
+    consumes the same canonical craft intent the Spec IR emits.
+    """
+    dials = dials or {}
+    stack: Dict[str, str] = {}
+    for line in text.splitlines():
+        m = re.search(
+            r"[`*]*(surface_optics|spatial_geometry|micro_typography|data_marks)[`*]*\s*[:：]\s*[`*]*([^`\n]+)[`*]*",
+            line, re.IGNORECASE)
+        if m:
+            key = m.group(1).strip().lower()
+            val = m.group(2).strip().lower().rstrip("`* \t")
+            if val and key not in stack:
+                stack[key] = val
+
+    if "surface_optics" not in stack:
+        lowered = text.lower()
+        if "light" in lowered or dials.get("energy") == "restrained":
+            stack["surface_optics"] = "matte_pigment_wash"
+        else:
+            stack["surface_optics"] = "coated_instrument_dark"
+    stack.setdefault("spatial_geometry", "soft_bento_pill")
+    stack.setdefault("micro_typography", "tight_display_polarized")
+    stack.setdefault("data_marks", "hatching_dither")
+    # Deterministic axis order regardless of authored bullet order.
+    return {axis: stack[axis] for axis in CRAFT_AXES}
+
+
+def _craft_specular(optics: str) -> str:
+    """Specular treatment from the authored surface optics: coated instruments
+    carry a machined top highlight; matte pigment washes stay flat."""
+    if optics == "matte_pigment_wash":
+        return "none"
+    return "inset 0 1px 0 0 rgba(255, 255, 255, 0.15)"
+
+
 def compute_tokens(
     dials: Dict[str, str] | None = None,
     palette_or_colors: str | Dict[str, str] = NEUTRAL_SCAFFOLD_NAME,
     mode: str = "formal",
+    craft_stack: Dict[str, str] | None = None,
 ) -> Dict[str, Any]:
     """Derive full design token tree from optional Five Axes / dials and an explicit palette or dynamic color dict.
 
@@ -751,8 +815,11 @@ def compute_tokens(
         "line_height_heading": line_height_heading,
     }
 
+    craft = craft_stack if craft_stack is not None else parse_craft_stack("", dials)
+
     return {
         "dials": dials,
+        "craft_stack": craft,
         "colors": colors,
         "space": space,
         "radii": radii,
@@ -795,11 +862,24 @@ def generate_css(tokens: Dict[str, Any]) -> str:
     materiality_desc = d.get("materiality", d.get("finish", "neutral"))
     density_desc = d.get("density", "balanced")
 
+    craft = tokens.get("craft_stack") or parse_craft_stack("", d)
+
     lines = [
         "/* ==========================================================================",
         "   DTCG Design Tokens - Derived from v10 Five Axes / Experience Foundation",
         f"   Energy: {energy_desc} | Materiality: {materiality_desc} | Density: {density_desc}",
         "   ========================================================================== */",
+    ]
+    provenance = tokens.get("provenance") or {}
+    if provenance:
+        lines.extend([
+            f"   Source: {provenance.get('source', '')} (mode={provenance.get('mode', 'formal')})",
+            f"   Source digest: {provenance.get('digest', '')}",
+        ])
+        if provenance.get("dials"):
+            dial_pairs = ", ".join(f"{k}: {v}" for k, v in provenance["dials"].items())
+            lines.append(f"   Authored dials: {dial_pairs}")
+    lines.extend([
         ":root {",
         "  /* Atmospheric Undertone Palette (Non-sterile chromatic surfaces) */",
         f"  --bg-void: {c['bg_void']};",
@@ -830,7 +910,8 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --status-running: {c['status_running']};",
         f"  --status-warning: {c['status_warning']};",
         f"  --status-danger: {c['status_danger']};",
-    ]
+    ])
+
     if "accent_seal" in c:
         lines.append(f"  --accent-seal: {c['accent_seal']};")
         lines.append("  --seal-imprint-duration: 160ms;")
@@ -876,10 +957,10 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         "",
         "  /* Orthogonal Craft Stack (Surface Optics, Spatial Geometry, Micro-Typography, Data Marks) */",
         f"  --surface-tint: {_surface_tint(c, is_light)};",
-        "  --surface-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.15);",
-        "  --pattern-hatch-45: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M-2,10 L10,-2 M-2,4 L4,-2 M2,10 L10,2' stroke='%23888' stroke-width='1' fill='none'/%3E%3C/svg%3E\");",
-        "  --font-display-tracking: -0.04em;",
-        "  --font-display-weight: 800;",
+        f"  --surface-specular: {_craft_specular(craft['surface_optics'])};",
+        f"  --pattern-hatch-45: {HATCH_PATTERN if craft['data_marks'] == 'hatching_dither' else 'none'};",
+        f"  --font-display-tracking: {CRAFT_TYPOGRAPHY.get(craft['micro_typography'], CRAFT_TYPOGRAPHY['tight_display_polarized'])[0]};",
+        f"  --font-display-weight: {CRAFT_TYPOGRAPHY.get(craft['micro_typography'], CRAFT_TYPOGRAPHY['tight_display_polarized'])[1]};",
         "",
         "  /* ==========================================================================",
         "     Layer 2: Semantic Tokens (Functional Roles & Expressive Intent)",
@@ -1213,6 +1294,17 @@ def compile_tokens(
     )
     computed["authority"] = "explicit_human" if has_confirmed else "derived"
 
+    # One-way provenance seal: the compiled stylesheet records the sha256 of the
+    # exact source it was derived from, so any later hand edit is detectable.
+    craft = parse_craft_stack(disc_text, dials)
+    computed["craft_stack"] = craft
+    computed["provenance"] = {
+        "source": str(discussion_path),
+        "mode": mode,
+        "digest": "sha256:" + hashlib.sha256(disc_text.encode("utf-8")).hexdigest(),
+        "dials": dict(sorted(dials.items())),
+    }
+
     # Perform WCAG AAA/AA relative luminance pre-flight diagnostics
     c = computed["colors"]
     c_ratio = check_wcag_contrast(c["text_primary"], c["bg_surface"])
@@ -1244,54 +1336,152 @@ def compile_tokens(
         print(f"[TOKEN COMPILER] Successfully compiled Token Markdown contract to {out_md}")
 
 
-def reconcile_tokens_from_css(
-    css_path: str,
-    discussion_path: str,
-    json_path: str | None = None,
-    md_path: str | None = None,
-) -> None:
-    """Read review modifications from tokens.css and reconcile back into discussion.md and t1 contracts."""
+def read_tokens_provenance(css_path: str) -> Dict[str, Any]:
+    """Read the provenance block a compile stamped into a tokens.css.
+
+    Returns the source path, mode, sha256 source digest, and authored dial
+    annotations. A stylesheet with no provenance block yields an empty dict —
+    it predates the fuse and carries no freshness claim.
+    """
     css_p = Path(css_path)
-    disc_p = Path(discussion_path)
     if not css_p.is_file():
-        print(f"[RECONCILE] Error: CSS file not found: {css_path}")
-        return
-    if not disc_p.is_file():
-        print(f"[RECONCILE] Error: Discussion file not found: {discussion_path}")
-        return
+        return {}
+    text = css_p.read_text(encoding="utf-8")
+    m = re.search(
+        r"Source:\s*(?P<src>[^\n]+?)\s+\(mode=(?P<mode>\w+)\)\n"
+        r"\s*Source digest:\s*(?P<digest>sha256:[0-9a-f]{64})\n"
+        r"(?:\s*Authored dials:\s*(?P<dials>[^\n]*))?",
+        text,
+    )
+    if not m:
+        return {}
+    dials: Dict[str, str] = {}
+    if m.group("dials"):
+        for pair in m.group("dials").split(","):
+            if ":" in pair:
+                k, v = pair.split(":", 1)
+                dials[k.strip()] = v.strip()
+    return {
+        "source": m.group("src").strip(),
+        "mode": m.group("mode"),
+        "digest": m.group("digest"),
+        "dials": dials,
+    }
+
+
+def _render_sealed_css(source_text: str, source_path: str, mode: str) -> str:
+    """Compile a token source to the exact sealed stylesheet bytes the fuse expects."""
+    dials = parse_5dials(source_text)
+    dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
+    computed = compute_tokens(dials, dynamic_colors, mode=mode)
+    computed["authority"] = "explicit_human" if (
+        "## Confirmed Decisions" in source_text
+        or any(k in source_text for k in ("--color-primary", "--accent-primary", "--bg-surface"))
+    ) else "derived"
+    computed["craft_stack"] = parse_craft_stack(source_text, dials)
+    computed["provenance"] = {
+        "source": source_path,
+        "mode": mode,
+        "digest": "sha256:" + hashlib.sha256(source_text.encode("utf-8")).hexdigest(),
+        "dials": dict(sorted(dials.items())),
+    }
+    return generate_css(computed)
+
+
+def check_tokens_sync(css_path: str, discussion_path: str, mode: str = "formal") -> Dict[str, Any]:
+    """Freshness fuse: verify tokens.css still derives from its declared source.
+
+    Three ordered checks:
+    1. The stylesheet must carry a compile-time provenance seal at all.
+    2. The sealed source digest must match the source's current sha256, so a
+       source edit after compile is drift.
+    3. The stylesheet's dial annotations must equal the sealed annotations, and
+       the stylesheet bytes must equal a fresh compile of the sealed source —
+       so a palette-only hand edit to tokens.css fails the freshness check even
+       though the source digest itself still matches.
+
+    Returns a state dict; never mutates artifacts.
+    """
+    css_p = Path(css_path)
+    if not css_p.is_file():
+        return {"state": "missing", "css_path": str(css_p), "reason": f"tokens stylesheet not found: {css_p}"}
 
     css_text = css_p.read_text(encoding="utf-8")
-    var_matches = re.findall(r"(--[a-zA-Z0-9_-]+)\s*:\s*([^;]+);", css_text)
-    if not var_matches:
-        print("[RECONCILE] No CSS variables found to reconcile.")
-        return
+    provenance = read_tokens_provenance(css_path)
+    if not provenance:
+        return {
+            "state": "out_of_sync",
+            "css_path": str(css_p),
+            "drift": "no provenance block: tokens.css was never compiled by compile_tokens.py or the seal was removed",
+        }
 
-    reconciled_vars = {k.strip(): v.strip() for k, v in var_matches}
-    disc_text = disc_p.read_text(encoding="utf-8")
+    disc_p = Path(discussion_path)
+    seal_mode = provenance.get("mode", mode)
+    source_text = _resolve_token_source(str(disc_p), mode=seal_mode)
+    if not source_text:
+        return {
+            "state": "out_of_sync",
+            "css_path": str(css_p),
+            "drift": f"token source not found: {disc_p}",
+        }
+    current_digest = "sha256:" + hashlib.sha256(source_text.encode("utf-8")).hexdigest()
 
-    reconcile_lines = [
-        "\n\n## Confirmed Decisions (Reconciled from Review tokens.css)",
-        f"- Reconciled from: `{css_path}`",
-    ]
-    for k, v in sorted(reconciled_vars.items()):
-        if any(c in k for c in ("color", "accent", "bg-", "border-", "text-", "status-", "radius-", "font-", "motion-", "space-")):
-            reconcile_lines.append(f"- {k}: {v}")
+    if provenance["digest"] != current_digest:
+        return {
+            "state": "out_of_sync",
+            "css_path": str(css_p),
+            "drift": (f"tokens.css digest {provenance['digest']} does not match the current "
+                      f"source digest {current_digest} ({provenance['source']}); hand edits to "
+                      "tokens.css never flow back into the source — recompile from discussion"),
+        }
 
-    reconcile_block = "\n".join(reconcile_lines) + "\n"
-    if "## Confirmed Decisions (Reconciled from Review tokens.css)" in disc_text:
-        disc_text = re.sub(
-            r"## Confirmed Decisions \(Reconciled from Review tokens\.css\).*?(?=\n## |\Z)",
-            reconcile_block.strip() + "\n",
-            disc_text,
-            flags=re.DOTALL,
+    # Dial-annotation freshness: the stylesheet's own dial line must equal the
+    # annotations recorded at compile time. A hand edit to that line fails even
+    # when the source digest still matches, because the stylesheet no longer
+    disc_dials = parse_5dials(source_text)
+    if disc_dials:
+        expected_dial_pairs = ", ".join(f"{k}: {v}" for k, v in disc_dials.items())
+        m = re.search(r"^\s*Authored dials:\s*([^\n]*)$", css_text, re.MULTILINE)
+        if not m or m.group(1).strip() != expected_dial_pairs:
+            return {
+                "state": "out_of_sync",
+                "css_path": str(css_p),
+                "drift": ("tokens.css dial annotation freshness check failed: the Authored dials "
+                          f"line no longer matches the compiled annotations ({expected_dial_pairs})"),
+            }
+
+    # Byte-level body freshness: recompile the sealed source and compare. This
+    # is what catches a palette-only hand edit — the digest and dial annotations
+    # still look correct while the CSS body no longer is what the compiler emits.
+    expected_css = _render_sealed_css(source_text, provenance["source"], seal_mode)
+    if css_text != expected_css:
+        return {
+            "state": "out_of_sync",
+            "css_path": str(css_p),
+            "drift": ("tokens.css body digest no longer matches a fresh compile of its sealed source "
+                      f"({provenance['source']}); hand edits to tokens.css never flow back into "
+                      "the source — recompile from discussion"),
+        }
+
+    return {
+        "state": "in_sync",
+        "css_path": str(css_p),
+        "digest": current_digest,
+        "dials": provenance.get("dials", {}),
+    }
+
+
+def assert_tokens_in_sync(css_path: str, discussion_path: str, mode: str = "formal") -> None:
+    """Downstream admission gate: hard-reject consumption of out_of_sync tokens."""
+    result = check_tokens_sync(css_path, discussion_path, mode=mode)
+    if result["state"] != "in_sync":
+        raise TokensOutOfSyncError(
+            f"tokens.css is {result['state']}; downstream consumption rejected: {result.get('drift', '')}"
         )
-    else:
-        disc_text = disc_text.rstrip() + reconcile_block
 
-    disc_p.write_text(disc_text, encoding="utf-8")
-    print(f"[RECONCILE] Successfully synced review tokens back into {disc_p}")
 
-    compile_tokens(str(disc_p), str(css_p), json_path, md_path)
+class TokensOutOfSyncError(RuntimeError):
+    """Raised when downstream consumers attempt to admit stale or hand-edited tokens."""
 
 
 def main():
@@ -1301,11 +1491,15 @@ def main():
     parser.add_argument("--output-json", default="prototype/contracts/tokens/t1.json", help="Target DTCG JSON file")
     parser.add_argument("--output-md", default="prototype/contracts/tokens/t1.md", help="Target Markdown contract file")
     parser.add_argument("--mode", choices=("formal", "probe"), default="formal", help="formal: no inferred aesthetics (neutral scaffold); probe: permit heuristic palette inference")
-    parser.add_argument("--reconcile-from-css", help="Reconcile human review edits from tokens.css back into discussion.md and contracts")
+    parser.add_argument("--check-sync", action="store_true", help="Verify tokens.css freshness against its source instead of compiling; exit 1 on out_of_sync")
     args = parser.parse_args()
 
-    if args.reconcile_from_css:
-        reconcile_tokens_from_css(args.reconcile_from_css, args.discussion, args.output_json, args.output_md)
+    if args.check_sync:
+        result = check_tokens_sync(args.output_css, args.discussion, mode=args.mode)
+        if result["state"] != "in_sync":
+            print(f"[TOKEN FUSE] out_of_sync: {result.get('drift', '')}")
+            sys.exit(1)
+        print(f"[TOKEN FUSE] tokens.css is in sync with {result.get('digest')}")
         return
 
     compile_tokens(args.discussion, args.output_css, args.output_json, args.output_md, mode=args.mode)

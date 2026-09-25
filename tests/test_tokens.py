@@ -168,6 +168,106 @@ def test_omitted_dials_palette_stays_neutral_in_formal_mode():
     assert not _is_gray(probed["accent_primary"])
 
 
+def _compile_foundation(tmp_path: Path, dials: str = "- Energy: steady\n") -> Path:
+    """Compile a tokens.css from an authored foundation record; return the tmp root."""
+    ct = _load_compiler()
+    foundation = tmp_path / "prototype/contracts/foundation/f1.md"
+    foundation.parent.mkdir(parents=True)
+    foundation.write_text(f"""# Project Experience Foundation: f1
+
+## 5-Dial Style Register (五刻度风格寄存器)
+{dials}
+## Seed Palette / Color Register
+- --accent-primary: #d6f56b
+- --bg-surface: #080b0b
+""", encoding="utf-8")
+    discussion = tmp_path / "prototype/discussion.md"
+    discussion.write_text("# Discussion\n\n## Confirmed Decisions\n", encoding="utf-8")
+
+    out_css = tmp_path / "prototype/shared/tokens.css"
+    ct.compile_tokens(str(discussion), str(out_css))
+    return tmp_path
+
+
+def test_compile_stamps_provenance_and_downstream_passes(tmp_path: Path):
+    """Positive specimen: compile → tokens.css carries the source digest → downstream passes."""
+    ct = _load_compiler()
+    root = _compile_foundation(tmp_path)
+    css_path = root / "prototype/shared/tokens.css"
+
+    css = css_path.read_text(encoding="utf-8")
+    assert "Source digest: sha256:" in css
+    assert "Authored dials: energy: steady" in css
+
+    # Freshness fuse admits freshly compiled tokens for downstream consumption.
+    sync = ct.check_tokens_sync(str(css_path), str(root / "prototype/discussion.md"))
+    assert sync["state"] == "in_sync", sync
+    ct.assert_tokens_in_sync(str(css_path), str(root / "prototype/discussion.md"))  # must not raise
+
+
+def test_hand_edited_palette_marks_out_of_sync_and_rejects_downstream(tmp_path: Path):
+    """Boundary specimen: flip one palette color after compile → fuse fails, downstream rejected."""
+    ct = _load_compiler()
+    root = _compile_foundation(tmp_path)
+    css_path = root / "prototype/shared/tokens.css"
+
+    # Reviewer hand-edits a single palette color in the compiled stylesheet.
+    edited = css_path.read_text(encoding="utf-8").replace("--accent-primary: #d6f56b;", "--accent-primary: #38bdf8;")
+    css_path.write_text(edited, encoding="utf-8")
+
+    # The freshness digest check fails (not just the dial annotations): the
+    # source was untouched, so the drift is between the edited CSS and its seal.
+    sync = ct.check_tokens_sync(str(css_path), str(root / "prototype/discussion.md"))
+    assert sync["state"] == "out_of_sync"
+    assert "digest" in sync["drift"]
+    assert "tokens.css" in sync["drift"] or "hand edits" in sync["drift"]
+
+    # Downstream consumption is hard-rejected naming tokens.css as out_of_sync.
+    with pytest.raises(ct.TokensOutOfSyncError, match="out_of_sync"):
+        ct.assert_tokens_in_sync(str(css_path), str(root / "prototype/discussion.md"))
+
+
+def test_source_edit_marks_out_of_sync_even_with_matching_dials(tmp_path: Path):
+    """Editing the source after compile is also drift: the digest no longer matches."""
+    ct = _load_compiler()
+    root = _compile_foundation(tmp_path)
+    css_path = root / "prototype/shared/tokens.css"
+    (root / "prototype/contracts/foundation/f1.md").write_text(
+        "# Project Experience Foundation: f1\n\n## 5-Dial Style Register\n- Energy: kinetic\n",
+        encoding="utf-8")
+
+    sync = ct.check_tokens_sync(str(css_path), str(root / "prototype/discussion.md"))
+    assert sync["state"] == "out_of_sync"
+
+
+def test_palette_only_edit_cannot_pass_dial_annotation_freshness(tmp_path: Path):
+    """A hand edit to the stylesheet's dial annotation line fails freshness on its own."""
+    ct = _load_compiler()
+    root = _compile_foundation(tmp_path)
+    css_path = root / "prototype/shared/tokens.css"
+
+    # Touch only the Authored dials line — palette bytes and source untouched.
+    forged = css_path.read_text(encoding="utf-8").replace(
+        "Authored dials: energy: steady", "Authored dials: energy: kinetic")
+    css_path.write_text(forged, encoding="utf-8")
+
+    sync = ct.check_tokens_sync(str(css_path), str(root / "prototype/discussion.md"))
+    assert sync["state"] == "out_of_sync"
+    assert "dial annotation" in sync["drift"]
+
+
+def test_unsealed_tokens_css_is_out_of_sync(tmp_path: Path):
+    """A stylesheet that never went through the compiler carries no seal: rejected."""
+    ct = _load_compiler()
+    root = _compile_foundation(tmp_path)
+    css_path = root / "prototype/shared/tokens.css"
+    css_path.write_text(":root { --accent-primary: #fff; }\n", encoding="utf-8")
+
+    sync = ct.check_tokens_sync(str(css_path), str(root / "prototype/discussion.md"))
+    assert sync["state"] == "out_of_sync"
+    assert "no provenance" in sync["drift"]
+
+
 def test_formal_empty_dials_yield_steady_motion_not_kinetic_hud():
     ct = _load_compiler()
     tokens = ct.compute_tokens({})

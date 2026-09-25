@@ -272,7 +272,14 @@ def lint_formal_entry(root: Path, slice_id: str) -> List[SpecLintError]:
 
 
 def lint_canonical_spec_ir(root: Path, slice_id: str, candidate_id: str = "r1") -> List[SpecLintError]:
-    """Validate canonical specification IR against JSON Schema Draft 2020-12 and boundary gates."""
+    """Validate canonical specification IR against JSON Schema Draft 2020-12 and boundary gates.
+
+    Tier-aware per the T-01 progressive schema: an `intent_spec` validates at
+    its tier and is never demanded the `execution_spec`-only state machine and
+    action contracts; only an IR that claims `execution_spec` must carry them.
+    Also runs the tokens freshness fuse: hand-edited or stale tokens.css fails
+    the lint with the drift named.
+    """
     errors: List[SpecLintError] = []
     schema_path = root / "skills/spec-prototype/schemas/prototype-spec.v1.json"
     if not schema_path.is_file():
@@ -300,6 +307,39 @@ def lint_canonical_spec_ir(root: Path, slice_id: str, candidate_id: str = "r1") 
         pass
     except Exception as exc:
         errors.append(SpecLintError("E020_SCHEMA_VALIDATION_FAILED", str(ir_path), f"Schema validation error: {exc}"))
+
+    spec_tier = data.get("spec_tier", "execution_spec")
+    state_model = data.get("state_model") or {}
+    actions = data.get("actions") or []
+
+    # Tier admission: only an execution_spec claim demands the Stage 3/4 state
+    # machine. An intent_spec validates at its tier — demanding execution_spec
+    # fields here would reject every legitimate Stage 1 compilation.
+    if spec_tier == "execution_spec":
+        missing_tiers = [key for key in ("state_model", "actions") if not data.get(key)]
+        empty_state = spec_tier == "execution_spec" and not any(
+            (state_model.get(k) for k in ("domain_states", "interaction_states", "data_scenarios", "stress_fixtures"))
+        )
+        if missing_tiers or empty_state:
+            errors.append(SpecLintError("E021_TIER_ADMISSION_FAILED", str(ir_path),
+                                        f"IR declares spec_tier 'execution_spec' but lacks the Stage 3/4 "
+                                        f"state machine and action contracts: missing={missing_tiers}, "
+                                        f"empty_state_model={empty_state}."))
+
+    # Tokens freshness fuse: the compiled stylesheet must still derive from its
+    # source. Hand edits are a hard lint failure with the drift named, so the
+    # build cannot silently admit someone else's palette.
+    tokens_css = root / "prototype/shared/tokens.css"
+    if tokens_css.is_file():
+        try:
+            import compile_tokens
+            sync = compile_tokens.check_tokens_sync(str(tokens_css), str(root / "prototype/discussion.md"))
+        except Exception as exc:
+            sync = {"state": "out_of_sync", "drift": f"freshness fuse failed to run: {type(exc).__name__}: {exc}"}
+        if sync.get("state") == "out_of_sync":
+            errors.append(SpecLintError("E022_TOKENS_OUT_OF_SYNC", str(tokens_css),
+                                        f"tokens.css is out_of_sync; downstream consumption is rejected. "
+                                        f"Drift: {sync.get('drift', 'unknown')}."))
 
     # Boundary and integrity checks
     coverage = data.get("scope", {}).get("topology_scope", {}).get("coverage")
