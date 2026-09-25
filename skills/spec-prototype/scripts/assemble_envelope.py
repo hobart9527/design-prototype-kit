@@ -594,6 +594,31 @@ def _extract_craft_guidance(skill_dir: Path, rel_file: str, method_id: str) -> s
         return ""
 
 
+def declared_method_ids(spec_text: str, contract_text: str = "") -> List[str]:
+    """Read the craft-method ids the authored Spec explicitly names.
+
+    The Builder only receives methods the Spec declared (methods_applied line,
+    a Craft Methods list, or inline method ids/names as literals). Heuristic
+    trigger words never authorize a method: an unauthorized method must not
+    reach the Builder, and a Spec naming nothing yields [].
+    """
+    declared: List[str] = []
+    for text in (spec_text or "", contract_text or ""):
+        if not text:
+            continue
+        for m in re.finditer(r"`([a-z0-9]+(?:-[a-z0-9]+)+)`", text):
+            candidate = m.group(1)
+            if candidate not in declared:
+                declared.append(candidate)
+        for m in re.finditer(r"^\s*[-*]?\s*(?:[Cc]raft\s+[Mm]ethods?|[Mm]ethods?[_ ]?applied)\s*[:=]\s*([^\n]+)",
+                             text, re.MULTILINE):
+            for part in re.split(r"[,;、]", m.group(1)):
+                token = part.strip().strip("`'\"").strip().lower().replace(" ", "-")
+                if token and token not in declared:
+                    declared.append(token)
+    return declared
+
+
 def select_active_methods(
     registry_path: Path,
     stage: int = 2,
@@ -604,17 +629,24 @@ def select_active_methods(
     slice_id: str = "",
     limit_range: tuple[int, int] = (3, 6),
 ) -> List[Dict[str, Any]]:
-    """Select 3-6 relevant craft methods from registry.yaml based on stage and context triggers.
+    """Advisory candidate source for craft methods explicitly declared by the Spec.
 
-    Loads methods lazily, scores against observed triggers, and excludes non-matching methods.
+    This is not an authority: the Builder receives only methods the authored
+    Spec named (see `declared_method_ids`). Heuristic trigger scoring remains
+    available as a labeled advisory ordering over the declared set, and a Spec
+    naming no method returns [] — no global default set is injected.
     """
     all_methods = load_method_registry(registry_path)
     if not all_methods:
         return []
 
+    declared = set(declared_method_ids(spec_text, contract_text))
+    if not declared:
+        return []
+
     combined = f"{slice_id} {layout_profile} {product_text} {contract_text} {spec_text}".lower()
 
-    # Detect context features (triggers)
+    # Advisory trigger detection, used only to order declared candidates.
     active_triggers = set()
 
     # 1. State mutation & actions
@@ -681,6 +713,11 @@ def select_active_methods(
 
     scored_candidates = []
     for m in all_methods:
+        # Authorization first: only Spec-declared methods are candidates at all.
+        method_id = m.get("id", "")
+        if method_id.lower() not in declared:
+            continue
+
         stages = m.get("stages", [])
         if stages and stage not in stages:
             continue
@@ -1843,10 +1880,14 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
     # status forward rather than flattening every build back to the default; the
     # fallback remains for a legacy pillar-only assembly with no canonical IR.
     _ir_status = "sealed_provisional"
+    authored_viewports: List[int] = []
     if "canonical_ir" in paths and paths["canonical_ir"].is_file():
         try:
             _ir_data = json.loads(paths["canonical_ir"].read_text(encoding="utf-8"))
             _ir_status = _ir_data.get("identity", {}).get("authority_status") or "sealed_provisional"
+            authored_viewports = [
+                int(v) for v in (_ir_data.get("scope", {}).get("verification_scope", {}) or {}).get("viewports") or []
+                if isinstance(v, (int, float)) and v > 0]
         except (OSError, ValueError):
             pass
 
@@ -1927,7 +1968,12 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "builder_guidance": {
             "authority_ceiling": "Stage 2 prototypes remain 'sealed_provisional'; do not self-declare 'frozen approved'.",
             "observable_affordances": "Render explicit visible controls and text for all declared interactive verbs.",
-            "responsive_folding": "Ensure fluid reflow down to 390px mobile viewport without horizontal overflow."
+            # Authored verification viewports only: the folding rule names what
+            # the Spec actually binds, and stays absent when none are declared.
+            **({"responsive_folding":
+                f"Ensure fluid reflow down to {min(authored_viewports)}px "
+                "(narrowest authored verification viewport) without horizontal overflow."}
+               if authored_viewports else {}),
         },
         "build_authority": build_authority,
         "has_hypothesis_actions": has_hypothesis_action,
@@ -2004,14 +2050,26 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
             "mandatory_states": authored_states,
             "visual_inspection_mandate": "Critic must use Read tool to visually inspect captured screenshots at every mandatory viewport; textual HTML review alone is non-independent."
         },
+        # Each digest key carries the real relative path of the object it names,
+        # so the dispatch boundary validates that object rather than a fixed
+        # legacy file layout. In a canonical-only assembly the compiled IR is
+        # the slice-contract authority and every legacy pillar key falls back
+        # to the canonical r1.spec.md; coexisting legacy+canonical sets bind
+        # what actually fed this envelope.
         "spec_sources": {
-            "product_digest": hashlib.sha256(paths["product"].read_bytes()).hexdigest(),
-            "surface_map_digest": hashlib.sha256(paths["surface_map"].read_bytes()).hexdigest(),
-            "foundation_digest": hashlib.sha256(paths["foundation"].read_bytes()).hexdigest(),
-            "tokens_css_digest": hashlib.sha256(paths["tokens_css"].read_bytes()).hexdigest(),
-            "tokens_md_digest": hashlib.sha256(paths["tokens_md"].read_bytes()).hexdigest(),
-            "contract_digest": hashlib.sha256(paths["slice_contract"].read_bytes()).hexdigest(),
-            "specification_digest": hashlib.sha256(paths["specification"].read_bytes()).hexdigest(),
+            key: {
+                "path": path.relative_to(root).as_posix(),
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+            for key, path in (
+                ("product_digest", paths["product"]),
+                ("surface_map_digest", paths["surface_map"]),
+                ("foundation_digest", paths["foundation"]),
+                ("tokens_css_digest", paths["tokens_css"]),
+                ("tokens_md_digest", paths["tokens_md"]),
+                ("contract_digest", paths.get("canonical_ir") or paths["slice_contract"]),
+                ("specification_digest", paths["specification"]),
+            )
         }
     }
 

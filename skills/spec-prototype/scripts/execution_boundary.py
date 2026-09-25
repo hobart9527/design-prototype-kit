@@ -82,26 +82,40 @@ def dispatch(args, active):
                 'target_html_path must reside inside prototype/experiments/ or prototype/surfaces/.')
         spec_sources = data.get('spec_sources', {})
         require(bool(spec_sources), 'Lean envelope must include spec_sources digests.')
-        # P1-3: Stale Digest Guard - re-calculate current SHA256 of spec sources to ensure freshness
+        # P1-3: Stale Digest Guard - each digest key carries the real relative
+        # path of the object it names, so the guard compares the bytes of the
+        # object the envelope actually bound (canonical-only envelopes name
+        # r1.spec.md/r1.spec.json and never demand legacy pillar files).
         slice_id = data['slice_id']
-        file_map = {
-            'product_digest': root / 'prototype/product.md',
-            'surface_map_digest': root / 'prototype/contracts/surface-maps/m1.md',
-            'foundation_digest': root / 'prototype/contracts/foundation/f1.md',
-            'tokens_css_digest': root / 'prototype/shared/tokens.css',
-            'tokens_md_digest': root / 'prototype/contracts/tokens/t1.md',
-            'tokens_json_digest': root / 'prototype/contracts/tokens/t1.json',
-            'contract_digest': root / f'prototype/contracts/slices/{slice_id}/c1.md',
-            'specification_digest': root / f'prototype/specifications/{slice_id}/r1.md',
-        }
-        for digest_key, file_path in file_map.items():
-            expected = spec_sources.get(digest_key)
-            if expected:
-                require(file_path.is_file(),
-                        f'Stale contract: {file_path.name} was deleted since envelope was compiled. Re-assemble envelope before dispatch.')
-                actual = hashlib.sha256(file_path.read_bytes()).hexdigest()
-                require(actual == expected,
-                        f'Stale contract: {file_path.name} changed since envelope was compiled ({actual[:8]} != {expected[:8]}). Re-assemble envelope before dispatch.')
+        for digest_key, bound in spec_sources.items():
+            if isinstance(bound, str):
+                # Legacy pre-path-binding envelope: it names no object, so the
+                # guard cannot compare bytes without guessing a retired fixed
+                # path. Nothing recorded means nothing to verify.
+                continue
+            if isinstance(bound, dict):
+                expected_digest = bound.get('sha256')
+                rel_path = bound.get('path')
+            else:
+                raise ValueError(f'Lean envelope spec_sources entry {digest_key} must be a digest or a path+sha256 binding.')
+            require(isinstance(expected_digest, str) and expected_digest,
+                    f'Lean envelope spec_sources entry {digest_key} must carry a sha256 digest.')
+            require(isinstance(rel_path, str) and rel_path,
+                    f'Lean envelope spec_sources entry {digest_key} must name the relative path it digests.')
+            require(re.fullmatch(r'[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*', rel_path),
+                    f'Lean envelope spec_sources entry {digest_key} carries an invalid relative path: {rel_path}')
+            file_path = root / rel_path
+            # Repository containment: canonical realpath, no symlink escape.
+            require(not file_path.is_symlink(),
+                    f'Stale contract: {file_path.name} is a symlink; bound sources must be regular files in this repository.')
+            resolved = file_path.resolve()
+            require(resolved.is_relative_to(root.resolve()),
+                    f'Stale contract: {file_path.name} escapes the repository; bound sources must stay inside the repository.')
+            require(resolved.is_file(),
+                    f'Stale contract: {file_path.name} was deleted since envelope was compiled. Re-assemble envelope before dispatch.')
+            actual = hashlib.sha256(resolved.read_bytes()).hexdigest()
+            require(actual == expected_digest,
+                    f'Stale contract: {file_path.name} changed since envelope was compiled ({actual[:8]} != {expected_digest[:8]}). Re-assemble envelope before dispatch.')
 
         # P0-1: Build Authority Gate in execution boundary
         # If the envelope targets formal release/freeze or is not explicitly probe,

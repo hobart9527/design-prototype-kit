@@ -111,9 +111,136 @@ def test_authored_values_and_digests_survive_assembly(tmp_path):
     assert len(env["coverage"]["unselected_surfaces"]) == 7  # context retained, not targeted
     for key in ("product_digest", "surface_map_digest", "foundation_digest", "contract_digest",
                 "specification_digest", "tokens_md_digest", "tokens_css_digest"):
-        assert len(env["spec_sources"][key]) == 64
-    assert env["spec_sources"]["tokens_md_digest"] == hashlib.sha256(
+        assert len(env["spec_sources"][key]["sha256"]) == 64
+    assert env["spec_sources"]["tokens_md_digest"]["sha256"] == hashlib.sha256(
         (root / "prototype/contracts/tokens/t1.md").read_bytes()).hexdigest()
+    # Each digest key carries the real relative path of the object it digests,
+    # so the dispatch boundary validates that object, not a fixed legacy file.
+    assert env["spec_sources"]["product_digest"]["path"] == "prototype/product.md"
+    assert env["spec_sources"]["specification_digest"]["path"] == f"prototype/specifications/{SLICE}/r1.md"
+    assert env["spec_sources"]["specification_digest"]["sha256"] == hashlib.sha256(
+        (root / f"prototype/specifications/{SLICE}/r1.md").read_bytes()).hexdigest()
+
+
+# T-03 specimen: a canonical-only repo (r1.spec.md + compiled IR) dispatches
+# without any legacy pillar file being demanded.
+
+CANONICAL_DISCUSSION = """# Design Discussion: Terminal Cluster Workbench
+
+## 1. 业务与用户极端张力 (Core Tension)
+- Operational through-put vs Catastrophic Bus-Hang Failures.
+
+## 2. 现实双地锚 (Reality Benchmark Anchors)
+- Operational Grounding: Slurm + Run:ai
+- Kinetic Grounding: Vernier Caliper detents
+
+## 3. 项目级状态模型 (State Model)
+- `domain/cluster-nominal` (集群常态): 全部节点健康，张量流水线满负荷。
+- `domain/incident-active` (故障激活): 单机 NVLink 挂起，等待排空。
+- `interaction/inspecting` (检视中): 抽屉展开、等待确认。
+- `interaction/committing` (提交中): 排空动作机械压感执行。
+- `data/cold-metrics` (冷指标): 首次加载、缓存未命中、时序抖动。
+
+## 4. 5-Dial 风格寄存器 (5-Dial Style Register)
+- Density: dense
+- Finish: machined-industrial
+- Palette: plasma-cyan
+
+## 5. OOUX 实体拓扑与表面分配
+- **主工作区 (Primary)**: `console/cluster-overview`
+- **上下文视图 (Contextual)**: `surfaces/incident-drawer`
+
+## 6. Viewport 与强制测试状态
+- `Viewport`: `390px` (phone) / `1280px` (desktop)
+- `Required States`: `state-draft`, `state-sealed`
+
+## 7. 破坏协议 (Break Protocol)
+- `stress/bus-hang` | Vector: `NVLink 链路挂起 6 秒` | Expected: `2 秒内定位故障节点并显示降级徽标`。
+- `stress/cold-boot` | Vector: `冷启动空缓存` | Expected: `骨架屏占位 + 降级徽标`。
+"""
+
+
+def build_canonical_repo(tmp_path: Path) -> Path:
+    """A canonical-only Stage 1 contract: compiled IR + r1.spec.md, no legacy pillars."""
+    from compile_spec_ir import compile_canonical_ir, render_single_spec_md
+
+    root = tmp_path
+    discussion = root / "prototype/discussion.md"
+    discussion.parent.mkdir(parents=True, exist_ok=True)
+    discussion.write_text(CANONICAL_DISCUSSION, encoding="utf-8")
+    ir = compile_canonical_ir(root=root, slice_id="cluster-overview", stage="hero_probe")
+    write(root / "prototype/contracts/compiled/cluster-overview/r1.spec.json",
+          json.dumps(ir, indent=2, ensure_ascii=False))
+    write(root / "prototype/specifications/cluster-overview/r1.spec.md",
+          render_single_spec_md(ir))
+    write(root / "prototype/shared/tokens.css",
+          ":root {\n  --surface-bg: #101418;\n  --text-primary: #e6edf3;\n}\n")
+    return root
+
+
+def dispatch_payload(root: Path, env: dict) -> dict:
+    return {"repository_root": str(root), "skill_root": str(assemble_envelope.SKILL),
+            "mode": "lean-builder-envelope", "slice_id": env["slice_id"],
+            "target_html_path": env["target_html_path"],
+            "spec_sources": env["spec_sources"]}
+
+
+def test_canonical_only_envelope_binds_real_paths_and_dispatches(tmp_path):
+    root = build_canonical_repo(tmp_path)
+    env = assemble_envelope.assemble(root, "cluster-overview")
+    # The digests name the canonical artifacts, not fallback legacy pillar paths.
+    assert env["spec_sources"]["specification_digest"]["path"] == \
+        "prototype/specifications/cluster-overview/r1.spec.md"
+    assert env["spec_sources"]["contract_digest"]["path"] == \
+        "prototype/contracts/compiled/cluster-overview/r1.spec.json"
+    assert "product.md" not in env["spec_sources"]["product_digest"]["path"]
+    # The specimen: matching digests pass the boundary with no legacy file present.
+    assert not (root / "prototype/product.md").exists()
+    assert not (root / "prototype/contracts/surface-maps/m1.md").exists()
+    execution_boundary.dispatch(
+        {"subagent_type": "spec-prototype-builder",
+         "prompt": json.dumps(dispatch_payload(root, env))}, root)
+
+
+def test_edited_bound_source_is_refused_with_named_file(tmp_path):
+    root = build_canonical_repo(tmp_path)
+    env = assemble_envelope.assemble(root, "cluster-overview")
+    spec = root / "prototype/specifications/cluster-overview/r1.spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8") + "\n<!-- tampered -->\n",
+                    encoding="utf-8")
+    with pytest.raises(ValueError) as error:
+        execution_boundary.dispatch(
+            {"subagent_type": "spec-prototype-builder",
+             "prompt": json.dumps(dispatch_payload(root, env))}, root)
+    assert "Stale contract" in str(error.value)
+    assert "r1.spec.md" in str(error.value)
+
+
+def test_removed_bound_source_is_refused_with_named_file(tmp_path):
+    root = build_canonical_repo(tmp_path)
+    env = assemble_envelope.assemble(root, "cluster-overview")
+    (root / "prototype/shared/tokens.css").unlink()
+    with pytest.raises(ValueError) as error:
+        execution_boundary.dispatch(
+            {"subagent_type": "spec-prototype-builder",
+             "prompt": json.dumps(dispatch_payload(root, env))}, root)
+    assert "Stale contract" in str(error.value)
+    assert "tokens.css" in str(error.value)
+
+
+def test_symlink_escaping_repository_is_refused_at_dispatch(tmp_path):
+    root = build_canonical_repo(tmp_path)
+    env = assemble_envelope.assemble(root, "cluster-overview")
+    outside = tmp_path.parent / f"outside-tokens-{tmp_path.name}.css"
+    outside.write_text(":root { --escaped: 1; }\n", encoding="utf-8")
+    tokens = root / "prototype/shared/tokens.css"
+    tokens.unlink()
+    tokens.symlink_to(outside)
+    with pytest.raises(ValueError) as error:
+        execution_boundary.dispatch(
+            {"subagent_type": "spec-prototype-builder",
+             "prompt": json.dumps(dispatch_payload(root, env))}, root)
+    assert "Stale contract" in str(error.value) or "repository" in str(error.value)
 
 
 def test_absent_optional_facts_do_not_become_fixed_domain_claims(tmp_path):
@@ -263,7 +390,7 @@ def test_boundary_admits_only_the_bounded_lint_helper_form(tmp_path):
 def test_boundary_rejects_traversal_out_of_the_selection(tmp_path):
     root = build_repo(tmp_path)
     env = assemble_to_file(root)
-    env["spec_sources"]["contract_digest"] = "0" * 64
+    env["spec_sources"]["contract_digest"]["sha256"] = "0" * 64
     payload = {"repository_root": str(root), "skill_root": str(assemble_envelope.SKILL),
                "mode": "lean-builder-envelope", "slice_id": SLICE,
                "target_html_path": "prototype/experiments/escape/index.html",
@@ -279,7 +406,7 @@ def test_stale_contract_digest_is_refused_at_dispatch(tmp_path):
     payload = {"repository_root": str(root), "skill_root": str(assemble_envelope.SKILL),
                "mode": "lean-builder-envelope", "slice_id": SLICE,
                "target_html_path": f"prototype/experiments/{SLICE}/anchor/index.html",
-               "spec_sources": {**env["spec_sources"], "specification_digest": "0" * 64}}
+               "spec_sources": {**env["spec_sources"], "specification_digest": {"path": env["spec_sources"]["specification_digest"]["path"], "sha256": "0" * 64}}}
     with pytest.raises(ValueError) as error:
         execution_boundary.dispatch(
             {"subagent_type": "spec-prototype-builder", "prompt": json.dumps(payload)}, root)

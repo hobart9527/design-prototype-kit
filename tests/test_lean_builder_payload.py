@@ -166,13 +166,30 @@ def test_topology_and_interaction_contracts_are_readable(tmp_path):
 
 
 def test_slim_methods_ride_along_without_verbose_guidance(tmp_path):
-    env = assemble(build_repo(tmp_path))
+    root = build_repo(tmp_path)
+    spec = root / f"prototype/specifications/{SLICE}/r1.md"
+    spec.write_text(
+        spec.read_text(encoding="utf-8")
+        + "- Methods applied: form-ergonomics, context-preservation\n",
+        encoding="utf-8")
+    env = assemble(root)
     payload = assemble_envelope.build_builder_payload(env)
-    assert payload["active_methods"], "fixture no longer activates any craft method"
+    # Only the Spec-declared methods reach the Builder, carrying slim metadata.
+    assert {m["id"] for m in payload["active_methods"]} == {"form-ergonomics", "context-preservation"}
     assert len(payload["active_methods"]) == len(env["active_methods"])
     for method in payload["active_methods"]:
         assert set(method) == set(SLIM_METHOD_FIELDS)
         assert "actionable_guidance" not in method
+
+
+def test_undeclared_spec_activates_no_method(tmp_path):
+    """A Spec naming no craft method sends none: no heuristic global default set."""
+    env = assemble(build_repo(tmp_path))
+    assert env["active_methods"] == []
+    payload = assemble_envelope.build_builder_payload(env)
+    assert payload["active_methods"] == []
+    debug = assemble_envelope.build_builder_payload(env, include_debug=True)["debug_context"]
+    assert debug["active_methods"] == []
 
 
 def test_output_file_carries_the_lean_payload(tmp_path, monkeypatch, capsys):
