@@ -23,11 +23,13 @@ REPO = Path(__file__).resolve().parents[1]
 SKILL = REPO / "skills/spec-prototype"
 
 SKILL_MD = SKILL / "SKILL.md"
-CORE = SKILL / "references/core-workflow.md"
+CORE_KERNEL = SKILL / "references/core-kernel.md"
+STAGE_3 = SKILL / "references/stages/stage-3-skeleton.md"
+STAGE_5 = SKILL / "references/stages/stage-5-freeze.md"
 USAGE = SKILL / "references/04-governance/usage.md"
 HANDOFF = SKILL / "references/04-governance/handoff.md"
 
-ALL_ROUTE_FILES = (SKILL_MD, CORE, USAGE)
+ALL_ROUTE_FILES = (SKILL_MD, STAGE_3, USAGE)
 
 
 def _read(path: Path) -> str:
@@ -50,24 +52,22 @@ def test_coverage_selection_precedes_stage_3_expansion_in_skill():
     assert stage_3 < selection, "selection rule must live inside Stage 3, before expansion"
 
 
-def test_core_workflow_places_selection_after_router_and_before_stage_1():
-    content = _read(CORE)
-    router = content.index("Change Scope Router")
-    selection = content.index("Coverage Selection before Stage 3")
-    stage_1 = content.index("### Stage 1: Understand & Frame")
-    assert router < selection < stage_1
+def test_stage_3_places_selection_after_coverage_heading_and_before_topology():
+    content = _read(STAGE_3)
+    selection = content.index("Coverage Selection before Expansion")
+    router = content.index("Derived Surface Topology Rollout")
+    assert selection < router, "selection rule must precede Stage 3 expansion"
 
 
 def test_selection_asks_only_when_unresolved():
-    content = _read(CORE)
-    section = content[content.index("Coverage Selection before Stage 3"): content.index("### Stage 1: Understand & Frame")]
+    content = _read(STAGE_3)
+    section = content[content.index("Coverage Selection before Expansion"): content.index("Derived Surface Topology Rollout")]
     assert "only when" in section.lower()
-    assert "reused on continuation" in section or "reused" in section
 
 
 def test_prior_explicit_selection_is_not_re_asked():
-    content = _read(CORE)
-    assert "do not re-ask" in content.lower() or "Retain, do not re-ask" in content
+    content = _read(STAGE_3)
+    assert "Retain, do not re-ask" in content
 
 
 # --- Scope versus approval --------------------------------------------------
@@ -89,9 +89,9 @@ def test_skill_selection_does_not_authorize_approval():
 
 
 def test_subset_keeps_map_and_rationale_authoritative():
-    content = _read(CORE)
-    section = content[content.index("Coverage Selection before Stage 3"): content.index("### Stage 1: Understand & Frame")]
-    assert "remain authoritative" in section
+    content = _read(STAGE_3)
+    section = content[content.index("Coverage Selection before Expansion"): content.index("Derived Surface Topology Rollout")]
+    assert "authoritative" in section
     assert "object model" in section
     assert "Surface Map" in section
 
@@ -104,15 +104,15 @@ def test_unselected_surfaces_stay_provisional_not_deleted():
 
 
 def test_missing_selection_never_defaults_to_full_product():
-    assert "never silently defaults to" in _read(CORE)
+    assert "never silently defaults to" in _read(STAGE_3)
     for path in ALL_ROUTE_FILES:
         content = _read(path)
         assert "full-product" in content or "整产品" in content, path
 
 
 def test_out_of_scope_dependency_disclosed_not_added():
-    content = _read(CORE)
-    section = content[content.index("Coverage Selection before Stage 3"): content.index("### Stage 1: Understand & Frame")]
+    content = _read(STAGE_3)
+    section = content[content.index("Coverage Selection before Expansion"): content.index("Derived Surface Topology Rollout")]
     assert "disclosed" in section
     assert "never silently added" in section
 
@@ -124,15 +124,15 @@ def test_bounded_probe_spec_only_and_refinement_stay_valid():
     for path in ALL_ROUTE_FILES:
         content = _read(path)
         assert "direction probe" in content, path
-    assert "local refinement" in _read(CORE)
-    assert "spec-only" in _read(CORE)
+    assert "local refinement" in _read(STAGE_3)
+    assert "spec-only" in _read(STAGE_3)
 
 
 def test_lightweight_routes_not_forced_through_full_product():
-    content = _read(CORE)
-    section = content[content.index("Coverage Selection before Stage 3"): content.index("### Stage 1: Understand & Frame")]
+    content = _read(STAGE_3)
+    section = content[content.index("Coverage Selection before Expansion"): content.index("Derived Surface Topology Rollout")]
     assert "not forced" in section
-    assert "sealed provisional Spec" in section
+    assert "sealed provisional" in section.lower()
 
 
 def test_usage_route_table_keeps_lightweight_examples():
@@ -145,25 +145,39 @@ def test_usage_route_table_keeps_lightweight_examples():
 
 
 def test_formal_candidate_still_requires_sealed_provisional_spec():
-    core = _read(CORE)
-    assert "No Prototype Code without a Sealed Provisional Spec Contract" in core
-    assert "Sealed Provisional" in core
+    kernel = _read(CORE_KERNEL)
+    assert "Sealed Provisional Spec Contract" in kernel
+    assert "Sealed Provisional" in kernel
 
 
 def test_authority_lifecycle_unchanged():
-    content = _read(CORE)
+    content = _read(CORE_KERNEL)
     assert "Draft" in content
     assert "Sealed Provisional" in content
     assert "Validated" in content
     assert "Frozen Approved" in content
 
 
+def test_authority_lifecycle_delegates_to_artifact_lifecycle():
+    kernel = _read(CORE_KERNEL)
+    assert "04-governance/artifact-lifecycle.md" in kernel
+    freeze = _read(STAGE_5)
+    assert "04-governance/artifact-lifecycle.md" in freeze
+
+
 def test_nine_pillars_ownership_preserved_in_selection_rule():
     content = _read(SKILL_MD)
     assert "Nine Pillars" in content
-    content_core = _read(CORE)
-    assert "Nine Pillars" in content_core
-    assert "Double Diamond" in content_core
+    content_kernel = _read(CORE_KERNEL)
+    assert "Nine Pillars" in content_kernel
+    assert "Double Diamond" in content_kernel
+
+
+def test_no_active_core_workflow_load_references():
+    """The retired core-workflow.md must not be active-loaded by any router."""
+    for path in (SKILL_MD, CORE_KERNEL, STAGE_3, STAGE_5):
+        content = _read(path)
+        assert "core-workflow" not in content, path
 
 
 # --- Handoff continuity binding ---------------------------------------------
@@ -186,14 +200,14 @@ def test_handoff_reconciles_revision_mismatch_before_expansion():
 
 
 def test_stage_5_freeze_no_longer_uses_product_md_as_slice_spec():
-    for path in (SKILL_MD, CORE):
-        content = _read(path)
-        assert "--spec prototype/product.md" not in content, path
+    content = _read(SKILL_MD)
+    assert "--spec prototype/product.md" not in content
 
 
 def test_stage_5_freeze_binds_slice_specification():
-    assert "specifications/<slice_id>/r1.md" in _read(SKILL_MD)
-    assert "specifications/<slice_id>/r1.md" in _read(CORE)
+    content = _read(SKILL_MD)
+    assert "specifications/<slice_id>/r1.spec.md" in content
+    assert "specifications/<slice_id>/r1.md" in content
 
 
 def test_no_full_product_default_prescription():

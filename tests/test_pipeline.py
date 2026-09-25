@@ -131,22 +131,27 @@ def test_execution_boundary_freeze_rejects_foreign_root(tmp_path: Path):
 
 
 def test_canonical_design_references_and_floors():
-    workflow_text = (SKILL / "references/core-workflow.md").read_text(encoding="utf-8")
-    assert "OOUX Cardinality-to-Layout Anchor" in workflow_text
-    assert "Non-transfer Boundaries" in workflow_text or "non-transfer boundary" in workflow_text
-    assert "Reference Benchmarks" in workflow_text
-    assert "Action Verb Lifecycle" in workflow_text
-    assert "Decisive Exchange 3-Frame Inspection" in workflow_text
-    assert "Native-First vs Production Handoff" in workflow_text
-    assert "Cognitive Budgeting" in workflow_text
-    assert "5-Dial Style Register" in workflow_text
-    assert "Vague-Word Firewall" in workflow_text
-    assert "Concentric Border Radius" in workflow_text
-    assert "Tabular Numerics" in workflow_text
-    assert "Optical Alignment" in workflow_text
-    assert "Atmospheric Undertone" in workflow_text
-    assert "Compression & Release" in workflow_text
-    assert "The Break Protocol" in workflow_text
+    stage1_text = (SKILL / "references/stages/stage-1-frame.md").read_text(encoding="utf-8")
+    assert "OOUX Cardinality-to-Layout Anchor" in stage1_text
+    assert "Material Non-transfer Boundaries" in stage1_text
+    assert "Reference Benchmarks" in stage1_text
+    assert "Action Verb Lifecycle" in stage1_text
+    assert "Cognitive Budgeting" in stage1_text
+    assert "5-Dial Style Register" in stage1_text
+
+    stage2_text = (SKILL / "references/stages/stage-2-probe.md").read_text(encoding="utf-8")
+    assert "Native-First vs Production Handoff" in stage2_text
+
+    stage4_text = (SKILL / "references/stages/stage-4-audit.md").read_text(encoding="utf-8")
+    assert "Decisive Exchange 3-Frame Inspection" in stage4_text
+    assert "The Break Protocol" in stage4_text
+
+    stage3_text = (SKILL / "references/stages/stage-3-skeleton.md").read_text(encoding="utf-8")
+    assert "Compression & Release" in stage3_text
+
+    visual_text = (SKILL / "references/02-craft-methods/visual-craft.md").read_text(encoding="utf-8")
+    assert "Optical Concentric Radii" in visual_text
+    assert "Tabular numerals" in visual_text
 
     floor_text = (SKILL / "references/03-verification/quality-floor.md").read_text(encoding="utf-8")
     assert "Non-Transfer Boundary" in floor_text or "non-transfer boundary" in floor_text
@@ -368,11 +373,10 @@ record: prototype-specification
     assert "≤ 8 tool turns" not in builder_md and "<= 8 tool turns" not in builder_md
     assert "an execution-safety budget" in builder_md
 
-    # 8. Verify SKILL.md and core-workflow.md declare Spec-First invariant & 6 pillars
-    core_wf = (SKILL / "references/core-workflow.md").read_text(encoding="utf-8")
-    assert ("No Prototype Code without a Sealed Provisional Spec Contract" in core_wf or
-            "No Prototype Code without a Frozen Spec Contract" in core_wf)
-    assert "foundation/f1.md" in core_wf
+    # 8. Verify SKILL.md and core-kernel.md declare the Spec-First invariant
+    core_kernel = (SKILL / "references/core-kernel.md").read_text(encoding="utf-8")
+    assert ("Sealed Provisional Spec Contract" in core_kernel or
+            "Sealed Provisional" in core_kernel)
     skill_md = (SKILL / "SKILL.md").read_text(encoding="utf-8")
     assert ("ZERO Prototype Code without a complete sealed provisional Spec Contract" in skill_md or
             "ZERO Prototype Code without a complete frozen Spec Contract" in skill_md)

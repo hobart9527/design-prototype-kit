@@ -1,9 +1,9 @@
 """Test suite enforcing Canonical v10.1 Ontology invariants across forced-read documents.
 
 Enforces:
-1. Zero legacy Gear Chains in core-workflow and references.
+1. Zero legacy Gear Chains in the active router and references.
 2. Zero Six-Pillar Spec references (must be Nine Pillars).
-3. Zero Baseline-exclusive classifier definitions in core-workflow.
+3. Zero Baseline-exclusive classifier definitions in the active router.
 4. Clean separation of Invariants vs Techniques in runtime instructions.
 """
 from __future__ import annotations
@@ -17,8 +17,11 @@ SKILL = REPO / "skills/spec-prototype"
 
 
 def test_no_legacy_gear_chains_in_workflow():
-    workflow_path = SKILL / "references/core-workflow.md"
-    content = workflow_path.read_text(encoding="utf-8")
+    """Gear-chain retirement is asserted against the active always-loaded router."""
+    router_path = SKILL / "SKILL.md"
+    content = router_path.read_text(encoding="utf-8")
+    kernel_path = SKILL / "references/core-kernel.md"
+    content += kernel_path.read_text(encoding="utf-8")
 
     # Must not contain legacy gear chains as active ontology
     assert "业务本体传动链" not in content
@@ -32,8 +35,11 @@ def test_no_legacy_gear_chains_in_workflow():
 
 
 def test_canonical_nine_pillars_in_workflow():
-    workflow_path = SKILL / "references/core-workflow.md"
-    content = workflow_path.read_text(encoding="utf-8")
+    """Nine Pillars ownership lives in the active router and core kernel."""
+    router_path = SKILL / "SKILL.md"
+    content = router_path.read_text(encoding="utf-8")
+    kernel_path = SKILL / "references/core-kernel.md"
+    content += kernel_path.read_text(encoding="utf-8")
 
     # Must use canonical Nine Pillars
     assert "Nine Pillars" in content

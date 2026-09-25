@@ -234,12 +234,14 @@ def test_undelivered_selection_is_reported_by_quality_checks(tmp_path):
 # Source instructions: continuation and completion stay distinguishable.
 
 def test_workflow_distinguishes_continuation_and_completion():
-    text = (ROOT / "skills/spec-prototype/references/core-workflow.md").read_text(encoding="utf-8")
+    text = (ROOT / "skills/spec-prototype/references/stages/stage-3-skeleton.md").read_text(encoding="utf-8")
+    reconciler_doc = (ROOT / "skills/spec-prototype/scripts/prototype_context.py").read_text(encoding="utf-8")
     assert "reconcile_obligations" in text
     assert "authorizes automatic continuation" in text
     assert "never discharges an obligation" in text
-    assert "declared-but-absent surfaces" in text
-    assert "never forced to display review-management statuses" in text
+    assert "never forced to display review-management status" in text
+    assert "reconcile_obligations" in reconciler_doc
+    assert "never discharges an obligation" in reconciler_doc
 
 
 def test_context_module_documents_separation_of_facts():

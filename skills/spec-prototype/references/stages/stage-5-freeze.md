@@ -37,8 +37,8 @@ handoff.
 ## Authority State
 
 Delivery reaches `Frozen Approved` only here. This is the sole admission state for
-downstream frontend engineering delivery (Loom Entry 2). See the authority
-lifecycle in [`../core-workflow.md`](../core-workflow.md) and the artifact state
+downstream frontend engineering delivery (Loom Entry 2). See the full
+authority-to-artifact lifecycle mapping and the artifact state
 rules in [`../04-governance/artifact-lifecycle.md`](../04-governance/artifact-lifecycle.md).
 
 ## Manifest Discipline

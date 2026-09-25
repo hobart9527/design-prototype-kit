@@ -3,10 +3,11 @@
 Layer 2 of the progressive-disclosure router. This file answers one question:
 **"What must never be violated under any circumstance?"**
 
-Read this kernel on every entry. Read
-[the shared product-design core](core-workflow.md) and the relevant
+Read this kernel on every entry. Read the relevant
 `references/stages/*.md` procedure only when the declared intent requires that
-stage. The kernel is small and always loaded; stage procedures load on demand.
+stage; the kernel is small and always loaded, stage procedures and the deeper
+`references/` modules load on demand. The detailed stage routing and delegation
+map is owned by [SKILL.md](../SKILL.md).
 
 ## 1. Spec as Durable Contract, Prototype as Disposable Proof
 
@@ -26,6 +27,10 @@ backward.
 
 Freeze binds the immutable candidate Specification
 (`prototype/specifications/<slice_id>/r1.md`), never a mutable product record.
+The full authority-to-artifact lifecycle mapping, mutability rules and revision
+semantics are owned by
+[`04-governance/artifact-lifecycle.md`](04-governance/artifact-lifecycle.md);
+this kernel states the states and delegates the details.
 
 ## 3. Zero Prototype Code Without a Sealed Provisional Spec Contract
 

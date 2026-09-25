@@ -6,8 +6,8 @@ across every in-scope surface derived from the Surface Topology.
 
 ## Coverage Selection before Expansion
 
-The Change Scope Router in [`../core-workflow.md`](../core-workflow.md) decides
-which stages run; it does not decide how much of the product those stages cover.
+The entry intent routing in [SKILL.md](../../SKILL.md) decides which stages run;
+it does not decide how much of the product those stages cover.
 Before expanding beyond the validated anchor, resolve the requested scope against
 the current Surface Map, task risks, probe results, and applicable platform
 contexts:
@@ -28,15 +28,16 @@ contexts:
   selection. A dependency outside the selection is disclosed, never silently added.
 - **Lightweight routes stay valid**: a bounded direction probe, a spec-only request,
   or a local refinement keeps its route and is not forced through full-product
-  enumeration.
+  enumeration; a formal candidate still requires its applicable sealed provisional
+  Spec.
 - **One obligation reconciler, two coverages**: selected and full-product coverage
   execute and report through `prototype_context.reconcile_obligations`. Only a
   `full-product` selection authorizes automatic continuation across batches; a
   `selected` coverage stops at its declared obligations. A missing artifact or
-  missing evidence withholds completion, and a documented blocker never discharges
-  an obligation — only an explicit scope change does. Pending destinations stay
-  href-free rather than becoming broken links, and product navigation is never
-  forced to display review-management status.
+  missing evidence withholds completion, and a documented blocker
+  never discharges an obligation — only an explicit scope change does. Pending destinations stay
+  href-free rather than becoming broken links, and product
+  navigation is never forced to display review-management status.
 
 ## Derived Surface Topology Rollout
 

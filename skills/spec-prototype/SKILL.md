@@ -19,9 +19,9 @@ Before any substantive design answer or action, read [the core kernel](reference
 It is the small, always-loaded source (<100 lines) for fundamental guardrails: Spec as durable contract, prototype as disposable proof, the authority lifecycle, the evidence protocol, and non-negotiable experience invariants.
 
 **Lazy Loading Invariant (按需加载纪律)**:
-Do NOT unconditionally read `core-workflow.md` or all stage procedures at launch.
-Treat `core-workflow.md` and `references/stages/` (`stage-0-explore.md` ~ `stage-5-freeze.md`) as strictly on-demand reference modules.
-Only read the specific stage file matching the currently active stage or frontier.
+Do NOT unconditionally read all reference modules or stage procedures at launch.
+Treat `references/stages/` (`stage-0-explore.md` ~ `stage-5-freeze.md`) and the other files under `references/` as strictly on-demand reference modules beyond the always-loaded core kernel.
+Only read the specific file matching the currently active stage or frontier.
 
 ## Entry Intent & Contextual Routing (意图优先，资产为证)
 

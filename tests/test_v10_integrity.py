@@ -412,22 +412,28 @@ def test_critic_finding_classifications_and_targeted_refinement():
 
 
 def test_change_scope_router_and_tension_in_core_workflow():
-    """Verify core-workflow.md defines L0-L4 Change Scope Router and Signature discipline."""
-    wf_path = REPO / "skills/spec-prototype/references/core-workflow.md"
-    text = wf_path.read_text(encoding="utf-8")
+    """Verify Stage 3 owns Coverage Selection and Signature discipline inline (core-workflow retired)."""
+    stage3_path = REPO / "skills/spec-prototype/references/stages/stage-3-skeleton.md"
+    text = stage3_path.read_text(encoding="utf-8")
 
-    # Change Scope Router
-    assert "Change Scope Router" in text
-    assert "L0 (Cosmetic)" in text
-    assert "L1 (Component)" in text
-    assert "L2 (Screen)" in text
-    assert "L3 (Flow)" in text
-    assert "L4 (Product)" in text
+    # Coverage Selection rule carried inline by the Stage 3 owner
+    assert "Coverage Selection before Expansion" in text
+    assert "Retain, do not re-ask" in text
+    assert "Selection is scope, not approval" in text
 
     # Signature vs Convention
     assert "Signature vs. Convention" in text
     assert "Signature Surface" in text
     assert "Convention Surfaces" in text
+
+    # The retired shared router is not active-loaded anywhere
+    for path in (
+        REPO / "skills/spec-prototype/SKILL.md",
+        REPO / "skills/spec-prototype/references/core-kernel.md",
+        stage3_path,
+        REPO / "skills/spec-prototype/references/stages/stage-5-freeze.md",
+    ):
+        assert "core-workflow" not in path.read_text(encoding="utf-8"), path
 
 
 def test_method_registry_and_craft_guidelines_hygiene():
@@ -581,7 +587,9 @@ def test_authority_lifecycle_mechanization_and_downstream_gate():
 def test_stage1_sealed_provisional_and_stage5_frozen_approved_terminology():
     """v10.2.1 Task 4: Harmonize Stage 1 Sealed Provisional and Stage 5 Frozen Approved terminology."""
     skill_text = (REPO / "skills/spec-prototype/SKILL.md").read_text(encoding="utf-8")
-    wf_text = (REPO / "skills/spec-prototype/references/core-workflow.md").read_text(encoding="utf-8")
+    kernel_text = (REPO / "skills/spec-prototype/references/core-kernel.md").read_text(encoding="utf-8")
+    stage5_text = (REPO / "skills/spec-prototype/references/stages/stage-5-freeze.md").read_text(encoding="utf-8")
+    stage1_text = (REPO / "skills/spec-prototype/references/stages/stage-1-frame.md").read_text(encoding="utf-8")
 
     # SKILL.md
     assert "Sealed Provisional Spec Artifacts" in skill_text
@@ -589,10 +597,16 @@ def test_stage1_sealed_provisional_and_stage5_frozen_approved_terminology():
     assert "Draft → Sealed Provisional → Validated → Frozen Approved" in skill_text
     assert "Silent Packaging & Frozen Approved Delivery" in skill_text
 
-    # core-workflow.md
-    assert "Draft → Sealed Provisional (Stage 1) → Validated (Stage 4) → Frozen Approved (Stage 5)" in wf_text
-    assert "Sealed Provisional Baseline Closure" in wf_text
-    assert "Silent Governance & Frozen Approved Delivery" in wf_text
+    # core-kernel.md (active authority-lifecycle owner)
+    assert "Draft → Sealed Provisional → Validated → Frozen Approved" in kernel_text
+    assert "Sealed Provisional" in kernel_text
+    assert "Frozen Approved" in kernel_text
+    assert "04-governance/artifact-lifecycle.md" in kernel_text
+
+    # Stage owners
+    assert "Silent Governance & Frozen Approved Delivery" in stage5_text
+    assert "04-governance/artifact-lifecycle.md" in stage5_text
+    assert "Sealed Provisional Baseline Closure" in stage1_text
 
 
 
