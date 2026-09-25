@@ -267,6 +267,68 @@ def test_freeze_rejects_less_privileged_scope_entry(tmp_path: Path):
         handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
 
 
+# --- directory evidence bundles: PNG-only probe evidence is frozen as a whole
+
+def _add_probe_pngs(root: Path) -> Path:
+    probe_dir = root / "prototype/evidence/probes/reader"
+    probe_dir.mkdir(parents=True, exist_ok=True)
+    (probe_dir / "shot-1.png").write_bytes(b"\x89PNG fake image one\n")
+    (probe_dir / "shot-2.png").write_bytes(b"\x89PNG fake image two\n")
+    return probe_dir
+
+
+def test_png_only_evidence_freezes_and_admits(tmp_path: Path):
+    spec = _build_root(tmp_path)
+    probe_dir = _add_probe_pngs(tmp_path)
+
+    manifest = handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+    evidence = manifest["evidence"]
+    assert evidence["type"] == "screenshot_evidence_bundle"
+    assert evidence["count"] == 2
+    assert evidence["path"] == str(probe_dir.relative_to(tmp_path))
+    assert manifest["status"] == "frozen"
+
+    assert handoff.downstream_admission(tmp_path, "reader")["gate"] == "passed"
+
+
+def test_png_addition_after_freeze_names_changed_path(tmp_path: Path):
+    spec = _build_root(tmp_path)
+    _add_probe_pngs(tmp_path)
+    handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+
+    (tmp_path / "prototype/evidence/probes/reader/shot-3.png").write_bytes(
+        b"\x89PNG fake image three\n")
+    with pytest.raises(handoff.HandoffError, match="shot-3\\.png"):
+        handoff.downstream_admission(tmp_path, "reader")
+
+
+def test_png_deletion_after_freeze_invalidates_admission(tmp_path: Path):
+    spec = _build_root(tmp_path)
+    _add_probe_pngs(tmp_path)
+    handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+
+    (tmp_path / "prototype/evidence/probes/reader/shot-2.png").unlink()
+    with pytest.raises(handoff.HandoffError, match="changed after freeze"):
+        handoff.downstream_admission(tmp_path, "reader")
+
+
+def test_png_edit_after_freeze_invalidates_admission(tmp_path: Path):
+    spec = _build_root(tmp_path)
+    _add_probe_pngs(tmp_path)
+    handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+
+    (tmp_path / "prototype/evidence/probes/reader/shot-1.png").write_bytes(
+        b"\x89PNG tampered bytes\n")
+    with pytest.raises(handoff.HandoffError, match="changed after freeze"):
+        handoff.downstream_admission(tmp_path, "reader")
+
+
+def test_self_declared_frozen_text_without_manifest_stays_blocked(tmp_path: Path):
+    spec = _build_root(tmp_path, status="frozen approved")
+    with pytest.raises(handoff.HandoffError, match="has not been frozen"):
+        handoff.check_downstream_gate(tmp_path, "reader")
+
+
 # --- execution boundary: no permissive freeze form survives ------------------
 
 def test_boundary_refuses_force_flag_and_foreign_root(tmp_path: Path):

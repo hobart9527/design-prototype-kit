@@ -84,6 +84,25 @@ def quoted_path(value: str) -> str:
 
 def retained(root: Path, value: str) -> dict:
     path = within(root, value)
+    if path.is_dir():
+        # Directory evidence bundle: a composite digest over every recursive
+        # child's relative path plus bytes, so adding, deleting or editing any
+        # file invalidates the bundle. Per-file digests are retained so drift
+        # diagnostics can name the exact changed child.
+        children = sorted(p for p in path.rglob("*") if p.is_file())
+        files = {child.relative_to(path).as_posix():
+                 f"sha256:{hashlib.sha256(child.read_bytes()).hexdigest()}"
+                 for child in children}
+        h = hashlib.sha256()
+        for rel, digest in files.items():
+            h.update(rel.encode("utf-8"))
+            h.update(chr(0).encode("utf-8"))
+            h.update(digest.encode("utf-8"))
+        return {"path": path.relative_to(root).as_posix(),
+                "type": "directory_bundle",
+                "count": len(children),
+                "sha256": f"sha256:{h.hexdigest()}",
+                "files": files}
     data = path.read_bytes()
     return {"path": path.relative_to(root).as_posix(),
             "sha256": hashlib.sha256(data).hexdigest()}
@@ -682,20 +701,11 @@ def freeze(root: Path, spec: str) -> dict:
         probe_dir = root / "prototype" / "evidence" / "probes" / pkt["slice_id"]
         if not probe_dir.is_dir():
             probe_dir = root / "prototype" / "evidence" / pkt["slice_id"] / pkt["candidate_id"]
-        if probe_dir.is_dir():
-            pngs = sorted(probe_dir.glob("*.png"))
-            if pngs:
-                # Compute composite digest of screenshot evidence
-                h = hashlib.sha256()
-                for p in pngs:
-                    h.update(p.name.encode("utf-8"))
-                    h.update(p.read_bytes())
-                evidence_record = {
-                    "path": str(probe_dir.relative_to(root)),
-                    "type": "screenshot_evidence_bundle",
-                    "count": len(pngs),
-                    "sha256": f"sha256:{h.hexdigest()}",
-                }
+        if probe_dir.is_dir() and any(probe_dir.glob("*.png")):
+            # Route the screenshot evidence bundle through the directory-aware
+            # retained() so the recursive composite digest covers each child.
+            evidence_record = retained(root, str(probe_dir.relative_to(root)))
+            evidence_record["type"] = "screenshot_evidence_bundle"
 
     # Specifications are immutable candidate contracts compiled from retained sources.
     # Authority status and lifecycle transitions live exclusively in freeze-manifest.json
@@ -800,9 +810,21 @@ def downstream_admission(root: Path, slice_id: str) -> dict:
         if art_path and expected_sha:
             curr_art = retained(root, art_path)
             if curr_art["sha256"] != expected_sha:
+                # Directory bundles carry per-file digests: name the exact
+                # changed child when one is identifiable.
+                detail = f"({curr_art['sha256'][:8]} != {expected_sha[:8]})"
+                expected_files = frozen_art.get("files")
+                if expected_files and curr_art.get("files"):
+                    curr_files = curr_art["files"]
+                    changed = [p for p, d in expected_files.items()
+                               if curr_files.get(p) != d]
+                    added = [p for p in curr_files if p not in expected_files]
+                    if changed or added:
+                        detail = (f"({'changed: ' + ', '.join(changed + added)}"
+                                  f" vs {expected_sha[:8]})")
                 raise HandoffError(
                     f"Downstream Gate Blocked: Frozen artifact {art_path} changed after freeze "
-                    f"({curr_art['sha256'][:8]} != {expected_sha[:8]}); re-freeze before admission.")
+                    f"{detail}; re-freeze before admission.")
     manifest["admission"] = "bound_to_frozen_revision"
     return manifest
 
@@ -834,8 +856,13 @@ def check_downstream_gate(root: Path, slice_id: str) -> dict:
     evidence_dir = root / "prototype/evidence" / slice_id / spec_path.stem
     manifest_path = evidence_dir / "freeze-manifest.json"
 
-    # Extract authority / compilation status
-    status_match = re.search(r"^-\s*(?:Compilation status|Authority status):\s*`?([a-zA-Z0-9_ -]+)`?", spec_body, re.M | re.IGNORECASE)
+    # Extract authority / compilation status, matching the same formats freeze
+    # accepts: legacy bullet (- Authority status: `x`) and canonical blockquote
+    # (> **Authority Status**: `x`), so diagnostics are consistent.
+    status_match = re.search(
+        r"(?:^-\s*(?:Compilation status|Authority status):|>\s*\*\*Authority Status\*\*:)\s*`?([a-zA-Z0-9_ -]+)`?",
+        spec_body, re.M | re.IGNORECASE
+    )
     spec_status = status_match.group(1).strip().lower() if status_match else "provisional"
 
     if manifest_path.is_file():
