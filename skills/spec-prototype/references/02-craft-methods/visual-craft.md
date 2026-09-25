@@ -1,7 +1,7 @@
 # Craft reference — Visual language and atmosphere
 
 > **Pillars**: `Expression` · `Attention` · `Value`  
-> **Core Invariants**: Five Axes Calibration · Optical Concentric Radii · Non-Generic Materiality
+> **Core Invariants**: Five Axes Calibration · Declared-Attribute Optics · Optical Concentric Geometry · Non-Generic Materiality
 
 Owns the perceptible language: material and metaphor, semantic tokens, typography, composition,
 imagery, entry composition and iconography. **Open lens:** which competing atmosphere, hierarchy
@@ -102,9 +102,14 @@ High-fidelity verisimilitude requires authentic craft without heavy framework bl
    </svg>
    ```
 
-3. **Concentric Radii Standards (同心几何)**:
-   - Standardize nested rounded containers to eliminate geometric visual dissonance:
+3. **Optical Concentric Geometry (同心几何的所有权归属)**:
+   - Owns the concentric relation, not a fixed radius value: nested rounded containers
+   stay optically concentric with
    $$R_{\text{in}} = \max(0, R_{\text{out}} - \text{Padding})$$
+   recomputed at every nesting level. The declared `spatial_geometry` axis and
+   `massing_pattern` own which radius scale the surface uses — compact dense-console
+   radii and generous editorial radii are equally valid; only the concentric relation
+   is invariant.
 
 4. **Tactile Mechanical Detents & Feedback**:
    - For mission-critical actions, combine tactile micro-motion with clear visual state changes:
@@ -407,8 +412,10 @@ people read continuously, scan choices, compare values or operate controls.
 - For scanning, make labels, values and qualifiers distinguishable through a
   deliberate combination of position, size and weight. Every label need not be
   bold; a consistent value column can do more than another heading level.
-- For comparison, align equivalent information and use appropriate numeral
-  forms. Tabular numerals help repeated values; proportional forms may fit prose.
+- For comparison, align equivalent information and let the declared
+  `micro_typography` axis own the numeral forms: when declared, tabular figures
+  hold the value column and the declared display tracking applies; when a native
+  or prose surface declares no display tracking, proportional forms fit the text.
 - For expressive titles, test how letterform shape, stroke contrast, width and
   spacing relate to the product's voice. A display face earns its role through
   the composed words, not its reputation. Interface text need not share that face.

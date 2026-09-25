@@ -15,8 +15,26 @@ Map object relationships to structural presentation. Start with the established 
 - **1 : N Collection**: Master-Detail, Interactive Table, or Faceted Feed with high-speed scanning controls.
 - **N : M Network / Graph**: Node-Link Canvas, Multi-Column Board, or Relational Split View.
 
+These are candidate containers derived from cardinality, not a fixed layout table:
+when the envelope declares `massing_pattern`, it owns the spatial center of
+gravity — which regions carry mass, which compress, which anchor the scan — and
+the container composition follows that declaration. The cardinality-to-container
+mapping then shapes the internals, not the other way around.
 When the authentic domain context genuinely demands a specialized physical layout (e.g. continuous film strip, concentric radar, seismic trace stack), it may replace the conventional container — but must preserve 3-tier wayfinding and keyboard navigation.
 Never invent navigation containers before mapping this cardinality.
+
+## Declared kinematics: deformation and focus-restore (声明驱动的运动学)
+
+When the envelope declares `kinematics`, it is the owning attribute for how state
+changes move — implement the declared deformation (how surfaces compress, expand,
+or morph on activation) and the declared focus-restore transition (how focus
+returns to its origin after an overlay, popover, or commit resolves) exactly, not
+a generic spring or fade substituted uniformly. Momentum must be conserved across
+the transition: departing and entering content relate spatially and temporally
+per the declaration, rather than teleporting or snapping. When `kinematics` is
+not declared, stay neutral and derivable — do not fabricate a motion recipe the
+slice never authored, and never add decorative motion to a dense console that
+declared none.
 
 ## The Container Proximity Ladder (交互容器匹配阶梯与心流守则)
 

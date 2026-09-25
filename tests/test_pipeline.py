@@ -150,8 +150,19 @@ def test_canonical_design_references_and_floors():
     assert "Compression & Release" in stage3_text
 
     visual_text = (SKILL / "references/02-craft-methods/visual-craft.md").read_text(encoding="utf-8")
-    assert "Optical Concentric Radii" in visual_text
-    assert "Tabular numerals" in visual_text
+    assert "Declared-Attribute Optics" in visual_text
+    assert "Optical Concentric Geometry" in visual_text
+    assert "spatial_geometry" in visual_text
+    assert "micro_typography" in visual_text
+
+    builder_text = (REPO / "agents/spec-prototype-builder.md").read_text(encoding="utf-8")
+    assert "massing_pattern" in builder_text
+    assert "kinematics" in builder_text
+    assert "data_syntax" in builder_text
+
+    critic_text = (REPO / "agents/spec-prototype-critic.md").read_text(encoding="utf-8")
+    assert "display: none" in critic_text
+    assert "Cognitive Quality Review" in critic_text
 
     floor_text = (SKILL / "references/03-verification/quality-floor.md").read_text(encoding="utf-8")
     assert "Non-Transfer Boundary" in floor_text or "non-transfer boundary" in floor_text

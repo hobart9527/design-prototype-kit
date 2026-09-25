@@ -142,32 +142,68 @@ build on its own.
   figures must specify `font-variant-numeric: tabular-nums`; proportional digits
   that jitter columns on update are a DEFECT.
 
-### Anti-Generic Craft Stack Verification (advisory anti-template checks)
+### Anti-Generic Craft Stack Verification (declared-attribute, advisory)
 
 When the envelope's `visual_directives.craft_stack` declares the four orthogonal
 craft axes (`surface_optics`, `spatial_geometry`, `micro_typography`, `data_marks`),
-inspect the rendered evidence against each axis and report misses as craft findings:
+each axis is a declared attribute, not a fixed style table: judge the rendered
+evidence against what the slice **declared**, not against a universal house recipe.
+Report misses as craft findings:
 
-- **Micro-typography texture:** display numerals and headline figures should read
-  with tight tracking (`--font-display-tracking`, default `-0.04em`) and
-  `tabular-nums` stability. Browser-default proportional tracking on polarized
-  display figures is a generic-work signal, not a craft decision.
-- **Non-generic bento layout:** container surfaces should compose as soft bento
-  geometry with generous padding (min 20px) and pill-shaped action triggers
-  (`--radius-pill`, default `9999px`). An interchangeable equal-width card grid
-  with default corner radii is the generic-shell fingerprint to flag.
-- **Data mark textures:** status and metric distributions should carry SVG pattern
-  hatching (`--pattern-hatch-45`) or segmented bars. Flat native progress bars and
-  stock `<progress>` elements are a generic-work signal when `data_marks` is
-  declared as textured.
-- **Surface optics coherence:** the declared `surface_optics` axis should be
-  visible as a tonal wash plus top-edge specular highlight
-  (`--surface-tint`, `--surface-specular`) on elevated surfaces, not a flat
-  token color with no material treatment.
+- **Micro-typography texture:** when `micro_typography` is declared, display
+  numerals and headline figures should read with the declared tracking and
+  `tabular-nums` stability. Browser-default proportional tracking on display
+  figures the slice declared as polarized is a generic-work signal. A minimal,
+  editorial, or native surface that never declared display tracking is not a miss.
+- **Spatial geometry fidelity:** when `spatial_geometry` (with `massing_pattern`)
+  is declared, container surfaces should compose from that declared geometry,
+  padding, and trigger shape, and the spatial center of gravity should follow the
+  declared `massing_pattern`. An interchangeable equal-width card grid that ignores
+  the declared massing is the generic-shell fingerprint. Compact radii and tight
+  padding on a dense console are correct execution, not a craft miss — never demand
+  generous padding or pill triggers the slice did not declare.
+- **Data mark textures:** when `data_marks` is declared as textured, status and
+  metric distributions should carry pattern hatching or segmented bars per the
+  declared `data_syntax`; flat native bars are a generic-work signal there. When a
+  native data language is declared, native marks are the faithful choice — do not
+  flag them.
+- **Surface optics coherence:** when `surface_optics` is declared, the declared
+  material treatment should be visible on elevated surfaces. Do not demand
+  frosted-glass, tonal washes, or decorative layers on a dense console or any
+  surface whose declared optics are flat.
 
 These are expert critique signals, not a build gate: report each miss as craft
 feedback under the classification protocol, and only accessibility breaches or
 confirmed `DEFECT`-grade spec drift rise to blocking findings.
+
+### Cognitive Quality Review (dual-dimension verdict)
+
+Engineering conformance is necessary but never sufficient. Structure every review
+along two dimensions and never pass a mediocre genericized UI merely for being
+compliant and error-free:
+
+1. **Engineering contract** — state-machine coverage (every declared state reached
+   and rendered), DOM reachability (no functional element hidden by crude
+   `display: none`; secondary entities fold into reachable triggers), and
+   accessibility (focus, keyboard, contrast, target size).
+2. **Cognitive quality** — judged from the rendered evidence against the product's
+   real constraints:
+   - **Visual signal-to-noise ratio**: does every visible element earn its pixels
+     against the task, or is the screen padded with decorative mass the slice never
+     declared (frosted-glass panels, gradient ornaments, non-functional chrome)?
+     Dense consoles should stay dense and quiet, not decorated.
+   - **State-transition spatio-temporal momentum conservation**: when a state
+     changes, does the moving content keep coherent momentum — departing and
+     entering elements relate spatially and temporally per the declared `kinematics`
+     — rather than teleporting or snapping with unexplained jank?
+   - **Negative-space breathing**: does the composition breathe where the declared
+     `massing_pattern` allocates release, and hold compression where it allocates
+     mass? Generic even spacing that ignores the declared massing is a cognitive
+     defect even when pixel-perfect.
+
+A prototype that passes every engineering check yet reads as interchangeable,
+declawed generic work — flat hierarchy, uniform spacing, no product causality —
+fails the cognitive dimension and is recommended against, not passed.
 
 Light, dark, flat, layered, dense, spacious, immediate, animated, familiar and
 experimental work can all be excellent. Judge the supplied specification and target
@@ -210,7 +246,11 @@ Structure the review around four distinct assessments matching `templates/protot
    confirmation, meaning conveyed by color alone) and generated-slop fingerprints (fake OS chrome
    like `9:41` or battery glyphs, AI-default dark-purple/neon combinations, placeholder copy like
    `Lorem` or `John Doe`). A confirmed floor violation is an uncompromised finding on sight — never
-   averaged away by visual polish or ambient craft. Record unrun checks explicitly as `unverified`
+   averaged away by visual polish or ambient craft. **A prototype that destroys user context via
+   crude `display: none`** — hiding declared functional entities (panels, filters, sibling
+   surfaces, in-progress drafts) on narrow viewports or state changes instead of folding them
+   into a reachable affordance — is blocked even when every engineering check passes: context
+   destruction is a `VIOLATION`, not a craft preference. Record unrun checks explicitly as `unverified`
    (never passed).
 2. **Design merit** — expert judgment on usefulness, coherence, craft, character,
    benefit/cost and transfer.

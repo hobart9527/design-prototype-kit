@@ -108,20 +108,44 @@ Honor the product's real domain, not a generic web shell.
   directly, and never use raw inline hex codes in `style="..."` attributes.
 - **Orthogonal Craft Stack (visual_directives.craft_stack)**: honor the four orthogonal
   craft axes compiled into `visual_directives.craft_stack` (`surface_optics`,
-  `spatial_geometry`, `micro_typography`, `data_marks`) and their pre-baked token
-  counterparts:
-  - Micro-Typography: display numerals carry tight tracking
-    (`letter-spacing: var(--font-display-tracking, -0.04em); font-variant-numeric: tabular-nums`),
-    with headline weights reading through `var(--font-display-weight, 800)`.
-  - Spatial Geometry: soft bento container geometry with generous padding
-    (minimum 20px interior padding on card/bento surfaces) and pill-shaped action
-    triggers (`border-radius: var(--radius-pill, 9999px)`).
-  - Data Marks: render status and metric distributions with SVG pattern hatching
-    (`var(--pattern-hatch-45)`) or segmented bars rather than flat native progress
-    bars, so data texture carries the product's material identity.
+  `spatial_geometry`, `micro_typography`, `data_marks`). Each axis is a **declared
+  attribute, not a fixed style table**: derive the concrete expression from what the
+  slice declares and from the meso constructs below. Never apply a uniform default
+  (large radius, wide padding, negative tracking) to a surface that did not declare
+  it — minimal, native, and high-density styles are all reachable from real business
+  constraints:
+  - Micro-Typography: apply display tracking and tabular figures where the declared
+    `micro_typography` axis (or a metric's column-stability need) calls for them; a
+    native or prose surface may keep browser-default tracking.
+  - Spatial Geometry: derive container geometry, interior padding, and trigger shape
+    from the declared `spatial_geometry` axis and `massing_pattern`; a dense console
+    may use compact radii and tight padding, an editorial surface generous ones.
+  - Data Marks: when `data_marks` is declared as textured, render status and metric
+    distributions with pattern hatching or segmented bars; native marks are correct
+    when the slice declares a native data language.
   - Surface Optics: layer the tonal wash and top-edge highlight
-    (`var(--surface-tint)`, `var(--surface-specular)`) on elevated surfaces per the
-    declared `surface_optics` axis; do not paint raw gradients over the token baseline.
+    (`var(--surface-tint)`, `var(--surface-specular)`) on elevated surfaces only when
+    the declared `surface_optics` axis names it; do not paint raw gradients over the
+    token baseline, and do not bolt decorative optics onto a flat, dense surface.
+
+### Meso constructs (declared-attribute consumption)
+
+When the envelope declares these meso attributes, consume them as the owning
+authority for their dimension; when absent, leave the dimension neutral and
+derivable rather than fabricating a default:
+
+- **`massing_pattern`** — build the spatial center of gravity from the declared
+  pattern: which region carries visual mass, which compresses, which anchors the
+  scan. Let it — not a generic bento template — set the proportional weight
+  hierarchy of regions, cards, and white space.
+- **`kinematics`** — implement deformation and focus-restore transitions as
+  declared: how surfaces deform on activation and how focus returns to its origin.
+  Momentum follows the declared pacing; do not substitute a uniform spring or fade
+  recipe for every state change.
+- **`data_syntax`** — implement compact alignment and micro-trend charts as
+  declared: the declared alignment grammar (column alignment, unit placement) governs
+  numeric presentation, and micro-trend marks follow the declared chart syntax
+  instead of a universal sparkline recipe.
 
 ### 3.2 Task Integrity — the critical journey actually works
 
@@ -175,7 +199,8 @@ Meet the declared accessibility floor; do not substitute generic web defaults fo
   Given outer radius `R_out` and the gap/padding `P` between the outer edge and the inner
   element, the inner radius is `R_in = max(0, R_out - P)`. Recompute at every nesting level;
   do not reuse the outer radius on the inner child, and clamp at 0 (square inside) rather than
-  letting the subtraction go negative.
+  letting the subtraction go negative. The invariant is the geometric relation, not a specific
+  radius value: derive the declared radii from `spatial_geometry` and `massing_pattern`.
 - **Numeric Stability**: Telemetry streams, timestamps, counters, and financial/monetary
   figures use `font-variant-numeric: tabular-nums` so digits hold their column on update and
   the eye does not jitter while scanning.
@@ -183,17 +208,14 @@ Meet the declared accessibility floor; do not substitute generic web defaults fo
   or qualifier in the same optical unit (e.g. `128 ms`, `3 nodes`, `42 %`), labels the quantity
   it measures, and states its comparison basis when one is implied. A bare digit with no unit,
   label, or context is a static-quality failure.
-- **Craft Stack Micro-Typography Floor**: Display numerals and headline figures compile with
-  tight tracking and stable digits — `letter-spacing: var(--font-display-tracking, -0.04em)` and
-  `font-variant-numeric: tabular-nums` — so polarized display type reads as a deliberate optical
-  decision, not a browser default.
-- **Craft Stack Spatial Geometry Floor**: Compose container surfaces as soft bento geometry with
-  generous interior padding (minimum 20px) and pill-shaped action triggers
-  (`border-radius: var(--radius-pill, 9999px)`); generic equal-width card grids without the bento
-  weight hierarchy fail this floor.
-- **Craft Stack Data Marks Floor**: Render status and metric distributions with SVG pattern
-  hatching (`var(--pattern-hatch-45)`) or segmented bars instead of flat native bars, so data
-  texture carries the declared `data_marks` axis rather than shipping a stock `<progress>` look.
+- **Declared-Attribute Craft Floors**: Craft floors apply only where the corresponding axis is
+  declared. When `micro_typography` is declared, display figures compile with the declared
+  tracking and stable digits. When `spatial_geometry` is declared, container surfaces compose
+  from the declared geometry, padding, and trigger shape derived with `massing_pattern` —
+  compact, dense, generous, and minimal expressions are all valid. When `data_marks` is
+  declared as textured, render distributions with pattern hatching or segmented bars; when a
+  native data language is declared, native marks are the faithful choice. Never substitute a
+  fixed pixel checklist for the declared attribute.
 
 ### 3.4 State & Recovery Integrity — loading, empty, error, recovery
 
