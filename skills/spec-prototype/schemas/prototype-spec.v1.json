@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://specs.codex.internal/prototype-spec.v1.json",
   "title": "Canonical Prototype Specification IR",
-  "description": "Strict machine-readable Intermediate Representation for prototype specification, binding authority, IA topology, state models, design invariants, and verifiable evidence.",
+  "description": "Strict machine-readable Intermediate Representation for prototype specification, binding authority, IA topology, state models, design invariants, and verifiable evidence. Progressive tiers: `intent_spec` admits a Stage 1 problem thesis, topology, and five-axis/craft intent without a state machine; `execution_spec` admits the full Stage 3/4 state machine and action contracts.",
   "type": "object",
   "required": [
     "schema_version",
@@ -10,14 +10,18 @@
     "sources",
     "scope",
     "foundation",
-    "state_model",
-    "invariants",
-    "actions"
+    "spec_tier",
+    "invariants"
   ],
   "properties": {
     "schema_version": {
       "type": "string",
       "const": "prototype-spec/v1"
+    },
+    "spec_tier": {
+      "type": "string",
+      "enum": ["intent_spec", "execution_spec"],
+      "description": "Which admission tier the compiled IR legitimately reached: `intent_spec` (Stage 1: thesis + topology + craft intent) or `execution_spec` (Stage 3/4: full state machine + action contracts)."
     },
     "identity": {
       "type": "object",
@@ -109,12 +113,10 @@
           "properties": {
             "viewports": {
               "type": "array",
-              "minItems": 1,
               "items": { "type": "integer" }
             },
             "required_states": {
               "type": "array",
-              "minItems": 1,
               "items": { "type": "string" }
             }
           }
@@ -160,7 +162,6 @@
       "properties": {
         "domain_states": {
           "type": "array",
-          "minItems": 1,
           "items": {
             "type": "object",
             "required": ["id", "label"],
@@ -173,12 +174,10 @@
         },
         "interaction_states": {
           "type": "array",
-          "minItems": 1,
           "items": { "type": "string" }
         },
         "data_scenarios": {
           "type": "array",
-          "minItems": 1,
           "items": {
             "type": "object",
             "required": ["id", "description"],
@@ -190,7 +189,6 @@
         },
         "stress_fixtures": {
           "type": "array",
-          "minItems": 1,
           "items": {
             "type": "object",
             "required": ["id", "vector", "expected_behavior"],
@@ -240,6 +238,36 @@
         }
       }
     },
+    "layout_directives": {
+      "type": "object",
+      "description": "Meso assembly slot: information-topology constructs.",
+      "properties": {
+        "massing_pattern": {
+          "type": "string",
+          "description": "Declared massing construct (e.g. canvas-inspector, split-stream, focus-diorama, pinned-master-detail). An undeclared massing smooths to a topology-derived fallback without blocking compilation."
+        }
+      }
+    },
+    "interaction_spec": {
+      "type": "object",
+      "description": "Meso assembly slot: spatio-temporal continuity protocol.",
+      "properties": {
+        "kinematics": {
+          "type": "string",
+          "description": "Authored kinematics protocol governing deformation and focus-restore transitions."
+        }
+      }
+    },
+    "visual_directives": {
+      "type": "object",
+      "description": "Meso assembly slot: data micro-construct syntax.",
+      "properties": {
+        "data_syntax": {
+          "type": "string",
+          "description": "Authored syntax for compact alignment and micro-trend data constructs."
+        }
+      }
+    },
     "artifacts_binding": {
       "type": "object",
       "properties": {
@@ -249,5 +277,67 @@
         "prototype_html": { "type": "string" }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "spec_tier": { "const": "execution_spec" } },
+        "required": ["spec_tier"]
+      },
+      "then": {
+        "required": ["state_model", "actions"],
+        "properties": {
+          "state_model": {
+            "type": "object",
+            "required": ["domain_states", "interaction_states", "data_scenarios", "stress_fixtures"],
+            "properties": {
+              "domain_states": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["id", "label"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "label": { "type": "string" },
+                    "description": { "type": "string" }
+                  }
+                }
+              },
+              "interaction_states": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string" }
+              },
+              "data_scenarios": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["id", "description"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "description": { "type": "string" }
+                  }
+                }
+              },
+              "stress_fixtures": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["id", "vector", "expected_behavior"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "vector": { "type": "string" },
+                    "expected_behavior": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

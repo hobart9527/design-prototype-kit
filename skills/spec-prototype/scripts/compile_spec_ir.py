@@ -157,6 +157,28 @@ _REQUIRED_SECTIONS: List[Dict[str, Any]] = [
     },
 ]
 
+# Progressive tier admission: `intent_spec` (Stage 1) requires only the problem
+# thesis, topology, and five-axis/craft intent — no state machine. The five-axis
+# register always derives defaults, so the gate items an author can actually
+# miss are the thesis and the declared topology. `execution_spec` (Stage 3/4)
+# keeps the full gate in `_REQUIRED_SECTIONS` above.
+_INTENT_REQUIRED_SECTIONS: List[Dict[str, Any]] = [
+    {
+        "key": "core_tension",
+        "label": "问题论点 (core_tension)",
+        "section": "Stage 1 §1 (业务与用户极端张力)",
+        "form": "- <张力 A> vs <张力 B>",
+        "example": "- Operational through-put vs Catastrophic Bus-Hang Failures.",
+    },
+    {
+        "key": "declared_surfaces",
+        "label": "拓扑声明表面 (declared_surfaces)",
+        "section": _SURFACES_SECTION,
+        "form": "- **主工作区 (Primary)**: `surface/<id>`",
+        "example": "- **主工作区 (Primary)**: `console/cluster-overview`",
+    },
+]
+
 
 class IncompleteStageContractError(ValueError):
     """Raised when discussion.md omits fields the canonical IR requires non-empty.
@@ -166,9 +188,10 @@ class IncompleteStageContractError(ValueError):
     single raise reports every missing item at once.
     """
 
-    def __init__(self, violations: List[Dict[str, str]]):
+    def __init__(self, violations: List[Dict[str, str]], header: str = ""):
         self.violations = violations
-        super().__init__(format_missing_sections(violations))
+        report = format_missing_sections(violations)
+        super().__init__(f"{header}\n{report}" if header else report)
 
 
 def format_missing_sections(violations: List[Dict[str, str]]) -> str:
@@ -432,6 +455,95 @@ def parse_craft_stack(text: str, five_axes: Dict[str, str]) -> Dict[str, str]:
     return {axis: stack[axis] for axis in axes}
 
 
+def parse_authored_invariants(text: str) -> List[Dict[str, Any]]:
+    """Extract authored design invariants from discussion.md, or emit none.
+
+    Invariants are admitted ONLY from an authored section (Design Invariants /
+    设计不变式 / Design Rules). The former hardcoded telemetry/4096 template
+    invariants were never authored facts and are retired: an unauthored
+    discussion yields `[]`, never injected heuristics.
+
+    Authored line form:
+      - `inv/<id>` | <statement> | severity: blocking | verification: computed_style
+    `severity` defaults to advisory and `verification` to manual; unknown
+    severities fall back to advisory rather than fabricating an enum value.
+    """
+    sec = extract_section(text, r"###?\s*.*(?:Invariants|不变式|Design Rules|设计规则)")
+    out: List[Dict[str, Any]] = []
+    severities = {"blocking", "warning", "advisory"}
+    verifications = {"computed_style", "dom_query", "screenshot_review", "manual"}
+    for line in sec.splitlines():
+        m = re.match(r"^[-*]\s*`([^`]+)`\s*\|\s*(.+)$", line.strip())
+        if not m:
+            continue
+        inv_id = m.group(1).strip()
+        parts = [p.strip() for p in m.group(2).split("|")]
+        statement = parts[0] if parts else ""
+        if not inv_id or not statement:
+            continue
+        severity = "advisory"
+        verification = "manual"
+        applies_to: List[str] = []
+        for tail in parts[1:]:
+            sm = re.match(r"severity\s*[:：]\s*(\w+)", tail, re.IGNORECASE)
+            if sm and sm.group(1).lower() in severities:
+                severity = sm.group(1).lower()
+            vm = re.match(r"verif(?:ication|ication_method)?\s*[:：]\s*(\w+)", tail, re.IGNORECASE)
+            if vm and vm.group(1).lower() in verifications:
+                verification = vm.group(1).lower()
+            am = re.match(r"applies_to\s*[:：]\s*(.+)", tail, re.IGNORECASE)
+            if am:
+                applies_to = [t.strip() for t in re.split(r"[,，、]", am.group(1)) if t.strip()]
+        out.append({
+            "id": inv_id,
+            "upstream_ref": "discussion.md",
+            "statement": statement,
+            "severity": severity,
+            "applies_to": applies_to,
+            "verification_method": verification,
+            "authority": "authored",
+        })
+    return out
+
+
+def parse_meso_directives(text: str, navigation_topology: str) -> Dict[str, Dict[str, str]]:
+    """Extract authored meso assembly slots from discussion.md.
+
+    Slots: `layout_directives.massing_pattern` (information-topology construct),
+    `interaction_spec.kinematics` (spatio-temporal continuity protocol),
+    `visual_directives.data_syntax` (data micro-construct syntax). Authored
+    `` `massing_pattern`: <value> ``-style bullets are taken verbatim; an
+    undeclared massing smooths to a topology-derived fallback without blocking
+    compilation. Kinematics and data_syntax are emitted only when authored.
+    """
+    authored: Dict[str, str] = {}
+    for line in text.splitlines():
+        m = re.search(
+            r"[`*]*(massing_pattern|kinematics|data_syntax)[`*]*\s*[:：]\s*[`]*([^`\n]+)",
+            line,
+            re.IGNORECASE,
+        )
+        if m:
+            key = m.group(1).strip().lower()
+            val = m.group(2).strip().lower().rstrip("`* \t")
+            if val and key not in authored:
+                authored[key] = val
+
+    if "massing_pattern" in authored:
+        massing = authored["massing_pattern"]
+    elif navigation_topology == "workspace-inspector":
+        massing = "canvas-inspector"
+    else:
+        massing = "stacked-flow"
+
+    directives: Dict[str, Dict[str, str]] = {"layout_directives": {"massing_pattern": massing}}
+    if "kinematics" in authored:
+        directives["interaction_spec"] = {"kinematics": authored["kinematics"]}
+    if "data_syntax" in authored:
+        directives["visual_directives"] = {"data_syntax": authored["data_syntax"]}
+    return directives
+
+
 def compile_canonical_ir(
     root: Path,
     slice_id: str,
@@ -443,6 +555,7 @@ def compile_canonical_ir(
     viewports: Optional[List[int]] = None,
     allow_incomplete: bool = False,
     fragment_path: Optional[Path] = None,
+    required_tier: str = "intent_spec",
 ) -> Dict[str, Any]:
     """Compile prototype/discussion.md into Canonical Specification IR."""
     disc_path = root / "prototype/discussion.md"
@@ -540,45 +653,34 @@ def compile_canonical_ir(
     data_scenarios = frag_data.get("data_scenarios") or parse_data_scenarios(disc_text)
     stress_fixtures = frag_data.get("stress_fixtures") or parse_stress_fixtures(disc_text)
 
-    # Invariants (Design Rules). Compiler-inferred heuristics, not authored
-    # requirements: authority=inferred and no upstream_ref (the former REQ-*
-    # identifiers were fictional and must not masquerade as traced authority).
-    # Severity is advisory, not blocking: an inferred template carries no author
-    # mandate and must not gate a build as if it were a ratified requirement.
-    invariants = [
-        {
-            "id": f"{slice_id.upper()}-A1",
-            "authority": "inferred",
-            "statement": "Operator must distinguish fault state vs normal telemetry within 2 seconds of screen load.",
-            "severity": "advisory",
-            "applies_to": ["draft", "sealed"],
-            "verification_method": "screenshot_review",
-        },
-        {
-            "id": f"{slice_id.upper()}-A2",
-            "authority": "inferred",
-            "statement": "Action verification: high-hazard commits require Proximity Level >= 2 dedicated confirmation.",
-            "severity": "advisory",
-            "applies_to": ["confirming", "committing"],
-            "verification_method": "dom_query",
-        },
-        {
-            "id": f"{slice_id.upper()}-A3",
-            "authority": "inferred",
-            "statement": "Signature accent seal color (--accent-seal) is strictly forbidden on draft, pending, or secondary controls.",
-            "severity": "advisory",
-            "applies_to": ["draft", "idle"],
-            "verification_method": "computed_style",
-        },
-    ]
+    # Invariants: ONLY discussion/Spec-authored invariants reach the IR. The
+    # former hardcoded telemetry/4096 GPU template entries were injected
+    # heuristics with no authored source and are retired: an unauthored
+    # discussion emits `[]`, never a template.
+    invariants = parse_authored_invariants(disc_text)
 
     # Actions: derived strictly from authored key bindings in discussion.md.
     # The former hardcoded "检视实体"/"确定隔离排空" verbs were never extracted from
     # the source and are removed; when no binding exists, actions stays empty.
     actions = parse_action_verbs(disc_text)
 
+    # Meso assembly slots: authored massing/kinematics/data_syntax declarations,
+    # with an undeclared massing smoothing to a topology-derived fallback.
+    meso = parse_meso_directives(disc_text, "workspace-inspector")
+
+    # Progressive tier stamping: the IR emits the tier it can legitimately
+    # derive. A full state machine AND action contracts present (authored here
+    # or merged from a Stage 3/4 fragment) earn `execution_spec`; otherwise the
+    # Stage 1 `intent_spec` tier is stamped.
+    has_state_machine = bool(
+        domain_states and interaction_states and data_scenarios and stress_fixtures
+    )
+    has_action_contracts = bool(actions)
+    spec_tier = "execution_spec" if (has_state_machine and has_action_contracts) else "intent_spec"
+
     ir = {
         "schema_version": "prototype-spec/v1",
+        "spec_tier": spec_tier,
         "identity": {
             "product_id": product_id,
             "slice_id": slice_id,
@@ -636,6 +738,7 @@ def compile_canonical_ir(
         },
         "actions": actions,
         "invariants": invariants,
+        **meso,
         "artifacts_binding": {
             "tokens_css": "prototype/shared/tokens.css",
             "tokens_json": "prototype/contracts/tokens/t1.json",
@@ -661,15 +764,44 @@ def compile_canonical_ir(
         for spec in _REQUIRED_SECTIONS
         if not extracted.get(spec["key"])
     ]
-    if violations:
-        report = format_missing_sections(violations)
+    intent_extracted: Dict[str, Any] = {
+        "core_tension": tension_text,
+        "declared_surfaces": declared_surfaces,
+    }
+    intent_violations = [
+        {"key": spec["key"], "label": spec["label"], "section": spec["section"],
+         "form": spec["form"], "example": spec["example"]}
+        for spec in _INTENT_REQUIRED_SECTIONS
+        if not intent_extracted.get(spec["key"])
+    ]
+    if violations and intent_violations:
+        # Not even the Stage 1 intent tier is satisfiable: report everything.
+        report = format_missing_sections(violations + intent_violations)
         if not allow_incomplete:
-            raise IncompleteStageContractError(violations)
+            raise IncompleteStageContractError(violations + intent_violations)
         sys.stderr.write(
             "WARNING: --allow-incomplete 已启用，跳过阶段边界校验。\n"
             "以下必备字段在 discussion.md 中缺失，产出的 IR 不合规且可能无法通过 schema：\n"
             f"{report}\n"
         )
+    elif violations:
+        # Stage 1 intent_spec admission passes with only the Stage 1 gate
+        # active: missing later-stage state taxonomy stays a downstream
+        # requirement, not a compilation blocker at this tier.
+        report = format_missing_sections(violations)
+        if spec_tier != "execution_spec":
+            sys.stderr.write(
+                "NOTE: 以下 execution_spec (Stage 3/4) 字段在 discussion.md 中缺失，"
+                "本编译产物为 intent_spec 层级：\n"
+                f"{report}\n"
+            )
+        elif not allow_incomplete:
+            raise IncompleteStageContractError(violations)
+        else:
+            sys.stderr.write(
+                "WARNING: --allow-incomplete 已启用，跳过阶段边界校验。\n"
+                f"{report}\n"
+            )
 
     # Validate against schema if jsonschema is available. A known-incomplete IR
     # (explicit --allow-incomplete) already violates minItems by definition, so
@@ -677,6 +809,20 @@ def compile_canonical_ir(
     if jsonschema and SCHEMA_PATH.is_file() and not (violations and allow_incomplete):
         schema_obj = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
         jsonschema.validate(instance=ir, schema=schema_obj)
+
+    # Tier admission boundary: a consumer requiring `execution_spec` refuses a
+    # Stage-1-only IR with the missing-state message instead of admitting it.
+    if required_tier == "execution_spec" and spec_tier != "execution_spec":
+        missing = format_missing_sections(violations) if violations else \
+            "state_model (domain_states / interaction_states / data_scenarios / stress_fixtures) 或 actions 缺失"
+        raise IncompleteStageContractError(
+            violations
+            or [{"key": "state_model", "label": "执行层级状态机 (state_model)",
+                 "section": "Stage 3/4 (状态机与动作契约)",
+                 "form": "完整的 domain/interaction/data/stress 状态模型与 action 契约",
+                 "example": "- `domain/<state-id>` (业务状态名称): 一句话语义描述"}],
+            header=f"execution_spec 层级不可达成：当前 discussion.md 仅满足 intent_spec。\n{missing}",
+        )
 
     return ir
 
@@ -687,12 +833,14 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
     src = ir["sources"]
     scope = ir["scope"]
     fnd = ir["foundation"]
-    states = ir["state_model"]
+    states = ir.get("state_model") or {
+        "domain_states": [], "interaction_states": [], "data_scenarios": [], "stress_fixtures": [],
+    }
 
     md = []
     md.append(f"# Prototype Specification: {ident['title']} ({ident['slice_id']}/{ident['candidate_revision']})")
     md.append("")
-    md.append(f"> **Authority Status**: `{ident['authority_status'].upper()}` | **Revision**: `{ident['contract_revision']}` / `{ident['candidate_revision']}`")
+    md.append(f"> **Authority Status**: `{ident['authority_status'].upper()}` | **Revision**: `{ident['contract_revision']}` / `{ident['candidate_revision']}` | **Spec Tier**: `{ir.get('spec_tier', 'execution_spec')}`")
     md.append(f"> **Source Reference**: `{src['discussion_ref']}` ({src.get('discussion_sha256', 'untracked')})")
     md.append("")
     md.append("---")

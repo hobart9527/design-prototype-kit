@@ -85,7 +85,10 @@ def test_schema_validates_canonical_ir(tmp_path: Path):
     assert "incident-drawer" in ir["scope"]["build_scope"]["context_surfaces"]
 
     # Verify REAL extracted values (not arbitrary lower bounds).
-    assert ir["invariants"]  # derived invariants remain non-empty
+    # Invariants are admitted only from an authored section: this discussion
+    # authors none, so none may be injected.
+    assert ir["invariants"] == []
+    assert ir["spec_tier"] == "intent_spec"
     assert [s["id"] for s in ir["state_model"]["domain_states"]] == [
         "domain/cluster-nominal",
         "domain/incident-active",
@@ -142,7 +145,7 @@ def test_missing_required_sections_fail_loudly(tmp_path: Path):
         "required_states",
     ):
         assert key in message
-    assert "发现 6 项缺失" in message
+    assert "发现 7 项缺失" in message
     assert excinfo.value.violations
     assert "Stage 1 §3" in message
 
@@ -213,6 +216,93 @@ def test_dial_alias_weight_maps_to_materiality():
     assert dials["materiality"] == "dense-tactile"
 
 
+STAGE1_DISCUSSION = """# Design Discussion: Reading Sanctuary
+
+## 1. 业务与用户极端张力 (Core Tension)
+- Deep Contemplation vs Digital Attention Economy.
+
+## 2. 现实双地锚 (Reality Benchmark Anchors)
+- Operational Grounding: iA Writer
+- Kinetic Grounding: Paperback page turns
+
+## 5. OOUX 实体拓扑与表面分配
+- **主工作区 (Primary)**: `reader/article-canvas`
+
+## 8. Design Invariants (设计不变式)
+- `inv/accent-seal` | Accent seal reserved for irreversible commits | severity: blocking | verification: computed_style | applies_to: draft, idle
+"""
+
+
+def _write_discussion(tmp_path: Path, text: str) -> Path:
+    disc = tmp_path / "prototype/discussion.md"
+    disc.parent.mkdir(parents=True)
+    disc.write_text(text, encoding="utf-8")
+    return tmp_path
+
+
+def test_stage1_intent_spec_compiles_and_validates(tmp_path: Path):
+    """Positive specimen: thesis + topology + craft intent with no states admits intent_spec."""
+    root = _write_discussion(tmp_path, STAGE1_DISCUSSION)
+
+    ir = compile_canonical_ir(root=root, slice_id="reading-sanctuary", stage="hero_probe")
+
+    assert ir["spec_tier"] == "intent_spec"
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    jsonschema.validate(instance=ir, schema=schema)
+    # No state_model requirement at Stage 1: the section may be wholly absent.
+    assert ir["state_model"]["domain_states"] == []
+    # Authored invariants are kept verbatim; nothing is injected.
+    assert [i["id"] for i in ir["invariants"]] == ["inv/accent-seal"]
+    assert ir["invariants"][0]["severity"] == "blocking"
+    # Meso assembly slots: undeclared massing smooths to a fallback, unauthored
+    # kinematics/data_syntax stay absent.
+    assert ir["layout_directives"]["massing_pattern"]
+    assert "interaction_spec" not in ir or "kinematics" not in ir.get("interaction_spec", {})
+    assert "visual_directives" not in ir or "data_syntax" not in ir.get("visual_directives", {})
+
+
+def test_authored_meso_slots_pass_through(tmp_path: Path):
+    """Authored massing/kinematics/data_syntax declarations reach the IR verbatim."""
+    root = _write_discussion(tmp_path, STAGE1_DISCUSSION.replace(
+        "## 5. OOUX 实体拓扑与表面分配",
+        "## 5. OOUX 实体拓扑与表面分配\n- `massing_pattern`: `split-stream`\n- `kinematics`: `focus-restore-250ms`\n- `data_syntax`: `micro-trend-compact`",
+    ))
+    ir = compile_canonical_ir(root=root, slice_id="reading-sanctuary")
+    assert ir["layout_directives"]["massing_pattern"] == "split-stream"
+    assert ir["interaction_spec"]["kinematics"] == "focus-restore-250ms"
+    assert ir["visual_directives"]["data_syntax"] == "micro-trend-compact"
+
+
+def test_stage1_only_ir_rejected_when_execution_spec_required(tmp_path: Path):
+    """Boundary specimen: execution_spec demand on Stage-1-only IR names the missing states."""
+    root = _write_discussion(tmp_path, STAGE1_DISCUSSION)
+
+    with pytest.raises(IncompleteStageContractError) as excinfo:
+        compile_canonical_ir(root=root, slice_id="reading-sanctuary", required_tier="execution_spec")
+
+    message = str(excinfo.value)
+    assert "execution_spec" in message
+    assert "state_model" in message or "domain_states" in message
+
+
+def test_whole_state_ids_survive_compilation(tmp_path: Path):
+    """Full identifiers like `interaction/inspecting` reach state_model entries intact."""
+    ir = compile_canonical_ir(
+        root=_write_discussion(tmp_path, COMPLETE_DISCUSSION),
+        slice_id="cluster-overview",
+        stage="hero_probe",
+    )
+    assert "interaction/inspecting" in ir["state_model"]["interaction_states"]
+    assert "interaction/committing" in ir["state_model"]["interaction_states"]
+
+
+def test_unauthored_discussion_injects_no_invariants(tmp_path: Path):
+    """An unauthored discussion yields an empty invariants array, never templates."""
+    root = _write_discussion(tmp_path, COMPLETE_DISCUSSION)
+    ir = compile_canonical_ir(root=root, slice_id="cluster-overview", stage="hero_probe")
+    assert ir["invariants"] == []
+
+
 def test_handoff_packet_routes_canonical_spec(tmp_path: Path):
     """Verify handoff.py packet and pillar_packet resolve canonical .spec.md."""
     from handoff import pillar_packet
@@ -257,6 +347,7 @@ def test_assemble_envelope_canonical_lint_and_status(tmp_path: Path):
     # Create canonical IR with validated status
     ir_data = {
         "schema_version": "prototype-spec/v1",
+        "spec_tier": "intent_spec",
         "identity": {
             "product_id": "test-product",
             "slice_id": slice_id,
@@ -310,6 +401,7 @@ def test_lint_canonical_spec_ir_schema_and_boundary(tmp_path: Path):
     # Valid IR passes
     valid_ir = {
         "schema_version": "prototype-spec/v1",
+        "spec_tier": "execution_spec",
         "identity": {
             "product_id": "test",
             "slice_id": slice_id,
