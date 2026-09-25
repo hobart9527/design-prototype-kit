@@ -26,60 +26,73 @@ implicit becomes an ungrounded aesthetic preference. Record one or more:
 Base the driver on Reality Benchmark Anchors (Linear, Datadog, iA Writer, Stripe,
 or physical instruments) rather than invented rationale.
 
-## Stage 1 Design Co-creation Dialectic (渐进式设计共创四重奏 · Grilling & Brainstorming Engine)
+## Selectable Method Topics (渐进式设计共创 · Grilling & Brainstorming Engine)
 
-Stage 1 is a progressive, guided design conversation driven by a **Dynamic Topological Collapse Spine** — NOT an opaque questionnaire or bulk document generator. The Agent acts as an experienced design partner, projecting the Five Axes and Nine Pillars into concrete, visual, and experiential choices across four bundled rounds:
+Stage 1 is a progressive, guided design conversation. The Agent acts as an
+experienced design partner, projecting the Five Axes and Nine Pillars into
+concrete, visual, and experiential choices through **selectable method topics** —
+NOT a mandatory physical-metaphor-first ordering and NOT a fixed four-round
+lockstep.
 
 ### Interaction Principles (Grilling & Brainstorming Protocol)
 1. **Agent Fact-Finding vs Human Decision**:
    - Facts belong to the Agent: search repository sources (`product.md`, PRDs, code models) silently via read-only tools. NEVER ask the user what the codebase already tells you.
    - Trade-offs belong to the User: present 2~3 concrete options with trade-offs, then give a clear recommended choice marked with `➡️`.
-2. **Dynamic Topological Collapse (动态拓扑坍缩)**:
-   - Round N consumes and parameterizes the settled consensus of Round N-1.
-   - Topology inherits the settled Metaphor; Sensory Palette inherits the settled Topology; Falsification Stress inherits the settled Palette discipline.
-3. **Ratchet Settlement & Decision Map**:
-   - Each confirmed round ratchets shut (recorded in prototype/discussion.md Decision Record). It is not reopened unless the user explicitly requests an overrule.
-   - Display the concise 4-line Decision Map at the end of each round:
+2. **Selectable Topics, Not Sequential Gates**:
+   - The four topics below are independent method modules: enter whichever topic
+     owns the currently active uncertainty. No topic requires another to settle
+     first, and no fixed ordering or round count is mandated.
+   - A topic loads when its question is live and is skipped when the relevant
+     decision is already settled, delegated, or out of scope.
+3. **Minimal Reopening & Honest Settlement**:
+   - Feedback reopens only the affected minimal owning decision; every other
+     settled decision stays ratcheted shut unless the user explicitly requests
+     an overrule.
+   - Never present unapproved options as confirmed: only an actual user
+     selection or an explicit delegation populates a confirmed decision in
+     `prototype/discussion.md`. A bare "continue" resumes authorized work but
+     resolves no open direction choice.
+   - Record the concise Decision Frontier after each settlement, listing only
+     the topics actually in play:
      ```text
      Design Frontier:
-       ✓ [Metaphor & Benchmark] <Settled choice>
-       ◐ [Topology & Scaffolding] <Active question>
-       ○ [Sensory & Kinetic Imprint] (Awaiting Topology)
-       ○ [Falsification & Auto-Compile] (Awaiting Sensory)
+       ✓ [Topic: Metaphor & Benchmark] <Settled choice>
+       ◐ [Topic: Topology & Scaffolding] <Active question>
+       ○ [Topic: Sensory & Kinetic Imprint] (not yet entered)
+       ○ [Topic: Falsification & Auto-Compile] (not yet entered)
      ```
 
-### Bundled Frontier Rounds
+### Available Method Topics
 
-#### Round 1: Physical Reality & Modern Benchmark (Frontier: Metaphor & Character)
+#### Topic: Physical Reality & Modern Benchmark (Metaphor & Character)
 - **Lazy Module**: `references/dialectic/01-metaphor-benchmark.md` (<80 lines).
 - **Pillars & Axes**: 9-Pillar: Mental Model & Resistance; 5-Axis: Character.
-- **Method**: Project 2~3 real-world physical mechanisms (e.g. Precision Caliper vs Customs Clearance vs Editorial Proofing Table), each paired with modern digital benchmarks (Linear, Bloomberg, Stripe, GitHub PR) stating what to adopt and what to refuse.
+- **Method**: Project 2~3 real-world physical mechanisms (e.g. Precision Caliper vs Customs Clearance vs Editorial Proofing Table), each paired with modern digital benchmarks (Linear, Bloomberg, Stripe, GitHub PR) stating what to adopt and what to refuse. A physical metaphor is an optional anchor: record its explicit transfer / non-transfer boundary when used.
 - **Question Format**:
   ```markdown
   ❓ **Q1** - **Physical Reality Metaphor & Product Character**: <exposition of domain tension and 2~3 candidate archetypes with trade-offs>
 
   ➡️ <recommended archetype with justification>
   ```
-- **Settlement**: Lock primary metaphor, core tension, and Character profile.
+- **Settlement**: When entered, lock primary metaphor (or its declared absence), core tension, and Character profile.
 
-#### Round 2: Spatial Density & Layout Scaffolding (Frontier: Topology & Resistance)
+#### Topic: Spatial Density & Layout Scaffolding (Topology & Resistance)
 - **Lazy Module**: `references/dialectic/02-topology-scaffolding.md` (<60 lines).
 - **Pillars & Axes**: 9-Pillar: Topology & Journey; 5-Axis: Density & Rhythm.
 - **Method**: Present 2~3 structural layouts via pure text ASCII wireframes (NO COLOR, ONLY STRUCTURE). Clarify Container Proximity Ladder (Level 0~4) for hazardous vs routine actions.
 - **Settlement**: Lock layout profile (`adaptive-workspace` or `editorial-dossier`), visual centroid, and Density/Rhythm values.
 
-#### Round 3: Material Substrate, Palette Discipline & Kinetic Imprint (Frontier: Materiality & Energy)
+#### Topic: Material Substrate, Palette Discipline & Kinetic Imprint (Materiality & Energy)
 - **Lazy Module**: `references/dialectic/03-sensory-kinetic.md` (<100 lines).
 - **Pillars & Axes**: 9-Pillar: Color Semantics & Micro-timing; 5-Axis: Materiality & Energy.
-- **Method**: Present tangible material moodboards (Void Slate vs Organic Bone) with exact hex tokens. Define the Signature Accent (`--accent-seal`) alongside its strict Negative List (草稿与日常操作绝不带朱). Specify the 160ms Decisive Exchange 3-Frame kinetic response.
-- **Settlement**: Lock `--accent-seal`, substrate tokens, and kinetic timing.
+- **Method**: Present tangible material moodboards (Void Slate vs Organic Bone) as optional anchors with explicit transfer / non-transfer boundaries and exact hex tokens. Define the Signature Accent (`--accent-seal`) with any negative boundaries as product-semantic rules decided per product, not global template mandates. Specify the Decisive Exchange 3-Frame kinetic response when energy is a live question.
+- **Settlement**: Lock `--accent-seal` (if a signature accent is chosen), substrate tokens, and kinetic timing.
 
-#### Round 4: Falsification Boundary & Automated Contract Compilation (Frontier: Resilience & Gate)
+#### Topic: Falsification Boundary & Automated Contract Compilation (Resilience & Gate)
 - **Lazy Module**: `references/dialectic/04-falsification-compile.md` (<60 lines).
 - **Pillars & Axes**: 9-Pillar: Resilience & Interaction Lifecycle.
 - **Method**: Establish the 5-second perceptual falsification test and 4-dimensional reality breakers (Unbreakable string, 0-item state, 320px fold, rapid interruption).
 - **Execution**: Trigger `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice-id>` to compile canonical machine IR (`.spec.json`) and single-file RFC view (`.spec.md`), followed by `compile_tokens.py`. Status is sealed as `sealed_provisional`. (Legacy `materialize_contracts.py` remains available for multi-file backwards compatibility).
-
 ## Macro Double Diamond
 
 ### Discover — Pillars: Value, Research
@@ -124,26 +137,25 @@ Stage 1 is a progressive, guided design conversation driven by a **Dynamic Topol
   (ban bare buzzwords like "高级", "现代"; expand into `[dimension] + [boundary] + [counter-example]`)
   and emit a concrete proposal with initial palette anchors (`--accent-primary`, `--bg-void`),
   axis orientation, and trade-off notes.
-- **Orthogonal 4-Axis Craft Stack (Physical Anchor Mapping)**: alongside the Five Axes,
-  map the physical anchors into four orthogonal craft axes that travel with the sealed
-  foundation and envelope as `craft_stack`:
-  - `surface_optics` — from the Materiality axis and reality grounding anchor: a
-    light or restrained register compiles to `matte_pigment_wash`; a dark
-    instrumentation register compiles to `coated_instrument_dark`. Surfaces then
-    consume `--surface-tint` and `--surface-specular` rather than raw gradients.
-  - `spatial_geometry` — from the Density axis and the physical metaphor's massing:
-    default `soft_bento_pill` (generous bento padding, pill triggers via
-    `--radius-pill`).
-  - `micro_typography` — from the Character axis and the measuring-instrument
-    anchor: default `tight_display_polarized` (`--font-display-tracking: -0.04em`,
-    `--font-display-weight: 800`, tabular numerals).
-  - `data_marks` — from the physical texture anchor: default `hatching_dither`
-    (`--pattern-hatch-45` SVG hatching or segmented bars instead of flat bars).
-  Explicit `surface_optics: ...`-style declarations in the 5-Dial register override
-  the compiled defaults; `compile_spec_ir.py` emits the resolved stack into
+- **Orthogonal 4-Axis Craft Stack (Authorable Axes)**: alongside the Five Axes,
+  four orthogonal craft axes travel with the sealed foundation and envelope as
+  `craft_stack`. They carry NO fixed method defaults: each axis is authored from
+  the product's own settled decisions, and every authored value records its
+  product-semantic source:
+  - `surface_optics` — from the Materiality axis and the product's surface
+    decision; authored values map to compiled registers (e.g. `matte_pigment_wash`
+    or `coated_instrument_dark`). Surfaces then consume `--surface-tint` and
+    `--surface-specular` rather than raw gradients.
+  - `spatial_geometry` — from the Density axis and the product's massing
+    decision (e.g. bento padding, pill triggers via `--radius-pill`).
+  - `micro_typography` — from the Character axis (e.g. display tracking, weight,
+    tabular numerals).
+  - `data_marks` — from the product's data-texture decision (e.g. SVG
+    `--pattern-hatch-45` hatching or segmented bars instead of flat bars).
+  Explicit `surface_optics: ...`-style declarations in the 5-Dial register are
+  the authoring route; `compile_spec_ir.py` emits the resolved stack into
   `foundation.craft_stack` and `assemble_envelope.py` projects it into
   `visual_directives.craft_stack`.
-- **LLM Dynamic Chromatics**: once the proposal is chosen, `compile_tokens.py`
   derives a 16-step physical elevation matrix by luminance delta and generates
   `prototype/shared/tokens.css` (plus `prototype/contracts/tokens/t1.json`).
 - **Cognitive Budgeting**: separate the zero-borrow low-entropy base (routine

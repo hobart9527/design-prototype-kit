@@ -45,14 +45,20 @@ different propositions when a choice remains. No candidate quota applies.
 
 ## Decisions and authority
 
-| ID | Decision or authoritative section link | Status | Reason / evidence | Actual user quote + turn/date or source locator + delegated scope | Affected artifacts |
-|---|---|---|---|---|---|
+| ID | Decision or authoritative section link | Status | Reason / evidence | Actual user quote + turn/date or source locator + delegated scope | User source (`confirmed \| delegated \| synthetic-fixture`) | Affected artifacts / minimal owning scope |
+|---|---|---|---|---|---|---|
 
 Status: `proposed | confirmed | delegated | needs-evidence | superseded`.
 Only an actual user decision or an explicit prior delegation can populate
 `confirmed`/`delegated`; AI recommendations, Builder receipts, Critic reports and
-test passes are not approval. After formalization retain a link and rationale,
-not a competing rule.
+test passes are not approval. The `User source` column records where authority
+actually came from per decision: a confirmed user selection, an explicitly
+delegated scope, or a synthetic-fixture actor (which carries zero human
+authority). The scope column names the minimal owning decision affected, so that
+feedback reopens only that decision and never the whole frontier. A bare
+"continue" instruction without a chosen direction never resolves an open
+direction choice into a confirmed decision. After formalization retain a link
+and rationale, not a competing rule.
 
 ## Open frontier
 

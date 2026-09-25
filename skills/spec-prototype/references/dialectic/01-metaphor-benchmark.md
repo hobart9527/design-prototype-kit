@@ -1,7 +1,8 @@
-# Dialectic Slice: Metaphor & Benchmark (Frontier 1)
+# Dialectic Slice: Metaphor & Benchmark (Topic)
 
 > Dynamic projection module for Physical Reality Mapping & Modern Benchmark Calibration.
-> Load strictly during Round 1 of Stage 1 co-creation.
+> A selectable Stage 1 method topic: load it when Metaphor & Character is the
+> active uncertainty, in any order alongside the other topics.
 
 ## 1. Domain Fact Mining (Agent Fact-Finding)
 - The Agent MUST inspect existing workspace sources (`prototype/product.md`, PRDs, code models) before speaking.
@@ -27,5 +28,8 @@ Pair each physical metaphor with authentic digital benchmarks — state what to 
 - *Stripe / Apple*: Adopt progressive disclosure, trustworthy typographic hierarchy; REFUSE generic bloated card padding.
 - *GitHub PR*: Adopt diff collation, explicit approval lineage; REFUSE raw engineering jargon.
 
-## 4. Ratchet Settlement
-Upon user selection, lock the primary metaphor, core tension, and Character profile. Proceed to Frontier 2 (Topology).
+## 4. Settlement
+Upon user selection, lock the primary metaphor (or its declared absence — a
+physical metaphor is an optional anchor with an explicit transfer / non-transfer
+boundary), core tension, and Character profile. This topic's settlement does not
+gate any other topic.

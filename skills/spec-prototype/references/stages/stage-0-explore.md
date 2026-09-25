@@ -21,9 +21,10 @@ brief plus evidence, never a sealed contract and never an approved artifact.
 1. **Falsifiable brief first.** State the tension or uncertainty the probe tests,
    the observation that would falsify the proposed direction, and the evidence
    that would settle it. A probe without a falsification boundary is not a probe.
-2. **Bounded divergence.** Fork on at least three genuinely distinct dimensions;
-   close cousins of one solution do not count as divergence. Use real-world
-   Reference Benchmarks rather than invented anchors.
+2. **Honest divergence.** Fork across as many genuinely distinct hypotheses as
+   the open uncertainty actually holds; a candidate count follows the hypotheses,
+   not a quota. Close cousins of one solution do not count as divergence. Use
+   real-world Reference Benchmarks rather than invented anchors.
 3. **No-build discipline.** A no-build request ("只讨论", "不制作页面") forbids
    runnable HTML/JS/CSS prototypes. It still **MANDATES** recording the design
    model and decisions in `prototype/discussion.md` as the central index. Never
@@ -32,16 +33,21 @@ brief plus evidence, never a sealed contract and never an approved artifact.
 4. **Evidence honesty.** Keep claims labelled `explicit | observed | derived |
    hypothesis | unknown`. A probe screenshot proves a rendered direction; it does
    not prove ergonomic viability or aesthetic fitness.
+5. **Research conclusions are legal output without build authorization.** A
+   no-build exploration may close with sourced research conclusions and the
+   updated discussion record; building is never a precondition for a legal exit.
 
 ## Gated Output
 
 - `prototype/discussion.md` updated with the probe record and Resume section.
 - Optional single direction probe artifact under `prototype/experiments/`.
 - A direction probe report stating the surviving direction, the falsification
-  boundary, and what was consciously sacrificed.
+  boundary, and what was consciously sacrificed. Screenshots are attached only
+  when a probe artifact was actually built.
 
 ## Exit
 
-Legal exits are the direction probe report plus its screenshot, or an explicit
-promotion into [Stage 1](stage-1-frame.md) when the direction becomes a formal
-candidate and therefore requires a sealed provisional Spec.
+Legal exit is the direction probe report — with screenshots only when a probe
+was actually built — or an explicit promotion into [Stage 1](stage-1-frame.md)
+when the direction becomes a formal candidate and therefore requires a sealed
+provisional Spec.

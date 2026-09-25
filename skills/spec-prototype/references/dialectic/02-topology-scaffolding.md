@@ -1,11 +1,14 @@
-# Dialectic Slice: Topology & Scaffolding (Frontier 2)
+# Dialectic Slice: Topology & Scaffolding (Topic)
 
 > Dynamic projection module for Spatial Density, Layout Scaffolding & Attention Centroid.
-> Load strictly during Round 2 of Stage 1 co-creation.
+> A selectable Stage 1 method topic: load it when Topology & Resistance is the
+> active uncertainty, in any order alongside the other topics.
 
-## 1. Prerequisites Check
-- Verify Round 1 (Metaphor & Character) is settled.
-- Derive spatial distribution directly from the settled physical metaphor.
+## 1. Entry Check
+- This topic is selectable, not sequenced: no other topic must settle first.
+- Derive spatial distribution from the decisions the product has actually
+  settled; when a physical metaphor was settled, inherit it, otherwise ground
+  the layout in the product's own density, centroid, and journey decisions.
 
 ## 2. ASCII Wireframe Projections (NO COLOR, ONLY STRUCTURE)
 Present 2~3 distinct spatial layouts via pure text ASCII wireframes:
@@ -55,5 +58,5 @@ Stakeholders can review spatial hierarchy visually within seconds.
 - High-hazard actions MUST live in Proximity Level >= 2 (dedicated inspector or modal).
 - Routine actions live in Level 0/1 (direct inline chip or table row action).
 
-## 5. Ratchet Settlement
-Lock visual centroid, layout profile (`adaptive-workspace`, `editorial-dossier`, or `canvas-inspector`), and Density/Rhythm values.
+## 5. Settlement
+Lock visual centroid, layout profile (`adaptive-workspace`, `editorial-dossier`, or `canvas-inspector`), and Density/Rhythm values. This topic's settlement does not gate any other topic.

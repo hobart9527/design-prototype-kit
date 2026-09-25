@@ -1,11 +1,13 @@
-# Dialectic Slice: Falsification & Compile (Frontier 4)
+# Dialectic Slice: Falsification & Compile (Topic)
 
 > Dynamic projection module for 5-Second Falsification, Stress Boundary & Automated Compilation.
-> Load strictly during Round 4 of Stage 1 co-creation.
+> A selectable Stage 1 method topic: load it when Resilience & Gate is the
+> active uncertainty, in any order alongside the other topics.
 
-## 1. Prerequisites Check
-- Verify Rounds 1~3 are settled.
-- All 5 axes (Density, Energy, Materiality, Rhythm, Character) and relevant pillars have concrete values.
+## 1. Entry Check
+- This topic is selectable, not sequenced: no other topic must settle first.
+- Work from whatever axis and pillar values the product has actually settled;
+  any value still open stays labelled as such rather than being invented.
 
 ## 2. 5-Second Perceptual Falsification Criteria
 Every Stage 1 closure MUST establish at least one falsification test for the Stage 2 Hero Probe:
