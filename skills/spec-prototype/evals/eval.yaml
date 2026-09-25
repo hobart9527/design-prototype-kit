@@ -4,7 +4,7 @@ environment:
 skills:
   - source: local_path
     path: .
-    include: [SKILL.md, "references/**", "templates/**", "scripts/**", "agents/**"]
+    include: [SKILL.md, "references/**", "templates/**", "scripts/**", "../agents/**"]
 engine:
   name: claude-code
 cases:
@@ -14,11 +14,19 @@ cases:
     - evals/cases/novel-coordination.yaml
     - evals/cases/scoped-feedback.yaml
     - evals/cases/mobile-field-app.yaml
+    - evals/cases/confirmed-resume.yaml
   defaults:
     timeout_seconds: 900
     max_turns: 30
     collect_artifacts: ["prototype/**"]
   parallelism: 1
+  baselines:
+    # Same-content blind-comparison baseline: the confirmed-resume case runs
+    # against its own recorded baseline so a later run is judged on identical
+    # inputs with no visibility into the baseline's answers.
+    - case: confirmed-resume
+      mode: blind
+      same_content: true
 judge:
   type: rule_based
   success:

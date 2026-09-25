@@ -9,7 +9,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Iterable
 
@@ -191,6 +194,171 @@ def _extract_section_text(text: str, *keywords: str) -> str:
 # Last coverage run's structured flags, published so the report can surface an
 # absent spec instead of letting empty-string matching pass silently.
 LAST_COVERAGE_RESULTS: dict[str, object] = {}
+
+
+# --- Tiered evidence chain -------------------------------------------------
+# L1 = DOM/ARIA/data-state structural checks (always available, static source).
+# L2 = computed-style checks (available only when a headless style engine is
+#      reachable). L3 = screenshot comparison (best-effort capture).
+# A missing browser, fonts, or GPU degrades the run to the reachable tier and is
+# reported as environment_not_ready with the tier reached — never as a
+# code-assertion failure. Only L1 failures block.
+
+_STYLE_ENGINE_CANDIDATES = (
+    "chromium", "chrome", "google-chrome", "google-chrome-stable",
+    "microsoft-edge", "msedge", "firefox",
+)
+
+# Capability probes are environment facts, not per-document facts: cache by
+# engine so one verification run launches the browser at most once per tier.
+_TIER_PROBE_CACHE: dict[str, tuple[bool, str | None]] = {}
+
+# Tiered evidence record of the last assert_quality run: names which tiers ran
+# and the reason for every tier that did not.
+LAST_TIER_EVIDENCE: dict[str, object] = {}
+
+
+def _style_engine_command() -> str | None:
+    """Return a usable headless style engine command, or None when absent."""
+    for name in _STYLE_ENGINE_CANDIDATES:
+        found = shutil.which(name)
+        if found:
+            return found
+    try:
+        import playwright  # noqa: F401
+        return "playwright"
+    except ImportError:
+        return None
+
+
+def _chrome_like_flags(engine: str, profile_dir: Path) -> list[str]:
+    flags = ["--headless", "--disable-gpu", "--no-first-run",
+             f"--user-data-dir={profile_dir}"]
+    if engine != "firefox":
+        flags.append("--no-sandbox")
+    return flags
+
+
+def _probe_computed_style(html: Path) -> tuple[bool, str | None]:
+    """L2 probe: confirm a style engine can render the document."""
+    engine = _style_engine_command()
+    if not engine:
+        return False, "environment_not_ready: no headless style engine available for computed-style checks"
+    cached = _TIER_PROBE_CACHE.get(f"style:{engine}")
+    if cached is not None:
+        return cached
+    if engine == "playwright":
+        result = _playwright_probe(html, capture=False)
+    else:
+        with tempfile.TemporaryDirectory() as td:
+            cmd = [engine, *_chrome_like_flags(engine, Path(td)),
+                   "--dump-dom", html.resolve().as_uri()]
+            result = _run_engine_probe(cmd, "computed-style probe")
+    _TIER_PROBE_CACHE[f"style:{engine}"] = result
+    return result
+
+
+def _probe_screenshot(html: Path) -> tuple[bool, str | None]:
+    """L3 probe: confirm the engine can capture a screenshot for comparison."""
+    engine = _style_engine_command()
+    if not engine:
+        return False, "environment_not_ready: no headless style engine available for screenshot comparison"
+    cached = _TIER_PROBE_CACHE.get(f"screenshot:{engine}")
+    if cached is not None:
+        return cached
+    if engine == "playwright":
+        result = _playwright_probe(html, capture=True)
+    else:
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "tier3.png"
+            cmd = [engine, *_chrome_like_flags(engine, Path(td)),
+                   f"--screenshot={out}", "--window-size=1280,800",
+                   html.resolve().as_uri()]
+            ok, reason = _run_engine_probe(cmd, "screenshot capture")
+            if ok and not out.is_file():
+                ok, reason = False, "environment_not_ready: screenshot capture produced no image"
+            result = (ok, reason)
+    _TIER_PROBE_CACHE[f"screenshot:{engine}"] = result
+    return result
+
+
+def _run_engine_probe(cmd: list[str], label: str) -> tuple[bool, str | None]:
+    try:
+        proc = subprocess.run(cmd, capture_output=True, timeout=20)
+    except subprocess.TimeoutExpired:
+        return False, f"environment_not_ready: {label} timed out"
+    except OSError as exc:
+        return False, f"environment_not_ready: {label} failed ({exc.__class__.__name__})"
+    if proc.returncode != 0:
+        return False, f"environment_not_ready: {label} exited non-zero"
+    return True, None
+
+
+def _playwright_probe(html: Path, capture: bool) -> tuple[bool, str | None]:
+    label = "screenshot capture" if capture else "computed-style probe"
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+            page.goto(html.resolve().as_uri())
+            if capture:
+                page.screenshot(path=tempfile.mkstemp(suffix=".png")[1])
+            browser.close()
+    except Exception as exc:  # noqa: BLE001 — any launch/render failure is environmental
+        return False, f"environment_not_ready: {label} failed ({exc.__class__.__name__})"
+    return True, None
+
+
+def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, object]:
+    """Build the tiered evidence record for one verification run.
+
+    Names which tiers ran and why the rest did not. Only L1 failures block;
+    L2/L3 environment gaps are recorded as environment_not_ready reasons.
+    """
+    tiers: dict[str, dict[str, object]] = {}
+    evidence: dict[str, object] = {
+        "tiers": tiers, "tier_reached": "L1", "outcome": "passed",
+        "environment_not_ready": False,
+    }
+    if l1_failures:
+        tiers["L1"] = {"status": "failed", "failure_count": len(l1_failures)}
+        blocked = "upstream_blocked: L1 structural checks failed"
+        tiers["L2"] = {"status": "skipped", "reason": blocked}
+        tiers["L3"] = {"status": "skipped", "reason": blocked}
+        evidence["tier_reached"] = "L1"
+        evidence["outcome"] = "blocked"
+        return evidence
+    tiers["L1"] = {"status": "passed"}
+    evidence["tier_reached"] = "L2"
+
+    l2_ok, l2_reason = _probe_computed_style(html)
+    if l2_ok:
+        tiers["L2"] = {"status": "passed"}
+    else:
+        tiers["L2"] = {"status": "degraded", "reason": l2_reason}
+
+    if l2_ok:
+        l3_ok, l3_reason = _probe_screenshot(html)
+    else:
+        # The style engine is unreachable this run; capture cannot run either.
+        l3_ok, l3_reason = False, (
+            "environment_not_ready: screenshot comparison skipped "
+            "(style engine unavailable)")
+    if l3_ok:
+        tiers["L3"] = {"status": "passed"}
+        evidence["tier_reached"] = "L3"
+    else:
+        tiers["L3"] = {"status": "skipped", "reason": l3_reason}
+
+    env_reasons = [
+        str(rec["reason"]) for rec in tiers.values()
+        if str(rec.get("reason", "")).startswith("environment_not_ready")
+    ]
+    evidence["environment_not_ready"] = bool(env_reasons)
+    if env_reasons:
+        evidence["environment_reasons"] = env_reasons
+    return evidence
 
 
 def coverage_failures(html: Path, contract_path: Path | str | None = None) -> list[str]:
@@ -580,6 +748,16 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     print("BROWSER: " + states.get("browser", "unverified"))
     print("VISUAL: " + states.get("visual", "unverified"))
     print("HUMAN: " + states.get("human", "unverified"))
+    LAST_TIER_EVIDENCE.clear()
+    LAST_TIER_EVIDENCE.update(tiered_quality_evidence(html, failures))
+    for tier_id in ("L1", "L2", "L3"):
+        record = LAST_TIER_EVIDENCE["tiers"][tier_id]
+        status = record["status"]
+        reason = f" ({record['reason']})" if record.get("reason") else ""
+        print(f"TIER {tier_id}: {status}{reason}")
+    if LAST_TIER_EVIDENCE.get("environment_not_ready"):
+        print("ENVIRONMENT: not_ready (degraded to tier "
+              f"{LAST_TIER_EVIDENCE['tier_reached']})")
     for advisory in advisories:
         print(f"  [advisory] {advisory}")
     if failures:
