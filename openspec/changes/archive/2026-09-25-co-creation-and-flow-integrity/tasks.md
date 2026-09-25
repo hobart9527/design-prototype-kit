@@ -2,7 +2,7 @@
 
 ## 1. Wave 1 — Rule ownership convergence and de-templated co-creation
 
-- [ ] T-01 Converge active rule ownership and retire legacy core-workflow references
+- [x] T-01 Converge active rule ownership and retire legacy core-workflow references
   - Depends on: none
   - Anchors: skills/spec-prototype/SKILL.md, skills/spec-prototype/references/core-kernel.md, skills/spec-prototype/references/stages/stage-3-skeleton.md, skills/spec-prototype/references/stages/stage-5-freeze.md, skills/spec-prototype/references/04-governance/usage.md
   - Write scope: skills/spec-prototype/SKILL.md, skills/spec-prototype/references/core-kernel.md, skills/spec-prototype/references/stages/stage-3-skeleton.md, skills/spec-prototype/references/stages/stage-5-freeze.md, skills/spec-prototype/references/04-governance/usage.md, tests/test_design_chain_continuity.py, tests/test_v10_integrity.py, tests/test_canonical_ontology.py, tests/test_prototype_coverage.py, tests/test_pipeline.py
@@ -11,7 +11,7 @@
   - Action: Retire active core-workflow.md references: SKILL.md lazy-load lines point to core-kernel.md and stages only; core-kernel.md routes lifecycle to references/04-governance/artifact-lifecycle.md; stage-3-skeleton.md carries the Coverage Selection rule inline; stage-5-freeze.md cites artifact-lifecycle.md. Keep usage.md lightweight-route examples. Update the five test files whose assertions still bind the retired file to assert the new owners. After T-03 lands, retarget the two heuristic-injection assertions that assert retired behavior: tests/test_v10_integrity.py (select_active_methods "3 <= len(selected) <= 6" at ~:479) must instead assert declared-method-id selection — methods named in the Spec text are selected and unnamed heuristics are not; tests/test_pipeline.py form-ergonomics heuristic-activation assertion must instead assert activation only via Spec-declared method ids. Do not delete core-workflow.md or edit archived Changes.
   - Specimen: Positive — `grep -rn "core-workflow" skills/spec-prototype/SKILL.md skills/spec-prototype/references/core-kernel.md skills/spec-prototype/references/stages/stage-3-skeleton.md skills/spec-prototype/references/stages/stage-5-freeze.md` returns no active-load references. Boundary — an Explore-intent IA-probe request is not forced through the five-stage pipeline by any remaining rule text; select_active_methods with spec_text naming no method ids returns an empty advisory list.
 
-- [ ] T-02 Unfix stage and dialectic templates so co-creation governs
+- [x] T-02 Unfix stage and dialectic templates so co-creation governs
   - Depends on: none
   - Anchors: skills/spec-prototype/references/stages/stage-0-explore.md, skills/spec-prototype/references/stages/stage-1-frame.md, skills/spec-prototype/references/dialectic/01-metaphor-benchmark.md, skills/spec-prototype/references/dialectic/02-topology-scaffolding.md, skills/spec-prototype/references/dialectic/03-sensory-kinetic.md, skills/spec-prototype/references/dialectic/04-falsification-compile.md, skills/spec-prototype/templates/discussion.md, skills/spec-prototype/references/04-governance/discussion.md
   - Write scope: skills/spec-prototype/references/stages/stage-0-explore.md, skills/spec-prototype/references/stages/stage-1-frame.md, skills/spec-prototype/references/dialectic/01-metaphor-benchmark.md, skills/spec-prototype/references/dialectic/02-topology-scaffolding.md, skills/spec-prototype/references/dialectic/03-sensory-kinetic.md, skills/spec-prototype/references/dialectic/04-falsification-compile.md, skills/spec-prototype/templates/discussion.md, tests/test_dialectic_enhancements.py, tests/test_semantic_freedom_regression.py
@@ -22,7 +22,7 @@
 
 ## 2. Wave 2 — Canonical dispatch and evidence-freeze seam closure
 
-- [ ] T-03 Bind canonical dispatch to real paths and dynamic envelope extraction
+- [x] T-03 Bind canonical dispatch to real paths and dynamic envelope extraction
   - Depends on: T-01
   - Anchors: skills/spec-prototype/scripts/execution_boundary.py:dispatch, skills/spec-prototype/scripts/assemble_envelope.py:select_active_methods, skills/spec-prototype/scripts/assemble_envelope.py:_canonical_ir_fields
   - Write scope: skills/spec-prototype/scripts/execution_boundary.py, skills/spec-prototype/scripts/assemble_envelope.py, tests/test_execution_boundary.py, tests/test_platform_envelope.py, tests/test_lean_builder_payload.py
@@ -31,7 +31,7 @@
   - Action: In execution_boundary.py dispatch (lines ~87-104), replace the fixed legacy file_map (product.md, m1.md, f1.md, r1.md, c1.md) with digest keys bound to the real relative paths recorded in the envelope's spec_sources, validating repository containment (canonical realpath, no symlink escape), source type, and required references before byte comparison, so a canonical-only fixture whose summaries point at r1.spec.md/r1.spec.json dispatches without demanding legacy files and coexisting legacy+canonical sets compare the objects each digest names. In assemble_envelope.py, stop injecting the six hardcoded global methods (decisive-3-frame, visual-rhythm-density, action-verb-lifecycle, etc. via select_active_methods heuristic triggers) and the fixed "responsive_folding: 390px" builder_guidance; derive active_methods and builder_guidance from authored Spec declarations (methods_applied/declared method ids and authored viewports) so unauthorized methods never reach the Builder, keeping select_active_methods only as a labeled advisory candidate source that is empty when the Spec names nothing.
   - Specimen: Positive — an envelope assembled from a canonical-only repo (specification r1.spec.md) passes execution_boundary.dispatch with matching digests. Boundary — removing or editing any bound source after assembly is refused with the stale-digest error naming the changed file.
 
-- [ ] T-04 Close evidence-freeze type asymmetry and status-diagnostics alignment in handoff
+- [x] T-04 Close evidence-freeze type asymmetry and status-diagnostics alignment in handoff
   - Depends on: T-01
   - Anchors: skills/spec-prototype/scripts/handoff.py:retained, skills/spec-prototype/scripts/handoff.py:freeze, skills/spec-prototype/scripts/handoff.py:check_downstream_gate
   - Write scope: skills/spec-prototype/scripts/handoff.py, tests/test_handoff_scope_integrity.py, tests/test_spec_only_freeze.py, tests/test_v10_integrity.py
