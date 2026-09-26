@@ -546,7 +546,8 @@ primary_surface: "cockpit-main"
     assert ir["scope"]["verification_scope"]["viewports"] == [390, 1280]
     assert ir["scope"]["verification_scope"]["required_states"] == ["state-draft", "state-sealed"]
     assert ir["scope"]["topology_scope"]["primary_surface"] == "cockpit-main"
-    assert "cockpit-main" in ir["scope"]["topology_scope"]["declared_surfaces"]
+    assert ir["scope"]["topology_scope"]["declared_surfaces"] == ["cockpit-main", "node-drawer", "mobile-sentinel"]
+    assert ir["scope"]["build_scope"]["context_surfaces"] == ["node-drawer", "mobile-sentinel"]
     assert "Throughput vs Liability" in ir["sources"]["core_tension"]
     assert len(ir["invariants"]) == 3
     assert any(i["id"] == "inv/wcag-contrast" and i["severity"] == "blocking" for i in ir["invariants"])

@@ -693,9 +693,16 @@ def compile_canonical_ir(
     primary_surface = fm_data.get("primary_surface")
     for line in surfaces_text.splitlines():
         line = line.strip()
-        m_surf = re.search(r"`([a-zA-Z0-9_\-\/]+)`", line)
-        if not m_surf:
-            m_surf = re.search(r"(?:surface|console|reader|workspace)/([a-zA-Z0-9_\-]+)", line)
+        # Skip meso layout constructs
+        if re.search(r"[`*]*(massing_pattern|kinematics|data_syntax)[`*]*\s*[:：]", line, re.IGNORECASE):
+            continue
+        # Skip OOUX entity declarations unless explicitly naming a surface
+        if re.search(r"[`*]*(?:ooux|entity\s+model|实体模型|实体拓扑)[`*]*\s*[:：]", line, re.IGNORECASE) and not re.search(r"(?:surface|console|reader|workspace)/", line, re.IGNORECASE):
+            continue
+
+        m_surf = re.search(r"(?:surfaces?|consoles?|readers?|workspaces?)/([a-zA-Z0-9_\-]+)", line, re.IGNORECASE)
+        if not m_surf and re.search(r"(?:primary|contextual|supporting|glance|surfaces?|主|上下文|辅助|扫视|表面|工作区)", line, re.IGNORECASE):
+            m_surf = re.search(r"`([a-zA-Z0-9_\-]+)`", line)
         if m_surf:
             s_name = Path(m_surf.group(1)).name
             if s_name not in declared_surfaces:
