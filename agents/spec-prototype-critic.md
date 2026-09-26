@@ -90,6 +90,28 @@ cancel/close followed by re-entry, retry and reset where present. Flag a silent
 no-op, stale state or untested enabled branch as an implementation defect or
 missing evidence; aggregate passing checks do not override it.
 
+### Tiered evidence protocol (L1/L2/L3)
+
+Quality verification runs as a three-tier evidence chain mirroring
+`scripts/verify_prototype_quality.py`:
+
+- **L1 — DOM/ARIA/`data-state` structural checks:** static source inspection of
+  markup, roles, ARIA attributes and `data-state` wiring. Always available,
+  independent of any browser, and the **only blocking tier**: an L1 failure is a
+  code-assertion failure.
+- **L2 — computed-style checks:** token application and computed styles,
+  available only when a reachable headless style engine (Chromium-family,
+  Firefox, or Playwright) exists. Non-blocking.
+- **L3 — screenshot comparison:** best-effort visual capture comparison.
+  Non-blocking.
+
+When the browser, fonts, or GPU are missing, degrade to the reachable tier and
+report `environment_not_ready` naming the tier reached (`L1`/`L2`). A missing
+environment is an explicit degradation, never a silent skip of L2/L3 and never
+misreported as a code-assertion failure. Read the run's `TIER L1/L2/L3` and
+`ENVIRONMENT: not_ready` output to know which tiers actually ran and why the
+rest did not.
+
 ## Exercise professional design judgment
 
 Judge the whole product experience, not only correctness or taste:
