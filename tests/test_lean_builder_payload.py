@@ -14,7 +14,7 @@ SCRIPTS = ROOT / "skills/spec-prototype/scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import assemble_envelope  # noqa: E402
-from test_platform_envelope import SLICE, build_repo  # noqa: E402
+from test_platform_envelope import SLICE, build_canonical_repo, build_repo, write  # noqa: E402
 
 IR_FIELDS = (
     "identity",
@@ -234,3 +234,26 @@ def test_undeclared_device_keeps_both_extremes(tmp_path):
     with_device(root, "")
     env = assemble(root)
     assert viewport_widths(env) == [1280, 390]
+
+
+# T-02: authored verification viewports own the inspection set; the device
+# ladder is only the fallback when the Canonical Spec IR declares none.
+
+def with_ir_viewports(root: Path, viewports: list) -> None:
+    ir_path = root / "prototype/contracts/compiled/cluster-overview/r1.spec.json"
+    ir = json.loads(ir_path.read_text(encoding="utf-8"))
+    ir["scope"]["verification_scope"]["viewports"] = viewports
+    ir_path.write_text(json.dumps(ir, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def test_authored_ir_viewports_override_the_device_ladder(tmp_path):
+    root = build_canonical_repo(tmp_path)
+    with_ir_viewports(root, [1440, 1024, 1440, 0])
+    # device-context: desktop would otherwise inspect 1280 only; the authored
+    # widths win sorted, deduped, positive.
+    write(root / "prototype/product.md",
+          "# Product Thesis: Terminal Cluster Workbench\n\n"
+          "```prototype-context\nrecord: product\ndevice-context: desktop\n```\n")
+    env = assemble_envelope.assemble(root, "cluster-overview")
+    assert viewport_widths(env) == [1024, 1440]
+    assert "--viewports 1024,1440" in env["capture_command"]

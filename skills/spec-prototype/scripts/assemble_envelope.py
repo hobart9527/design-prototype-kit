@@ -863,14 +863,23 @@ def build_builder_payload(envelope: Dict[str, Any], *, include_debug: bool = Fal
     return payload
 
 
-def _mandatory_viewports(platform: Dict[str, Any]) -> List[Dict[str, str]]:
-    """Derive the inspection viewports from the authored device fact.
+def _mandatory_viewports(
+        platform: Dict[str, Any], authored: Optional[List[int]] = None
+) -> List[Dict[str, str]]:
+    """Derive the inspection viewports from authored facts.
 
-    A mismatched viewport gate is a false negative, not a stricter one: a
-    desktop-only console has no authored mobile contract to violate, and a
-    touch-primary flow has no authored desktop one. An undeclared device keeps
-    both extremes rather than inventing a restricted set.
+    Precedence: when the Canonical Spec IR declares `scope.verification_scope.
+    viewports`, those widths win (sorted, deduped, positive) and the device
+    ladder below is only the fallback. A mismatched viewport gate is a false
+    negative, not a stricter one: a desktop-only console has no authored mobile
+    contract to violate, and a touch-primary flow has no authored desktop one.
+    An undeclared device keeps both extremes rather than inventing a restricted
+    set.
     """
+    if authored:
+        return [{"width": width, "name": f"authored-{width}",
+                 "focus": "authored verification viewport"}
+                for width in authored]
     device = str(platform.get("device_context") or "").strip().lower()
     desktop = {"width": 1280, "name": "desktop-canvas",
                "focus": "spatial hierarchy and high-density telemetry"}
@@ -1864,10 +1873,18 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         ir_open_design_space.append("spatial-topology")
 
     # The derived inspection contract must actually reach capture.mjs, otherwise
-    # the authored device fact has no consumer. A declared device forwards its
-    # derived viewports and states; an undeclared one leaves capture.mjs's own
-    # device discovery intact rather than inventing a restricted set.
-    mandatory_viewports = _mandatory_viewports(dict(platform_context["platform"]))
+    # the authored device fact has no consumer. Authored verification viewports
+    # from the Canonical Spec IR take precedence over the device ladder; a
+    # declared device forwards its derived viewports and states; an undeclared
+    # one leaves capture.mjs's own device discovery intact rather than inventing
+    # a restricted set.
+    authored_ir_viewports: List[int] = []
+    if canonical_ir_data is not None:
+        authored_ir_viewports = sorted({
+            int(v) for v in ((canonical_ir_data.get("scope") or {}).get("verification_scope") or {}).get("viewports") or []
+            if isinstance(v, (int, float)) and int(v) > 0})
+    mandatory_viewports = _mandatory_viewports(
+        dict(platform_context["platform"]), authored=authored_ir_viewports)
     device_declared = bool(str(platform_context["platform"].get("device_context") or "").strip())
     if device_declared:
         capture_cmd = (
@@ -2046,7 +2063,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "platform": dict(platform_context["platform"]),
         "contract_lint": contract_lint,
         "inspection_contract": {
-            "mandatory_viewports": _mandatory_viewports(dict(platform_context["platform"])),
+            "mandatory_viewports": mandatory_viewports,
             "mandatory_states": authored_states,
             "visual_inspection_mandate": "Critic must use Read tool to visually inspect captured screenshots at every mandatory viewport; textual HTML review alone is non-independent."
         },
