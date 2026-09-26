@@ -11,3 +11,6 @@ benchmarks/results/
 benchmarks/baselines/*/*
 !benchmarks/baselines/*/MANIFEST.json
 
+# Runtime prototype artifacts generated during design sessions
+prototype/
+
