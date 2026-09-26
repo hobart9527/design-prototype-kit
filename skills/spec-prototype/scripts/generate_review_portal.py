@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-import re
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, List
 import json
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -29,10 +28,6 @@ def _read_verification(root: Path) -> Dict[str, str]:
 
 def discover_surfaces(root: Path) -> List[Dict[str, str]]:
     surfaces: List[Dict[str, str]] = []
-
-    # Check surface map
-    smap = root / "prototype/contracts/surface-maps/m1.md"
-    smap_text = smap.read_text(encoding="utf-8") if smap.is_file() else ""
 
     # Primary Core Anchor(s) (supporting neutral anchor/ and legacy hero-anchor/)
     exp_dir = root / "prototype/experiments"

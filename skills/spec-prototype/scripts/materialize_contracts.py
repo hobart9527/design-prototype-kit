@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import re
 import shutil
 import sys
@@ -397,7 +396,7 @@ invariants: {invariants_str}
 """)
 
     # 4. Tokens
-    templates["tokens"] = (root / "prototype/contracts/tokens/t1.md", f"""# Design Tokens Revision: t1
+    templates["tokens"] = (root / "prototype/contracts/tokens/t1.md", """# Design Tokens Revision: t1
 
 - Foundation revision: f1
 - Tokens revision: t1

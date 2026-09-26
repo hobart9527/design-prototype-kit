@@ -898,7 +898,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         "  /* Typography System */",
         f"  --font-sans: {f['sans']};",
         f"  --font-mono: {f['mono']};",
-        f"  --font-variant-numeric: tabular-nums;",
+        "  --font-variant-numeric: tabular-nums;",
         f"  --text-primary: {c['text_primary']};",
         f"  --text-secondary: {c['text_secondary']};",
         f"  --text-tertiary: {c['text_tertiary']};",
@@ -926,7 +926,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --paper-bg: {c.get('paper_bg', c['bg_surface'])};",
         f"  --ink-primary: {c.get('ink_primary', c['text_primary'])};",
         f"  --ink-secondary: {c.get('ink_secondary', c['text_secondary'])};",
-        f"  --reading-measure-max: 68ch;",
+        "  --reading-measure-max: 68ch;",
         f"  --line-height-body: {tokens.get('typography', {}).get('line_height_body', '1.5')};",
         f"  --line-height-heading: {tokens.get('typography', {}).get('line_height_heading', '1.2')};",
         "  --min-touch-target: 44px;",
@@ -1016,7 +1016,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
     if m.get("tactile_active"):
         lines.extend([
             "/* Mechanical Tactile Feedback (:active detent) */",
-            f".btn-tactile:active, button:active, [role=\"button\"]:active {{",
+            ".btn-tactile:active, button:active, [role=\"button\"]:active {",
             f"  transform: scale({m['active_scale']});",
             f"  transition: transform {m['duration_fast']} {m['ease_hud']};",
             "}",
@@ -1065,8 +1065,6 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     r = tokens["radii"]
     f = tokens["fonts"]
     m = tokens.get("motion", {})
-    sem = tokens.get("semantics", {})
-    comp = tokens.get("components", {})
 
     # Determine authority provenance
     # Explicit Human Decision > Frozen Product Rule > Derived Token > Default

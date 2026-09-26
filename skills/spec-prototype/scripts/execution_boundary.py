@@ -86,7 +86,6 @@ def dispatch(args, active):
         # path of the object it names, so the guard compares the bytes of the
         # object the envelope actually bound (canonical-only envelopes name
         # r1.spec.md/r1.spec.json and never demand legacy pillar files).
-        slice_id = data['slice_id']
         for digest_key, bound in spec_sources.items():
             if isinstance(bound, str):
                 # Legacy pre-path-binding envelope: it names no object, so the

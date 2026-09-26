@@ -14,7 +14,6 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prototype_context  # noqa: E402
@@ -224,11 +223,10 @@ def _style_engine_command() -> str | None:
         found = shutil.which(name)
         if found:
             return found
-    try:
-        import playwright  # noqa: F401
+    import importlib.util
+    if importlib.util.find_spec("playwright") is not None:
         return "playwright"
-    except ImportError:
-        return None
+    return None
 
 
 def _chrome_like_flags(engine: str, profile_dir: Path) -> list[str]:
@@ -524,12 +522,6 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
 
     # Navigation integrity: every relative href must resolve inside the delivered prototype scope
     broken_nav = []
-    artifact_root = html.parent
-    for depth in range(1, 5):
-        candidate = html.parents[depth - 1]
-        if (candidate / "shared/tokens.css").is_file():
-            artifact_root = candidate
-            break
     # Only navigable anchors are checked here: stylesheet/asset links are validated by token inheritance.
     for href in re.findall(r'<a\b[^>]*href=["\']([^"\'#][^"\']*)["\']', source, re.IGNORECASE):
         if href.startswith(("http://", "https://", "mailto:", "data:", "javascript:")):

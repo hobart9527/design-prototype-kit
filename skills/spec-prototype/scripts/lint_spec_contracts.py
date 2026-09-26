@@ -49,7 +49,6 @@ def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
         return errors
 
     prod_text = required_paths["product"].read_text(encoding="utf-8")
-    smap_text = required_paths["surface_map"].read_text(encoding="utf-8")
     f1_text = required_paths["foundation"].read_text(encoding="utf-8")
     c1_text = required_paths["slice_contract"].read_text(encoding="utf-8")
     r1_text = required_paths["specification"].read_text(encoding="utf-8")
@@ -310,7 +309,6 @@ def lint_canonical_spec_ir(root: Path, slice_id: str, candidate_id: str = "r1") 
 
     spec_tier = data.get("spec_tier", "execution_spec")
     state_model = data.get("state_model") or {}
-    actions = data.get("actions") or []
 
     # Tier admission: only an execution_spec claim demands the Stage 3/4 state
     # machine. An intent_spec validates at its tier — demanding execution_spec
