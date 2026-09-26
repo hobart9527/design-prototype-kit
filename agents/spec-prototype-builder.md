@@ -171,6 +171,11 @@ A rendered screen that was never driven through its committed action is not cove
   DOM status feedback. Any clear status surface satisfies this — `role="status"`,
   `class="toast"`, or a declared feedback element — the mechanism is yours, but silence
   after a commit is not acceptable.
+- **Destructive Operation Safety Triad (高危操作防护三要素 · 关键任务不变量)**:
+  For any hazardous, destructive, or state-mutating operation (e.g. 下线节点, 排空机器, 清理生产实例):
+  1. *Pre-commit Consequence Modal*: MUST open a `<dialog id="...">` modal before committing, showing the blast radius / consequence, with explicit confirmation language (e.g. `确认排空`, `确认下线`, `Drain`).
+  2. *Post-commit Observable State*: Committing the action MUST immediately render clear state feedback in the DOM matching: `已排空`, `排空中`, `处理中`, `已完成` (or `draining`).
+  3. *Safe Exit / Rollback Affordance*: MUST provide a clearly visible, operable undo or rollback trigger (e.g. `回滚`, `撤销`, `取消`, `rollback`, `undo`) allowing the operator to reverse or abort the consequence.
 - **Container Proximity Guidance**: Match container weight to operational hazard and input
   complexity. Lightweight toggles are usually best served in-situ (popover, inline detent,
   flyout) rather than a blocking drawer or scrim; dense multi-field forms suit a drawer and

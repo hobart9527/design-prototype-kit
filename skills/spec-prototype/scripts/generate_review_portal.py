@@ -331,7 +331,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       <span>SHORTCUTS: [SPACE/P: DRAIN] [ESC: CLOSE] [J/K: SELECT]</span>
     </div>
     <div class="status-item">
-      <span>DTCG TOKENS: FROZEN</span>
+      <span>DTCG TOKENS: SEALED_PROVISIONAL</span>
     </div>
   </div>
 

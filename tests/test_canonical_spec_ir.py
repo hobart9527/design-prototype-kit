@@ -618,4 +618,33 @@ def test_canonical_envelope_anchors_and_states_carry_derived_authority(tmp_path:
     for ds in domain_states:
         assert ds["authority"] == "derived", f"Domain state {ds} must carry derived authority"
 
+    # Layout regions and directives must be derived, not explicit
+    regions = env["layout_directives"]["regions"]
+    for r in regions:
+        assert r["authority"] == "derived", f"Region {r} must carry derived authority"
+    assert env["layout_directives"]["authority"] == "derived"
+    assert env["visual_directives"]["density_calibration"]["authority"] == "derived"
+
+
+def test_surface_extraction_filters_out_viewport_and_testing_dimensions(tmp_path: Path):
+    """Verify compile_spec_ir filters out Viewport/Screen/Breakpoint noise from declared surfaces."""
+    disc_text = """
+### Spatial Anatomy & Surface Topology
+- `surfaces/cockpit-main` (主表面): 核心操作台
+- `Viewport` (视口尺寸): 1280px / 390px
+- `surfaces/incident-drawer` (抽屉表面): 详情检视
+- `Breakpoint`: 320px fold
+"""
+    disc_path = tmp_path / "prototype/discussion.md"
+    disc_path.parent.mkdir(parents=True)
+    disc_path.write_text(disc_text, encoding="utf-8")
+
+    ir = compile_canonical_ir(root=tmp_path, slice_id="cockpit-main", allow_incomplete=True)
+    declared = ir["scope"]["topology_scope"]["declared_surfaces"]
+    assert "cockpit-main" in declared
+    assert "incident-drawer" in declared
+    assert "Viewport" not in declared
+    assert "Breakpoint" not in declared
+
+
 

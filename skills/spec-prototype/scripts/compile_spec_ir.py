@@ -703,8 +703,15 @@ def compile_canonical_ir(
         m_surf = re.search(r"(?:surfaces?|consoles?|readers?|workspaces?)/([a-zA-Z0-9_\-]+)", line, re.IGNORECASE)
         if not m_surf and re.search(r"(?:primary|contextual|supporting|glance|surfaces?|主|上下文|辅助|扫视|表面|工作区)", line, re.IGNORECASE):
             m_surf = re.search(r"`([a-zA-Z0-9_\-]+)`", line)
+        NON_SURFACE_NAMES = {
+            "viewport", "viewports", "screen", "screens", "breakpoint", "breakpoints",
+            "device", "devices", "mobile", "desktop", "tablet", "width", "height",
+            "dimension", "dimensions", "resolution", "resolutions"
+        }
         if m_surf:
             s_name = Path(m_surf.group(1)).name
+            if s_name.lower() in NON_SURFACE_NAMES:
+                continue
             if s_name not in declared_surfaces:
                 declared_surfaces.append(s_name)
             if ("primary" in line.lower() or "主" in line) and not primary_surface:
@@ -713,6 +720,8 @@ def compile_canonical_ir(
     if fm_data.get("declared_surfaces") and isinstance(fm_data["declared_surfaces"], list):
         for s in fm_data["declared_surfaces"]:
             s_name = Path(str(s)).name
+            if s_name.lower() in NON_SURFACE_NAMES:
+                continue
             if s_name not in declared_surfaces:
                 declared_surfaces.append(s_name)
 

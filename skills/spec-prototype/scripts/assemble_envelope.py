@@ -192,7 +192,7 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
             "relation": "primary-focus",
             "scroll_owner": "self",
             "continuity": "preserve-primary-context",
-            "authority": "explicit",
+            "authority": "derived",
             "source": _ir_pointer(ref, "scope/topology_scope/primary_surface"),
         })
     for surface in declared:
@@ -204,7 +204,7 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
             "relation": "adjacent-to-primary",
             "scroll_owner": "self",
             "continuity": "preserve-during-mutation",
-            "authority": "explicit",
+            "authority": "derived",
             "source": _ir_pointer(ref, "scope/topology_scope/declared_surfaces"),
         })
 
@@ -213,7 +213,7 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
                               else "natural-flow"),
         "regions": regions,
         "navigation": list(topology.get("declared_surfaces") or []),
-        "authority": "explicit",
+        "authority": "derived",
         "source": _ir_pointer(ref, "scope/topology_scope"),
     }
 
@@ -224,7 +224,7 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
         "density_calibration": {
             "base_spacing": "var(--space-2)",
             "typography": "var(--font-sans)",
-            "authority": "explicit",
+            "authority": "derived",
             "source": _ir_pointer(ref, "foundation/five_axes"),
         },
     }
@@ -1752,7 +1752,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
             "relation": "primary-focus",
             "scroll_owner": "self",
             "continuity": "preserve-primary-context",
-            "authority": "explicit",
+            "authority": "derived",
             "source": "m1.md#topology"
         })
     if ooux_topology.get("context_region"):
@@ -1762,7 +1762,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
             "relation": "adjacent-to-primary",
             "scroll_owner": "self",
             "continuity": "preserve-during-mutation",
-            "authority": "explicit",
+            "authority": "derived",
             "source": "m1.md#topology"
         })
     # No synthetic topology: an undeclared region set stays empty and the
@@ -1772,7 +1772,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "viewport_strategy": "100vh-locked" if layout_profile in ("dense-console", "operational-canvas") else "natural-flow",
         "regions": ir_regions,
         "navigation": nav_links,
-        "authority": "explicit",
+        "authority": "derived",
         "source": "m1.md"
     }
 
