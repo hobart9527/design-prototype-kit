@@ -161,7 +161,7 @@ def _complete_skill(root):
     (root / "templates").mkdir(parents=True, exist_ok=True)
     (root / "SKILL.md").write_text("skill", encoding="utf-8")
     (root / "CONTEXT.md").write_text("context", encoding="utf-8")
-    (root / "references/core-workflow.md").write_text("workflow", encoding="utf-8")
+    (root / "references/core-kernel.md").write_text("kernel", encoding="utf-8")
     (root / "templates/slice.md").write_text("t", encoding="utf-8")
     return root
 
@@ -173,7 +173,7 @@ def test_incomplete_skill_source_is_refused_and_named(tmp_path, monkeypatch):
     assert bl.variant_sources("candidate_skill")["skill"] == complete
 
     missing = {"SKILL.md": "SKILL.md", "CONTEXT.md": "CONTEXT.md",
-               "references/core-workflow.md": "references/core-workflow.md"}
+               "references/core-kernel.md": "references/core-kernel.md"}
     for name, rel in missing.items():
         complete.joinpath(rel).unlink()
         with pytest.raises(bl.BenchBlocked) as excinfo:

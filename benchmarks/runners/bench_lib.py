@@ -203,28 +203,33 @@ def extract_user_input(text: str) -> str | None:
 # skill, never from benchmarks/baselines/*/MANIFEST.json: a complete baseline
 # legitimately ships no method-manifest.json or surface-map-manifest.json, so a
 # manifest-shaped check would refuse the valid control arm.
-REQUIRED_SKILL_ENTRIES = ("SKILL.md", "CONTEXT.md", "references/core-workflow.md")
+REQUIRED_SKILL_ENTRIES = ("SKILL.md", "CONTEXT.md", "references/core-kernel.md")
 REQUIRED_SKILL_TEMPLATE_DIR = "templates"
+# A frozen baseline tree is already verified file-by-file against its own
+# MANIFEST.json, so it is held to the historical shape it was frozen with, not to
+# the candidate entry contract: v10.2.1-stable predates references/core-kernel.md.
+REQUIRED_BASELINE_ENTRIES = ("SKILL.md", "CONTEXT.md")
 
 
-def skill_contract_gaps(skill_root) -> list[str]:
+def skill_contract_gaps(skill_root, entries=REQUIRED_SKILL_ENTRIES) -> list[str]:
     """Required entries a resolved skill source is missing."""
     root = pathlib.Path(skill_root)
-    gaps = [rel for rel in REQUIRED_SKILL_ENTRIES if not (root / rel).is_file()]
+    gaps = [rel for rel in entries if not (root / rel).is_file()]
     templates = root / REQUIRED_SKILL_TEMPLATE_DIR
     if not (templates.is_dir() and any(p.is_file() for p in templates.iterdir())):
         gaps.append(f"{REQUIRED_SKILL_TEMPLATE_DIR}/*")
     return gaps
 
 
-def require_complete_skill(skill_root, origin: str) -> None:
+def require_complete_skill(skill_root, origin: str,
+                           entries=REQUIRED_SKILL_ENTRIES) -> None:
     """Refuse an incomplete resolved source before a workspace is built from it.
 
     Names the resolved path and every missing entry so an operator learns which
     contract member failed without inspecting the tree. The source is never
     repaired here: a refused tree is left exactly as found.
     """
-    gaps = skill_contract_gaps(skill_root)
+    gaps = skill_contract_gaps(skill_root, entries)
     if gaps:
         raise BenchBlocked(f"{origin}: incomplete skill source {skill_root}, "
                            f"missing {', '.join(gaps)}")
@@ -260,7 +265,8 @@ def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
         stale = divergences()
         if not stale:
             # Empty hashes prove nothing: the tree is still held to the shape contract.
-            require_complete_skill(base / "skills/spec-prototype", f"baseline {tag} (cached)")
+            require_complete_skill(base / "skills/spec-prototype",
+                                   f"baseline {tag} (cached)", REQUIRED_BASELINE_ENTRIES)
             return base
         shutil.rmtree(base / "skills", ignore_errors=True)
         shutil.rmtree(base / "agents", ignore_errors=True)
@@ -280,7 +286,8 @@ def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
         raise BenchBlocked(f"baseline {tag}: {len(divergent)} file(s) diverge from MANIFEST "
                            f"at {rev[:12]}: {divergent[:3]}")
     # The manifest pins the revision; it does not prove the revision revives a skill shape.
-    require_complete_skill(base / "skills/spec-prototype", f"baseline {tag} (restored {rev[:12]})")
+    require_complete_skill(base / "skills/spec-prototype",
+                           f"baseline {tag} (restored {rev[:12]})", REQUIRED_BASELINE_ENTRIES)
     return base
 
 
