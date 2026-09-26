@@ -1390,7 +1390,7 @@ def test_verify_quality_negative_checks_block_goodhart_loopholes(tmp_path: Path)
 
 
 def test_reconcile_review_tokens_back_to_contracts(tmp_path: Path):
-    """Verify reconcile_tokens_from_css captures human review edits in tokens.css and updates discussion & t1.json."""
+    """Verify uni-directional derivation: hand edits to tokens.css cause out_of_sync rejection."""
     compile_mod = _load("compile_tokens", "compile_tokens.py")
 
     discussion = tmp_path / "discussion.md"
@@ -1413,15 +1413,9 @@ def test_reconcile_review_tokens_back_to_contracts(tmp_path: Path):
     modified_css = re.sub(r"--accent-primary:\s*#[0-9a-fA-F]+;", "--accent-primary: #38bdf8;", css_content)
     out_css.write_text(modified_css, encoding="utf-8")
 
-    # Reconcile back into discussion and contracts
-    compile_mod.reconcile_tokens_from_css(str(out_css), str(discussion), str(out_json), str(out_md))
-
-    # Verify discussion and t1.json received the review edit
-    updated_disc = discussion.read_text(encoding="utf-8")
-    assert "--accent-primary: #38bdf8" in updated_disc
-
-    updated_json = json.loads(out_json.read_text(encoding="utf-8"))
-    assert updated_json["color"]["primary"]["$value"] == "#38bdf8"
+    # Verify uni-directional fuse catches drift
+    sync_status = compile_mod.check_tokens_sync(str(out_css), str(discussion))
+    assert sync_status["state"] == "out_of_sync"
 
 
 
