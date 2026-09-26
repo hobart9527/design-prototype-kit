@@ -316,7 +316,7 @@ def lint_canonical_spec_ir(root: Path, slice_id: str, candidate_id: str = "r1") 
     # machine. An intent_spec validates at its tier — demanding execution_spec
     # fields here would reject every legitimate Stage 1 compilation.
     if spec_tier == "execution_spec":
-        missing_tiers = [key for key in ("state_model", "actions") if not data.get(key)]
+        missing_tiers = [key for key in ("state_model", "actions") if key not in data or data[key] is None]
         empty_state = spec_tier == "execution_spec" and not any(
             (state_model.get(k) for k in ("domain_states", "interaction_states", "data_scenarios", "stress_fixtures"))
         )
