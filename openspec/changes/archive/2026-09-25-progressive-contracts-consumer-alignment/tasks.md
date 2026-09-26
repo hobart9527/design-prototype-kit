@@ -2,7 +2,7 @@
 
 ## 1. Wave 3 — Progressive contracts, compiler, and consumer validation (Vertical Slice)
 
-- [ ] T-01 Progressive schema tiers, meso slots, invariant retirement, and contract lint alignment
+- [x] T-01 Progressive schema tiers, meso slots, invariant retirement, and contract lint alignment
   - Depends on: none
   - Anchors: skills/spec-prototype/scripts/compile_spec_ir.py:compile_spec_ir, skills/spec-prototype/schemas/prototype-spec.v1.json, skills/spec-prototype/scripts/lint_spec_contracts.py:277-330, tests/test_canonical_spec_ir.py, tests/test_contract_seam_fidelity.py
   - Write scope: skills/spec-prototype/scripts/compile_spec_ir.py, skills/spec-prototype/schemas/prototype-spec.v1.json, skills/spec-prototype/scripts/lint_spec_contracts.py, tests/test_canonical_spec_ir.py, tests/test_contract_seam_fidelity.py
@@ -11,7 +11,7 @@
   - Action: Vertical Slice encompassing schema authoring, IR compilation, and consumer validation. Introduce progressive schema tiers in prototype-spec.v1.json and compile_spec_ir.py: `intent_spec` requires only problem thesis, topology, and five-axis/craft intent (Stage 1 admission, no state_model requirement); `execution_spec` requires full state machine and action contracts (Stage 3/4 admission). Compile IR emits the derived tier and stamps it. Structurally support meso assembly slots: `layout_directives.massing_pattern`, `interaction_spec.kinematics`, `visual_directives.data_syntax`; absence of declared massing smooths to fallback without blocking compilation. Remove injected telemetry/4096 GPU template invariants from compile_spec_ir.py: invariants without authored source are not injected; only discussion/Spec-authored invariants reach the IR. Fix state-id word-splitting defect so identifiers like `interaction/inspecting` pass through intact. Align lint_spec_contracts.py tier-admission presence rule: execution_spec claim fails E021 only when state_model/actions key is absent or None, or when every state_model section is empty; present-but-empty actions array with populated state_model lints clean. Update test_canonical_spec_ir.py and test_contract_seam_fidelity.py to assert new tiered behaviors, whole identifiers, and clean presence semantics.
   - Specimen: Positive — a Stage 1 spec with thesis, topology, and craft intent but no states compiles and validates as intent_spec. Boundary — an execution_spec IR with populated state_model and actions: [] lints clean without E021 rejection; Stage-1-only IR submitted where execution_spec is required fails with missing-state message; interaction/inspecting survives compilation as one identifier.
 
-- [ ] T-02 Tokens uni-directional derivation, freshness fuse, and craft stack consumption
+- [x] T-02 Tokens uni-directional derivation, freshness fuse, and craft stack consumption
   - Depends on: T-01
   - Anchors: skills/spec-prototype/scripts/compile_tokens.py, tests/test_tokens.py, tests/test_craft_stack.py
   - Write scope: skills/spec-prototype/scripts/compile_tokens.py, tests/test_tokens.py, tests/test_craft_stack.py
@@ -22,7 +22,7 @@
 
 ## 2. Wave 4 — Consumer freedom and tiered evaluation
 
-- [ ] T-03 Builder/Critic meso consumption and dual-dimension review
+- [x] T-03 Builder/Critic meso consumption and dual-dimension review
   - Depends on: T-01
   - Anchors: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, skills/spec-prototype/references/02-craft-methods/visual-craft.md, skills/spec-prototype/references/02-craft-methods/data-information.md, skills/spec-prototype/references/02-craft-methods/ia-interaction.md, tests/test_pipeline.py:145-175
   - Write scope: agents/spec-prototype-builder.md, agents/spec-prototype-critic.md, skills/spec-prototype/references/02-craft-methods/visual-craft.md, skills/spec-prototype/references/02-craft-methods/data-information.md, skills/spec-prototype/references/02-craft-methods/ia-interaction.md, tests/test_pipeline.py
@@ -31,7 +31,7 @@
   - Action: Builder prompt: consume meso constructs — build spatial center of gravity from `massing_pattern`, implement deformation and focus-restore transitions from `kinematics`, implement compact alignment and micro-trend charts from `data_syntax`; remove uniform large-radius, wide-padding, negative-tracking biases so minimal, native, and high-density styles are reachable from real business constraints. Critic prompt: dual-dimension review — engineering contract (state-machine coverage, DOM reachability, accessibility) AND cognitive quality (visual signal-to-noise ratio, state-transition spatio-temporal momentum conservation, negative-space breathing); never pass a mediocre genericized UI merely for being compliant and error-free; block prototypes that lose context via crude `display: none`; do not demand frosted-glass or decorative layers on dense consoles. Update three craft-method references so defaults are declared-attribute-driven rather than fixed style tables. Retarget test_pipeline.py:152-154 for new ownership wording; keep quality-floor.md and discussion-template assertions untouched.
   - Specimen: Positive — a dense console Spec with `massing_pattern` declared produces Builder guidance naming spatial hierarchy from that pattern and no decorative-layer demand. Boundary — Critic review of context-destroying `display: none` prototype is blocked even when engineering checks pass; compliant genericized flat UI fails cognitive dimension.
 
-- [ ] T-04 Tiered evidence chain in quality verification and eval alignment
+- [x] T-04 Tiered evidence chain in quality verification and eval alignment
   - Depends on: none
   - Anchors: skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/evals/eval.yaml, tests/test_dialectic_enhancements.py:56-173, tests/test_v10_integrity.py:37-58
   - Write scope: skills/spec-prototype/scripts/verify_prototype_quality.py, skills/spec-prototype/evals/eval.yaml, tests/test_quality_tiers.py, tests/test_dialectic_enhancements.py, tests/test_v10_integrity.py
