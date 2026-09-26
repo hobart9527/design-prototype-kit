@@ -158,7 +158,7 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
             entries.append({
                 "name": name,
                 "type": kind,
-                "authority": item.get("authority", "explicit") if isinstance(item, dict) else "explicit",
+                "authority": item.get("authority", "derived") if isinstance(item, dict) else "derived",
                 "source": _ir_pointer(ref, f"{pointer}/{index}"),
             })
         return entries
@@ -173,8 +173,11 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
         "ui_transient_states": state_entries(state_model.get("interaction_states"), "ui_transient_state",
                                              "state_model/interaction_states"),
         "anchors": [
-            {"source": anchor, "transfer": [], "non_transfer": [],
-             "authority": "explicit", "source_ref": _ir_pointer(ref, f"sources/reality_anchors/{index}")}
+            {"source": anchor.get("source", anchor) if isinstance(anchor, dict) else anchor,
+             "transfer": anchor.get("transfer", []) if isinstance(anchor, dict) else [],
+             "non_transfer": anchor.get("non_transfer", []) if isinstance(anchor, dict) else [],
+             "authority": anchor.get("authority", "derived") if isinstance(anchor, dict) else "derived",
+             "source_ref": _ir_pointer(ref, f"sources/reality_anchors/{index}")}
             for index, anchor in enumerate(sources.get("reality_anchors") or [])
         ],
     }

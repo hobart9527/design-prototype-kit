@@ -556,3 +556,66 @@ primary_surface: "cockpit-main"
     assert ir["layout_directives"]["massing_pattern"] == "canvas-inspector"
 
 
+def test_execution_boundary_admits_workspace_and_relative_helper_scripts(tmp_path: Path):
+    """Verify execution_boundary admits helpers invoked via workspace-relative or installed paths."""
+    import execution_boundary
+
+    fake_workspace = tmp_path / "custom-bench"
+    skill_scripts = fake_workspace / ".claude/skills/spec-prototype/scripts"
+    skill_scripts.mkdir(parents=True)
+    helper = skill_scripts / "compile_spec_ir.py"
+    helper.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+
+    # Workspace-local relative invocation
+    execution_boundary.shell_read(f"python3 {helper} --slice test", fake_workspace)
+    # Standard repository invocation
+    execution_boundary.shell_read("python3 skills/spec-prototype/scripts/compile_tokens.py --discussion d.md", fake_workspace)
+    # Node helpers
+    execution_boundary.shell_read("node skills/spec-prototype/scripts/preview.mjs", fake_workspace)
+
+    # Rogue script must still be rejected
+    rogue = skill_scripts / "rogue_tool.py"
+    rogue.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="Only installed helpers run"):
+        execution_boundary.shell_read(f"python3 {rogue}", fake_workspace)
+
+
+def test_canonical_envelope_anchors_and_states_carry_derived_authority(tmp_path: Path):
+    """Verify canonical IR envelope anchors and states carry derived authority to eliminate authority promotion."""
+    import assemble_envelope
+
+    disc_path = tmp_path / "prototype/discussion.md"
+    disc_path.parent.mkdir(parents=True)
+    disc_path.write_text(COMPLETE_DISCUSSION, encoding="utf-8")
+
+    ir = compile_canonical_ir(root=tmp_path, slice_id="workbench")
+    ir_path = tmp_path / "prototype/contracts/compiled/workbench/r1.spec.json"
+    ir_path.parent.mkdir(parents=True)
+    ir_path.write_text(json.dumps(ir), encoding="utf-8")
+
+    spec_md = render_single_spec_md(ir)
+    spec_path = tmp_path / "prototype/specifications/workbench/r1.spec.md"
+    spec_path.parent.mkdir(parents=True, exist_ok=True)
+    spec_path.write_text(spec_md, encoding="utf-8")
+
+    # Tokens file
+    tokens_path = tmp_path / "prototype/shared/tokens.css"
+    tokens_path.parent.mkdir(parents=True)
+    tokens_path.write_text(":root { --accent-primary: #000; }", encoding="utf-8")
+
+    env = assemble_envelope.assemble(tmp_path, "workbench")
+    assert env["mode"] == "lean-builder-envelope"
+
+    # Anchors must be derived, not explicit
+    anchors = env["semantic_contract"]["anchors"]
+    assert len(anchors) > 0
+    for a in anchors:
+        assert a["authority"] == "derived", f"Anchor {a} must carry derived authority"
+
+    # Domain states must be derived, not explicit
+    domain_states = env["semantic_contract"]["domain_states"]
+    assert len(domain_states) > 0
+    for ds in domain_states:
+        assert ds["authority"] == "derived", f"Domain state {ds} must carry derived authority"
+
+

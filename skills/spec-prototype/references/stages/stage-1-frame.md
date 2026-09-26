@@ -40,6 +40,8 @@ lockstep.
    - Trade-offs belong to the User: present 2~3 concrete options with trade-offs, then give a clear recommended choice marked with `➡️`.
    - **Materially Different Invariant**: presented options must diverge in information architecture, task flow, or core interaction model — never be stylistic variants of one idea (recoloring, re-padding, or re-spacing the same layout is not an option set). If genuinely distinct hypotheses do not exist, present fewer options and say why rather than padding the set.
    - **Evidence Label Discipline**: `explicit` is reserved for decisions traceable to an actual user message or approved source — quote the locator. Agent-derived professional judgment (style tone, visual theme, metaphor anchors, benchmark references, entity models) MUST be recorded as `derived` (or `hypothesis`), never `explicit`, even when the user has confirmed the overall direction. A confirmed direction confirms the decision, not its evidence class.
+   - **Method ID Citation Invariant**: explicitly cite active method registry IDs (e.g. `action-verb-lifecycle`, `context-preservation`, `dense-operational-console`, `progressive-disclosure`, `ooux-mapping`, `the-break-protocol`) in `discussion.md` and spec frontmatter under `applied_methods:` to preserve traceability.
+   - **Zero Capability Fabrication**: never synthesize unrequested system capabilities (e.g. automatic remediation / 自愈) into user journeys or core contracts unless stated in ground truth. Keep user journeys strictly bounded to the requested operational scope.
 2. **Selectable Topics, Not Sequential Gates**:
    - The four topics below are independent method modules: enter whichever topic
      owns the currently active uncertainty. No topic requires another to settle
