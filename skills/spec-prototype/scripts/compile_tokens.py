@@ -1440,7 +1440,7 @@ def check_tokens_sync(css_path: str, discussion_path: str, mode: str = "formal")
     # when the source digest still matches, because the stylesheet no longer
     disc_dials = parse_5dials(source_text)
     if disc_dials:
-        expected_dial_pairs = ", ".join(f"{k}: {v}" for k, v in disc_dials.items())
+        expected_dial_pairs = ", ".join(f"{k}: {v}" for k, v in sorted(disc_dials.items()))
         m = re.search(r"^\s*Authored dials:\s*([^\n]*)$", css_text, re.MULTILINE)
         if not m or m.group(1).strip() != expected_dial_pairs:
             return {
