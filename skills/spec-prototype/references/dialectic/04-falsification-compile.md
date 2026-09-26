@@ -36,3 +36,50 @@ Verify pipeline:
 Legacy compatibility only: `materialize_contracts.py --slice <slice-id> --phase all`
 still emits the multi-file `c1.md` / `r1.md` set for backwards-compatible readers;
 it is not the canonical compilation path.
+
+## 5. Canonical Discussion Contract Schema (规范契约与 Google Design.md 标准)
+
+Preferred Standard: Follow the Google Design.md Architecture defined in [`../spec-md-contract.md`](../spec-md-contract.md).
+Using standard YAML Frontmatter and semantic sections completely eliminates compiler reverse-engineering:
+
+```markdown
+---
+spec_schema: "google-design-md/v2"
+slice_id: "<slice-id>"
+authority: "sealed_provisional"
+stage: "hero_probe"
+viewports: [390, 1280]
+required_states: [state-draft, state-sealed]
+tokens_ref: "prototype/shared/tokens.css"
+primary_surface: "<primary-surface-id>"
+---
+
+# Surface Specification: <Product Name>
+
+## 1. Problem Framing & Drivers
+- **Core Tension**: <Core Tension A> vs <Core Tension B>
+- **Reality Anchors**: Adopt <benchmark> / Refuse <anti-pattern>
+- **Ruthless Omissions**: 1. <Omission 1> 2. <Omission 2> 3. <Omission 3>
+
+## 2. Experience Foundation & Five Axes
+- Density: dense | Energy: kinetic | Materiality: coated_instrument_dark | Rhythm: fluid | Character: technical
+- --bg-void: #0b0f10
+- --bg-surface: #121719
+- --accent-primary: #38bdf8
+
+## 3. Spatial Anatomy & Surfaces
+- **主工作区 (Primary)**: `surface/<id>`
+- **上下文抽屉 (Contextual)**: `surface/<id>`
+- **移动扫视图 (Glance)**: `surface/<id>`
+
+## 4. State Models & Action Lifecycle
+- `domain/<state-id>`: 一句话语义描述
+- `interaction/<state-id>`: 一句话交互描述
+- `data/<data-id>`: 真实数据场景说明
+
+## 5. Resilience, Reality Breakers & Invariants
+- `stress/<fixture-id>` | Vector: <破坏性输入> ➔ Expected: <预期自愈与容错行为>
+- `inv/<id>` | <不变量描述> | severity: blocking | verif: dom_query
+```
+
+Legacy section headings (`Stage 1 §1`, `Stage 1 §3`, `Stage 1 §5`, `Stage 1 §8`) remain fully supported for backwards compatibility.

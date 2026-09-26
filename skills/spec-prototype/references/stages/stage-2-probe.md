@@ -34,6 +34,16 @@ The dispatch path is IR-first and uses the canonical Dual-Envelope Architecture 
    (`assemble_envelope.py`), synthesizing the 7-field Executable Design IR alongside the decoupled `constraint_envelope` (binding invariants) and `creative_envelope` (agency parameters).
 4. `dispatch builder` — pass the synthesized envelope JSON directly to `spec-prototype-builder`.
 
+**Dispatch Closure Invariant (派发闭环纪律)**: a Builder dispatch is not
+interruptible conversation — never yield the turn while the Builder is pending.
+After the Agent call returns, immediately verify the receipt: the hero-anchor
+HTML file exists at the payload's declared path and the verification scripts ran.
+If the Builder result is missing or empty, retry the dispatch once within the
+same turn; do not end the turn with a status message like "等待构建完成" (waiting
+for the build). A turn may only close after the probe artifact exists on disk or
+the dispatch has irreversibly failed and the failure is recorded in
+`prototype/discussion.md`.
+
 ### Envelope Semantic Contract (Constraint vs Creative)
 The synthesized envelope strictly enforces the separation of non-negotiable constraints from layout creativity:
 - **`constraint_envelope` (Binding Invariants · 绝不妥协)**:

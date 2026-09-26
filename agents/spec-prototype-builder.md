@@ -75,6 +75,15 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
 - **Turn 4 (Receipt)**:
   Return the verified receipt text.
 
+### Anti-Runaway & Fail-Fast Boundaries (严禁越界与失控调试)
+
+- **Hard Tool Budget (Max 6 tool calls)**: The entire build, verify, capture, and receipt workflow MUST complete within 6 tool calls. Once this budget is exhausted, immediately emit the final delivery receipt with current status.
+- **No Background Daemons**: NEVER launch background HTTP servers (`python3 -m http.server`), persistent node processes, or long-running daemons.
+- **No Workspace Escapes**: NEVER search, read, or execute tools/scripts outside the current workspace and declared `skill_root` (e.g. NEVER inspect `~/.codex`, `/Users/hobart/.codex`, global `node_modules`, or system applications like `/Applications/Google Chrome.app`). All permitted tools (`verification_command`, `capture_command`) are pre-baked in the envelope.
+- **Upstream Defect Fail-Fast**: If an upstream artifact (`tokens.css`, `r1.spec.json`, or script dependency) is broken, syntax-invalid, or missing runtime dependencies:
+  - Do NOT attempt to repair upstream assets or build alternative browser automation rigs.
+  - If visual capture fails or renders unstyled due to upstream token/CSS syntax errors, record the exact diagnostic (`BLOCKER: <upstream-asset> broken: <reason>`) in the delivery receipt and EXIT immediately.
+
 ## 3. The Five Core Integrity Categories
 
 All non-negotiable requirements reduce to five integrity categories. These are the

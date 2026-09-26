@@ -208,6 +208,12 @@ def discussion_record(cwd):
 def check(payload):
     require(isinstance(payload, dict), 'Invalid native tool event.')
     if payload.get('agent_type') in {'spec-prototype-builder', 'spec-prototype-critic'}:
+        tool = payload.get('tool_name')
+        args = payload.get('tool_input', {})
+        if tool == 'Bash':
+            cmd = args.get('command', '')
+            if 'http.server' in cmd:
+                raise ValueError('Builder/critic must not launch background HTTP servers.')
         return
     tool = payload.get('tool_name')
     args = payload.get('tool_input', {})

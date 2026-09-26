@@ -49,6 +49,65 @@ def sha256_file(path: Path) -> str:
     return f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}"
 
 
+def parse_frontmatter(text: str) -> tuple[Dict[str, Any], str]:
+    """Parse YAML-like frontmatter if present at the start of markdown text."""
+    if not text.startswith("---"):
+        return {}, text
+    lines = text.splitlines()
+    end_idx = -1
+    for i in range(1, len(lines)):
+        if lines[i].strip() in ("---", "..."):
+            end_idx = i
+            break
+    if end_idx == -1:
+        return {}, text
+
+    fm_lines = lines[1:end_idx]
+    body = "\n".join(lines[end_idx + 1:])
+    data: Dict[str, Any] = {}
+    current_key: Optional[str] = None
+
+    for line in fm_lines:
+        line_str = line.strip()
+        if not line_str or line_str.startswith("#"):
+            continue
+        # List item under current_key
+        if line_str.startswith("- ") and current_key:
+            item = line_str[2:].strip().strip("\"'")
+            try:
+                item_val: Any = int(item)
+            except ValueError:
+                item_val = item
+            if isinstance(data.get(current_key), list):
+                data[current_key].append(item_val)
+            else:
+                data[current_key] = [item_val]
+            continue
+        # Key-value pair
+        m = re.match(r"^([A-Za-z0-9_-]+)\s*[:：]\s*(.*)$", line_str)
+        if m:
+            key = m.group(1).strip()
+            val = m.group(2).strip()
+            # Strip trailing comments e.g. # comment
+            if " #" in val:
+                val = val.split(" #", 1)[0].strip()
+            current_key = key
+            if not val:
+                data[key] = []
+            elif val.startswith("[") and val.endswith("]"):
+                raw_items = [x.strip().strip("\"'") for x in val[1:-1].split(",") if x.strip()]
+                converted = []
+                for x in raw_items:
+                    try:
+                        converted.append(int(x))
+                    except ValueError:
+                        converted.append(x)
+                data[key] = converted
+            else:
+                data[key] = val.strip("\"'")
+    return data, body
+
+
 # ATX heading grammar: 1-6 `#`, at least one space, optional closing `#` run.
 _ATX_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)(?:\s+#+)?\s*$")
 
@@ -322,14 +381,14 @@ def parse_domain_states(text: str) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     seen: set = set()
     for line in text.splitlines():
-        m = re.search(r"`domain/([a-z0-9][a-z0-9_-]*)`(.*)$", line, re.IGNORECASE)
+        m = re.search(r"[`*]*(domain/[a-z0-9][a-z0-9_-]*)[`*]*(.*)$", line, re.IGNORECASE)
         if not m:
             continue
-        sid = f"domain/{m.group(1)}"
-        if sid.lower() in seen:
+        sid = m.group(1).lower()
+        if sid in seen:
             continue
-        seen.add(sid.lower())
-        label, description = _split_label_description(m.group(2), m.group(1))
+        seen.add(sid)
+        label, description = _split_label_description(m.group(2), sid.split("/", 1)[1])
         out.append({"id": sid, "label": label, "description": description})
     return out
 
@@ -338,11 +397,11 @@ def parse_interaction_states(text: str) -> List[str]:
     """Extract authored interaction states declared as `interaction/<id>` tokens."""
     out: List[str] = []
     seen: set = set()
-    for m in re.finditer(r"`interaction/([a-z0-9][a-z0-9_-]*)`", text, re.IGNORECASE):
-        tok = f"interaction/{m.group(1)}"
-        if tok.lower() in seen:
+    for m in re.finditer(r"[`*]*(interaction/[a-z0-9][a-z0-9_-]*)[`*]*", text, re.IGNORECASE):
+        tok = m.group(1).lower()
+        if tok in seen:
             continue
-        seen.add(tok.lower())
+        seen.add(tok)
         out.append(tok)
     return out
 
@@ -351,27 +410,22 @@ def parse_data_scenarios(text: str) -> List[Dict[str, Any]]:
     """Extract authored data scenarios declared as `data/<id>` bullets."""
     out: List[Dict[str, Any]] = []
     seen: set = set()
-    for m in re.finditer(r"`data/([a-z0-9][a-z0-9_-]*)`([^\n]*)", text, re.IGNORECASE):
-        sid = f"data/{m.group(1)}"
-        if sid.lower() in seen:
+    for m in re.finditer(r"[`*]*(data/[a-z0-9][a-z0-9_-]*)[`*]*([^\n]*)", text, re.IGNORECASE):
+        tok = m.group(1).lower()
+        if tok in seen:
             continue
-        seen.add(sid.lower())
-        _, description = _split_label_description(m.group(2), m.group(1))
-        out.append({"id": sid, "description": description})
+        seen.add(tok)
+        _, description = _split_label_description(m.group(2), tok.split("/", 1)[1])
+        out.append({"id": tok, "description": description})
     return out
 
 
 def _capture_field(text: str, label_pattern: str) -> str:
-    """Capture one `Label: value` field, terminating at `|` or EOL.
-
-    A value wrapped in backticks stops at the closing backtick so trailing
-    punctuation authored outside the code span is discarded; a bare value stops
-    at the field separator `|` or the end of line.
-    """
-    m = re.search(label_pattern + r"\s*[:：]\s*`([^`\n]+)`", text, re.IGNORECASE)
+    """Capture one `Label: value` field, terminating at `|`, `➔`, or EOL."""
+    m = re.search(label_pattern + r"\s*[:：]\s*[`*]+([^`*\n]+)[`*]+", text, re.IGNORECASE)
     if m:
         return m.group(1).strip()
-    m = re.search(label_pattern + r"\s*[:：]\s*([^\n|]+)", text, re.IGNORECASE)
+    m = re.search(label_pattern + r"\s*[:：]\s*([^\n|➔]+)", text, re.IGNORECASE)
     return m.group(1).strip() if m else ""
 
 
@@ -384,16 +438,21 @@ def parse_stress_fixtures(text: str) -> List[Dict[str, Any]]:
     """
     out: List[Dict[str, Any]] = []
     for line in text.splitlines():
-        m = re.search(r"`stress/([a-z0-9][a-z0-9_-]*)`(.*)$", line, re.IGNORECASE)
+        m = re.search(r"[`*]*(stress/[a-z0-9][a-z0-9_-]*)[`*]*(.*)$", line, re.IGNORECASE)
         if not m:
             continue
+        fid = m.group(1).lower()
         rest = m.group(2)
         vector = _capture_field(rest, r"Vector")
         expected = _capture_field(rest, r"Expected(?:\s+Behavior)?")
+        if not expected:
+            m_arrow = re.search(r"(?:➔|->)\s*(?:Expected:?\s*)?[`*]*([^`*\n|]+)", rest, re.IGNORECASE)
+            if m_arrow:
+                expected = m_arrow.group(1).strip()
         if not vector or not expected:
             continue
         out.append({
-            "id": f"stress/{m.group(1)}",
+            "id": fid,
             "vector": vector,
             "expected_behavior": expected,
         })
@@ -403,22 +462,22 @@ def parse_stress_fixtures(text: str) -> List[Dict[str, Any]]:
 def parse_required_states(text: str) -> List[str]:
     """Extract mandatory test-state identifiers.
 
-    Two authored forms are admitted: an explicit `Required States` line (every
-    backticked token on that line is taken verbatim), and any standalone
-    backticked `state-*` token. Nothing is derived or defaulted.
+    Admitted from: an explicit `Required States` line (or `Mandatory Test States`),
+    or any standalone backticked `state-*` token. Nothing is derived or defaulted.
     """
     out: List[str] = []
     seen: set = set()
 
     def _add(tok: str) -> None:
-        if tok.lower() not in seen:
-            seen.add(tok.lower())
-            out.append(tok)
+        clean = tok.strip().strip("`*\"'").lower()
+        if clean and clean not in seen:
+            seen.add(clean)
+            out.append(clean)
 
-    for m in re.finditer(r"(?:Required[ \t]+States?|强制测试状态)[ \t]*[:：]?[ \t]*([^\n]*)", text, re.IGNORECASE):
-        for tok in re.findall(r"`([a-z0-9][a-z0-9_-]*)`", m.group(1), re.IGNORECASE):
+    for m in re.finditer(r"(?:Required[ \t]+States?|Mandatory[ \t]+Test[ \t]+States?|强制测试状态)[ \t]*[:：]?[ \t]*([^\n]*)", text, re.IGNORECASE):
+        for tok in re.findall(r"[`*]?([a-z0-9][a-z0-9_-]*)[`*]?", m.group(1), re.IGNORECASE):
             _add(tok)
-    for tok in re.findall(r"`(state-[a-z0-9][a-z0-9_-]*)`", text, re.IGNORECASE):
+    for tok in re.findall(r"[`*]?(state-[a-z0-9][a-z0-9_-]*)[`*]?", text, re.IGNORECASE):
         _add(tok)
     return out
 
@@ -468,12 +527,12 @@ def parse_authored_invariants(text: str) -> List[Dict[str, Any]]:
     `severity` defaults to advisory and `verification` to manual; unknown
     severities fall back to advisory rather than fabricating an enum value.
     """
-    sec = extract_section(text, r"###?\s*.*(?:Invariants|不变式|Design Rules|设计规则)")
+    sec = extract_section(text, r"###?\s*.*(?:Invariants|不变式|Design\s+Invariants|Design\s+Rules|设计规则|Resilience|Acceptance\s+Gates?)")
     out: List[Dict[str, Any]] = []
     severities = {"blocking", "warning", "advisory"}
     verifications = {"computed_style", "dom_query", "screenshot_review", "manual"}
     for line in sec.splitlines():
-        m = re.match(r"^[-*]\s*`([^`]+)`\s*\|\s*(.+)$", line.strip())
+        m = re.match(r"^[-*]\s*[`*]*(inv/[^`*|:：\s]+)[`*]*\s*[|:：]\s*(.+)$", line.strip())
         if not m:
             continue
         inv_id = m.group(1).strip()
@@ -561,6 +620,7 @@ def compile_canonical_ir(
     disc_path = root / "prototype/discussion.md"
     disc_text = disc_path.read_text(encoding="utf-8") if disc_path.is_file() else ""
     disc_digest = sha256_text(disc_text) if disc_text else ""
+    fm_data, body_text = parse_frontmatter(disc_text)
 
     # Optional Stage 3/4 incremental verification fragment overlay
     # (e.g. prototype/contracts/compiled/<slice>/state_model.slice.json or explicit path)
@@ -579,20 +639,35 @@ def compile_canonical_ir(
             except Exception:
                 pass
 
-    # Extract Product / Identity
-    title_m = re.search(r"#\s*Design\s*Discussion:\s*([^\n]+)", disc_text, re.IGNORECASE)
-    product_title = title_m.group(1).strip() if title_m else slice_id.replace("-", " ").title()
+    # Extract Product / Identity (Frontmatter title or Markdown header)
+    if fm_data.get("title"):
+        product_title = str(fm_data["title"]).strip()
+    else:
+        title_m = re.search(r"#\s*(?:Design\s*Discussion|Surface\s*Specification|Prototype\s*Specification):\s*([^\n]+)", disc_text, re.IGNORECASE)
+        product_title = title_m.group(1).strip() if title_m else slice_id.replace("-", " ").title()
     product_id = re.sub(r"[^a-z0-9]+", "-", product_title.lower()).strip("-") or "product"
 
+    # Frontmatter authority / stage overrides
+    if authority_status == "sealed_provisional" and fm_data.get("authority"):
+        authority_status = str(fm_data["authority"]).strip()
+    if stage == "hero_probe" and fm_data.get("stage"):
+        stage = str(fm_data["stage"]).strip()
+
     # Extract Core Tension
-    tension_text = extract_section(disc_text, r"###?\s*.*(?:Core Tension|张力|极端张力)")
+    tension_text = extract_section(disc_text, r"###?\s*.*(?:Core\s+Tension|Problem\s+Framing|Tension|业务与用户极端张力|极端张力|张力)")
+    if not tension_text and fm_data.get("core_tension"):
+        tension_text = str(fm_data["core_tension"]).strip()
+    if not tension_text:
+        m_tension = re.search(r"[-*]?\s*\**Core\s+Tension\**\s*[:：]\s*`?([^`\n]+)`?", disc_text, re.IGNORECASE)
+        if m_tension:
+            tension_text = m_tension.group(1).strip()
     # Absent authored tension stays None: never fabricate a domain claim that
     # would propagate downstream as a real constraint.
     if not tension_text:
         tension_text = None
 
     # Extract Reality Anchors
-    anchors_text = extract_section(disc_text, r"###?\s*.*(?:Reality.*Anchors|现实双地锚|地锚)")
+    anchors_text = extract_section(disc_text, r"###?\s*.*(?:Reality.*Anchors?|现实双地锚|地锚|Industry\s+Benchmarks?|Benchmarks?)")
     anchors = []
     for line in anchors_text.splitlines():
         line = line.strip()
@@ -613,18 +688,26 @@ def compile_canonical_ir(
     craft_stack = parse_craft_stack(style_text or disc_text, five_axes)
 
     # Extract OOUX / Surfaces
-    surfaces_text = extract_section(disc_text, r"###?\s*.*(?:OOUX|实体拓扑|Surfaces|表面分配)")
+    surfaces_text = extract_section(disc_text, r"###?\s*.*(?:OOUX|实体拓扑|Surfaces?|Spatial\s+Anatomy|Anatomy|表面分配)")
     declared_surfaces = []
-    primary_surface = None
+    primary_surface = fm_data.get("primary_surface")
     for line in surfaces_text.splitlines():
         line = line.strip()
         m_surf = re.search(r"`([a-zA-Z0-9_\-\/]+)`", line)
+        if not m_surf:
+            m_surf = re.search(r"(?:surface|console|reader|workspace)/([a-zA-Z0-9_\-]+)", line)
         if m_surf:
             s_name = Path(m_surf.group(1)).name
             if s_name not in declared_surfaces:
                 declared_surfaces.append(s_name)
-            if "primary" in line.lower() or "主" in line:
+            if ("primary" in line.lower() or "主" in line) and not primary_surface:
                 primary_surface = s_name
+
+    if fm_data.get("declared_surfaces") and isinstance(fm_data["declared_surfaces"], list):
+        for s in fm_data["declared_surfaces"]:
+            s_name = Path(str(s)).name
+            if s_name not in declared_surfaces:
+                declared_surfaces.append(s_name)
 
     if not declared_surfaces:
         # No fabricated "inspector"/"telemetry" surfaces: an undeclared topology
@@ -678,6 +761,14 @@ def compile_canonical_ir(
     has_action_contracts = bool(actions)
     spec_tier = "execution_spec" if (has_state_machine and has_action_contracts) else "intent_spec"
 
+    fm_vps = fm_data.get("viewports")
+    resolved_fm_vps = [int(v) for v in fm_vps if str(v).isdigit()] if (fm_vps and isinstance(fm_vps, list)) else []
+    resolved_vps = list(viewports) if viewports else (frag_data.get("viewports") or (resolved_fm_vps if resolved_fm_vps else parse_viewports(disc_text)))
+
+    fm_states = fm_data.get("required_states")
+    resolved_fm_states = [str(s).strip() for s in fm_states if str(s).strip()] if (fm_states and isinstance(fm_states, list)) else []
+    resolved_req_states = frag_data.get("required_states") or (resolved_fm_states if resolved_fm_states else parse_required_states(disc_text))
+
     ir = {
         "schema_version": "prototype-spec/v1",
         "spec_tier": spec_tier,
@@ -717,9 +808,9 @@ def compile_canonical_ir(
             "verification_scope": {
                 # Authored viewports win; otherwise fragment viewports, then widths parsed from
                 # discussion.md. No fabricated device set.
-                "viewports": list(viewports) if viewports else (frag_data.get("viewports") or parse_viewports(disc_text)),
+                "viewports": resolved_vps,
                 # Mandatory test states, parsed from authored declarations or fragment.
-                "required_states": frag_data.get("required_states") or parse_required_states(disc_text),
+                "required_states": resolved_req_states,
             },
         },
         "foundation": {

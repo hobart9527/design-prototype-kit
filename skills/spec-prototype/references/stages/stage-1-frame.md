@@ -38,6 +38,8 @@ lockstep.
 1. **Agent Fact-Finding vs Human Decision**:
    - Facts belong to the Agent: search repository sources (`product.md`, PRDs, code models) silently via read-only tools. NEVER ask the user what the codebase already tells you.
    - Trade-offs belong to the User: present 2~3 concrete options with trade-offs, then give a clear recommended choice marked with `➡️`.
+   - **Materially Different Invariant**: presented options must diverge in information architecture, task flow, or core interaction model — never be stylistic variants of one idea (recoloring, re-padding, or re-spacing the same layout is not an option set). If genuinely distinct hypotheses do not exist, present fewer options and say why rather than padding the set.
+   - **Evidence Label Discipline**: `explicit` is reserved for decisions traceable to an actual user message or approved source — quote the locator. Agent-derived professional judgment (style tone, visual theme, metaphor anchors, benchmark references, entity models) MUST be recorded as `derived` (or `hypothesis`), never `explicit`, even when the user has confirmed the overall direction. A confirmed direction confirms the decision, not its evidence class.
 2. **Selectable Topics, Not Sequential Gates**:
    - The four topics below are independent method modules: enter whichever topic
      owns the currently active uncertainty. No topic requires another to settle
@@ -89,9 +91,10 @@ lockstep.
 - **Settlement**: Lock `--accent-seal` (if a signature accent is chosen), substrate tokens, and kinetic timing.
 
 #### Topic: Falsification Boundary & Automated Contract Compilation (Resilience & Gate)
-- **Lazy Module**: `references/dialectic/04-falsification-compile.md` (<60 lines).
+- **Lazy Module**: `references/dialectic/04-falsification-compile.md` (<100 lines).
 - **Pillars & Axes**: 9-Pillar: Resilience & Interaction Lifecycle.
 - **Method**: Establish the 5-second perceptual falsification test and 4-dimensional reality breakers (Unbreakable string, 0-item state, 320px fold, rapid interruption).
+- **Canonical Schema Requirement**: Authors are encouraged to use the Google Design.md Architecture with YAML frontmatter defined in [`../spec-md-contract.md`](../spec-md-contract.md) or the canonical sections in `04-falsification-compile.md` §5. Frontmatter (viewports, stage, authority) and semantic sections eliminate compiler guessing. Do not reverse engineer compilers via ad-hoc python scripts.
 - **Execution**: Trigger `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice-id>` to compile canonical machine IR (`.spec.json`) and single-file RFC view (`.spec.md`), followed by `compile_tokens.py`. Status is sealed as `sealed_provisional`. (Legacy `materialize_contracts.py` remains available for multi-file backwards compatibility).
 ## Macro Double Diamond
 
@@ -166,6 +169,7 @@ lockstep.
 ### Deliver — Pillars: Interaction, Resilience
 - **Action Verb Lifecycle**: close the semantic loop of Trigger → Context → Commit
   → Feedback; one atomic verb, no synonym drift.
+  - **Verb Budget Invariant**: each action verb must trace to a user-stated need or a marked `[hypothesis]`/`[derived]` proposal. Never upgrade a vague user word into a concrete system capability: "收尾" (wrap up) does not authorize "生成复盘报告" (generate postmortem report), "记录" does not authorize "自动归档到审计系统", "管理" does not authorize a specific export/integration. When a richer capability seems professionally necessary, list it as a separate `derived` proposition with its cost — not as settled scope.
 - **The Break Protocol**: predefine long-string truncation, 0/1/1000 states, and
   viewport fold limits.
 - **Automated Contract Compilation**: run `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice-id>`

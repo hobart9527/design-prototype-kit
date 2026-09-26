@@ -453,3 +453,105 @@ def test_lint_canonical_spec_ir_schema_and_boundary(tmp_path: Path):
     errors = lint_canonical_spec_ir(tmp_path, slice_id)
     assert not errors
 
+
+def test_google_design_md_frontmatter_and_standard_sections_compile_cleanly(tmp_path: Path):
+    """Verify that a spec adhering to the Google Design.md architecture compiles cleanly."""
+    spec_text = """---
+spec_schema: "google-design-md/v2"
+slice_id: "incident-commander"
+authority: "sealed_provisional"
+stage: "hero_probe"
+viewports: [390, 1280]
+required_states: [state-draft, state-sealed]
+tokens_ref: "prototype/shared/tokens.css"
+primary_surface: "cockpit-main"
+---
+
+# Surface Specification: Incident Commander Cockpit
+
+## 1. Problem Framing & Drivers (支柱 1-2: 价值与真实地锚)
+- **Core Tension**: `Throughput vs Liability` (秒级止血处置吞吐 vs 误操作责任风险).
+- **Design Driver**: `tension` | `failure_mode` (脑裂状态下操作员盲目重启集群).
+- **Reality Anchors**:
+  - `Adopt`: Datadog 密集状态指示灯、Linear 键盘第一响应速度.
+  - `Refuse`: 消费级多步配置向导、高侵入式全屏模态遮罩.
+- **Ruthless Omissions (三大舍弃)**:
+  1. 舍弃事后复盘报告与长篇图表生成 (由离线工单系统承担).
+  2. 舍弃多集群全局拓扑编辑能力 (当前视口仅做应急隔离).
+  3. 舍弃复杂的多级组织权限审批流 (仅保留本地物理签名核验).
+
+## 2. Experience Foundation & Five Axes (支柱 6-7: 视觉刻度与五轴)
+- **Five Axes Register**:
+  - Density: dense
+  - Energy: kinetic
+  - Materiality: coated_instrument_dark
+  - Rhythm: fluid
+  - Character: technical
+- **Seed Palette / Color Register**:
+  - --bg-void: #0b0f10
+  - --bg-surface: #121719
+  - --accent-primary: #38bdf8
+  - --accent-seal: #d93829
+
+## 3. Spatial Anatomy & Surfaces (支柱 3 & 5: OOUX 与拓扑空间)
+- **Surface Allocation**:
+  - **主工作区 (Primary)**: `surface/cockpit-main`
+  - **上下文视图 (Contextual)**: `surface/node-drawer`
+  - **移动扫视图 (Glance)**: `surface/mobile-sentinel`
+- **Meso Directives**:
+  - `massing_pattern`: `canvas-inspector`
+  - `kinematics`: `focus-restore-250ms`
+  - `data_syntax`: `micro-trend-compact`
+
+## 4. State Models & Action Lifecycle (支柱 4: 交互状态机)
+- **Domain States**:
+  - `domain/nominal` (集群常态): 全部节点健康，张量流水线满负荷吞吐。
+  - `domain/degraded` (性能降级): 单机 NVLink 延迟超过 15%，触发预警。
+  - `domain/breached` (止血阻断): 节点心跳超时，进入待隔离状态。
+- **Interaction States**:
+  - `interaction/idle`, `interaction/inspecting`, `interaction/armed`, `interaction/committing`
+- **Data Scenarios**:
+  - `data/cold-cache`: 首次加载、缓存未命中场景。
+  - `data/burst-traffic`: 10x 流量峰值时的 UI 批处理渲染。
+- **Action Verbs (Key Bindings & Triggers)**:
+  - `Space` 键瞬时检视 (proximity: 1)
+  - `Enter` 键机械压感提交 (proximity: 2)
+
+## 5. Resilience, Reality Breakers & Invariants (支柱 8-9: 破坏协议与验收门禁)
+- **Four-Dimensional Reality Breakers (Break Protocol)**:
+  - `stress/long-service-name` | Vector: `120 字符超长微服务名称` ➔ Expected: `单行省略截断 + Tooltip 展示`
+  - `stress/zero-alert` | Vector: `无告警空状态` ➔ Expected: `展示健康绿标与上次巡检时间戳`
+  - `stress/network-lag` | Vector: `断网或 504 Gateway Timeout` ➔ Expected: `操作按钮进入禁用重试态`
+- **Design Invariants**:
+  - `inv/wcag-contrast` | 核心文本与背景对比度必须满足 WCAG AA 4.5:1 | severity: blocking | verif: computed_style
+  - `inv/horizontal-fit` | 320px 视口无水平滚动条 | severity: blocking | verif: dom_query
+  - `inv/destructive-guard` | 破坏性止血操作必须具备二次物理确认锁 | severity: blocking | verif: dom_query
+"""
+    disc = tmp_path / "prototype/discussion.md"
+    disc.parent.mkdir(parents=True)
+    disc.write_text(spec_text, encoding="utf-8")
+
+    ir = compile_canonical_ir(
+        root=tmp_path,
+        slice_id="incident-commander",
+    )
+
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    jsonschema.validate(instance=ir, schema=schema)
+
+    assert ir["schema_version"] == "prototype-spec/v1"
+    assert ir["identity"]["slice_id"] == "incident-commander"
+    assert ir["identity"]["authority_status"] == "sealed_provisional"
+    assert ir["identity"]["title"] == "Incident Commander Cockpit"
+    assert ir["scope"]["verification_scope"]["viewports"] == [390, 1280]
+    assert ir["scope"]["verification_scope"]["required_states"] == ["state-draft", "state-sealed"]
+    assert ir["scope"]["topology_scope"]["primary_surface"] == "cockpit-main"
+    assert "cockpit-main" in ir["scope"]["topology_scope"]["declared_surfaces"]
+    assert "Throughput vs Liability" in ir["sources"]["core_tension"]
+    assert len(ir["invariants"]) == 3
+    assert any(i["id"] == "inv/wcag-contrast" and i["severity"] == "blocking" for i in ir["invariants"])
+    assert len(ir["state_model"]["domain_states"]) == 3
+    assert len(ir["state_model"]["stress_fixtures"]) == 3
+    assert ir["layout_directives"]["massing_pattern"] == "canvas-inspector"
+
+

@@ -199,6 +199,15 @@ def test_compile_stamps_provenance_and_downstream_passes(tmp_path: Path):
     assert "Source digest: sha256:" in css
     assert "Authored dials: energy: steady" in css
 
+    # CSS syntax validity: provenance block must be enclosed inside /* ... */ before :root
+    comment_end = css.find("*/")
+    root_start = css.find(":root {")
+    assert comment_end != -1 and root_start != -1
+    assert comment_end < root_start
+    pre_root = css[:root_start].strip()
+    assert pre_root.endswith("*/"), "Header comment must close immediately before :root with no bare text"
+    assert "Source:" in pre_root[:comment_end]
+
     # Freshness fuse admits freshly compiled tokens for downstream consumption.
     sync = ct.check_tokens_sync(str(css_path), str(root / "prototype/discussion.md"))
     assert sync["state"] == "in_sync", sync

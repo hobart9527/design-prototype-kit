@@ -868,7 +868,6 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         "/* ==========================================================================",
         "   DTCG Design Tokens - Derived from v10 Five Axes / Experience Foundation",
         f"   Energy: {energy_desc} | Materiality: {materiality_desc} | Density: {density_desc}",
-        "   ========================================================================== */",
     ]
     provenance = tokens.get("provenance") or {}
     if provenance:
@@ -880,6 +879,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
             dial_pairs = ", ".join(f"{k}: {v}" for k, v in provenance["dials"].items())
             lines.append(f"   Authored dials: {dial_pairs}")
     lines.extend([
+        "   ========================================================================== */",
         ":root {",
         "  /* Atmospheric Undertone Palette (Non-sterile chromatic surfaces) */",
         f"  --bg-void: {c['bg_void']};",
