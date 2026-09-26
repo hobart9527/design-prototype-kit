@@ -222,14 +222,15 @@ def skill_contract_gaps(skill_root, entries=REQUIRED_SKILL_ENTRIES) -> list[str]
 
 
 def require_complete_skill(skill_root, origin: str,
-                           entries=REQUIRED_SKILL_ENTRIES) -> None:
+                           entries=None) -> None:
     """Refuse an incomplete resolved source before a workspace is built from it.
 
     Names the resolved path and every missing entry so an operator learns which
     contract member failed without inspecting the tree. The source is never
     repaired here: a refused tree is left exactly as found.
     """
-    gaps = skill_contract_gaps(skill_root, entries)
+    target_entries = entries or (REQUIRED_BASELINE_ENTRIES if "baseline" in origin else REQUIRED_SKILL_ENTRIES)
+    gaps = skill_contract_gaps(skill_root, target_entries)
     if gaps:
         raise BenchBlocked(f"{origin}: incomplete skill source {skill_root}, "
                            f"missing {', '.join(gaps)}")
