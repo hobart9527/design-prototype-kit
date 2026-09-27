@@ -203,6 +203,11 @@ async function main() {
       fs.writeFileSync(file, Buffer.from(shot.result.data, "base64"));
       return { action: "screenshot", file, bytes: fs.statSync(file).size };
     }
+    if (args._command === "craft") {
+      const expression = Buffer.from(args.script || "", "base64").toString("utf8");
+      if (!expression) throw new Error("--script is required for craft probe");
+      return { action: "craft", result: await cdp.evaluate(expression) };
+    }
     return { action: "snapshot", snapshot: await cdp.evaluate(SNAPSHOT_JS) };
   });
   process.stdout.write(JSON.stringify(out));

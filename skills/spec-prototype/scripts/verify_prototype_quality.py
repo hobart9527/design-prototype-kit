@@ -61,10 +61,62 @@ def _collect_action_ids_from_markdown(text: str) -> set[str]:
     return ids
 
 
+def _ir_contract_path(path: Path) -> Path | None:
+    """Resolve the canonical compiled IR JSON paired with a canonical .spec.md.
+
+    The IR (`contracts/compiled/<slice>/r1.spec.json`) is the machine SSOT for
+    contract items; Markdown is only a human view. Header rows and placeholder
+    cells in that view must never become DOM assertions.
+    """
+    if not path.name.endswith(".spec.md"):
+        return None
+    candidate = path.parents[2] / "contracts/compiled" / path.parent.name / "r1.spec.json"
+    return candidate if candidate.is_file() else None
+
+
+def _ir_contract_items(path: Path) -> tuple[list[str], set[str]]:
+    """Extract verifiable items and action ids from the compiled Spec IR.
+
+    Returns (items, action_ids). Items are verbatim strings/tuples sourced only
+    from machine-authored fields (actions, entities, surfaces), never from the
+    Markdown rendering, so tables and placeholder rows cannot leak in.
+    """
+    try:
+        ir = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return [], set()
+    items: list[str] = []
+    ids: set[str] = set()
+
+    for action in ir.get("actions") or []:
+        if not isinstance(action, dict):
+            continue
+        aid = str(action.get("id") or "").strip()
+        if aid.startswith("action-"):
+            ids.add(aid)
+        label = str(action.get("label") or action.get("trigger") or "").strip()
+        pair = tuple(s for s in (aid, label) if s)
+        if pair:
+            items.append(pair)
+
+    scope = ir.get("scope") or {}
+    topology = scope.get("topology_scope") or {}
+    for surface in topology.get("selected_surfaces") or topology.get("declared_surfaces") or []:
+        name = str(surface).strip()
+        if name and len(name) > 2:
+            items.append(name)
+
+    return items, ids
+
+
 def _contract_action_ids(path: Path | None) -> set[str]:
     """Resolve declared action ids from the contract and optional paired c1."""
     if not path or not path.is_file():
         return set()
+    ir_path = _ir_contract_path(path)
+    if ir_path:
+        _, ids = _ir_contract_items(ir_path)
+        return ids
     sources = [path.read_text(encoding="utf-8")]
     if not path.name.endswith(".spec.md"):
         try:
@@ -80,9 +132,20 @@ def _contract_action_ids(path: Path | None) -> set[str]:
 
 
 def _contract_items(path: Path | None) -> list[str]:
-    """Extract verifiable entity names, action IDs, or button labels from contract markdown."""
+    """Extract verifiable entity names, action IDs, or button labels.
+
+    Canonical `.spec.md` contracts resolve to their compiled IR JSON first
+    (machine SSOT); the Markdown parser below only serves legacy `r1.md`
+    contracts where no IR exists. Header rows and placeholder cells in a
+    Markdown table must never become DOM assertions.
+    """
     if not path or not path.is_file():
         return []
+    ir_path = _ir_contract_path(path)
+    if ir_path:
+        items, _ = _ir_contract_items(ir_path)
+        if items:
+            return items
     items: list[str] = []
     in_actions = False
     in_assertions = False
@@ -143,6 +206,7 @@ def _contract_items(path: Path | None) -> list[str]:
 
             if not line.strip().startswith("|"):
                 continue
+            # Table separator rows and header cells never become contract items.
             cells = [re.sub(r"[*`]", "", c).strip() for c in line.strip().strip("|").split("|")]
             if not cells or not cells[0]:
                 continue
@@ -344,6 +408,81 @@ def _playwright_probe(html: Path, capture: bool) -> tuple[bool, str | None]:
     return True, None
 
 
+def probe_craft_floors(html: Path, viewport_width: int = 1280) -> tuple[bool, str | None]:
+    """Browser-check press feedback, nested radii, and tabular numeric stability."""
+    node = shutil.which("node")
+    probe_mjs = Path(__file__).resolve().parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
+    if not node or not probe_mjs.is_file():
+        return False, "environment_not_ready: craft floor probe needs node and browser_probe.mjs"
+
+    script = r'''(() => {
+      const visible = (el) => {
+        const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+        return r.width > 0 && r.height > 0 && s.display !== "none" && s.visibility !== "hidden";
+      };
+      const corners = ["TopLeft", "TopRight", "BottomRight", "BottomLeft"];
+      const radius = (style, corner) => parseFloat(style[`border${corner}Radius`]) || 0;
+      const label = (el) => (el.getAttribute("aria-label") || el.id || el.className || el.tagName).toString().slice(0, 80);
+      const failures = [];
+      const commit = [...document.querySelectorAll('button[type="submit"], button[data-action], form button, [role="button"][data-action], [role="dialog"] button')]
+        .filter(visible);
+      const activeRules = [...document.styleSheets].flatMap((sheet) => {
+        try { return [...sheet.cssRules].filter((r) => r.selectorText && /:active\b/.test(r.selectorText)); }
+        catch { return []; }
+      });
+      for (const el of commit) {
+        const hasActive = activeRules.some((rule) => {
+          try { return el.matches(rule.selectorText.replace(/::?[\w-]+(?:\([^)]*\))?/g, "")) &&
+            [...rule.style].some((p) => ["transform", "scale", "filter", "box-shadow", "background-color", "border-color", "opacity"].includes(p)); }
+          catch { return false; }
+        });
+        if (!hasActive) failures.push(`press feedback: ${label(el)} has no detectable :active visual change`);
+      }
+      for (const inner of document.querySelectorAll("*")) {
+        if (!visible(inner)) continue;
+        const parent = inner.parentElement;
+        if (!parent || !visible(parent)) continue;
+        const childStyle = getComputedStyle(inner), parentStyle = getComputedStyle(parent);
+        if (!corners.some((corner) => radius(childStyle, corner) > 0)
+            || !corners.some((corner) => radius(parentStyle, corner) > 0)) continue;
+        const p = Math.max(parseFloat(parentStyle.paddingTop) || 0, parseFloat(parentStyle.paddingRight) || 0,
+          parseFloat(parentStyle.paddingBottom) || 0, parseFloat(parentStyle.paddingLeft) || 0);
+        for (const corner of corners) {
+          const expected = Math.max(0, radius(parentStyle, corner) - p);
+          const actual = radius(childStyle, corner);
+          if (Math.abs(actual - expected) > 1)
+            failures.push(`concentric radius: ${label(inner)} ${corner} radius ${actual}px, expected ${expected}px within 1px`);
+        }
+      }
+      const numeric = document.querySelectorAll("td, th, time, data, output, meter, [aria-live], [data-metric]");
+      for (const el of numeric) {
+        if (!visible(el) || !/\d/.test(el.textContent || el.value || "")) continue;
+        if (!getComputedStyle(el).fontVariantNumeric.split(/\s+/).includes("tabular-nums"))
+          failures.push(`tabular numerals: ${label(el)} must compute font-variant-numeric: tabular-nums`);
+      }
+      return { failures, checked: { commit: commit.length, numeric: numeric.length } };
+    })()'''
+    import base64
+    import json as _json
+    try:
+        proc = subprocess.run(
+            [node, str(probe_mjs), "craft", "--url", html.resolve().as_uri(),
+             "--viewport", f"{viewport_width}x900", "--script", base64.b64encode(script.encode()).decode()],
+            capture_output=True, text=True, timeout=60, cwd=str(probe_mjs.parents[1]))
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        return False, f"environment_not_ready: craft floor probe failed ({exc.__class__.__name__})"
+    if proc.returncode != 0:
+        return False, f"environment_not_ready: craft floor probe exited {proc.returncode}"
+    try:
+        result = _json.loads(proc.stdout.strip().splitlines()[-1]).get("result")
+        failures = result["failures"]
+    except (KeyError, ValueError, IndexError, TypeError):
+        return False, "environment_not_ready: craft floor probe returned unparseable output"
+    if failures:
+        return False, "craft floor assertion: " + "; ".join(failures[:8])
+    return True, None
+
+
 def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44) -> tuple[bool, str | None]:
     """Measure interactive controls smaller than min_px at the given viewport
     width, so a touch-target violation surfaces at build time instead of only
@@ -429,8 +568,8 @@ def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44)
 def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, object]:
     """Build the tiered evidence record for one verification run.
 
-    Names which tiers ran and why the rest did not. Only L1 failures block;
-    L2/L3 environment gaps are recorded as environment_not_ready reasons.
+    Names which tiers ran and why the rest did not. Confirmed L1/L2 defects
+    block; environment gaps are recorded as environment_not_ready reasons.
     """
     tiers: dict[str, dict[str, object]] = {}
     evidence: dict[str, object] = {
@@ -455,11 +594,22 @@ def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, obj
         tiers["L2"] = {"status": "degraded", "reason": l2_reason}
 
     if l2_ok:
+        craft_ok, craft_reason = probe_craft_floors(html)
+        if craft_reason and "environment_not_ready" in craft_reason:
+            tiers["L2"] = {"status": "degraded", "reason": craft_reason}
+            evidence["craft_floor_not_verified"] = craft_reason
+            evidence["environment_not_ready"] = True
+        elif not craft_ok and craft_reason:
+            tiers["L2"] = {"status": "failed", "reason": craft_reason}
+            evidence["tier_reached"] = "L2"
+            evidence["outcome"] = "failed"
+            tiers["L3"] = {"status": "skipped", "reason": "upstream_blocked: craft floor failure"}
+            return evidence
+
         # The style engine renders; measure touch targets at mobile width so a
-        # 44px violation surfaces at build time, not only at benchmark judging.
+        # 44px violation surfaces at build time, not only at downstream judging.
         touch_ok, touch_reason = probe_touch_targets(html)
         if not touch_ok and touch_reason and "environment_not_ready" not in touch_reason:
-            l1_failures.append(touch_reason)
             tiers["L2"] = {"status": "failed", "reason": touch_reason}
             evidence["tier_reached"] = "L2"
             evidence["outcome"] = "failed"
@@ -646,14 +796,6 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if missing:
         failures.append("contract assertion: declared items absent from DOM: " + ", ".join(missing[:5]))
 
-    # Tokens are checked strictly for declared, generic accessibility/typography hooks.
-    if "font-variant-numeric" in token_source:
-        if "font-variant-numeric" not in source and "tabular-nums" not in source:
-            failures.append("token assertion: numeric presentation token is not consumed (use font-variant-numeric: tabular-nums or .tabular-nums)")
-    if "--radius-" in token_source:
-        if "var(--radius-" not in source and "var(--radius" not in source:
-            failures.append("token assertion: radius tokens are not consumed (use var(--radius-*))")
-
     # Hard floor: reject raw inline hex colors in style attributes (enforces token inheritance)
     raw_style_hex = re.findall(r'style=["\'][^"\']*#[0-9a-fA-F]{3,8}[^"\']*["\']', source)
     if raw_style_hex:
@@ -807,9 +949,8 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             if not (has_svg or has_html5_data or has_context_modifier or has_metric_with_unit or (is_narrative and has_narrative_units)):
                 failures.append("data-craft assertion: Zero Naked Metrics violation (metrics must carry reference baseline, unit context, delta trend, visual sparkline/meter/canvas, or authentic narrative units)")
 
-        # Tactile Detents / Interactive feedback: advisory craft, not a build blocker.
-        # A specific press-physics recipe is a subjective craft choice; a functional
-        # prototype is never failed for choosing different motion.
+        # Additional press-physics recipes remain advisory; the scoped visible
+        # :active response is enforced by the rendered craft-floor probe above.
         if "Cognitive Budgeting" in contract_text or "Decisive Exchange 3-Frame" in contract_text or "Tactile Detents" in contract_text:
             has_active = bool(re.search(r":active\s*\{[^}]*(?:transform|scale|translate|filter|box-shadow|inset|opacity|background|border|color|duration|transition|motion|ease|cubic|rgb)", source, re.IGNORECASE))
             has_tailwind_active = bool(re.search(r"active:(?:scale|translate|bg|shadow|opacity)-", source))
@@ -871,7 +1012,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             failures.append("stale-template assertion: unconsidered placeholder content detected")
 
     states = _evidence_state(html)
-    print("STATIC: " + ("pass" if not failures else "fail"))
+    LAST_TIER_EVIDENCE.clear()
+    LAST_TIER_EVIDENCE.update(tiered_quality_evidence(html, failures))
+    tier_outcome = LAST_TIER_EVIDENCE.get("outcome")
+    print("STATIC: " + ("pass" if not failures and tier_outcome not in ("failed", "blocked") else "fail"))
     if LAST_COVERAGE_RESULTS.get("specification_missing"):
         # Surfaces to the operator that no spec text was found, so a pass was
         # not earned against an empty string.
@@ -879,8 +1023,6 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     print("BROWSER: " + states.get("browser", "unverified"))
     print("VISUAL: " + states.get("visual", "unverified"))
     print("HUMAN: " + states.get("human", "unverified"))
-    LAST_TIER_EVIDENCE.clear()
-    LAST_TIER_EVIDENCE.update(tiered_quality_evidence(html, failures))
     for tier_id in ("L1", "L2", "L3"):
         record = LAST_TIER_EVIDENCE["tiers"][tier_id]
         status = record["status"]
@@ -889,6 +1031,9 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if LAST_TIER_EVIDENCE.get("environment_not_ready"):
         print("ENVIRONMENT: not_ready (degraded to tier "
               f"{LAST_TIER_EVIDENCE['tier_reached']})")
+    if LAST_TIER_EVIDENCE.get("craft_floor_not_verified"):
+        print("CRAFT FLOORS: not_verified (" + str(LAST_TIER_EVIDENCE["craft_floor_not_verified"]) + ")")
+        return False
     for advisory in advisories:
         print(f"  [advisory] {advisory}")
     if failures:
@@ -903,12 +1048,13 @@ if __name__ == "__main__":
     parser.add_argument("html", nargs="?", default=None, help="Target HTML file")
     parser.add_argument("tokens", nargs="?", default=None, help="Shared tokens stylesheet")
     parser.add_argument("--slice", dest="slice_id", help="Slice ID for convention-over-configuration auto-resolution")
+    parser.add_argument("--root", dest="root", help="Repository root for --slice auto-resolution (defaults to cwd)")
     parser.add_argument("--tokens", dest="tokens_opt")
     parser.add_argument("--contract", dest="contract")
     parser.add_argument("--strict-divergence", action="store_true")
     args = parser.parse_args()
 
-    root = Path.cwd()
+    root = Path(args.root).resolve() if args.root else Path.cwd()
     if args.slice_id:
         slice_id = args.slice_id
         candidates = [

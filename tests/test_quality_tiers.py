@@ -130,6 +130,32 @@ def test_l1_failure_blocks_even_when_l2_l3_unavailable(tmp_path, monkeypatch):
     assert evidence["environment_not_ready"] is False
 
 
+def test_craft_probe_unavailable_degrades_l2_as_not_verified(tmp_path, monkeypatch):
+    monkeypatch.setattr(vpq, "_probe_computed_style", lambda _html: (True, None))
+    monkeypatch.setattr(vpq, "probe_craft_floors", lambda _html: (False, "environment_not_ready: no browser"))
+    monkeypatch.setattr(vpq, "probe_touch_targets", lambda _html: (True, None))
+    monkeypatch.setattr(vpq, "_probe_screenshot", lambda _html: (True, None))
+
+    evidence = vpq.tiered_quality_evidence(tmp_path / "specimen.html", [])
+
+    assert evidence["tiers"]["L2"]["status"] == "degraded"
+    assert evidence["craft_floor_not_verified"] == "environment_not_ready: no browser"
+    assert evidence["environment_not_ready"] is True
+
+
+def test_l2_touch_target_failure_stays_at_l2(tmp_path, monkeypatch):
+    monkeypatch.setattr(vpq, "_probe_computed_style", lambda _html: (True, None))
+    monkeypatch.setattr(vpq, "probe_craft_floors", lambda _html: (True, None))
+    monkeypatch.setattr(vpq, "probe_touch_targets", lambda _html: (False, "touch target below 44px"))
+
+    evidence = vpq.tiered_quality_evidence(tmp_path / "specimen.html", [])
+
+    assert evidence["tiers"]["L1"]["status"] == "passed"
+    assert evidence["tiers"]["L2"]["status"] == "failed"
+    assert evidence["outcome"] == "failed"
+    assert evidence["tiers"]["L3"]["status"] == "skipped"
+
+
 def test_tier_evidence_record_names_all_tiers(tmp_path, monkeypatch):
     """A tiered evidence record always names which tiers ran and why the rest did not."""
     monkeypatch.setattr(vpq, "_style_engine_command", lambda: None)
@@ -145,3 +171,92 @@ def test_tier_evidence_record_names_all_tiers(tmp_path, monkeypatch):
     for tier_id, tier in record["tiers"].items():
         if tier["status"] == "skipped":
             assert tier.get("reason"), f"{tier_id} skipped without a reason"
+
+
+def _write_canonical_contract(tmp_path: Path) -> Path:
+    """Canonical layout: specifications/<slice>/r1.spec.md + compiled IR JSON."""
+    contract = tmp_path / "prototype/specifications/slice-a/r1.spec.md"
+    contract.parent.mkdir(parents=True, exist_ok=True)
+    contract.write_text(
+        "# Spec\n\n## 3.5 Product-Validated Design Rules\n\n"
+        "| Decision | Value or behavior |\n|---|---|\n"
+        "| _No validated shared rules compiled from this Spec IR._ | | |\n",
+        encoding="utf-8",
+    )
+    ir_path = tmp_path / "prototype/contracts/compiled/slice-a/r1.spec.json"
+    ir_path.parent.mkdir(parents=True, exist_ok=True)
+    ir_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "prototype-spec/v1",
+                "scope": {
+                    "topology_scope": {
+                        "declared_surfaces": ["command-bench", "node-inspector"],
+                        "primary_surface": "command-bench",
+                    },
+                    "build_scope": {"selected_surfaces": ["command-bench"]},
+                },
+                "state_model": {},
+                "actions": [
+                    {"id": "action-acknowledge", "label": "Acknowledge"},
+                    {"id": "action-resolve", "label": "Resolve"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return contract
+
+
+def test_contract_items_from_ir_skip_table_headers_and_placeholders(tmp_path):
+    """Regression: canonical .spec.md resolves items via the compiled IR JSON.
+
+    Markdown table headers (`Decision`) and placeholder rows must never become
+    DOM assertions — that false positive drove Stage 4 into an unrecoverable
+    self-repair loop in the r8b sandbox run.
+    """
+    contract = _write_canonical_contract(tmp_path)
+    items = vpq._contract_items(contract)
+    assert all("Decision" != i and "No validated" not in str(i) for i in items)
+    # Surfaces from IR scope reach the assertion set; markdown table text does not.
+    assert any("command-bench" in str(i) for i in items)
+    action_ids = vpq._contract_action_ids(contract)
+    assert action_ids == {"action-acknowledge", "action-resolve"}
+
+
+def test_contract_items_fall_back_to_markdown_without_ir(tmp_path):
+    """Without a paired IR JSON, legacy markdown parsing still applies."""
+    contract = tmp_path / "prototype/specifications/slice-b/r1.spec.md"
+    contract.parent.mkdir(parents=True, exist_ok=True)
+    contract.write_text(
+        "# Spec\n## Core Entities\n"
+        "| Entity | Role |\n|---|---|\n| Bench Grid | primary surface |\n",
+        encoding="utf-8",
+    )
+    items = vpq._contract_items(contract)
+    assert "Bench Grid" in items
+
+
+def test_l1_replay_passes_on_placeholder_only_spec(tmp_path):
+    """End-to-end L1 replay: a spec whose only table rows are placeholders and
+    whose IR-declared surfaces appear in the DOM must pass the contract gate."""
+    contract = _write_canonical_contract(tmp_path)
+    tokens = _write_tokens(tmp_path)
+    html = tmp_path / "prototype/experiments/slice-a/anchor/index.html"
+    html.parent.mkdir(parents=True, exist_ok=True)
+    html.write_text(
+        """<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../../shared/tokens.css"></head>
+<body>
+<main data-entity="command-bench">
+  <h1>Bench</h1>
+  <button data-action="action-acknowledge">Acknowledge</button>
+  <button data-action="action-resolve">Resolve</button>
+</main>
+<script>document.querySelector("button").addEventListener("click", () => {});</script>
+</body></html>""",
+        encoding="utf-8",
+    )
+    failures = vpq.coverage_failures(html, contract_path=contract)
+    assert not any("contract assertion" in f for f in failures), failures
