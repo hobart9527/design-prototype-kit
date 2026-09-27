@@ -76,7 +76,8 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             if session_budget_usd and total_cost >= session_budget_usd:
                 status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
                 break
-            prompt = "继续。"
+            prompt = ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
+                      "不要重新规划已完成的部分。")
             continue
         if out["status"] == "budget_exceeded":
             # The per-call budget is a guard against one runaway call, not the
@@ -89,7 +90,8 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             if not session_budget_usd:
                 status, note = "BLOCKED", "per-call budget exhausted and no session budget set"
                 break
-            prompt = "继续。"
+            prompt = ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
+                      "不要重新规划已完成的部分。")
             continue
         if out["status"] != "completed":
             status, note = "BLOCKED", f"turn {turn['turn']} {out['status']}: {turn['stderr']}"
@@ -127,7 +129,8 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
                 break
             turn["prompt_kind"] = "auto_continue"
             turns[-1] = turn
-            prompt = "继续。"
+            prompt = ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
+                      "不要重新规划已完成的部分。")
             continue
         status, note = "COMPLETED", ""
         break
