@@ -387,7 +387,11 @@ export function resolveEvidenceRoot(explicit) {
   for (const candidate of candidates) {
     if (typeof candidate !== "string" || candidate.length === 0) continue;
     const abs = path.resolve(candidate);
+    // Accept both install layouts: the repo checkout (`<root>/skills/...`) and
+    // a host Skill install (`<root>/.claude/skills/...`). Without the `.claude`
+    // branch, envelope capture commands record evidence as no_repository_root.
     if (fs.existsSync(path.join(abs, "skills", "spec-prototype"))) return abs;
+    if (fs.existsSync(path.join(abs, ".claude", "skills", "spec-prototype"))) return abs;
   }
   return null;
 }
@@ -464,19 +468,42 @@ async function main() {
       repoRoot = args[++i] || null;
     } else if (args[i] === "--slice") {
       const sliceId = args[++i];
-      const repoRoot = path.resolve(__dirname, "../../..");
+      // Repo-root resolution order (SSOT): explicit --repo-root wins, then
+      // LOOM_REPO_ROOT, then a marker walk from cwd upward so a Skill
+      // installed under `<root>/.claude/skills/` still resolves correctly.
+      // The old `__dirname/../../..` fallback mis-derived the root whenever
+      // the scripts live inside a `.claude` install rather than `<root>/skills/`.
+      const scriptRoot = path.resolve(__dirname, "../..");
+      const markerIsRoot = (abs) =>
+        fs.existsSync(path.join(abs, "prototype")) &&
+        (fs.existsSync(path.join(abs, "skills", "spec-prototype")) ||
+          fs.existsSync(path.join(abs, ".claude", "skills", "spec-prototype")));
+      let resolvedRoot = repoRoot || process.env.LOOM_REPO_ROOT || null;
+      if (!resolvedRoot) {
+        for (let dir = path.resolve(process.cwd()); ; dir = path.dirname(dir)) {
+          if (markerIsRoot(dir)) { resolvedRoot = dir; break; }
+          if (dir === path.dirname(dir)) break; // filesystem root
+        }
+      }
+      if (!resolvedRoot && markerIsRoot(scriptRoot)) resolvedRoot = scriptRoot;
+      const root = resolvedRoot ? path.resolve(resolvedRoot) : path.resolve(__dirname, "../../..");
       const candidatePaths = [
-        path.join(repoRoot, `prototype/experiments/${sliceId}/anchor/index.html`),
-        path.join(repoRoot, `prototype/experiments/${sliceId}/hero-anchor/index.html`),
-        path.join(repoRoot, `prototype/surfaces/${sliceId}/index.html`),
+        path.join(root, `prototype/experiments/${sliceId}/anchor/index.html`),
+        path.join(root, `prototype/experiments/${sliceId}/hero-anchor/index.html`),
+        path.join(root, `prototype/experiments/${sliceId}/r1/index.html`),
+        path.join(root, `prototype/experiments/${sliceId}/index.html`),
+        path.join(root, `prototype/surfaces/${sliceId}/index.html`),
       ];
       const matched = candidatePaths.find((p) => fs.existsSync(p)) || candidatePaths[0];
       url = `file://${matched}`;
-      outputDir = path.join(repoRoot, `prototype/evidence/probes/${sliceId}/`);
+      outputDir = path.join(root, `prototype/evidence/probes/${sliceId}/`);
       // Slice defaults are a fallback: an explicit --viewports/--states wins
       // regardless of argument order, so the envelope's derived gates survive.
-      if (!statesExplicit) states = ["ideal", "empty", "error"];
-      if (!viewportsExplicit) viewports = ["320", "390", "768", "1280"];
+      if (!statesExplicit) states = ["default", "stressed", "empty"];
+      // Viewport ladder trimmed to the case-required set plus one narrow fold
+      // check: 4 viewports × N states produced 28 PNGs per slice in r8b while
+      // the case contract only required 390/1280.
+      if (!viewportsExplicit) viewports = ["320", "390", "1280"];
     } else if (args[i] === "--output" || args[i] === "-o") {
       outputDir = args[++i];
     } else if (args[i] === "--target" || args[i] === "-t") {
