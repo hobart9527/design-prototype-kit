@@ -53,6 +53,26 @@ Exact references preserve the rationale chain without creating another authority
 - Benefit, trade-off, learning burden and falsification/transfer test:
 - Delegated-only variations that may change between executions:
 
+## Validated experience and design-system handoff
+
+Record only decisions demonstrated by the retained prototype and evidence, or mark
+items as open. Do not promote an implementation accident, untested hypothesis or
+AI suggestion into a shared rule. Each adopted rule names its source and transfer
+boundary; slice-specific choices remain local. This handoff supplements the
+compiler-generated candidate; it does not alter a frozen Spec or silently confer
+approval. Material changes require a successor revision through the normal review
+and freeze path.
+
+| Decision / token / component | Validated value or behavior | Scope and responsive/state variation | Evidence and source anchor | Transfer boundary / open question |
+|---|---|---|---|---|
+| | | | | |
+
+- Content and terminology rules demonstrated by representative product content:
+- Interaction and feedback rules demonstrated across applicable states:
+- Type, color, layout, component, motion or imagery decisions retained from the prototype:
+- Platform adaptations and approved exceptions:
+- Unvalidated choices kept delegated or provisional:
+
 ## Builder contract
 
 Reference Contract-owned surfaces, journeys, applicable states, shared fixtures and

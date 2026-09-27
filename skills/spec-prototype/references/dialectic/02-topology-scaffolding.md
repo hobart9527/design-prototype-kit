@@ -59,4 +59,4 @@ Stakeholders can review spatial hierarchy visually within seconds.
 - Routine actions live in Level 0/1 (direct inline chip or table row action).
 
 ## 5. Settlement
-Lock visual centroid, layout profile (`adaptive-workspace`, `editorial-dossier`, or `canvas-inspector`), and Density/Rhythm values. This topic's settlement does not gate any other topic.
+Lock the visual centroid and the structure the user selected: record it as `Layout Profile` (`adaptive-workspace`, `dense-console`, `operational-canvas`, `editorial-reading`, `somatic-touchflow`) and/or a `massing_pattern` (e.g. `canvas-inspector`). Record Density/Rhythm only when actually decided. This topic's settlement does not gate any other topic.

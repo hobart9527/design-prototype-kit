@@ -96,21 +96,21 @@ Quality verification runs as a three-tier evidence chain mirroring
 `scripts/verify_prototype_quality.py`:
 
 - **L1 — DOM/ARIA/`data-state` structural checks:** static source inspection of
-  markup, roles, ARIA attributes and `data-state` wiring. Always available,
-  independent of any browser, and the **only blocking tier**: an L1 failure is a
-  code-assertion failure.
-- **L2 — computed-style checks:** token application and computed styles,
-  available only when a reachable headless style engine (Chromium-family,
-  Firefox, or Playwright) exists. Non-blocking.
+  markup, roles, ARIA attributes and `data-state` wiring. Always available.
+- **L2 — computed-style and craft-floor checks:** token application, computed
+  styles, and the three hard craft invariants; available only when a reachable
+  headless browser exists. A confirmed craft-floor violation blocks. A missing
+  browser yields `Not verified`, never a pass.
 - **L3 — screenshot comparison:** best-effort visual capture comparison.
-  Non-blocking.
+  Non-blocking, and cannot waive an L2 hard-floor failure.
 
-When the browser, fonts, or GPU are missing, degrade to the reachable tier and
-report `environment_not_ready` naming the tier reached (`L1`/`L2`). A missing
-environment is an explicit degradation, never a silent skip of L2/L3 and never
-misreported as a code-assertion failure. Read the run's `TIER L1/L2/L3` and
-`ENVIRONMENT: not_ready` output to know which tiers actually ran and why the
-rest did not.
+When the browser, fonts, or GPU are missing, report `environment_not_ready`
+naming the tier reached (`L1`/`L2`). Craft-floor checks that require rendered
+styles are then `Not verified`, never passed. A missing environment is an
+explicit degradation, never misreported as a code-assertion failure. Read the
+run's `TIER L1/L2/L3` and `ENVIRONMENT: not_ready` output to know which tiers
+actually ran and why the rest did not. Do not claim `verified` acceptance while
+a scoped craft floor remains unverified.
 
 ## Exercise professional design judgment
 
@@ -146,31 +146,34 @@ Judge the whole product experience, not only correctness or taste:
 - **Feasibility and evidence:** Does the design respect known platform/runtime
   constraints, and does each claim have evidence suited to it?
 
-### Somatic Craft Checks (advisory sensory guidance)
+### Craft Floors (hard defects)
 
-When the reviewed surface declares a touch target context, inspect the rendered
-evidence against these somatic rules and report each miss as a finding. This is
-expert critique, not a build gate: only accessibility breaches (contrast, focus,
-pointer-target minimums, safe-area occlusion) rise to a Floor `VIOLATION`.
-Stylistic geometry such as a concentric radius ratio, press-feedback recipe, or
-numeric-stability rule is reported as advisory craft feedback and SHALL NOT fail a
-build on its own.
+These three craft invariants are hard defects whenever their stated scope applies;
+report a Floor `VIOLATION` and fail the build. Do not reclassify them as advisory.
+
+The three hard defects are press feedback, concentric nested radii, and tabular numerals.
+
+- **Press feedback:** controls that commit a change need a visible `:active`
+  response. Plain links and pure navigation are out of scope. Commit surfaces give
+  `:active` spring micro-feedback paired with the declared commit feedback text.
+- **Concentric radii:** for a rounded child inside a rounded parent, with padding
+  `P`, require `R_in = max(0, R_out - P)` (allow 1px measurement tolerance).
+- **Numeric stability:** values that update in place or align in columns use
+  `font-variant-numeric: tabular-nums`. Numbers in prose are out of scope.
+
+When the reviewed surface declares a touch target context, inspect rendered
+ evidence for these rules and report each miss as a finding. Other geometry,
+press physics, or typography choices remain advisory unless a separate declared
+accessibility or product invariant makes them a Floor.
 
 - **Mobile safe-area insets:** fixed or edge-anchored chrome must pad with
   `env(safe-area-inset-*)`; content hidden under a notch or the home indicator is
   a defect, not a stylistic choice.
 - **Touch target floor:** every tappable control must present a minimum 44x44px
-  hit target. A visually smaller glyph with insufficient transparent padding
-  fails.
-- **Press feedback:** commit surfaces must give `:active` spring micro-feedback on
-  press, not a silent tap.
-- **Concentric nested radius:** nested rounded containers must satisfy the
-  optical geometry `R_in = max(0, R_out - P)`, where `R_out` is the outer radius
-  and `P` the gap between outer edge and inner element. Reused outer radii on an
-  inner child, or a negative subtraction, are DEFECT-level geometry misses.
-- **Numeric stability:** telemetry, timestamps, counters and financial/metric
-  figures must specify `font-variant-numeric: tabular-nums`; proportional digits
-  that jitter columns on update are a DEFECT.
+  hit target. A visually smaller glyph with insufficient transparent padding fails.
+
+Accessibility breaches (contrast, focus, pointer-target minimums, safe-area
+occlusion) remain Floor `VIOLATION`s as well.
 
 ### Anti-Generic Craft Stack Verification (declared-attribute, advisory)
 

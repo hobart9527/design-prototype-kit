@@ -27,6 +27,17 @@ Audit the three-frame continuous evolution of core decisive interactions:
 Run `verify_prototype_quality.py` to confirm 100% token inheritance, no inline
 hex, zero destructive overflow, and viewport fold integrity.
 
+> **Completion Receipt Discipline (完成终态与修复预算)**:
+> The Builder's delivery receipt is authoritative once it reports `STATIC: pass`
+> with capture paths — do NOT re-run the same verify in the main session just to
+> confirm a receipt that already names a passing verdict. If L1 verify fails:
+> allow AT MOST ONE targeted repair round (fix the exact failed assertion, then
+> re-verify once). If it still fails, record the outcome in
+> `prototype/discussion.md`'s Resume block as `Stage 4: PARTIAL — <findings>`
+> and END the session normally. A session must never run out the wall clock in
+> an open-ended self-repair loop: a sealed PARTIAL state with honest findings is
+> a valid terminal state; a timeout is not.
+
 ### Track B: Interaction & Stress Floor (The Break Protocol)
 Inject destructive limit tests: extreme long-string truncation, zero state
 (first-use guidance), and extreme-value scroll containment. Walk the Reachable-
@@ -37,11 +48,27 @@ usable; no dead controls.
 Capture real render viewports via `capture.mjs`. Keep evidence and approval
 decoupled: `renderer: captured` never automatically equals `visual: verified`.
 
+> **Visual Inspection Token Hygiene (视觉审查 Token 节制)**:
+> Automated static verify (`verify_prototype_quality.py`) is primary and non-negotiable.
+> NEVER use the `Read` tool to batch-read multiple full-resolution PNG screenshots into the LLM context.
+> Multiple base64 images cause immediate context bloat (15k-25k tokens per image) and budget exhaustion.
+> If a visual sanity check is necessary, inspect AT MOST 1 key screenshot (e.g. the 390px mobile view or the core hero state).
+
 ### Track D: Ergonomic & Human Verification
 - *Dual-Channel Affordance (Floor)*: every shortcut or gesture has a corresponding visible GUI control.
 - *Zero Metaphor Contamination (Floor)*: core entities use real business vocabulary; skeuomorphic metaphor never takes over.
-- *Domain-Specific Craft Heuristics*: the B-Pro 5-Second Test for operational/engineering scenes, and the C-Consumer Somatic Test for consumer/touch scenes.
+- *Task-Fit Craft Heuristics (advisory)*: choose the probe the task implies, not the audience label — a 5-second recognition test where the person must read state at a glance, a somatic walk-through where direct touch handling carries the task. Report misses as craft findings, not floor failures.
 - *Human Gate & Delegation-Aware Protocol*: when the user has granted full design delegation (`delegated`) or pre-agreed acceptance criteria, proceed automatically on test assertions and captured evidence. Pause only for irreversible divergence, a serious experience regression (floor failure), or a genuinely new business fork.
+
+### Critic Dispatch Discipline (Critic 必达)
+When the prototype is captured and verify is pass (or sealed `PARTIAL`), dispatch
+`spec-prototype-critic` in the SAME turn — do not defer it behind further
+tuning. A session that ends with a captured prototype but no critic judgment
+has not completed Stage 4; record `Stage 4: PARTIAL — critic not dispatched` in
+the Resume block if the budget truly cannot cover it. In automated sessions,
+reserve roughly one per-call budget ($8) for the critic before spending on
+cosmetic re-tuning: independent review closes the evidence loop; a prettier
+screenshot without review does not.
 
 All floor definitions live in
 [`../03-verification/quality-floor.md`](../03-verification/quality-floor.md);

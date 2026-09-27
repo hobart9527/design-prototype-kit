@@ -165,13 +165,10 @@ def test_canonical_design_references_and_floors():
     assert "Cognitive Quality Review" in critic_text
 
     floor_text = (SKILL / "references/03-verification/quality-floor.md").read_text(encoding="utf-8")
-    assert "Non-Transfer Boundary" in floor_text or "non-transfer boundary" in floor_text
-    assert "Zero Naked Metrics" in floor_text
-    assert "Action Verb Lifecycle" in floor_text
-    assert "Concentric Border Radi" in floor_text
-    assert "Tabular Numerics" in floor_text
-    assert "Atmospheric Undertone" in floor_text
-    assert "Vague-Word Firewall" in floor_text
+    assert "non-transfer boundary" in floor_text
+    assert "candidate techniques, not global requirements" in floor_text
+    assert "Tabular numerals can aid" in floor_text
+    assert "neutral surfaces" in floor_text
 
     discussion_tmpl = (SKILL / "templates/discussion.md").read_text(encoding="utf-8")
     assert "OOUX Cardinality-to-Layout Anchor" in discussion_tmpl
@@ -675,7 +672,7 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
     good_html = tmp_path / "good.html"
     good_html.write_text("""<!DOCTYPE html><html><body>
 <main id="app" class="panel" style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums; overflow: hidden;">
-  <button id="btn-action" onclick="void(0)">Run</button>
+  <button id="btn-action" onclick="void(0)" style="min-width: 44px; min-height: 44px;">Run</button>
 </main>
 <script>
   window.addEventListener('keydown', (e) => {});
@@ -764,8 +761,16 @@ record: prototype-specification
     assert env["envelope_version"] == "2.0"
     assert "token_link_tag" in env
     assert "shared/tokens.css" in env["token_link_tag"]
-    assert env["verification_command"] == "python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice console"
-    assert env["capture_command"] == "node skills/spec-prototype/scripts/capture.mjs --slice console"
+    # Commands are absolute (skill_root/repository_root derived) so they execute
+    # verbatim inside `.claude/skills` install layouts, not just repo checkouts.
+    assert env["verification_command"].endswith(
+        "verify_prototype_quality.py --slice console --root " + str(tmp_path)
+    )
+    assert env["verification_command"].startswith("python3 ")
+    assert "skills/spec-prototype/scripts" in env["verification_command"]
+    assert env["capture_command"].endswith("capture.mjs --slice console --repo-root " + str(tmp_path))
+    assert env["capture_command"].startswith("node ")
+    assert "skills/spec-prototype/scripts" in env["capture_command"]
 
     topology = env["topology_context"]
     assert topology["current_slice"] == "console"

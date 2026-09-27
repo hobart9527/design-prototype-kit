@@ -16,7 +16,8 @@ The envelope's **7-field canonical IR** is the primary consumption contract. Rea
 before any legacy projection:
 
 - **`identity`** — slice identity, authority lifecycle, build authority, target path, source ref.
-- **`semantic_contract`** — domain thesis, primary entities, the separated state structure (below), and reality anchors.
+- **`semantic_contract`** — domain thesis, primary entities, the separated state structure (below), reality anchors, design intent and ruthless omissions.
+- **`design_intent`** — when present, authored scene, proposition, signature relationship and product-specific anti-slop bans; preserve these as creative direction, not new functional requirements.
 - **`layout_directives`** — viewport strategy, declared `regions`, navigation.
 - **`visual_directives`** — token baseline, sensory dials, density calibration.
 - **`action_contracts`** — authored verbs with trigger role, consequence, transient states, feedback.
@@ -89,6 +90,7 @@ Tool turns are an execution-safety budget, not a design constraint: use the mini
 - **Hard Tool Budget (Max 6 tool calls)**: The entire build, verify, capture, and receipt workflow MUST complete within 6 tool calls. Once this budget is exhausted, immediately emit the final delivery receipt with current status.
 - **No Background Daemons**: NEVER launch background HTTP servers (`python3 -m http.server`), persistent node processes, or long-running daemons.
 - **No Workspace Escapes**: NEVER search, read, or execute tools/scripts outside the current workspace and declared `skill_root` (e.g. NEVER inspect `~/.codex`, `/Users/hobart/.codex`, global `node_modules`, or system applications like `/Applications/Google Chrome.app`). All permitted tools (`verification_command`, `capture_command`) are pre-baked in the envelope.
+- **No Gate Source Reverse-Engineering**: NEVER read, `sed`, `grep`, or otherwise inspect the source of `verify_prototype_quality.py`, `capture.mjs`, `compile_spec_ir.py`, `compile_tokens.py`, or any other gate/script under `skill_root/scripts/`. The envelope's `verification_contract.static_checklist` enumerates everything the verifier asserts — satisfy the checklist directly in the authored HTML. Reading gate source to reverse-engineer assertions is a bounded-authority violation, not research; run the pre-baked `verification_command` instead and read its failure output.
 - **Upstream Defect Fail-Fast**: If an upstream artifact (`tokens.css`, `r1.spec.json`, or script dependency) is broken, syntax-invalid, or missing runtime dependencies:
   - Do NOT attempt to repair upstream assets or build alternative browser automation rigs.
   - If visual capture fails or renders unstyled due to upstream token/CSS syntax errors, record the exact diagnostic (`BLOCKER: <upstream-asset> broken: <reason>`) in the delivery receipt and EXIT immediately.
@@ -119,7 +121,10 @@ Honor the product's real domain, not a generic web shell.
   fixture data MUST be authored in the declared language. Never mix half-English /
   half-Chinese unless a secondary bilingual representation is explicitly declared.
 - **Design Token Invariance**: Link the shared tokens stylesheet in `<head>` using the
-  exact `token_link_tag` (or `token_stylesheet_ref`). Do NOT redeclare or shadow
+  exact `token_link_tag` (or `<link rel="stylesheet" href="{token_stylesheet_ref}">` / `visual_directives.token_link_tag`).
+  NEVER guess or manually miscalculate relative path depth (e.g. inside `prototype/experiments/<slice>/anchor/index.html`,
+  the relative path to `prototype/shared/tokens.css` is strictly `../../../shared/tokens.css`, never `../../`).
+  Do NOT redeclare or shadow
   `:root { ... }` custom properties in `<style>`. Consume the declared tokens
   (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`,
   `var(--radius-outer)`, `var(--radius-card)`, `var(--radius-btn)`, `var(--space-*)`, etc.)
@@ -180,11 +185,7 @@ A rendered screen that was never driven through its committed action is not cove
   DOM status feedback. Any clear status surface satisfies this — `role="status"`,
   `class="toast"`, or a declared feedback element — the mechanism is yours, but silence
   after a commit is not acceptable.
-- **Destructive Operation Safety Triad (高危操作防护三要素 · 关键任务不变量)**:
-  For any hazardous, destructive, or state-mutating operation (e.g. 下线节点, 排空机器, 清理生产实例):
-  1. *Pre-commit Consequence Modal*: MUST open a `<dialog id="...">` modal before committing, showing the blast radius / consequence, with explicit confirmation language (e.g. `确认排空`, `确认下线`, `Drain`).
-  2. *Post-commit Observable State*: Committing the action MUST immediately render clear state feedback in the DOM matching: `已排空`, `排空中`, `处理中`, `已完成` (or `draining`).
-  3. *Safe Exit / Rollback Affordance*: MUST provide a clearly visible, operable undo or rollback trigger (e.g. `回滚`, `撤销`, `取消`, `rollback`, `undo`) allowing the operator to reverse or abort the consequence.
+- **Consequence and Recovery Fit**: For each action, communicate its actual consequence before commit at a level proportionate to its reversibility, impact and uncertainty. Use inline feedback for routine reversible changes; reserve blocking confirmation for consequential actions where the consequence is not otherwise clear or the action is difficult to reverse. After commit, show the real resulting state and offer only a recovery path the product actually supports. Never invent a rollback, cancel path or domain-specific status phrase.
 - **Container Proximity Guidance**: Match container weight to operational hazard and input
   complexity. Lightweight toggles are usually best served in-situ (popover, inline detent,
   flyout) rather than a blocking drawer or scrim; dense multi-field forms suit a drawer and
@@ -325,7 +326,7 @@ Honor declared platform invariants; when a platform contract is unauthored, stat
 
 Return a concise receipt containing:
 - Target path and revision identity (path plus digest or equivalent revision identity);
-- Quality gate assertion results (`STATIC: pass`);
+- Quality gate assertion results (`STATIC: pass`), verbatim verifier verdict line;
 - Capture metadata: runner, `browser_execution`, runtime, target platform, and the dependency identity
   bound to the captured pixels; state any declared platform whose validation remains `unverified`;
 - State and interaction coverage actually exercised;

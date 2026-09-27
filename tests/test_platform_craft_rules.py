@@ -49,6 +49,17 @@ def test_role_instruction_requires_active_spring_micro_feedback():
         assert re.search(r"spring", text, re.IGNORECASE), (
             f"{role} does not name spring micro-feedback"
         )
+        assert re.search(r"hard (?:defects|floor)|DEFECT", text, re.IGNORECASE), (
+            f"{role} does not classify press feedback as a hard defect"
+        )
+
+
+def test_critic_does_not_downgrade_craft_floors_to_advisory():
+    text = role_text("critic")
+    assert "SHALL NOT fail a build" not in text
+    assert "hard defects whenever their stated scope applies" in text
+    assert "R_in = max(0, R_out - P)" in text
+    assert "font-variant-numeric: tabular-nums" in text
 
 
 # --- concentric nested radius geometry ------------------------------------

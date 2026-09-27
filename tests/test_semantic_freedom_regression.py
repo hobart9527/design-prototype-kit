@@ -175,10 +175,13 @@ def test_builder_contract_is_bounded_by_the_five_integrity_categories():
 # --- seam 5: critic evaluates the floor, not aesthetic taste ------------------
 
 
-def test_critic_keeps_aesthetic_craft_advisory_not_a_build_gate():
+def test_critic_keeps_three_craft_invariants_hard_and_aesthetic_craft_advisory():
     # Markdown wraps prose, so compare against a whitespace-normalized copy.
     text = re.sub(r"\s+", " ", CRITIC.read_text(encoding="utf-8"))
-    assert "SHALL NOT fail a build" in text
-    assert "advisory" in text.lower()
-    # Only floor breaches gate; stylistic geometry is critique, not refusal.
-    assert re.search(r"only accessibility breaches", text, re.IGNORECASE)
+    assert "hard defects whenever their stated scope applies" in text
+    assert "R_in = max(0, R_out - P)" in text
+    assert "font-variant-numeric: tabular-nums" in text
+    assert "press physics, or typography choices remain advisory" in text
+    assert "SHALL NOT fail a build" not in text
+    assert "hard defects whenever their stated scope applies" in text
+    assert "press physics, or typography choices remain advisory" in text

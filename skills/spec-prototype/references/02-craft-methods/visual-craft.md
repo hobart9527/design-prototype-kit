@@ -10,13 +10,25 @@ Foundation, tokens and actual-content specimen must travel coherently across con
 
 ## Materiality Calibration: Anti-Default Palette Invariant (材质拟合与色彩反惰性)
 
-Never collapse all interfaces into dark-mode industrial grays. Palette, typography, and materiality MUST calibrate directly against the domain's reality anchors:
+Never collapse all interfaces into one house look, whether dark industrial grays or
+generic light SaaS. Palette, typography and materiality are authored from this
+product's own evidence: its reading or working conditions, content, consequence of
+error, brand inheritance and the reality anchors the author adopted or refused. A
+product category is not evidence; two products in the same category may rightly
+diverge.
 
-| Domain Archetype | Material Substrate & Subservience | Primary Chromatic Calibration | Typographic Rhythm | Negative Pattern to Avoid |
-|---|---|---|---|---|
-| **Editorial & Long-form Reading** | Warm paper / vellum texture (`#faf8f3`, `#f5efe6`) | Monochromatic charcoal / ink, understated vermilion or lapis accents | Classical serif headings, generous line-height (`1.8~1.85`), measure $\le 68\text{ch}$ | Pitch black OLED backgrounds, cold cyber cyan, neon alerts |
-| **Engineering & SRE Workbench** | Dense cold titanium / dark graphite (`#0a0c10`, `#0f141c`) | High-contrast amber, phosphor green, or titanium status markers | Monospace digits (`tabular-nums`), mechanical 1px hairline borders | Soft pastel washes, decorative drop shadows, non-tabular digits |
-| **Internal Procurement & Audit** | Clean neutral daylight office ground (`#ffffff`, `#f8fafc`) | Trustworthy slate, navy, restrained semantic green/red for approval | Crisp sans-serif, dense form field alignment, clear visual anchors | High-contrast gaming dark mode, gratuitous gradient cards |
+Calibrate by asking, per surface:
+
+| Question | Evidence to inspect | What it may settle |
+|---|---|---|
+| Where and how long is this read or operated? | Lighting, session length, glance vs sustained use | Ground luminance, contrast reserve, measure and line-height |
+| What must never be misread? | Critical values, states and irreversible actions | Which roles earn chroma, where numerals need stable figures |
+| What voice does the content carry? | Actual copy, authorship, inherited brand | Type families, weight contrast, restraint of ornament |
+| Which anchors were adopted or refused? | The authored Reality Anchors and Non-transfer boundaries | Which material properties transfer and which do not |
+
+Record the resolved values once in the Foundation and tokens with their source.
+Any specific palette or type pairing seen elsewhere is a reference to inspect, not a
+preset to inherit.
 
 Load the named section for the open question; do not read the whole pillar for a single decision.
 Values decided here are returned to the Foundation and token revision, not restated per page.
@@ -63,7 +75,7 @@ other lenses only when they produce a materially different proposition.
 | Lens | Generative move | Translation into a screen | Failure to examine |
 |---|---|---|---|
 | Material metaphor | Give the experience a physical property and context: held, layered, marked, porous, elastic, precise | Translate two or three properties into type, edges, grouping, light or feedback; explain which physical behavior does **not** transfer | Literal texture, decorative objects, or physics that obscures controls |
-| Dual Physics (B-Pro vs C-Consumer) | Ground physical intuition by domain: **Instrument Physics** (calipers, dials, detents, tabular-nums) for B-Pro; **Lifeworld Somatics** (paper fold, fluid inertia, gravity snap, 44px thumb zone) for C-Consumer | Manifest physics as tactile micro-dynamics (easing, damping, elevation) rather than literal visual noise | Entity contamination: renaming domain objects into physics metaphors (e.g. calling tasks particles) |
+| Physical intuition | Ground feedback in the physics the person's actual task suggests: instrument-like precision (detents, stable figures) where exact adjustment matters, lifeworld somatics (fold, inertia, snap) where direct handling matters; the audience segment alone decides neither | Manifest physics as tactile micro-dynamics (easing, damping, elevation) rather than literal visual noise | Entity contamination: renaming domain objects into physics metaphors (e.g. calling tasks particles) |
 | Archetype | Define a supported relationship: coach, curator, companion, instrument; what does this role help the person notice? | Set voice, emphasis, timing of help, density and the degree of invitation versus authority | Stereotyped users, patronizing copy or unsupported promises |
 | Narrative | Follow anticipation → consequential decision → response → return; identify where confidence, curiosity or satisfaction should change | Compose an opening, evidence at the decision, a meaningful result and continuity on revisit | Turning a repeatable task into forced theatre or hiding essential comparisons |
 | Cultural/semiotic | Inspect an actual artifact or tradition relevant to audience/content; identify its structural grammar and meaning | Transform editorial order, mark-making, proportions or rhythm; cite source and adaptation | Exotic decoration, false cultural authority or unreadable symbols |

@@ -84,7 +84,7 @@ lockstep.
 - **Lazy Module**: `references/dialectic/02-topology-scaffolding.md` (<60 lines).
 - **Pillars & Axes**: 9-Pillar: Topology & Journey; 5-Axis: Density & Rhythm.
 - **Method**: Present 2~3 structural layouts via pure text ASCII wireframes (NO COLOR, ONLY STRUCTURE). Clarify Container Proximity Ladder (Level 0~4) for hazardous vs routine actions.
-- **Settlement**: Lock layout profile (`adaptive-workspace` or `editorial-dossier`), visual centroid, and Density/Rhythm values.
+- **Settlement**: Lock the chosen structure as an authored `Layout Profile` (e.g. `adaptive-workspace`, `editorial-reading`) or `massing_pattern` only when the user selected it, plus visual centroid and any Density/Rhythm values actually decided.
 
 #### Topic: Material Substrate, Palette Discipline & Kinetic Imprint (Materiality & Energy)
 - **Lazy Module**: `references/dialectic/03-sensory-kinetic.md` (<100 lines).
@@ -195,6 +195,65 @@ Optional legacy compatibility: the multi-file `prototype/product.md`,
 `prototype/specifications/<slice_id>/r1.md` set may still be materialized via
 `materialize_contracts.py` for legacy readers; it is not a Stage 1 closure
 requirement.
+
+## Canonical Discussion Contract Schema (discussion.md 最小完整范式)
+
+> **严禁逆向工程脚本**：严禁调用 Bash/grep/sed/head 去反查 `compile_spec_ir.py` 或 `compile_tokens.py` 内部源码！这会白白消耗 10+ 个 turn 与数十万 tokens。直接参照以下骨架产出 `prototype/discussion.md`，脚本即可 100% 顺利解析并编译出合规 IR：
+
+```markdown
+# Design Discussion & Decisions
+
+## Stage 1 §1 (业务与用户极端张力)
+- 核心张力: <张力 A> vs <张力 B>
+- 极简裁撤 (Ruthless Omissions):
+  - 裁撤项 1: 不做任何未经授权的周边功能或臆测自愈逻辑
+- 现实基准 (Reality Anchors):
+  - 锚点系统: <Benchmark Name> (如 Datadog / Linear)
+
+## Stage 1 §2 (五轴风格寄存器、色彩与活跃工法)
+- Active Methods (活跃工法申报 — method recall 断言的解析源):
+  - `context-preservation` — 上下文保持: 主从切换/抽屉展开不丢当前工作状态 (运维台/工作台类必选)
+  - `action-verb-lifecycle` — 动作动销闭环: 每个主行动有触发/提交/反馈完整链路 (事务操作类必选)
+  - (按产品类型从 registry 补充: 消费级流程选 `form-ergonomics`/`progressive-disclosure`; 内容类选 `editorial-rhythm`; 高密度监控选 `dense-operational-console`)
+- 五轴设定:
+  - `density`: `compact`
+  - `energy`: `calm`
+  - `materiality`: `coated`
+  - `rhythm`: `steady`
+  - `character`: `technical`
+- 色板基准: `palette: titanium-amber` (可选: `zinc-cobalt`, `titanium-amber`, `obsidian-emerald`, `plasma-cyan`)
+- 签名强调色: `--accent-seal: #ff9800`
+
+## Stage 1 §3 (项目级状态模型)
+- `domain/<state-1>` (状态名称): 状态的一句话语义描述
+- `domain/<state-2>` (状态名称): 状态的一句话语义描述
+- `interaction/inspecting` (检视中): 操作者定位到具体实体或展开抽屉面板
+- `data/nominal` (基线场景): 正常业务负载数据场景
+- `data/stressed` (极限场景): 故障高峰或极限数据场景
+
+## Stage 1 §4 (破坏协议 / Break Protocol)
+- `stress/network-lag` | Vector: `网络延迟 5s` | Expected: `展示加载态与降级提示`
+- `stress/text-overflow` | Vector: `极端超长文本` | Expected: `单行省略不撑破网格`
+
+## Stage 1 §5 (OOUX 实体拓扑与表面分配)
+- 核心实体:
+  - `entity/<id>`: 实体描述
+- 拓扑表面:
+  - **主工作区 (Primary)**: `surface/<main-surface-id>`
+  - **上下文检视 (Contextual)**: `surface/<secondary-surface-id>`
+- 视口与测试配置:
+  - `Viewport`: `390px` (mobile), `1280px` (desktop)
+  - `Required States`: `state-default`, `state-active`
+
+## Stage 1 §6 (动作闭环 / Action Verbs)
+| 动作 ID | 触发控件 | 容器形式 | 提交动作 | 反馈方式 | 影响范围 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `<action-id>` | `button[data-action="<action-id>"]` | `modal` / `drawer` | `<commit-id>` | `toast & state mutation` | `影响说明` |
+
+## Resume
+- Stage: Stage 1 sealed provisional
+- Next: compile_spec_ir.py && compile_tokens.py -> assemble_envelope.py -> dispatch Builder
+```
 
 ## Exit
 

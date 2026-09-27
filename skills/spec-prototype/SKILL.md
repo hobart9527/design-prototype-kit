@@ -22,6 +22,11 @@ It is the small, always-loaded source (<100 lines) for fundamental guardrails: S
 Do NOT unconditionally read all reference modules or stage procedures at launch.
 Treat `references/stages/` (`stage-0-explore.md` ~ `stage-5-freeze.md`) and the other files under `references/` as strictly on-demand reference modules beyond the always-loaded core kernel.
 Only read the specific file matching the currently active stage or frontier.
+**Minimal Reading List (最小阅读清单)**: a full pipeline pass reads at most 4 reference
+files — the core kernel (once), the active stage file, the execution boundary (before
+first write/build), and at most one craft reference actually cited by the active
+method set. Reading more than one file per stage frontier is a discipline violation;
+fact-finding belongs to repository sources (`product.md`, briefs), not Skill prose.
 
 ## Entry Intent & Contextual Routing (意图优先，资产为证)
 
@@ -68,15 +73,22 @@ The system unifies all design operations into four orthogonal layers and one tra
 
 Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
 
-**One-Stage-Per-Turn Budget Discipline (单回合单阶段预算纪律)**: A bounded session
-turn carries at most one stage to its checkpoint. When the active stage's
-artifacts are compiled and verified (e.g. Stage 1's sealed IR + tokens), record
-the stage checkpoint in `prototype/discussion.md`'s Resume block and end the
-turn with a summary. The next stage (Builder dispatch, critique, freeze) starts
-in the next turn from that checkpoint. Batch compilation in one shell call
+**Bounded Stage Budget Discipline (有界阶段预算纪律)**: Keep each stage's work
+bounded and record its checkpoint in `prototype/discussion.md`'s Resume block.
+Do not end a turn solely because a checkpoint was reached: when the user asked
+for a runnable prototype, Stage 1's sealed IR + tokens may flow directly into
+envelope assembly and Builder dispatch in the same turn. Pause only for an
+unresolved user decision, a real stage boundary that needs review, or an explicit
+session limit. Batch compilation in one shell call
 (`compile_spec_ir.py && compile_tokens.py`); write `discussion.md` once per
-authoring pass. This keeps a budget or wall-clock failure inside a single
-stage instead of destroying an unbounded multi-stage session.
+authoring pass. A checkpoint records recovery state; it is not an extra approval
+gate or a reason to strand the first runnable prototype. A bounded-failure
+terminal state (`Stage 4: PARTIAL — <findings>` in the Resume block) is a valid
+session end; never spend the remaining wall clock in an open-ended repair loop
+(see Stage 4 Completion Receipt Discipline).
+**Anti-Inspection Rule (禁查编译器源码纪律)**: Never use `grep`, `sed`, `head`, or `Read`
+to inspect `compile_spec_ir.py` or `compile_tokens.py` source code. Directly use the
+canonical discussion contract skeleton documented in `references/stages/stage-1-frame.md`.
 
 ```text
 [Stage 1: 破 - Understand & Frame (问题空间与设计契约定义 · Grilling & Brainstorming Engine)]
@@ -110,6 +122,7 @@ stage instead of destroying an unbounded multi-stage session.
   │    - Visual Capture: Renderer capture status (captured != verified; visual critique remains explicit)
   │    - Human Evidence: Final signoff and stakeholder confirmation
   │  Controlled Absorption Loop: Critique absorbed into tokens.css / HTML slices -> Re-verify.
+  │  Visual Inspection Discipline: Automated static verify is primary. NEVER use the Read tool to batch-read multiple full-resolution PNG screenshots (causes massive context bloat and budget exhaustion). If visual sanity check is necessary, inspect at most 1 key screenshot (e.g. mobile 390px).
   ▼
 [Stage 5: 冻 - Silent Packaging & Frozen Approved Delivery (静默封版与工件交付)]
      Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (WCAG 2.2 AA floor / AAA static tokens), and `python3 skills/spec-prototype/scripts/handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.spec.md` (canonical IR path) or `--spec prototype/specifications/<slice_id>/r1.md` (legacy path). `--root` must be the repository root (containing `prototype/`). Freeze binds the immutable candidate Specification, never a mutable product record.

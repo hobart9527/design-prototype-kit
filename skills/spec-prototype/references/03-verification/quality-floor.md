@@ -19,7 +19,13 @@ An experience fails the Floor if any of the following occurs:
 - Metaphor entity disguise: renaming or disguising core business objects into physics or sci-fi metaphors (e.g. calling tasks particles, calling risk controls detent rods).
 - Ergonomic Reality Gate failures:
   - Missing Dual-Channel Affordance: Critical keyboard shortcuts or gestural interactions lack visible, accessible GUI buttons or controls.
-  - Basic Ergonomic Breakdown: An operator cannot locate primary system status or complete the main loop without reading manual prose. Domain-specific heuristics (e.g. B-Pro 5-second anomaly triage, C-Consumer somatic lifeworld habits) are evaluated under [Craft Guidelines](#2-quality-criteria-craft-conviction-and-resonance) and domain context rather than rigid global floors.
+  - Basic Ergonomic Breakdown: An operator cannot locate primary system status or complete the main loop without reading manual prose. Domain-specific heuristics are evaluated under [Craft Guidelines](#2-quality-criteria-craft-conviction-and-resonance) and domain context rather than rigid global floors.
+- **Craft invariants (hard defects within their applicable scope):**
+  - Commit controls require perceptible `:active` press feedback. Plain links and pure navigation are out of scope.
+  - A rounded child nested inside a rounded parent with padding `P` satisfies `R_in = max(0, R_out - P)` (1px measurement tolerance).
+  - Numeric values that update in place or align in columns use `font-variant-numeric: tabular-nums`; prose numbers are out of scope.
+  - A check that cannot run is `Not verified`, never a pass.
+
 - Technical shallowness & toy-demo collapse: Presenting a trivially linear, toy mockup that strips away essential domain mechanics (e.g. non-linear branching in DAG workflows, temporal baselines in telemetry) under the pretext of omission.
 - Stale Template Plagiarism & Execution Evasion: Rote copy-pasting of prior design mockups, stale entity names, or hardcoded topologies without fresh Stage 1 divergence reasoning. Verification harness enforces anti-stagnation rules against placeholder content.
 
@@ -34,6 +40,10 @@ Above the Floor, design merit is judged by qualitative evidence across core dime
 - **Sense & Kinetic Clarity**: Physical or somatic mechanics resolve operational tensions; dynamic signals (such as throughput pulses or status transitions) deliver immediate situational awareness rather than superficial decoration.
 - **IA & Topology**: Information architecture reflects task priority and authentic entity relationships; non-linear topologies preserve context across branches and secondary workflows.
 - **Contextual Craft & Density**: Metrics feature legible reference benchmarks (scales, gridlines, event markers, micro-sparklines); density calibrated to high signal-to-noise ratio without cramped text or vacuum voids.
+
+## Contextual Craft Guidelines & Heuristics (optional)
+
+Other geometry, surface and motion choices are candidate techniques, not global requirements. Tabular numerals can aid scanning where prose figures form a meaningful comparison; neutral surfaces remain valid. These contextual notes never soften a confirmed Floor defect.
 - **Closure Rigor**: 100% state closure across core interactive branches with resilient error recovery.
 
 ## Constructive Critique & Trade-off Assessment (Anti-Bureaucratic Evaluation)
@@ -228,19 +238,20 @@ inconclusive when available evidence cannot answer the review question.
 
 ## Generated-output fingerprint check
 
-Audit-side detector only — these fingerprints never enter generation prompts
-(Foundation, Builder dispatch or tokens). Check combinations, not single values;
-an individual color or word is not a violation by itself.
+Audit-side detector — fingerprints are not fixed style bans. A concise, product-specific
+anti-slop brief may pass only relevant tells to Builder dispatch. Confirm each against
+the authored product intent; combinations, not single values, are the concern.
+An individual color or word is not a violation by itself.
 
-- **Color-combination fingerprints**: dark purple-black base (hue 260–300,
-  saturation > 10%) paired with a violet accent and glow borders; pink-to-cyan
-  or rainbow gradient buttons; multiple high-saturation neon accents with
-  blur/glow stacking. Any single hue used intentionally with brand evidence is
-  legitimate; the violation is the unconsidered default combination.
-- **Fake-chrome fingerprints**: a hardcoded `HH:MM` status bar (e.g. `9:41`),
-  signal/Wi-Fi/battery icon clusters, fake browser URL bar or traffic lights,
-  fake Dynamic Island or device bezel drawn inside the prototype — unless the
-  product itself is a browser, device preview or design canvas.
+- **Color-combination fingerprints**: combinations such as a dark purple-black
+  base paired with violet glow, pink-to-cyan or rainbow gradients, or stacked neon
+  accents with blur/glow. These are review leads only: judge against the product's
+  authored intent, brand evidence and rendered result; no palette is inherently
+  generic or forbidden.
+- **Fake-chrome fingerprints**: a hardcoded device-status bar, signal/battery
+  cluster, browser URL bar, traffic lights or device bezel drawn inside a prototype.
+  Confirm these are misleading in the actual product context; they are appropriate
+  when the product itself is a browser, device preview or design canvas.
 - **Placeholder-content fingerprints**: the literal strings `Lorem`,
   `John Doe`, `Acme`-style generic company names, `example.` email domains;
   the same metric value repeated across 3+ unrelated cards; uniformly round
@@ -277,17 +288,3 @@ redundant finding — report the cheaper fix instead.
 | A detector fingerprint reported without confirming the rendered output | Confirm against the running prototype, or drop it |
 | Register judged only for under-expression | Check both directions: loud-reverted-to-polished and quiet-forced-to-gritty |
 | A remediation that adds code where deletion or platform behavior suffices | Replace it with the cheapest rung that solves the defect |
-
----
-
-# Contextual Craft Guidelines & Heuristics (Consolidated from design-floor)
-
-## Geometric and Visual Craft Guidelines (Candidate Techniques)
-- Concentric Border Radii Rule: R_inner = max(0, R_outer - Padding). Eliminates visual collision or concentric distortion when rounded containers are nested.
-- Tabular Numerics: font-variant-numeric: tabular-nums on high-frequency telemetry, timestamps, and currency values to prevent scan jitter.
-- Zero Naked Metrics: Every metric must display a baseline, threshold, or floor/ceiling benchmark to convey operational meaning.
-- Atmospheric Undertone: Surfaces must derive from contextual dark/light undertones, eliminating flat dead neutral greys.
-- Perceptible Action Feedback: Active states must provide immediate, perceptible feedback (e.g. tactile scale, elevation shift, or luminance pulse) with stable layout integrity.
-- Action Verb Lifecycle: Interactive buttons must reflect full lifecycle state transitions (e.g. QUARANTINE STEP -> QUARANTINED).
-- Non-Transfer Boundary: Every physical or conceptual metaphor must explicitly define and enforce its non-transfer boundary.
-- Vague-Word Firewall: Reject any aesthetic justification relying on vague adjectives without concrete token, contrast, and spacing bounds.

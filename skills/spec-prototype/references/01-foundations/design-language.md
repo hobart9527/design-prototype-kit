@@ -165,35 +165,16 @@ A robust design proposition must be verified against authentic, messy, and extre
 - **Dynamic Scale Calibration**: Charts and sparklines calibrate their baselines to data domain needs (zero-anchoring for ratios, dynamic bounds for high-variance monitoring) to prevent flatline clipping while clearly displaying scale context.
 - **Kinetic Physics and Visual Detents**: When scrubbers or timeline replays map to physical event milestones, provide tactile visual resistance or snapping detents. Ensure snapping logic permits keyboard step navigation without value pinning (WCAG 2.1.2).
 
-## Production-Grade Scenario Baseline Palettes & Tokens
+## Craft references are evidence, not presets
 
-> **Subservience & Open Archetypes Notice**:
-> The 4 baselines below are illustrative starting points and composable patterns, **not** rigid silos or compulsory templates. As defined in [`design-methods.md`](design-methods.md#4-open-physical-substrates--composable-patterns-开放物理地质场与参考模式), real products synthesize open Physical Lifeworld Substrates and domain tensions orthogonally. Designers and Builders may adapt or completely override these tokens to serve the product's authentic domain substrate.
-
-### Baseline 1: Dense Data & Engineering Workbench (High Cognitive Efficiency)
-- **Primary Use Case**: Observability, telemetry dashboards, developer tools, financial trading terminals.
-- **Spatial Grid**: Base unit `4px`. Compact padding (`px-2 py-1`), hairline borders (`border-neutral-200 dark:border-neutral-800`), dense tables with sticky headers.
-- **Color Discipline**: Low-saturation surfaces (`bg-neutral-50 dark:bg-neutral-950`), muted slate borders, semantic indicators (emerald success, amber warning, rose error) applied with high contrast on small badge/dot footprints.
-- **Typography**: Primary sans (`Inter`, `system-ui`), tabular mono (`JetBrains Mono`, `ui-monospace`) for all metrics and timestamps. 12px/13px compact body scales.
-
-### Baseline 2: Immersive Business & Consumer Web (Fluid Narrative & Focus)
-- **Primary Use Case**: SaaS collaboration, project management, modern commerce, customer intelligence.
-- **Spatial Grid**: Base unit `8px`. Spacious card padding (`p-6`), progressive elevation (`shadow-sm` on hover elevating to `shadow-md`), generous negative space.
-- **Color Discipline**: Warm neutral or deep slate foundations, high-energy primary accent (`indigo-600` / `violet-600`), soft tint container backgrounds (`bg-indigo-50/50`).
-- **Typography**: Refined modern sans (`Plus Jakarta Sans`, `Inter`), deliberate scale hierarchy from 32px display headers to 14px comfortable body text.
-
-### Baseline 3: Editorial & Focused Reading (Minimal Distraction & Flow)
-- **Primary Use Case**: Long-form documentation, markdown editors, research analysis, knowledge bases.
-- **Spatial Grid**: Fluid layout with fixed measure (max-width `68ch` for core text reading stream). Asymmetric side margins for annotations.
-- **Color Discipline**: Paper-like background tones (`bg-[#FAF9F6]` light / `bg-[#18181A]` dark), ultra-high contrast dark typography, zero ambient noise.
-- **Typography**: Distinct editorial serif or highly legible reading sans (`Newsreader`, `Charter`, `Inter`), relaxed line heights (`leading-relaxed` 1.65), refined footnote styling.
-
-### Baseline 4: Immersive Consumer & Mobile Touch-First (Vibrant, Kinetic & Tactile)
-- **Primary Use Case**: Consumer social, lifestyle commerce, mobile utility, creative tools.
-- **Spatial & Touch Ergonomics**: Minimum touch target `44x44px` (`min-h-[44px] min-w-[44px]`), edge padding `px-4`, bottom-sheet anchor, thumb-zone primary action radius.
-- **Color Discipline & Visual Tension**: Saturated brand accent, high-contrast expressive surfaces, subtle ambient glow (`shadow-primary/20`), glassmorphic/frosted background blurs (`backdrop-blur-md bg-white/80 dark:bg-neutral-900/80`).
-- **Kinetic Feedback & Physics**: Responsive micro-press states (`:active { transform: scale(0.97); }`), fluid spring deceleration curves (`cubic-bezier(0.16, 1, 0.3, 1)`), smooth bottom-sheet drag detents and tactile pull-to-refresh mechanics.
-- **Typography**: Expressive, high-impact sans (`SF Pro`, `Plus Jakarta Sans`), tight display tracking (`tracking-tight`), distinct badges and pill tags.
+Use the product's task, content, platform, brand evidence and authored proposition to
+choose color, type, density, layout, imagery, components, feedback and motion. Do not
+select a treatment from a product-category palette or baseline. The examples elsewhere
+in this reference are possibilities to investigate, not defaults to copy; their values,
+font names and CSS snippets are not a token recipe. When a focused craft question
+remains, consult the relevant method reference and compare treatments on the same
+representative task and content. Keep any chosen values traceable to the product brief,
+existing design system, platform requirement or observed evidence.
 
 The synopsis compresses the full causal proposition; it neither replaces the
 seven fields above nor creates another approval object or design workflow.
