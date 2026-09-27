@@ -7,6 +7,7 @@ reported as unverified unless an evidence manifest explicitly records them.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import shutil
@@ -250,6 +251,14 @@ def _style_engine_command() -> str | None:
         found = shutil.which(name)
         if found:
             return found
+    # macOS app bundles are common but not on PATH.
+    for app in (
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    ):
+        if Path(app).exists():
+            return app
     import importlib.util
     if importlib.util.find_spec("playwright") is not None:
         return "playwright"
@@ -335,6 +344,88 @@ def _playwright_probe(html: Path, capture: bool) -> tuple[bool, str | None]:
     return True, None
 
 
+def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44) -> tuple[bool, str | None]:
+    """Measure interactive controls smaller than min_px at the given viewport
+    width, so a touch-target violation surfaces at build time instead of only
+    at downstream benchmark judging (which runs at 390px).
+
+    Uses the benchmark's CDP probe (browser_probe.mjs) when node is available:
+    it evaluates JS in the page and already implements the same measurement
+    the judge consumes. Falls back to a playwright evaluation; chrome
+    --dump-dom cannot evaluate and reports environment_not_ready.
+    """
+    node = shutil.which("node")
+    # scripts/ -> spec-prototype/ -> skills/ -> repo root
+    probe_mjs = Path(__file__).resolve().parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
+    if node and probe_mjs.is_file():
+        cached = _TIER_PROBE_CACHE.get(f"touch:{viewport_width}:{html}")
+        if cached is not None:
+            return cached
+        import json as _json
+        try:
+            proc = subprocess.run(
+                [node, str(probe_mjs), "snapshot", "--url", html.resolve().as_uri(),
+                 "--viewport", f"{viewport_width}x900"],
+                capture_output=True, text=True, timeout=60,
+                cwd=str(probe_mjs.parents[1]))
+        except subprocess.TimeoutExpired:
+            return False, "environment_not_ready: touch-target probe timed out"
+        except OSError as exc:
+            return False, f"environment_not_ready: touch-target probe failed ({exc.__class__.__name__})"
+        if proc.returncode != 0:
+            return False, f"environment_not_ready: touch-target probe exited {proc.returncode}"
+        try:
+            out = _json.loads(proc.stdout.strip().splitlines()[-1])
+            count = int(out["snapshot"]["smallTargetCount"])
+            names = out["snapshot"].get("smallTargets") or []
+        except (KeyError, ValueError, IndexError, TypeError):
+            return False, "environment_not_ready: touch-target probe returned unparseable output"
+        if count > 0:
+            result = False, (f"touch_target assertion: {count} control(s) below {min_px}px "
+                             f"at {viewport_width}px: {'; '.join(str(n) for n in names[:5])}")
+        else:
+            result = True, None
+        _TIER_PROBE_CACHE[f"touch:{viewport_width}:{html}"] = result
+        return result
+
+    if importlib.util.find_spec("playwright") is not None:
+        script = (
+            "(() => {"
+            "const visible = (el) => { const r = el.getBoundingClientRect();"
+            "return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'"
+            "&& getComputedStyle(el).display !== 'none'; };"
+            "const sel = 'button, a, input, select, textarea, [role=button], [role=tab], [role=menuitem]';"
+            "let small = 0; const names = [];"
+            "for (const el of document.querySelectorAll(sel)) {"
+            "if (!visible(el)) continue; const r = el.getBoundingClientRect();"
+            "if (r.width < %d || r.height < %d) { small++; if (names.length < 5)"
+            "names.push((el.getAttribute('aria-label') || el.innerText || el.tagName).trim().slice(0, 40)); } }"
+            "return small + '|' + names.join(';;'); })()"
+        ) % (min_px, min_px)
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch()
+                page = browser.new_page(viewport={"width": viewport_width, "height": 900})
+                page.goto(html.resolve().as_uri())
+                raw = page.evaluate(script)
+                browser.close()
+        except Exception as exc:  # noqa: BLE001
+            return False, f"environment_not_ready: touch-target probe failed ({exc.__class__.__name__})"
+        try:
+            count_str, _, names = str(raw).partition("|")
+            count = int(count_str)
+        except (ValueError, AttributeError):
+            return False, "environment_not_ready: touch-target probe returned unparseable output"
+        if count > 0:
+            return False, (f"touch_target assertion: {count} control(s) below {min_px}px "
+                           f"at {viewport_width}px: {names}")
+        return True, None
+
+    return False, ("environment_not_ready: touch-target probe needs node (browser_probe.mjs) "
+                   "or playwright; neither is available")
+
+
 def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, object]:
     """Build the tiered evidence record for one verification run.
 
@@ -362,6 +453,18 @@ def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, obj
         tiers["L2"] = {"status": "passed"}
     else:
         tiers["L2"] = {"status": "degraded", "reason": l2_reason}
+
+    if l2_ok:
+        # The style engine renders; measure touch targets at mobile width so a
+        # 44px violation surfaces at build time, not only at benchmark judging.
+        touch_ok, touch_reason = probe_touch_targets(html)
+        if not touch_ok and touch_reason and "environment_not_ready" not in touch_reason:
+            l1_failures.append(touch_reason)
+            tiers["L2"] = {"status": "failed", "reason": touch_reason}
+            evidence["tier_reached"] = "L2"
+            evidence["outcome"] = "failed"
+            tiers["L3"] = {"status": "skipped", "reason": "upstream_blocked: L2 touch-target check failed"}
+            return evidence
 
     if l2_ok:
         l3_ok, l3_reason = _probe_screenshot(html)
