@@ -17,6 +17,7 @@ import bench_lib as bl  # noqa: E402
 import aggregate_report  # noqa: E402
 import regression_judge  # noqa: E402
 import run_claude_session  # noqa: E402
+import run_matrix  # noqa: E402
 import runtime_judge  # noqa: E402
 import task_judge  # noqa: E402
 
@@ -89,6 +90,42 @@ def test_error_envelope_is_not_mistaken_for_model_output():
     payload = bl.parse_result_payload(envelope)
     assert payload["is_error"] is True
     assert payload.get("result") is None
+
+
+def test_matrix_runs_candidate_before_stable_control(tmp_path, monkeypatch):
+    calls = []
+    matrix = tmp_path / "matrix"
+    monkeypatch.setattr(run_matrix.subprocess, "run", lambda cmd, **kwargs: (
+        calls.append(cmd) or type("Completed", (), {"stderr": "", "returncode": 0})()))
+    run_matrix._run_sessions(
+        ["case"], ["stable_skill", "candidate_skill"], 1, matrix,
+        type("Args", (), {
+            "model": None, "max_turns": None, "timeout": None,
+            "budget_usd": None, "task_trace": False, "max_task_steps": 8,
+            "visual": False, "session_budget_usd": 5.0, "rejudge": False,
+            "open": False,
+        })(),
+    )
+    assert [cmd[cmd.index("--variant") + 1] for cmd in calls] == [
+        "candidate_skill", "stable_skill"]
+
+
+def test_unrecognized_model_error_is_not_auto_continued(tmp_path, monkeypatch):
+    case = bl.load_case("incident-commander")
+    calls = []
+    monkeypatch.setattr(bl, "run_claude", lambda *args, **kwargs: (
+        calls.append(kwargs) or {
+            "status": "max_turns", "session_id": "session", "elapsed_s": 1,
+            "cost_usd": 0.1, "models": [], "result": "", "is_error": True,
+            "stderr": '[claude-code:unrecognized_model] {"model":"gemini"}',
+        }))
+    result = run_claude_session.run_session(
+        case, "stable_skill", tmp_path, model=None, max_turns=4,
+        timeout_s=30, budget_usd=1, session_budget_usd=4,
+    )
+    assert result["status"] == "BLOCKED"
+    assert "CLI returned an error envelope" in result["note"]
+    assert len(calls) == 1
 
 
 def test_task_outcomes_are_evidence_bound():

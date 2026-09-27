@@ -257,8 +257,15 @@ def main() -> int:
     parser.add_argument("--max-turns", type=int, default=None)
     parser.add_argument("--timeout", type=int, default=None)
     parser.add_argument("--budget-usd", type=float, default=None)
-    parser.add_argument("--task-trace", action="store_true")
-    parser.add_argument("--visual", action="store_true")
+    # Default to the case's own evaluation declaration: a case.yaml that declares
+    # task_trace/visual_pairwise gets them without the caller remembering flags.
+    # Explicit flags still override (no way to force-disable via CLI yet).
+    pre_args, _ = parser.parse_known_args()
+    _case_eval = (bl.load_case(pre_args.case).get("meta") or {}).get("evaluation") or {}
+    parser.set_defaults(task_trace=bool(_case_eval.get("task_trace")),
+                        visual=bool(_case_eval.get("visual_pairwise")))
+    parser.add_argument("--task-trace", dest="task_trace", action="store_true")
+    parser.add_argument("--visual", dest="visual", action="store_true")
     parser.add_argument("--max-task-steps", type=int, default=6)
     parser.add_argument("--session-budget-usd", type=float, default=None)
     parser.add_argument("--rejudge", action="store_true",

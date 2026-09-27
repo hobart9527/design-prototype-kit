@@ -398,8 +398,15 @@ def run_claude(prompt: str, cwd: pathlib.Path, *, session_id: str | None = None,
     try:
         proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=timeout_s, env=env)
     except subprocess.TimeoutExpired:
+        # A timed-out CLI emits no result payload, so its spend would read as $0.
+        # Estimate from the session transcript's cumulative usage instead — the
+        # transcript is written incrementally and survives the timeout.
+        sid = session_id or ""
+        est = estimate_cost_from_transcript(sid) if sid else None
         return {"status": "timeout", "elapsed_s": round(time.monotonic() - started, 2),
-                "exit_code": None, "result": "", "stderr": f"timeout after {timeout_s}s"}
+                "exit_code": None, "result": "", "stderr": f"timeout after {timeout_s}s",
+                "cost_usd": est, "cost_estimated": est is not None,
+                "session_id": sid}
     elapsed = round(time.monotonic() - started, 2)
     payload = parse_result_payload(proc.stdout)
     return {
@@ -455,6 +462,45 @@ def _classify_exit(proc: subprocess.CompletedProcess, payload: dict) -> str:
     if "budget" in reason:
         return "budget_exceeded"
     return "error"
+
+
+def estimate_cost_from_transcript(session_id: str, config_root: pathlib.Path | None = None) -> float | None:
+    """Estimate session cost from a transcript's modelUsage when the CLI payload is absent.
+
+    Reads `~/.claude/projects/<dir>/<session_id>.jsonl`, sums per-model
+    input/output token usage, and prices with a rough blended schedule. Returns
+    None when no transcript exists — missing evidence stays missing, never $0.
+    """
+    root = config_root or (pathlib.Path.home() / ".claude" / "projects")
+    if not root.is_dir():
+        return None
+    matches = list(root.glob(f"*/{session_id}.jsonl"))
+    if not matches:
+        return None
+    try:
+        rows = [json.loads(line) for line in matches[0].read_text(encoding="utf-8").splitlines() if line.strip()]
+    except (OSError, json.JSONDecodeError):
+        return None
+    usage = {}
+    for row in rows:
+        msg = row.get("message") or {}
+        if msg.get("role") != "assistant":
+            continue
+        u = msg.get("usage") or {}
+        if not u:
+            continue
+        model = msg.get("model") or "unknown"
+        acc = usage.setdefault(model, {"in": 0, "out": 0})
+        acc["in"] += (u.get("input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0) + (u.get("cache_creation_input_tokens") or 0)
+        acc["out"] += u.get("output_tokens") or 0
+    if not usage:
+        return None
+    # Blended rate schedule (USD per MTok): conservative, favors overestimate.
+    RATES = {"in": 3.0, "out": 15.0}
+    total = 0.0
+    for acc in usage.values():
+        total += acc["in"] / 1e6 * RATES["in"] + acc["out"] / 1e6 * RATES["out"]
+    return round(total, 4)
 
 
 def new_session_id() -> str:

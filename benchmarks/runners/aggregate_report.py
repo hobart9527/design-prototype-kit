@@ -163,7 +163,18 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
     # leaving a reader to find it; a silent mismatch reads as a broken report.
     hard_gate_verdicts = {"REGRESSION", "INVALID_CONTROL"}
     status_divergence = None
-    if status in hard_gate_verdicts and regression["verdict"] != "REGRESSION":
+    # A stable arm that trips a semantic hard gate is a broken control, not a
+    # candidate win: the paired verdict stays labeled but the report must tell
+    # the reader the comparison basis failed and name the remedy (add a no_skill
+    # control run) rather than presenting PASS as if the control were sound.
+    if status == "INVALID_CONTROL":
+        status_divergence = (
+            f"control arm ({', '.join(gate_arms)}) tripped a hard gate: the stable "
+            "baseline itself fabricated or escaped authority, so the paired verdict "
+            "has no sound comparison basis. Re-run with a no_skill control "
+            "(--variants candidate_skill,no_skill) and treat this report as "
+            "candidate-side evidence only.")
+    elif status in hard_gate_verdicts and regression["verdict"] != "REGRESSION":
         status_divergence = (
             f"hard gate tripped on {', '.join(gate_arms)} while the paired verdict is "
             f"{regression['verdict']}: the gate is absolute and fires on the artifacts "
@@ -173,6 +184,14 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         status_divergence = ("no hard gate tripped but the paired verdict regressed; "
                              "the paired comparison is the more specific claim.")
 
+    pairwise_cost = round(sum(
+        ((pair.get("metrics") or {}).get("cost_usd") or 0)
+        for pair in pairwise
+    ), 4)
+    pairwise_cost_known = sum(
+        1 for pair in pairwise
+        if isinstance((pair.get("metrics") or {}).get("cost_usd"), (int, float))
+    )
     return {
         "run_id": run_id,
         "suite": suite,
@@ -190,6 +209,16 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         "metrics": {
             "pairwise_preference": preference,
             "pairwise_pairs": len(judged_pairs),
+            "pairwise_agreement": round(max(preference.values()) / len(judged_pairs), 3) if judged_pairs else None,
+            "pairwise_confidence_counts": {
+                level: sum(1 for pair in judged_pairs
+                           if (pair.get("result") or {}).get("confidence") == level)
+                for level in ("low", "medium", "high")
+            },
+            "pairwise_cost_usd": pairwise_cost,
+            "pairwise_cost_recorded": pairwise_cost_known,
+            "pairwise_cost_missing": max(0, len(pairwise) - pairwise_cost_known),
+            "pairwise_cost_total_complete": pairwise_cost_known == len(pairwise),
             "pairwise_unverified": len([p for p in pairwise if p.get("status") != "judged"]),
             "design_reinterpretation_rate": _mean(
                 [(f.get("contract") or {}).get("reinterpretation_rate") for f in frontend]),
@@ -231,8 +260,12 @@ def render_markdown(report: dict) -> str:
             f"{data['task_success_rate']} | {data['method_recall']} | "
             f"{data['semantic_gate_pass']}/{data['semantic_gate_fail']}/{data['semantic_gate_unverified']} | "
             f"{data['artifact_turns']} | {data['cost_usd']} |")
+    pairwise_metrics = report["metrics"]
     lines += ["", "## Pairwise (blind)", "",
-              json.dumps(report["metrics"]["pairwise_preference"], ensure_ascii=False), ""]
+              json.dumps(pairwise_metrics["pairwise_preference"], ensure_ascii=False),
+              f"- judged pairs: {pairwise_metrics['pairwise_pairs']}; unverified: {pairwise_metrics['pairwise_unverified']}",
+              f"- agreement concentration (largest outcome share; descriptive only): {pairwise_metrics['pairwise_agreement']}",
+              f"- model-reported confidence (not statistical confidence): {json.dumps(pairwise_metrics['pairwise_confidence_counts'])}", ""]
     for pair in report.get("pairwise") or []:
         blind = {}
         blind_path = pair.get("blind_manifest_path")
@@ -273,8 +306,18 @@ def render_markdown(report: dict) -> str:
         total_cost += metrics.get("cost_usd") or 0
         lines.append(f"| {run['case_id']} | {run['variant']} | {run.get('repeat')} | {run['status']} | "
                      f"{metrics.get('cost_usd')} | {metrics.get('turns')} |")
-    lines += ["", f"Session cost captured across runs: **${round(total_cost, 2)}** "
-                  "(excludes judge calls and frontend reproduction)."]
+    frontend_cost = sum(
+        ((item.get("metrics") or {}).get("cost_usd") or 0)
+        for item in report.get("frontend") or []
+    )
+    lines += ["", "## Cost accounting", "",
+              f"- session cost captured across runs: **${round(total_cost, 2)}**",
+              f"- pairwise judge cost recorded: **${pairwise_metrics['pairwise_cost_usd']}** "
+              f"({pairwise_metrics['pairwise_cost_recorded']} recorded; {pairwise_metrics['pairwise_cost_missing']} missing)",
+              f"- frontend reproduction cost recorded: **${round(frontend_cost, 4)}** "
+              f"({sum(1 for item in report.get('frontend') or [] if (item.get('metrics') or {}).get('cost_usd') is not None)} recorded; "
+              f"{sum(1 for item in report.get('frontend') or [] if (item.get('metrics') or {}).get('cost_usd') is None)} missing)",
+              "- Missing cost records mean total spend is incomplete; they are not treated as zero."]
     lines.append("")
     return "\n".join(lines)
 

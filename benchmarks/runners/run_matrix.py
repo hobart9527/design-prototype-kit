@@ -28,10 +28,26 @@ def _run_sessions(cases, variants, repeats, matrix_dir, args) -> list:
     results = []
     total = len(cases) * len(variants) * repeats
     index = 0
+    ordered_variants = list(variants)
+    if "candidate_skill" in ordered_variants and "stable_skill" in ordered_variants:
+        ordered_variants.remove("candidate_skill")
+        ordered_variants.insert(ordered_variants.index("stable_skill"), "candidate_skill")
     for case_id in cases:
-        for variant in variants:
+        for variant in ordered_variants:
             for repeat in range(1, repeats + 1):
                 index += 1
+                # Total-budget governance: session caps are per-session, so a
+                # matrix of N sessions can spend N × session cap. Track actual
+                # recorded spend across finished runs and skip the rest once the
+                # matrix cap is reached.
+                if getattr(args, "total_budget_usd", None) is not None:
+                    spent = sum(float(r.get("cost_usd") or 0) for r in results)
+                    if spent >= args.total_budget_usd:
+                        bl.eprint(
+                            f"[matrix] total budget ${args.total_budget_usd} reached "
+                            f"(spent ${round(spent, 2)}); skipping {case_id}/{variant}/r{repeat}"
+                        )
+                        continue
                 bl.eprint(f"[matrix] {index}/{total} {case_id}/{variant}/r{repeat}")
                 cmd = [sys.executable, str(bl.BENCH / "runners" / "run_case.py"),
                        "--case", case_id, "--variant", variant, "--repeat", str(repeat),
@@ -160,6 +176,9 @@ def main() -> int:
     parser.add_argument("--frontend-reproduction", action="store_true")
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--session-budget-usd", type=float, default=None)
+    parser.add_argument("--total-budget-usd", type=float, default=None,
+                        help="Hard cap on cumulative spend across the whole matrix; "
+                             "remaining sessions are skipped once it is reached")
     parser.add_argument("--rejudge", action="store_true",
                         help="re-run judges and the report over an existing run without new sessions")
     parser.add_argument("--open", action="store_true",

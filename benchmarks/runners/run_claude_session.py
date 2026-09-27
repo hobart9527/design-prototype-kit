@@ -66,8 +66,16 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
         transcript.append({"role": "assistant", "text": out["result"]})
         with records_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(turn, ensure_ascii=False) + "\n")
+        bl.eprint(
+            f"[session] {case['id']}/{variant} call={turn['turn']} "
+            f"status={turn['status']} elapsed={turn['elapsed_s']}s "
+            f"cost=${turn['cost_usd'] or 0:.2f} files={bl.workspace_components(workspace)['file_count']}"
+        )
 
         if out["status"] == "max_turns":
+            if not out.get("result") and out.get("is_error"):
+                status, note = "BLOCKED", f"CLI returned an error envelope: {turn['stderr']}"
+                break
             # The CLI caps agent turns per call. Resume the same session with a
             # neutral continuation so a long design session can finish; the
             # wall-clock, loop-turn and session-budget limits still bound it.

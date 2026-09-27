@@ -132,6 +132,36 @@ def test_recorded_provenance_is_reported_and_absent_when_runs_disagree(tmp_path)
     assert disagreeing["provenance"]["source_identity"] == ["a" * 64, "b" * 64]
 
 
+def test_pairwise_summary_discloses_agreement_and_missing_judge_cost(tmp_path):
+    _write_run(tmp_path, _run())
+    pair_dir = tmp_path / "pairwise" / "c-stable-vs-candidate"
+    pair_dir.mkdir(parents=True)
+    bl.write_json(pair_dir / "result.json", {
+        "case_id": "c", "pair": "candidate_skill_vs_stable_skill", "status": "judged",
+        "result": {"overall_preference": "alpha", "confidence": "high"},
+        "metrics": {"cost_usd": 0.12},
+    })
+    unverified_dir = tmp_path / "pairwise" / "c-no-skill-vs-stable"
+    unverified_dir.mkdir(parents=True)
+    bl.write_json(unverified_dir / "result.json", {
+        "case_id": "c", "pair": "no_skill_vs_stable_skill", "status": "unverified",
+        "metrics": {},
+    })
+
+    report = aggregate_report.build(tmp_path, "custom", "test")
+    metrics = report["metrics"]
+    assert metrics["pairwise_agreement"] == 1.0
+    assert metrics["pairwise_confidence_counts"] == {"low": 0, "medium": 0, "high": 1}
+    assert metrics["pairwise_cost_usd"] == 0.12
+    assert metrics["pairwise_cost_recorded"] == 1
+    assert metrics["pairwise_cost_missing"] == 1
+    assert metrics["pairwise_cost_total_complete"] is False
+    markdown = aggregate_report.render_markdown(report)
+    assert "not statistical confidence" in markdown
+    assert "1 recorded; 1 missing" in markdown
+    assert "total spend is incomplete" in markdown
+
+
 def test_prior_run_result_is_archived_not_overwritten(tmp_path, monkeypatch):
     """Re-judging keeps the previous evidence as run-result-prev<N>.json instead of erasing it."""
     case_id = sorted(bl.case_paths())[0]

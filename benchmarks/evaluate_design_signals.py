@@ -28,21 +28,22 @@ def evaluate_design_signals(proto_dir: Path, slice_id: str) -> Dict[str, Any]:
     envelope_json = proto_dir / f"experiments/{slice_id}/envelope.json"
     html_file = proto_dir / f"experiments/{slice_id}/anchor/index.html"
 
-    # Negative gate: Empty or missing core artifacts immediately blocks evaluation
+    # This legacy signal report is diagnostic only. It must not imply that a
+    # fixed visual recipe is necessary for product quality or readiness.
     core_files = [f for f in [tokens_css, c1_md, envelope_json, html_file] if f.is_file()]
-    if len(core_files) == 0:
+    if not core_files:
         return {
             "slice_id": slice_id,
-            "status": "BLOCKED",
-            "message": "Empty or non-existent prototype directory. Core artifacts missing.",
-            "signal_coverage_pct": 0.0,
+            "status": "UNVERIFIED",
+            "message": "Prototype and contract evidence are unavailable.",
+            "signal_coverage_pct": None,
             "passed_checks": 0,
-            "total_checks": 12,
+            "total_checks": 0,
             "details": {"error": ["No prototype or contract files detected"]}
         }
 
     checks_passed = 0
-    total_checks = 12
+    total_checks = 0
     details: Dict[str, List[str]] = {
         "chromatic": [],
         "typographic": [],
@@ -51,8 +52,9 @@ def evaluate_design_signals(proto_dir: Path, slice_id: str) -> Dict[str, Any]:
         "tactile": []
     }
 
-    # 1. Chromatic Resonance (3 checks)
+    # 1. Chromatic evidence (diagnostic signals, not mandatory aesthetic choices)
     if tokens_css.is_file():
+        total_checks += 3
         css = tokens_css.read_text(encoding="utf-8")
         if not re.search(r'#(?:808080|777777|888888)\b', css):
             checks_passed += 1
@@ -74,8 +76,9 @@ def evaluate_design_signals(proto_dir: Path, slice_id: str) -> Dict[str, Any]:
     else:
         details["chromatic"].append("FAIL: tokens.css not found")
 
-    # 2. Typographic Rhythm (3 checks)
+    # 2. Typographic evidence
     if tokens_css.is_file():
+        total_checks += 3
         css = tokens_css.read_text(encoding="utf-8")
         if "font-variant-numeric: tabular-nums" in css or "--font-mono" in css:
             checks_passed += 1
@@ -97,8 +100,9 @@ def evaluate_design_signals(proto_dir: Path, slice_id: str) -> Dict[str, Any]:
     else:
         details["typographic"].append("FAIL: tokens.css not found")
 
-    # 3. Spatial Equilibrium (2 checks)
+    # 3. Spatial evidence
     if tokens_css.is_file():
+        total_checks += 2
         css = tokens_css.read_text(encoding="utf-8")
         if ("--radius-outer" in css and "--radius-inner" in css) or "--radius-card" in css:
             checks_passed += 1
@@ -114,8 +118,9 @@ def evaluate_design_signals(proto_dir: Path, slice_id: str) -> Dict[str, Any]:
     else:
         details["spatial"].append("FAIL: tokens.css not found")
 
-    # 4. Cognitive Ergonomics & Disclosure (2 checks)
+    # 4. Cognitive context signals
     if envelope_json.is_file():
+        total_checks += 2
         try:
             env = json.loads(envelope_json.read_text(encoding="utf-8"))
             if "attention_routing" in env or "disclosure_levels" in str(env):
@@ -134,8 +139,9 @@ def evaluate_design_signals(proto_dir: Path, slice_id: str) -> Dict[str, Any]:
     else:
         details["cognitive"].append("FAIL: envelope.json not found")
 
-    # 5. Fault Resilience & Commit Mechanics (2 checks)
+    # 5. Action and recovery context signals
     if c1_md.is_file():
+        total_checks += 2
         c1_text = c1_md.read_text(encoding="utf-8")
         if "Fault Tolerance" in c1_text or "Error Recovery" in c1_text:
             checks_passed += 1
@@ -151,12 +157,13 @@ def evaluate_design_signals(proto_dir: Path, slice_id: str) -> Dict[str, Any]:
     else:
         details["tactile"].append("FAIL: Slice contract c1.md not found")
 
-    coverage_pct = round((checks_passed / total_checks) * 100.0, 1)
-    status = "PASS" if coverage_pct >= 80.0 else "FAIL"
+    coverage_pct = round((checks_passed / total_checks) * 100.0, 1) if total_checks else None
+    status = "DIAGNOSTIC" if total_checks else "UNVERIFIED"
 
     return {
         "slice_id": slice_id,
         "status": status,
+        "message": "Signals are diagnostic; inspect product intent and rendered evidence before judging quality.",
         "signal_coverage_pct": coverage_pct,
         "passed_checks": checks_passed,
         "total_checks": total_checks,

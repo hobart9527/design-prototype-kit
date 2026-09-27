@@ -37,13 +37,13 @@ mat_contracts = _load("mat_contracts", SCRIPTS / "materialize_contracts.py")
 verify_quality = _load("verify_quality", SCRIPTS / "verify_prototype_quality.py")
 
 
-def test_empty_prototype_directory_is_blocked():
-    """Negative Test: Empty prototype directory must evaluate to BLOCKED with 0.0% coverage."""
+def test_empty_prototype_directory_is_unverified():
+    """Missing evidence is unverified, not a failed design-quality score."""
     with tempfile.TemporaryDirectory() as tmpdir:
         empty_dir = Path(tmpdir)
         res = eval_signals.evaluate_design_signals(empty_dir, "test-slice")
-        assert res["status"] == "BLOCKED"
-        assert res["signal_coverage_pct"] == 0.0
+        assert res["status"] == "UNVERIFIED"
+        assert res["signal_coverage_pct"] is None
         assert res["passed_checks"] == 0
 
 
