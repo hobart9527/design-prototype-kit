@@ -12,6 +12,12 @@
 - Current topology/prototype coverage and evidence links:
 - Pending prerequisite (`none | needs_decision | needs_evidence | blocked`), impact and owner:
 - Next action and its prerequisite:
+- Stage checkpoint (`stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze`), completed in this turn:
+- Turn budget discipline: conclude the current turn once the named stage
+  checkpoint's artifacts are compiled and verified; the next stage starts in
+  the next turn from this Resume block, never mid-turn. A turn that would
+  start Builder dispatch after the **current stage's** checkpoint is
+  complete has already overspent — stop and summarize instead.
 
 “Active track” is retained for checker compatibility and means the current
 uncertainty, not a mandatory Track A/Track B sequence. The route contract in
@@ -59,6 +65,14 @@ feedback reopens only that decision and never the whole frontier. A bare
 "continue" instruction without a chosen direction never resolves an open
 direction choice into a confirmed decision. After formalization retain a link
 and rationale, not a competing rule.
+
+Authority-source discipline: a user's *pain narrative* ("上个月有人误排空，没法回滚")
+is context evidence, never a `confirmed` decision — the decision row that reacts
+to it stays `proposed`/`needs-evidence` until the user actually picks the
+direction. Marking a derived mechanism (双签, 30s 回滚, 梯次排空) `explicit` and
+citing the pain quote as its authority is an authority promotion: derived
+lifecycle mechanisms carry `derived` evidence status with the pain point as
+impact context.
 
 ## Open frontier
 
@@ -128,20 +142,39 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
   - `domain/avalanche-alert` (雪崩告警): 异常节点聚集扩散
   - `domain/quarantined` (已隔离): 机器安全下线
 - **Action Verb Lifecycle (必须包含破坏性操作的确认与回滚出口)**:
-  - `action-space`: 检视异常节点详情 (Trigger: Space key -> Level 1 Flyout -> Feedback: 高亮锁定)
-  - `action-enter`: 提交机器排空方案 (Trigger: Enter key -> Level 4 `<dialog>` 确认弹窗展示后果 -> Commit: "签发梯次排空" -> Feedback: "排空中 / 已排空")
-  - `action-escape`: 紧急熔断与回滚 (Trigger: Escape key -> Commit: "回滚下线节点" -> Feedback: "已回滚")
+  ```contract:actions
+  - id: action-space
+    verb: 检视异常节点详情
+    trigger: Space key / row click
+    proximity_level: 1
+    commit: 打开 Level 1 Flyout
+    feedback: 高亮锁定
+  - id: action-enter
+    verb: 提交机器排空方案
+    trigger: Enter key / button click
+    proximity_level: 4
+    commit: 签发梯次排空 / 确认隔离下线
+    consequence: Level 4 dialog 展示不可逆操作后果；快捷双签必须确定且可用
+    feedback: 立即显示“排空中 / 已排空”状态
+  - id: action-escape
+    verb: 紧急熔断与回滚
+    trigger: Escape key / button click
+    proximity_level: 1
+    commit: 撤销 / 回滚 / 撤回上线
+    feedback: 已回滚 / 已撤销
+  ```
+  机器权威来源为上述 YAML；下方散文只解释，不得另行声明不同 ID 或生命周期。
 - **Decisive Exchange 3-Frame Verification**: 触发 (Frame 1: 80ms) -> 提交 (Frame 2: 150ms) -> 结果 (Frame 3: 持久)
 
 #### 5. Verifiable Invariants & Break Protocol (支柱 9: 韧性与证伪门禁)
 - **Verifiable Design Invariants**:
   - `[inv/wcag-contrast]` (`blocking` · `dom_computed`): 核心文本必须满足 WCAG 2.2 AA (>= 4.5:1)，操作按钮 >= 3.0:1
   - `[inv/token-inheritance]` (`blocking` · `dom_computed`): 100% 继承 `prototype/shared/tokens.css`，0 内联 hex
-  - `[inv/action-safety]` (`blocking` · `dom_event`): 高危排空必须弹出 `<dialog>` 二次确认，且必须提供“回滚/撤销”操作
+  - `[inv/action-safety]` (`blocking` · `dom_event`): 高危排空必须弹出 `<dialog>` 二次确认；模态内必须确保双人签发可被快速/确定性解锁；提交后 DOM 必须渲染明确的状态反馈（含 "已排空" 或 "排空中"）；且必须持久展示可触达的 "撤回 / 撤销 / 回滚" 动作按钮。
 - **The Break Protocol**:
   - `[stress/unbreakable-string]`: 超长节点标识与微服务名自动截断，禁止破坏横向布局
   - `[stress/zero-data]`: 0 异常机器时展示常态自愈健康指示，严禁白屏
-  - `[stress/320px-fold]`: 320px 视口单列自然流动，无横向溢出滚动条
+  - `[stress/320px-fold]`: 320px / 390px 视口单列自然流动，全容器 box-sizing: border-box，严格消除横向溢出滚动条（scrollWidth == clientWidth）
 
 ### Stage 2: Proposition & Probe (立 - 核心主交互物化)
 - **Hero Screen Anchor Target**: `prototype/experiments/<slice_id>/anchor/index.html` (or probe path)

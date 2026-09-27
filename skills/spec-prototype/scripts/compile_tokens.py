@@ -395,6 +395,27 @@ def parse_5dials(discussion_text: str) -> Dict[str, str]:
     return parse_five_axes(discussion_text)
 
 
+def _has_confirmed_token_authority(source_text: str) -> bool:
+    """True only when a real confirmed-decision record pins the token values.
+
+    A seed palette the design agent authored in Stage 1 is derived work, not
+    human authority, regardless of which token names it happens to spell.
+    Human authority requires an explicit confirmed-decisions section, or a
+    decision-table row whose status is `confirmed`/`delegated` AND whose scope
+    actually names the token/palette decision.
+    """
+    if re.search(r"^#{2,4}\s*(?:Confirmed|已确认)\s*(?:Decisions?|决策)", source_text, re.IGNORECASE | re.MULTILINE):
+        return True
+    for line in source_text.splitlines():
+        if not line.strip().startswith("|"):
+            continue
+        if not re.search(r"\|\s*(?:confirmed|delegated)\s*\|", line, re.IGNORECASE):
+            continue
+        if re.search(r"色|palette|token|颜色|配色|色彩", line, re.IGNORECASE):
+            return True
+    return False
+
+
 def _hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
     h = hex_code.lstrip("#")
     if len(h) == 3:
@@ -1287,10 +1308,11 @@ def compile_tokens(
     dynamic_colors = extract_dynamic_palette(disc_text, mode=mode)
     computed = compute_tokens(dials, dynamic_colors, mode=mode)
 
-    has_confirmed = "## Confirmed Decisions" in disc_text or any(
-        k in disc_text for k in ("--color-primary", "--accent-primary", "--bg-surface")
-    )
-    computed["authority"] = "explicit_human" if has_confirmed else "derived"
+    # Authority reflects provenance, not keyword presence: a token list that
+    # merely appears in the authored discussion is still agent-derived unless a
+    # confirmed user decision record (the decision table's confirmed rows or an
+    # explicit confirmed-decisions section) actually pins those values.
+    computed["authority"] = "explicit_human" if _has_confirmed_token_authority(disc_text) else "derived"
 
     # One-way provenance seal: the compiled stylesheet records the sha256 of the
     # exact source it was derived from, so any later hand edit is detectable.
@@ -1372,10 +1394,7 @@ def _render_sealed_css(source_text: str, source_path: str, mode: str) -> str:
     dials = parse_5dials(source_text)
     dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
     computed = compute_tokens(dials, dynamic_colors, mode=mode)
-    computed["authority"] = "explicit_human" if (
-        "## Confirmed Decisions" in source_text
-        or any(k in source_text for k in ("--color-primary", "--accent-primary", "--bg-surface"))
-    ) else "derived"
+    computed["authority"] = "explicit_human" if _has_confirmed_token_authority(source_text) else "derived"
     computed["craft_stack"] = parse_craft_stack(source_text, dials)
     computed["provenance"] = {
         "source": source_path,

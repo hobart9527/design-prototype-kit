@@ -140,6 +140,16 @@ def test_export_tokens_parses_two_column_breakpoints(tmp_path: Path):
     assert data["breakpoints"]["wide"]["$value"] == "1600px"
 
 
+def test_token_authority_requires_token_specific_confirmation():
+    ct = _load_compiler()
+    seed = "## Seed Palette\n- --accent-primary: #d6f56b\n"
+    assert ct._has_confirmed_token_authority(seed) is False
+    assert ct._has_confirmed_token_authority(
+        "| palette | confirmed | user selected palette |") is True
+    assert ct._has_confirmed_token_authority(
+        "| rollout policy | confirmed | user selected rollout |") is False
+
+
 def test_compile_tokens_empty_dials_yield_neutral_scaffold():
     ct = _load_compiler()
     tokens = ct.compute_tokens({})

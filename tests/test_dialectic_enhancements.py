@@ -52,6 +52,42 @@ def test_discussion_decision_record_ingestion(tmp_path: Path):
     assert "Operator distinguishes draft from seal in 5 seconds" in r1_text
 
 
+def test_action_identity_gate_covers_canonical_spec_and_paired_legacy_contract(tmp_path: Path, capsys):
+    script = "<script>window.addEventListener('keydown', ()=>{});</script>"
+    html = tmp_path / "prototype/surfaces/ledger-slice/index.html"
+    html.parent.mkdir(parents=True)
+    html.write_text(
+        "<!DOCTYPE html><html><body><main id='main'><button data-action='action-enter'>Enter</button></main>"
+        + script + "</body></html>", encoding="utf-8")
+    tokens = tmp_path / "prototype/shared/tokens.css"
+    tokens.parent.mkdir(parents=True)
+    tokens.write_text(":root {}", encoding="utf-8")
+
+    canonical = tmp_path / "prototype/specifications/ledger-slice/r1.spec.md"
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text(
+        "# Spec\n## Action Verb Lifecycle\n- `action-enter`: submit\n"
+        "- `action-escape`: undo\n", encoding="utf-8")
+    assert verify_prototype_quality.assert_quality(
+        str(html), str(tokens), contract_path=str(canonical)) is False
+    output = capsys.readouterr().out
+    assert "action identity assertion" in output
+    assert "action-escape" in output
+
+    legacy = tmp_path / "prototype/specifications/ledger-slice/r1.md"
+    legacy.write_text("# Spec\n## Action Verb Lifecycle\n- `action-enter`: submit\n", encoding="utf-8")
+    paired = tmp_path / "prototype/contracts/slices/ledger-slice/c1.md"
+    paired.parent.mkdir(parents=True)
+    paired.write_text(
+        "# Slice contract\n## Action Verb Lifecycle\n- `action-space`: inspect\n",
+        encoding="utf-8")
+    assert verify_prototype_quality.assert_quality(
+        str(html), str(tokens), contract_path=str(legacy)) is False
+    output = capsys.readouterr().out
+    assert "action identity assertion" in output
+    assert "action-space" in output
+
+
 def test_signature_accent_discipline_gate(tmp_path: Path):
     """Verify verify_prototype_quality catches --accent-seal usage on draft/secondary elements."""
     contract = tmp_path / "r1.md"

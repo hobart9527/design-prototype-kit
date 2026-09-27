@@ -50,6 +50,34 @@ def _action_cell(row_cells: list[str], columns: dict[str, int], field: str) -> s
     return row_cells[index].strip() if index is not None and index < len(row_cells) else ""
 
 
+def _collect_action_ids_from_markdown(text: str) -> set[str]:
+    """Collect action ids from bullets, tables and contract:actions YAML blocks."""
+    ids: set[str] = set()
+    for m in re.finditer(r"`(action-[a-z0-9]+(?:-[a-z0-9]+)*)`", text):
+        ids.add(m.group(1))
+    for m in re.finditer(r"^\s*-?\s*id:\s*(action-[a-z0-9]+(?:-[a-z0-9]+)*)\s*$", text, re.MULTILINE):
+        ids.add(m.group(1))
+    return ids
+
+
+def _contract_action_ids(path: Path | None) -> set[str]:
+    """Resolve declared action ids from the contract and optional paired c1."""
+    if not path or not path.is_file():
+        return set()
+    sources = [path.read_text(encoding="utf-8")]
+    if not path.name.endswith(".spec.md"):
+        try:
+            paired = path.parents[2] / "contracts/slices" / path.parent.name / "c1.md"
+            if paired.is_file():
+                sources.append(paired.read_text(encoding="utf-8"))
+        except (OSError, IndexError):
+            pass
+    ids: set[str] = set()
+    for source in sources:
+        ids.update(_collect_action_ids_from_markdown(source))
+    return ids
+
+
 def _contract_items(path: Path | None) -> list[str]:
     """Extract verifiable entity names, action IDs, or button labels from contract markdown."""
     if not path or not path.is_file():
@@ -135,7 +163,6 @@ def _contract_items(path: Path | None) -> list[str]:
                 trigger_tuple = tuple(s for s in (act_id, trig_lbl) if s and s not in ("-", "---", "N/A", "Action ID", "Trigger Button Label", "unspecified", "Unspecified"))
                 if trigger_tuple:
                     items.append(trigger_tuple)
-
                 # Column identity comes from the authored header, so a 6- or 7-column
                 # table (or any column order) yields the real commit button and feedback.
                 cols = action_columns or _action_column_map(cells)
@@ -496,7 +523,16 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if not re.search(r"<button\b|<a\b[^>]*href=|role=[\"']button", source):
         failures.append("interaction assertion: no reachable control")
 
-    declared = _contract_items(Path(contract_path) if contract_path else None)
+    contract_file = Path(contract_path) if contract_path else None
+    declared = _contract_items(contract_file)
+    required_action_ids = _contract_action_ids(contract_file)
+    rendered_action_ids = set(re.findall(r'data-action=["\'](action-[a-z0-9]+(?:-[a-z0-9]+)*)["\']', source))
+    missing_actions = sorted(required_action_ids - rendered_action_ids)
+    if missing_actions:
+        failures.append(
+            "action identity assertion: authored action id(s) missing from DOM data-action: "
+            + ", ".join(missing_actions[:8])
+        )
     missing: list[str] = []
     for item in declared:
         if isinstance(item, tuple):

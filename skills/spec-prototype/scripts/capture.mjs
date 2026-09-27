@@ -69,13 +69,35 @@ function buildStateUrl(baseUrl, state) {
   return baseUrl + `#state=${state}`;
 }
 
+async function loadPlaywright() {
+  // Local node_modules first, then global installs (npm -g), which ESM import
+  // cannot reach without an explicit resolution attempt.
+  try {
+    return await import("playwright");
+  } catch {}
+  try {
+    const { createRequire } = await import("node:module");
+    const { execFileSync } = await import("node:child_process");
+    const globalRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf8" }).trim();
+    const req = createRequire(`${globalRoot}/`);
+    const playwrightPath = req.resolve("playwright");
+    const mod = await import(playwrightPath);
+    // Global-install CJS interop exposes the namespace on .default.
+    return mod.chromium ? mod : (mod.default ?? null);
+  } catch {}
+  return null;
+}
+
 async function captureWithPlaywright(baseUrl, outputDir, viewports, states, concurrency = 4) {
   try {
-    const { chromium } = await import("playwright");
+    const pw = await loadPlaywright();
+    if (!pw) return null;
+    const { chromium } = pw;
     const browser = await chromium.launch({ headless: true });
     const captured = {};
     const failures = [];
     const runtimeErrors = [];
+    const viewportMetrics = {};
 
     const tasks = [];
     for (const state of states) {
@@ -93,6 +115,41 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
         const page = await browser.newPage({ viewport: dim });
         page.on("pageerror", (err) => runtimeErrors.push(`[${prefix}] ${err.message}`));
         await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
+        // Viewport containment evidence: record horizontal overflow at capture
+        // time so a scrollWidth > clientWidth break surfaces in the same pass
+        // as the screenshot instead of only at downstream task judging.
+        const metrics = await page.evaluate(() => {
+          const de = document.documentElement;
+          const smallTargets = [];
+          // Record every interactive control below the task judge's default
+          // 44px touch-target floor; WCAG exceptions require independent review.
+          const isInteractive = (el) => Boolean(el.closest("button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab], [role=checkbox], [role=switch], [role=radio], summary"));
+          for (const el of document.querySelectorAll("button, a[href], input, select, textarea, [role=button], [role=tab], summary")) {
+            if (!isInteractive(el)) continue;
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 || r.height === 0) continue;
+            const inlineException = el.hasAttribute("data-inline-target-exception");
+            if ((r.width < 44 || r.height < 44) && !inlineException) {
+              smallTargets.push({
+                tag: el.tagName.toLowerCase(),
+                label: (el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 40),
+                width: Math.round(r.width),
+                height: Math.round(r.height),
+              });
+            }
+          }
+          return {
+            scrollWidth: de.scrollWidth,
+            clientWidth: de.clientWidth,
+            scrollHeight: de.scrollHeight,
+            clientHeight: de.clientHeight,
+            small_touch_targets: smallTargets.slice(0, 10),
+            small_touch_target_count: smallTargets.length,
+            dialog_present: Boolean(document.querySelector("dialog")),
+            dialog_showmodal_bound: /showModal/.test(document.documentElement.outerHTML),
+          };
+        });
+        viewportMetrics[prefix] = metrics;
         await page.screenshot({ path: targetFile, fullPage: false });
         await page.close();
         if (states.length > 1 && (state === "ideal" || state === states[0])) {
@@ -116,6 +173,7 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
       runner: "playwright-concurrent",
       viewports: vps,
       captures: captured,
+      viewport_metrics: viewportMetrics,
       runtime_errors: runtimeErrors,
       failures,
     };
@@ -178,7 +236,19 @@ async function captureWithCli(browserBin, baseUrl, outputDir, viewports, states,
       const vp = k.split("-").pop();
       if (!vps[vp]) vps[vp] = v;
     }
-    return { status: "captured", runner: "system-browser-cli-concurrent", viewports: vps, captures: captured };
+    // The CLI screenshot path cannot evaluate page DOM: containment and
+    // touch-target metrics stay explicitly unmeasured rather than absent
+    // (absent would read as "measured clean" downstream).
+    const viewportMetrics = Object.fromEntries(
+      Object.keys(captured).map((prefix) => [prefix, { dom_metrics: "unmeasured_cli_runner" }])
+    );
+    return {
+      status: "captured",
+      runner: "system-browser-cli-concurrent",
+      viewports: vps,
+      captures: captured,
+      viewport_metrics: viewportMetrics,
+    };
   }
   return null;
 }
@@ -216,6 +286,18 @@ export function buildCaptureMetadata(result, options = {}) {
   const captures = capture.captures || {};
   const failures = Array.isArray(capture.failures) ? capture.failures : [];
   const runtimeErrors = Array.isArray(capture.runtime_errors) ? capture.runtime_errors : [];
+  const viewportMetrics = capture.viewport_metrics || {};
+  // Horizontal overflow at any captured viewport is a containment break, not a
+  // capture failure: surface it as an explicit finding on the metadata record.
+  const overflowFindings = Object.entries(viewportMetrics)
+    .filter(([, m]) => m && typeof m.scrollWidth === "number" && typeof m.clientWidth === "number"
+      && m.scrollWidth > m.clientWidth + 1)
+    .map(([prefix, m]) => `${prefix}: scrollWidth=${m.scrollWidth} clientWidth=${m.clientWidth}`);
+  // Touch-target findings mirror the task judge's min_touch_target check so a
+  // small-control break surfaces at capture time, not only at judging.
+  const touchFindings = Object.entries(viewportMetrics)
+    .filter(([, m]) => m && typeof m.small_touch_target_count === "number" && m.small_touch_target_count > 0)
+    .map(([prefix, m]) => `${prefix}: ${m.small_touch_target_count} control(s) under 44px min target`);
   const screenshotCount = Object.keys(captures).length;
   const browserExecution = BROWSER_EXECUTION_BY_RUNNER[capture.runner] || "unavailable";
   const status = typeof capture.status === "string" ? capture.status : "browser_unavailable";
@@ -251,6 +333,12 @@ export function buildCaptureMetadata(result, options = {}) {
       paths: Object.values(captures),
       runtime_errors: runtimeErrors,
       failures,
+      viewport_metrics: viewportMetrics,
+      horizontal_overflow: overflowFindings,
+      small_touch_targets: touchFindings,
+      dom_metrics_coverage: Object.values(viewportMetrics).some((m) => m && m.dom_metrics === "unmeasured_cli_runner")
+        ? "partial: CLI runner cannot evaluate DOM; containment/touch findings above are Playwright-only"
+        : "full",
     },
     validation: {
       kind: "renderer_capture",

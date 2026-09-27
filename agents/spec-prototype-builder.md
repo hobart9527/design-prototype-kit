@@ -29,6 +29,15 @@ consult them for nuance, but never let a legacy key contradict the canonical IR,
 treat a `reference_pattern` (editorial-reading, somatic-touchflow, operational-canvas,
 dense-console) as a rigid template to clone verbatim.
 
+> **Verifiability expectation (no new gate, just predictability):** every declared
+> `action_contracts[].id` and every entity in `semantic_contract` will be asserted
+> **verbatim** back against your rendered HTML by `verify_prototype_quality.py` and
+> the Critic. Bind them exactly: each interactive control that realizes an authored
+> action carries `data-action="<action-id>"`, and — when it targets a specific
+> entity — `data-entity-id="<entity-id>"` plus an `aria-label` that names that
+> entity (e.g. `aria-label="排空 node-sg2-batch3"`). Never let a blanket `title`
+> attribute collapse several rows into one identical accessible name.
+
 ### Separated state structure
 
 `semantic_contract` separates states by authentic authority. Consume them distinctly:
@@ -258,6 +267,17 @@ Leave no state silent and lose no user work.
   `390px`), never bluntly hide critical functional objects with `display: none`. Secondary
   entities (marginal notes, inspect panels) fold into an accessible bottom-sheet trigger or
   badge, retaining full entity reachability.
+- **Lifecycle Closure (行为闭环)**: Every long-running action that the Spec declares (drain,
+  sync, batch, deploy) must settle its in-flight flag and release any global lock on completion
+  — never leave `state.<doing>` true after the post-condition is met, and never let the
+  completion count diverge from the declared total. An already-completed mutation that the Spec
+  marks reversible gets a genuine reverse path (rollback / re-schedule), distinct from merely
+  aborting an in-flight run. A follow-on action gated on completion must actually be reachable
+  after the action completes.
+- **No Guardrail Backdoors**: When the Spec authors a dual-signoff, confirmation, or high-risk
+  guard, do NOT ship an in-UI "drill sign" / "quick-sign" / one-click-bypass control that a single
+  actor can use to defeat it. Rehearsal or fixture shortcuts belong in a test hook
+  (`window.__TEST_HARNESS__`), never as a visible business button.
 - **Disabled Sibling Navigation Contract**: Sibling navigation follows actual delivery, and the
   quality gate asserts it. A sibling surface delivered this round is reachable by a live
   `href` from every other delivered member. A sibling surface NOT delivered is not linked by a

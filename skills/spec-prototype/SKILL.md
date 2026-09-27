@@ -68,9 +68,19 @@ The system unifies all design operations into four orthogonal layers and one tra
 
 Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
 
+**One-Stage-Per-Turn Budget Discipline (单回合单阶段预算纪律)**: A bounded session
+turn carries at most one stage to its checkpoint. When the active stage's
+artifacts are compiled and verified (e.g. Stage 1's sealed IR + tokens), record
+the stage checkpoint in `prototype/discussion.md`'s Resume block and end the
+turn with a summary. The next stage (Builder dispatch, critique, freeze) starts
+in the next turn from that checkpoint. Batch compilation in one shell call
+(`compile_spec_ir.py && compile_tokens.py`); write `discussion.md` once per
+authoring pass. This keeps a budget or wall-clock failure inside a single
+stage instead of destroying an unbounded multi-stage session.
+
 ```text
 [Stage 1: 破 - Understand & Frame (问题空间与设计契约定义 · Grilling & Brainstorming Engine)]
-  │  Core Objective: Progressive design co-creation via Dynamic Topological Collapse Spine across 4 bundled rounds (Metaphor -> Topology -> Sensory -> Falsification/Compile).
+  │  Core Objective: Progressive design co-creation via Dynamic Topological Collapse Spine. Co-creation themes (Metaphor / Topology / Sensory / Falsification) are selected and ordered by the live uncertainty, never a fixed 4-round questionnaire (see stage-1-frame.md).
   │  Alignment Cadence: Agent finds facts silently; User decides trade-offs. Present 2~3 concrete options with trade-offs and a strong recommendation (`➡️`). Ratchet confirmed rounds into prototype/discussion.md Decision Record.
   │  Micro-slice Lazy Loading: Dynamically load only the matching rule slice for the active frontier:
   │    - Round 1: references/dialectic/01-metaphor-benchmark.md (<80 lines)

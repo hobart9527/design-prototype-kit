@@ -108,6 +108,8 @@ Base unit:
 | `--shadow-sm` | | Subtle lift: cards, dropdowns |
 | `--shadow-md` | | Elevated: modals, popovers |
 | `--shadow-lg` | | High elevation: dialogs |
+| `--surface-specular` | | 1px top highlight inner specular reflection: `inset 0 1px 0 0 rgba(255,255,255,0.08)` |
+| `--backdrop-scrim` | | Backdrop frosted blur filter: `blur(16px) saturate(180%)` |
 
 Elevation rule: use the approved Foundation and platform conventions; explain the semantic role of raised surfaces.
 

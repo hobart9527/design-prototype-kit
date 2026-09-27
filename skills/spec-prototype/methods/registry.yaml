@@ -207,3 +207,25 @@ methods:
       - "Never deploy full-height blocking drawers or scrims for Level 0/1 in-situ or lightweight actions"
       - "Browser native reserved keys (Space for scroll, Tab for focus chain) are strictly protected"
     file: "references/02-craft-methods/ia-interaction.md"
+
+  - id: dense-operational-console
+    name: "Dense Operational Console & Telemetry Workbench"
+    pillars:
+      - Expression
+      - Attention
+      - Topology
+    stages:
+      - 1
+      - 2
+      - 3
+    activate_when:
+      - telemetry_display
+      - kpi_dashboard
+      - real_time_monitoring
+      - dense_data_workbench
+      - incident_response
+    invariants:
+      - "Multi-cluster and multi-region telemetry visible without excessive whitespace"
+      - "Tabular typography and micro-trends preserve immediate operational readability"
+      - "Primary triage actions accessible within single viewport scroll bounds"
+    file: "references/02-craft-methods/data-information.md"

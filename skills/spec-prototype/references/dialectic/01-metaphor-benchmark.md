@@ -8,6 +8,13 @@
 - The Agent MUST inspect existing workspace sources (`prototype/product.md`, PRDs, code models) before speaking.
 - Extract: Focal Object, Primary Operator, Decisive Consequence, and Core Operational Tension.
 - NEVER ask the user for facts knowable from repository inspection.
+- **Capability Fabrication Firewall (能力防脑补防火墙)**: Surfaces and entities may
+  only reference communication channels, integrations, or personnel roles the
+  brief actually declares. A glance/sentinel surface renders the state the
+  operator already owns — it never invents telephony, SMS, paging, email, or
+  third-party notification hooks the brief never mentioned. An unmentioned
+  channel is not a design gap to fill; it is a scope boundary to record under
+  Ruthless Omissions.
 
 ## 2. Physical Metaphor Projection Archetypes (9-Pillar: Mental Model & Resistance)
 Project 2~3 distinct real-world physical mechanisms matching the domain:

@@ -81,6 +81,24 @@ def test_screenshot_only_evidence_is_labelled_as_rendered_capture():
     assert meta["validation"]["native_platform_validation"] is False
 
 
+def test_capture_metrics_surface_overflow_touch_and_cli_gaps():
+    measured = stub_result(viewport_metrics={
+        "390": {"scrollWidth": 412, "clientWidth": 390, "small_touch_target_count": 1,
+                "dialog_present": True, "dialog_showmodal_bound": True}
+    })
+    meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {"result": measured, "options": {}})
+    assert meta["evidence"]["horizontal_overflow"] == ["390: scrollWidth=412 clientWidth=390"]
+    assert meta["evidence"]["small_touch_targets"] == ["390: 1 control(s) under 44px min target"]
+    assert meta["evidence"]["dom_metrics_coverage"] == "full"
+    assert meta["evidence"]["viewport_metrics"]["390"]["dialog_showmodal_bound"] is True
+
+    cli = stub_result(runner="system-browser-cli-concurrent", viewport_metrics={
+        "390": {"dom_metrics": "unmeasured_cli_runner"}
+    })
+    cli_meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {"result": cli, "options": {}})
+    assert "partial" in cli_meta["evidence"]["dom_metrics_coverage"]
+
+
 def test_partial_capture_is_screenshot_only_not_rendered():
     payload = {"result": stub_result(failures=[{"state": "error", "viewport": "390", "error": "timeout"}]), "options": {}}
     meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", payload)
