@@ -112,6 +112,23 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
         if question:
             prompt = bl.mock_reply(question, mock["rules"], mock["fallback"])
             continue
+        # A staged design skill ends each turn cleanly at a stage checkpoint
+        # ("Stage 1 sealed; next: dispatch builder"). That is a pause, not a
+        # finished delivery: if no runnable prototype exists yet, the session
+        # must resume instead of being recorded as complete. Without this the
+        # more disciplined the skill is about stage boundaries, the more
+        # certain the harness is to score it as "no HTML artifacts".
+        if not bl.workspace_components(workspace)["has_html"]:
+            if len(turns) >= max_turns:
+                status, note = "BLOCKED", f"max_turns={max_turns} reached without any runnable prototype"
+                break
+            if session_budget_usd and total_cost >= session_budget_usd:
+                status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
+                break
+            turn["prompt_kind"] = "auto_continue"
+            turns[-1] = turn
+            prompt = "继续。"
+            continue
         status, note = "COMPLETED", ""
         break
 
