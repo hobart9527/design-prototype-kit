@@ -63,7 +63,18 @@
           "type": "array",
           "items": { "type": "string" }
         },
-        "core_tension": { "type": ["string", "null"] }
+        "core_tension": { "type": ["string", "null"] },
+        "design_intent": {
+          "type": "object",
+          "properties": {
+            "scene_sentence": { "type": "string" },
+            "signature_relationship": { "type": "string" },
+            "design_proposition": { "type": "string" },
+            "anti_slop_bans": { "type": "array", "items": { "type": "string" } },
+            "source_ref": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
       }
     },
     "scope": {
@@ -129,7 +140,7 @@
       "properties": {
         "five_axes": {
           "type": "object",
-          "required": ["density", "energy", "materiality", "rhythm", "character"],
+          "description": "Only authored axes appear; an absent axis is open design space, never a default.",
           "properties": {
             "density": { "type": "string" },
             "energy": { "type": "string" },

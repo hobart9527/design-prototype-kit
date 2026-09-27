@@ -278,21 +278,20 @@ def format_missing_sections(violations: List[Dict[str, str]]) -> str:
 
 
 def parse_5_dial_register(text: str) -> Dict[str, str]:
-    """Extract 5-dial style register attributes."""
-    dials = {
-        "density": "balanced",
-        "energy": "focused",
-        "materiality": "subtle",
-        "rhythm": "fluid",
-        "character": "restrained",
-    }
+    """Extract only the authored Five Axes; undeclared axes stay open.
+
+    The Five Axes are optional calibration, so an unset axis is never filled
+    with a default that would reach the Builder as if it were authored.
+    """
+    axes = ("density", "energy", "materiality", "rhythm", "character")
+    dials: Dict[str, str] = {}
     # Look for `- \`?(\w+)\`?: \`?([^\`\n]+)\`?`
     for line in text.splitlines():
         m = re.search(r"[-*]\s*`?([A-Za-z]+)`?:\s*`?([^`\n]+)`?", line)
         if m:
             key = m.group(1).strip().lower()
             val = m.group(2).strip().lower()
-            if key in dials:
+            if key in axes:
                 dials[key] = val
             # Legacy dial aliases mirror compile_tokens.LEGACY_DIAL_MAP exactly;
             # the same key never maps to two different axes.
@@ -302,7 +301,22 @@ def parse_5_dial_register(text: str) -> Dict[str, str]:
                 dials["materiality"] = val
             elif key == "seriousness":
                 dials["character"] = val
-    return dials
+    return {axis: dials[axis] for axis in axes if axis in dials}
+
+def parse_palette_discipline(text: str) -> Dict[str, str]:
+    """Extract an authored signature accent and its policy, or nothing.
+
+    A signature accent is a per-product decision; absent an authored
+    `--accent-seal` token the compiler must not supply a colour or a rule.
+    """
+    discipline: Dict[str, str] = {}
+    seal = re.search(r"--accent-seal`?\s*[:：]\s*`?(#[0-9a-fA-F]{3,8})", text)
+    if seal:
+        discipline["accent_seal"] = f"var(--accent-seal, {seal.group(1)})"
+    policy = re.search(r"(?:Signature\s+)?Accent\s+Policy[*`]*\s*[:：]\s*([^\n]+)", text, re.IGNORECASE)
+    if policy:
+        discipline["accent_policy"] = policy.group(1).strip().strip("`* ")
+    return discipline
 
 
 # Leading modifiers that decorate an authored action verb inside prose, e.g.
@@ -323,6 +337,34 @@ def parse_ruthless_omissions(text: str) -> List[str]:
         if m:
             items.append(m.group(1).strip())
     return items
+
+
+def parse_design_intent(text: str) -> Dict[str, Any]:
+    """Retain authored proposition and anti-slop context for creative consumers."""
+    fields = {
+        "scene_sentence": r"Scene sentence|场景句",
+        "signature_relationship": r"Signature Relationship|签名关系",
+        "design_proposition": r"Design Proposition|设计命题|Core design thesis",
+    }
+    intent: Dict[str, Any] = {}
+    for key, label in fields.items():
+        match = re.search(rf"^\s*[-*]?\s*(?:\*\*)?(?:{label})(?:\*\*)?\s*[:：]\s*(.+?)\s*$",
+                          text, re.IGNORECASE | re.MULTILINE)
+        if match:
+            intent[key] = match.group(1).strip().strip("`\\\"'")
+    anti_slop = extract_section(text, r"###?\s*.*(?:Anti[- ]slop|Match-and-refuse|禁用项|反模板)")
+    if not anti_slop:
+        match = re.search(
+            r"(?:Anti[- ]slop|Match-and-refuse|禁用项|反模板)[^\n]*\n((?:(?:\s*[-*]|\s*\d+[.)])\s+[^\n]*\n?)+)",
+            text, re.IGNORECASE)
+        anti_slop = match.group(1) if match else ""
+    bans = [m.group(1).strip() for line in anti_slop.splitlines()
+            if (m := re.match(r"^\s*(?:[-*]|\d+[.)])\s+(.+?)\s*$", line))]
+    if bans:
+        intent["anti_slop_bans"] = bans
+    if intent:
+        intent["source_ref"] = "prototype/discussion.md"
+    return intent
 
 
 # An authored lifecycle clause after the verb, e.g. "`Enter` 键机械压感双签隔离
@@ -672,13 +714,10 @@ def parse_required_states(text: str) -> List[str]:
 
 
 def parse_craft_stack(text: str, five_axes: Dict[str, str]) -> Dict[str, str]:
-    """Extract the orthogonal 4-axis craft stack from discussion text, or derive defaults.
+    """Extract only the authored axes of the orthogonal 4-axis craft stack.
 
-    Authored `surface_optics: ...`-style bullets are taken verbatim (lowercased,
-    first match wins per axis). Absent axes compile from physical anchors: a
-    light or energy-restrained register reads as a matte pigment wash, otherwise
-    a coated instrument dark; the remaining three axes default to the soft bento
-    pill, tight polarized display, and hatching-dither data marks.
+    Unspecified axes remain open; they are not inferred from domain words or
+    filled with a house style.
     """
     axes = ("surface_optics", "spatial_geometry", "micro_typography", "data_marks")
     stack: Dict[str, str] = {}
@@ -690,17 +729,9 @@ def parse_craft_stack(text: str, five_axes: Dict[str, str]) -> Dict[str, str]:
             if val and key not in stack:
                 stack[key] = val
 
-    if "surface_optics" not in stack:
-        lowered = text.lower()
-        if "light" in lowered or five_axes.get("energy") == "restrained":
-            stack["surface_optics"] = "matte_pigment_wash"
-        else:
-            stack["surface_optics"] = "coated_instrument_dark"
-    stack.setdefault("spatial_geometry", "soft_bento_pill")
-    stack.setdefault("micro_typography", "tight_display_polarized")
-    stack.setdefault("data_marks", "hatching_dither")
+    # Omitted craft is genuine design space, not a request for a preset.
     # Deterministic axis order regardless of authored bullet order.
-    return {axis: stack[axis] for axis in axes}
+    return {axis: stack[axis] for axis in axes if axis in stack}
 
 
 def parse_authored_invariants(text: str) -> List[Dict[str, Any]]:
@@ -873,8 +904,9 @@ def compile_canonical_ir(
     style_text = extract_section(disc_text, r"###?\s*.*(?:5-Dial|风格寄存器|Style Register)")
     five_axes = parse_5_dial_register(style_text or disc_text)
 
-    # Orthogonal 4-axis craft stack: authored declarations or physical-anchor defaults.
+    # Optional craft declarations remain open when the author leaves them unset.
     craft_stack = parse_craft_stack(style_text or disc_text, five_axes)
+    design_intent = parse_design_intent(disc_text)
 
     # Extract OOUX / Surfaces
     surfaces_text = extract_section(disc_text, r"###?\s*.*(?:OOUX|实体拓扑|Surfaces?|Spatial\s+Anatomy|Anatomy|表面分配)")
@@ -1020,6 +1052,7 @@ def compile_canonical_ir(
             "reality_anchors": anchors,
             "core_tension": tension_text,
             "ruthless_omissions": ruthless_omissions,
+            **({"design_intent": design_intent} if design_intent else {}),
         },
         "scope": {
             "topology_scope": {
@@ -1048,10 +1081,7 @@ def compile_canonical_ir(
         "foundation": {
             "five_axes": five_axes,
             "craft_stack": craft_stack,
-            "palette_discipline": {
-                "accent_seal": "var(--accent-seal, #D93829)",
-                "accent_policy": "Forbidden in draft/pending states; reserved exclusively for irreversible authority seals.",
-            },
+            "palette_discipline": parse_palette_discipline(disc_text),
         },
         "state_model": {
             "domain_states": domain_states,
@@ -1174,6 +1204,17 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
         md.append(f"- **Core Tension**: {src['core_tension']}")
     else:
         md.append("- **Core Tension**: *(未从 discussion.md 提取到——请在 discussion 中明确描述核心张力)*")
+    design_intent = src.get("design_intent") or {}
+    if design_intent:
+        md.append("- **Authored Design Intent**:")
+        for key, label in (("scene_sentence", "Scene sentence"),
+                           ("signature_relationship", "Signature Relationship"),
+                           ("design_proposition", "Design Proposition")):
+            if design_intent.get(key):
+                md.append(f"  - **{label}**: {design_intent[key]}")
+        for ban in design_intent.get("anti_slop_bans") or []:
+            md.append(f"  - **Anti-slop ban**: {ban}")
+        md.append(f"  - **Source**: `{design_intent.get('source_ref', 'prototype/discussion.md')}`")
     md.append("- **Reality Anchors**:")
     if src["reality_anchors"]:
         for a in src["reality_anchors"]:
@@ -1203,10 +1244,19 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
     md.append("- **Five-Axis Sensory Register**:")
     for k, v in fnd["five_axes"].items():
         md.append(f"  - `{k}`: `{v}`")
-    md.append(f"- **Signature Accent Policy**: {fnd['palette_discipline'].get('accent_policy', 'Strict')}")
+    if not fnd["five_axes"]:
+        md.append("  - _No axis declared; sensory calibration remains open design space._")
+    palette = fnd.get("palette_discipline") or {}
+    if palette.get("accent_seal") or palette.get("accent_policy"):
+        md.append(f"- **Signature Accent**: `{palette.get('accent_seal', 'undeclared')}` — "
+                  f"{palette.get('accent_policy', '_policy not authored_')}")
+    else:
+        md.append("- **Signature Accent**: _None declared._")
     md.append("- **Orthogonal Craft Stack**:")
     for k, v in (fnd.get("craft_stack") or {}).items():
         md.append(f"  - `{k}`: `{v}`")
+    if not fnd.get("craft_stack"):
+        md.append("  - _No craft axis declared; the Builder resolves craft within the open design space._")
     md.append(f"- **Tokens Stylesheet**: `{ir['artifacts_binding']['tokens_css']}`")
     md.append("")
     md.append("---")
@@ -1236,43 +1286,37 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
     md.append("")
     md.append("---")
     md.append("")
-    # Google Design-grade structured blocks: System Constants give the Builder a
-    # deterministic physical reference frame (type scale, spacing modulus, token
-    # semantics), and Viewport Intent declares per-breakpoint IA priority so the
-    # Builder never has to invent layout from prose.
-    md.append("## 3.5 System Constants (Physical Reference Frame)")
-    md.append("> The Builder consumes these as the deterministic base, not prose to interpret.")
+    # Bound tokens and authored viewport intent constrain implementation;
+    # this renderer must not invent a shared visual recipe.
+    md.append("## 3.5 Product-Validated Design Rules")
+    md.append("> Promote a rule only when retained evidence supports it; otherwise keep it open or provisional.")
     md.append("")
-    md.append("### Type Scale (compulsory hierarchy)")
-    md.append("| Role | Token | Use |")
-    md.append("|---|---|---|")
-    md.append("| Display | `var(--font-sans)` + `var(--font-display-weight)` | Page-level statement |")
-    md.append("| Title | `var(--font-sans)` | Section / panel heading |")
-    md.append("| Body | `var(--font-sans)` | Running content |")
-    md.append("| Label | `var(--font-mono)` | Metadata, telemetry, tags |")
+    md.append("| Decision | Value or behavior | Scope / variation | Evidence | Transfer boundary |")
+    md.append("|---|---|---|---|---|")
+    md.append("| _No validated shared rules compiled from this Spec IR._ | | | | |")
     md.append("")
-    md.append("### Spacing Modulus")
-    md.append("- Base unit: `var(--space-2)` (8px). All rhythm derives from the `--space-*` scale in `prototype/shared/tokens.css`; no ad-hoc pixel values.")
-    md.append("- Component boundary: `var(--radius-card)`; interactive control: `var(--radius-btn)`.")
+    md.append("## 3.6 System Constants (Physical Reference Frame)")
+    md.append("> Token values come from the bound stylesheet; avoid interpreting this table as a mandated aesthetic recipe.")
     md.append("")
-    md.append("### Color Semantics (state separation)")
-    md.append("- Surface / Border / Text / Focus are distinct tokens (`--color-bg-surface`, `--color-border-subtle`, `--color-text-primary`); never reuse one token across roles.")
-    md.append("- Status: `--color-status-running` / `--color-status-warning` / `--color-status-danger`. Accent seal is reserved for irreversible authority seals only.")
+    md.append("### Typography tokens")
+    md.append("- Font families, weights, sizes and line heights belong to the bound token artifact and authored design rules.")
     md.append("")
-    md.append("## 3.6 Responsive Viewport Intent (IA priority per breakpoint)")
-    md.append("> Declares which surfaces lead and which collapse at each viewport. The Builder must honor this ordering, not guess it.")
+    md.append("### Spacing and geometry tokens")
+    md.append("- Use the bound `--space-*` and `--radius-*` tokens where they fit the validated design; component geometry may vary by component and platform.")
+    md.append("")
+    md.append("### Semantic color roles")
+    md.append("- Surface, border, text, focus and status roles should remain distinguishable and meet applicable accessibility requirements; their palette and mapping are authored in the bound token artifact.")
+    md.append("")
+    md.append("## 3.7 Responsive Viewport Intent (authored constraints)")
+    md.append("> Preserve declared viewport priorities; do not infer a layout mode from width alone.")
     md.append("")
     viewports = (ir.get("scope", {}).get("verification_scope", {}) or {}).get("viewports") or []
     primary = scope.get("topology_scope", {}).get("primary_surface") or ""
     if viewports:
         for vp in viewports:
             md.append(f"### {vp}px")
-            if vp <= 480:
-                md.append("- Mode: **Glance Sentinel**. Lead with blast-radius / posture / progress; collapse detail lists below the fold.")
-            else:
-                md.append("- Mode: **Command Cockpit**. Lead with primary surface; avoid empty inspector when nothing is selected — show aggregate analysis instead.")
-            if primary:
-                md.append(f"- Primary surface: `{primary}` leads; contextual surfaces support, never outrank.")
+            md.append(f"- Declared primary surface: `{primary}`" if primary
+                      else "- No primary surface declared.")
             md.append("")
     else:
         md.append("_No authored viewports declared in discussion.md._")

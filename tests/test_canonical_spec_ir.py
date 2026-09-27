@@ -31,6 +31,12 @@ COMPLETE_DISCUSSION = """# Design Discussion: Terminal Cluster Workbench
 - Operational Grounding: Slurm + Run:ai
 - Kinetic Grounding: Vernier Caliper detents
 
+- Scene sentence: A reviewer compares signal drift during a live run.
+- Signature Relationship: Review evidence stays beside the decision.
+- Anti-slop match-and-refuse bans:
+  - No ornamental neon gradient.
+  - No fake device chrome.
+
 ## 3. 项目级状态模型 (State Model)
 - `domain/cluster-nominal` (集群常态): 全部节点健康，张量流水线满负荷。
 - `domain/incident-active` (故障激活): 单机 NVLink 挂起，等待排空。
@@ -78,6 +84,15 @@ def test_schema_validates_canonical_ir(tmp_path: Path):
     assert ir["identity"]["slice_id"] == "cluster-overview"
     assert ir["identity"]["candidate_revision"] == "r1"
     assert ir["identity"]["authority_status"] == "sealed_provisional"
+    assert ir["sources"]["design_intent"]["scene_sentence"] == (
+        "A reviewer compares signal drift during a live run."
+    )
+    assert ir["sources"]["design_intent"]["signature_relationship"] == (
+        "Review evidence stays beside the decision."
+    )
+    assert ir["sources"]["design_intent"]["anti_slop_bans"] == [
+        "No ornamental neon gradient.", "No fake device chrome."
+    ]
 
     # Verify Scope Separation (Topology vs Build)
     assert ir["scope"]["topology_scope"]["coverage"] in ("key-journey", "slice-isolated")
@@ -236,6 +251,13 @@ def test_render_single_spec_md(tmp_path: Path):
     # Verify new scope binding lines
     assert "Prototype write scope" in rendered_md
     assert "Evidence write scope" in rendered_md
+    assert "Product-Validated Design Rules" in rendered_md
+    assert "No validated shared rules compiled" in rendered_md
+    assert "Glance Sentinel" not in rendered_md
+    assert "Command Cockpit" not in rendered_md
+    assert "No authored viewport" not in rendered_md
+    assert "Font families, weights, sizes and line heights belong to the bound token artifact" in rendered_md
+    assert "do not infer a layout mode from width alone" in rendered_md
 
 
 def test_dial_alias_weight_maps_to_materiality():
@@ -243,6 +265,17 @@ def test_dial_alias_weight_maps_to_materiality():
     from compile_spec_ir import parse_5_dial_register
     dials = parse_5_dial_register("- weight: dense-tactile")
     assert dials["materiality"] == "dense-tactile"
+
+def test_undeclared_axes_and_accent_stay_open():
+    """Unset Five Axes and signature accent are open design space, not defaults."""
+    from compile_spec_ir import parse_5_dial_register, parse_palette_discipline
+    assert parse_5_dial_register("- density: sparse") == {"density": "sparse"}
+    assert parse_5_dial_register("plain prose") == {}
+    assert parse_palette_discipline("no accent authored") == {}
+    authored = parse_palette_discipline(
+        "- `--accent-seal`: `#B3352B`\n- **Accent Policy**: only on the final commit")
+    assert authored == {"accent_seal": "var(--accent-seal, #B3352B)",
+                        "accent_policy": "only on the final commit"}
 
 
 STAGE1_DISCUSSION = """# Design Discussion: Reading Sanctuary

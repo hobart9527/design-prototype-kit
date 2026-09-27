@@ -74,45 +74,38 @@ def test_canonical_ir_emits_craft_stack_conforming_to_schema(tmp_path: Path):
     jsonschema.validate(instance=ir, schema=schema)
 
     stack = ir["foundation"]["craft_stack"]
-    assert set(stack.keys()) == {
-        "surface_optics",
-        "spatial_geometry",
-        "micro_typography",
-        "data_marks",
-    }
-    # Kinetic energy with no authored craft declarations compiles the
-    # coated-instrument default set, not a light-mode wash.
-    assert stack["surface_optics"] == "coated_instrument_dark"
-    assert stack["spatial_geometry"] == "soft_bento_pill"
-    assert stack["micro_typography"] == "tight_display_polarized"
-    assert stack["data_marks"] == "hatching_dither"
+    assert stack == {}
 
 
-def test_parse_craft_stack_physical_anchor_defaults():
-    """Light register compiles matte pigment wash; restrained energy too."""
+def test_parse_craft_stack_preserves_only_authored_axes():
     from compile_spec_ir import parse_craft_stack
 
-    light = parse_craft_stack("Light weight instrumentation prose", {})
-    assert light["surface_optics"] == "matte_pigment_wash"
-
-    restrained = parse_craft_stack("plain prose", {"energy": "restrained"})
-    assert restrained["surface_optics"] == "matte_pigment_wash"
-
-    dark = parse_craft_stack("dark ops console", {"energy": "kinetic"})
-    assert dark["surface_optics"] == "coated_instrument_dark"
-
+    assert parse_craft_stack("Light weight instrumentation prose", {}) == {}
+    assert parse_craft_stack("plain prose", {"energy": "restrained"}) == {}
     authored = parse_craft_stack(
         "- surface_optics: brushed_bronze\n- data_marks: segmented_bars\n", {}
     )
-    assert authored["surface_optics"] == "brushed_bronze"
-    assert authored["data_marks"] == "segmented_bars"
-    assert authored["spatial_geometry"] == "soft_bento_pill"
-    assert authored["micro_typography"] == "tight_display_polarized"
+    assert authored == {
+        "surface_optics": "brushed_bronze",
+        "data_marks": "segmented_bars",
+    }
 
 
-def test_generate_css_emits_craft_stack_tokens():
-    """Craft custom properties survive token compilation into the stylesheet."""
+def test_generate_css_leaves_undeclared_craft_neutral():
     css = generate_css(compute_tokens({}))
+    assert "--surface-specular: none;" in css
+    assert "--pattern-hatch-45: none;" in css
+    assert "--font-display-tracking: 0;" in css
+    assert "--font-display-weight: 500;" in css
+
+
+def test_generate_css_emits_authored_craft_stack_tokens():
+    css = generate_css(compute_tokens({}, craft_stack={
+        "surface_optics": "coated_instrument_dark",
+        "spatial_geometry": "soft_bento_pill",
+        "micro_typography": "tight_display_polarized",
+        "data_marks": "hatching_dither",
+    }))
     assert "--surface-tint:" in css
     assert "--surface-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.15);" in css
     assert "--pattern-hatch-45: url(\"data:image/svg+xml" in css

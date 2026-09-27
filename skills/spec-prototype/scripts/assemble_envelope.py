@@ -191,6 +191,8 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
     ]
     semantic_contract = {
         "domain_thesis": sources.get("core_tension"),
+        "design_intent": dict(sources.get("design_intent") or {}),
+        "ruthless_omissions": list(sources.get("ruthless_omissions") or []),
         "primary_entities": entity_ids,
         "surfaces": list(topology.get("declared_surfaces") or []),
         "domain_states": state_entries(state_model.get("domain_states"), "domain_state",
@@ -843,6 +845,7 @@ _IR_FIELDS = (
     # Meso assembly slots are authored design substance; they must reach the
     # Builder payload, not be stripped at the whitelist.
     "meso_assembly",
+    "design_intent",
 )
 _PAYLOAD_CONTEXT_FIELDS = (
     "envelope_version",
@@ -946,7 +949,7 @@ def _mandatory_viewports(
                 for width in authored]
     device = str(platform.get("device_context") or "").strip().lower()
     desktop = {"width": 1280, "name": "desktop-canvas",
-               "focus": "spatial hierarchy and high-density telemetry"}
+               "focus": "spatial hierarchy and task continuity at wide width"}
     mobile = {"width": 390, "name": "mobile-somatic",
               "focus": "44px touch targets and responsive folding without amnesia"}
     tablet = {"width": 768, "name": "tablet-canvas",
@@ -1390,10 +1393,21 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
                 )
             nav_links.append(entry)
 
-    verification_cmd = f"python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice {slice_id}"
+    # Commands are absolute and derived from the envelope's own skill_root /
+    # repository_root — the single source of truth. Relative `skills/...` paths
+    # break when the Skill is installed under `.claude/skills/` (the sandbox
+    # layout), where the workspace root has no `skills/` directory.
+    skill_scripts = (SKILL / "scripts").resolve()
+    verification_cmd = (
+        f"python3 {skill_scripts / 'verify_prototype_quality.py'} --slice {slice_id}"
+        f" --root {root.resolve()}"
+    )
     # The capture command is assembled after the authored viewport and state
     # contracts resolve, so the derived gates actually reach capture.mjs.
-    capture_cmd = f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
+    capture_cmd = (
+        f"node {skill_scripts / 'capture.mjs'} --slice {slice_id}"
+        f" --repo-root {root.resolve()}"
+    )
 
     # Extract OOUX Cardinality & Spatial Mapping from authored surface map or spec contract.
     # Authority invariant: Object Cardinality -> Topology Constraints -> Layout Candidate.
@@ -1677,6 +1691,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         },
         "target_html_path": target_html,
         "token_stylesheet_ref": token_rel_href,
+        "token_link_tag": token_link_tag,
         "verifiable_assertions": assertions,
         "required_action_bindings": [
             {
@@ -1826,6 +1841,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
 
     ir_semantic_contract = {
         "domain_thesis": domain_thesis.get("product_thesis", brand_title),
+        "design_intent": dict(canonical_ir_data.get("sources", {}).get("design_intent") or {}) if canonical_ir_data else {},
+        "ruthless_omissions": list(canonical_ir_data.get("sources", {}).get("ruthless_omissions") or []) if canonical_ir_data else [],
         "primary_entities": [e.get("name", "entity") for e in ooux_entities] if ooux_entities else [slice_id],
         "domain_states": [{"name": s, "type": "domain_state", "authority": "explicit", "source": "c1.md#states"} for s in explicit_domain_states],
         "experience_states": [{"name": s, "type": "experience_state", "authority": "derived", "source": "r1.md#assertions"} for s in derived_experience_states],
@@ -1868,6 +1885,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
     ir_visual_directives = {
         "token_baseline": token_rel_href,
         "sensory_dials": five_axes,
+        "craft_stack": dict((canonical_ir_data or {}).get("foundation", {}).get("craft_stack") or {}),
         "density_calibration": {
             "base_spacing": "var(--space-2)",
             "typography": "var(--font-sans)",
@@ -1952,9 +1970,24 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
     ]
     unmapped_sections = [e["source"] for e in sources_mapped if e["status"] != "compiled"]
 
+    # Static checklist mirrors what verify_prototype_quality.py will assert, so
+    # the Builder can satisfy the gate on first pass instead of reverse-reading
+    # the verifier's source (which cost ~14 min in the r8b sandbox run).
+    static_checklist = [
+        "semantic hooks: data-entity / data-action / data-state attributes present (>=3 inspectable elements)",
+        "interaction binding: addEventListener or on* handler on reachable controls (button/a[href]/role=button)",
+        "action identity: every action id declared in the Spec renders as data-action=\"action-*\"",
+        "contract items: declared entities/surfaces appear verbatim in the DOM",
+        "token inheritance: link the tokens stylesheet via the envelope's token_link_tag exactly; no inline hex in style attributes",
+        "craft floors: :active press feedback on interactive controls; nested radii follow R_inner = max(0, R_outer - P); tabular-nums on dynamic/aligned numerals",
+        "touch floor: interactive targets >= 44px or data-inline-target-exception with justification",
+        "overflow containment: text-overflow/overflow/truncation declared for stress fixtures",
+        "viewport navigation: relative hrefs resolve inside the prototype scope",
+    ]
     ir_verification_contract = {
         "negative_bounds": ir_negative_bounds,
         "command": verification_cmd,
+        "static_checklist": static_checklist,
         "projection_digest": {
             "sources_mapped": sources_mapped,
             "unmapped_sections": unmapped_sections,
@@ -1968,6 +2001,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "container-elevation-subtlety",
         "transient-animation-timings-within-tokens"
     ]
+    if not ir_visual_directives["craft_stack"]:
+        ir_open_design_space.append("visual-craft")
     if not ir_regions:
         ir_open_design_space.append("spatial-topology")
 
@@ -1987,7 +2022,8 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
     device_declared = bool(str(platform_context["platform"].get("device_context") or "").strip())
     if device_declared:
         capture_cmd = (
-            f"node skills/spec-prototype/scripts/capture.mjs --slice {slice_id}"
+            f"node {skill_scripts / 'capture.mjs'} --slice {slice_id}"
+            f" --repo-root {root.resolve()}"
             f" --viewports {','.join(str(v['width']) for v in mandatory_viewports)}"
             f" --states {','.join(authored_states)}"
         )
@@ -2037,12 +2073,14 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         ir_meso_assembly = canonical_ir_ir.get("meso_assembly") or {}
         ir_visual_directives = canonical_ir_ir["visual_directives"]
         ir_visual_directives["token_baseline"] = token_rel_href
+        ir_visual_directives["token_link_tag"] = token_link_tag
         ir_action_contracts = canonical_ir_ir["action_contracts"]
         ir_negative_bounds = canonical_ir_ir["negative_bounds"]
         ir_regions = ir_layout_directives["regions"]
         ir_verification_contract = {
             "negative_bounds": ir_negative_bounds,
             "command": verification_cmd,
+            "static_checklist": static_checklist,
             "projection_digest": {
                 "sources_mapped": [
                     {"source": _ir_pointer(canonical_ref, "state_model"),
@@ -2093,6 +2131,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         # Authored meso assembly slots reach the Builder as design substance,
         # kept on the envelope so the whitelist retains them in the payload.
         "meso_assembly": ir_meso_assembly,
+        "design_intent": dict(ir_semantic_contract.get("design_intent") or {}),
 
         "envelope_version": "2.0",
         "envelope_architecture": "3.0-dual",
@@ -2124,12 +2163,12 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
                     )
                 ]}
                if (verb_lifecycle or ir_action_contracts) else {}),
-            "destructive_safety_triad": (
-                "For hazardous/destructive operations: (1) pre-commit <dialog> consequence modal; "
-                "(2) post-commit observable DOM state feedback (排空中/已排空/draining-class status); "
-                "(3) persistent rollback affordance (回滚/撤销). Destructive commit controls must be "
-                "deterministically operable: pre-authorized or quick-fill (e.g. 演练速签) so operators "
-                "and automated agents never wedge on locked dual-signature inputs."
+            "consequence_and_recovery_fit": (
+                "Make the actual consequence clear before commit in proportion to impact, "
+                "uncertainty and reversibility. Use non-blocking feedback for routine reversible "
+                "changes; reserve confirmation for consequential actions. Show the real resulting "
+                "state and only recovery paths supported by the product. Do not invent rollback, "
+                "status vocabulary or authorization shortcuts."
             ),
         },
         "build_authority": build_authority,

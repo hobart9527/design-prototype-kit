@@ -118,6 +118,32 @@ def test_debug_context_retains_demoted_blobs_on_request(tmp_path):
     assert payload["identity"] == env["identity"]
 
 
+def test_authored_design_intent_and_omissions_reach_builder_payload(tmp_path):
+    root = build_canonical_repo(tmp_path)
+    discussion = root / "prototype/discussion.md"
+    discussion.write_text(
+        discussion.read_text(encoding="utf-8")
+        + "\n- Scene sentence: A reader annotates a passage in context.\n"
+        + "- Signature Relationship: Notes remain anchored to source text.\n"
+        + "## Anti-slop match-and-refuse bans\n- No fake browser chrome.\n",
+        encoding="utf-8",
+    )
+    from compile_spec_ir import compile_canonical_ir, render_single_spec_md
+
+    ir = compile_canonical_ir(root, "cluster-overview")
+    ir_path = root / "prototype/contracts/compiled/cluster-overview/r1.spec.json"
+    ir_path.write_text(json.dumps(ir), encoding="utf-8")
+    spec_path = root / "prototype/specifications/cluster-overview/r1.spec.md"
+    spec_path.write_text(render_single_spec_md(ir), encoding="utf-8")
+    env = assemble_envelope.assemble(root, "cluster-overview")
+    payload = assemble_envelope.build_builder_payload(env)
+    assert payload["design_intent"]["scene_sentence"] == (
+        "A reader annotates a passage in context."
+    )
+    assert payload["design_intent"]["anti_slop_bans"] == ["No fake browser chrome."]
+    assert payload["semantic_contract"]["ruthless_omissions"] == env["semantic_contract"]["ruthless_omissions"]
+
+
 def test_payload_preserves_dispatch_critical_identity(tmp_path):
     env = assemble(build_repo(tmp_path))
     payload = assemble_envelope.build_builder_payload(env)

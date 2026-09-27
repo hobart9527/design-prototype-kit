@@ -155,12 +155,13 @@ def test_compile_tokens_empty_dials_yield_neutral_scaffold():
     tokens = ct.compute_tokens({})
     colors = tokens["colors"]
 
-    # Neutral grayscale surfaces; no acid-lime accent and no industrial near-black void.
+    # Neutral scaffold carries no chosen brand hue or industrial near-black.
     assert _is_gray(colors["accent_primary"]), colors["accent_primary"]
     assert _is_gray(colors["bg_void"]), colors["bg_void"]
     assert _is_gray(colors["bg_surface"]), colors["bg_surface"]
     assert colors["accent_primary"] != "#d6f56b"
     assert colors["bg_void"] != "#080b0b"
+    assert tokens["craft_stack"] == {}
 
     css = ct.generate_css(tokens)
     assert "machined-industrial" not in css

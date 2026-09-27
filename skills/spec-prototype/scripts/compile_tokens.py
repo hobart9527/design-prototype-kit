@@ -607,14 +607,7 @@ HATCH_PATTERN = (
 
 
 def parse_craft_stack(text: str, dials: Dict[str, str] | None = None) -> Dict[str, str]:
-    """Extract the authored 4-axis craft stack, or derive physical-anchor defaults.
-
-    Authored `surface_optics: ...`-style bullets are taken verbatim (lowercased).
-    Undeclared axes default deterministically: a light or restrained register
-    compiles matte_pigment_wash; everything else compiles the coated-instrument
-    dark set. Mirrors compile_spec_ir.parse_craft_stack so the tokens compiler
-    consumes the same canonical craft intent the Spec IR emits.
-    """
+    """Extract only authored craft axes; omitted axes remain open design space."""
     dials = dials or {}
     stack: Dict[str, str] = {}
     for line in text.splitlines():
@@ -627,23 +620,15 @@ def parse_craft_stack(text: str, dials: Dict[str, str] | None = None) -> Dict[st
             if val and key not in stack:
                 stack[key] = val
 
-    if "surface_optics" not in stack:
-        lowered = text.lower()
-        if "light" in lowered or dials.get("energy") == "restrained":
-            stack["surface_optics"] = "matte_pigment_wash"
-        else:
-            stack["surface_optics"] = "coated_instrument_dark"
-    stack.setdefault("spatial_geometry", "soft_bento_pill")
-    stack.setdefault("micro_typography", "tight_display_polarized")
-    stack.setdefault("data_marks", "hatching_dither")
+    # Omitted craft is genuine design space, not a request for a preset.
     # Deterministic axis order regardless of authored bullet order.
-    return {axis: stack[axis] for axis in CRAFT_AXES}
+    return {axis: stack[axis] for axis in CRAFT_AXES if axis in stack}
 
 
 def _craft_specular(optics: str) -> str:
     """Specular treatment from the authored surface optics: coated instruments
     carry a machined top highlight; matte pigment washes stay flat."""
-    if optics == "matte_pigment_wash":
+    if optics in {"matte_pigment_wash", "neutral"}:
         return "none"
     return "inset 0 1px 0 0 rgba(255, 255, 255, 0.15)"
 
@@ -870,7 +855,7 @@ def _surface_tint(colors: Dict[str, str], is_light: bool) -> str:
 
 
 def generate_css(tokens: Dict[str, Any]) -> str:
-    """Render CSS variables and physical craft classes."""
+    """Render semantic CSS variables with explicit or neutral craft values."""
     c = tokens["colors"]
     s = tokens["space"]
     r = tokens["radii"]
@@ -883,7 +868,9 @@ def generate_css(tokens: Dict[str, Any]) -> str:
     materiality_desc = d.get("materiality", d.get("finish", "neutral"))
     density_desc = d.get("density", "balanced")
 
-    craft = tokens.get("craft_stack") or parse_craft_stack("", d)
+    craft = {**{"surface_optics": "neutral", "spatial_geometry": "neutral",
+                "micro_typography": "neutral", "data_marks": "native"},
+             **(tokens.get("craft_stack") or parse_craft_stack("", d))}
 
     lines = [
         "/* ==========================================================================",
@@ -980,8 +967,8 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --surface-tint: {_surface_tint(c, is_light)};",
         f"  --surface-specular: {_craft_specular(craft['surface_optics'])};",
         f"  --pattern-hatch-45: {HATCH_PATTERN if craft['data_marks'] == 'hatching_dither' else 'none'};",
-        f"  --font-display-tracking: {CRAFT_TYPOGRAPHY.get(craft['micro_typography'], CRAFT_TYPOGRAPHY['tight_display_polarized'])[0]};",
-        f"  --font-display-weight: {CRAFT_TYPOGRAPHY.get(craft['micro_typography'], CRAFT_TYPOGRAPHY['tight_display_polarized'])[1]};",
+        f"  --font-display-tracking: {CRAFT_TYPOGRAPHY.get(craft['micro_typography'], ('0', '500'))[0]};",
+        f"  --font-display-weight: {CRAFT_TYPOGRAPHY.get(craft['micro_typography'], ('0', '500'))[1]};",
         "",
         "  /* ==========================================================================",
         "     Layer 2: Semantic Tokens (Functional Roles & Expressive Intent)",
