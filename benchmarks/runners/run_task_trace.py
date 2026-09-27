@@ -97,7 +97,11 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
         session.send(cmd="screenshot", file=str(shot_dir / f"{task['id']}-before.png"))
 
         for step_index in range(max_steps):
-            controls = [{"index": c["index"], "role": c["role"], "name": c["name"]}
+            # The action id (data-action) is the authored action contract; exposing
+            # it lets the agent pick a deterministic identity instead of guessing
+            # among ambiguous visible names.
+            controls = [{"index": c["index"], "role": c["role"], "name": c["name"],
+                         **({"action": c["actions"]} if c.get("actions") else {})}
                         for c in (snapshot.get("controls") or [])[:60]]
             prompt = bl.render(
                 bl.prompt_template("task-agent.txt"),
@@ -125,20 +129,37 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
                 break
             if kind == "click":
                 index = action.get("target_index")
-                target = next((c["name"] for c in controls if c["index"] == index), None)
-                if not target:
+                matched = next((c for c in controls if c["index"] == index), None)
+                if not matched:
                     step["error"] = f"target_index {index} not among visible controls"
                     trace["steps"].append(step)
                     trace["status"] = "dead_end"
                     break
-                step["target"] = target
-                response = session.send(cmd="click", match=target)
+                step["target"] = matched["name"]
+                # Deterministic identity first: data-action is the authored action
+                # contract. Fall back to name matching only when the control
+                # carries no action id (legacy or non-spec-prototype artifacts).
+                action_id = (matched.get("action") or "").strip() or action.get("target_action")
+                if action_id:
+                    response = session.send(cmd="click", match_action=action_id)
+                    if "error" in response:
+                        step["error"] = response["error"]
+                        trace["steps"].append(step)
+                        trace["status"] = "dead_end"
+                        break
+                    step["clicked"] = (response.get("click") or {}).get("clicked")
+                    if (response.get("click") or {}).get("reason"):
+                        # data-action miss (stale id or ambiguity) — fall back to name
+                        step["fallback"] = (response.get("click") or {}).get("reason")
+                        response = session.send(cmd="click", match=matched["name"])
+                else:
+                    response = session.send(cmd="click", match=matched["name"])
                 if "error" in response:
                     step["error"] = response["error"]
                     trace["steps"].append(step)
                     trace["status"] = "dead_end"
                     break
-                step["clicked"] = response.get("click")
+                step["clicked"] = (response.get("click") or {}).get("clicked") or step.get("clicked")
                 snapshot = response.get("snapshot") or {}
                 trace["snapshots"].append(_trim(snapshot))
             elif kind == "scroll":

@@ -224,6 +224,10 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             unverified.append("semantic_fidelity")
         if unverified:
             result["notes"].append("unverified dimensions: " + ", ".join(unverified))
+            # A critical dimension that was never actually verified must NOT pass:
+            # downgrade to INCONCLUSIVE so unmeasured truth is never laundered
+            # into a green checkmark.
+            result["status"] = "INCONCLUSIVE"
         if (not result["runtime"] or not result["runtime"]["checks"]):
             result["status"] = "INCONCLUSIVE"
 

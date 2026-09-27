@@ -59,9 +59,13 @@ def evaluate_outcome(outcome: dict, trace: dict) -> dict:
             verdict = "fail" if scroll_width > client_width + SCROLL_TOLERANCE_PX else "pass"
             detail = f"scrollWidth={scroll_width:g} clientWidth={client_width:g}"
     elif check == "min_touch_target":
-        small = _measurement(last.get("small_target_count"))
+        # The probe (browser_probe.mjs) emits `smallTargetCount` (camelCase); a
+        # snake_case alias is tolerated for hand-authored traces. Read both so a
+        # recorded measurement never silently downgrades to unverified.
+        raw_small = last.get("smallTargetCount", last.get("small_target_count"))
+        small = _measurement(raw_small)
         if small is None:
-            detail = f"small_target_count not recorded: {last.get('small_target_count')!r}"
+            detail = f"small_target_count not recorded: {raw_small!r}"
         else:
             verdict = "pass" if small == 0 else "fail"
             detail = f"{int(small)} control(s) below {outcome.get('px', 44)}px"

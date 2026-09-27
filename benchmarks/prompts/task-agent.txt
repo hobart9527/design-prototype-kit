@@ -3,7 +3,7 @@ the controls currently visible on the page. You do not know the designer's inten
 
 Goal: {goal}
 
-Visible interactive controls (index | role | accessible name):
+Visible interactive controls (index | role | accessible name | action id):
 {controls}
 
 Visible text excerpt:
@@ -15,3 +15,4 @@ Choose exactly one next action and answer JSON only:
 {{"action":"click|scroll|wait|done","target_index":<int|null>,
   "reason":"<short>","expect":"<what you expect to observe after>"}}
 Use "done" when the goal is reached or the task is a dead end.
+Pick target_index from the listed controls only.

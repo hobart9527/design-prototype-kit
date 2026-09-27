@@ -128,8 +128,25 @@ const SNAPSHOT_JS = `(() => {
   };
 })()`;
 
-const CLICK_JS = (match) => `(() => {
+const CLICK_JS = (match, matchAction) => `(() => {
   const needle = ${JSON.stringify(match)};
+  const actionId = ${JSON.stringify(matchAction)};
+  // Deterministic path first: a data-action identity is the authored action
+  // contract, exact by construction — never a fuzzy name score. Name matching
+  // stays as fallback for prototypes that carry no data-action attributes.
+  if (actionId) {
+    const exact = [...document.querySelectorAll('[data-action]')]
+      .filter((el) => (el.getAttribute("data-action") || "") === actionId
+        && el.getBoundingClientRect().width > 0);
+    if (exact.length === 1) {
+      const el = exact[0];
+      el.scrollIntoView({ block: "center" });
+      el.click();
+      return { clicked: (el.getAttribute("aria-label") || el.innerText || "").trim().slice(0, 90),
+               tag: el.tagName.toLowerCase(), by: "data-action" };
+    }
+    if (exact.length > 1) return { clicked: null, reason: 'ambiguous data-action "' + actionId + '" matched ' + exact.length + " controls" };
+  }
   const candidates = [...document.querySelectorAll('[data-bench-index]')];
   const scored = [];
   for (const el of candidates) {
@@ -173,7 +190,7 @@ async function main() {
   const out = await withPage(viewport, url, async (cdp) => {
     if (args._command === "click") {
       const before = await cdp.evaluate(SNAPSHOT_JS);
-      const click = await cdp.evaluate(CLICK_JS(args.match || ""));
+      const click = await cdp.evaluate(CLICK_JS(args.match || "", args.match_action || ""));
       await sleep(900);
       const after = await cdp.evaluate(SNAPSHOT_JS);
       return { action: "click", match: args.match, click, before, after };
@@ -209,7 +226,7 @@ async function sessionMain(url, viewport) {
       if (cmd.cmd === "snapshot") {
         response = { snapshot: await cdp.evaluate(SNAPSHOT_JS) };
       } else if (cmd.cmd === "click") {
-        const click = await cdp.evaluate(CLICK_JS(cmd.match || ""));
+        const click = await cdp.evaluate(CLICK_JS(cmd.match || "", cmd.match_action || ""));
         await sleep(900);
         response = { click, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
       } else if (cmd.cmd === "scroll") {

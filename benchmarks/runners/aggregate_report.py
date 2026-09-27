@@ -37,9 +37,14 @@ def _critical_accessibility_violation(run: dict) -> bool:
     if any(c.get("id") == "contrast_primary_text" and c.get("status") == "fail" for c in checks):
         return True
     for task in ((run.get("task") or {}).get("tasks") or []):
-        if any(o.get("id") == "touch_targets" and o.get("status") == "fail"
-               for o in (task.get("required_outcomes") or [])):
-            return True
+        # Match by outcome semantics, not one hard-coded id: any outcome whose
+        # check is a touch-target assertion (touch_targets, mobile_touch_targets,
+        # or any id whose check == min_touch_target) that failed is the same
+        # class of critical accessibility violation.
+        for o in (task.get("required_outcomes") or []):
+            is_touch = o.get("check") == "min_touch_target" or "touch_target" in str(o.get("id", ""))
+            if is_touch and o.get("status") == "fail":
+                return True
     return False
 
 
