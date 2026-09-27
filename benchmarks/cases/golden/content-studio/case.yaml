@@ -1,14 +1,14 @@
-id: incident-commander
-category: enterprise-ops
+id: content-studio
+category: collaborative-content-workflow
 difficulty: hard
-suite: [golden, release]
-tension_class: low_innovation
+suite: [golden, daily, calibration]
+tension_class: signature_opportunity
 
 run_policy:
   repeats: 3
-  timeout_seconds: 1800
-  max_turns: 24
-  max_budget_usd_per_turn: 8.0
+  timeout_seconds: 1500
+  max_turns: 20
+  max_budget_usd_per_turn: 6.0
 
 variants:
   - no_skill
@@ -25,25 +25,25 @@ viewports:
 
 capabilities_under_test:
   - product_understanding
-  - context_preservation
-  - action_safety
-  - dense_information
+  - version_integrity
+  - contextual_comment_resolution
+  - authorship_preservation
+  - accessibility
   - responsive
-  - frontend_contract
 
 evaluation:
   semantic: true
   task_trace: true
   visual_pairwise: true
-  frontend_reproduction: true
+  frontend_reproduction: false
 
 method_expectation:
   must_consider:
     - context-preservation
     - action-verb-lifecycle
   relevant:
-    - progressive-disclosure
-    - dense-operational-console
-  should_not_select:
-    - form-ergonomics
     - editorial-rhythm
+    - progressive-disclosure
+  should_not_select:
+    - dense-operational-console
+    - automatic-content-generation

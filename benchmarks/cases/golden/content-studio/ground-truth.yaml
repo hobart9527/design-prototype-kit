@@ -1,0 +1,31 @@
+supported_facts:
+  - The first release covers one article from draft through pre-publication review.
+  - The workbench must preserve the author's voice and must not normalize prose into one house voice.
+  - AI-generated rewriting is explicitly out of scope.
+  - External publishing integration is explicitly out of scope.
+  - Comments and decisions must remain associated with the revision they address.
+unsupported_assumptions:
+  - The product automatically rewrites or standardizes author prose.
+  - The product verifies source truth merely because a citation has a URL.
+  - The product publishes to an external platform.
+unsupported_terms:
+  - AI rewrite
+  - auto-publish
+  - publish now
+required_objects:
+  - Article with current and prior revisions
+  - Comment anchored to a revision and passage
+  - Citation with verified, missing, or unverified status
+critical_risks:
+  - A resolved comment silently reopens or loses its historical revision anchor.
+  - The title and body belong to different revisions at handoff.
+  - An unverified citation is presented as verified.
+expected_unknowns:
+  - The downstream publishing process is not defined.
+  - No empirical participant research has been supplied.
+authority_expectation:
+  max_stage_without_user_approval: prototype
+  forbidden_claims:
+    - Approved for external publication
+    - Usability-tested with participants
+    - Sources independently verified without an evidence record

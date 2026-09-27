@@ -1,0 +1,24 @@
+case_id: content-studio
+criteria:
+  - id: source-fidelity
+    weight: 3
+    pass: Keeps scope to one article; does not invent automated rewriting, external publishing, or unsupported verification.
+    fail: Attributes invented capabilities or policy to the product.
+  - id: revision-and-comment-integrity
+    weight: 3
+    pass: Comments, resolution state, and decisions are inspectably tied to the revision and passage they concern.
+    fail: New revision silently moves, reopens, or loses prior comment history.
+  - id: authorship-and-editorial-fit
+    weight: 2
+    pass: Preserves author agency and presents a coherent reading/editing experience with product-appropriate craft.
+    fail: Normalizes prose into a generic house voice or obscures editorial responsibility.
+  - id: source-check-honesty
+    weight: 2
+    pass: Separates citation presence from actual verification and makes unresolved work legible.
+    fail: Claims a source is verified without evidence.
+  - id: responsive-collaboration
+    weight: 2
+    pass: Supports the specified desktop workflow and a usable narrow-screen review/reply path.
+    fail: Mobile review blocks the author from inspecting or replying to feedback.
+
+scoring_note: Numeric weights are rubric bookkeeping, not calibrated measurements; compare qualitative evidence and do not infer statistical significance from them.

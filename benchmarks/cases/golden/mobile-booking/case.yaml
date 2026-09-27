@@ -1,7 +1,7 @@
 id: mobile-booking
 category: consumer-service
 difficulty: medium
-suite: [golden, daily]
+suite: [golden, daily, calibration]
 tension_class: signature_opportunity
 
 run_policy:

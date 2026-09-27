@@ -1,7 +1,7 @@
 id: approval-workflow
 category: enterprise-internal-tooling
 difficulty: medium
-suite: [golden, daily]
+suite: [golden, daily, calibration]
 tension_class: low_innovation
 
 run_policy:

@@ -1,0 +1,33 @@
+tasks:
+  - id: review-author-revision
+    critical: true
+    start:
+      state: revision_submitted
+      viewport: 1280
+    goal: Review the author's latest revision, identify changed passages, leave a comment tied to the correct revision, then mark the resolved earlier comment without losing its history.
+    required_outcomes:
+      - id: compare-revision
+        check: text_present
+        pattern: "修订|版本|变更|revision|diff"
+      - id: comment-anchored
+        check: text_present
+        pattern: "评论|批注|意见|comment"
+      - id: resolved-comment-preserved
+        check: text_present
+        pattern: "已解决|已处理|resolved"
+  - id: verify-before-publication
+    critical: true
+    start:
+      state: pre_publication_review
+      viewport: 1280
+    goal: Check the article before handoff, find any citation that has not been verified, and confirm that the title and body belong to the same revision.
+    required_outcomes:
+      - id: citation-state-visible
+        check: text_present
+        pattern: "已核对|未核实|缺失|verified|unverified|missing"
+      - id: revision-consistency
+        check: text_present
+        pattern: "标题|正文|版本|revision"
+      - id: no-invented-publish
+        check: text_absent
+        pattern: "立即发布|发布到平台|publish now"

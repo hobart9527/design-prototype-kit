@@ -1,0 +1,172 @@
+{
+  "run_id": "candidate-cocreate-ic-r8b",
+  "suite": "daily",
+  "generated_at": "20260927_211839",
+  "status": "INVALID_CONTROL",
+  "status_divergence": "hard gate tripped on stable_skill while the paired verdict is PASS: the gate is absolute and fires on the artifacts themselves, while the paired verdict only compares the candidate against the control, so both stand.",
+  "hard_gate_arms": [
+    "stable_skill"
+  ],
+  "cases": [
+    "incident-commander"
+  ],
+  "variants": [
+    "candidate_skill",
+    "stable_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "incident-commander",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "BLOCKED",
+      "metrics": {
+        "turns": 1,
+        "elapsed_seconds": 1799.03,
+        "cost_usd": 0.0
+      },
+      "notes": [
+        "session BLOCKED: turn 1 timeout: timeout after 1799s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "184d88a2-5c10-4de3-8b85-67836c75b867",
+        "workspace": "/tmp/design-bench/incident-commander/candidate_skill/20260927_201453-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    },
+    {
+      "case_id": "incident-commander",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "BLOCKED",
+      "metrics": {
+        "turns": 2,
+        "elapsed_seconds": 1799.56,
+        "cost_usd": 8.0563
+      },
+      "notes": [
+        "session BLOCKED: turn 2 timeout: timeout after 1251s"
+      ],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "7e0891cf-7390-49c3-8d4a-f65510012223",
+        "workspace": "/tmp/design-bench/incident-commander/stable_skill/20260927_204630-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 1,
+    "authority_escape": 0,
+    "critical_task_break": 0,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 0,
+      "blocked": 1,
+      "task_success_rate": null,
+      "method_recall": 0.25,
+      "method_precision": 1.0,
+      "semantic_gate_pass": 1,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 1.0,
+      "cost_usd": 0,
+      "elapsed_seconds": 1799.0,
+      "inline_hex_failures": 0
+    },
+    "stable_skill": {
+      "runs": 1,
+      "completed": 0,
+      "blocked": 1,
+      "task_success_rate": null,
+      "method_recall": 0.75,
+      "method_precision": 0.375,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 2.0,
+      "cost_usd": 8.0563,
+      "elapsed_seconds": 1799.6,
+      "inline_hex_failures": 0
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 2,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "303dd08ecdbcd2b0390dbdbef4f6632ec536b36d296a6ab6ae55a4f311e660cc",
+      "3a59ff41d749a20c2ac869ab691aa277e9a697d02ddab65813cbd03d7fda6d60"
+    ],
+    "disclosure": "all 2 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_agreement": null,
+    "pairwise_confidence_counts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "pairwise_cost_usd": 0,
+    "pairwise_cost_recorded": 0,
+    "pairwise_cost_missing": 0,
+    "pairwise_cost_total_complete": true,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "PASS",
+    "pairs_compared": 1,
+    "compared_dimensions": 2,
+    "verified_dimensions": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "pass",
+        "candidate": "pass"
+      }
+    ],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "semantic",
+        "stable": "fail",
+        "candidate": "pass"
+      }
+    ],
+    "missing_pairs": []
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "incident-commander/candidate_skill: session blocked",
+    "incident-commander/candidate_skill: task behaviour unverified",
+    "incident-commander/stable_skill: session blocked",
+    "incident-commander/stable_skill: task behaviour unverified"
+  ]
+}
