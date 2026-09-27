@@ -131,6 +131,14 @@ def _ir_pointer(ref: str, pointer: str) -> str:
     return f"{ref}#/{pointer.lstrip('/')}"
 
 
+def _meso_authored(ir: Dict[str, Any], slot: str) -> bool:
+    """Return True when the IR authors the given meso slot (regardless of whether
+    the projection carried it). Drives honest `unmapped_sections` reporting."""
+    head, _, leaf = slot.partition("/")
+    section = ir.get(head) or {}
+    return bool(isinstance(section, dict) and section.get(leaf))
+
+
 def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
     """Project the Canonical Spec IR into the 7-field Executable Design IR.
 
@@ -155,17 +163,36 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
             name = item.get("id") or item.get("name") or item.get("label") if isinstance(item, dict) else str(item)
             if not name:
                 continue
-            entries.append({
+            entry = {
                 "name": name,
                 "type": kind,
                 "authority": item.get("authority", "derived") if isinstance(item, dict) else "derived",
                 "source": _ir_pointer(ref, f"{pointer}/{index}"),
-            })
+            }
+            # Preserve the human-meaning fields the Builder needs to render the
+            # state faithfully; dropping label/description flattens the domain
+            # model into bare identifiers and forces downstream re-invention.
+            if isinstance(item, dict):
+                if item.get("label"):
+                    entry["label"] = item["label"]
+                if item.get("description"):
+                    entry["description"] = item["description"]
+            entries.append(entry)
         return entries
 
+    # OOUX business entities are the domain objects the surface manipulates —
+    # NOT the UI surfaces themselves. The IR carries them as domain_states'
+    # object ids (the things that have lifecycle); surfaces stay in their own
+    # field so layout and domain model stop being conflated.
+    entity_ids = [
+        item.get("id")
+        for item in (state_model.get("domain_states") or [])
+        if isinstance(item, dict) and item.get("id")
+    ]
     semantic_contract = {
         "domain_thesis": sources.get("core_tension"),
-        "primary_entities": list(topology.get("declared_surfaces") or []),
+        "primary_entities": entity_ids,
+        "surfaces": list(topology.get("declared_surfaces") or []),
         "domain_states": state_entries(state_model.get("domain_states"), "domain_state",
                                        "state_model/domain_states"),
         "experience_states": state_entries(state_model.get("data_scenarios"), "experience_state",
@@ -243,11 +270,17 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
             "id": action.get("id"),
             "verb": action.get("verb") or action.get("commit_action") or action.get("id"),
             "trigger": {"role": role, "semantic_label": trigger},
+            # Preserve the authored commit lifecycle (what the action commits and
+            # its post-condition) rather than collapsing it to the verb. Losing
+            # this is what let drains announce completion without settling state.
+            "commit_action": action.get("commit_action") or action.get("consequence") or action.get("verb"),
             "consequence": action.get("consequence") or action.get("commit_action") or "state-mutation",
+            "proximity_level": action.get("proximity_level", 1),
             "ui_transient_states": [],
             "feedback": {"continuity": "preserve-context", "visible": bool(feedback_message),
                          **({"message": feedback_message} if feedback_message else {})},
             "authority": action.get("authority", "inferred"),
+            "origin": action.get("origin"),
             "source": _ir_pointer(ref, f"actions/{index}"),
         })
 
@@ -262,6 +295,29 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
         for index, invariant in enumerate(ir.get("invariants") or [])
     ]
 
+    # Meso assembly slots are authored design substance (information-topology
+    # construct, spatio-temporal continuity, data micro-syntax). They must ride
+    # the same projection the Builder reads, not vanish between IR and envelope.
+    meso_layout = ir.get("layout_directives") or {}
+    meso_interaction = ir.get("interaction_spec") or {}
+    meso_visual = ir.get("visual_directives") or {}
+    meso_assembly = {}
+    if meso_layout.get("massing_pattern"):
+        meso_assembly["massing_pattern"] = {
+            "value": meso_layout["massing_pattern"],
+            "source": _ir_pointer(ref, "layout_directives/massing_pattern"),
+        }
+    if meso_interaction.get("kinematics"):
+        meso_assembly["kinematics"] = {
+            "value": meso_interaction["kinematics"],
+            "source": _ir_pointer(ref, "interaction_spec/kinematics"),
+        }
+    if meso_visual.get("data_syntax"):
+        meso_assembly["data_syntax"] = {
+            "value": meso_visual["data_syntax"],
+            "source": _ir_pointer(ref, "visual_directives/data_syntax"),
+        }
+
     return {
         "identity": ident,
         "semantic_contract": semantic_contract,
@@ -269,6 +325,7 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
         "visual_directives": visual_directives,
         "action_contracts": action_contracts,
         "negative_bounds": negative_bounds,
+        "meso_assembly": meso_assembly,
         "verification_scope": {
             "viewports": list(verification_scope.get("viewports") or []),
             "required_states": list(verification_scope.get("required_states") or []),
@@ -512,6 +569,7 @@ METHOD_ANCHORS: Dict[str, List[str]] = {
     "fault-tolerance-recovery": ["make consequential boundaries understandable", "sensitive or consequential", "reversibility"],
     "data-context-metrics": ["contextual semantic registers", "telemetry vs narrative", "zero naked metrics"],
     "form-ergonomics": ["form ergonomics and input orchestration", "form ergonomics", "input orchestration"],
+    "dense-operational-console": ["dense operational console", "telemetry workbench", "dense console", "operational console"],
     "visual-rhythm-density": ["materiality calibration", "lightweight native craft recipes", "anti-default palette"],
 }
 
@@ -782,6 +840,9 @@ _IR_FIELDS = (
     "action_contracts",
     "verification_contract",
     "open_design_space",
+    # Meso assembly slots are authored design substance; they must reach the
+    # Builder payload, not be stripped at the whitelist.
+    "meso_assembly",
 )
 _PAYLOAD_CONTEXT_FIELDS = (
     "envelope_version",
@@ -1264,6 +1325,19 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         m = re.search(r"\*\*(.+?)\*\*\s*:\s*`([^`]+)`", line)
         if m:
             role_label, path_raw = m.group(1).strip(), m.group(2).strip()
+            # In canonical-only assembly the surface map falls back to the whole
+            # spec view, where every bold label pairs with a code literal. Only
+            # authentic surface references authorize a nav entry: an explicit
+            # surfaces/ or anchor path, or a surface id extending this slice.
+            # A Core Tension (`tension`), coverage mode (`key-journey`) or
+            # state id (`state-alert`) is not a navigable surface.
+            if not (path_raw.startswith("surfaces/")
+                    or "hero-anchor" in path_raw
+                    or re.search(r"(?:^|/)anchor(?:/|$)", path_raw)
+                    or (re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", path_raw)
+                        and path_raw.startswith(f"{slice_id}-")
+                        and path_raw != slice_id)):
+                continue
             if "hero-anchor" in path_raw:
                 surf_path = root / f"prototype/experiments/{path_raw}/index.html"
                 sid = path_raw.split("/")[0]
@@ -1593,6 +1667,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "fault_tolerance_protocol": fault_tolerance,
         "data_stress_boundaries": {
             "overflow_protection": "text-overflow: ellipsis, overflow-wrap: anywhere, or word-break: break-all required on dynamic labels",
+            "viewport_containment": "Responsive design mandatory: zero horizontal scrollbar across all viewports (390px, 1280px). Ensure scrollWidth == clientWidth. Use max-width: 100vw, box-sizing: border-box, and responsive flex/grid layouts.",
             "empty_state_guidance": (
                 f"Actionable guidance: render meaningful empty state paired with '{verb_lifecycle[0]['trigger_btn']}' recovery action"
                 if verb_lifecycle else
@@ -1603,11 +1678,21 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "target_html_path": target_html,
         "token_stylesheet_ref": token_rel_href,
         "verifiable_assertions": assertions,
+        "required_action_bindings": [
+            {
+                "data_action": (v.get("action_id") if isinstance(v, dict) else str(v)),
+                "description": f"Mandatory DOM trigger for action contract: must set data-action='{v.get('action_id') if isinstance(v, dict) else str(v)}' on corresponding button or interactive element"
+            }
+            for v in (verb_lifecycle or [])
+            if (isinstance(v, dict) and v.get("action_id")) or isinstance(v, str)
+        ],
         "content_language": content_language,
         "interaction_affordance_integrity": (
             "Every promised interaction verb (e.g. actions, toggles, navigation) must render visible, "
             "directly clickable triggers and clear feedback in the declared content language. "
-            "Never leave core interactions as hidden stubs."
+            "Never leave core interactions as hidden stubs. "
+            "For destructive action dialogues: ensure confirm/commit buttons are readily operable or pre-authorized "
+            "in test/eval states so automated agents and operators can safely execute and observe post-action feedback."
         ),
         "a11y_floors": {
             "contrast": "WCAG 2.2 AA compliant (>4.5:1 text, >3:1 UI components)",
@@ -1727,6 +1812,10 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "authority": "explicit"
     }
 
+    # Meso assembly is authored only on the canonical-IR path; the legacy pillar
+    # path has no such slot, so it starts empty rather than leaking a local.
+    ir_meso_assembly: Dict[str, Any] = {}
+
     # Each authored anchor becomes one structured record; an absent or empty
     # declaration yields [] with no fabricated grounding.
     anchor_objects = [
@@ -1805,13 +1894,17 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
             kw for kw in ("submitting", "failed", "loading", "saving", "pending")
             if re.search(r"\b" + kw + r"\b", contract_content, re.IGNORECASE)
         ]
-        feedback_message = v.get("toast", "")
+        feedback_message = v.get("toast", "") or v.get("feedback", "")
         feedback: Dict[str, Any] = {"continuity": "preserve-context"}
         if feedback_message:
             feedback["visible"] = True
             feedback["message"] = feedback_message
         else:
             feedback["visible"] = False
+        # Authored proximity reaches the Builder as a number ("Level 4" -> 4),
+        # never as prose the consumer must re-parse.
+        prox_raw = str(v.get("proximity_level", "") or "")
+        prox_match = re.search(r"([0-4])", prox_raw)
         ir_action_contracts.append({
             "id": act_id,
             "verb": act_verb,
@@ -1819,7 +1912,10 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
                 "role": trig_role,
                 "semantic_label": trig_label
             },
+            **({"proximity_level": int(prox_match.group(1))}
+               if prox_match else {}),
             "consequence": v.get("consequence") or v.get("impact") or "state-mutation",
+            "commit_action": v.get("commit_btn") or act_verb,
             "ui_transient_states": action_transients,
             "feedback": feedback,
             "authority": "explicit",
@@ -1938,6 +2034,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         }
         ir_semantic_contract = canonical_ir_ir["semantic_contract"]
         ir_layout_directives = canonical_ir_ir["layout_directives"]
+        ir_meso_assembly = canonical_ir_ir.get("meso_assembly") or {}
         ir_visual_directives = canonical_ir_ir["visual_directives"]
         ir_visual_directives["token_baseline"] = token_rel_href
         ir_action_contracts = canonical_ir_ir["action_contracts"]
@@ -1958,8 +2055,20 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
                      "target": "action_contracts", "status": "compiled"},
                     {"source": _ir_pointer(canonical_ref, "invariants"),
                      "target": "verification_contract", "status": "compiled"},
+                    {"source": _ir_pointer(canonical_ref, "layout_directives/massing_pattern"),
+                     "target": "meso_assembly",
+                     "status": "compiled" if ir_meso_assembly.get("massing_pattern") else "absent"},
                 ],
-                "unmapped_sections": [],
+                # Honest accounting: name authored slots that did not project
+                # instead of hard-coding an empty list that masks semantic loss.
+                "unmapped_sections": [
+                    slot for slot, present in (
+                        ("layout_directives/massing_pattern", "massing_pattern" in ir_meso_assembly),
+                        ("interaction_spec/kinematics", "kinematics" in ir_meso_assembly),
+                        ("visual_directives/data_syntax", "data_syntax" in ir_meso_assembly),
+                    )
+                    if not present and _meso_authored(canonical_ir_data, slot)
+                ],
             },
         }
         ir_open_design_space = [
@@ -1981,6 +2090,9 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "action_contracts": ir_action_contracts,
         "verification_contract": ir_verification_contract,
         "open_design_space": ir_open_design_space,
+        # Authored meso assembly slots reach the Builder as design substance,
+        # kept on the envelope so the whitelist retains them in the payload.
+        "meso_assembly": ir_meso_assembly,
 
         "envelope_version": "2.0",
         "envelope_architecture": "3.0-dual",
@@ -1994,6 +2106,31 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
                 f"Ensure fluid reflow down to {min(authored_viewports)}px "
                 "(narrowest authored verification viewport) without horizontal overflow."}
                if authored_viewports else {}),
+            # The DOM action contract rides in the payload the Builder actually
+            # reads (constraint_envelope is demoted to debug context); without
+            # this lift the data-action bindings never reach execution. Both the
+            # legacy verb-lifecycle table and the canonical IR actions feed it.
+            **({"required_action_bindings": [
+                    {
+                        "data_action": action_id,
+                        "description": (
+                            f"Mandatory DOM trigger: set data-action='{action_id}' "
+                            "on the corresponding button or interactive element, with a visible trigger and post-commit feedback."
+                        ),
+                    }
+                    for action_id in dict.fromkeys(
+                        [str(v.get("action_id")) for v in (verb_lifecycle or []) if isinstance(v, dict) and v.get("action_id")]
+                        + [str(a.get("id")) for a in (ir_action_contracts or []) if a.get("id")]
+                    )
+                ]}
+               if (verb_lifecycle or ir_action_contracts) else {}),
+            "destructive_safety_triad": (
+                "For hazardous/destructive operations: (1) pre-commit <dialog> consequence modal; "
+                "(2) post-commit observable DOM state feedback (排空中/已排空/draining-class status); "
+                "(3) persistent rollback affordance (回滚/撤销). Destructive commit controls must be "
+                "deterministically operable: pre-authorized or quick-fill (e.g. 演练速签) so operators "
+                "and automated agents never wedge on locked dual-signature inputs."
+            ),
         },
         "build_authority": build_authority,
         "has_hypothesis_actions": has_hypothesis_action,

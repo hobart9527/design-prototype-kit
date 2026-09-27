@@ -14,6 +14,7 @@ if str(SCRIPTS) not in sys.path:
 
 from compile_spec_ir import (
     compile_canonical_ir,
+    parse_action_verbs,
     render_single_spec_md,
     SCHEMA_PATH,
     IncompleteStageContractError,
@@ -186,6 +187,34 @@ def test_cli_fails_nonzero_and_lists_missing(tmp_path: Path):
     assert proc.returncode != 0
     assert "domain_states" in proc.stderr
     assert "missing" in proc.stderr or "缺少" in proc.stderr
+
+
+def test_contract_actions_yaml_is_authoritative_and_fails_closed():
+    from compile_spec_ir import parse_action_verbs
+
+    actions = """```contract:actions
+- id: action-enter
+  verb: submit
+  trigger: Enter
+  proximity_level: 4
+  commit: Commit
+  feedback: Saved
+```"""
+    parsed = parse_action_verbs(actions)
+    assert [item["id"] for item in parsed] == ["action-enter"]
+    assert parsed[0]["authority"] == "explicit"
+    assert parsed[0]["feedback"] == "Saved"
+
+    duplicate = actions.replace(
+        "  feedback: Saved",
+        "  feedback: Saved\n- id: action-enter\n  verb: submit\n  trigger: Enter\n  commit: Again",
+    )
+    with pytest.raises(ValueError, match="duplicate id"):
+        parse_action_verbs(duplicate)
+    with pytest.raises(ValueError, match="missing required"):
+        parse_action_verbs("```contract:actions\n- id: action-enter\n  verb: submit\n```")
+    with pytest.raises(ValueError, match="invalid contract:actions YAML"):
+        parse_action_verbs("```contract:actions\n- id: [\n```")
 
 
 def test_render_single_spec_md(tmp_path: Path):
@@ -648,3 +677,85 @@ def test_surface_extraction_filters_out_viewport_and_testing_dimensions(tmp_path
 
 
 
+
+
+# --- B1 regression locks: semantic lossless projection -----------------------
+
+
+def test_navigation_topology_not_hardcoded(tmp_path: Path):
+    """Regression: the compiler must not invent `workspace-inspector` for every product.
+
+    Undeclared topology stays absent from the IR rather than being fabricated;
+    an authored `navigation_topology:` declaration is taken verbatim.
+    """
+    disc = tmp_path / "prototype/discussion.md"
+    disc.parent.mkdir(parents=True)
+    disc.write_text(
+        "# Discussion\n- Product: Editorial Reader\n- Baseline: content flow\n",
+        encoding="utf-8",
+    )
+    ir = compile_canonical_ir(root=tmp_path, slice_id="reader", allow_incomplete=True)
+    assert "navigation_topology" not in ir["scope"]["topology_scope"]
+
+    disc.write_text(
+        "# Discussion\n- Product: Ops Console\n- navigation_topology: `pinned-master-detail`\n",
+        encoding="utf-8",
+    )
+    ir2 = compile_canonical_ir(root=tmp_path, slice_id="ops", allow_incomplete=True)
+    assert ir2["scope"]["topology_scope"]["navigation_topology"] == "pinned-master-detail"
+
+
+def test_state_entries_preserve_label_and_description(tmp_path: Path):
+    """Regression: state projection must not flatten id/label/description to name+type."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills/spec-prototype/scripts"))
+    import assemble_envelope
+
+    ir = {
+        "identity": {},
+        "sources": {},
+        "scope": {"topology_scope": {}, "verification_scope": {}},
+        "foundation": {},
+        "state_model": {
+            "domain_states": [
+                {"id": "node/draining", "label": "排空中",
+                 "description": "节点正在逐批排空流量，未完成前不可收尾"},
+            ],
+            "interaction_states": [],
+            "data_scenarios": [],
+            "stress_fixtures": [],
+        },
+        "actions": [],
+        "invariants": [],
+    }
+    fields = assemble_envelope._canonical_ir_fields(ir, "r1.spec.json")
+    ds = fields["semantic_contract"]["domain_states"][0]
+    assert ds["name"] == "node/draining"
+    assert ds["label"] == "排空中"
+    assert "排空" in ds["description"]
+
+
+def test_action_contracts_preserve_commit_and_proximity(tmp_path: Path):
+    """Regression: action projection must keep commit_action/proximity_level/origin."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills/spec-prototype/scripts"))
+    import assemble_envelope
+
+    ir = {
+        "identity": {}, "sources": {}, "foundation": {}, "invariants": [],
+        "scope": {"topology_scope": {}, "verification_scope": {}},
+        "state_model": {"domain_states": [], "interaction_states": [],
+                        "data_scenarios": [], "stress_fixtures": []},
+        "actions": [{
+            "id": "action-resolve-incident", "verb": "收尾复盘", "trigger": "primary button",
+            "proximity_level": 4, "commit_action": "双签确认 -> 排空完成 -> 关闭事故",
+            "consequence": "事故关闭并进入复盘", "feedback": "事故已收尾",
+            "authority": "explicit", "origin": "discussion.md#contract:actions",
+        }],
+    }
+    fields = assemble_envelope._canonical_ir_fields(ir, "r1.spec.json")
+    act = fields["action_contracts"][0]
+    assert act["proximity_level"] == 4
+    assert "排空完成" in act["commit_action"]
+    assert act["origin"] == "discussion.md#contract:actions"
+    assert act["consequence"] == "事故关闭并进入复盘"

@@ -29,6 +29,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
+    import yaml  # type: ignore
+except ImportError:  # structured contract blocks require the authoritative YAML parser
+    yaml = None
+
+try:
     import jsonschema
 except ImportError:
     jsonschema = None
@@ -320,31 +325,190 @@ def parse_ruthless_omissions(text: str) -> List[str]:
     return items
 
 
+# An authored lifecycle clause after the verb, e.g. "`Enter` 键机械压感双签隔离
+# (Trigger: ... -> Commit: \"...\" -> Feedback: ...)" or the bullet form
+# "- `action-enter`: 双签隔离 (Trigger: Space key / row click -> ...)".
+# Capturing through the closing paren keeps the structured Trigger/Action/Commit/
+# Feedback semantics instead of truncating at the first 中文逗号 and flattening
+# the contract into a bare verb string.
+_ACTION_CLAUSE_RE = re.compile(
+    r"`([A-Za-z][A-Za-z0-9+]*)`\s*键([^(（\n]*)(?:[(（]([^)）\n]*)[)）])?"
+)
+_ACTION_FIELD_RE = re.compile(r"(Trigger|Action|Commit|Feedback)\s*[:：]\s*([^>-]+)")
+
+
+def _parse_action_clause(clause: str) -> Dict[str, str]:
+    """Split an authored lifecycle clause into its semantic fields."""
+    fields: Dict[str, str] = {}
+    for fm in _ACTION_FIELD_RE.finditer(clause):
+        value = fm.group(2).strip().strip('"“”').strip()
+        if value:
+            fields[fm.group(1).lower()] = value
+    return fields
+
+
+def _parse_contract_yaml_blocks(text: str, kind: str) -> List[Dict[str, Any]]:
+    """Parse fenced ```contract:<kind>``` YAML blocks — the machine SSOT form.
+
+    When the author writes structured contract blocks, they are authoritative:
+    parse them with the YAML loader and skip prose heuristics for that kind.
+    """
+    blocks: List[Dict[str, Any]] = []
+    matches = list(re.finditer(rf"^[ \t]*```contract:{kind}\s*\n(.*?)^[ \t]*```", text, re.DOTALL | re.MULTILINE))
+    if matches and yaml is None:
+        raise ValueError(f"contract:{kind} requires PyYAML to parse its authoritative block")
+    for m in matches:
+        body = m.group(1).strip()
+        try:
+            loaded = yaml.safe_load(body)
+        except yaml.YAMLError as exc:
+            raise ValueError(f"invalid contract:{kind} YAML: {exc}") from exc
+        entries = loaded if isinstance(loaded, list) else [loaded]
+        if not entries or any(not isinstance(entry, dict) for entry in entries):
+            raise ValueError(f"contract:{kind} must contain a mapping or list of mappings")
+        blocks.extend(entries)
+    return blocks
+
+
+def _action_from_contract_block(block: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Normalize one contract:actions YAML entry to the IR action shape."""
+    action_id = str(block.get("id") or "").strip()
+    required = {"id": action_id, "verb": str(block.get("verb") or "").strip(),
+                "trigger": str(block.get("trigger") or "").strip(),
+                "commit": str(block.get("commit") or block.get("commit_action") or "").strip()}
+    missing = [key for key, value in required.items() if not value]
+    if missing:
+        raise ValueError("contract:actions entry missing required field(s): " + ", ".join(missing))
+    try:
+        proximity_level = int(block.get("proximity_level") or 1)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"contract:actions {action_id} has invalid proximity_level") from exc
+    if proximity_level < 1:
+        raise ValueError(f"contract:actions {action_id} proximity_level must be >= 1")
+    entry: Dict[str, Any] = {
+        "id": action_id,
+        "verb": required["verb"],
+        "trigger": required["trigger"],
+        "proximity_level": proximity_level,
+        "commit_action": required["commit"],
+        "authority": "explicit",
+        "origin": "discussion.md#contract:actions",
+    }
+    for opt in ("feedback", "consequence"):
+        val = block.get(opt)
+        if val:
+            entry[opt] = str(val).strip()
+    return entry
+
+
+def _authored_action_ids(text: str) -> set:
+    """Collect every action id the authored Action Verbs declarations name.
+
+    Action declarations appear both as headings-with-bullets and as inline
+    bullet anchors (`- **Action Verbs …**:` followed by indented items), so the
+    scan walks the whole document from each Action Verbs anchor to the next
+    same-depth anchor. Every form counts — the template bullet form
+    (`action-space`: …), the prose key-binding form (`Space` 键…), and table
+    rows (| `action-space` | …). This is the latch's ground truth: what the
+    author wrote must equal what parse_action_verbs extracted, or compilation
+    fails instead of silently dropping semantics.
+    """
+    ids: set = set()
+    # Structured contract blocks declare their ids directly.
+    for block in _parse_contract_yaml_blocks(text, "actions"):
+        block_id = str(block.get("id") or "").strip()
+        if block_id:
+            ids.add(block_id)
+    anchor_re = re.compile(r"(?:^|\n)\s*(?:#{2,6}\s.*|[*\-]\s*\*\*.*)?(?:Action\s+Verbs?|动作契约|动作词|键位与动作)", re.IGNORECASE)
+    for anchor in anchor_re.finditer(text):
+        body = text[anchor.end():anchor.end() + 4000]
+        # Stop at the next structural boundary: a heading or a new bold bullet
+        # label that is not part of this action list.
+        stop = re.search(r"\n\s{0,2}(?:#{1,6}\s|[*\-]\s*\*\*[^*]+:\*\*)", body)
+        section = body[:stop.start()] if stop else body
+        for m in re.finditer(r"`(action-[a-z0-9]+(?:-[a-z0-9]+)*)`", section):
+            ids.add(m.group(1))
+        for m in re.finditer(r"`([A-Za-z][A-Za-z0-9+]*)`\s*键", section):
+            ids.add(f"action-{m.group(1).lower()}")
+        for line in section.splitlines():
+            if not line.strip().startswith("|"):
+                continue
+            for c in (cell.strip() for cell in line.split("|")):
+                cm = re.match(r"`?(action-[a-z0-9]+(?:-[a-z0-9]+)*)`?$", c)
+                if cm:
+                    ids.add(cm.group(1))
+    return ids
+
+
 def parse_action_verbs(text: str) -> List[Dict[str, Any]]:
     """Derive action verbs from authored key bindings, or emit nothing.
 
-    An action is emitted only where discussion.md binds a named key to a verb
-    (e.g. "`Space` 键瞬时检视", "`Enter` 键机械压感提交"). The verb text is taken
-    from the source; nothing is invented when no binding exists. Entries carry
-    authority=inferred so downstream reads them as derived, not authored fact.
+    The fenced ```contract:actions``` YAML block is the machine SSOT: when
+    present it is authoritative and prose heuristics are skipped for this kind.
+    Otherwise two authored prose forms are recognized — the prose binding
+    ("`Space` 键瞬时检视 (Trigger: ... -> Feedback: ...)") and the template
+    bullet ("`action-space`: 检视异常节点详情 (Trigger: Space key / row click ->
+    Level 1 Flyout -> ...)"). In both, the verb keeps only its head; the
+    structured Trigger/Commit/Feedback clause is preserved in `commit_action`,
+    and the Feedback message lands in `feedback` instead of being truncated at
+    the first 中文逗号 and lost. Proximity stays 1 unless the clause authors a
+    higher container level. Nothing is invented when no binding exists. Entries carry authority=inferred so
+    downstream reads them as derived, not authored fact.
     """
     actions: List[Dict[str, Any]] = []
     seen: set = set()
-    for m in re.finditer(r"`([A-Za-z][A-Za-z0-9+]*)`\s*键([^、，,。;；\n]*)", text):
-        key = m.group(1)
-        verb = _ACTION_MODIFIER_RE.sub("", m.group(2).strip()).strip()
-        if not verb or key in seen:
-            continue
-        seen.add(key)
-        actions.append({
-            "id": f"action-{key.lower()}",
+
+    # Priority 0: fenced contract:actions YAML blocks are the machine SSOT.
+    contract_blocks = _parse_contract_yaml_blocks(text, "actions")
+    if contract_blocks:
+        for block in contract_blocks:
+            entry = _action_from_contract_block(block)
+            if entry["id"] in seen:
+                raise ValueError(f"contract:actions contains duplicate id: {entry['id']}")
+            seen.add(entry["id"])
+            actions.append(entry)
+        return actions
+
+    def _emit(action_id: str, key: str, verb: str, clause: str) -> None:
+        if not verb or action_id in seen:
+            return
+        seen.add(action_id)
+        fields = _parse_action_clause(clause)
+        proximity = 1
+        level_match = re.search(r"Level\s*([0-4])", clause)
+        if level_match:
+            proximity = int(level_match.group(1))
+        elif re.search(r"<dialog>|确认弹窗|modal", clause, re.IGNORECASE):
+            proximity = 4
+        entry: Dict[str, Any] = {
+            "id": action_id,
             "verb": verb,
-            "trigger": f"{key} key",
-            "proximity_level": 1,
-            "commit_action": verb,
+            "trigger": fields.get("trigger") or (f"{key} key" if key else ""),
+            "proximity_level": proximity,
+            "commit_action": fields.get("commit") or verb,
             "authority": "inferred",
             "origin": "discussion.md",
-        })
+        }
+        if fields.get("feedback"):
+            entry["feedback"] = fields["feedback"]
+        if fields.get("action"):
+            entry["consequence"] = fields["action"]
+        actions.append(entry)
+
+    # Form 1: "`<Key>` 键<verb> (lifecycle clause)".
+    for m in _ACTION_CLAUSE_RE.finditer(text):
+        key = m.group(1)
+        verb = _ACTION_MODIFIER_RE.sub("", m.group(2).strip()).strip()
+        _emit(f"action-{key.lower()}", key, verb, (m.group(3) or "").strip())
+
+    # Form 2 (Stage 1 template): "- `action-<slug>`: <verb> (Trigger: <Key> key
+    # ... -> ... -> Feedback: ...)". The action id is authored directly; the
+    # clause carries the structured lifecycle.
+    for m in re.finditer(
+        r"`(action-[a-z0-9]+(?:-[a-z0-9]+)*)`\s*[:：]\s*([^(`\n（]+)\s*(?:[(（]([^)）\n]*)[)）])?",
+        text,
+    ):
+        _emit(m.group(1), "", _ACTION_MODIFIER_RE.sub("", m.group(2).strip()).strip(), (m.group(3) or "").strip())
     return actions
 
 
@@ -356,6 +520,31 @@ def parse_viewports(text: str) -> List[int]:
         if 200 <= v <= 4000 and v not in out:
             out.append(v)
     return sorted(out)
+
+
+def parse_navigation_topology(text: str, fm_data: Dict[str, Any]) -> Optional[str]:
+    """Extract the authored navigation/layout topology, else None.
+
+    `navigation_topology` is a design decision (workspace-inspector vs
+    editorial-flow vs stacked-flow, etc.). The compiler must NOT fabricate a
+    default: frontmatter wins, then an explicit `navigation_topology:` /
+    `导航拓扑:` declaration in discussion.md. Undeclared stays None so the IR
+    omits the key rather than hard-coding one layout for every product.
+    """
+    fm_val = fm_data.get("navigation_topology") or fm_data.get("topology")
+    if fm_val:
+        return str(fm_val).strip()
+    m = re.search(
+        r"navigation[_\s-]?topology\s*[:：]\s*`?([A-Za-z0-9][A-Za-z0-9_-]*)`?",
+        text,
+        re.IGNORECASE,
+    )
+    if m:
+        return m.group(1).strip()
+    m = re.search(r"导航拓扑\s*[:：]\s*`?([A-Za-z0-9][A-Za-z0-9_-]*)`?", text)
+    if m:
+        return m.group(1).strip()
+    return None
 
 
 def _split_label_description(rest: str, fallback_label: str):
@@ -763,9 +952,34 @@ def compile_canonical_ir(
     # the source and are removed; when no binding exists, actions stays empty.
     actions = parse_action_verbs(disc_text)
 
+    # Semantic latch: an authored Action Verbs section that fails to project
+    # into IR actions is a silent semantic loss (format drift between template
+    # and parser), not an empty contract. Fail loudly at compile time instead
+    # of letting the Builder receive an empty action_contracts payload.
+    authored_action_ids = _authored_action_ids(disc_text)
+    extracted_action_ids = {a.get("id") for a in actions}
+    if authored_action_ids and authored_action_ids != extracted_action_ids:
+        missing = sorted(authored_action_ids - extracted_action_ids)
+        extra = sorted(extracted_action_ids - authored_action_ids)
+        detail = ", ".join(missing) if missing else ""
+        if extra:
+            detail = (detail + "; " if detail else "") + "spurious: " + ", ".join(extra)
+        raise IncompleteStageContractError(
+            [{
+                "key": "actions_latch",
+                "label": "动作契约语义闩锁 (action semantic latch)",
+                "section": "discussion.md → Action Verbs",
+                "form": "authored action ids must project 1:1 into IR actions",
+                "example": f"authored={sorted(authored_action_ids)} extracted={sorted(extracted_action_ids)} ({detail})",
+            }],
+            header="动作契约提取不完整：discussion.md 的 Action Verbs 授权项未全部进入 IR actions。"
+                   "这通常是格式漂移（模板改了、解析器没跟上）或章节残留空壳；修复作者格式或解析器后重试。",
+        )
+
     # Meso assembly slots: authored massing/kinematics/data_syntax declarations,
     # with an undeclared massing smoothing to a topology-derived fallback.
-    meso = parse_meso_directives(disc_text, "workspace-inspector")
+    nav_topology = parse_navigation_topology(disc_text, fm_data)
+    meso = parse_meso_directives(disc_text, nav_topology or "stacked-flow")
 
     # Progressive tier stamping: the IR emits the tier it can legitimately
     # derive. A full state machine AND action contracts present (authored here
@@ -814,7 +1028,9 @@ def compile_canonical_ir(
                 # Omit when undeclared: schema types primary_surface as string,
                 # and a null would falsely imply an authored primary surface.
                 **({"primary_surface": primary_surface} if primary_surface else {}),
-                "navigation_topology": "workspace-inspector",
+                # Omit when undeclared: navigation_topology is an authored design
+                # decision, not a constant the compiler may invent per product.
+                **({"navigation_topology": nav_topology} if nav_topology else {}),
             },
             "build_scope": {
                 "stage": stage,
@@ -971,7 +1187,7 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
     md.append("")
     md.append("### Topology & IA Scope (Pillars: Object · Topology)")
     md.append(f"- **Coverage Mode**: `{scope['topology_scope']['coverage']}`")
-    md.append(f"- **Navigation Topology**: `{scope['topology_scope']['navigation_topology']}`")
+    md.append(f"- **Navigation Topology**: `{scope['topology_scope'].get('navigation_topology') or '_None declared_'}`")
     md.append(f"- **Primary Surface**: `{scope['topology_scope'].get('primary_surface') or '_None declared_'}`")
     declared_str = ", ".join(f"`{s}`" for s in scope['topology_scope']['declared_surfaces'])
     md.append(f"- **Declared Surfaces**: {declared_str or '_None declared_'}")
@@ -1020,6 +1236,47 @@ def render_single_spec_md(ir: Dict[str, Any]) -> str:
     md.append("")
     md.append("---")
     md.append("")
+    # Google Design-grade structured blocks: System Constants give the Builder a
+    # deterministic physical reference frame (type scale, spacing modulus, token
+    # semantics), and Viewport Intent declares per-breakpoint IA priority so the
+    # Builder never has to invent layout from prose.
+    md.append("## 3.5 System Constants (Physical Reference Frame)")
+    md.append("> The Builder consumes these as the deterministic base, not prose to interpret.")
+    md.append("")
+    md.append("### Type Scale (compulsory hierarchy)")
+    md.append("| Role | Token | Use |")
+    md.append("|---|---|---|")
+    md.append("| Display | `var(--font-sans)` + `var(--font-display-weight)` | Page-level statement |")
+    md.append("| Title | `var(--font-sans)` | Section / panel heading |")
+    md.append("| Body | `var(--font-sans)` | Running content |")
+    md.append("| Label | `var(--font-mono)` | Metadata, telemetry, tags |")
+    md.append("")
+    md.append("### Spacing Modulus")
+    md.append("- Base unit: `var(--space-2)` (8px). All rhythm derives from the `--space-*` scale in `prototype/shared/tokens.css`; no ad-hoc pixel values.")
+    md.append("- Component boundary: `var(--radius-card)`; interactive control: `var(--radius-btn)`.")
+    md.append("")
+    md.append("### Color Semantics (state separation)")
+    md.append("- Surface / Border / Text / Focus are distinct tokens (`--color-bg-surface`, `--color-border-subtle`, `--color-text-primary`); never reuse one token across roles.")
+    md.append("- Status: `--color-status-running` / `--color-status-warning` / `--color-status-danger`. Accent seal is reserved for irreversible authority seals only.")
+    md.append("")
+    md.append("## 3.6 Responsive Viewport Intent (IA priority per breakpoint)")
+    md.append("> Declares which surfaces lead and which collapse at each viewport. The Builder must honor this ordering, not guess it.")
+    md.append("")
+    viewports = (ir.get("scope", {}).get("verification_scope", {}) or {}).get("viewports") or []
+    primary = scope.get("topology_scope", {}).get("primary_surface") or ""
+    if viewports:
+        for vp in viewports:
+            md.append(f"### {vp}px")
+            if vp <= 480:
+                md.append("- Mode: **Glance Sentinel**. Lead with blast-radius / posture / progress; collapse detail lists below the fold.")
+            else:
+                md.append("- Mode: **Command Cockpit**. Lead with primary surface; avoid empty inspector when nothing is selected — show aggregate analysis instead.")
+            if primary:
+                md.append(f"- Primary surface: `{primary}` leads; contextual surfaces support, never outrank.")
+            md.append("")
+    else:
+        md.append("_No authored viewports declared in discussion.md._")
+        md.append("")
     md.append("## 4. Verifiable Design Invariants & Break Protocol (Pillar: Resilience)")
     md.append("### Verifiable Assertions")
     for inv in ir["invariants"]:
