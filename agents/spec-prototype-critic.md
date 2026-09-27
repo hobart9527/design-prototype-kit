@@ -118,6 +118,14 @@ Judge the whole product experience, not only correctness or taste:
 
 - **Product and semantic fit:** Does the work preserve sourced value, actors,
   objects, content, authority and consequences without invented capability?
+  **Integration capability trace-back:** every integration or external-system
+  capability appearing in the prototype (channels, auth methods, biometrics,
+  report generators, notification hooks, third-party services) must trace back
+  to a verb or noun the brief actually declares. One that does not is a
+  fabricated capability: flag it for downgrade to a `hypothesis`/`unknown`
+  evidence status or removal, and record the boundary under Ruthless
+  Omissions. A glance surface renders state the operator already owns; it
+  never invents a channel the brief never mentioned.
 - **Journey and topology:** Are the necessary surfaces and relationships present,
   economical and continuous across entry, work, service moments and return?
 - **Interaction and agency:** Can people recognize choices, predict consequences,
