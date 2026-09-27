@@ -23,6 +23,30 @@
 uncertainty, not a mandatory Track A/Track B sequence. The route contract in
 `references/04-governance/discussion.md` owns permitted stopping and exit.
 
+## Cold-start inference & seed status
+
+Infer silently from every workspace source before speaking. Each dimension's
+evidence status records what the *sources actually support* — `[explicit]`
+means a named user statement or committed document states it verbatim;
+inference from a pain narrative, a persona convention or industry practice is
+`[derived]`; if the sources cannot settle it, `[unknown]`.
+
+- Actor: `[derived]` (who operates the product, from the brief's own words)
+- Use scene: `[derived]` (where and under what pressure)
+- Information priority: `[derived]` (what must be legible first)
+- Main journey: `[derived]` (the end-to-end operator path)
+- Style tone: `[derived]` (visual register, only if sources constrain it)
+- Scene sentence: (one sentence composing the above as a concrete moment)
+- Anti-slop match-and-refuse bans: (what this product must never do)
+- Seed confirmation Gate: `[derived]` state which dimensions the sources
+  settled and which remain inferred. A brief that fully specifies the
+  product may justify `[explicit]` per dimension — cite the exact brief
+  passage in the dimension line. Never write "需求已完全固化" or "无需额外
+  用户输入": a sealed provisional contract is exactly the claim that user
+  confirmation is still pending. If any dimension stays `[unknown]`, list it
+  below with impact and owner.
+- Unknowns that could change the current decision, impact and owner: (required when any dimension is unknown)
+
 ## Working understanding (Nine Pillars Canonical Ontology)
 
 | Pillar | Focus | Current statement | Evidence status (`explicit | observed | derived | hypothesis | unknown`) | Source / impact / owner |

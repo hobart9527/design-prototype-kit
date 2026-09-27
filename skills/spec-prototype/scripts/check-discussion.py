@@ -70,6 +70,19 @@ def main() -> int:
             return fail("cold start needs anti-slop boundary status")
         if "Seed confirmation Gate:" not in cold:
             return fail("cold start needs seed gate status")
+        # An [explicit] status claims a verbatim source statement. Without a
+        # cited passage the marker is an authority promotion: the checker can
+        # shape the marker toward honesty even though it cannot read the brief.
+        for dimension in ("Actor", "Use scene", "Information priority", "Main journey"):
+            line = next((l for l in cold.splitlines() if l.strip().startswith(f"- {dimension}:")), "")
+            if "[explicit]" in line or "`[explicit]`" in line:
+                if not re.search(r"brief[.md]*[#\d§：:]|brief\.md|《|“.{4,}”", line):
+                    return fail(f"{dimension} marked [explicit] without citing the source passage")
+        if re.search(r"Seed confirmation Gate:.*((完全固化|无需额外用户输入|已确认|无需更多输入)|fully (settled|confirmed)|no further (user )?input)", cold):
+            return fail(
+                "Seed confirmation Gate claims user confirmation is complete; a sealed "
+                "provisional contract is the claim that confirmation is still pending"
+            )
         if has_unknown and not re.search(
             r"- Unknowns that could change the current decision, impact and owner:\s*\S",
             cold,
