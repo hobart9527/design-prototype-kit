@@ -1,0 +1,107 @@
+{
+  "run_id": "candidate-cocreate-ic",
+  "suite": "daily",
+  "generated_at": "20260926_180556",
+  "status": "BLOCKED",
+  "status_divergence": null,
+  "hard_gate_arms": [],
+  "cases": [
+    "incident-commander"
+  ],
+  "variants": [
+    "candidate_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "incident-commander",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "BLOCKED",
+      "metrics": {
+        "turns": 2,
+        "elapsed_seconds": 1799.21,
+        "cost_usd": 2.365
+      },
+      "notes": [
+        "session BLOCKED: turn 2 timeout: timeout after 1155s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "gemini",
+        "router_host": "router360.duckdns.org",
+        "session_id": "1bf20d41-8687-43c4-a149-b7b4678c36d5",
+        "workspace": "/tmp/design-bench/incident-commander/candidate_skill/20260926_173445-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 0,
+    "authority_escape": 0,
+    "critical_task_break": 0,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 0,
+      "blocked": 1,
+      "task_success_rate": null,
+      "method_recall": 0.25,
+      "method_precision": 1.0,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 1,
+      "semantic_signals": 0,
+      "artifact_turns": 2.0,
+      "cost_usd": 2.365,
+      "elapsed_seconds": 1799.2,
+      "inline_hex_failures": 0
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 1,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "6dc19b459d9e210b49f51f42f816605536042c3565e0fd6f3ed3a106c6c5400f"
+    ],
+    "disclosure": "all 1 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "INCONCLUSIVE",
+    "pairs_compared": 0,
+    "compared_dimensions": 0,
+    "verified_dimensions": [],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [],
+    "missing_pairs": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      }
+    ]
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "incident-commander/candidate_skill: semantic judge unverified",
+    "incident-commander/candidate_skill: session blocked"
+  ]
+}

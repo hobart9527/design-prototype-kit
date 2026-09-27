@@ -1,0 +1,98 @@
+{
+  "run_id": "baseline-preatomic-ic",
+  "suite": "daily",
+  "generated_at": "20260926_172601",
+  "status": "INVALID_CONTROL",
+  "status_divergence": "hard gate tripped on stable_skill while the paired verdict is INCONCLUSIVE: the gate is absolute and fires on the artifacts themselves, while the paired verdict only compares the candidate against the control, so both stand.",
+  "hard_gate_arms": [
+    "stable_skill"
+  ],
+  "cases": [
+    "incident-commander"
+  ],
+  "variants": [
+    "stable_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "incident-commander",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 2,
+        "elapsed_seconds": 1158.49,
+        "cost_usd": 6.4921
+      },
+      "notes": [],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "flash,gemini",
+        "router_host": "router360.duckdns.org",
+        "session_id": "8fc94f64-006b-47ed-939b-c9c251d36cd7",
+        "workspace": "/tmp/design-bench/incident-commander/stable_skill/20260926_170540-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 1,
+    "authority_escape": 0,
+    "critical_task_break": 0,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "stable_skill": {
+      "runs": 1,
+      "completed": 1,
+      "blocked": 0,
+      "task_success_rate": null,
+      "method_recall": 0.5,
+      "method_precision": 0.667,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 2.0,
+      "cost_usd": 6.4921,
+      "elapsed_seconds": 1158.5,
+      "inline_hex_failures": 0
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 1,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "3a59ff41d749a20c2ac869ab691aa277e9a697d02ddab65813cbd03d7fda6d60"
+    ],
+    "disclosure": "all 1 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "INCONCLUSIVE",
+    "pairs_compared": 0,
+    "compared_dimensions": 0,
+    "verified_dimensions": [],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [],
+    "missing_pairs": []
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": []
+}

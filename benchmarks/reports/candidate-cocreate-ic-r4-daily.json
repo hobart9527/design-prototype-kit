@@ -1,0 +1,109 @@
+{
+  "run_id": "candidate-cocreate-ic-r4",
+  "suite": "daily",
+  "generated_at": "20260926_235745",
+  "status": "REGRESSION",
+  "status_divergence": "hard gate tripped on candidate_skill while the paired verdict is INCONCLUSIVE: the gate is absolute and fires on the artifacts themselves, while the paired verdict only compares the candidate against the control, so both stand.",
+  "hard_gate_arms": [
+    "candidate_skill"
+  ],
+  "cases": [
+    "incident-commander"
+  ],
+  "variants": [
+    "candidate_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "incident-commander",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "BLOCKED",
+      "metrics": {
+        "turns": 2,
+        "elapsed_seconds": 1799.23,
+        "cost_usd": 2.9809
+      },
+      "notes": [
+        "session BLOCKED: turn 2 timeout: timeout after 1370s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "gemini",
+        "router_host": "router360.duckdns.org",
+        "session_id": "d52f79cb-5ed9-4e45-bc8c-cdd528005c15",
+        "workspace": "/tmp/design-bench/incident-commander/candidate_skill/20260926_232307-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 0,
+    "authority_escape": 0,
+    "critical_task_break": 1,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 0,
+      "blocked": 1,
+      "task_success_rate": 0.333,
+      "method_recall": 0.75,
+      "method_precision": 0.75,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 1,
+      "semantic_signals": 0,
+      "artifact_turns": 2.0,
+      "cost_usd": 2.9809,
+      "elapsed_seconds": 1799.2,
+      "inline_hex_failures": 0
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 1,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "310b9e7cf04f5739fc4d924beb6efd0738eb16a3c7b3701e09c381712c4516c4"
+    ],
+    "disclosure": "all 1 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "INCONCLUSIVE",
+    "pairs_compared": 0,
+    "compared_dimensions": 0,
+    "verified_dimensions": [],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [],
+    "missing_pairs": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      }
+    ]
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "incident-commander/candidate_skill: semantic judge unverified",
+    "incident-commander/candidate_skill: session blocked"
+  ]
+}
