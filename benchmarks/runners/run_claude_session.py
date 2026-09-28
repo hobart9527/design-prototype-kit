@@ -46,7 +46,18 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
                             max_turns=turns_per_call, max_budget_usd=budget_usd,
                             timeout_s=int(min(remaining, timeout_s)))
         session_id = out.get("session_id") or session_id
-        total_cost += out.get("cost_usd") or 0.0
+        # The CLI's total_cost_usd is cumulative across all resumed turns in
+        # this session, not this call's incremental spend. Adding it repeatedly
+        # compounds prior turns. On normal return, ratchet total_cost to the
+        # latest reported cumulative spend. On timeout, the CLI emits no payload;
+        # add the per-turn budget to the last known baseline as a conservative
+        # upper bound so runaway timeouts cannot bypass total-budget governance.
+        call_cost = out.get("cost_usd") or 0.0
+        if out.get("cost_estimated"):
+            timeout_bound = budget_usd if budget_usd is not None else 8.0
+            total_cost = max(total_cost, call_cost) + timeout_bound
+        else:
+            total_cost = max(total_cost, call_cost)
         model_seen.update(out.get("models") or [])
         turn = {
             "turn": len(turns) + 1,

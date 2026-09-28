@@ -596,3 +596,101 @@ def test_projection_digest_records_a_real_ledger(tmp_path):
     # No t1.json in the fixture: the token source is disclosed as unmapped, not asserted compiled.
     assert "t1#tokens" in unmapped
     assert {e["source"] for e in mapped if e["status"] == "unmapped"} == set(unmapped)
+
+
+# A staged Skill copy is a legitimate install. The hook is loaded from the
+# operator's install while the session may run a byte-identical copy inside its
+# own workspace; demanding physical path identity refused every dispatch of it.
+
+def test_dispatch_admits_a_staged_skill_tree_copy(tmp_path):
+    root = build_repo(tmp_path)
+    env = assemble_to_file(root)
+    staged = tmp_path / "staged" / "spec-prototype"
+    (staged / "scripts").mkdir(parents=True)
+    (staged / "scripts" / "execution_boundary.py").write_text("# staged copy\n", encoding="utf-8")
+    payload = {"repository_root": str(root), "skill_root": str(staged),
+               "mode": "lean-builder-envelope", "slice_id": SLICE,
+               "target_html_path": f"prototype/experiments/{SLICE}/anchor/index.html",
+               "spec_sources": env["spec_sources"]}
+    execution_boundary.dispatch(
+        {"subagent_type": "spec-prototype-builder", "prompt": json.dumps(payload)}, root)
+
+
+def test_dispatch_still_refuses_a_bare_spec_prototype_directory(tmp_path):
+    root = build_repo(tmp_path)
+    env = assemble_to_file(root)
+    impostor = tmp_path / "impostor" / "spec-prototype"
+    impostor.mkdir(parents=True)
+    payload = {"repository_root": str(root), "skill_root": str(impostor),
+               "mode": "lean-builder-envelope", "slice_id": SLICE,
+               "target_html_path": f"prototype/experiments/{SLICE}/anchor/index.html",
+               "spec_sources": env["spec_sources"]}
+    with pytest.raises(ValueError, match="installed Skill root"):
+        execution_boundary.dispatch(
+            {"subagent_type": "spec-prototype-builder", "prompt": json.dumps(payload)}, root)
+
+
+def test_boundary_scope_survives_a_header_and_resume_declaration(tmp_path):
+    # The canonical record names the boundary in its header and again in its
+    # Resume block. Those are one declaration; the scope must stay active
+    # instead of raising on every gated call.
+    root = tmp_path / "project"
+    (root / "prototype").mkdir(parents=True)
+    (root / "prototype/discussion.md").write_text(
+        "# Design Discussion\n\n- Execution boundary: active\n\n## Resume\n"
+        "- Execution boundary: active\n", encoding="utf-8")
+    assert execution_boundary.active_root(root) == root
+
+
+def test_boundary_scope_closes_on_a_trailing_released_declaration(tmp_path):
+    root = tmp_path / "project"
+    (root / "prototype").mkdir(parents=True)
+    (root / "prototype/discussion.md").write_text(
+        "# Design Discussion\n\n- Execution boundary: active\n\n## Resume\n"
+        "- Execution boundary: released\n", encoding="utf-8")
+    assert execution_boundary.active_root(root) is None
+
+
+def test_dispatch_admits_canonical_spec_pillar_packet(tmp_path):
+    """Execution boundary admits handoff packet for canonical .spec.md via pillar_packet."""
+    import handoff
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / "prototype/discussion.md").parent.mkdir(parents=True)
+    (root / "prototype/discussion.md").write_text("# Disc\n## Resume\n- Execution boundary: active\n")
+    (root / "prototype/shared").mkdir(parents=True)
+    (root / "prototype/shared/tokens.css").write_text(":root { --primary: #000; }\n")
+    spec_dir = root / "prototype/specifications/test-slice"
+    spec_dir.mkdir(parents=True)
+    spec_path = spec_dir / "r1.spec.md"
+    spec_path.write_text("# RFC Spec\n- Prototype write scope: `prototype/experiments/test-slice/r1/`\n")
+
+    pkt = handoff.packet_for(root, spec_path)
+    assert pkt["specification"]["path"] == "prototype/specifications/test-slice/r1.spec.md"
+    # Ensure this dispatch passes execution_boundary.dispatch
+    execution_boundary.dispatch(
+        {"subagent_type": "spec-prototype-builder", "prompt": json.dumps(pkt)}, root)
+
+
+def test_shell_read_admits_and_chains_and_refuses_escapes(tmp_path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    # Batch compilation helper chain
+    execution_boundary.shell_read(
+        "python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice s1 && "
+        "python3 skills/spec-prototype/scripts/compile_tokens.py", root)
+
+    # Chained helper with illegal shell write
+    with pytest.raises(ValueError):
+        execution_boundary.shell_read(
+            "python3 skills/spec-prototype/scripts/compile_tokens.py && rm -rf /", root)
+
+    # Chained helper with pipe
+    with pytest.raises(ValueError):
+        execution_boundary.shell_read(
+            "python3 skills/spec-prototype/scripts/compile_tokens.py | cat", root)
+
+    # Chained helper with background &
+    with pytest.raises(ValueError):
+        execution_boundary.shell_read(
+            "python3 skills/spec-prototype/scripts/compile_tokens.py & python3 skills/spec-prototype/scripts/compile_tokens.py", root)

@@ -10,7 +10,7 @@ hooks:
     - matcher: "Write|Edit|MultiEdit|NotebookEdit|Bash|Agent|Task"
       hooks:
         - type: command
-          command: 'python3 -c "import os, sys, subprocess; f = [p for p in [os.environ.get(\"LOOM_CLAUDE_HOME\", os.path.expanduser(\"~/.claude\")) + \"/skills/spec-prototype/scripts/execution_boundary.py\", \"skills/spec-prototype/scripts/execution_boundary.py\"] if os.path.isfile(p)]; sys.exit(subprocess.run([sys.executable, f[0]]).returncode if f else 0)"'
+          command: 'python3 -c "import os, sys, subprocess; f = [p for p in [\".claude/skills/spec-prototype/scripts/execution_boundary.py\", \"skills/spec-prototype/scripts/execution_boundary.py\", os.environ.get(\"LOOM_CLAUDE_HOME\", os.path.expanduser(\"~/.claude\")) + \"/skills/spec-prototype/scripts/execution_boundary.py\"] if os.path.isfile(p)]; sys.exit(subprocess.run([sys.executable, f[0]]).returncode if f else 0)"'
 ---
 
 # Spec Prototype — Canonical 5-Stage Design Delivery Engine
@@ -58,112 +58,139 @@ of tokens, stylesheets, or prototypes alone.
 
 Evidence lens labels retained for lineage review: **Archetype A: Greenfield 0-to-1**, **Archetype B: New Surface 1-to-N**, and **Archetype C: Refinement & Audit**. These labels describe observed workspace context only.
 
-## Canonical Design Architecture (1 主 + 3 辅 + Evidence 终局模型)
+## Design Method (设计本体与决策节奏)
 
-The system unifies all design operations into four orthogonal layers and one transverse governance protocol:
-1. **Nine Pillars (WHAT WE DESIGN — 唯一设计本体)**: Value · Research · Object · Journey · Topology · Attention · Expression · Interaction · Resilience. Defines what consequential problems every design must resolve.
-2. **Double Diamond (HOW WE DECIDE — 决策收放流向)**: Problem Space (Discover · Define) ──> Solution Space (Develop · Deliver). Directs when to diverge and when to converge across the entire design lifecycle.
-3. **Five Axes (HOW IT FEELS — 表达坐标寄存器)**: Density · Energy · Materiality · Rhythm · Character. Evaluates and calibrates sensory direction; optionally declared as needed, never forced as a mandatory CSS formula.
-4. **Craft Library (HOW TO CRAFT — 工法与参考库)**: General craft methods (OOUX, Action Verb Lifecycle, Context Preservation, Break Protocol, etc.) and composable reference patterns (Workbench, Canvas, Editorial, Touch). Subservient to Nine Pillars; techniques serve invariants and are never global rigid gates.
-5. **Evidence Protocol (横向证据治理)**: `explicit > observed > derived > hypothesis > unknown`. Every design decision must trace to empirical facts or declared hypotheses.
-   - **Strict Grounding Invariant**: Never invent unsupported product capabilities, third-party integrations, or user-research claims. When proposing user needs or architectural trade-offs not stated in the brief, strictly mark them as `[hypothesis]` or `[derived]`. Never cite unconducted user research (e.g., "眼动仪测试表明", "经用户调研反馈") as factual evidence.
-   - **Lean Stage 1 Invariant**: In Stage 1, focus cognitive budget strictly on unpacking the Core Tension and 1~2 high-risk core entities/journeys. Avoid speculative full-lifecycle matrix filling or generating bulky speculative copy across unselected surfaces. Target the minimal cohesive Core Anchor Slice directly.
+Use the **Nine Pillars**—Value, Research, Object, Journey, Topology, Attention,
+Expression, Interaction, Resilience—as the unique, complete design ontology to diagnose
+and frame the consequential problem. Do not treat the Nine Pillars as a bureaucratic
+form to fill; they are analytical lenses. Engage in deep dialectic dialogue only on the
+specific pillars carrying material tension or uncertainty.
 
-## Canonical 5-Stage Design Workflow (五阶工序状态机)
+Use the **Double Diamond** to diverge only where uncertainty is real, then converge
+on a coherent experience. The **Five Axes** (Density, Energy, Materiality, Rhythm,
+Character) are continuous sensory coordinates to calibrate and discuss aesthetic direction—never
+a forced CSS formula or arbitrary score. Maintain the **70/30 Innovation Boundary**: preserve
+70% familiar mental models for navigation and spatial expectations, while concentrating
+creative craft and novelty into the 30% resolving the slice's **Signature Moment**.
 
-Execute the stages matching declared intent and required evidence. The stages represent an adaptive capability set rather than a mandatory sequential gate:
+Ground product facts in the brief and workspace. Never invent capabilities,
+integrations, user research, or approval. Mark professional inference `[derived]`,
+untested proposal `[hypothesis]`, and unavailable facts `[unknown]`. Keep the initial
+scope to the smallest slice that can express and test the central design idea.
 
-**Bounded Stage Budget Discipline (有界阶段预算纪律)**: Keep each stage's work
-bounded and record its checkpoint in `prototype/discussion.md`'s Resume block.
-Do not end a turn solely because a checkpoint was reached: when the user asked
-for a runnable prototype, Stage 1's sealed IR + tokens may flow directly into
-envelope assembly and Builder dispatch in the same turn. Pause only for an
-unresolved user decision, a real stage boundary that needs review, or an explicit
-session limit. Batch compilation in one shell call
-(`compile_spec_ir.py && compile_tokens.py`); write `discussion.md` once per
-authoring pass. A checkpoint records recovery state; it is not an extra approval
-gate or a reason to strand the first runnable prototype. A bounded-failure
-terminal state (`Stage 4: PARTIAL — <findings>` in the Resume block) is a valid
-session end; never spend the remaining wall clock in an open-ended repair loop
-(see Stage 4 Completion Receipt Discipline).
-**Anti-Inspection Rule (禁查编译器源码纪律)**: Never use `grep`, `sed`, `head`, or `Read`
-to inspect `compile_spec_ir.py` or `compile_tokens.py` source code. Directly use the
-canonical discussion contract skeleton documented in `references/stages/stage-1-frame.md`.
+## Adaptive Design Workflow (意图驱动，设计产出优先)
 
-```text
-[Stage 1: 破 - Understand & Frame (问题空间与设计契约定义 · Grilling & Brainstorming Engine)]
-  │  Core Objective: Progressive design co-creation via Dynamic Topological Collapse Spine. Co-creation themes (Metaphor / Topology / Sensory / Falsification) are selected and ordered by the live uncertainty, never a fixed 4-round questionnaire (see stage-1-frame.md).
-  │  Alignment Cadence: Agent finds facts silently; User decides trade-offs. Present 2~3 concrete options with trade-offs and a strong recommendation (`➡️`). Ratchet confirmed rounds into prototype/discussion.md Decision Record.
-  │  Micro-slice Lazy Loading: Dynamically load only the matching rule slice for the active frontier:
-  │    - Round 1: references/dialectic/01-metaphor-benchmark.md (<80 lines)
-  │    - Round 2: references/dialectic/02-topology-scaffolding.md (<60 lines)
-  │    - Round 3: references/dialectic/03-sensory-kinetic.md (<100 lines)
-  │    - Round 4: references/dialectic/04-falsification-compile.md (<60 lines)
-  │  Sealed Provisional Spec Artifacts: prototype/contracts/compiled/<slice_id>/r1.spec.json (Strict Machine IR via compile_spec_ir.py), prototype/specifications/<slice_id>/r1.spec.md (Single-file human RFC Spec view), and prototype/shared/tokens.css (via compile_tokens.py) (authority status: sealed provisional). Legacy 6-piece artifacts (foundation/f1.md, surface-maps/m1.md, etc.) remain supported for backwards compatibility.
-  │  Gate Rule: ZERO Prototype Code without a complete sealed provisional Spec Contract (for formal candidate delivery; establishes sealed provisional baseline under the authority lifecycle `Draft → Sealed Provisional → Validated → Frozen Approved` before Stage 2 probe validation).
-  ▼
-[Stage 2: 立 - Proposition & High-Risk Probe (解空间主干物化与探针验证)]
-  │  Core Objective: Materialize the single highest-risk Hero Anchor screen or direction probe via bounded Builder dispatch under the sealed provisional Stage 1 Spec contracts.
-  │  Envelope Assembly: python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json
-  │  Dispatched via Lean Envelope: Builder receives bounded constraints (Constraint Envelope) while retaining layout composition agency (Creative Envelope).
-  │  Execution Safety: Single hero anchor / signature relationship only; headless browser verification; no exploratory runaway code.
-  ▼
-[Stage 3: 拓 - Walking Skeleton Rollout (端到端真实骨架贯通)]
-  │  Core Objective: Expand probe into a cohesive Walking Skeleton validating complete task continuity (Trigger -> Action -> State Mutation -> Recovery -> Return).
-  │  Coverage Selection: Resolve the implementation scope against the current Surface Map, task risks, probe results and applicable platform contexts. The selection is scope, not approval: it never authorizes the selected surfaces. Present concrete recommended combinations with their verification purpose, dependencies and omissions only while scope is unresolved. An explicit prior selection is reused without another question. A subset reduces the implementation target only; the full map, object model, rationale and applicable method outcomes stay authoritative, and unselected surfaces stay provisional. Missing or stale selections never default to full-product.
-  │  Structure: Derived from authentic Surface Topology (Primary, Contextual, Supporting). Unbound from rigid screen counts.
-  │  Strict Floors & Craft Guidance: Action verb closure, tokens.css adherence, zero inline hex, and contextual craft guidelines (contextual reference data, compression & release).
-  ▼
-[Stage 4: 验 - Four-Dimensional Evidence & Holistic Critique (四维证据客观走查)]
-  │  Automated Capture & Portal: capture.mjs (headless multi-viewport 320/390/1280px) & generate_review_portal.py.
-  │  Decoupled Evidence Gate:
-  │    - Engineering Evidence: DOM integrity, tokens, a11y floors (verify_prototype_quality.py)
-  │    - Interaction Evidence: State mutations, error recovery, undo detents, break protocol limits
-  │    - Visual Capture: Renderer capture status (captured != verified; visual critique remains explicit)
-  │    - Human Evidence: Final signoff and stakeholder confirmation
-  │  Controlled Absorption Loop: Critique absorbed into tokens.css / HTML slices -> Re-verify.
-  │  Visual Inspection Discipline: Automated static verify is primary. NEVER use the Read tool to batch-read multiple full-resolution PNG screenshots (causes massive context bloat and budget exhaustion). If visual sanity check is necessary, inspect at most 1 key screenshot (e.g. mobile 390px).
-  ▼
-[Stage 5: 冻 - Silent Packaging & Frozen Approved Delivery (静默封版与工件交付)]
-     Headless Compilation: export-tokens.py (DTCG tokens.json), wcag-check.js (WCAG 2.2 AA floor / AAA static tokens), and `python3 skills/spec-prototype/scripts/handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.spec.md` (canonical IR path) or `--spec prototype/specifications/<slice_id>/r1.md` (legacy path). `--root` must be the repository root (containing `prototype/`). Freeze binds the immutable candidate Specification, never a mutable product record.
-```
+Run only the work needed by the user's request; do not turn the stages into approval
+gates. The normal path is **Frame → Propose → Make → Look → Refine**:
 
-## Dual-Engine Architecture: Sharp Exploration vs Silent Governance
+1. **Frame** — identify the real task, people, objects, constraints, and one consequential
+   tension or opportunity. Ask only about a decision that changes the design.
+2. **Propose** — form a product-specific design proposition: what becomes easier to
+   perceive or do, its signature relationship, what remains familiar, and the trade-off.
+   Use real references as evidence to study, not as templates to copy.
+3. **Make** — create the requested artifact at the smallest useful fidelity. A runnable
+   prototype must implement its declared interactions and representative states; a
+   direction study need not pretend to be a complete product.
+4. **Look** — inspect the actual rendered work at the viewports and states that matter.
+   Judge hierarchy, composition, typography, density, content realism, interaction,
+   accessibility, and product fit. A clean static check is not a design review.
+5. **Refine** — fix the few consequential weaknesses at their owning layer. Normally
+   one focused refinement pass suffices; stop when the question is answered and state
+   any material uncertainty honestly.
 
-1. **Front-stage Exploration Engine (破、立、拓、验)**:
-   - Focus cognitive attention on reframing hidden business/user tensions, anchoring signature interactions, and declaring ruthless omissions over exhaustive matrix-filling.
-   - Stage 1 culminates in the durable **Design Specification (Spec)** or an exploratory direction brief.
-   - Stage 2 & 3 Builder operates under the **Lean Pre-baked Envelope Protocol**: deterministic, bounded code synthesis with evidence-led self-repair where interactive craft validates and refines the concept model (`Craft informs Soul`).
-2. **Back-stage Governance Compiler (Silent Packaging - 冻)**:
-   - Immutable digests, formal manifests, and token compilation run silently via helper scripts (`handoff.py`, `compile_tokens.py`, `wcag-check.js`) when transitioning between formal phases or downstream engineering handoff.
-   - Governance serves as a quiet post-hoc compiler, never an exploratory tax on upfront design reasoning.
+## Stage 3: 拓 — Walking Skeleton Rollout
 
-## Storage discipline (read before any file write)
+For Stage 3, resolve implementation scope against the Surface Map, user request, task
+risks, and platform context.
 
-1. All design records go to `prototype/discussion.md` (mandatory entry index) and `prototype/*.md`.
-2. A "只讨论" or "不做原型" request forbids runnable HTML/JS prototypes, but MANDATES writing the design into `prototype/discussion.md` — never leave it solely in chat dialogue.
-3. Never create design documents in the repository root (e.g. `DESIGN.md`, `PRODUCT-DESIGN.md`).
-4. Never substitute `prototype/discussion.md` with `prototype/README.md`.
+### Coverage Selection:
 
-## Native role boundary
+Scope is not approval and is the implementation target only. Preserve the full object
+model and rationale as authoritative; keep unselected surfaces provisional, disclose
+out-of-scope dependencies, and never default to full-product when selection is missing.
+Present concrete recommended combinations with their verification purpose, dependencies,
+and omissions only while scope is unresolved. An explicit prior selection is reused
+without asking again.
 
-Read [the native execution boundary](references/04-governance/execution-boundary.md) before a
-write, runnable probe, formal build or independent review. The main designer
-writes Markdown design records. Only `spec-prototype-builder` writes executable
-prototype output, from the exact retained direction brief or handoff packet and
-within its bounded prototype/evidence scopes.
+### Structure: Derived from authentic Surface Topology
 
-Coordinator dispatches `spec-prototype-builder` (or fallback `general-purpose` / `claude` if host agent registry lacks specialized builder) via standard `Agent` tool call with the exact envelope JSON string:
-1. Synthesize envelope: `python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json`
-2. Read the resulting JSON file.
-3. Call `Agent(subagent_type="spec-prototype-builder", prompt=envelope_json_string)`. If `spec-prototype-builder` is unavailable in the host agent environment, fall back to `Agent(subagent_type="general-purpose", prompt=envelope_json_string)`. The `prompt` parameter must be the raw JSON string without conversational prose, matching the PreToolUse hook parser.
+Use Primary, Contextual, and Supporting relationships, not a fixed screen count. The
+freeze/handoff command binds the selected `specifications/<slice_id>/r1.spec.md`
+(canonical IR path) or `specifications/<slice_id>/r1.md` (legacy path) when the user
+requests a frozen handoff.
 
-Coordinator dispatches `spec-prototype-critic` for independent review at Stage 4 (验):
-1. Execute multi-viewport captures: `node skills/spec-prototype/scripts/capture.mjs <target_url> --output prototype/evidence/probes/<slice_id>/ --viewports 320,390,1280 --states <declared_applicable_states>`
-2. Run static verification: `python3 skills/spec-prototype/scripts/verify_prototype_quality.py <target_html> prototype/shared/tokens.css --contract prototype/specifications/<slice_id>/r1.spec.md` (legacy multi-file trees use `r1.md`)
-3. Call `Agent(subagent_type="spec-prototype-critic", prompt=...)` supplying the target HTML path, specification path, static check output, and explicit paths to captured `.png` screenshots. Critic must inspect the actual rendered visual images using the `Read` tool before issuing judgments.
 
-The native Hook enforces tool shape and write ownership only while the nearest
-`prototype/discussion.md` records `Execution boundary: active`. It does not own
-product meaning, approval, design quality or artifact lifecycle. Never cite Hook
-permission as evidence that a design decision is correct or approved.
+Formal prototypes still require the applicable sealed provisional Spec before code.
+A direction probe, spec-only request, and local review keep their lightweight routes.
+When a runnable prototype is requested, continue from the design brief to the first
+working artifact in the same turn when possible; checkpoints are recovery notes, not
+approval rituals. End with a useful artifact or a concise, truthful blocker—not a
+waiting loop. A Stage 4 result may be `PARTIAL` when evidence or runtime is unavailable.
+
+## Minimal Design Record (最小设计记录)
+
+Keep `prototype/discussion.md` as the decision and evidence ledger. Use the canonical
+`google-design-md/v2` Markdown contract for formal slices: YAML frontmatter plus
+semantic sections for problem/drivers, experience direction, spatial anatomy, states
+and actions, and resilience/invariants. The existing
+[`spec-md-contract.md`](references/spec-md-contract.md) defines the parser-compatible
+shape. This is this Skill's Google Design.md-inspired format—not a claim that it is an
+official Google standard. Write only sections relevant to the requested scope; do not
+fill a matrix for completeness. Keep `explicit`, `observed`, `derived`, `hypothesis`,
+and `unknown` distinctions visible.
+
+## Craft Standard (现代设计工艺与三层工程沉淀)
+
+Make the output feel authored for this product, not decorated from a house style.
+Use realistic content and task-driven hierarchy; make density, typography, color,
+space, material, and motion reinforce the same design proposition. Preserve familiar
+conventions where they aid learning; spend novelty only where it improves the task.
+The applicable hard floors remain: WCAG/accessibility and honest evidence, visible
+`:active` feedback on commit controls, concentric nested radii
+(`R_inner = max(0, R_outer - P)`), `tabular-nums` for changing/aligned numeric data,
+and touch targets of at least 44×44px in touch contexts. Techniques beyond these
+floors are contextual choices, not global recipes.
+
+### P9+ Modern Craft Execution
+- **Subtle Materiality & Borders**: Translucent micro-borders (`rgba(255,255,255,0.08)` or `rgba(0,0,0,0.08)`), dual-layer ambient/contact shadows, and 1px inset specular highlights on dark elevated cards.
+- **Micro-Kinetic Affordance**: Buttons yield on `:active` with subtle micro-compression (`scale(0.985)`), animated via damping curves (`cubic-bezier(0.16, 1, 0.3, 1)`).
+- **Typographic Precision**: System font stack (`Inter`, `Geist`, `SF Pro`), antialiased rendering, tight font scale hierarchy, and `tabular-nums` numeric stabilization.
+
+### Downstream Engineering Assets (三层工程交付资产)
+Deliver artifacts ready for subsequent frontend generation:
+1. **`tokens.json` & `tokens.css`**: W3C DTCG-compliant tokens capturing semantic color, spacing, radii, typography, and elevation scales.
+2. **`spec.md`**: Single-source specification mapping component topology, state machines (`default | loading | stressed | empty | error`), and accessibility invariants.
+3. **`index.html`**: Clean, self-contained, accessible interactive implementation directly translatable into production frontend components.
+
+## Delivery Mechanics (单脑贯通 · 极速交付)
+
+The main designer owns the entire design lifecycle end-to-end: framing, code synthesis,
+visual verification, and downstream asset emission. There is NO mandatory delegation to
+external subagents (Builder or Critic) on the primary delivery path.
+
+1. **Direct Materialization**: The main designer writes runnable prototype code directly
+   to `prototype/experiments/<slice_id>/anchor/index.html` (and companion `shared/tokens.css`,
+   `specifications/<slice_id>/r1.spec.md`, `experiments/<slice_id>/envelope.json`). No multi-turn
+   agent translation overhead.
+2. **Visual Inspection**: The main designer runs `capture.mjs` directly, reads the resulting
+   `.png` viewports/states with the `Read` tool, visually reviews hierarchy and contrast,
+   and applies in-place refinements immediately.
+3. **Optional External Delegation**: Specialized subagents (`spec-prototype-builder`,
+   `spec-prototype-critic`) exist solely for optional, detached background explorations or
+   formal external reviews when explicitly demanded by the user—never as an obligatory
+   blocking gate on the main path.
+
+## Design record ownership
+
+Keep durable design decisions in `prototype/discussion.md` and related `prototype/*.md`
+records, never in a root-level design document or `prototype/README.md`. A discussion-only
+request creates no runnable HTML/JS prototype; retain the design outcome in the discussion
+record when the repository workflow requires a durable artifact.
+
+## Native execution boundary
+
+The main designer directly authors design contracts and runnable prototypes within the
+`prototype/` directory. When running helper commands, invoke installed scripts directly
+or via single-pass compound calls. The native hook protects against workspace escape and
+ensures writes remain strictly bounded within the project's `prototype/` hierarchy.
+Never cite Hook permission as evidence that a design decision is correct or approved.

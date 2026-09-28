@@ -1,28 +1,32 @@
-# Canonical Specification Standard: Google Design.md Architecture
+# Design Brief Format: Google Design.md-inspired
 
-> Google Design.md-inspired Industrial Specification Standard for `spec-prototype`.
-> Designed for Senior Design Partners (P9+), strictly projecting the Five Axes and Nine Pillars
-> into an actionable, verifiable, and zero-reverse-engineering design contract.
-
----
-
-## 1. Architectural Philosophy (架构原则)
-
-1. **Deterministic Frontmatter vs Semantic Markdown**:
-   - Machine constraints (viewports, stage, authority status, slice ID, token binding) are authored via standard **YAML Frontmatter**.
-   - Design intentions, spatial anatomy, and behavioral contracts are authored via structured Markdown sections.
-   - **Zero Reverse-Engineering**: The compiler parses standard semantic sections without demanding brittle heading numbers or exact internal regex patterns.
-
-2. **DTCG Direct Consumption (Token 直引)**:
-   - Design tokens live in `prototype/shared/tokens.css` (compiled from W3C DTCG).
-   - Builder and Critic directly import and consume tokens without intermediate code synthesis.
-
-3. **Verifiable Invariants as First-Class Gates**:
-   - Every contract terminates in testable physical invariants (`inv/<id>`) verifiable via DOM queries, computed CSS styles, or multi-viewport screenshot captures.
+> `google-design-md/v2` is this Skill's concise, parser-compatible design brief format,
+> inspired by the idea of a human-readable design context file. It is not an official
+> Google specification and does not require adoption of Material Design. Keep design
+> intent authored in Markdown; frontmatter carries only stable metadata needed by the
+> compiler. Add detail only when it affects a design or implementation decision.
 
 ---
 
-## 2. Canonical Spec Schema (`r1.spec.md` / `discussion.md`)
+## Format Principles
+
+- YAML frontmatter contains only compiler inputs and stable identity (such as
+  `spec_schema`, `slice_id`, applicable viewports/states, token reference, and
+  authority when explicitly declared).
+- Markdown carries the actual design argument and product decisions. Natural
+  section headings are acceptable when they map to the semantic sections below;
+  the compiler's accepted parser aliases remain the compatibility boundary.
+- Tokens are implementation output, not a mandate to author a full palette before
+  the direction is understood.
+- Invariants are explicit only when they matter to this slice. Do not turn every
+  design preference into a DOM/CSS gate.
+
+## Illustrative rich slice (not a required template)
+
+The following example shows parser-compatible details that a particular operational
+slice might need. It is not a checklist: omit fields, axes, states, surfaces, fixtures,
+and assertions that do not change the requested design or its implementation. For a
+new formal slice, prefer the minimum form below and add only evidenced decisions.
 
 ```markdown
 ---
@@ -108,13 +112,56 @@ primary_surface: "cockpit-main"
 
 ---
 
-## 3. Toolchain & Automation Mapping
+## Minimum formal slice
 
-| 契约章节 | 对应代码与工具链输出 | 校验工具与方法 |
-| :--- | :--- | :--- |
-| **Frontmatter** | `r1.spec.json` 的 `identity` 与 `scope.verification_scope` | `compile_spec_ir.py` JSON Schema 校验 |
-| **Experience Foundation** | `prototype/shared/tokens.css` | `compile_tokens.py` + CSS AST 校验 |
-| **Spatial Anatomy** | `r1.spec.json` 的 `scope.topology_scope` | Builder 映射为 HTML 主容器与抽屉网格 |
-| **State Models** | `r1.spec.json` 的 `state_model` | 浏览器 `data-state` 属性切换 |
-| **Break Protocol** | `r1.spec.json` 的 `stress_fixtures` | Headless Playwright 注入超长字符与空数据截屏 |
-| **Design Invariants** | `r1.spec.json` 的 `invariants` | `verify_prototype_quality.py` 自动化 DOM/CSS 审计 |
+Use the following small form when a formal runnable slice is needed. Add state,
+action, viewport, fixture, or invariant details only when they are authored and
+relevant to the requested slice. The compiler can emit an `intent_spec` before
+execution details exist; add those details when entering the implementation or
+verification work rather than inventing them in advance.
+
+```markdown
+---
+spec_schema: "google-design-md/v2"
+slice_id: "<slice-id>"
+viewports: [390, 1280] # only the viewports relevant to this work
+primary_surface: "<surface-id>"
+---
+
+# Surface Specification: <Product / Slice>
+
+## 1. Problem Framing & Drivers
+- Core Tension: <user value> vs <constraint or risk>
+- Reality Anchors: <specific reference and what to learn/refuse>
+- Ruthless Omissions: <capability or surface explicitly out of scope>
+
+## 2. Experience Foundation & Five Axes
+- Design Proposition: <what becomes easier or clearer and why>
+- Signature Relationship: <product-specific expression that serves the task>
+- Convention Retained: <familiar behavior preserved for learnability>
+
+## 3. Spatial Anatomy & Surfaces
+- **Primary**: `surface/<id>`
+- <additional surface only if needed by this slice>
+
+## 4. Actions & States (when behavior is in scope)
+- <authored task, visible action, result, and recovery>
+- Required States: `<state-id>` # only when state capture is needed
+
+## 5. Resilience & Invariants (when relevant)
+- <material failure/stress case and expected behavior>
+- <blocking invariant, with an observable verification method>
+```
+
+The existing rich sections and legacy multi-file format remain supported. This
+minimal form clarifies the entry contract; it does not replace those compatibility
+routes or authorize deleting schemas, scripts, or templates without a separate
+migration and test plan.
+
+## Compiler boundary
+
+The compiler translates authored Markdown into canonical IR; it does not require
+all downstream execution fields at the intent tier. Add detailed states, fixtures,
+and invariants only when implementation or verification decisions need them. Use the
+formal compiler and its focused tests as the compatibility authority; this brief is
+not an instruction to run every available audit.
