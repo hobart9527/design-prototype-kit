@@ -17,7 +17,7 @@
 `design-prototype-kit` 不是一套简单的“生成界面用的 Prompt”，而是一套面向大模型时代、具备现代 P9+ 资深设计专家裁决水准的**产品设计操作系统（Design Operating Harness）**。其底层遵循三大不可动摇的因果律：
 
 1. **规约即持久权威，原型即耗材凭据 (Spec as Durable Contract, Prototype as Disposable Proof)**
-   - 设计决策必须沉淀为具备法律级确定性的契约文件（`product.md`, `m1.md`, `f1.md`, `t1.json`, `c1.md`, `r1.md`）；
+   - 设计决策必须沉淀为四件高密度交付物（`discussion.md`, `r1.spec.md`, `tokens.css`/`t1.json`, `anchor/index.html`）；
    - 代码原型不是资产终点，而是验证关键假设、暴露交互死角与视口应力的低成本耗材。
 2. **物理因果推导自然结果，拒绝套路标签 (Physical Grounding over Rigid Archetypes)**
    - 杜绝“为了做阅读器就必须找现成套路”的模板化病灶；
@@ -64,11 +64,11 @@
  └─ 解构核心张力 (Core Tension)，确立 OOUX 实体，推导表面拓扑，OKLab 编译 DTCG tokens，物化 Sealed Provisional Spec 契约。
      │
      ▼ (门禁质检：lint_spec_contracts.py 拦截张力污染与空壳)
-[Stage 2: 立 - Proposition & Hero Probe]
+[Stage 2: 立 - Propose / Proposition & Hero Probe]
  └─ 自动装配确定性机器信封 (envelope.json)，派发 Builder 单道物化最高风险 Hero Anchor 页面，真实 Headless 走查。
      │
      ▼
-[Stage 3: 拓 - Walking Skeleton Rollout]
+[Stage 3: 拓 - Make / Walking Skeleton Rollout]
  └─ 依据拓扑展开为端到端全链路闭环骨架，保证跨页面相对链接与状态机（如书库断点续读、参数协同）完全贯通。
      │
      ▼
@@ -87,7 +87,7 @@
 为了杜绝“思考是一套、契约写一套、大模型代码瞎编一套”的传统弊端，系统实现了绝对单向无损的编译传导：
 
 - **L0 讨论层 (`discussion.md`)**：人类与 AI 探讨高阶价值冲突、现实隐喻与张力取舍。
-- **L1 契约物化 (`materialize_contracts.py`)**：格式化沉淀为包含真实实体表、专属断言与语种锁定的 6 根契约支柱。
+- **L1 契约物化 (`compile_spec_ir.py` + `compile_tokens.py`)**：从 `discussion.md` 单一来源编译 Canonical Spec IR (`contracts/compiled/<slice>/r1.spec.json`)、其单文件 RFC 视图 (`specifications/<slice>/r1.spec.md`) 与 DTCG token 样式表。已退役的 6 根契约支柱不再物化。
 - **L1.5 防逃逸门禁 (`lint_spec_contracts.py`)**：硬核校验张力真实性、现实因果、语种锁与断言完备性。
 - **L2 机器信封 (`assemble_envelope.py`)**：单向编译为单一事实源 `envelope.json`，严格解耦为：
   - `constraint_envelope` (MUST)：业务边界、实体基数、语种硬锁定、无障碍底线。
@@ -125,9 +125,9 @@ design-prototype-kit/
 │   └── runners/                  # 矩阵运行器、会话驱动器与基线冻结工具
 ├── skills/spec-prototype/        # Canonical 5-Stage 核心设计引擎
 │   ├── references/               # 01基础 / 02工法 / 03质检 / 04治理 规范库
-│   ├── templates/                # 契约模版 (product, surface, foundation, tokens, slice, spec)
-│   └── scripts/                  # 核心编译器 (materialize, compile_tokens, assemble, lint)
-└── tests/                        # 完整的自动化测试套件 (59+ passed)
+│   ├── templates/                # 契约模版 (discussion, prototype-specification, prototype-evidence, prototype-review)
+│   └── scripts/                  # 核心编译器 (compile_spec_ir, compile_tokens, assemble, lint)
+└── tests/                        # 完整的自动化测试套件 (416 passed)
 ```
 
 ---
@@ -139,13 +139,13 @@ design-prototype-kit/
 python3 -m pytest tests/ -v
 ```
 
-### 契约物化与自动化信封组装
+### 契约编译与自动化信封组装
 ```bash
-# 物化当前 slice 契约并自动装配 baseline envelope.json
-python3 skills/spec-prototype/scripts/materialize_contracts.py --slice <slice_id>
+# 从 discussion.md 编译 Canonical Spec IR 与单文件 RFC 视图
+python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>
 
 # 编译 OKLab DTCG 设计系统 Token 样式表与 JSON
-python3 skills/spec-prototype/scripts/compile_tokens.py --slice <slice_id>
+python3 skills/spec-prototype/scripts/compile_tokens.py
 ```
 
 ### 执行 Stage 1 契约完整性防逃逸质检 (Linter)
@@ -172,7 +172,7 @@ python3 benchmarks/runners/run_matrix.py --suite golden --repeats 1 --visual
 `design-prototype-kit` is not a loose set of UI generation prompts. It is an **AI Product Design Operating Harness** engineered to match the discernment, rigor, and craft of a Principal Experience Designer (P9+). Its foundation rests on three immutable principles:
 
 1. **Spec as Durable Contract, Prototype as Disposable Proof**
-   - Design convictions must be crystallized into unambiguous, sealed contract files (`product.md`, `m1.md`, `f1.md`, `t1.json`, `c1.md`, `r1.md`).
+   - Design convictions must be crystallized into the four high-density deliverables (`discussion.md`, `r1.spec.md`, `tokens.css`/`t1.json`, `anchor/index.html`).
    - Code prototypes are not precious final assets; they are disposable, low-cost instruments for falsifying hypotheses and exposing interaction stress under real viewports.
 2. **Physical Grounding over Rigid Archetypes**
    - Reject dogmatic classification silos (e.g., forcing products into artificial "archetype boxes").
@@ -212,7 +212,7 @@ The delivery engine advances through an adaptive, 5-stage state machine:
 To resolve traditional handoff friction between high-level reasoning and terminal agent execution, the harness implements a zero-loss compilation pipeline:
 
 - **L0 Discussion (`discussion.md`)**: Free-form cognitive negotiation between human and AI on tradeoffs and domain tensions.
-- **L1 Spec Contracts (`materialize_contracts.py`)**: Structured Markdown and YAML frontmatter capturing domain entities, language locks, and test assertions.
+- **L1 Canonical Spec IR (`compile_spec_ir.py`)**: Compiles `discussion.md` into the machine-readable IR at `contracts/compiled/<slice-id>/r1.spec.json` plus its single-file RFC view at `specifications/<slice-id>/r1.spec.md`. The retired 6-pillar contract set is no longer materialized.
 - **L1.5 Contract Linter (`lint_spec_contracts.py`)**: Strict gate checking for authentic tensions, reality anchors, language locks, and break protocol coverage.
 - **L2 Machine Envelope (`assemble_envelope.py`)**: Deterministic projection into `envelope.json`, strictly separated into:
   - `constraint_envelope` (MUST): Non-negotiable boundaries, state machines, entity tables, and a11y floors.
@@ -248,9 +248,9 @@ design-prototype-kit/
 │   └── runners/                  # Suite orchestrator and session runners
 ├── skills/spec-prototype/        # Canonical 5-Stage design delivery skill
 │   ├── references/               # 01-foundations, 02-craft, 03-verification, 04-governance
-│   ├── templates/                # Contract templates (product, m1, f1, t1, c1, r1)
-│   └── scripts/                  # materialize, compile_tokens, assemble, lint_spec
-└── tests/                        # Full regression and integrity suite (59+ tests)
+│   ├── templates/                # Contract templates (discussion, prototype-specification, prototype-evidence, prototype-review)
+│   └── scripts/                  # compile_spec_ir, compile_tokens, assemble, lint_spec
+└── tests/                        # Full regression and integrity suite (416 tests)
 ```
 
 ---
@@ -261,8 +261,8 @@ design-prototype-kit/
 # Run all automated tests
 python3 -m pytest tests/ -v
 
-# Materialize Stage 1 contracts and auto-assemble envelope
-python3 skills/spec-prototype/scripts/materialize_contracts.py --slice <slice_id>
+# Compile the Canonical Spec IR and its single-file RFC view from discussion.md
+python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>
 
 # Run contract completeness linter
 python3 skills/spec-prototype/scripts/lint_spec_contracts.py --slice <slice_id>

@@ -203,8 +203,10 @@ at decision time, role/authority boundaries are explicit, and no unresolved
 structural prerequisite forces Builder invention. Low-risk reversible details may
 remain delegated.
 
-Record the result in [the Surface Map](../../templates/surface-map.md). Retain a map
-snapshot before candidate compilation. A Walking Skeleton may cover one or many
+Record the result in the compiled slice specification
+(`prototype/specifications/<slice_id>/r1.spec.md`) and the decision record in
+`prototype/discussion.md`; the retired surface-map contract file is not authored.
+Retain that topology before candidate compilation. A Walking Skeleton may cover one or many
 surfaces according to the task; it is a validation batch, not a page quota. Whole-
 product delivery still accounts for every promised surface and journey.
 

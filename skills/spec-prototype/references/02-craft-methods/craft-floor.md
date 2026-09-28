@@ -65,6 +65,68 @@ made. When you catch one, rewrite the element rather than softening it.
 - **Stripes and grid overlays as background texture** with no canvas, map,
   blueprint, or measuring tool underneath them.
 
+## Render defect scan
+
+Rendered output fails differently from authored markup. These are read off the
+captures, never off the source. Run this list against every capture you take.
+
+- **Overlay positioning:** a `<dialog>`, popover, or toast is centered and inside
+  the viewport. A global reset (`* { margin: 0 }`, `*, *::before { all: unset }`)
+  removes the UA centering of `<dialog>`; restore `margin: auto` yourself.
+- **Native controls after a reset:** `<dialog>`, `<details>`, `<summary>`, and
+  `<table>` lose their UA behavior under an aggressive reset. Re-author what the
+  reset removed, or scope the reset away from them.
+- **Narrowest viewport:** at the smallest declared width, no horizontal scroll,
+  no element wider than its container, and no identifier broken mid-token. A
+  cluster label, a hostname, or a title that wraps to three lines is a reflow
+  failure, not a long-string success.
+- **Reading order under reflow:** when a surface recomposes for a narrow
+  viewport, the first-glance information stays first. Text that a heading splits
+  across lines was never given room to be read.
+- **Sticky and fixed layers:** a sticky header/toolbar does not cover the
+  content it labels or the control it sits above.
+- **Empty and long states:** a zero-item region has an authored empty state, and
+  the longest plausible value is the one you actually put in the fixture.
+
+## Responsive recomposition, not compression
+
+A narrow viewport is a different reading context, not a smaller desktop.
+
+- **Recompose by priority:** decide what the narrow view must answer first, then
+  build a structure for it. A wide table shrunk into a 390px column is a
+  compression defect — the desktop `grid-template-columns` will not reflow a
+  table into something readable.
+- **Tables degrade, they do not squeeze:** below the point where columns still
+  scan, a data table becomes a list of rows (label/value pairs) or a set of
+  cards. Keep the identity column, the state, and the primary action; demote the
+  rest behind a disclosure.
+- **Touch targets and type survive:** 44×44px minimum, and body copy keeps its
+  measure; never reduce to fit.
+- **The declaration is the contract:** if the brief or spec names a glance
+  surface, that surface answers its own question. It is not the desktop surface
+  with smaller text.
+
+## Signature mechanisms must keep their promise
+
+When the design's own proposition depends on a mechanism, check the mechanism,
+not the copy describing it.
+
+- **State the claim, then look for it in the render.** "Double sign-off",
+  "recoverable", "audited", "requires confirmation", "one-click" are claims. Each
+  must be observable in the built artifact.
+- **Two-person control needs two people.** Independent approval cannot be
+  authored as one actor ticking a second checkbox in the same dialog, session,
+  or browser. Without a second authenticated actor the mechanism is theatre; either
+  build the real handoff (a distinct approver, second session, or out-of-band
+  channel) or state plainly in the record that the second signature is
+  [`hypothesis`] and unimplemented. Never present a single-actor flow as double
+  sign-off.
+- **Recoverable means the reversal is reachable** from the surface where the
+  consequence is visible, not from a settings page two navigations away.
+- **Declared means rendered.** An action, state, or shortcut named in the spec
+  that appears nowhere in the artifact is a finding, not an omission to be
+  quietly dropped.
+
 ## Vague words
 
 An adjective is never a justification. `premium`, `refined`, `elegant`,

@@ -24,8 +24,10 @@ boundary:
 
 ## 3. Domain Color Discipline & Negative Declarations (9-Pillars: Color Semantics)
 A Signature Accent is optional and decided per product, never a template mandate:
-- **Signature Hue**: e.g., Authentic Cinnabar (`--accent-seal: #B3352B`) when the
-  product's semantics genuinely call for an authority accent.
+- **Signature Hue**: chosen from this product's own semantics — the domain's real
+  materials, signals, or environment — and stated with its derivation (why this
+  hue for this product). Any hue offered here is one worked example, not a default;
+  a seal-red is right only when the product's meaning actually calls for it.
 - **Negative boundaries are product-semantic rules**: any restriction (e.g. which
   states or actions may never carry the accent, and where the accent strikes) is
   authored from this product's own settled decisions and recorded with its
@@ -47,6 +49,6 @@ decisions and records its product-semantic source. The 5-Dial register's explici
 `surface_optics: ...`-style declarations are the authoring route.
 
 ## 6. Settlement
-When entered, lock the authored substrate tokens, `--accent-seal` (if a signature
-accent was chosen), craft stack axes, and kinetic timing. This topic's settlement
-does not gate any other topic.
+When entered, lock the authored substrate tokens, the chosen accent token (if a
+signature accent was chosen), craft stack axes, and kinetic timing. This topic's
+settlement does not gate any other topic.

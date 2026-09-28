@@ -2,7 +2,7 @@
 
 Read before the first consequential product interpretation and again only when
 relevant sources, scope or product semantics change. The output is a revisable,
-source-grounded Product Thesis and model basis in `prototype/product.md`, not a
+source-grounded Product Thesis and model basis in `prototype/discussion.md`, not a
 questionnaire or a replacement PRD.
 
 ## Deep sense-making and problem reframing

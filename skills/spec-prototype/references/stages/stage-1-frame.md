@@ -11,9 +11,21 @@ open alternatives only when a consequential choice is genuinely unresolved.
    tension or opportunity. Mark unsupported inference `[derived]` or `[hypothesis]`.
 3. Inspect existing product patterns and up to two relevant references. Say what to
    adopt and refuse; references inform the decision, they do not dictate the UI.
-4. Form one clear design proposition: what relationship changes, why it helps, what
+4. Form the design proposition: what relationship changes, why it helps, what
    remains familiar, and its cost or learning burden. Offer alternatives only where
    evidence leaves a real choice. Recommend one.
+   - **A new product defaults to 2–3 structurally distinct low-fidelity directions
+     before the main prototype.** The directions must differ in structure, not in
+     surface styling: a different organising principle, different primary object,
+     or a different pacing of the central task. Two recolourings of one layout is a
+     single direction counted twice.
+   - Keep each direction genuinely low-fidelity — enough to judge the structure and
+     the trade-off, not a finished screen. Compare them on the product question they
+     answer, not on polish.
+   - The user's choice of direction is the consequential decision this round exists
+     to produce. When evidence already determines the direction (an extension of an
+     existing product, a settled convention, a delegated choice), one proposition is
+     correct and the others are waste.
 5. Define only the surfaces, actions, states, and stress cases needed to guide the
    requested slice. Leave the rest open; never invent capability to fill a section.
 
@@ -28,8 +40,8 @@ prototype/
 ├── discussion.md                           # 【唯一决策源】人机共创、五轴校准、业务张力事实台账
 ├── specifications/<slice>/r1.spec.md       # 【唯一规范源】单文件完整 RFC：IA 拓扑、状态机、Break 协议
 ├── shared/
-│   ├── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
-│   └── tokens.json                         # （可选机器导出层）
+│   └── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
+├── contracts/tokens/t1.json               # （可选机器导出层：`compile_tokens.py --output-json` 的默认落点）
 └── experiments/<slice>/anchor/index.html   # 【唯一物化源】高保真、可交互、可独立运行的现代原型
 ```
 

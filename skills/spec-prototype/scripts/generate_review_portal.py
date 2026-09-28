@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Review Portal Dynamic Compiler.
 
-Compiles prototype/review-portal.html based on prototype/contracts/surface-maps/m1.md
-and actual disk-resident surfaces, eliminating dead links and path disparity.
+Compiles prototype/review-portal.html from the authored coverage record (the compiled
+slice specification, or the legacy surface map when a tree predates it) and the actual
+disk-resident surfaces, eliminating dead links and path disparity.
 """
 from __future__ import annotations
 
@@ -82,14 +83,21 @@ def read_coverage(root: Path) -> Dict[str, object] | None:
     Declared-but-absent surfaces stay visible; review management statuses stay
     out of the prototype's own navigation.
     """
+    # The canonical tree carries topology and product meaning inside the compiled
+    # slice specification; the retired pillar files are read only when a legacy
+    # tree has no r1.spec.md to stand in for them.
+    canonical_specs = sorted((root / "prototype/specifications").glob("*/r1.spec.md"))
+    legacy_specs = sorted((root / "prototype/specifications").glob("*/r1.md"))
+    spec = canonical_specs[0] if canonical_specs else (legacy_specs[0] if legacy_specs else None)
     sources = {
-        "surface_map": root / "prototype/contracts/surface-maps/m1.md",
-        "product": root / "prototype/product.md",
-        "foundation": root / "prototype/contracts/foundation/f1.md",
-        "specification": None,
+        "surface_map": (root / "prototype/contracts/surface-maps/m1.md"
+                        if not canonical_specs else spec),
+        "product": (root / "prototype/discussion.md" if (root / "prototype/discussion.md").is_file()
+                    else root / "prototype/product.md"),
+        "foundation": (root / "prototype/contracts/foundation/f1.md"
+                       if not canonical_specs else spec),
+        "specification": spec,
     }
-    specs = sorted((root / "prototype/specifications").glob("*/r1.md"))
-    sources["specification"] = specs[0] if specs else None
     texts = {}
     for key, path in sources.items():
         texts[key] = path.read_text(encoding="utf-8") if path and path.is_file() else ""

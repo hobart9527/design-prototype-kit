@@ -60,6 +60,21 @@ Multi-surface continuity: inherit the established product thesis, tokens, and
 navigation model. Reopen only a changed owner and its direct dependents; never
 restart the whole workflow because the session restarted.
 
+## Craft Reference Loading (Make 阶段阅读纪律)
+
+Before the first runnable write, load:
+1. `craft-floor.md` — mandatory (Verify + Refuse floors + render defect scan).
+2. One section of `visual-craft.md` matching the derived chassis — this is the
+   Minimal Reading List's legitimate fourth slot. The section to load is
+   determined by the physical anchor derivation, not by category:
+   - Dense instrumentation anchor → typographic density, numeric stability sections.
+   - Canvas / board anchor → spatial rhythm, elevation, grid sections.
+   - Editorial / long-form anchor → measure, leading, contrast sections.
+   - Touchflow / mobile anchor → touch target, gesture, recomposition sections.
+   Do not load `visual-craft.md` in full; load the section that matches the
+   declared chassis. If the product produced a novel chassis with no matching
+   section, load the spatial rhythm and typographic density sections as baseline.
+
 ## Compression & Release
 
 Refuse the uniform card grid: aggregate high-density operation zones tightly and

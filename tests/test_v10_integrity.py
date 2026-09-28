@@ -125,10 +125,9 @@ def test_three_tier_semantic_tokens_and_dtcg_authority():
         )
         out_css = root / "tokens.css"
         out_json = root / "t1.json"
-        out_md = root / "t1.md"
 
         # 1. Compile baseline tokens
-        compile_mod.compile_tokens(str(disc), str(out_css), str(out_json), str(out_md))
+        compile_mod.compile_tokens(str(disc), str(out_css), str(out_json))
 
         assert out_css.is_file()
         assert out_json.is_file()
@@ -171,7 +170,7 @@ def test_three_tier_semantic_tokens_and_dtcg_authority():
             "- `--accent-primary`: `#9333ea`\n",
             encoding="utf-8"
         )
-        compile_mod.compile_tokens(str(disc), str(out_css), str(out_json), str(out_md))
+        compile_mod.compile_tokens(str(disc), str(out_css), str(out_json))
         dtcg_confirmed = json.loads(out_json.read_text(encoding="utf-8"))
         assert dtcg_confirmed["primitives"]["color"]["primary"]["authority"] == "explicit_human"
 
@@ -188,9 +187,8 @@ def test_v10_1_five_axes_optionality_and_composable_envelope():
         empty_disc.write_text("# Pure Product Thesis\n- Just core value, zero dials.\n", encoding="utf-8")
         out_css = root / "out.css"
         out_json = root / "out.json"
-        out_md = root / "out.md"
 
-        compile_mod.compile_tokens(str(empty_disc), str(out_css), str(out_json), str(out_md))
+        compile_mod.compile_tokens(str(empty_disc), str(out_css), str(out_json))
         assert out_css.is_file()
         assert "--bg-void:" in out_css.read_text(encoding="utf-8")
 
@@ -257,7 +255,8 @@ def test_stale_digest_guard_blocks_modified_contract(tmp_path: Path):
     (tmp_path / "prototype/specifications/s1").mkdir(parents=True, exist_ok=True)
     (tmp_path / "prototype/specifications/s1/r1.md").write_text("# Spec\n", encoding="utf-8")
     disc = tmp_path / "prototype/discussion.md"
-    disc.write_text("- Execution boundary: active\n", encoding="utf-8")
+    original_disc = "- Execution boundary: active\n"
+    disc.write_text(original_disc, encoding="utf-8")
 
     # 2. Assemble initial fresh envelope
     env = assemble_mod.assemble(tmp_path, "s1", lint=False)
@@ -272,17 +271,31 @@ def test_stale_digest_guard_blocks_modified_contract(tmp_path: Path):
     # Fresh envelope passes execution boundary check
     boundary_mod.check(event)
 
-    # 3. Tamper with product.md after envelope was compiled
-    prod.write_text("# Product\n- Core Tension: CHANGED AFTER ENVELOPE SEAL\n", encoding="utf-8")
+    # 3. Tamper with the bound product record after the envelope was compiled.
+    # `prototype/discussion.md` is the product-record authority; a co-existing
+    # legacy `product.md` is retained input, never the bound source. The
+    # execution-boundary marker stays active so the digest guard is what blocks.
+    disc.write_text(
+        "- Execution boundary: active\n- Core Tension: CHANGED AFTER ENVELOPE SEAL\n",
+        encoding="utf-8")
 
     # 4. Same envelope must now be strictly blocked by Stale Digest Guard
-    with pytest.raises(ValueError, match="Stale contract: product.md changed"):
+    with pytest.raises(ValueError, match="Stale contract: discussion.md changed"):
         boundary_mod.check(event)
 
-    # 5. Delete product.md completely -> must block with "deleted since envelope was compiled"
-    prod.unlink()
-    with pytest.raises(ValueError, match="Stale contract: product.md was deleted"):
-        boundary_mod.check(event)
+    # 5. Delete a bound source that is not the boundary record itself -> must
+    # block with "deleted since envelope was compiled". Removing the discussion
+    # record instead would release the boundary before the digest guard ran.
+    disc.write_text(original_disc, encoding="utf-8")
+    fresh = assemble_mod.assemble(tmp_path, "s1", lint=False)
+    fresh_event = {
+        "cwd": str(tmp_path),
+        "tool_name": "Agent",
+        "tool_input": {"subagent_type": "spec-prototype-builder", "prompt": json.dumps(fresh)},
+    }
+    (tmp_path / "prototype/shared/tokens.css").unlink()
+    with pytest.raises(ValueError, match="Stale contract: tokens.css was deleted"):
+        boundary_mod.check(fresh_event)
 
 
 def test_build_authority_gate_blocks_formal_candidate_with_hypotheses(tmp_path: Path):

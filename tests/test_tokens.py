@@ -179,21 +179,22 @@ def test_omitted_dials_palette_stays_neutral_in_formal_mode():
     assert not _is_gray(probed["accent_primary"])
 
 
-def _compile_foundation(tmp_path: Path, dials: str = "- Energy: steady\n") -> Path:
-    """Compile a tokens.css from an authored foundation record; return the tmp root."""
-    ct = _load_compiler()
-    foundation = tmp_path / "prototype/contracts/foundation/f1.md"
-    foundation.parent.mkdir(parents=True)
-    foundation.write_text(f"""# Project Experience Foundation: f1
+def _compile_tokens_from_discussion(tmp_path: Path, dials: str = "- Energy: steady\n") -> Path:
+    """Author dials and palette in discussion.md, compile tokens.css, return the tmp root.
 
-## 5-Dial Style Register (五刻度风格寄存器)
-{dials}
-## Seed Palette / Color Register
-- --accent-primary: #d6f56b
+    `prototype/discussion.md` is the sole token authority: the retired
+    `prototype/contracts/foundation/f1.md` sibling was a second authority that
+    could silently outrank the discussion record.
+    """
+    ct = _load_compiler()
+    discussion = tmp_path / "prototype/discussion.md"
+    discussion.parent.mkdir(parents=True)
+    discussion.write_text(f"""# Discussion
+
+## Confirmed Decisions
+{dials}- --accent-primary: #d6f56b
 - --bg-surface: #080b0b
 """, encoding="utf-8")
-    discussion = tmp_path / "prototype/discussion.md"
-    discussion.write_text("# Discussion\n\n## Confirmed Decisions\n", encoding="utf-8")
 
     out_css = tmp_path / "prototype/shared/tokens.css"
     ct.compile_tokens(str(discussion), str(out_css))
@@ -203,7 +204,7 @@ def _compile_foundation(tmp_path: Path, dials: str = "- Energy: steady\n") -> Pa
 def test_compile_stamps_provenance_and_downstream_passes(tmp_path: Path):
     """Positive specimen: compile → tokens.css carries the source digest → downstream passes."""
     ct = _load_compiler()
-    root = _compile_foundation(tmp_path)
+    root = _compile_tokens_from_discussion(tmp_path)
     css_path = root / "prototype/shared/tokens.css"
 
     css = css_path.read_text(encoding="utf-8")
@@ -228,7 +229,7 @@ def test_compile_stamps_provenance_and_downstream_passes(tmp_path: Path):
 def test_hand_edited_palette_marks_out_of_sync_and_rejects_downstream(tmp_path: Path):
     """Boundary specimen: flip one palette color after compile → fuse fails, downstream rejected."""
     ct = _load_compiler()
-    root = _compile_foundation(tmp_path)
+    root = _compile_tokens_from_discussion(tmp_path)
     css_path = root / "prototype/shared/tokens.css"
 
     # Reviewer hand-edits a single palette color in the compiled stylesheet.
@@ -250,10 +251,10 @@ def test_hand_edited_palette_marks_out_of_sync_and_rejects_downstream(tmp_path: 
 def test_source_edit_marks_out_of_sync_even_with_matching_dials(tmp_path: Path):
     """Editing the source after compile is also drift: the digest no longer matches."""
     ct = _load_compiler()
-    root = _compile_foundation(tmp_path)
+    root = _compile_tokens_from_discussion(tmp_path)
     css_path = root / "prototype/shared/tokens.css"
-    (root / "prototype/contracts/foundation/f1.md").write_text(
-        "# Project Experience Foundation: f1\n\n## 5-Dial Style Register\n- Energy: kinetic\n",
+    (root / "prototype/discussion.md").write_text(
+        "# Discussion\n\n## Confirmed Decisions\n- Energy: kinetic\n",
         encoding="utf-8")
 
     sync = ct.check_tokens_sync(str(css_path), str(root / "prototype/discussion.md"))
@@ -263,7 +264,7 @@ def test_source_edit_marks_out_of_sync_even_with_matching_dials(tmp_path: Path):
 def test_palette_only_edit_cannot_pass_dial_annotation_freshness(tmp_path: Path):
     """A hand edit to the stylesheet's dial annotation line fails freshness on its own."""
     ct = _load_compiler()
-    root = _compile_foundation(tmp_path)
+    root = _compile_tokens_from_discussion(tmp_path)
     css_path = root / "prototype/shared/tokens.css"
 
     # Touch only the Authored dials line — palette bytes and source untouched.
@@ -279,7 +280,7 @@ def test_palette_only_edit_cannot_pass_dial_annotation_freshness(tmp_path: Path)
 def test_unsealed_tokens_css_is_out_of_sync(tmp_path: Path):
     """A stylesheet that never went through the compiler carries no seal: rejected."""
     ct = _load_compiler()
-    root = _compile_foundation(tmp_path)
+    root = _compile_tokens_from_discussion(tmp_path)
     css_path = root / "prototype/shared/tokens.css"
     css_path.write_text(":root { --accent-primary: #fff; }\n", encoding="utf-8")
 
@@ -317,13 +318,13 @@ def test_explicit_kinetic_energy_restores_hud_motion_and_detent():
     assert ".btn-tactile:active" in css
 
 
-def test_compile_tokens_reads_f1_foundation_dials_and_palette(tmp_path: Path):
+def test_compile_tokens_reads_authored_dials_and_palette(tmp_path: Path):
     ct = _load_compiler()
-    foundation = tmp_path / "prototype/contracts/foundation/f1.md"
-    foundation.parent.mkdir(parents=True)
-    foundation.write_text("""# Project Experience Foundation: f1
+    discussion = tmp_path / "prototype/discussion.md"
+    discussion.parent.mkdir(parents=True)
+    discussion.write_text("""# Discussion
 
-## 5-Dial Style Register (五刻度风格寄存器)
+## Confirmed Decisions
 - Energy: kinetic
 - Density: dense
 
@@ -334,21 +335,20 @@ def test_compile_tokens_reads_f1_foundation_dials_and_palette(tmp_path: Path):
 - --accent-primary: #d6f56b
 - --bg-surface: #080b0b
 """, encoding="utf-8")
-    discussion = tmp_path / "prototype/discussion.md"
-    discussion.write_text("# Discussion\n\n## Confirmed Decisions\n", encoding="utf-8")
 
     out_css = tmp_path / "tokens.css"
     ct.compile_tokens(str(discussion), str(out_css))
     css = out_css.read_text(encoding="utf-8")
 
-    # Dials and palette authored in f1.md reach the compiler through the discussion path.
+    # Dials and palette authored in the discussion record reach the compiler.
     assert "#d6f56b" in css
     assert "--bg-surface: #080b0b" in css
     assert "Energy: kinetic" in css
 
 
-def test_formal_mode_ignores_unmaterialized_discussion_decisions(tmp_path: Path):
+def test_retired_foundation_sibling_cannot_outrank_the_discussion_record(tmp_path: Path):
     ct = _load_compiler()
+    # A leftover legacy sibling carries a different accent.
     foundation = tmp_path / "prototype/contracts/foundation/f1.md"
     foundation.parent.mkdir(parents=True)
     foundation.write_text("""# Project Experience Foundation: f1
@@ -358,7 +358,6 @@ def test_formal_mode_ignores_unmaterialized_discussion_decisions(tmp_path: Path)
 
 ## Seed Palette / Color Register
 - --accent-primary: #d6f56b
-- --bg-surface: #080b0b
 """, encoding="utf-8")
     discussion = tmp_path / "prototype/discussion.md"
     discussion.write_text("""# Discussion
@@ -371,16 +370,16 @@ def test_formal_mode_ignores_unmaterialized_discussion_decisions(tmp_path: Path)
     ct.compile_tokens(str(discussion), str(out_css))
     css = out_css.read_text(encoding="utf-8")
 
-    # Formal mode reads only the sealed foundation record; un-materialized
-    # discussion decisions must not leak into the compiled output.
-    assert "#d6f56b" in css
-    assert "#ff00ff" not in css
+    # discussion.md is the sole token authority; the retired sibling is not a
+    # second authority and contributes nothing to the compiled output.
+    assert "#ff00ff" in css
+    assert "#d6f56b" not in css
 
 
-def test_compile_tokens_accepts_explicit_f1_path(tmp_path: Path):
+def test_compile_tokens_accepts_explicit_legacy_token_source_path(tmp_path: Path):
     ct = _load_compiler()
-    foundation = tmp_path / "f1.md"
-    foundation.write_text("""# Project Experience Foundation: f1
+    legacy = tmp_path / "legacy-tokens.md"
+    legacy.write_text("""# Legacy Token Record
 
 ## 5-Dial Style Register
 - Energy: kinetic
@@ -390,5 +389,7 @@ def test_compile_tokens_accepts_explicit_f1_path(tmp_path: Path):
 """, encoding="utf-8")
 
     out_css = tmp_path / "tokens.css"
-    ct.compile_tokens(str(foundation), str(out_css))
+    ct.compile_tokens(str(legacy), str(out_css))
+    # An explicit path stays readable as-authored; only generation of the
+    # retired sibling is gone.
     assert "#d6f56b" in out_css.read_text(encoding="utf-8")

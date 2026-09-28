@@ -359,16 +359,17 @@ record: prototype-specification
     # check() should succeed and not raise ValueError or KeyError
     boundary.check(event)
 
-    # 5. Verify compile_tokens 3-in-1 synchronization
+    # 5. Verify compile_tokens emits the two canonical token artifacts
     disc_text = """## 5-Dial Style Register\n- Energy: 3\n- Finish: 4\n- Density: 4\n- Weight: 3\n- Seriousness: 4\n- Palette: plasma-cyan\n"""
     discussion.write_text(disc_text, encoding="utf-8")
     out_css = tmp_path / "tokens_gen.css"
     out_json = tmp_path / "tokens_gen.json"
-    out_md = tmp_path / "tokens_gen.md"
-    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json))
     assert out_css.is_file() and "--radius-outer" in out_css.read_text(encoding="utf-8")
     assert out_json.is_file() and "$schema" in out_json.read_text(encoding="utf-8")
-    assert out_md.is_file() and "## Breakpoints" in out_md.read_text(encoding="utf-8")
+    # The retired Markdown token contract has no emission seam at all.
+    import inspect
+    assert "output_md_path" not in inspect.signature(compile_mod.compile_tokens).parameters
 
     # 6. Verify verify_prototype_quality smart path resolution & quality assertion
     dummy_html = tmp_path / "test.html"
@@ -429,7 +430,12 @@ def test_zero_broken_markdown_links_in_skill():
 
 
 def test_seven_high_leverage_design_levers_and_template_slots(tmp_path: Path):
-    """Verify that design-methods.md and all contract templates contain the 7 high-leverage levers."""
+    """Verify design-methods.md owns all 7 levers, and the retained templates carry their slots.
+
+    The legacy pillar templates (product / experience-foundation / surface-map /
+    slice-contract / tokens) are retired: their slots now live in the discussion
+    record and its Stage 1 sections, which this test reads instead.
+    """
     # 1. Verify design-methods.md has 7 levers and Divergence Gate
     methods_md = (SKILL / "references/01-foundations/design-methods.md").read_text(encoding="utf-8")
     assert "Reality Anchors & Tension Triad" in methods_md
@@ -442,27 +448,21 @@ def test_seven_high_leverage_design_levers_and_template_slots(tmp_path: Path):
     assert "Divergence Gate" in methods_md
     assert "Axis Inversion" in methods_md
 
-    # 2. Verify product.md template has Reality Benchmark Anchors and Ruthless Omissions
-    product_tmpl = (SKILL / "templates/product.md").read_text(encoding="utf-8")
-    assert "Operational Scene & Consequence" in product_tmpl
-    assert "Reality Benchmark Anchors" in product_tmpl
-    assert "Three Ruthless Omissions" in product_tmpl
-    assert "OOUX Entity Cardinality & Relationships" in product_tmpl
+    # 2. The retired pillar templates must not come back.
+    for name in ("product.md", "experience-foundation.md", "surface-map.md",
+                 "slice-contract.md", "tokens.md"):
+        assert not (SKILL / "templates" / name).exists(), name
 
-    # 3. Verify experience-foundation.md template has 5-Dial Style Register & Craft Physics Triad
-    foundation_tmpl = (SKILL / "templates/experience-foundation.md").read_text(encoding="utf-8")
-    assert "5-Dial Style Register & Vague-Word Translation" in foundation_tmpl
-    assert "Microscopic Craft Physics Triad" in foundation_tmpl
-    assert "Concentric Radii Formula" in foundation_tmpl
-    assert "OOUX Anti-Contamination & Non-Transfer Boundary" in foundation_tmpl
+    # 3. The discussion record owns the retired templates' authored slots.
+    discussion_tmpl = (SKILL / "templates/discussion.md").read_text(encoding="utf-8")
+    assert "## Working understanding (Nine Pillars Canonical Ontology)" in discussion_tmpl
+    assert "Problem Framing & Drivers" in discussion_tmpl
+    assert "Experience Foundation & Five Axes" in discussion_tmpl
+    assert "Spatial Anatomy & Surface Topology" in discussion_tmpl
+    assert "State Taxonomy & Action Lifecycle" in discussion_tmpl
+    assert "Verifiable Invariants & Break Protocol" in discussion_tmpl
 
-    # 4. Verify slice-contract.md has Action Verb Lifecycle & Decisive 3-Frame
-    slice_tmpl = (SKILL / "templates/slice-contract.md").read_text(encoding="utf-8")
-    assert "Action Verb Lifecycle Table" in slice_tmpl
-    assert "Decisive Exchange 3-Frame Specification" in slice_tmpl
-    assert "Context Preservation Rules" in slice_tmpl
-
-    # 5. Verify prototype-specification.md has Dual-Channel & Break Protocol
+    # 4. The canonical spec template keeps the dual-channel/break slots.
     spec_tmpl = (SKILL / "templates/prototype-specification.md").read_text(encoding="utf-8")
     assert "Dual-Channel Ergonomics" in spec_tmpl
     assert "The Break Protocol Stress Checkpoints" in spec_tmpl
@@ -953,7 +953,7 @@ def test_5_system_modern_industrial_derivation_and_rogue_root_blocking(tmp_path:
     out_json = tmp_path / "out_t1.json"
     out_md = tmp_path / "out_t1.md"
     out_css = tmp_path / "out_tokens.css"
-    compile_mod.compile_tokens(str(disc_file), str(out_css), str(out_json), str(out_md))
+    compile_mod.compile_tokens(str(disc_file), str(out_css), str(out_json))
     assert out_css.is_file()
     css_content = out_css.read_text(encoding="utf-8")
     assert "--accent-primary: #c76b3a;" in css_content
@@ -1194,7 +1194,7 @@ def test_multi_archetype_adaptation_and_flexible_verification(tmp_path: Path):
     tokens_md = proto / "contracts/tokens/t1.md"
     tokens_css.parent.mkdir(parents=True, exist_ok=True)
     tokens_json.parent.mkdir(parents=True, exist_ok=True)
-    tok_mod.compile_tokens(str(proto / "discussion.md"), str(tokens_css), str(tokens_json), str(tokens_md))
+    tok_mod.compile_tokens(str(proto / "discussion.md"), str(tokens_css), str(tokens_json))
 
     assert (proto / "contracts/foundation/f1.md").is_file()
     f1_text = (proto / "contracts/foundation/f1.md").read_text(encoding="utf-8")
@@ -1266,7 +1266,7 @@ def test_confirmed_option_priority_in_token_extraction(tmp_path: Path):
     out_css = tmp_path / "tokens.css"
     out_json = tmp_path / "t1.json"
     out_md = tmp_path / "t1.md"
-    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json))
 
     css_content = out_css.read_text(encoding="utf-8")
     assert "#f59e0b" in css_content, "Confirmed accent #f59e0b must be compiled"
@@ -1291,7 +1291,7 @@ def test_light_mode_palette_derivation_and_wcag_contrast(tmp_path: Path):
     out_css = tmp_path / "tokens.css"
     out_json = tmp_path / "t1.json"
     out_md = tmp_path / "t1.md"
-    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json))
 
     css_content = out_css.read_text(encoding="utf-8")
     # Verify dark text is generated, not light off-white
@@ -1427,7 +1427,7 @@ def test_reconcile_review_tokens_back_to_contracts(tmp_path: Path):
     out_css = tmp_path / "tokens.css"
     out_json = tmp_path / "t1.json"
     out_md = tmp_path / "t1.md"
-    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json), str(out_md))
+    compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json))
 
     # Reviewer changes accent-primary in tokens.css
     css_content = out_css.read_text(encoding="utf-8")

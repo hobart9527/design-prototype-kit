@@ -26,7 +26,7 @@ Only read the specific file matching the currently active stage or frontier.
 files — the core kernel (once), the active stage file, the execution boundary (before
 first write/build), and at most one craft reference actually cited by the active
 method set. Reading more than one file per stage frontier is a discipline violation;
-fact-finding belongs to repository sources (`product.md`, briefs), not Skill prose.
+fact-finding belongs to repository sources (the user brief, `prototype/discussion.md`), not Skill prose.
 
 ## Entry Intent & Contextual Routing (意图优先，资产为证)
 
@@ -98,10 +98,17 @@ gates. The normal path is **Frame → Propose → Make → Look → Refine**:
    one focused refinement pass suffices; stop when the question is answered and state
    any material uncertainty honestly.
 
-## Stage 3: 拓 — Walking Skeleton Rollout
+The stages and that path are one vocabulary, mapped one-to-one: **Stage 0** is a
+bounded exploration before Frame; **Frame** = Stage 1, **Propose** = Stage 2,
+**Make** = Stage 3, **Look / Refine** = Stage 4, and **Freeze** = the Stage 5
+optional handoff mechanic that follows Refine rather than extending the design
+work. `references/stages/` owns each stage's procedure; this file owns only the
+routing.
 
-For Stage 3, resolve implementation scope against the Surface Map, user request, task
-risks, and platform context.
+## Stage 3: 拓 — Make, Coverage Selection and Structure
+
+This is a routing summary only; the full procedure is owned by
+[`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) and is not restated here.
 
 ### Coverage Selection:
 
@@ -116,9 +123,7 @@ without asking again.
 
 Use Primary, Contextual, and Supporting relationships, not a fixed screen count. The
 freeze/handoff command binds the selected `specifications/<slice_id>/r1.spec.md`
-(canonical IR path) or `specifications/<slice_id>/r1.md` (legacy path) when the user
-requests a frozen handoff.
-
+when the user requests a frozen handoff.
 
 Formal prototypes still require the applicable sealed provisional Spec before code.
 A direction probe, spec-only request, and local review keep their lightweight routes.
@@ -135,8 +140,8 @@ prototype/
 ├── discussion.md                           # 【唯一决策源】人机共创、五轴校准、业务张力事实台账
 ├── specifications/<slice>/r1.spec.md       # 【唯一规范源】单文件完整 RFC：IA 拓扑、状态机、Break 协议
 ├── shared/
-│   ├── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
-│   └── tokens.json                         # （可选机器导出层）
+│   └── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
+├── contracts/tokens/t1.json                # （可选机器导出层：`compile_tokens.py --output-json` 的默认落点）
 └── experiments/<slice>/anchor/index.html   # 【唯一物化源】高保真、可交互、可独立运行的现代原型
 ```
 
@@ -144,6 +149,14 @@ prototype/
 1. NEVER author legacy 6-piece contract files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`).
 2. NEVER author a duplicate `prototype/product.md` — all product facts and dialectic context belong in `prototype/discussion.md`.
 3. NEVER run `materialize_contracts.py` in primary delivery.
+
+The discussion record also carries the two blocks that make a delivery evaluable:
+**Success metrics** (how the work will be judged — product outcomes with an
+observation method, never "the prototype exists") and a **Reviewer's evaluation
+guide** (what to attempt first, the deciding questions, what would count as
+failure, known limitations, and what each verdict means). Both are authored for
+the person who will open the artifact; both live in `discussion.md` and are
+updated as evidence arrives.
 
 Keep `prototype/discussion.md` as the decision and evidence ledger. Use the canonical
 `google-design-md/v2` Markdown contract for formal slices: YAML frontmatter plus
@@ -169,7 +182,18 @@ data — are owned by
 [`references/02-craft-methods/craft-floor.md`](references/02-craft-methods/craft-floor.md),
 which also owns the Refuse list and the browser-surface floor. That file is the
 craft reference the Minimal Reading List allows, and it is read before the first
-runnable write.
+runnable write. Two additional method references are available on demand:
+
+- **`references/02-craft-methods/mobile-ux.md`**: load when the physical anchor
+  or chassis is touch-native — thumb-zone architecture, gesture conflict rules,
+  bottom sheet strategy, single-hand flow invariant.
+- **`references/02-craft-methods/ai-native-ux.md`**: load when the product's
+  primary interaction involves a language model, generative system, or agentic
+  workflow — streaming output, uncertainty representation, human-in-the-loop
+  confirmation, multi-turn spatial logic, agentic step visibility.
+
+These files occupy the Minimal Reading List's fourth slot alongside visual-craft;
+load at most one of them per active stage frontier.
 
 Material, elevation, motion and typographic technique beyond those floors are
 contextual choices resolved from the product's evidence, never a global recipe.
@@ -178,7 +202,7 @@ proposition, or it is a default the Refuse list rejects.
 
 ### Downstream Engineering Assets (三层工程交付资产)
 Deliver artifacts ready for subsequent frontend generation:
-1. **`tokens.json` & `tokens.css`**: W3C DTCG-compliant tokens capturing semantic color, spacing, radii, typography, and elevation scales.
+1. **`tokens.css` & `contracts/tokens/t1.json`**: W3C DTCG-compliant tokens capturing semantic color, spacing, radii, typography, and elevation scales.
 2. **`spec.md`**: Single-source specification mapping component topology, state machines (`default | loading | stressed | empty | error`), and accessibility invariants.
 3. **`index.html`**: Clean, self-contained, accessible interactive implementation directly translatable into production frontend components.
 

@@ -406,6 +406,8 @@ def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> 
     1. Modern Canonical IR: `prototype/contracts/compiled/<slice_id>/r1.spec.json`
        and `prototype/specifications/<slice_id>/r1.spec.md`
     2. Legacy 6-piece files: product.md, m1.md, f1.md, t1.md, c1.md, r1.md
+       (readable as retained inputs only; never generated, never bound back in
+       once the canonical IR exists)
     """
     canonical_ir = root / f"prototype/contracts/compiled/{slice_id}/r1.spec.json"
     canonical_md = root / f"prototype/specifications/{slice_id}/r1.spec.md"
@@ -423,17 +425,19 @@ def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> 
                     f"Stage 1 contract lint failed at the formal entry. {detail}. "
                     f"Existing artifacts are unchanged; resolve each failure and re-assemble."
                 )
+        # The canonical IR owns every pillar on this path. A legacy pillar file
+        # left on disk is never bound back in: doing so would let a stale
+        # fragment outrank the compiled spec it was supposed to be replaced by.
         return {
             "canonical_ir": canonical_ir,
             "canonical_md": canonical_md,
             "tokens_css": tokens_css,
-            # Backwards compatibility fallbacks if legacy files exist alongside
-            "product": root / "prototype/product.md" if (root / "prototype/product.md").is_file() else canonical_md,
-            "surface_map": root / "prototype/contracts/surface-maps/m1.md" if (root / "prototype/contracts/surface-maps/m1.md").is_file() else canonical_md,
-            "foundation": root / "prototype/contracts/foundation/f1.md" if (root / "prototype/contracts/foundation/f1.md").is_file() else canonical_md,
-            "tokens_md": root / "prototype/contracts/tokens/t1.md" if (root / "prototype/contracts/tokens/t1.md").is_file() else canonical_md,
-            "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md" if (root / f"prototype/contracts/slices/{slice_id}/c1.md").is_file() else canonical_md,
-            "specification": root / f"prototype/specifications/{slice_id}/r1.md" if (root / f"prototype/specifications/{slice_id}/r1.md").is_file() else canonical_md,
+            "product": root / "prototype/discussion.md" if (root / "prototype/discussion.md").is_file() else canonical_md,
+            "surface_map": canonical_md,
+            "foundation": canonical_md,
+            "tokens_md": canonical_md,
+            "slice_contract": canonical_md,
+            "specification": canonical_md,
         }
 
     required = {
@@ -465,6 +469,10 @@ def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> 
                 f"Existing artifacts are unchanged; resolve each failure and re-assemble."
             )
 
+    # A legacy tree may predate the discussion record; the digest then binds
+    # the product record it does have rather than inventing a missing file.
+    if (root / "prototype/discussion.md").is_file():
+        required["discussion"] = root / "prototype/discussion.md"
     return required
 
 
@@ -2258,7 +2266,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
                 "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             }
             for key, path in (
-                ("product_digest", paths["product"]),
+                ("product_digest", paths.get("discussion") or paths["product"]),
                 ("surface_map_digest", paths["surface_map"]),
                 ("foundation_digest", paths["foundation"]),
                 ("tokens_css_digest", paths["tokens_css"]),

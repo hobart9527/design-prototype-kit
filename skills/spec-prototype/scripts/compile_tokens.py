@@ -1191,102 +1191,22 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def generate_markdown(tokens: Dict[str, Any], foundation_rev: str = "f1", tokens_rev: str = "t1") -> str:
-    """Render canonical Markdown token contract matching handoff.py and export-tokens.py specifications."""
-    c = tokens["colors"]
-    s = tokens["space"]
-    r = tokens["radii"]
-    f = tokens["fonts"]
-
-    lines = [
-        "# Design Tokens",
-        "",
-        "## Identity",
-        f"- Foundation revision: {foundation_rev}",
-        f"- Tokens revision: {tokens_rev}",
-        "- Status: sealed provisional",
-        "- Generated at: machine-compiled from 5-dials",
-        "",
-        "## Breakpoints",
-        "| Token | Value | Usage |",
-        "|---|---|---|",
-        "| `--bp-mobile` | 390px | Mobile viewport breakpoint |",
-        "| `--bp-tablet` | 768px | Tablet viewport breakpoint |",
-        "| `--bp-desktop` | 1280px | Desktop workbench default |",
-        "",
-        "## Color",
-        "| Token | Value | Usage |",
-        "|---|---|---|",
-        f"| `--color-bg-void` | {c['bg_void']} | Deepest atmospheric void |",
-        f"| `--color-bg-base` | {c['bg_base']} | App foundation background |",
-        f"| `--color-bg-surface` | {c['bg_surface']} | Card and workbench panel surface |",
-        f"| `--color-bg-surface-raised` | {c['bg_surface_raised']} | Elevated dropdown / popover |",
-        f"| `--color-border-dim` | {c['border_dim']} | Subtle dividing border |",
-        f"| `--color-border-subtle` | {c['border_subtle']} | Standard component boundary |",
-        f"| `--color-border-bright` | {c['border_bright']} | Focused or active boundary |",
-        f"| `--color-text-primary` | {c['text_primary']} | Primary high-contrast typography |",
-        f"| `--color-text-secondary` | {c['text_secondary']} | Secondary context / telemetry label |",
-        f"| `--color-accent-primary` | {c['accent_primary']} | Signature interactive accent |",
-        f"| `--color-status-running` | {c['status_running']} | Active operational state |",
-        f"| `--color-status-warning` | {c['status_warning']} | Warning / capacity threshold |",
-        f"| `--color-status-danger` | {c['status_danger']} | Critical failure / thermal error |",
-        "",
-        "## Spacing",
-        "| Token | Value | Usage |",
-        "|---|---|---|",
-    ]
-    for k, v in sorted(s.items()):
-        lines.append(f"| `--space-{k}` | {v} | Spacing unit {k} |")
-
-    lines.extend([
-        "",
-        "## Radius",
-        "| Token | Value | Usage |",
-        "|---|---|---|",
-        f"| `--radius-outer` | {r['outer']} | Outer container boundary |",
-        f"| `--radius-inner` | {r['inner']} | Concentric inner child boundary |",
-        f"| `--radius-card` | {r['card']} | Card entity radius |",
-        f"| `--radius-btn` | {r['btn']} | Interactive control radius |",
-        f"| `--radius-pill` | {r['pill']} | Status badge pill radius |",
-        "",
-        "## Typography",
-        "| Token | Value | Usage |",
-        "|---|---|---|",
-        f"| `--font-sans` | {f['sans']} | Primary UI font family |",
-        f"| `--font-mono` | {f['mono']} | Telemetry and code font family |",
-        "",
-    ])
-    return "\n".join(lines)
-
-
 def _resolve_token_source(discussion_path: str, mode: str = "formal") -> str:
-    """Read the authored token source: an f1.md foundation record takes precedence in formal mode.
+    """Read the authored token source. `discussion.md` is the sole authority.
 
-    Accepts either an explicit `f1.md` path or a discussion path whose sibling
-    `prototype/contracts/foundation/f1.md` carries the 5-dial register and palette.
-
-    In `formal` mode the sealed foundation record is the sole authority: when a
-    foundation record exists, un-materialized decisions in `discussion.md` are
-    ignored until they are materialized into a successor foundation record. Only
-    `probe` mode falls back to the raw discussion text when no foundation exists.
+    The legacy `prototype/contracts/foundation/f1.md` sibling is no longer
+    consulted: it was a second token authority that could silently outrank the
+    discussion record. An explicit path is still read as-authored, which keeps
+    legacy records readable as inputs without letting them be generated again.
     """
     disc_p = Path(discussion_path)
-    foundation_p = disc_p if disc_p.name == "f1.md" else disc_p.parent / "contracts/foundation/f1.md"
-    if mode == "formal" and foundation_p.is_file():
-        return foundation_p.read_text(encoding="utf-8")
-    parts: list[str] = []
-    if foundation_p.is_file():
-        parts.append(foundation_p.read_text(encoding="utf-8"))
-    if disc_p.is_file() and disc_p != foundation_p:
-        parts.append(disc_p.read_text(encoding="utf-8"))
-    return "\n".join(parts)
+    return disc_p.read_text(encoding="utf-8") if disc_p.is_file() else ""
 
 
 def compile_tokens(
     discussion_path: str,
     output_css_path: str,
     output_json_path: str | None = None,
-    output_md_path: str | None = None,
     mode: str = "formal",
 ) -> None:
     disc_text = _resolve_token_source(discussion_path, mode=mode)
@@ -1336,12 +1256,6 @@ def compile_tokens(
         out_json.write_text(json.dumps(dtcg_data, indent=2), encoding="utf-8")
         print(f"[TOKEN COMPILER] Successfully compiled DTCG JSON to {out_json}")
 
-    if output_md_path:
-        out_md = Path(output_md_path)
-        out_md.parent.mkdir(parents=True, exist_ok=True)
-        md_content = generate_markdown(computed)
-        out_md.write_text(md_content, encoding="utf-8")
-        print(f"[TOKEN COMPILER] Successfully compiled Token Markdown contract to {out_md}")
 
 
 def read_tokens_provenance(css_path: str) -> Dict[str, Any]:
@@ -1494,7 +1408,6 @@ def main():
     parser.add_argument("--discussion", default="prototype/discussion.md", help="Path to discussion.md")
     parser.add_argument("--output-css", default="prototype/shared/tokens.css", help="Target CSS file")
     parser.add_argument("--output-json", default="prototype/contracts/tokens/t1.json", help="Target DTCG JSON file")
-    parser.add_argument("--output-md", default="prototype/contracts/tokens/t1.md", help="Target Markdown contract file")
     parser.add_argument("--mode", choices=("formal", "probe"), default="formal", help="formal: no inferred aesthetics (neutral scaffold); probe: permit heuristic palette inference")
     parser.add_argument("--check-sync", action="store_true", help="Verify tokens.css freshness against its source instead of compiling; exit 1 on out_of_sync")
     args = parser.parse_args()
@@ -1507,7 +1420,7 @@ def main():
         print(f"[TOKEN FUSE] tokens.css is in sync with {result.get('digest')}")
         return
 
-    compile_tokens(args.discussion, args.output_css, args.output_json, args.output_md, mode=args.mode)
+    compile_tokens(args.discussion, args.output_css, args.output_json, mode=args.mode)
 
 
 if __name__ == "__main__":

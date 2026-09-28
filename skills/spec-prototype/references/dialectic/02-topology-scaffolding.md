@@ -34,7 +34,7 @@ Present 2~3 distinct spatial layouts via pure text ASCII wireframes:
 ### Option C: Infinite Canvas & Contextual Inspector (对标 Figma / Linear Workflow)
 ```text
 ┌─ Palette / Minimap (240px) ─┐┌─ Infinite Graph / Plane (flex) ──────────────────────────┐┌─ Contextual Inspector (320px) ─┐
-│ • Object stencil library    ││ [Node: Draft] ──(edge)──► [Node: Authority Seal]         ││ • Selected entity properties   │
+│ • Object stencil library    ││ [Node: Draft] ──(edge)──► [Node: Settled State]          ││ • Selected entity properties   │
 │ • Viewport navigation HUD   ││               ▲                                          ││ • Invariant checklist triggers │
 │ • Zoom & pan coordinates    ││               └─ Focus hover box (spatial coordinates)   ││ • High-hazard commit actions   │
 └─────────────────────────────┘└──────────────────────────────────────────────────────────┘└────────────────────────────────┘

@@ -13,11 +13,10 @@
 - Pending prerequisite (`none | needs_decision | needs_evidence | blocked`), impact and owner:
 - Next action and its prerequisite:
 - Stage checkpoint (`stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze`), completed in this turn:
-- Turn budget discipline: conclude the current turn once the named stage
-  checkpoint's artifacts are compiled and verified; the next stage starts in
-  the next turn from this Resume block, never mid-turn. A turn that would
-  start Builder dispatch after the **current stage's** checkpoint is
-  complete has already overspent — stop and summarize instead.
+- Turn budget discipline: a checkpoint is a recovery note, not a stop signal.
+  Keep working while authorized scope and evidence remain, and write this block
+  once per authoring pass. Stop only for an unresolved user decision, a real
+  stage boundary awaiting review, or an explicit session limit.
 
 “Active track” is retained for checker compatibility and means the current
 uncertainty, not a mandatory Track A/Track B sequence. The route contract in
@@ -246,6 +245,40 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
 - **DTCG Export (`prototype/dist/tokens.json`)**:
 - **WCAG Static Contrast Audit**:
 - **Handoff Manifest (`prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json` / SHA-256 integrity)**:
+
+## Success metrics
+
+State how this work will be judged — by the user, not by the agent. Metrics are
+product outcomes and observable behaviors, never "the prototype exists".
+
+| ID | Metric | Baseline | Target | How it is observed | Status (`[explicit] | [derived] | [hypothesis]`) |
+|---|---|---|---|---|---|---|---|
+| | | | | | |
+
+Rules:
+- Every metric names its observation method: a task a person performs, a number a
+  real system reports, or a specific capture. "Feels better" is not a metric.
+- A metric the sources never stated carries `[derived]` or `[hypothesis]` and is
+  labeled as the agent's proposal awaiting the user's confirmation.
+- Do not invent telemetry, analytics, or research that does not exist. If a metric
+  cannot currently be observed, say so in the observation column rather than
+  promising instrumentation.
+
+## Reviewer's evaluation guide
+
+Written for the person who will open the prototype and judge it. It states what to
+look at and what would count as a failure, so the review is not a taste contest.
+
+- **What to do first**: the exact path to the artifact, and the one task to attempt
+  from visible cues alone.
+- **What to check**: the 3–5 questions that decide the outcome, in priority order —
+  each tied to a pillar or a success metric above.
+- **What would make this fail**: the specific, observable conditions that mean the
+  design did not work (a wrong first action, a missing recovery, a broken narrow
+  viewport, an unreadable value), not adjectives.
+- **Known limitations**: what is deliberately unimplemented, simplified, or
+  `[hypothesis]`, so a gap is not mistaken for a defect or a defect for a gap.
+- **Verdict options**: what "accept", "accept with changes", and "reject" mean here.
 
 ## Evidence and changes
 

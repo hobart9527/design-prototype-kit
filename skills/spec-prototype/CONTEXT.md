@@ -94,13 +94,16 @@ They do not prescribe order, weight, page count, state count or style.
 - Cited product sources and native OpenSpec own product facts and behavior.
 - `prototype/discussion.md` owns the reconciled design synthesis and every
   approval decision, not source truth.
-- `product.md` is a legacy compatibility record compiled by
-  `materialize_contracts.py`; it mirrors the discussion synthesis and is not
-  itself the canonical or authoritative source.
-- Surface Map owns topology, routes, journeys and coverage.
-- Foundation owns the integrated Design Proposition and project-wide language.
-- Slice Contract owns scoped experience obligations and pins exact upstream
-  references.
+- `prototype/discussion.md` also owns the Success metrics and the Reviewer's
+  evaluation guide for the current delivery.
+- The compiled slice specification (`r1.spec.md`, from the Spec IR at
+  `contracts/compiled/<slice-id>/r1.spec.json`) carries topology, routes,
+  journeys and coverage, the integrated Design Proposition and project-wide
+  language, and the scoped experience obligations with their pinned upstream
+  references. The retired `product.md` / `m1.md` / `f1.md` / `c1.md` / `r1.md`
+  files are legacy inputs: readable on a tree that predates the IR, never
+  generated, never bound back in. `materialize_contracts.py` is not on any
+  primary path.
 - Specification compiles existing decisions without redefining them.
 - Discussion owns actual approval/delegation provenance and the active frontier.
 - Builder owns bounded specimen implementation; Critic owns independent advice.

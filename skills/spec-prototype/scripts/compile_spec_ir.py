@@ -6,16 +6,19 @@ Schema-validated Canonical IR (`prototype/contracts/compiled/<slice_id>/<candida
 and deterministically renders the single-file human RFC Specification view
 (`prototype/specifications/<slice_id>/<candidate_id>.spec.md`).
 
-This replaces the 6-file scatter (product.md, m1.md, f1.md, t1.md, c1.md, r1.md)
-and eliminates bidirectional/circular SHA-256 hash rebinding.
+This replaced the 6-file scatter (product.md, m1.md, f1.md, t1.md, c1.md, r1.md)
+and eliminated bidirectional/circular SHA-256 hash rebinding. Those files are now
+legacy inputs only: readable when a tree predates the canonical IR, never
+generated, and never bound back in once this compiler has run.
 
 Machine authority layers (two distinct schemas with disjoint field sets; do not conflate them):
 - Canonical Spec IR (`prototype-spec/v1`): `r1.spec.json` - schema-validated,
   discussion-derived, the single source of machine-truth spec content. Produced
   by this script.
 - Executable Design IR: embedded inside `envelope.json` - produced by
-  `assemble_envelope.py`, consumed by the Builder. Derived from the Canonical
-  Spec IR and the legacy 6-piece contracts.
+  `assemble_envelope.py`, consumed by the Builder. Projected from the Canonical
+  Spec IR when it exists; the legacy pillar parse remains only as the fallback
+  for a tree that has no canonical IR yet.
 """
 
 from __future__ import annotations

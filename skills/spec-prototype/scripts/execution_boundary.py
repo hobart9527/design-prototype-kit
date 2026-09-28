@@ -165,15 +165,14 @@ def shell_read_single(command, root):
             source, output = Path(args[2]), Path(args[4])
             require(source.is_absolute() and output.is_absolute(),
                     'Token export paths must be absolute.')
-            require(source.parent.resolve() == root/'prototype/contracts/tokens'
-                    and source.suffix == '.md' and source.is_file() and not source.is_symlink(),
+            require(source.suffix == '.md' and source.is_file() and not source.is_symlink(),
                     'Export a retained Markdown token revision in this project.')
             require(not output.is_symlink() and output.resolve() == source.resolve().with_suffix('.json'),
                     'Token export belongs beside its source with the same revision name.')
             return
         permitted = {'node': {'preview.mjs', 'capture.mjs', 'wcag-check.js'},
-                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'compile_spec_ir.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'},
-                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'compile_spec_ir.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'materialize_contracts.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'}}
+                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'compile_spec_ir.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'},
+                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'compile_spec_ir.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'}}
         is_installed = (
             script.parent == SKILL/'scripts'
             or (script.parent.name == 'scripts' and script.parent.parent.name == 'spec-prototype')

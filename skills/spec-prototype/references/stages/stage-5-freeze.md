@@ -26,13 +26,9 @@ handoff.
    (keyboard focus management, screen-reader landmarks, reachable touch targets).
 3. **SHA-256 asset identity binding / freeze**:
 
-   **Canonical IR path** (Stage 1 compiled via `compile_spec_ir.py`):
    `python3 skills/spec-prototype/scripts/handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.spec.md`
 
-   **Legacy 6-piece path** (Stage 1 compiled via `materialize_contracts.py`):
-   `python3 skills/spec-prototype/scripts/handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.md`
-
-   `--root` must point to the repository root (the directory containing `prototype/`), not to `prototype/` itself. The freeze command takes the Specification as its subject, computes SHA-256 fingerprints of every retained artifact, and writes the immutable freeze manifest to `prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json`. `product.md` is the evolvable runtime record and must not be used as a slice freeze contract.
+   `--root` must point to the repository root (the directory containing `prototype/`), not to `prototype/` itself. The freeze command takes the Specification as its subject, computes SHA-256 fingerprints of every retained artifact, and writes the immutable freeze manifest to `prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json`. `prototype/discussion.md` is the evolvable decision record and is never a freeze subject.
 
 ## Authority State
 

@@ -195,7 +195,7 @@ def test_recommendation_obligation_is_owned_by_the_route_not_the_templates():
     skill = (ROOT / "skills/spec-prototype/SKILL.md").read_text(encoding="utf-8")
     assert "Present concrete recommended combinations" in skill
     assert "never default to full-product" in skill
-    for name in ("surface-map.md", "product.md"):
+    for name in ("discussion.md", "prototype-specification.md"):
         text = (ROOT / "skills/spec-prototype/templates" / name).read_text(encoding="utf-8")
         assert "recommended combination" not in text.lower()
 
@@ -216,11 +216,16 @@ def test_no_second_editable_authority_or_new_dependency():
 
 
 def test_templates_are_parsable_and_round_trip(tmp_path):
-    for name in ("surface-map.md", "product.md", "experience-foundation.md",
-                 "prototype-specification.md"):
-        text = (ROOT / "skills/spec-prototype/templates" / name).read_text(encoding="utf-8")
-        assert prototype_context.parse_section(text) is not None, name
-        copy = tmp_path / name
+    templates = ROOT / "skills/spec-prototype/templates"
+    # Every retained template that declares a prototype-context record must parse,
+    # and the one canonical spec template must still carry its record.
+    carriers = [t for t in sorted(templates.glob("*.md"))
+                if "```prototype-context" in t.read_text(encoding="utf-8")]
+    assert "prototype-specification.md" in [t.name for t in carriers]
+    for template in carriers:
+        text = template.read_text(encoding="utf-8")
+        assert prototype_context.parse_section(text) is not None, template.name
+        copy = tmp_path / template.name
         copy.write_text(text, encoding="utf-8")
         assert copy.read_text(encoding="utf-8") == text
 

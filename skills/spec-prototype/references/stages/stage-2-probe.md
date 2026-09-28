@@ -4,21 +4,38 @@ Answer one question: *"Does the sealed provisional Spec survive contact with a
 real, running Hero Anchor?"* Stage 2 materializes the single highest-risk core
 surface or direction probe under the Stage 1 sealed provisional contracts.
 
-## Adaptive Hero Anchor Chassis
+## Physical Anchor → Spatial Chassis (物理现实推导优先)
 
-Stage 2 refuses one templated doctrine. The core prototype adapts its chassis to
-the Stage 1 product context:
+Stage 2 derives its spatial chassis from the domain's own physical reality, not from
+a fixed product-category list. The derivation path is mandatory:
 
-1. *Dense Workbench Pattern*: high-density data bench — micro-grid rhythm, multi-pane instrumentation, monospaced numerics.
-2. *Operational Canvas Pattern*: business board — structural rhythm, master-detail hierarchy, progressive disclosure.
-3. *Editorial Reading Pattern*: immersive text — character-measure control, quiet margins, paper contrast.
-4. *Somatic Touchflow Pattern*: mobile touch — thumb-zone targets, fluid curves, high responsiveness.
-5. *Adaptive Workspace Pattern*: adaptive workspace — compose space to the unique business model.
+1. **Physical anchor first**: name the real-world object, space, or procedure the
+   domain practitioner recognizes — the tool they hold, the room they work in, the
+   procedure their hands know. This is the source of spatial logic, not a decoration.
+2. **Derive the chassis from the anchor**: let the anchor's physicality determine
+   spatial structure — how work is laid out, how state is inspected, how the
+   operator's attention moves. A cockpit does not become a dashboard by analogy; its
+   spatial grammar (instrument clusters, scan routes, commit detents) must transfer.
+3. **State the non-transfer boundary**: name explicitly what the physical anchor must
+   NOT be read to mean — its failure modes, its impossible features, its cultural
+   freight that the digital medium cannot carry.
 
-The numeric grid, rhythm, and touch-target parameters behind each pattern are
+**Historical chassis specimens (历史标本，非分类表)**: the five patterns below are
+documented examples of past derivations — workbench, canvas, editorial, touchflow,
+adaptive — not a classification system to select from. A new product may produce
+a chassis that matches none of them. Never back-derive a physical anchor from a
+chassis name; always derive the chassis from the physical anchor.
+
+- *Dense Workbench*: derived from instrumentation consoles, trading floors, control rooms — micro-grid rhythm, multi-pane, monospaced numerics.
+- *Operational Canvas*: derived from whiteboards, planning boards, dispatch maps — structural rhythm, master-detail hierarchy, progressive disclosure.
+- *Editorial Reading*: derived from printed pages, legal codex, archival paper — character-measure control, quiet margins, warm paper contrast.
+- *Somatic Touchflow*: derived from handheld tools, physical checkouts, portable devices — thumb-zone targets, fluid curves, high haptic responsiveness.
+- *Adaptive Workspace*: derived when the domain's spatial logic has no close historical specimen — compose space from the product's own settled object model.
+
+The numeric grid, rhythm, and touch-target parameters behind any chassis are
 owned by [`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md)
 and [`../03-verification/quality-floor.md`](../03-verification/quality-floor.md);
-this stage selects a chassis and never restates the numbers.
+this stage derives the chassis and never restates the numbers.
 
 ## Canonical Executable IR & Direct Materialization (单脑贯通)
 
@@ -90,8 +107,11 @@ The main designer holds itself to the same bounds a dispatch would have imposed:
 - Author one self-contained HTML/CSS/JS page (`experiments/.../anchor/index.html`).
 - Run `python3 skills/spec-prototype/scripts/verify_prototype_quality.py`.
 - Capture real viewport evidence via `node skills/spec-prototype/scripts/capture.mjs`.
-- Retain at most two local self-repair attempts per probe. Unbounded filesystem
-  roaming and CSS ping-pong tuning are forbidden.
+- Retain at most two build-time self-repair attempts per probe: these are
+  mechanical fixes to a broken render, not design revisions. The separate
+  design-refinement pass at [Stage 4](stage-4-audit.md) owns its own single
+  focused pass and never spends this budget. Unbounded filesystem roaming and
+  CSS ping-pong tuning are forbidden either way.
 
 ## Design Engineering Floor
 
@@ -110,12 +130,19 @@ semantics (`<dialog>`, `<details>`, `<form>`) and CSS custom properties. Complex
 frontend componentization (React/Vue/shadcn, state libraries) is strictly reserved
 for downstream Loom Entry 2 engineering delivery.
 
-## Stage 2 Anchor Approval Gate
+## Stage 2 Anchor Presentation Pause
 
 Once the first surface is materialized, present real viewport screenshots at the
 runtime-derived `inspection_contract.mandatory_viewports` carried by the assembled
-payload — never a hardcoded viewport list. Only after the user confirms the visual
-tone and token base may later surfaces expand.
+payload — never a hardcoded viewport list.
+
+This is a presentation, not a gate. Show what was built and say plainly what the
+user's confirmation would change; then keep working under the authorized scope.
+Do not stop the run to wait for a nod, and do not treat silence as approval.
+Revert or redirect only on a real user decision; an unattended run continues to
+[Stage 3](stage-3-skeleton.md) with the sealed provisional contracts it already
+holds. Absorb any later tone or token correction in place, and record the
+superseded choice rather than silently overwriting it.
 
 ## Exit
 

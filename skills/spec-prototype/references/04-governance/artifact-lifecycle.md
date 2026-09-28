@@ -4,21 +4,30 @@ Read before creating, revising, freezing, or migrating product-experience artifa
 For formal contract semantics and source-to-UI evidence, use
 [interpretation rules](interpretation-rules.md).
 
+The four canonical high-density assets are the delivery set. Everything a formal
+run produces lives in one of them:
+
 | Object | Scope and owner | Lifecycle | May decide |
 |---|---|---|---|
-| Product record | Project design synthesis linked to cited product sources | revisable summary | Product Thesis, actors/jobs/outcomes, object/content and known constraints; never overrides sources |
-| Project Experience Foundation | Integrated Design Proposition and project-wide system relationships derived from product evidence | `draft -> frozen -> superseded` | Qualitative Design DNA, optional Real-World Mapping, content/brand/visual/interaction language, Signature Relationship, Signature Craft, scoped feedback principles and assertions |
-| Surface Map | Derived Surface Topology; working index plus retained snapshots | `draft -> frozen -> superseded` | Surfaces, routes, relationships, journeys, roles, responsive transformation and coverage |
-| Slice Contract | One user-visible slice | `draft -> frozen -> superseded` | Local experience decisions preserving product semantics |
-| Prototype Specification | Compiled exact source revisions plus one candidate decision | immutable bytes; selection/supersession recorded in Discussion/Review | Nothing new; it fixes generation constraints |
-| Discussion Prototype | One Specification revision and hypothesis | `generated -> verified` or `blocked` | Nothing; executable evidence only |
-| Prototype Review | One target and evidence set | `supported | rejected | inconclusive` | Professional recommendation and actual human decision recorded separately |
+| Decision record — `prototype/discussion.md` | The evolvable human/agent co-creation ledger: Product Thesis, confirmed decisions, Five-Axes calibration, coverage selection, evidence status | always mutable; never a freeze subject | Problem framing, product thesis, actors/jobs/outcomes, the chosen proposition and its trade-off, coverage, and what stays `[hypothesis]` |
+| Slice specification — `prototype/specifications/<slice>/r1.spec.md` | The single-file RFC: IA topology, state machine, actions, Break protocol, invariants. Compiled from the canonical IR (`contracts/compiled/<slice>/r1.spec.json`) | `draft -> frozen -> superseded` | The slice's binding generation constraints; nothing new is authored here after compile |
+| Token stylesheet — `prototype/shared/tokens.css` (+ `contracts/tokens/t1.json`) | The compiled physical style layer. `discussion.md` is the sole token authority; the JSON is derived packaging | `draft -> frozen -> superseded` | The concrete colour, space, radius, type and motion values every surface inherits |
+| Anchor artifact — `prototype/experiments/<slice>/anchor/index.html` | The runnable materialisation of one specification revision | `generated -> verified` or `blocked`; disposable evidence | Nothing; executable proof only |
+
+Retired contract files (`product.md`, `contracts/surface-maps/m1.md`,
+`contracts/foundation/f1.md`, `contracts/tokens/t1.md`, `contracts/slices/<slice>/c1.md`,
+`specifications/<slice>/r1.md`) are legacy inputs: readable, never generated, never
+bound back in once the canonical IR exists.
 
 The cited product source owns product behavior, roles, permissions, state, data
 relationships, Gates and acceptance. The records jointly project one Product
 Experience Model; they are not a second product database. The authoring session owns
 low-level implementation choices inside its experiment scope. Downstream delivery
 owns production implementation.
+
+A Prototype Review record may accompany a run, but it is an evidence note, not a fifth
+deliverable: its recommendation and the actual human decision are recorded separately,
+and it never rewrites the assets above.
 
 ## Authority Lifecycle vs. Artifact File Lifecycle Mapping
 
@@ -50,7 +59,8 @@ absolute handoff integrity, artifacts operate in two explicit tracks:
 - Invoked only when design exploration has converged and the team is ready to hand off
   specifications to engineering delivery (Loom).
 - Artifacts transition `draft -> frozen`. `handoff.py freeze` calculates immutable SHA256
-  digests across Foundation, Tokens, Surface Map, Slice Contract, and Specification.
+  digests across the four canonical assets: `discussion.md`, `r1.spec.md`,
+  `tokens.css` (`t1.json`), and the anchor `index.html`.
 - In this track, bytes are strictly immutable; any subsequent change requires an explicit
   successor revision.
 

@@ -207,7 +207,9 @@ def test_stage_5_freeze_no_longer_uses_product_md_as_slice_spec():
 def test_stage_5_freeze_binds_slice_specification():
     content = _read(SKILL_MD)
     assert "specifications/<slice_id>/r1.spec.md" in content
-    assert "specifications/<slice_id>/r1.md" in content
+    # The legacy single-file spec path is retired as a freeze subject: only the
+    # canonical r1.spec.md remains a frozen-handoff target.
+    assert "specifications/<slice_id>/r1.md" not in content
 
 
 def test_no_full_product_default_prescription():
