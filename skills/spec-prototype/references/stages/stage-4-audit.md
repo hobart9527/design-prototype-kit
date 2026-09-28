@@ -34,21 +34,22 @@ confirmation, or interaction tracing fails, record the scope as `unverified`, no
 passed. Inspect the actual screenshots before making visual claims. A static check
 supports a review; it does not establish visual quality.
 
-## Critic and repair
+## Independent review and repair
 
-Dispatch `spec-prototype-critic` for a consequential new direction, major interaction,
-or connected prototype when independent review can change the decision. Keep the
-request focused: original brief, design question, target revision, relevant captures,
-and the requested judgment. Ask for the strongest relationship to preserve and the
-few highest-impact findings—not a compliance inventory.
+Dispatch `spec-prototype-critic` only when an independent review is explicitly
+requested or when genuinely separate context can change the decision. The main
+designer performs the ordinary review directly. Keep any external request focused:
+original brief, design question, target revision, relevant captures, and the
+requested judgment. Ask for the strongest relationship to preserve and the few highest-impact findings—not a compliance inventory. Without an actual independent
+dispatch, label the review `review_independence: non-independent`; never claim
+independent verification from self-review.
 
-When a finding warrants code repair, dispatch a **fresh bounded Builder Agent**
-synchronously with the exact repair scope and decisions to preserve. Never use
-`SendMessage` to revive an exited Agent; never use `ScheduleWakeup` or `Monitor` with
-filesystem polling to wait for Builder work. Allow one focused repair pass. If it
-cannot complete within the available turn, record the review as `PARTIAL` in
-`prototype/discussion.md`, name the open finding and unverified scope, and stop; do not
-burn the remaining wall clock waiting.
+Repair in place at the owning layer. Optional detached work may still use a
+bounded `spec-prototype-builder` for a mechanical, scope-locked change, but never
+as the primary authoring path and never as a blocking gate. Allow one focused
+repair pass. If it cannot complete within the available turn, record the review as
+`PARTIAL` in `prototype/discussion.md`, name the open finding and unverified
+scope, and stop; do not burn the remaining wall clock waiting.
 
 ## Break Protocol
 
@@ -65,7 +66,7 @@ and available recovery are clear). Apply only where this sequence fits the actio
 
 ## Completion Receipt Discipline
 
-Use the Builder's actual receipt and verifier output; do not rerun identical work just
+Use the actual receipt and verifier output from the run; do not rerun identical work just
 to reconfirm it. Record what was observed, what changed, what could not be checked,
 and whether the design question is answered. `PARTIAL` with honest limitations is a
 valid end state. A timeout or a false verification claim is not.

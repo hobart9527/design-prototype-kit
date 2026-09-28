@@ -962,6 +962,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --duration-slow: {m['duration_slow']};",
         f"  --ease-hud: {m['ease_hud']};",
         f"  --ease-out: {m['ease_out']};",
+        f"  --press-scale: {m['active_scale']};",
         "",
         "  /* Orthogonal Craft Stack (Surface Optics, Spatial Geometry, Micro-Typography, Data Marks) */",
         f"  --surface-tint: {_surface_tint(c, is_light)};",

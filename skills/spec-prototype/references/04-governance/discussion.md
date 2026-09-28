@@ -142,7 +142,7 @@ Map feedback to the smallest owner:
 - object, terminology or content relationship → Object/Content Model;
 - task continuity, navigation or page boundary → journey/Surface Topology;
 - content voice, interaction or appearance → Design Proposition/Foundation;
-- implementation defect → Builder repair within exact scope;
+- implementation defect → repair in place within the exact declared scope;
 - evidence weakness → validation plan or `unverified`.
 
 Mark dependents for reconsideration and retain unrelated decisions. Combining

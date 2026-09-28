@@ -16,7 +16,7 @@ For formal contract semantics and source-to-UI evidence, use
 
 The cited product source owns product behavior, roles, permissions, state, data
 relationships, Gates and acceptance. The records jointly project one Product
-Experience Model; they are not a second product database. The Builder owns only
+Experience Model; they are not a second product database. The authoring session owns
 low-level implementation choices inside its experiment scope. Downstream delivery
 owns production implementation.
 

@@ -28,7 +28,7 @@ A core failure of rule-heavy systems is elevating specific techniques to rigid q
 
 | Invariant (体验不变式 · 必须满足) | Candidate Techniques (候选手艺 · 按需选用) | Anti-Pattern to Avoid |
 |---|---|---|
-| **Perceptible Immediate Feedback**: Consequential actions must provide instant, visible, non-destructive feedback. | `:active { transform: scale(0.97); }`, background shift, inset shadow, border detent, tactile spring. | Mandating `scale(0.97)` everywhere or breaking layout during press. |
+| **Perceptible Immediate Feedback**: Consequential actions must provide instant, visible, non-destructive feedback. | A press detent authored from the surface's own tokens (`transform: scale(var(--press-scale))`), background shift, inset shadow, border detent, tactile spring. | Mandating one global press scale everywhere, or breaking layout during press. |
 | **Contextual Data Grounding**: Key numbers must carry baseline, unit, or comparative context. | Inline units, thresholds, rated ceilings, status badges, delta arrows, compact sparklines. | Forcing SVG sparklines into focused reading or document canvases. |
 | **Harmonious Geometry**: Container borders and nested elements must maintain optical concentricity. | $R_{\text{in}} = \max(0, R_{\text{out}} - P)$, matched corner radii, optical alignment. | Disjointed nested rounded corners causing visual distortion. |
 | **Numeric Stability**: Tabular metrics, timers, and quantities must not jitter during updates. | `font-variant-numeric: tabular-nums`, monospace digits, dedicated figure columns. | Shifting layouts when digits fluctuate from 1 to 8. |

@@ -146,7 +146,7 @@ def dispatch(args, active):
 def shell_read_single(command, root):
     # A small argv seam, not a heuristic shell-write detector.
     require(not any(c in command for c in '\n\r;|&><`$'),
-            'Use a single read command or installed helper; delegate shell execution to Builder.')
+            'Use one read command or an installed project helper.')
     args = shlex.split(command)
     require(bool(args), 'Missing command.')
     tool = args[0]
@@ -180,7 +180,7 @@ def shell_read_single(command, root):
             or script.resolve() == (SKILL/'scripts'/script.name).resolve()
         )
         require(is_installed and script.name in permitted[tool],
-                'Only installed helpers run in the main designer; use Builder for code/setup.')
+                'Only installed helpers run here; author prototype files with Write/Edit instead.')
         if script.name == 'compile_spec_ir.py':
             require(any(arg == '--slice' for arg in args), 'compile_spec_ir.py requires an explicit --slice.')
         if script.name == 'lint_spec_contracts.py':
@@ -197,7 +197,7 @@ def shell_read_single(command, root):
                     freeze_root = Path(args[idx + 1]).resolve()
             require(freeze_root == root.resolve(), 'Freeze command must target the active discussion root.')
         return
-    raise ValueError('Use read-only tools or a bounded Builder for this command.')
+    raise ValueError('Use read-only tools or an installed project helper for this command.')
 
 
 def shell_read(command, root):
@@ -205,11 +205,11 @@ def shell_read(command, root):
         # A chained read/helper sequence: each segment must pass single shell_read independently.
         # Single '&', pipes, redirections or other shell metacharacters remain forbidden.
         require(not any(c in command for c in '\n\r;|><`$'),
-                'Use a single read command or installed helper; delegate shell execution to Builder.')
+                'Use one read command or an installed project helper.')
         segments = command.split('&&')
         require(bool(segments) and all(s.strip() for s in segments), 'Empty command in chain.')
         for seg in segments:
-            require('&' not in seg, 'Use a single read command or installed helper; delegate shell execution to Builder.')
+            require('&' not in seg, 'Use one read command or an installed project helper.')
             shell_read_single(seg.strip(), root)
         return
     shell_read_single(command, root)
@@ -263,7 +263,7 @@ def check(payload):
         if tool == 'Bash':
             cmd = args.get('command', '')
             if 'http.server' in cmd:
-                raise ValueError('Builder/critic must not launch background HTTP servers.')
+                raise ValueError('A bounded helper must not launch background HTTP servers.')
         return
     tool = payload.get('tool_name')
     args = payload.get('tool_input', {})
@@ -297,7 +297,7 @@ def check(payload):
         require(target.is_relative_to(root/'prototype'),
                 'Design and prototype artifacts must reside inside prototype/.')
     elif tool == 'NotebookEdit':
-        raise ValueError('Notebook execution belongs to a bounded Builder.')
+        raise ValueError('Notebook execution is out of scope for design prototype authoring.')
 
 
 def main():

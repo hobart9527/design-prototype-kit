@@ -47,7 +47,7 @@ Keep the human brief about decisions; machine IR and CSS tokens are compiled out
 ## Sealed Provisional Baseline Closure
 
 For a formal runnable prototype, establish the applicable sealed provisional Spec
-baseline before Builder code. A focused design brief or exploration is not itself a
+baseline before runnable code. A focused design brief or exploration is not itself a
 request to seal or freeze the whole product.
 
 ## Formal prototype compilation

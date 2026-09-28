@@ -55,20 +55,25 @@ this discipline governs the claims that anchor visual and interaction contracts.
 This protocol is generative-side discipline; the audit-side detector
 lives in the quality bar, not here.
 
-### Orthogonality: Reality Mapping source × Register dials
+### Orthogonality: Reality Mapping source × Five Axes
 
 Two independent decisions combine; never fuse them:
 
 - **Reality Mapping source (魂之源)** — which physical, optical, biomorphic,
   temporal or force phenomenon supplies the mechanism (the five dimensions above).
-- **Register dials (魂之度)** — the energy and finish of the delivery: quiet ↔
-  loud, raw ↔ polished, sparse ↔ dense, light ↔ heavy, playful ↔ solemn.
+- **Five Axes (魂之度)** — the energy and finish of the delivery, carried by the
+  canonical axes Density · Energy · Materiality · Rhythm · Character (see the
+  Axis DNA row below). A routine descriptive locality such as "quiet live venue"
+  or "polished instrument" is ordinary prose and needs no expansion; a locality
+  that anchors the visual or interaction contract expands through the
+  qualitative-adjective translation protocol above.
 
 The same acoustic-resonance source becomes a precision spectral instrument under
-quiet + polished, or an underground live-venue wall under loud + raw. Never bind
-a physical metaphor to one register: any mapping may be executed at any register
-the product's evidence earns. Every dial value cites evidence from the product's
-context; a dial set by habit or model default is an invalid derivation.
+low-energy + high-materiality, or an underground live-venue wall under
+high-energy + raw materiality. Never bind a physical metaphor to one axis value:
+any mapping may be executed at any position the product's evidence earns. Every
+axis value cites evidence from the product's context; an axis set by habit or
+model default is an invalid derivation.
 
 2. **Typographic Punch & Rhythm**:
    - Typography is the voice of the product. Do not use monotonous 14px/16px ladders.
@@ -267,18 +272,19 @@ rendered composition before reading its rationale. Record which claims are facts
 expert judgments, preferences, hypotheses or observed results. Visual evidence
 does not prove behavior; a behavioral trace does not prove visual craft.
 
-## Direction probe dispatch
+## Direction probe record
 
-For an authorized comparison, give the active host's bounded implementation role
-one retained probe brief per proposition: the product question, full Design
-Proposition fields, identical task/content specimen and viewport, repository and
-installed Skill roots, bounded experiment/evidence paths, available assets and
-required evidence. Use the dispatch shape defined by the active host adapter. Mark
-uninspected capabilities unknown and fixtures synthetic. A direction probe does
-not require a frozen Foundation, Contract or Specification and creates no approval.
+For an authorized comparison, retain one probe brief per proposition: the product
+question, full Design Proposition fields, identical task/content specimen and
+viewport, repository and installed Skill roots, bounded experiment/evidence
+paths, available assets and required evidence. Keep the probe envelope defined by
+[handoff](../04-governance/execution-boundary.md) beside it as the scope record.
+Mark uninspected capabilities unknown and fixtures synthetic. A direction probe
+does not require a frozen Foundation, Contract or Specification and creates no
+approval.
 
-Review the actual result against [the quality bar](../03-verification/quality-floor.md). The Builder
-role owns bounded implementation repair; a weak proposition or wrong topology
+Author the probe directly inside the declared scopes, then review the actual result
+against [the quality bar](../03-verification/quality-floor.md). A weak proposition or wrong topology
 returns to the design owner. A missing renderer leaves visible claims unverified
 rather than inviting a text-only quality claim.
 

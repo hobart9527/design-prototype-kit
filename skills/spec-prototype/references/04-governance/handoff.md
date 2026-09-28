@@ -1,6 +1,6 @@
 # Formal prototype evidence and handoff
 
-For an early visual comparison, use [the direction probe dispatch](../01-foundations/design-language.md#direction-probe-dispatch).
+For an early visual comparison, use [the direction probe record](../01-foundations/design-language.md#direction-probe-record).
 This reference is for formal specifications and their implementation.
 
 ## Reference set
@@ -46,15 +46,15 @@ against the current map before any expansion. Only a full-product selection
 authorizes expansion across every applicable surface of that revision.
 
 For multiple batches, establish a common runnable entry and compatible shared
-data/component references before dispatch. Keep each Builder's write scope
+data/component references before the next batch. Keep each batch's write scope
 bounded while planning and verifying connections between batches. Exercise
 cross-batch navigation, mutation and return; separately styled disconnected
 demos are not a complete product. Continue remaining authorized batches when
 unblocked, retaining total scope, coverage and the concrete next dependency.
 
-## Builder dispatch
+## Build contract
 
-Read [component implementation](../02-craft-methods/component-implementation.md) when preparing a build. In the Specification builder contract, populate the start command, verification commands, page/flow coverage with shared data references, delegated freedoms, and one component-constraint row per applicable surface/interaction; mark uninspected capabilities as unknown. Use dispositions `required | preferred | delegated | unavailable` exactly as the template defines them: reserve `required` for mandatory reuse of a named existing asset with its constraint and verification checkpoint, and keep component choice delegated when nothing is required. Where a component embodies a physical, optical, biomorphic, temporal, or domain-specific mapping, its constraint MUST describe that mapping as a concrete, verifiable, implementable mechanism — never as a literary adjective. A Builder reading the constraint must be able to implement it without guessing the designer's intent. Semantic obligations stay in the Slice Contract and Specification; do not promote implementation preferences into product semantics. Delegate compatible component selection and composition without asking the user to approve an implementation map. Component experience requirements remain in their existing Foundation/Contract owners. Earlier immutable Specifications without this contract fail packet lint with a diagnostic: preserve them unchanged and author a successor revision; do not patch immutable bytes to satisfy the parser.
+Read [component implementation](../02-craft-methods/component-implementation.md) when preparing a build. In the Specification build contract, populate the start command, verification commands, page/flow coverage with shared data references, delegated freedoms, and one component-constraint row per applicable surface/interaction; mark uninspected capabilities as unknown. Use dispositions `required | preferred | delegated | unavailable` exactly as the template defines them: reserve `required` for mandatory reuse of a named existing asset with its constraint and verification checkpoint, and keep component choice delegated when nothing is required. Where a component embodies a physical, optical, biomorphic, temporal, or domain-specific mapping, its constraint MUST describe that mapping as a concrete, verifiable, implementable mechanism — never as a literary adjective. Whoever authors the constraint must be able to implement it without guessing the designer's intent. Semantic obligations stay in the Slice Contract and Specification; do not promote implementation preferences into product semantics. Delegate compatible component selection and composition without asking the user to approve an implementation map. Component experience requirements remain in their existing Foundation/Contract owners. Earlier immutable Specifications without this contract fail packet lint with a diagnostic: preserve them unchanged and author a successor revision; do not patch immutable bytes to satisfy the parser.
 
 For formal builds, run
 `python3 <skill-home>/scripts/handoff.py packet --root <repository-root> --spec <specification-path>`.
@@ -124,28 +124,26 @@ unless the host can prove that no external action started. Never retry with a
 modified packet merely to bypass a host boundary. Preserve `prototype_blocked`
 and continue only with the evidence already available.
 
-The Builder role owns code and low-level layout details within the contract,
-never IA, business behavior, source artifacts or production delivery. If the
-host cannot execute that role, return the reviewable packet and execution
-limitation; do not claim it ran.
+The authoring role owns code and low-level layout details within the contract,
+never IA, business behavior, source artifacts or production delivery.
 
-At a given review checkpoint, obtain at most one independent Critic review for
+At a given review checkpoint, obtain at most one independent review for
 the exact target and question. Do not retry or fan out an identical request after
 denial or timeout. Preserve the unverified limitation, finish a clearly labeled
 non-independent review from available evidence, and surface the next decision;
-a Critic is supporting evidence, not a second gate.
+an independent review is supporting evidence, not a second gate.
 
-Include the resolved skill root so the Builder can read references/templates from the same installation. Accept component-service substitutions that preserve the Specification; send design or interaction conflicts back to the owning decision. Review the Builder's page/state and assertion evidence against the original requested scope, not only the pages it happened to build.
+Include the resolved skill root so helper scripts read references/templates from the same installation. Accept component-service substitutions that preserve the Specification; send design or interaction conflicts back to the owning decision. Review the page/state and assertion evidence against the original requested scope, not only the pages that happened to be built.
 
-Read [design floor](../03-verification/quality-floor.md) for implementation/inspection. Plan checks against agreed assertions and applicable states. Preserve identity and known platform affordances. If the builder finds a structural impossibility, it reports evidence to this skill for a scoped decision rather than silently redesigning.
+Read [design floor](../03-verification/quality-floor.md) for implementation/inspection. Plan checks against agreed assertions and applicable states. Preserve identity and known platform affordances. If authoring surfaces a structural impossibility, report the evidence to this skill for a scoped decision rather than silently redesigning.
 
 ## Review, repair and preserve
 
-After the Builder returns runnable artifacts and evidence, start the local gallery
+After runnable artifacts and evidence exist, start the local gallery
 with `node <skill-home>/scripts/preview.mjs <repository-root>` when available, and
 include its URL with the review material. This is a revision-labelled artifact
 index, not a task sequence: identify the current target and intended journey in
-the Review. Follow quality-bar's target-stability rules and the Critic's capture
+the Review. Follow quality-bar's target-stability rules and the capture
 obligation; do not associate screenshots by similar names or treat historical
 evidence as current. Then record findings and the next applicable human choice.
 For paired viewport evidence, retain each page/state capture set in its own

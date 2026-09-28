@@ -124,10 +124,11 @@ High-fidelity verisimilitude requires authentic craft without heavy framework bl
    is invariant.
 
 4. **Tactile Mechanical Detents & Feedback**:
-   - For mission-critical actions, combine tactile micro-motion with clear visual state changes:
+   - For mission-critical actions, combine tactile micro-motion with clear visual state changes.
+     The scale is authored per surface and compiled into `--press-scale`, never copied as a house number:
    ```css
    .btn-action:active {
-     transform: scale(0.98);
+     transform: scale(var(--press-scale));
      transition: transform var(--duration-fast) var(--ease-tactile);
    }
    ```

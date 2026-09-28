@@ -83,20 +83,31 @@ sidebar-plus-header chassis, decorative gradients, generic metric grids, or inve
 product chrome unless the brief gives a reason. Use realistic, varied content; every
 visible element must support the task or the declared expression.
 
-### Modern Craft & Aesthetic Execution (P9+ Modern Product DNA)
-Deliver authentic modern product craft (reflecting the calibre of Linear, Raycast, Vercel, Stripe) rather than generic admin templates:
-1. **Translucent Micro-Borders & Layered Depth**:
-   - Replace flat, opaque solid borders (`1px solid #ccc` or `1px solid #333`) with subtle translucent micro-borders (`1px solid rgba(255, 255, 255, 0.08)` on dark, `1px solid rgba(0, 0, 0, 0.08)` on light).
-   - Combine tight contact shadows with soft ambient falloff (e.g. `box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)`).
-   - On elevated dark surfaces, add a crisp 1px top-edge inset highlight (`box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06)`).
-   - Frosted overlays: modal, flyout, and floating control backdrops use `backdrop-filter: blur(16px)` with semi-transparent tinted surfaces.
+### Modern Craft & Aesthetic Execution
+
+Deliver authored modern product craft rather than generic admin templates. These
+are techniques the product's evidence may earn, not a house recipe; the Refuse
+list in `references/02-craft-methods/craft-floor.md` rejects any of them applied
+without a reason.
+
+1. **Material, Borders & Depth**:
+   - Declare elevation once: a border or a shadow, not both. A 1px border under a
+     wide soft shadow is the ghost card, and it reads as neither.
+   - Where a border is the chosen system, a translucent hairline
+     (`1px solid rgba(255,255,255,0.08)` on dark, `rgba(0,0,0,0.08)` on light)
+     often beats an opaque `#ccc`/`#333` rule; where shadow is the chosen system,
+     pair a tight contact shadow with soft ambient falloff and skip the border.
+   - Frosted overlays (`backdrop-filter`) are a specific effect, not decoration.
 2. **Typographic Rhythm & Number Stability**:
    - Modern font stack: default to `-apple-system, BlinkMacSystemFont, "Inter", "Geist", "Segoe UI", sans-serif` with `-webkit-font-smoothing: antialiased`.
    - Tight scale, strong contrast: keep type scales restrained (11-12px badges/meta, 13-14px primary body, 15-18px section titles, 20-24px hero headers); create hierarchy through weight (`500`/`600`) and opacity contrast (`rgba(..., 0.9)` vs `rgba(..., 0.45)`).
    - Numerical data, metrics, telemetry, and timestamps MUST declare `font-variant-numeric: tabular-nums` (or `font-feature-settings: "tnum"`).
+   - Theme the browser surfaces: selection, caret, scrollbars, focus rings.
 3. **Kinetic Affordance & Physical Interaction**:
    - Natural damping curves: avoid linear ease. Use spring/deceleration transitions (e.g. `transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease`).
-   - Micro-affordance on `:active`: buttons and interactive items yield on press with subtle compression (e.g. `transform: scale(0.985)` or `translateY(0.5px)`).
+   - Micro-affordance on `:active`: commit controls yield on press with a
+     perceptible detent, authored per surface and consumed from the compiled
+     token (`transform: scale(var(--press-scale))`), never copied as a house number.
    - Motion safety: wrap all kinetic transitions in `@media (prefers-reduced-motion: no-preference)`.
 4. **The 70/30 Innovation Balance**:
    - 70% Familiarity: keep spatial layout, navigation flows, and standard trigger positions intuitive and predictable.

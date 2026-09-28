@@ -35,7 +35,7 @@ A Signature Accent is optional and decided per product, never a template mandate
 Specify the physical response of the decisive commit action:
 - *Timing*: Fixed duration authored from the product's energy decision (e.g. a
   mechanical press, `cubic-bezier(.16, 1, .3, 1)`); no template-fixed value.
-- *Frame 1 (Intent)*: Pointer/key triggers tactile depression (`:active scale(0.98)`).
+- *Frame 1 (Intent)*: Pointer/key triggers tactile depression (`:active scale(var(--press-scale))`).
 - *Frame 2 (Commit)*: Immediate state freeze; prevents double submission.
 - *Frame 3 (Settlement)*: Badge transitions deterministically; focus deterministically restores to originating trigger.
 

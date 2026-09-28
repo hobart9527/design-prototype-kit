@@ -20,32 +20,36 @@ owned by [`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craf
 and [`../03-verification/quality-floor.md`](../03-verification/quality-floor.md);
 this stage selects a chassis and never restates the numbers.
 
-## Canonical Executable IR & Lean Builder Envelope Architecture
+## Canonical Executable IR & Direct Materialization (单脑贯通)
 
-The dispatch path is IR-first and uses the canonical Dual-Envelope Architecture (`mode: "lean-builder-envelope"`). The Coordinator runs the canonical pipeline before dispatching `spec-prototype-builder`:
+The path is IR-first and the main designer executes it end-to-end. No external
+agent sits between the contract and the artifact:
 
 1. `compile_spec_ir` — compile the Stage 1 discussions into the canonical machine
    IR (`r1.spec.json`) plus the single-file human RFC view (`r1.spec.md`)
    (`compile_spec_ir.py`). Legacy compatibility only: `materialize_contracts.py`
    still emits the multi-file `c1.md` / `r1.md` set.
-2. `compile` — derive physical tokens from the Five-Axis register
+2. `compile` — derive physical tokens from the Five Axes register
    (`compile_tokens.py` → `tokens.css` / `t1.json`; `t1.md` is legacy-only).
-3. `assemble lean payload` — assemble the pre-baked Lean Builder Envelope
-   (`assemble_envelope.py`), synthesizing the 7-field Executable Design IR alongside the decoupled `constraint_envelope` (binding invariants) and `creative_envelope` (agency parameters).
-4. `dispatch builder` — pass the synthesized envelope JSON directly to `spec-prototype-builder`.
+3. `author` — write the Hero Anchor directly at
+   `prototype/experiments/<slice_id>/anchor/index.html`, consuming the compiled
+   tokens. `assemble_envelope.py` may still emit
+   `prototype/experiments/<slice_id>/envelope.json` as the retained constraint
+   record for downstream handoff and benchmark harnesses; it is an artifact, not
+   a dispatch order.
+4. `look` — capture and read the rendered result (Stage 4), then refine in place.
 
-**Dispatch Closure Invariant (派发闭环纪律)**: a Builder dispatch is not
-interruptible conversation — never yield the turn while the Builder is pending.
-After the Agent call returns, immediately verify the receipt: the hero-anchor
-HTML file exists at the payload's declared path and the verification scripts ran.
-If the Builder result is missing or empty, retry the dispatch once within the
-same turn; do not end the turn with a status message like "等待构建完成" (waiting
-for the build). A turn may only close after the probe artifact exists on disk or
-the dispatch has irreversibly failed and the failure is recorded in
-`prototype/discussion.md`.
+Read [`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md)
+before the first write of runnable code; it holds the generating-side Verify and
+Refuse floors. Read
+[`../04-governance/execution-boundary.md`](../04-governance/execution-boundary.md)
+for the write-scope rules.
 
-### Envelope Semantic Contract (Constraint vs Creative)
-The synthesized envelope strictly enforces the separation of non-negotiable constraints from layout creativity:
+### Constraint versus Creative Agency
+
+The envelope's two halves remain the discipline even when the same session
+authors the code:
+
 - **`constraint_envelope` (Binding Invariants · 绝不妥协)**:
   - `domain_thesis`: Product thesis and authentic core tension.
   - `ooux_topology`: Object entity boundaries and cardinality constraints.
@@ -56,20 +60,38 @@ The synthesized envelope strictly enforces the separation of non-negotiable cons
   - Layout composition within the chosen chassis (workbench / canvas / reading / touchflow).
   - Spatial padding rhythm, typographic ladder contrast, and container elevation subtlety.
   - Micro-interactions, transient hover detents, and spring deceleration curves within token bounds.
-- **Legacy Envelope Notice**: Legacy single-contract projections without the 7-field IR are retained for backward-compatibility diagnostics only; `mode: "lean-builder-envelope"` emitted by `assemble_envelope.py` is the sole production dispatch format.
-See [`../04-governance/execution-boundary.md`](../04-governance/execution-boundary.md)
-for the dispatch admission rules.
 
-## Bounded Builder Execution
+## Divergence Discipline (发散与收敛分轨)
 
-The Builder is strictly constrained by the payload:
+The Double Diamond decides when differences are legitimate, so the two modes
+never share one rule:
 
-- Step 1: author one self-contained HTML/CSS/JS page (`experiments/.../hero-anchor/index.html`).
-- Step 2: run `python3 skills/spec-prototype/scripts/verify_prototype_quality.py`.
-- Step 3: capture real viewport evidence via `node skills/spec-prototype/scripts/capture.mjs`.
-- Step 4: return the delivery receipt. One dispatch retains at most two local
-  self-repair attempts. Unbounded filesystem roaming and CSS ping-pong tuning are
-  forbidden.
+- **Diverge — competing directions.** When several directions must expose a real
+  choice, they differentiate on structure, not on tint. Give each direction its
+  own IA and page flow; three directions sharing one page list and swapping
+  color and texture is the failure mode. Spread them across several axes at
+  once, and keep every option inside the register region the product's evidence
+  locks — never average toward a middle option, and never manufacture variety by
+  producing one bright, one dark and one warm.
+- **Converge — competing variants.** When variants of one decision are compared,
+  vary exactly one primary axis (structure, density, emphasis, type, or voice)
+  and let the secondary choices follow from it. Varying everything at once
+  produces three unattributable results: the comparison teaches nothing, and the
+  next decision starts from zero.
+
+The craft floor is identical across every direction and every variant. It is not
+an axis and never trades against one. A candidate that wins on looks while
+failing a hard floor is a bug with a nice surface, not a candidate.
+
+## Bounded Materialization
+
+The main designer holds itself to the same bounds a dispatch would have imposed:
+
+- Author one self-contained HTML/CSS/JS page (`experiments/.../anchor/index.html`).
+- Run `python3 skills/spec-prototype/scripts/verify_prototype_quality.py`.
+- Capture real viewport evidence via `node skills/spec-prototype/scripts/capture.mjs`.
+- Retain at most two local self-repair attempts per probe. Unbounded filesystem
+  roaming and CSS ping-pong tuning are forbidden.
 
 ## Design Engineering Floor
 

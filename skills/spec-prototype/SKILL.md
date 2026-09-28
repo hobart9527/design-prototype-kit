@@ -145,16 +145,20 @@ Make the output feel authored for this product, not decorated from a house style
 Use realistic content and task-driven hierarchy; make density, typography, color,
 space, material, and motion reinforce the same design proposition. Preserve familiar
 conventions where they aid learning; spend novelty only where it improves the task.
-The applicable hard floors remain: WCAG/accessibility and honest evidence, visible
-`:active` feedback on commit controls, concentric nested radii
-(`R_inner = max(0, R_outer - P)`), `tabular-nums` for changing/aligned numeric data,
-and touch targets of at least 44×44px in touch contexts. Techniques beyond these
-floors are contextual choices, not global recipes.
 
-### P9+ Modern Craft Execution
-- **Subtle Materiality & Borders**: Translucent micro-borders (`rgba(255,255,255,0.08)` or `rgba(0,0,0,0.08)`), dual-layer ambient/contact shadows, and 1px inset specular highlights on dark elevated cards.
-- **Micro-Kinetic Affordance**: Buttons yield on `:active` with subtle micro-compression (`scale(0.985)`), animated via damping curves (`cubic-bezier(0.16, 1, 0.3, 1)`).
-- **Typographic Precision**: System font stack (`Inter`, `Geist`, `SF Pro`), antialiased rendering, tight font scale hierarchy, and `tabular-nums` numeric stabilization.
+The four craft hard floors — WCAG/accessibility and honest evidence, visible
+`:active` feedback on commit controls, concentric nested radii
+(`R_inner = max(0, R_outer - P)`), and `tabular-nums` for changing/aligned numeric
+data — are owned by
+[`references/02-craft-methods/craft-floor.md`](references/02-craft-methods/craft-floor.md),
+which also owns the Refuse list and the browser-surface floor. That file is the
+craft reference the Minimal Reading List allows, and it is read before the first
+runnable write.
+
+Material, elevation, motion and typographic technique beyond those floors are
+contextual choices resolved from the product's evidence, never a global recipe.
+A generated effect is not craft: a technique earns its place in the design
+proposition, or it is a default the Refuse list rejects.
 
 ### Downstream Engineering Assets (三层工程交付资产)
 Deliver artifacts ready for subsequent frontend generation:

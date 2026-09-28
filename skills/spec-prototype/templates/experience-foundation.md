@@ -27,12 +27,14 @@
 
 ## 5-Dial Style Register & Vague-Word Translation
 
+Canonical Five Axes — the authority; legacy dial names (`Finish`, `Weight`,
+`Seriousness`) are accepted compiler aliases and are not written here.
 Direct input to `compile_tokens.py` machine compiler:
-- `Energy`: (1 = quiet submarine sonar, 5 = loud high-saturation telemetry)
-- `Finish`: (1 = raw technical utility, 5 = polished high-craft precision)
 - `Density`: (1 = sparse breathing room, 5 = dense aeronautical cockpit)
-- `Weight`: (1 = hairline light, 5 = heavy tactile presence)
-- `Seriousness`: (1 = playful consumer interaction, 5 = solemn mission-critical gravity)
+- `Energy`: (1 = quiet submarine sonar, 5 = loud high-saturation telemetry)
+- `Materiality`: (1 = raw technical utility, 5 = polished high-craft precision; carries legacy Finish/Weight)
+- `Rhythm`: (1 = steady metronomic pacing, 5 = compression-and-release tempo)
+- `Character`: (1 = playful consumer interaction, 5 = solemn mission-critical gravity)
 - Vague-word firewall translation (`[adjective] -> [parametric constraint] -> [counter-example]`):
 
 ## Microscopic Craft Physics Triad
