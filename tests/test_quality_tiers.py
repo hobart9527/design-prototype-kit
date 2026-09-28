@@ -260,3 +260,114 @@ def test_l1_replay_passes_on_placeholder_only_spec(tmp_path):
     )
     failures = vpq.coverage_failures(html, contract_path=contract)
     assert not any("contract assertion" in f for f in failures), failures
+
+
+def _dom_gate_contract(tmp_path: Path) -> Path:
+    contract = tmp_path / "r1.md"
+    contract.write_text(
+        "# Spec\n## Action Verb Lifecycle Table\n"
+        "| Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button | Completion Feedback Toast | Impact |\n"
+        "|---|---|---|---|---|---|\n"
+        "| reboot | Reboot | Confirm Reboot | Reboot Now | Done | Impact |\n"
+        "## The Break Protocol Stress Checkpoints\n"
+        "| Reality Breaker | Test Vector | Expected | Observed |\n"
+        "|---|---|---|---|\n"
+        "| Overflow | Hash | Truncate | pass |\n"
+        "## Dual-Channel Ergonomics (Keyboard Shortcuts & Focus Recovery)\n"
+        "| Shortcut Key | Target Action |\n"
+        "|---|---|\n"
+        "| `Space` | Inspect active node |\n",
+        encoding="utf-8",
+    )
+    return contract
+
+
+def test_l1_structural_checks_read_the_dom_not_the_source_text(tmp_path, capsys):
+    """A structural hook named in a comment or a string is not a delivered hook.
+
+    The regex era accepted `<!-- data-state="ideal" -->` and a state name quoted
+    inside a JS string as evidence. Every structural assertion must read the
+    parsed tree, so disguised hooks are reported as absent.
+    """
+    contract = _dom_gate_contract(tmp_path)
+    tokens = tmp_path / "tokens.css"
+    tokens.write_text(":root { --radius-btn: 4px; }", encoding="utf-8")
+
+    disguised = tmp_path / "disguised.html"
+    disguised.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css">
+<style>button:active{transform:scale(0.97);}</style></head>
+<body>
+  <!-- data-state="ideal" hashchange addEventListener('keydown') -->
+  <button id="reboot" style="border-radius: var(--radius-btn); text-overflow: ellipsis; overflow: hidden;">Reboot</button>
+  <dialog><h3>Confirm Reboot</h3><button>Reboot Now</button></dialog>
+  <div role="status">Done</div>
+  <span class="unit">42 ms</span>
+  <script>
+    // "addEventListener('keydown', ...)" and "hashchange" are only prose here.
+    const note = "data-state";
+  </script>
+</body></html>""", encoding="utf-8")
+    assert vpq.assert_quality(str(disguised), str(tokens), contract_path=str(contract)) is False
+    output = capsys.readouterr().out
+    assert "no state-switching hook detected" in output, output
+    assert "keyboard shortcuts not bound" in output, output
+
+    # The same document with real hooks clears both assertions.
+    honest = tmp_path / "honest.html"
+    honest.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css">
+<style>button:active{transform:scale(0.97);}</style></head>
+<body data-state="ideal">
+  <button id="reboot" style="border-radius: var(--radius-btn); text-overflow: ellipsis; overflow: hidden;">Reboot</button>
+  <dialog><h3>Confirm Reboot</h3><button>Reboot Now</button></dialog>
+  <div role="status">Done</div>
+  <span class="unit">42 ms</span>
+  <script>
+    window.addEventListener('keydown', () => {});
+    window.addEventListener('hashchange', () => {});
+  </script>
+</body></html>""", encoding="utf-8")
+    vpq.assert_quality(str(honest), str(tokens), contract_path=str(contract))
+    honest_output = capsys.readouterr().out
+    assert "no state-switching hook detected" not in honest_output, honest_output
+    assert "keyboard shortcuts not bound" not in honest_output, honest_output
+
+
+def test_l1_accent_discipline_reads_selector_and_body_from_one_rule(tmp_path):
+    """A reserved class elsewhere in the sheet cannot implicate an unrelated rule."""
+    tokens = tmp_path / "tokens.css"
+    tokens.write_text(
+        ":root { --accent-seal: #B3352B; --radius-outer: 8px; font-variant-numeric: tabular-nums; }",
+        encoding="utf-8",
+    )
+    contract = tmp_path / "r1.md"
+    contract.write_text("# Spec\n## Verifiable Design Assertions\n- item present\n", encoding="utf-8")
+
+    # `.btn-secondary` is mentioned in a comment; the accent lives in an
+    # unrelated rule. Neither is a leak.
+    clean = tmp_path / "clean.html"
+    clean.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css">
+<style>
+/* .btn-secondary must never use the seal accent */
+.authority-gate-commit { background: var(--accent-seal); }
+</style></head>
+<body>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;">
+<button class="authority-gate-commit">Commit Seal</button>
+</main>
+<script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
+</body></html>""", encoding="utf-8")
+    assert vpq.assert_quality(str(clean), str(tokens), contract_path=str(contract)) is True
+
+    # The reserved class and the accent in the same rule is a leak.
+    leaky = tmp_path / "leaky.html"
+    leaky.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css">
+<style>
+.btn-secondary { background: var(--accent-seal); }
+</style></head>
+<body>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;">
+<button class="btn-secondary">Draft Action</button>
+</main>
+<script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
+</body></html>""", encoding="utf-8")
+    assert vpq.assert_quality(str(leaky), str(tokens), contract_path=str(contract)) is False

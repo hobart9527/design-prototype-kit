@@ -119,7 +119,7 @@ unclear, that is the defect to fix — not a reason to add another script.
 | `execution_boundary.py` | Tool-call admission, and write-time validation of `intent.json` | tool-call payload | Skill hook (automatic) |
 | `compile_spec_ir.py` | The Spec IR and its `.spec.md` view | `prototype/intent.json`, `discussion.md` | Stage 1/2 prose |
 | `compile_tokens.py` | `tokens.css` and the DTCG `t1.json` | `discussion.md`, Five Axes | Stage 2/5 prose |
-| `verify_prototype_quality.py` | The HTML quality audit | authored HTML | Stage 2 prose |
+| `verify_prototype_quality.py` | The HTML quality audit: structural assertions read the parsed DOM, style assertions the owned declarations, rendered craft the browser | authored HTML | Stage 2 prose |
 | `handoff.py` | The dispatch packet and the Stage 5 freeze | Spec IR, decisions | Stage 5 prose, `execution_boundary` |
 | `assemble_envelope.py` | The dispatch envelope and its bound-source digests | Spec IR | `handoff` packet path; tests |
 | `prototype_context.py` | Shared project-context library (never run alone) | project tree | `handoff`, `verify_prototype_quality`, `lint_spec_contracts` |

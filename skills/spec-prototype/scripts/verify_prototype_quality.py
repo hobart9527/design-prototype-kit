@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Truthful, contract-driven checks for a prototype artifact.
 
-Static checks inspect source only. Browser, visual, and human evidence are
-reported as unverified unless an evidence manifest explicitly records them.
+Structural checks read a parsed DOM; style checks read the declarations the
+document owns. Browser, visual, and human evidence are reported as unverified
+unless an evidence manifest explicitly records them.
 """
 from __future__ import annotations
 
@@ -14,10 +15,339 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from html.parser import HTMLParser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prototype_context  # noqa: E402
+
+
+# --- Minimal DOM layer -----------------------------------------------------
+# Structural assertions read a parsed tree, not the source text. A class inside
+# a comment, a tag named in prose, or a handler mentioned in a string must never
+# satisfy a DOM check, so every structural fact comes from the tree. Style
+# declarations stay textual, but only from the <style> elements and style
+# attributes that actually own them — never from the document at large.
+
+_VOID_TAGS = frozenset({
+    "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+    "meta", "param", "source", "track", "wbr",
+})
+
+# Inline event-handler attributes, by the events this tool asserts on.
+_INLINE_HANDLERS = ("onclick", "onkeydown", "onkeyup", "onsubmit",
+                    "ontouchstart", "ontouchend")
+
+# Tokens that authorize a continuous animation (high-yield zones and the
+# standard accessibility loading states).
+_AUTHORIZED_ANIMATION = re.compile(
+    r"\b(?:high-yield|pulse|heartbeat|beacon|live-indicator|radar|spinner|loading|loader|progress)\b",
+    re.IGNORECASE)
+
+# Class tokens that make a metric readable without a chart.
+_CONTEXT_MODIFIER = re.compile(r"(?:unit|baseline|sparkline|threshold|reference|trend|delta|badge|status)")
+
+# Metric containers, and the unit that must follow the number inside one.
+_METRIC_CLASS = re.compile(r"(?:stat|metric|kpi|value|num|count)")
+_METRIC_UNIT = re.compile(r"^\s*[\d.,]+\s*(?:[a-zA-Z%/$€¥°]|/[a-zA-Z]+)")
+
+# Classes reserved for secondary affordances, where the signature accent is
+# forbidden.
+_FORBIDDEN_ACCENT_CLASSES = frozenset({
+    "draft", "pending", "secondary", "ghost", "cancel", "subtle", "base", "zero-borrow",
+})
+
+
+def _strip_comments(text: str, line_comment: bool) -> str:
+    """Blank out comments without touching string literals.
+
+    A quoted `//` (a URL) or a `/*` inside `content: "..."` is content, not a
+    comment, so the scan tracks quote state and only drops what is truly
+    commented out. Blanked spans keep their newlines so line structure holds.
+    """
+    out: list[str] = []
+    index = 0
+    length = len(text)
+    quote = ""
+    while index < length:
+        char = text[index]
+        if quote:
+            out.append(char)
+            if char == "\\" and index + 1 < length:
+                out.append(text[index + 1])
+                index += 2
+                continue
+            if char == quote:
+                quote = ""
+            index += 1
+            continue
+        if char in ("'", '"', "`"):
+            quote = char
+            out.append(char)
+            index += 1
+            continue
+        if text.startswith("/*", index):
+            end = text.find("*/", index + 2)
+            end = length if end == -1 else end + 2
+            out.append("\n" * text.count("\n", index, end))
+            index = end
+            continue
+        if line_comment and text.startswith("//", index):
+            end = text.find("\n", index)
+            index = length if end == -1 else end
+            continue
+        out.append(char)
+        index += 1
+    return "".join(out)
+
+
+def _strip_css_comments(text: str) -> str:
+    return _strip_comments(text, line_comment=False)
+
+
+def _strip_js_comments(text: str) -> str:
+    return _strip_comments(text, line_comment=True)
+
+
+class _Element:
+    """One parsed element: tag, attributes, children, and its own text runs."""
+
+    __slots__ = ("tag", "attrs", "parent", "children", "own_text")
+
+    def __init__(self, tag: str, attrs: dict[str, str], parent: "_Element | None") -> None:
+        self.tag = tag
+        self.attrs = attrs
+        self.parent = parent
+        self.children: list[_Element] = []
+        self.own_text: list[str] = []
+
+    def get(self, name: str, default: str = "") -> str:
+        return self.attrs.get(name, default)
+
+    @property
+    def classes(self) -> set[str]:
+        return set(self.get("class").split())
+
+    def text(self) -> str:
+        """This element's own text, excluding its descendants'."""
+        return "".join(self.own_text)
+
+    def descendants(self) -> list["_Element"]:
+        out: list[_Element] = []
+        stack = list(reversed(self.children))
+        while stack:
+            el = stack.pop()
+            out.append(el)
+            stack.extend(reversed(el.children))
+        return out
+
+
+class _DomBuilder(HTMLParser):
+    def __init__(self, doc: "_Document") -> None:
+        super().__init__(convert_charrefs=True)
+        self.doc = doc
+        self.stack: list[_Element] = [doc.root]
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        element = _Element(
+            tag,
+            {name.lower(): (value if value is not None else "") for name, value in attrs},
+            self.stack[-1],
+        )
+        self.stack[-1].children.append(element)
+        self.doc.elements.append(element)
+        if tag not in _VOID_TAGS:
+            self.stack.append(element)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.handle_starttag(tag, attrs)
+        if tag not in _VOID_TAGS:
+            self.stack.pop()
+
+    def handle_endtag(self, tag: str) -> None:
+        for index in range(len(self.stack) - 1, 0, -1):
+            if self.stack[index].tag == tag:
+                del self.stack[index:]
+                return
+
+    def handle_data(self, data: str) -> None:
+        self.stack[-1].own_text.append(data)
+
+    def handle_comment(self, data: str) -> None:
+        # Kept as a fact about the document, never as document content: a
+        # commented-out state hook or metric is not a delivered one.
+        self.doc.comments.append(data)
+
+
+class _Document:
+    """A parsed document with the structural queries the assertions need."""
+
+    def __init__(self, source: str) -> None:
+        self.source = source
+        self.root = _Element("#document", {}, None)
+        self.elements: list[_Element] = []
+        self.comments: list[str] = []
+        builder = _DomBuilder(self)
+        builder.feed(source)
+        builder.close()
+        # Comments are stripped from both executable layers: a commented-out
+        # listener is not a listener, and a class named in a CSS comment is not
+        # a selector. HTML comments never reach these strings in the first place.
+        self.style_text = _strip_css_comments(
+            "\n".join(el.text() for el in self.elements if el.tag == "style"))
+        self.script_text = _strip_js_comments(
+            "\n".join(el.text() for el in self.elements if el.tag == "script"))
+        self.text = self._visible_text()
+
+    def _visible_text(self) -> str:
+        parts: list[str] = []
+
+        def walk(node: _Element) -> None:
+            for child in node.children:
+                if child.tag in ("script", "style"):
+                    continue
+                parts.extend(child.own_text)
+                walk(child)
+
+        walk(self.root)
+        return "".join(parts)
+
+    def declarations(self) -> str:
+        """Every CSS declaration the document owns: <style> bodies and style attributes."""
+        parts = [self.style_text]
+        parts.extend(el.get("style") for el in self.elements if "style" in el.attrs)
+        return "\n".join(parts)
+
+    def contains(self, needle: str) -> bool:
+        """True when the needle is real document content, never a comment."""
+        if needle in self.text or needle in self.script_text or needle in self.style_text:
+            return True
+        return any(needle in value for el in self.elements for value in el.attrs.values())
+
+    def tags(self, *names: str) -> list[_Element]:
+        wanted = set(names)
+        return [el for el in self.elements if el.tag in wanted]
+
+    def with_attr(self, name: str) -> list[_Element]:
+        return [el for el in self.elements if name in el.attrs]
+
+    def attr_equals(self, name: str, value: str) -> bool:
+        return any(el.get(name) == value for el in self.elements)
+
+    def controls(self) -> list[_Element]:
+        """Reachable controls: buttons, anchors with an href, and button roles."""
+        return [el for el in self.elements
+                if el.tag == "button"
+                or (el.tag == "a" and "href" in el.attrs)
+                or el.get("role") == "button"]
+
+    def links_to(self, surface_id: str) -> bool:
+        return any(surface_id in el.get("href") for el in self.elements if "href" in el.attrs)
+
+    def has_event_binding(self) -> bool:
+        if "addEventListener(" in self.script_text:
+            return True
+        return any(name in el.attrs for el in self.elements for name in _INLINE_HANDLERS)
+
+    def has_keyboard_binding(self) -> bool:
+        if re.search(r"addEventListener\s*\(\s*['\"]key(?:down|up)['\"]", self.script_text, re.IGNORECASE):
+            return True
+        return any(name in el.attrs for el in self.elements for name in ("onkeydown", "onkeyup"))
+
+    def has_feedback_container(self) -> bool:
+        for el in self.elements:
+            if el.get("role") in ("status", "alert"):
+                return True
+            if re.search(r"\b(?:toast|notification|feedback|alert-box|status-message|snackbar)\b",
+                         el.get("class"), re.IGNORECASE):
+                return True
+            if re.search(r"(?:toast|feedback|status-msg)", el.get("id"), re.IGNORECASE):
+                return True
+            if "data-feedback" in el.attrs or "data-toast" in el.attrs:
+                return True
+        return False
+
+    def has_touch_binding(self) -> bool:
+        if re.search(r"addEventListener\s*\(\s*['\"](?:touch|pointer|click)['\"]",
+                     self.script_text, re.IGNORECASE):
+            return True
+        return any(name in el.attrs for el in self.elements for name in ("ontouchstart", "ontouchend", "onclick"))
+
+    def has_state_hook(self) -> bool:
+        """A state the document can actually switch, never a quoted label.
+
+        Script signals are matched by API shape (`location.hash`, `dataset.`
+        assignment, `setAttribute('data-state'`), so a state name that merely
+        appears inside a string literal is not read as a hook.
+        """
+        if re.search(r"addEventListener\s*\(\s*['\"](?:hashchange|popstate)['\"]", self.script_text):
+            return True
+        if re.search(r"location\.hash", self.script_text):
+            return True
+        if re.search(r"dataset\.\w+\s*=|setAttribute\s*\(\s*['\"]data-", self.script_text):
+            return True
+        for el in self.elements:
+            if "data-state" in el.attrs:
+                return True
+            if re.search(r"(?:empty|loading|view-mode|state-)", el.get("class")):
+                return True
+            if re.search(r"(?:empty|loading|view-mode)", el.get("id")):
+                return True
+        return False
+
+    def has_authorized_animation(self) -> bool:
+        for el in self.elements:
+            if el.get("aria-busy").lower() == "true" or el.get("role") == "progressbar":
+                return True
+            if any(_AUTHORIZED_ANIMATION.search(el.get(name)) for name in ("class", "id", "data-zone")):
+                return True
+        return False
+
+    def has_context_modifier(self) -> bool:
+        for el in self.elements:
+            if _CONTEXT_MODIFIER.search(el.get("class")):
+                return True
+            if any(name in el.attrs for name in
+                   ("data-unit", "data-baseline", "data-threshold", "data-trend", "data-delta")):
+                return True
+        return False
+
+    def has_metric_with_unit(self) -> bool:
+        for el in self.elements:
+            if _METRIC_CLASS.search(el.get("class")) and _METRIC_UNIT.match(el.text()):
+                return True
+        return False
+
+    def has_charted_metric(self) -> bool:
+        for el in self.tags("svg"):
+            if any(child.tag in ("polyline", "path", "rect", "line", "circle") for child in el.descendants()):
+                return True
+        return False
+
+    def empty_state_containers(self) -> list[_Element]:
+        out: list[_Element] = []
+        for el in self.tags("div", "section", "aside", "main"):
+            marker = f"{el.get('data-for')} {el.get('data-state')}"
+            if re.search(r"empty", marker, re.IGNORECASE) or re.search(
+                    r"\b(?:empty-state|state-empty|is-empty)\b", el.get("class")):
+                out.append(el)
+        return out
+
+
+def _pending_sibling_marked(dom: _Document, surface_id: str) -> bool:
+    """True when an undelivered sibling is represented without a live href.
+
+    An unreachable surface may not be linked, but it must not vanish from the
+    shell either: a disabled affordance or an explicit text/data representation
+    keeps the destination review-visible without producing a 404.
+    """
+    for el in dom.elements:
+        if not any(surface_id in f"{name} {value}" for name, value in el.attrs.items()):
+            continue
+        if el.get("aria-disabled").lower() == "true" or "disabled" in el.attrs or "data-disabled" in el.attrs:
+            return True
+    return any(el.get(name) == surface_id for el in dom.elements
+               for name in ("data-sibling", "data-pending", "data-surface"))
 
 
 _ACTION_COLUMN_KEYS = (
@@ -288,7 +618,7 @@ LAST_COVERAGE_RESULTS: dict[str, object] = {}
 
 
 # --- Tiered evidence chain -------------------------------------------------
-# L1 = DOM/ARIA/data-state structural checks (always available, static source).
+# L1 = DOM/ARIA/data-state structural checks (always available, parsed tree).
 # L2 = computed-style checks (available only when a headless style engine is
 #      reachable). L3 = screenshot comparison (best-effort capture).
 # A missing browser, fonts, or GPU degrades the run to the reachable tier and is
@@ -682,7 +1012,7 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
         return []
 
     context = prototype_context.read_context(**texts)
-    delivered = {}
+    delivered: dict[str, str] = {}
     pages = sorted((root / "prototype/surfaces").glob("*/index.html")) + sorted(
         (root / "prototype/experiments").glob("*/**/index.html"))
     for page in pages:
@@ -692,14 +1022,15 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
         slice_name = Path(contract_path).parent.name
         if slice_name not in delivered and html.is_file():
             content = html.read_text(encoding="utf-8")
+            dom = _Document(content)
             has_surface_identity = (
-                f'data-surface="{slice_name}"' in content or
-                f'data-slice="{slice_name}"' in content or
-                f'id="{slice_name}"' in content or
-                f'class="{slice_name}"' in content or
-                f"surface-{slice_name}" in content or
+                dom.attr_equals("data-surface", slice_name) or
+                dom.attr_equals("data-slice", slice_name) or
+                dom.attr_equals("id", slice_name) or
+                dom.attr_equals("class", slice_name) or
+                dom.contains(f"surface-{slice_name}") or
                 slice_name in html.as_posix() or
-                (len(content.strip()) > 50 and any(tag in content.lower() for tag in ("<main", "<body", "<html", "<div")))
+                (len(content.strip()) > 50 and dom.tags("main", "body", "html", "div"))
             )
             if has_surface_identity and len(content.strip()) > 50:
                 delivered[slice_name] = content
@@ -726,31 +1057,17 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
         source = delivered.get(surface, "")
         if not source:
             continue
+        # A live href to an undelivered sibling is a 404 in waiting. Read the
+        # parsed anchors: an href named inside a comment or a string is not a link.
+        dom = _Document(source)
         for sibling in reconciliation["in_round"]:
             if sibling == surface or sibling in delivered:
                 continue
-            if re.search(rf"href=[\"'][^\"']*{re.escape(sibling)}[^\"']*[\"']", source):
+            if dom.links_to(sibling):
                 failures.append(f"coverage assertion: pending sibling {sibling} linked from {surface} but not delivered (render a disabled affordance instead)")
     LAST_COVERAGE_RESULTS.clear()
     LAST_COVERAGE_RESULTS.update(results)
     return failures
-
-
-def _pending_sibling_marked(source: str, surface_id: str) -> bool:
-    """True when an undelivered sibling is represented without a live href.
-
-    An unreachable surface may not be linked, but it must not vanish from the
-    shell either: a disabled affordance or an explicit text/data representation
-    keeps the destination review-visible without producing a 404.
-    """
-    for tag in re.findall(r"<[^>]+>", source):
-        if surface_id in tag and re.search(
-                r'aria-disabled\s*=\s*["\']true["\']|(?:^|\s)disabled(?:\s|>|$)|data-disabled',
-                tag, re.IGNORECASE):
-            return True
-    return bool(re.search(
-        rf'data-(?:sibling|pending|surface)\s*=\s*["\']{re.escape(surface_id)}["\']',
-        source, re.IGNORECASE))
 
 
 def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
@@ -762,24 +1079,34 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         return False
     source = html.read_text(encoding="utf-8")
     token_source = tokens.read_text(encoding="utf-8")
+    dom = _Document(source)
+    declarations = dom.declarations()
     # Fatal only: task completion, contract conformance, contrast/a11y, state
     # handling. Subjective aesthetic craft lands in `advisories` instead.
     failures: list[str] = []
     advisories: list[str] = []
 
-    # DOM and interaction assertions use semantic hooks, never domain names.
-    entities = re.findall(r"(?:data-(?:entity|contract|item)|id|class)=[\"'][^\"']+[\"']", source)
-    if len(entities) < 3 and not re.search(r"<button\b|<a\b|role=[\"\']button", source):
+    # DOM and interaction assertions read the parsed tree, never the source text:
+    # a class named in a comment or a tag quoted inside a string is not a hook.
+    inspectable = [
+        el for el in dom.elements
+        if "id" in el.attrs or "class" in el.attrs
+        or any(name.startswith("data-") for name in el.attrs)
+    ]
+    if len(inspectable) < 3 and not dom.controls():
         failures.append("DOM assertion: no inspectable semantic elements")
-    if not re.search(r"addEventListener\s*\(|\bon(?:click|keydown|submit)\s*=|onclick=", source):
+    if not dom.has_event_binding():
         failures.append("interaction assertion: no declarative or imperative event binding")
-    if not re.search(r"<button\b|<a\b[^>]*href=|role=[\"']button", source):
+    if not dom.controls():
         failures.append("interaction assertion: no reachable control")
 
     contract_file = Path(contract_path) if contract_path else None
     declared = _contract_items(contract_file)
     required_action_ids = _contract_action_ids(contract_file)
-    rendered_action_ids = set(re.findall(r'data-action=["\'](action-[a-z0-9]+(?:-[a-z0-9]+)*)["\']', source))
+    rendered_action_ids = {
+        el.get("data-action") for el in dom.with_attr("data-action")
+        if re.fullmatch(r"action-[a-z0-9]+(?:-[a-z0-9]+)*", el.get("data-action"))
+    }
     missing_actions = sorted(required_action_ids - rendered_action_ids)
     if missing_actions:
         failures.append(
@@ -789,23 +1116,27 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     missing: list[str] = []
     for item in declared:
         if isinstance(item, tuple):
-            if not any(sub in source for sub in item if sub and len(sub) > 2):
+            if not any(dom.contains(sub) for sub in item if sub and len(sub) > 2):
                 missing.append("/".join(sub for sub in item if sub))
-        elif len(item) > 2 and item not in source:
+        elif len(item) > 2 and not dom.contains(item):
             missing.append(item)
     if missing:
         failures.append("contract assertion: declared items absent from DOM: " + ", ".join(missing[:5]))
 
     # Hard floor: reject raw inline hex colors in style attributes (enforces token inheritance)
-    raw_style_hex = re.findall(r'style=["\'][^"\']*#[0-9a-fA-F]{3,8}[^"\']*["\']', source)
+    raw_style_hex = [
+        el.get("style") for el in dom.with_attr("style")
+        if re.search(r"#[0-9a-fA-F]{3,8}\b", el.get("style"))
+    ]
     if raw_style_hex:
         failures.append(f"craft assertion: raw inline hex colors in style attributes ({len(raw_style_hex)} found; use CSS custom properties / var(--...))")
 
     # Navigation integrity: every relative href must resolve inside the delivered prototype scope
     broken_nav = []
     # Only navigable anchors are checked here: stylesheet/asset links are validated by token inheritance.
-    for href in re.findall(r'<a\b[^>]*href=["\']([^"\'#][^"\']*)["\']', source, re.IGNORECASE):
-        if href.startswith(("http://", "https://", "mailto:", "data:", "javascript:")):
+    for el in dom.tags("a"):
+        href = el.get("href")
+        if not href or href.startswith(("#", "http://", "https://", "mailto:", "data:", "javascript:")):
             continue
         if not (html.parent / href).resolve().exists():
             broken_nav.append(href)
@@ -816,34 +1147,38 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         )
 
     # Accessibility floor: conditional prefers-reduced-motion when animations or transitions are present
-    has_motion = bool(re.search(r'(?:transition|animation)\s*:\s*(?!none\b)[^;}{]+', source, re.IGNORECASE))
+    has_motion = bool(re.search(r'(?:transition|animation)\s*:\s*(?!none\b)[^;}{]+', declarations, re.IGNORECASE))
     if has_motion:
-        if not re.search(r'@media\s*\(\s*prefers-reduced-motion', source, re.IGNORECASE):
+        if not re.search(r'@media\s*\(\s*prefers-reduced-motion', dom.style_text, re.IGNORECASE):
             failures.append("a11y assertion: dynamic transitions/animations declared without @media (prefers-reduced-motion: reduce) override")
 
     # Hard floor: reject rogue :root color property redeclarations in <style>
-    style_blocks = re.findall(r"<style\b[^>]*>(.*?)</style>", source, re.DOTALL | re.IGNORECASE)
-    for sb in style_blocks:
-        if re.search(r":root\s*\{[^}]*--(?:accent|bg|border|text)-[a-zA-Z0-9_-]+\s*:[^}]*\}", sb):
-            failures.append("token assertion: rogue :root color tokens declared in <style> (shadows tokens.css; must consume tokens from tokens.css)")
-            break
+    if re.search(r":root\s*\{[^}]*--(?:accent|bg|border|text)-[a-zA-Z0-9_-]+\s*:[^}]*\}", dom.style_text):
+        failures.append("token assertion: rogue :root color tokens declared in <style> (shadows tokens.css; must consume tokens from tokens.css)")
 
     # Signature Accent Discipline: enforce strict negative boundary for --accent-seal
     # var(--accent-seal) is reserved for authority seals, decisive commits, and fatal collisions;
     # it is strictly forbidden on draft, pending, secondary, ghost, or cancel affordances.
     if "--accent-seal" in token_source or "--accent-seal" in source:
-        accent_leak_patterns = [
-            r'<(?:button|a|span|div|p)\b[^>]*class=["\'][^"\']*(?:draft|pending|secondary|ghost|cancel|subtle|base|zero-borrow)[^"\']*["\'][^>]*style=["\'][^"\']*--accent-seal[^"\']*["\']',
-            r'\.[a-zA-Z0-9_-]*(?:draft|pending|secondary|ghost|cancel|subtle|base|zero-borrow)[a-zA-Z0-9_-]*[^{}]*\{[^}]*var\(--accent-seal\)',
-        ]
-        for alp in accent_leak_patterns:
-            if re.search(alp, source, re.IGNORECASE):
-                failures.append(
-                    "token-discipline assertion: Signature Accent Leak detected. "
-                    "var(--accent-seal) is strictly reserved for authoritative gate, seal imprint, or fatal collision; "
-                    "forbidden on draft, pending, secondary, ghost, cancel, or zero-borrow base elements."
-                )
-                break
+        # Inline: an element that carries both a reserved class and the accent.
+        inline_leak = any(
+            el.classes & _FORBIDDEN_ACCENT_CLASSES and "--accent-seal" in el.get("style")
+            for el in dom.elements
+        )
+        # Stylesheet: a rule whose selector names a reserved class and whose body
+        # consumes the accent. Selector and body are read from the same rule, so a
+        # forbidden class elsewhere in the sheet cannot trigger it.
+        rule_leak = any(
+            any(re.search(rf"[.\-]{re.escape(name)}(?![\w-])", selector) for name in _FORBIDDEN_ACCENT_CLASSES)
+            and "--accent-seal" in body
+            for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", dom.style_text)
+        )
+        if inline_leak or rule_leak:
+            failures.append(
+                "token-discipline assertion: Signature Accent Leak detected. "
+                "var(--accent-seal) is strictly reserved for authoritative gate, seal imprint, or fatal collision; "
+                "forbidden on draft, pending, secondary, ghost, cancel, or zero-borrow base elements."
+            )
 
     # Cognitive Budgeting & Energy Return Ledger (借贷法则门禁):
     # 1. Applicability-driven: triggers only when contract explicitly declares non-placeholder borrow zones.
@@ -855,15 +1190,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         has_concrete_ledger = bool(re.search(r"(?:high_yield_borrow_zone|High-Yield|Borrow Zone|借贷区)[^\n]*[:=]\s*(?![`*_]*(?:unspecified|none|n/a|not declared)\b)[^\n]+", contract_text, re.IGNORECASE))
         if has_ledger_decl and has_concrete_ledger:
             # Check for unauthorized rogue infinite animations in the base UI
-            has_infinite_anim = bool(re.search(r"animation\s*:\s*[^;}]*\binfinite\b", source, re.IGNORECASE))
+            has_infinite_anim = bool(re.search(r"animation\s*:\s*[^;}]*\binfinite\b", declarations, re.IGNORECASE))
             if has_infinite_anim:
                 # Infinite animations are permitted for high-yield containers, live indicators, or standard accessibility loading states
-                is_authorized_animation = bool(re.search(
-                    r'(?:class|id|data-zone)=["\'][^"\']*\b(?:high-yield|pulse|heartbeat|beacon|live-indicator|radar|spinner|loading|loader|progress)\b[^"\']*["\']|aria-busy=["\']true["\']|role=["\']progressbar["\']',
-                    source,
-                    re.IGNORECASE
-                ))
-                if not is_authorized_animation:
+                if not dom.has_authorized_animation():
                     failures.append(
                         "cognitive-budget assertion: Energy leak in zero-borrow base UI. "
                         "Continuous infinite animations are forbidden outside explicit high-yield/pulse containers or loading states; "
@@ -874,7 +1204,7 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if contract_path and Path(contract_path).is_file():
         contract_text = Path(contract_path).read_text(encoding="utf-8")
         if "Dual-Channel Ergonomics" in contract_text or "Shortcut Key" in contract_text:
-            if not re.search(r"addEventListener\s*\(\s*['\"]key(?:down|up)['\"]|\bonkey(?:down|up)\s*=", source, re.IGNORECASE):
+            if not dom.has_keyboard_binding():
                 failures.append("ergonomics assertion: declared dual-channel keyboard shortcuts not bound (missing keydown/keyup listener)")
 
         # Action Verb Lifecycle feedback closure: when commit mutations or toasts are declared
@@ -892,18 +1222,12 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             bool(verb_sec) and not bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", verb_sec, re.IGNORECASE | re.DOTALL))
         )
         if has_active_verbs:
-            has_feedback_hook = bool(re.search(
-                r'role=["\'](?:status|alert)["\']|class=["\'][^"\']*\b(?:toast|notification|feedback|alert-box|status-message|snackbar)\b[^"\']*["\']|id=["\'][^"\']*(?:toast|feedback|status-msg)[^"\']*["\']|data-(?:feedback|toast)=',
-                source,
-                re.IGNORECASE,
-            ))
-            if not has_feedback_hook:
+            if not dom.has_feedback_container():
                 failures.append("action-lifecycle assertion: Action Verb Lifecycle declared in contract but DOM lacks visible feedback container (role='status|alert', class='toast|feedback', or id='toast')")
 
         # Touch-first gesture detents check: when touch-first ergonomics are declared in contract
         if "Touch-First Ergonomics" in contract_text or "Gesture Detents" in contract_text:
-            has_touch = bool(re.search(r"addEventListener\s*\(\s*['\"](?:touch|pointer|click)['\"]|\b(?:ontouchstart|ontouchend|onclick)\s*=", source, re.IGNORECASE))
-            if not has_touch:
+            if not dom.has_touch_binding():
                 failures.append("touch ergonomics assertion: declared touch-first gestures or tap detents not bound (missing touch/pointer/click handler)")
 
         # Dynamic state machine check: when multi-state or Break Protocol stress checkpoints are declared
@@ -920,20 +1244,15 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             bool(break_sec) and not bool(re.search(r"(?:The Break Protocol|Stress Checkpoints).*?(?:N/A|Not Applicable|无需破坏压测|不适用)", break_sec, re.IGNORECASE | re.DOTALL))
         )
         if has_active_break:
-            has_state_hook = bool(re.search(
-                r"hashchange|location\.hash|data-state|state-[a-zA-Z0-9_-]+|class=[\"'][^\"']*(?:empty|loading|view-mode|state-)[^\"']*[\"']|id=[\"'][^\"']*(?:empty|loading|view-mode)[^\"']*[\"']",
-                source,
-                re.IGNORECASE,
-            ))
-            if not has_state_hook:
+            if not dom.has_state_hook():
                 failures.append("state-machine assertion: stress checkpoints declared but no state-switching hook detected (use hashchange / location.hash / data-state / class empty|loading|view-mode)")
-            if not re.search(r"text-overflow\s*:\s*ellipsis|overflow(?:-[xy])?\s*:\s*(?:hidden|auto|scroll)|break-word|break-all|truncate|clamp\(|overflow-wrap\s*:\s*(?:anywhere|break-word)|word-break\s*:\s*break-all", source, re.IGNORECASE):
+            if not re.search(r"text-overflow\s*:\s*ellipsis|overflow(?:-[xy])?\s*:\s*(?:hidden|auto|scroll)|break-word|break-all|truncate|clamp\(|overflow-wrap\s*:\s*(?:anywhere|break-word)|word-break\s*:\s*break-all", declarations, re.IGNORECASE):
                 failures.append("break-protocol assertion: missing string overflow containment (use text-overflow: ellipsis, overflow containment, truncate, or word-break: break-all)")
 
             # Actionable empty-state floor: empty-state presentation surface must provide an actionable trigger (button or link bait)
-            empty_containers = re.findall(r'(<(?:div|section|aside|main)\b[^>]*(?:data-(?:for|state)=[\'"][^\'"]*empty[^\'"]*[\'"]|class=[\'"][^\'"]*\b(?:empty-state|state-empty|is-empty)\b[^\'"]*[\'"])[^>]*>.*?</(?:div|section|aside|main)>)', source, re.DOTALL | re.IGNORECASE)
-            for ec in empty_containers:
-                if not re.search(r'<button\b|<a\b[^>]*href=|role=[\'"]button[\'"]', ec, re.IGNORECASE):
+            for container in dom.empty_state_containers():
+                reachable = [el for el in container.descendants() if el in dom.controls()]
+                if not reachable:
                     failures.append("contextual agency assertion: empty state container lacks actionable trigger (<button> or <a href>)")
                     break
 
@@ -941,22 +1260,20 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         if "Zero Naked Metrics" in contract_text or "Micro Sparklines" in contract_text or "sparkline" in contract_text.lower():
             # Domain Context Awareness: Narrative/Editorial literature surfaces measure prose by words/reading time, NOT telemetry graphs
             is_narrative = bool(re.search(r"editorial|reading|essay|narrative|阅读|长文|文学", contract_text, re.IGNORECASE))
-            has_narrative_units = bool(re.search(r"\b\d+[\d,.]*\s*(?:字|词|min|分钟|words?|mins?|章|节|段|篇)\b", source, re.IGNORECASE))
-            has_svg = bool(re.search(r"<svg\b[^>]*>(?:.*?<polyline|.*?<path|.*?<rect|.*?<line|.*?<circle)", source, re.DOTALL | re.IGNORECASE))
-            has_html5_data = bool(re.search(r"<(?:meter|progress|data|canvas)\b", source, re.IGNORECASE))
-            has_context_modifier = bool(re.search(r'class=["\'][^"\']*(?:unit|baseline|sparkline|threshold|reference|trend|delta|badge|status)[^"\']*["\']|data-(?:unit|baseline|threshold|trend|delta)=', source, re.IGNORECASE))
-            has_metric_with_unit = bool(re.search(r'class=["\'][^"\']*(?:stat|metric|kpi|value|num|count)[^"\']*["\'][^>]*>\s*[\d.,]+\s*(?:[a-zA-Z%/$€¥°]|/[a-zA-Z]+)', source, re.IGNORECASE))
-            if not (has_svg or has_html5_data or has_context_modifier or has_metric_with_unit or (is_narrative and has_narrative_units)):
+            has_narrative_units = bool(re.search(r"\b\d+[\d,.]*\s*(?:字|词|min|分钟|words?|mins?|章|节|段|篇)\b", dom.text, re.IGNORECASE))
+            has_html5_data = bool(dom.tags("meter", "progress", "data", "canvas"))
+            if not (dom.has_charted_metric() or has_html5_data or dom.has_context_modifier()
+                    or dom.has_metric_with_unit() or (is_narrative and has_narrative_units)):
                 failures.append("data-craft assertion: Zero Naked Metrics violation (metrics must carry reference baseline, unit context, delta trend, visual sparkline/meter/canvas, or authentic narrative units)")
 
         # Additional press-physics recipes remain advisory; the scoped visible
         # :active response is enforced by the rendered craft-floor probe above.
         if "Cognitive Budgeting" in contract_text or "Decisive Exchange 3-Frame" in contract_text or "Tactile Detents" in contract_text:
-            has_active = bool(re.search(r":active\s*\{[^}]*(?:transform|scale|translate|filter|box-shadow|inset|opacity|background|border|color|duration|transition|motion|ease|cubic|rgb)", source, re.IGNORECASE))
-            has_tailwind_active = bool(re.search(r"active:(?:scale|translate|bg|shadow|opacity)-", source))
-            has_focus_visible = bool(re.search(r":focus-visible\s*\{", source, re.IGNORECASE))
-            has_transition = bool(re.search(r"transition\s*:\s*[^;]+(?:transform|all|ease|cubic|duration|opacity|color)", source, re.IGNORECASE))
-            has_pointer_mutation = bool(re.search(r"addEventListener\s*\(\s*['\"](?:pointerdown|touchstart|mousedown)['\"].*?(?:classList|style|scale|active|transform)", source, re.DOTALL | re.IGNORECASE))
+            has_active = bool(re.search(r":active\s*\{[^}]*(?:transform|scale|translate|filter|box-shadow|inset|opacity|background|border|color|duration|transition|motion|ease|cubic|rgb)", declarations, re.IGNORECASE))
+            has_tailwind_active = bool(re.search(r"active:(?:scale|translate|bg|shadow|opacity)-", declarations))
+            has_focus_visible = bool(re.search(r":focus-visible\s*\{", declarations, re.IGNORECASE))
+            has_transition = bool(re.search(r"transition\s*:\s*[^;]+(?:transform|all|ease|cubic|duration|opacity|color)", declarations, re.IGNORECASE))
+            has_pointer_mutation = bool(re.search(r"addEventListener\s*\(\s*['\"](?:pointerdown|touchstart|mousedown)['\"].*?(?:classList|style|scale|active|transform)", dom.script_text, re.DOTALL | re.IGNORECASE))
             if not (has_active or has_tailwind_active) and not (has_focus_visible and has_transition) and not has_pointer_mutation:
                 advisories.append("craft advisory (non-blocking): interactive controls use no detected press/motion response; consider :active physics, :focus-visible transition, or pointer state mutation")
 
@@ -997,18 +1314,18 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 for sid in siblings:
                     delivered_sibling = prototype_root.name == "prototype" and any(
                         prototype_root.rglob(f"{sid}/**/index.html"))
-                    has_link = re.search(rf"href=[\"'][^\"']*{re.escape(sid)}[^\"']*[\"']", source)
+                    has_link = dom.links_to(sid)
                     if delivered_sibling and not has_link:
                         failures.append(f"topology assertion: delivered sibling {sid} is not reachable by navigation link from {current_id}")
                     if not delivered_sibling and has_link:
                         failures.append(f"topology assertion: undelivered sibling {sid} linked by live href from {current_id} (404); render a disabled affordance instead")
-                    if not delivered_sibling and not _pending_sibling_marked(source, sid):
+                    if not delivered_sibling and not _pending_sibling_marked(dom, sid):
                         failures.append(f"topology assertion: undelivered sibling {sid} is neither linked nor represented as a disabled affordance from {current_id}")
 
     failures.extend(coverage_failures(html, contract_path=contract_path))
 
     if check_stale:
-        if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", source, re.IGNORECASE):
+        if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", dom.text, re.IGNORECASE):
             failures.append("stale-template assertion: unconsidered placeholder content detected")
 
     states = _evidence_state(html)
