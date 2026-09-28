@@ -128,6 +128,37 @@ def test_unrecognized_model_error_is_not_auto_continued(tmp_path, monkeypatch):
     assert len(calls) == 1
 
 
+def test_genuine_turn_cap_auto_continues(tmp_path, monkeypatch):
+    case = bl.load_case("incident-commander")
+    calls = []
+
+    def mock_run(*args, **kwargs):
+        calls.append(kwargs)
+        if len(calls) == 1:
+            return {
+                "status": "max_turns", "session_id": "session_cap", "elapsed_s": 20,
+                "cost_usd": 1.0, "num_turns": 61, "result": "", "is_error": True,
+                "errors": ["Reached maximum number of turns (60)"],
+                "models": ["flash"],
+                "stderr": '[claude-code:unrecognized_model] {"model":"flash"}',
+            }
+        (tmp_path / "prototype" / "experiments" / "anchor").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "prototype" / "experiments" / "anchor" / "index.html").write_text("<html></html>")
+        return {
+            "status": "completed", "session_id": "session_cap", "elapsed_s": 10,
+            "cost_usd": 1.5, "num_turns": 15, "result": "Done with prototype",
+            "is_error": False, "models": ["flash"], "stderr": "",
+        }
+
+    monkeypatch.setattr(bl, "run_claude", mock_run)
+    result = run_claude_session.run_session(
+        case, "candidate_skill", tmp_path, model="flash", max_turns=4,
+        timeout_s=60, budget_usd=2.0, session_budget_usd=10.0,
+    )
+    assert len(calls) == 2
+    assert calls[1]["resume"] == "session_cap"
+
+
 def test_task_outcomes_are_evidence_bound():
     task = {"id": "t", "required_outcomes": [
         {"id": "text", "check": "text_present", "pattern": "worker"},

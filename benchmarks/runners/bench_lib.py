@@ -422,12 +422,23 @@ def run_claude(prompt: str, cwd: pathlib.Path, *, session_id: str | None = None,
         "is_error": payload.get("is_error"),
         "usage": payload.get("usage") or {},
         "models": sorted((payload.get("modelUsage") or {}).keys()),
-        "stderr": (proc.stderr or "")[:2000],
+        "stderr": clean_stderr(proc.stderr)[:2000],
         "subtype": payload.get("subtype"),
         "terminal_reason": payload.get("terminal_reason"),
         "permission_denials": payload.get("permission_denials"),
         "errors": payload.get("errors"),
     }
+
+
+def clean_stderr(stderr: str | None) -> str:
+    """Strip harmless SDK diagnostic lines so genuine runtime errors stay visible."""
+    if not stderr:
+        return ""
+    lines = [
+        line for line in stderr.splitlines()
+        if not line.strip().startswith("[claude-code:unrecognized_model]")
+    ]
+    return "\n".join(lines).strip()
 
 
 def parse_result_payload(stdout: str) -> dict:

@@ -165,7 +165,7 @@ def main() -> int:
     parser.add_argument("--cases", default=None, help="comma-separated case ids (overrides --suite)")
     parser.add_argument("--variants", default="stable_skill,candidate_skill")
     parser.add_argument("--repeats", type=int, default=1)
-    parser.add_argument("--model", default=None)
+    parser.add_argument("--model", default="flash", help="Claude model name (default: flash)")
     parser.add_argument("--max-turns", type=int, default=None)
     parser.add_argument("--timeout", type=int, default=None)
     parser.add_argument("--budget-usd", type=float, default=None)

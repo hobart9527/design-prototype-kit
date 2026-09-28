@@ -253,7 +253,7 @@ def main() -> int:
     parser.add_argument("--variant", required=True, choices=list(bl.VARIANTS))
     parser.add_argument("--repeat", type=int, default=1)
     parser.add_argument("--matrix-dir", required=True)
-    parser.add_argument("--model", default=None)
+    parser.add_argument("--model", default="flash")
     parser.add_argument("--max-turns", type=int, default=None)
     parser.add_argument("--timeout", type=int, default=None)
     parser.add_argument("--budget-usd", type=float, default=None)

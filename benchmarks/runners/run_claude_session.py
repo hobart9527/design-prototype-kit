@@ -84,7 +84,16 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
         )
 
         if out["status"] == "max_turns":
-            if not out.get("result") and out.get("is_error"):
+            errors = out.get("errors") or []
+            num_turns = out.get("num_turns") or 0
+            is_genuine_turn_cap = (
+                num_turns > 1
+                and (
+                    not errors
+                    or all("maximum number of turns" in str(e).lower() for e in errors)
+                )
+            )
+            if not is_genuine_turn_cap and (not out.get("result") and out.get("is_error")):
                 status, note = "BLOCKED", f"CLI returned an error envelope: {turn['stderr']}"
                 break
             # The CLI caps agent turns per call. Resume the same session with a
