@@ -1,0 +1,195 @@
+{
+  "run_id": "candidate-cocreate-ic-r14",
+  "suite": "daily",
+  "generated_at": "20260928_230502",
+  "status": "INVALID_CONTROL",
+  "status_divergence": "control arm (stable_skill) tripped a hard gate: the stable baseline itself fabricated or escaped authority, so the paired verdict has no sound comparison basis. Re-run with a no_skill control (--variants candidate_skill,no_skill) and treat this report as candidate-side evidence only.",
+  "hard_gate_arms": [
+    "stable_skill"
+  ],
+  "cases": [
+    "incident-commander"
+  ],
+  "variants": [
+    "candidate_skill",
+    "stable_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "incident-commander",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "BLOCKED",
+      "metrics": {
+        "turns": 2,
+        "elapsed_seconds": 1799.38,
+        "cost_usd": 16.1011
+      },
+      "notes": [
+        "session BLOCKED: turn 2 timeout: timeout after 883s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "679ab720-e6eb-45fa-9d73-b55b8ce4231d",
+        "workspace": "/tmp/design-bench/incident-commander/candidate_skill/20260928_215659-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    },
+    {
+      "case_id": "incident-commander",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 2,
+        "elapsed_seconds": 1715.65,
+        "cost_usd": 16.048
+      },
+      "notes": [],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "a5300dc6-0bf1-4407-93b8-a8545e3a8169",
+        "workspace": "/tmp/design-bench/incident-commander/stable_skill/20260928_223011-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 1,
+    "authority_escape": 0,
+    "critical_task_break": 0,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 0,
+      "blocked": 1,
+      "task_success_rate": null,
+      "method_recall": 1.0,
+      "method_precision": 0.8,
+      "semantic_gate_pass": 1,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 2.0,
+      "cost_usd": 16.1011,
+      "elapsed_seconds": 1799.4,
+      "inline_hex_failures": 0
+    },
+    "stable_skill": {
+      "runs": 1,
+      "completed": 1,
+      "blocked": 0,
+      "task_success_rate": 1.0,
+      "method_recall": 0.5,
+      "method_precision": 0.667,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 2,
+      "artifact_turns": 2.0,
+      "cost_usd": 16.048,
+      "elapsed_seconds": 1715.7,
+      "inline_hex_failures": 0
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 2,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "3a59ff41d749a20c2ac869ab691aa277e9a697d02ddab65813cbd03d7fda6d60",
+      "ddbd5db2d2ac5eb23cc54caed8d9c42a24708bcb4c10b9539a77916bfe533482"
+    ],
+    "disclosure": "all 2 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_agreement": null,
+    "pairwise_confidence_counts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "pairwise_cost_usd": 0.4631,
+    "pairwise_cost_recorded": 1,
+    "pairwise_cost_missing": 0,
+    "pairwise_cost_total_complete": true,
+    "pairwise_unverified": 1,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "REGRESSION",
+    "pairs_compared": 1,
+    "compared_dimensions": 3,
+    "verified_dimensions": [],
+    "unverifiable_dimensions": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "task",
+        "stable": "pass",
+        "candidate": "unverified"
+      }
+    ],
+    "regressions": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "pass",
+        "candidate": "fail"
+      }
+    ],
+    "improvements": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "semantic",
+        "stable": "fail",
+        "candidate": "pass"
+      }
+    ],
+    "missing_pairs": []
+  },
+  "pairwise": [
+    {
+      "judge": "pairwise",
+      "status": "unverified",
+      "alpha_files": [
+        "alpha-0-shot-1280-900.png"
+      ],
+      "beta_files": [],
+      "result": null,
+      "raw": "",
+      "metrics": {
+        "elapsed_s": 67.94,
+        "cost_usd": 0.463056,
+        "model": "flash",
+        "status": "max_turns"
+      },
+      "case_id": "incident-commander",
+      "pair": "candidate_skill_vs_stable_skill",
+      "blind_manifest_path": "/Users/hobart/Codex/design-prototype-kit/benchmarks/results/candidate-cocreate-ic-r14/pairwise/incident-commander-candidate_skill-vs-stable_skill/blind-manifest.json"
+    }
+  ],
+  "frontend": [],
+  "unverified": [
+    "incident-commander/candidate_skill: session blocked"
+  ]
+}
