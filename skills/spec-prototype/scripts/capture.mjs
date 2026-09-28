@@ -98,6 +98,7 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
     const failures = [];
     const runtimeErrors = [];
     const viewportMetrics = {};
+    const stateConfirmations = {};
 
     const tasks = [];
     for (const state of states) {
@@ -115,6 +116,21 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
         const page = await browser.newPage({ viewport: dim });
         page.on("pageerror", (err) => runtimeErrors.push(`[${prefix}] ${err.message}`));
         await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
+        const stateConfirmation = await page.evaluate((expectedState) => {
+          const declared = document.body?.dataset.state || document.documentElement.dataset.state || "";
+          const hashState = new URLSearchParams(location.hash.replace(/^#/, "")).get("state") || "";
+          return {
+            expected: expectedState,
+            observed: declared || hashState,
+            confirmed: expectedState === "default"
+              ? !declared || declared === "default"
+              : declared === expectedState || hashState === expectedState,
+          };
+        }, state);
+        stateConfirmations[prefix] = stateConfirmation;
+        if (!stateConfirmation.confirmed) {
+          throw new Error(`state_unconfirmed: expected ${state}, observed ${stateConfirmation.observed || "none"}`);
+        }
         // Viewport containment evidence: record horizontal overflow at capture
         // time so a scrollWidth > clientWidth break surfaces in the same pass
         // as the screenshot instead of only at downstream task judging.
@@ -174,8 +190,18 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
       viewports: vps,
       captures: captured,
       viewport_metrics: viewportMetrics,
+      state_confirmations: stateConfirmations,
       runtime_errors: runtimeErrors,
-      failures,
+      failures: [
+        ...failures,
+        ...Object.entries(stateConfirmations)
+          .filter(([, confirmation]) => !confirmation.confirmed)
+          .map(([prefix, confirmation]) => ({
+            state: confirmation.expected,
+            viewport: prefix.split("-").pop(),
+            error: `state_unconfirmed: expected ${confirmation.expected}, observed ${confirmation.observed || "none"}`,
+          })),
+      ],
     };
   } catch {
     return null;
@@ -243,11 +269,14 @@ async function captureWithCli(browserBin, baseUrl, outputDir, viewports, states,
       Object.keys(captured).map((prefix) => [prefix, { dom_metrics: "unmeasured_cli_runner" }])
     );
     return {
-      status: "captured",
+      status: states.length > 1 ? "capture_failed" : "captured",
       runner: "system-browser-cli-concurrent",
       viewports: vps,
       captures: captured,
       viewport_metrics: viewportMetrics,
+      unconfirmed_states: states.length > 1
+        ? states.filter((state) => state !== "default").map((state) => `${state}: state confirmation unavailable in CLI runner`)
+        : [],
     };
   }
   return null;
@@ -298,10 +327,17 @@ export function buildCaptureMetadata(result, options = {}) {
   const touchFindings = Object.entries(viewportMetrics)
     .filter(([, m]) => m && typeof m.small_touch_target_count === "number" && m.small_touch_target_count > 0)
     .map(([prefix, m]) => `${prefix}: ${m.small_touch_target_count} control(s) under 44px min target`);
+  const stateConfirmations = capture.state_confirmations || {};
+  const unconfirmedStates = [
+    ...Object.entries(stateConfirmations)
+      .filter(([, confirmation]) => !confirmation || confirmation.confirmed !== true)
+      .map(([prefix, confirmation]) => `${prefix}: expected ${confirmation?.expected || "unknown"}, observed ${confirmation?.observed || "none"}`),
+    ...(capture.unconfirmed_states || []),
+  ];
   const screenshotCount = Object.keys(captures).length;
   const browserExecution = BROWSER_EXECUTION_BY_RUNNER[capture.runner] || "unavailable";
   const status = typeof capture.status === "string" ? capture.status : "browser_unavailable";
-  const captured = status === "captured" && screenshotCount > 0;
+  const captured = status === "captured" && screenshotCount > 0 && unconfirmedStates.length === 0;
 
   let evidenceKind;
   if (screenshotCount === 0) evidenceKind = "none";
@@ -315,6 +351,11 @@ export function buildCaptureMetadata(result, options = {}) {
     `source:${sourceRevision}`,
     `deps:${dependencySignature}`,
   ].join("|");
+
+  const evidenceFailures = [...failures, ...unconfirmedStates.map((message) => ({ state: "unconfirmed", viewport: null, error: message }))];
+  const evidenceRuntimeErrors = unconfirmedStates.length > 0
+    ? [...runtimeErrors, ...unconfirmedStates.map((message) => `state_confirmation: ${message}`)]
+    : runtimeErrors;
 
   return {
     schema: "loom.capture-metadata.v1",
@@ -331,8 +372,10 @@ export function buildCaptureMetadata(result, options = {}) {
       kind: evidenceKind,
       screenshots: screenshotCount,
       paths: Object.values(captures),
-      runtime_errors: runtimeErrors,
-      failures,
+      runtime_errors: evidenceRuntimeErrors,
+      failures: evidenceFailures,
+      unconfirmed_states: unconfirmedStates,
+      state_confirmations: stateConfirmations,
       viewport_metrics: viewportMetrics,
       horizontal_overflow: overflowFindings,
       small_touch_targets: touchFindings,

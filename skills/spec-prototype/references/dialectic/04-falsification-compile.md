@@ -37,10 +37,19 @@ Legacy compatibility only: `materialize_contracts.py --slice <slice-id> --phase 
 still emits the multi-file `c1.md` / `r1.md` set for backwards-compatible readers;
 it is not the canonical compilation path.
 
-## 5. Canonical Discussion Contract Schema (规范契约与 Google Design.md 标准)
+## 5. Design Brief Format (`google-design-md/v2`)
 
-Preferred Standard: Follow the Google Design.md Architecture defined in [`../spec-md-contract.md`](../spec-md-contract.md).
-Using standard YAML Frontmatter and semantic sections completely eliminates compiler reverse-engineering:
+For formal slices, use the concise parser-compatible format documented in
+[`../spec-md-contract.md`](../spec-md-contract.md). It is Skill-owned and inspired by
+Google Design.md; it is not an official Google schema and does not prescribe Material
+Design. Use YAML frontmatter only for stable compiler metadata, then author the
+product-specific design in semantic Markdown sections. Include only applicable
+contract details; never populate speculative fields for checklist completeness.
+
+The compiler consumes the existing semantic headings and field forms. If a format
+change is needed, update the compiler and its tests rather than reverse-engineering
+it with ad-hoc scripts.
+
 
 ```markdown
 ---

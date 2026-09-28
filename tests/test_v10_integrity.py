@@ -615,10 +615,10 @@ def test_stage1_sealed_provisional_and_stage5_frozen_approved_terminology():
     stage1_text = (REPO / "skills/spec-prototype/references/stages/stage-1-frame.md").read_text(encoding="utf-8")
 
     # SKILL.md
-    assert "Sealed Provisional Spec Artifacts" in skill_text
-    assert "authority status: sealed provisional" in skill_text
-    assert "Draft → Sealed Provisional → Validated → Frozen Approved" in skill_text
-    assert "Silent Packaging & Frozen Approved Delivery" in skill_text
+    assert "Formal prototypes still require the applicable sealed provisional Spec before code." in skill_text
+    assert "Draft → Sealed Provisional → Validated → Frozen Approved" in kernel_text
+    assert "authority lifecycle" in skill_text
+    assert "Silent Governance & Frozen Approved Delivery" in stage5_text
 
     # core-kernel.md (active authority-lifecycle owner)
     assert "Draft → Sealed Provisional → Validated → Frozen Approved" in kernel_text

@@ -1,123 +1,74 @@
-# Stage 4: Holistic Review & In-Place Tuning (验 - 鉴)
+# Stage 4: Look & Refine
 
-Answer one question: *"Does the delivered prototype close every floor with
-transparent evidence?"* Stage 4 runs decoupled audits across engineering,
-interaction, visual, and human dimensions.
+Answer: *Does the design solve the intended task with distinctive, coherent craft?*
+Review the rendered experience first. Checks serve design judgment; they are not the
+purpose of this stage.
 
-## Unified Review Portal
+## Focused design review
 
-Run `python3 skills/spec-prototype/scripts/generate_review_portal.py` to produce a
-panoramic multi-viewport review board (`review-portal.html`) embedding every page
-iframe, viewport switching over the runtime-derived
-`inspection_contract.mandatory_viewports`, and the authored interaction state
-triggers (`inspection_contract.mandatory_states`). The viewport set is never a
-hardcoded list.
+1. Inspect actual rendered views at the viewports and states that can change the
+   judgment. Look first at hierarchy, composition, density, typography, content
+   realism, color, spacing, material, motion, and product-specific expression.
+2. Attempt the central task from visible cues. Confirm the meaningful result and one
+   applicable interruption, recovery, or boundary case. Screenshots prove appearance,
+   not interaction.
+3. Check only applicable non-negotiable floors: source fidelity; working declared
+   actions and recovery; WCAG/accessibility; visible `:active` feedback on commit
+   controls; concentric nested radii (`R_inner = max(0, R_outer - P`);
+   `font-variant-numeric: tabular-nums` for aligned or changing values; and 44×44px
+   touch targets in touch contexts. Reduced-motion behavior applies when motion is used.
+4. Preserve the strongest design relationship. Report only consequential findings,
+   normally no more than three. State location/state, user impact, owning layer, and
+   smallest useful intervention. Separate fact, design judgment, preference, and
+   missing evidence; do not invent problems to fill a quota.
+5. Refine at the owning layer, then inspect the affected view or task again. One
+   focused pass is normally sufficient. Continue only when the user changes scope or
+   new evidence exposes a new cause.
+
+## Capture and evidence
+
+Use `capture.mjs` for rendered evidence when available, with only the relevant
+viewports and declared states. A state is captured only if its trigger was applied and
+the page confirmed it; filenames alone are not proof. If browser startup, state
+confirmation, or interaction tracing fails, record the scope as `unverified`, not
+passed. Inspect the actual screenshots before making visual claims. A static check
+supports a review; it does not establish visual quality.
+
+## Critic and repair
+
+Dispatch `spec-prototype-critic` for a consequential new direction, major interaction,
+or connected prototype when independent review can change the decision. Keep the
+request focused: original brief, design question, target revision, relevant captures,
+and the requested judgment. Ask for the strongest relationship to preserve and the
+few highest-impact findings—not a compliance inventory.
+
+When a finding warrants code repair, dispatch a **fresh bounded Builder Agent**
+synchronously with the exact repair scope and decisions to preserve. Never use
+`SendMessage` to revive an exited Agent; never use `ScheduleWakeup` or `Monitor` with
+filesystem polling to wait for Builder work. Allow one focused repair pass. If it
+cannot complete within the available turn, record the review as `PARTIAL` in
+`prototype/discussion.md`, name the open finding and unverified scope, and stop; do not
+burn the remaining wall clock waiting.
+
+## Break Protocol
+
+Choose only the stress cases material to the product and current task: e.g. long
+content, no data, narrow layout, rapid activation, interruption, or degraded service.
+Use real state triggers. A copied/default screenshot cannot establish that a stress
+case rendered. Do not simulate new product capability merely to make a test pass.
 
 ## Decisive Exchange 3-Frame Inspection
 
-Audit the three-frame continuous evolution of core decisive interactions:
+For a consequential action, inspect intent (the person understands the action),
+commit (the action has perceptible feedback), and settled result (the changed state
+and available recovery are clear). Apply only where this sequence fits the action.
 
-- `Intent`: clear intent perception on hover or focus activation.
-- `Detent`: pronounced physical damping, elastic press, or instantaneous feedback on trigger.
-- `Settled`: explicit state settlement, focus restoration, and steady finish.
+## Completion Receipt Discipline
 
-## Decoupled Four-Dimensional Evidence
+Use the Builder's actual receipt and verifier output; do not rerun identical work just
+to reconfirm it. Record what was observed, what changed, what could not be checked,
+and whether the design question is answered. `PARTIAL` with honest limitations is a
+valid end state. A timeout or a false verification claim is not.
 
-### Track A: Engineering DOM & Token Floor
-Run `verify_prototype_quality.py` to confirm 100% token inheritance, no inline
-hex, zero destructive overflow, and viewport fold integrity.
-
-> **Completion Receipt Discipline (完成终态与修复预算)**:
-> The Builder's delivery receipt is authoritative once it reports `STATIC: pass`
-> with capture paths — do NOT re-run the same verify in the main session just to
-> confirm a receipt that already names a passing verdict. If L1 verify fails:
-> allow AT MOST ONE targeted repair round (fix the exact failed assertion, then
-> re-verify once). If it still fails, record the outcome in
-> `prototype/discussion.md`'s Resume block as `Stage 4: PARTIAL — <findings>`
-> and END the session normally. A session must never run out the wall clock in
-> an open-ended self-repair loop: a sealed PARTIAL state with honest findings is
-> a valid terminal state; a timeout is not.
-
-### Track B: Interaction & Stress Floor (The Break Protocol)
-Inject destructive limit tests: extreme long-string truncation, zero state
-(first-use guidance), and extreme-value scroll containment. Walk the Reachable-
-Control Closure: every visible key action (cancel, close, retry, reset) must be
-usable; no dead controls.
-
-### Track C: Renderer Capture Status
-Capture real render viewports via `capture.mjs`. Keep evidence and approval
-decoupled: `renderer: captured` never automatically equals `visual: verified`.
-
-> **Visual Inspection Token Hygiene (视觉审查 Token 节制)**:
-> Automated static verify (`verify_prototype_quality.py`) is primary and non-negotiable.
-> NEVER use the `Read` tool to batch-read multiple full-resolution PNG screenshots into the LLM context.
-> Multiple base64 images cause immediate context bloat (15k-25k tokens per image) and budget exhaustion.
-> If a visual sanity check is necessary, inspect AT MOST 1 key screenshot (e.g. the 390px mobile view or the core hero state).
-
-### Track D: Ergonomic & Human Verification
-- *Dual-Channel Affordance (Floor)*: every shortcut or gesture has a corresponding visible GUI control.
-- *Zero Metaphor Contamination (Floor)*: core entities use real business vocabulary; skeuomorphic metaphor never takes over.
-- *Task-Fit Craft Heuristics (advisory)*: choose the probe the task implies, not the audience label — a 5-second recognition test where the person must read state at a glance, a somatic walk-through where direct touch handling carries the task. Report misses as craft findings, not floor failures.
-- *Human Gate & Delegation-Aware Protocol*: when the user has granted full design delegation (`delegated`) or pre-agreed acceptance criteria, proceed automatically on test assertions and captured evidence. Pause only for irreversible divergence, a serious experience regression (floor failure), or a genuinely new business fork.
-
-### Critic Dispatch Discipline (Critic 必达)
-When the prototype is captured and verify is pass (or sealed `PARTIAL`), dispatch
-`spec-prototype-critic` in the SAME turn — do not defer it behind further
-tuning. A session that ends with a captured prototype but no critic judgment
-has not completed Stage 4; record `Stage 4: PARTIAL — critic not dispatched` in
-the Resume block if the budget truly cannot cover it. In automated sessions,
-reserve roughly one per-call budget ($8) for the critic before spending on
-cosmetic re-tuning: independent review closes the evidence loop; a prettier
-screenshot without review does not.
-
-All floor definitions live in
-[`../03-verification/quality-floor.md`](../03-verification/quality-floor.md);
-this module cites them and never copies floor rules.
-
-## Controlled Feedback Absorption & Targeted Refinement Loop
-
-- **Zero Full-Wipeout Rule**: a Critic finding never triggers indiscriminate
-  global rebuild. Locate the defect precisely to its Pillar and Artifact, and
-  preserve unaffected decisions.
-- **Targeted Refinement Contract**: the Critic must emit an explicit repair
-  boundary:
-
-  ```yaml
-  finding:
-    pillar: Attention | Interaction | Expression | Resilience
-    layer: visual_hierarchy | visual_composition | typography | state_transition
-    scope: screen.slice_id.component_target
-    severity: major | minor | preference
-    classification: VIOLATION | DEFECT | DESIGN JUDGMENT
-  action: targeted_repair
-  return_to: Stage 2 (probe) | Stage 3 (skeleton) | Stage 4 (tuning)
-  invalidate:
-    - visual_hierarchy
-  preserve:
-    - object_model
-    - topology
-    - state_matrix
-    - token_bindings
-  ```
-
-- **Surgical In-Place Patching**:
-  - Global visual and rhythm feedback flows back to
-    `prototype/discussion.md` (the single decision authority) and is recompiled
-    through `compile_tokens.py` into `prototype/shared/tokens.css`; island
-    overrides are forbidden.
-  - Page-local structural or micro-interaction defects are fixed directly in the
-    owning HTML slice.
-  - After repair, rerun automated verification and multi-viewport review until
-    every floor closes.
-
-## Independent Critic Checkpoint
-
-The Critic recommends and identifies the owning decision; it does not approve.
-Apply feedback to the smallest owner, preserve unaffected decisions, and rerun
-affected checks only.
-
-## Exit
-
-Legal exit is a validated contract set plus an audit report or patched slice
-(`review-only`). Proceed to [Stage 5](stage-5-freeze.md) only when floors and
-evidence pass.
+Stage 5 freeze, manifests, and export are optional handoff mechanics, not a design
+review gate. Run them only when the user requested a frozen or downstream handoff.

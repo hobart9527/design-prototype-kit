@@ -106,6 +106,30 @@ def test_partial_capture_is_screenshot_only_not_rendered():
     assert meta["evidence"]["failures"]
 
 
+def test_unconfirmed_state_is_not_rendered_capture_evidence():
+    result = stub_result(state_confirmations={
+        "empty-390": {"expected": "empty", "observed": "default", "confirmed": False}
+    })
+    meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {"result": result, "options": {}})
+    assert meta["evidence"]["kind"] == "screenshot-only"
+    assert meta["evidence"]["unconfirmed_states"] == [
+        "empty-390: expected empty, observed default"
+    ]
+    assert meta["validation"]["claim"] == "capture_failed"
+
+
+def test_cli_multi_state_capture_is_unconfirmed():
+    result = stub_result(
+        runner="system-browser-cli-concurrent",
+        unconfirmed_states=["empty: state confirmation unavailable in CLI runner"],
+    )
+    meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {"result": result, "options": {}})
+    assert meta["evidence"]["kind"] == "screenshot-only"
+    assert meta["evidence"]["unconfirmed_states"] == [
+        "empty: state confirmation unavailable in CLI runner"
+    ]
+
+
 def test_capture_failure_stays_explicit_and_carries_no_screenshots():
     payload = {"result": {"status": "browser_unavailable"}, "options": {"runtime": "none"}}
     meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", payload)

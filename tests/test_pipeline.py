@@ -132,19 +132,31 @@ def test_execution_boundary_freeze_rejects_foreign_root(tmp_path: Path):
 
 def test_canonical_design_references_and_floors():
     stage1_text = (SKILL / "references/stages/stage-1-frame.md").read_text(encoding="utf-8")
-    assert "OOUX Cardinality-to-Layout Anchor" in stage1_text
-    assert "Material Non-transfer Boundaries" in stage1_text
-    assert "Reference Benchmarks" in stage1_text
-    assert "Action Verb Lifecycle" in stage1_text
-    assert "Cognitive Budgeting" in stage1_text
-    assert "5-Dial Style Register" in stage1_text
+    assert "smallest useful design brief" in stage1_text
+    assert "Five Axes are optional" in stage1_text
+    assert "## Required parser anchors" in stage1_text
+    assert "google-design-md/v2" in stage1_text
+    assert "official Google schema" in stage1_text
 
     stage2_text = (SKILL / "references/stages/stage-2-probe.md").read_text(encoding="utf-8")
     assert "Native-First vs Production Handoff" in stage2_text
 
     stage4_text = (SKILL / "references/stages/stage-4-audit.md").read_text(encoding="utf-8")
-    assert "Decisive Exchange 3-Frame Inspection" in stage4_text
-    assert "The Break Protocol" in stage4_text
+    assert "rendered experience first" in stage4_text
+    assert "few highest-impact findings" in stage4_text
+    assert "A state is captured only if its trigger was applied" in stage4_text
+    assert "Choose only the stress cases material" in stage4_text
+
+    contract_text = (SKILL / "references/spec-md-contract.md").read_text(encoding="utf-8")
+    assert "not an official" in contract_text
+    assert "Illustrative rich slice (not a required template)" in contract_text
+    assert "Minimum formal slice" in contract_text
+
+    builder_text = (REPO / "agents/spec-prototype-builder.md").read_text(encoding="utf-8")
+    assert "## Design Before Markup" in builder_text
+    assert "44×44px" in builder_text
+    assert "generic metric grids" in builder_text
+
 
     stage3_text = (SKILL / "references/stages/stage-3-skeleton.md").read_text(encoding="utf-8")
     assert "Compression & Release" in stage3_text
@@ -381,18 +393,18 @@ record: prototype-specification
 
     # 7. Verify builder agent contract specifies Lean Pre-baked Envelope Protocol
     builder_md = (REPO / "agents/spec-prototype-builder.md").read_text(encoding="utf-8")
-    assert "Lean Pre-baked Envelope Protocol" in builder_md
-    assert "≤ 8 tool turns" not in builder_md and "<= 8 tool turns" not in builder_md
-    assert "an execution-safety budget" in builder_md
+    assert "Design Before Markup" in builder_md
+    assert "44×44px" in builder_md
+    assert "single-pass" in builder_md.lower()
 
     # 8. Verify SKILL.md and core-kernel.md declare the Spec-First invariant
     core_kernel = (SKILL / "references/core-kernel.md").read_text(encoding="utf-8")
     assert ("Sealed Provisional Spec Contract" in core_kernel or
             "Sealed Provisional" in core_kernel)
     skill_md = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-    assert ("ZERO Prototype Code without a complete sealed provisional Spec Contract" in skill_md or
-            "ZERO Prototype Code without a complete frozen Spec Contract" in skill_md)
-    assert "foundation/f1.md" in skill_md
+    assert "Formal prototypes still require the applicable sealed provisional Spec before code." in skill_md
+    assert "prototype/discussion.md" in skill_md
+    assert "spec-prototype-builder" in skill_md
 
 
 def test_zero_broken_markdown_links_in_skill():
