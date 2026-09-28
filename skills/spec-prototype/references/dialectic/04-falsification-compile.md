@@ -33,9 +33,8 @@ Verify pipeline:
 3. `tokens.css` compiled with domain tokens preserved (plus `t1.json`).
 4. Stage 1 lifecycle advances to `sealed_provisional`.
 
-Legacy compatibility only: `materialize_contracts.py --slice <slice-id> --phase all`
-still emits the multi-file `c1.md` / `r1.md` set for backwards-compatible readers;
-it is not the canonical compilation path.
+**Banned in Primary Delivery**:
+NEVER run `materialize_contracts.py` or write legacy fragmented contracts (`f1.md`, `m1.md`, `t1.md`, `c1.md`, `r1.md`, `product.md`). The single unified RFC specification is `r1.spec.md`.
 
 ## 5. Design Brief Format (`google-design-md/v2`)
 

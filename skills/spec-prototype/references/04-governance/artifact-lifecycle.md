@@ -68,18 +68,18 @@ prototype/reviews/<slice-id>/<prototype-revision>.md
 
 ### Legacy compatibility paths
 
-These are the fixed multi-file artifacts emitted only by the legacy
-`materialize_contracts.py` path; they are readable compatibility inputs, not the
-canonical baseline:
+### Deprecated Legacy 6-Piece Files (Banned in Primary Delivery)
 
+The legacy 6-piece multi-file set is deprecated and MUST NOT be authored or generated:
 ```text
-prototype/product.md
-prototype/contracts/surface-maps/m1.md
-prototype/contracts/foundation/f1.md
-prototype/contracts/tokens/t1.md
-prototype/contracts/slices/<slice-id>/c1.md
-prototype/specifications/<slice-id>/r1.md
+prototype/product.md                        # Duplicate of discussion.md
+prototype/contracts/surface-maps/m1.md      # Subsumed by r1.spec.md
+prototype/contracts/foundation/f1.md        # Subsumed by discussion.md & tokens.css
+prototype/contracts/tokens/t1.md            # Subsumed by shared/tokens.css
+prototype/contracts/slices/<slice-id>/c1.md # Subsumed by r1.spec.md
+prototype/specifications/<slice-id>/r1.md   # Replaced by single-file r1.spec.md
 ```
+Primary delivery writes ONLY the Four Canonical High-Density Assets: `discussion.md`, `r1.spec.md`, `tokens.css`, and `index.html`.
 
 ## Session intent and retained design
 

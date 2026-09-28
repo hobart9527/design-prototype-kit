@@ -127,7 +127,23 @@ working artifact in the same turn when possible; checkpoints are recovery notes,
 approval rituals. End with a useful artifact or a concise, truthful blocker—not a
 waiting loop. A Stage 4 result may be `PARTIAL` when evidence or runtime is unavailable.
 
-## Minimal Design Record (最小设计记录)
+## Minimal Design Record & Four High-Density Deliverables (单脑四联装)
+
+The entire design prototype lifecycle is consolidated into exactly four high-density assets:
+```text
+prototype/
+├── discussion.md                           # 【唯一决策源】人机共创、五轴校准、业务张力事实台账
+├── specifications/<slice>/r1.spec.md       # 【唯一规范源】单文件完整 RFC：IA 拓扑、状态机、Break 协议
+├── shared/
+│   ├── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
+│   └── tokens.json                         # （可选机器导出层）
+└── experiments/<slice>/anchor/index.html   # 【唯一物化源】高保真、可交互、可独立运行的现代原型
+```
+
+**Refusal List (绝对拒止)**:
+1. NEVER author legacy 6-piece contract files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`).
+2. NEVER author a duplicate `prototype/product.md` — all product facts and dialectic context belong in `prototype/discussion.md`.
+3. NEVER run `materialize_contracts.py` in primary delivery.
 
 Keep `prototype/discussion.md` as the decision and evidence ledger. Use the canonical
 `google-design-md/v2` Markdown contract for formal slices: YAML frontmatter plus

@@ -26,7 +26,7 @@ backward.
 - **Frozen Approved** — Stage 5 immutable candidate bound by SHA-256 manifest.
 
 Freeze binds the immutable candidate Specification
-(`prototype/specifications/<slice_id>/r1.md`), never a mutable product record.
+(`prototype/specifications/<slice_id>/r1.spec.md`), never a mutable product record.
 The full authority-to-artifact lifecycle mapping, mutability rules and revision
 semantics are owned by
 [`04-governance/artifact-lifecycle.md`](04-governance/artifact-lifecycle.md);
@@ -64,9 +64,14 @@ full Surface Map, object model, and rationale remain authoritative; unselected
 surfaces stay provisional; a missing selection never silently defaults to
 full-product; out-of-scope dependencies are disclosed, never silently added.
 
-## 7. Storage and Role Discipline
+## 7. Four High-Density Deliverables & Role Discipline
 
-All design records go to `prototype/discussion.md` (mandatory entry index) and
-`prototype/*.md`. The main designer directly writes design records and executable
-prototype output within the bounded `prototype/` scope. Never edit OpenSpec, and
-never substitute `prototype/discussion.md` with `prototype/README.md`.
+The entire design prototype lifecycle is consolidated into four high-density assets:
+1. `prototype/discussion.md` — sole decision, dialectic, and product facts ledger.
+2. `prototype/specifications/<slice>/r1.spec.md` — sole RFC spec contract (IA topology, states, Break Protocol).
+3. `prototype/shared/tokens.css` — sole physical token layer compiled by DTCG.
+4. `prototype/experiments/<slice>/anchor/index.html` — sole runnable prototype implementation.
+
+Never create legacy fragmented contract files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`) or duplicate `prototype/product.md`. Never run `materialize_contracts.py` in primary delivery.
+
+The main designer directly writes design records and executable prototype output within the bounded `prototype/` scope. Never edit OpenSpec, and never substitute `prototype/discussion.md` with `prototype/README.md`.

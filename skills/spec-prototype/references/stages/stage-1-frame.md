@@ -20,7 +20,23 @@ open alternatives only when a consequential choice is genuinely unresolved.
 Ask the user only when a decision materially changes the direction or scope. Resolve
 repository facts silently. Preserve settled and delegated choices on continuation.
 
-## Design brief format
+## Design brief format & Four High-Density Deliverables (单脑四联装)
+
+The entire design prototype lifecycle is consolidated into four high-density assets:
+```text
+prototype/
+├── discussion.md                           # 【唯一决策源】人机共创、五轴校准、业务张力事实台账
+├── specifications/<slice>/r1.spec.md       # 【唯一规范源】单文件完整 RFC：IA 拓扑、状态机、Break 协议
+├── shared/
+│   ├── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
+│   └── tokens.json                         # （可选机器导出层）
+└── experiments/<slice>/anchor/index.html   # 【唯一物化源】高保真、可交互、可独立运行的现代原型
+```
+
+**Banned in Primary Delivery**:
+- NEVER author legacy 6-piece files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`).
+- NEVER author a duplicate `prototype/product.md` — all product facts and dialectic context belong in `prototype/discussion.md`.
+- NEVER run `materialize_contracts.py` in primary delivery.
 
 Keep `prototype/discussion.md` as the concise human-readable decision and evidence
 record. For a formal prototype, use `google-design-md/v2` frontmatter and semantic
