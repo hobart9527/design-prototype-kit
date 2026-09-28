@@ -10,6 +10,11 @@ import re
 import shlex
 import sys
 
+try:
+    import jsonschema
+except ImportError:  # Schema validation is best-effort; the boundary still holds.
+    jsonschema = None
+
 from handoff import packet_for
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -150,8 +155,18 @@ def shell_read_single(command, root):
     args = shlex.split(command)
     require(bool(args), 'Missing command.')
     tool = args[0]
-    if tool in {'pwd', 'ls', 'cat', 'head', 'tail', 'wc', 'rg', 'pytest'}:
+    if tool in {'pwd', 'ls', 'cat', 'head', 'tail', 'wc', 'rg', 'grep', 'pytest'}:
         require(not any(a.startswith('--pre') for a in args[1:]), 'Use Read/Grep without an external preprocessor.')
+        return
+    if tool == 'sed':
+        require('-n' in args[1:], 'Only read-only `sed -n` is admitted; in-place editing is a write.')
+        return
+    if tool == 'cd':
+        # Chaining from another directory is a read-navigation convenience, not
+        # a write. Stay inside the active discussion root.
+        require(len(args) == 2, 'Use `cd <one directory>` inside the project.')
+        require((root / args[1]).resolve().is_relative_to(root.resolve()),
+                'Stay inside the active discussion repository.')
         return
     if tool == 'git':
         require(args[1:] in (['status', '--short'], ['status', '--short', '--branch'],
@@ -170,15 +185,18 @@ def shell_read_single(command, root):
             require(not output.is_symlink() and output.resolve() == source.resolve().with_suffix('.json'),
                     'Token export belongs beside its source with the same revision name.')
             return
-        permitted = {'node': {'preview.mjs', 'capture.mjs', 'wcag-check.js'},
-                     'python3': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'compile_spec_ir.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'},
-                     'python3.14': {'check-discussion.py', 'handoff.py', 'compile_tokens.py', 'compile_spec_ir.py', 'verify_prototype_quality.py', 'assemble_envelope.py', 'lint_spec_contracts.py', 'generate_review_portal.py', 'check-assertions.py'}}
+        # The installed `scripts/` directory is the manifest. A per-name
+        # whitelist drifted from the shipped set repeatedly (a retired helper
+        # stayed listed, a live one went missing), so admission is now "a
+        # helper that actually ships in this Skill tree". Write scope still
+        # keeps the model out of `scripts/`, so this admits only shipped code.
         is_installed = (
             script.parent == SKILL/'scripts'
             or (script.parent.name == 'scripts' and script.parent.parent.name == 'spec-prototype')
             or script.resolve() == (SKILL/'scripts'/script.name).resolve()
         )
-        require(is_installed and script.name in permitted[tool],
+        shipped = {p.name for p in (SKILL/'scripts').iterdir() if p.is_file()}
+        require(is_installed and script.name in shipped,
                 'Only installed helpers run here; author prototype files with Write/Edit instead.')
         if script.name == 'compile_spec_ir.py':
             require(any(arg == '--slice' for arg in args), 'compile_spec_ir.py requires an explicit --slice.')
@@ -200,18 +218,23 @@ def shell_read_single(command, root):
 
 
 def shell_read(command, root):
-    if '&&' in command:
-        # A chained read/helper sequence: each segment must pass single shell_read independently.
-        # Single '&', pipes, redirections or other shell metacharacters remain forbidden.
-        require(not any(c in command for c in '\n\r;|><`$'),
+    # `2>&1` only merges stderr into stdout; it opens no file and writes
+    # nothing. Drop it before the redirection check so a diagnostic-preserving
+    # read is not mistaken for a write. A real file redirection still fails.
+    scrubbed = re.sub(r'\s*2>&1', '', command)
+    if '&&' in scrubbed or '|' in scrubbed:
+        # A chained read/helper sequence: every segment must pass
+        # shell_read_single independently. Redirecting into a file, command
+        # substitution and backgrounding remain forbidden.
+        require(not any(c in scrubbed for c in '\n\r;><`$'),
                 'Use one read command or an installed project helper.')
-        segments = command.split('&&')
+        segments = re.split(r'&&|\|', scrubbed)
         require(bool(segments) and all(s.strip() for s in segments), 'Empty command in chain.')
         for seg in segments:
             require('&' not in seg, 'Use one read command or an installed project helper.')
             shell_read_single(seg.strip(), root)
         return
-    shell_read_single(command, root)
+    shell_read_single(scrubbed, root)
 
 
 def boundary_status(record: Path) -> str | None:
@@ -252,6 +275,64 @@ def discussion_record(cwd):
         if record.is_file() or record.is_symlink():
             return record
     return None
+
+
+def _pointer(error) -> str:
+    """Render a jsonschema error as a JSON Pointer plus a readable path."""
+    path = "/".join(str(p) for p in error.absolute_path) or "(root)"
+    return f"{path}: {error.message}"
+
+
+def validate_intent(path: Path, text: str) -> None:
+    """Validate prototype/intent.json against the Stage 1 schema at write time.
+
+    Feedback lands inside the same tool call that wrote the file: the author
+    gets the failing JSON Pointer and the schema's own message instead of
+    discovering the drift several commands later. Only the Stage 1 tier is
+    checked here, so a Stage 1 write is never judged against Stage 3/4 fields.
+    """
+    require(path.name == 'intent.json', 'internal: not an intent contract path')
+    try:
+        instance = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            f'intent.json is not valid JSON at line {error.lineno} column {error.colno}: {error.msg}. '
+            'JSON has no indentation semantics, so fix the syntax rather than the layout.'
+        ) from error
+    if jsonschema is None:
+        return
+    schema_path = SKILL / 'schemas' / 'intent.v1.json'
+    if not schema_path.is_file():
+        return
+    schema = json.loads(schema_path.read_text(encoding='utf-8'))
+    errors = sorted(jsonschema.Draft202012Validator(schema).iter_errors(instance),
+                    key=lambda e: list(e.absolute_path))
+    if errors:
+        detail = '\n'.join(f'  - {_pointer(e)}' for e in errors)
+        raise ValueError(
+            'intent.json does not satisfy the Stage 1 intent contract:\n'
+            f'{detail}\n'
+            'Fix the named fields and write the file again.'
+        )
+
+
+def _edited_text(args, target: Path) -> str:
+    """Reconstruct the post-edit text so validation sees the resulting file."""
+    if 'content' in args:
+        return args['content']
+    try:
+        current = target.read_text(encoding='utf-8')
+    except OSError:
+        return ''
+    edits = args.get('edits') or [{'old_string': args.get('old_string', ''),
+                                   'new_string': args.get('new_string', ''),
+                                   'replace_all': args.get('replace_all', False)}]
+    for edit in edits:
+        old, new = edit.get('old_string', ''), edit.get('new_string', '')
+        if not old:
+            continue
+        current = current.replace(old, new, -1 if edit.get('replace_all') else 1)
+    return current
 
 
 def check(payload):
@@ -295,6 +376,8 @@ def check(payload):
         target = (Path(payload['cwd'])/args['file_path']).resolve()
         require(target.is_relative_to(root/'prototype'),
                 'Design and prototype artifacts must reside inside prototype/.')
+        if target.name == 'intent.json':
+            validate_intent(target, _edited_text(args, target))
     elif tool == 'NotebookEdit':
         raise ValueError('Notebook execution is out of scope for design prototype authoring.')
 

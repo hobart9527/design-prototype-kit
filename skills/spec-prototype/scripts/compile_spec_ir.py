@@ -257,16 +257,28 @@ class IncompleteStageContractError(ValueError):
 
     def __init__(self, violations: List[Dict[str, str]], header: str = ""):
         self.violations = violations
-        report = format_missing_sections(violations)
-        super().__init__(f"{header}\n{report}" if header else report)
+        report = format_missing_sections(violations, header=header or _MISSING_ABORT_HEADER)
+        super().__init__(report)
 
 
-def format_missing_sections(violations: List[Dict[str, str]]) -> str:
-    """Render an actionable, multi-item report of every missing required section."""
-    parts = [
-        "compile_spec_ir: discussion.md 缺少 Canonical IR 必备字段，编译中止。",
-        f"发现 {len(violations)} 项缺失：",
-    ]
+_MISSING_ABORT_HEADER = "compile_spec_ir: discussion.md 缺少 Canonical IR 必备字段，编译中止。"
+_MISSING_NOTE_HEADER = (
+    "compile_spec_ir: 以下 Canonical IR 字段尚未在 discussion.md 中声明；"
+    "本次按 intent_spec 层级继续编译，未中止。"
+)
+
+
+def format_missing_sections(violations: List[Dict[str, str]], header: str = _MISSING_ABORT_HEADER) -> str:
+    """Render an actionable, multi-item report of every missing required section.
+
+    `header` names the concrete consequence of this call site. The same report is
+    reused for a hard abort and for an intent-tier note that compiles anyway, so
+    a default that always reads `编译中止` would tell an author the run stopped
+    when it did not. Aborting call sites take the default; continuing ones pass
+    `_MISSING_NOTE_HEADER`, and an empty header suppresses the line.
+    """
+    parts = [header] if header else []
+    parts.append(f"发现 {len(violations)} 项缺失：")
     for index, item in enumerate(violations, start=1):
         parts.append(
             f"  [{index}] {item['key']} ({item['label']}) 未提取到。\n"
@@ -826,6 +838,52 @@ def parse_meso_directives(text: str, navigation_topology: str) -> Dict[str, Dict
     return directives
 
 
+NON_SURFACE_NAMES = {
+    "viewport", "viewports", "screen", "screens", "breakpoint", "breakpoints",
+    "device", "devices", "mobile", "desktop", "tablet", "width", "height",
+    "dimension", "dimensions", "resolution", "resolutions",
+}
+
+
+def load_intent_contract(root: Path) -> Dict[str, Any]:
+    """Read prototype/intent.json — the Stage 1 machine contract.
+
+    Stage 1 fields arrive as a JSON object the author writes directly, so the
+    compiler no longer has to recover them from prose. A malformed file is a
+    hard error here rather than a silent fallback to regex, because falling
+    back would let a broken contract compile as if it were authored.
+    """
+    path = root / "prototype/intent.json"
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise IncompleteStageContractError(
+            [{
+                "key": "intent_json",
+                "label": "Stage 1 机器契约 (prototype/intent.json)",
+                "section": "Stage 1 (intent tier)",
+                "form": '{"schema_version": "intent.v1", "slice_id": ..., "core_tension": ..., '
+                        '"declared_surfaces": [...], "physical_anchor": ...}',
+                "example": f"第 {error.lineno} 行第 {error.colno} 列 JSON 语法错误：{error.msg}",
+            }],
+            header="compile_spec_ir: prototype/intent.json 无法解析，编译中止。",
+        ) from error
+    if not isinstance(data, dict):
+        raise IncompleteStageContractError(
+            [{
+                "key": "intent_json",
+                "label": "Stage 1 机器契约 (prototype/intent.json)",
+                "section": "Stage 1 (intent tier)",
+                "form": "一个 JSON 对象",
+                "example": "顶层必须是对象，而不是数组或标量。",
+            }],
+            header="compile_spec_ir: prototype/intent.json 顶层必须是对象，编译中止。",
+        )
+    return data
+
+
 def compile_canonical_ir(
     root: Path,
     slice_id: str,
@@ -844,6 +902,7 @@ def compile_canonical_ir(
     disc_text = disc_path.read_text(encoding="utf-8") if disc_path.is_file() else ""
     disc_digest = sha256_text(disc_text) if disc_text else ""
     fm_data, body_text = parse_frontmatter(disc_text)
+    intent = load_intent_contract(root)
 
     # Optional Stage 3/4 incremental verification fragment overlay
     # (e.g. prototype/contracts/compiled/<slice>/state_model.slice.json or explicit path)
@@ -876,8 +935,11 @@ def compile_canonical_ir(
     if stage == "hero_probe" and fm_data.get("stage"):
         stage = str(fm_data["stage"]).strip()
 
-    # Extract Core Tension
-    tension_text = extract_section(disc_text, r"###?\s*.*(?:Core\s+Tension|Problem\s+Framing|Tension|业务与用户极端张力|极端张力|张力)")
+    # Extract Core Tension. The Stage 1 machine contract wins when present;
+    # prose recovery stays as the fallback for records that predate intent.json.
+    tension_text = str(intent.get("core_tension") or "").strip() or None
+    if not tension_text:
+        tension_text = extract_section(disc_text, r"###?\s*.*(?:Core\s+Tension|Problem\s+Framing|Tension|业务与用户极端张力|极端张力|张力)")
     if not tension_text and fm_data.get("core_tension"):
         tension_text = str(fm_data["core_tension"]).strip()
     if not tension_text:
@@ -891,13 +953,17 @@ def compile_canonical_ir(
 
     # Physical anchor is an explicit Stage 1 decision; category-based guesses
     # must not silently determine the device chassis.
-    physical_anchor_match = re.search(
-        r"^\s*[-*]?\s*(?:\*\*)?(?:Physical Anchor|physical_anchor)(?:\*\*)?\s*[:：]\s*([^\n]+)",
+    # Physical anchor: an explicit Stage 1 decision. The machine contract wins;
+    # category-based guesses must not silently determine the device chassis.
+    physical_anchor = str(intent.get("physical_anchor") or "").strip()
+    if not physical_anchor:
+        physical_anchor_match = re.search(
+        r"^\s*[-*]?\s*(?:\*\*)?(?:Physical Anchor|physical_anchor)(?:\s+Declaration)?(?:\*\*)?\s*[:：]\s*([^\n]+)",
         disc_text,
         re.IGNORECASE | re.MULTILINE,
     )
-    physical_anchor = physical_anchor_match.group(1).strip().strip("`* ") if physical_anchor_match else ""
-    physical_anchor = re.sub(r"^physical_anchor\s*:\s*", "", physical_anchor, flags=re.IGNORECASE).strip()
+        physical_anchor = physical_anchor_match.group(1).strip().strip("`* ") if physical_anchor_match else ""
+        physical_anchor = re.sub(r"^physical_anchor\s*:\s*", "", physical_anchor, flags=re.IGNORECASE).strip()
 
     # Extract Reality Anchors
     anchors_text = extract_section(disc_text, r"###?\s*.*(?:Reality.*Anchors?|现实双地锚|地锚|Industry\s+Benchmarks?|Benchmarks?)")
@@ -937,11 +1003,6 @@ def compile_canonical_ir(
         m_surf = re.search(r"(?:surfaces?|consoles?|readers?|workspaces?)/([a-zA-Z0-9_\-]+)", line, re.IGNORECASE)
         if not m_surf and re.search(r"(?:primary|contextual|supporting|glance|surfaces?|主|上下文|辅助|扫视|表面|工作区)", line, re.IGNORECASE):
             m_surf = re.search(r"`([a-zA-Z0-9_\-]+)`", line)
-        NON_SURFACE_NAMES = {
-            "viewport", "viewports", "screen", "screens", "breakpoint", "breakpoints",
-            "device", "devices", "mobile", "desktop", "tablet", "width", "height",
-            "dimension", "dimensions", "resolution", "resolutions"
-        }
         if m_surf:
             s_name = Path(m_surf.group(1)).name
             if s_name.lower() in NON_SURFACE_NAMES:
@@ -950,6 +1011,14 @@ def compile_canonical_ir(
                 declared_surfaces.append(s_name)
             if ("primary" in line.lower() or "主" in line) and not primary_surface:
                 primary_surface = s_name
+
+    if isinstance(intent.get("declared_surfaces"), list):
+        for s in intent["declared_surfaces"]:
+            s_name = Path(str(s)).name
+            if s_name.lower() in NON_SURFACE_NAMES:
+                continue
+            if s_name not in declared_surfaces:
+                declared_surfaces.append(s_name)
 
     if fm_data.get("declared_surfaces") and isinstance(fm_data["declared_surfaces"], list):
         for s in fm_data["declared_surfaces"]:
@@ -1155,7 +1224,7 @@ def compile_canonical_ir(
         # Stage 1 intent_spec admission passes with only the Stage 1 gate
         # active: missing later-stage state taxonomy stays a downstream
         # requirement, not a compilation blocker at this tier.
-        report = format_missing_sections(violations)
+        report = format_missing_sections(violations, header=_MISSING_NOTE_HEADER)
         if spec_tier != "execution_spec":
             sys.stderr.write(
                 "NOTE: 以下 execution_spec (Stage 3/4) 字段在 discussion.md 中缺失，"

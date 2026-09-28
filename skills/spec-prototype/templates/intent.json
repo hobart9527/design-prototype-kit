@@ -1,0 +1,8 @@
+{
+  "schema_version": "intent.v1",
+  "slice_id": "sample-slice",
+  "core_tension": "Operational throughput vs Irreversible drain risk",
+  "declared_surfaces": ["cockpit-main", "detail-drawer"],
+  "physical_anchor": "desktop workstation",
+  "content_language": "zh-Hans"
+}

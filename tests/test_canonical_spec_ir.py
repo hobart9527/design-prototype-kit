@@ -346,6 +346,61 @@ def test_stage1_intent_spec_compiles_and_validates(tmp_path: Path):
     assert "visual_directives" not in ir or "data_syntax" not in ir.get("visual_directives", {})
 
 
+def test_intent_json_is_the_stage1_machine_contract(tmp_path: Path):
+    """prototype/intent.json supplies Stage 1 fields without prose recovery."""
+    root = _write_discussion(tmp_path, "# Design Discussion\n\nNo structured sections here.\n")
+    (root / "prototype/intent.json").write_text(json.dumps({
+        "schema_version": "intent.v1",
+        "slice_id": "reading-sanctuary",
+        "core_tension": "Quiet reading vs Notification gravity",
+        "declared_surfaces": ["surfaces/reading-sanctuary"],
+        "physical_anchor": "none",
+    }), encoding="utf-8")
+
+    ir = compile_canonical_ir(root=root, slice_id="reading-sanctuary", stage="hero_probe")
+
+    assert ir["sources"]["core_tension"] == "Quiet reading vs Notification gravity"
+    # Surface ids normalize to their leaf name, matching the prose path.
+    assert ir["scope"]["topology_scope"]["declared_surfaces"] == ["reading-sanctuary"]
+
+
+def test_intent_json_anchor_satisfies_the_stage2_gate(tmp_path: Path):
+    """A declared anchor in intent.json admits Stage 2 exactly like the prose form."""
+    root = _write_discussion(tmp_path, "# Design Discussion\n\nNo structured sections here.\n")
+    (root / "prototype/intent.json").write_text(json.dumps({
+        "schema_version": "intent.v1",
+        "slice_id": "reading-sanctuary",
+        "core_tension": "Quiet reading vs Notification gravity",
+        "declared_surfaces": ["surfaces/reading-sanctuary"],
+        "physical_anchor": "none",
+    }), encoding="utf-8")
+
+    ir = compile_canonical_ir(
+        root=root, slice_id="reading-sanctuary", stage="hero_probe", required_tier="stage2")
+
+    assert ir["spec_tier"] == "intent_spec"
+
+
+def test_malformed_intent_json_aborts_rather_than_falling_back(tmp_path: Path):
+    """A broken machine contract must not silently degrade to regex recovery."""
+    root = _write_discussion(tmp_path, STAGE1_DISCUSSION)
+    (root / "prototype/intent.json").write_text("{ not json", encoding="utf-8")
+
+    with pytest.raises(IncompleteStageContractError, match="intent.json"):
+        compile_canonical_ir(root=root, slice_id="reading-sanctuary", stage="hero_probe")
+
+
+def test_intent_note_never_claims_compilation_stopped(tmp_path: Path, capsys):
+    """The intent-tier NOTE compiles anyway, so it must not read as an abort."""
+    root = _write_discussion(tmp_path, STAGE1_DISCUSSION)
+
+    compile_canonical_ir(root=root, slice_id="reading-sanctuary", stage="hero_probe")
+
+    err = capsys.readouterr().err
+    assert "未中止" in err
+    assert "编译中止" not in err
+
+
 def test_authored_meso_slots_pass_through(tmp_path: Path):
     """Authored massing/kinematics/data_syntax declarations reach the IR verbatim."""
     root = _write_discussion(tmp_path, STAGE1_DISCUSSION.replace(

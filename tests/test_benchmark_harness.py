@@ -188,6 +188,26 @@ def test_runtime_judge_flags_inline_hex_and_missing_record(tmp_path):
     assert result["contrast"]["primary_text_on_bg"] > 4.5
 
 
+def test_run_claude_pins_the_skill_home_to_the_session_workspace(tmp_path, monkeypatch):
+    """Each variant must load the boundary shipped beside it, not the operator's.
+
+    The Skill hook resolves `${LOOM_CLAUDE_HOME:-~/.claude}/skills/spec-prototype`.
+    Left unset, that reaches the operator's `~/.claude`, which is commonly a
+    symlink to the live repo skill -- a stable-variant session then runs the
+    candidate boundary against baseline docs and deadlocks.
+    """
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["env"] = kwargs.get("env", {})
+        return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps({"result": "ok", "total_cost_usd": 0.0}), stderr="")
+
+    monkeypatch.setattr(bl.subprocess, "run", fake_run)
+    bl.run_claude("prompt", tmp_path, max_turns=1)
+
+    assert captured["env"]["LOOM_CLAUDE_HOME"] == str(tmp_path / ".claude")
+
+
 def test_regression_judge_requires_a_paired_control():
     empty = regression_judge.judge([])
     assert empty["verdict"] == "INCONCLUSIVE"

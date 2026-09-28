@@ -24,6 +24,11 @@ uncertainty, not a mandatory Track A/Track B sequence. The route contract in
 
 ## Cold-start inference & seed status
 
+- Physical Anchor: `<declared chassis, e.g. desktop workstation / mobile device, or none>`
+  State the real-world object or space whose physicality drives the spatial
+  chassis. An undeclared anchor blocks formal Stage 2; `none` is an intentional
+  non-device decision, not missing information.
+
 Infer silently from every workspace source before speaking. Each dimension's
 evidence status records what the *sources actually support* — `[explicit]`
 means a named user statement or committed document states it verbatim;

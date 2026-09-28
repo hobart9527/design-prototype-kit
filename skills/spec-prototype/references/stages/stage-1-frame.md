@@ -89,17 +89,29 @@ request to seal or freeze the whole product.
 
 ## Formal prototype compilation
 
-When a runnable formal prototype is requested, author the minimum contract in
-`prototype/discussion.md`, then run the documented `compile_spec_ir.py --required-tier stage2` and
-`compile_tokens.py` commands in one shell invocation. The Stage 2 tier refuses to compile
-without an explicit Physical Anchor declaration (including `none` when no device anchor applies).
-The compiler creates the machine IR and human `.spec.md` view; fix actionable compiler errors at their authored source.
+When a runnable formal prototype is requested, write the Stage 1 machine contract
+to `prototype/intent.json` (copy `templates/intent.json`), then run the documented
+`compile_spec_ir.py --required-tier stage2` and `compile_tokens.py` commands in one
+shell invocation. The compiler creates the machine IR and human `.spec.md` view;
+fix actionable compiler errors at their authored source.
+
+`prototype/intent.json` carries the Stage 1 fields — `slice_id`, `core_tension`,
+`declared_surfaces`, and `physical_anchor` — as JSON, so no field has to be
+recovered from prose. The boundary validates the file against
+`schemas/intent.v1.json` as you write it: a rejected write names the failing
+field, and you fix it in the same step. `prototype/discussion.md` remains the
+human co-creation record and the Resume ledger; it is no longer the machine
+interface.
+
+The Stage 2 tier refuses to compile without an explicit Physical Anchor
+declaration (including `none` when no device anchor applies).
 Do not inspect compiler source to learn design decisions. Lightweight exploration,
 spec-only discussion, and local review do not require the full formal pipeline.
 
 ## Required parser anchors
 
-For the formal intent tier, retain the existing parser-compatible headings and fields:
+For a record that predates `intent.json`, the compiler still recovers the intent
+tier from these parser-compatible headings:
 
 ```markdown
 # Surface Specification: <Product / Slice>

@@ -206,10 +206,17 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
             "pass" if len(evidence_markers) >= 3 else ("fail" if not evidence_markers else "unknown"),
             f"markers={evidence_markers}")
 
-    envelopes = list(artifacts_dir.rglob("envelope.json"))
-    specs = list(artifacts_dir.rglob("*.md"))
-    add("builder_boundary", "pass" if envelopes and specs else ("not_applicable" if variant == "no_skill" else "fail"),
-        f"envelopes={len(envelopes)} spec_docs={len(specs)}")
+    # Delivery boundary: the single-brain path compiles the canonical IR and
+    # authors the anchor directly, so `envelope.json` is an optional
+    # compatibility artifact, not the proof of delivery. Requiring it marked
+    # every conforming single-brain run as a boundary failure. Read the
+    # products the path actually owns: the canonical IR plus the spec view.
+    spec_ir = [name for name in texts if name.endswith(".spec.json")]
+    spec_views = [name for name in texts if name.endswith(".spec.md")]
+    add("builder_boundary",
+        "pass" if spec_ir and spec_views else ("not_applicable" if variant == "no_skill" else "fail"),
+        f"spec_ir={len(spec_ir)} spec_views={len(spec_views)} "
+        f"envelopes={len(list(artifacts_dir.rglob('envelope.json')))}")
 
     inline_hex = sum(len(INLINE_HEX_RE.findall(text)) for text in html_files.values())
     tokens_present = any("tokens.css" in name for name in css_files)

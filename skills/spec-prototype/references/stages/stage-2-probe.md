@@ -105,6 +105,11 @@ failing a hard floor is a bug with a nice surface, not a candidate.
 The main designer holds itself to the same bounds a dispatch would have imposed:
 
 - Author one self-contained HTML/CSS/JS page (`experiments/.../anchor/index.html`).
+- **Write it in passes, not in one shot.** A single Write carrying the whole page
+  overruns the tool's output budget and the call is cut off mid-stream, leaving a
+  truncated file and a wasted turn. Write the structural skeleton first (doctype,
+  token `<link>`, landmark elements, empty state containers), then add each region
+  with a separate Edit. Keep any one write under roughly 8KB.
 - Run `python3 skills/spec-prototype/scripts/verify_prototype_quality.py`.
 - Capture real viewport evidence via `node skills/spec-prototype/scripts/capture.mjs`.
 - Retain at most two build-time self-repair attempts per probe: these are

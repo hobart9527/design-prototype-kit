@@ -685,10 +685,18 @@ def test_shell_read_admits_and_chains_and_refuses_escapes(tmp_path):
         execution_boundary.shell_read(
             "python3 skills/spec-prototype/scripts/compile_tokens.py && rm -rf /", root)
 
-    # Chained helper with pipe
+    # Chained helper into a read-only consumer: admitted, and every segment is
+    # validated independently.
+    execution_boundary.shell_read(
+        "python3 skills/spec-prototype/scripts/compile_tokens.py | cat", root)
+
+    # A pipe into a non-read command is still an escape route and stays refused.
     with pytest.raises(ValueError):
         execution_boundary.shell_read(
-            "python3 skills/spec-prototype/scripts/compile_tokens.py | cat", root)
+            "python3 skills/spec-prototype/scripts/compile_tokens.py | sh", root)
+    with pytest.raises(ValueError):
+        execution_boundary.shell_read(
+            "python3 skills/spec-prototype/scripts/compile_tokens.py | tee /etc/passwd", root)
 
     # Chained helper with background &
     with pytest.raises(ValueError):

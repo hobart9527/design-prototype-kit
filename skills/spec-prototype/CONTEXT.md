@@ -109,3 +109,24 @@ They do not prescribe order, weight, page count, state count or style.
 - Builder owns bounded specimen implementation; Critic owns independent advice.
 - The human owns consequential product changes and final direction.
 - Downstream delivery owns production implementation.
+
+## Script roles
+
+Each helper owns exactly one artifact or one decision. When a script's role is
+unclear, that is the defect to fix — not a reason to add another script.
+
+| Script | Owns | Reads | Reached from |
+|---|---|---|---|
+| `execution_boundary.py` | Tool-call admission, and write-time validation of `intent.json` | tool-call payload | Skill hook (automatic) |
+| `compile_spec_ir.py` | The Spec IR and its `.spec.md` view | `prototype/intent.json`, `discussion.md` | Stage 1/2 prose |
+| `compile_tokens.py` | `tokens.css` and the DTCG `t1.json` | `discussion.md`, Five Axes | Stage 2/5 prose |
+| `verify_prototype_quality.py` | The HTML quality audit | authored HTML | Stage 2 prose |
+| `handoff.py` | The dispatch packet and the Stage 5 freeze | Spec IR, decisions | Stage 5 prose, `execution_boundary` |
+| `assemble_envelope.py` | The dispatch envelope and its bound-source digests | Spec IR | `handoff` packet path; tests |
+| `prototype_context.py` | Shared project-context library (never run alone) | project tree | `handoff`, `verify_prototype_quality`, `lint_spec_contracts` |
+| `capture.mjs`, `preview.mjs`, `wcag-check.js` | Rendered evidence, preview, contrast preflight | authored HTML/tokens | Stage 2/4 prose |
+
+Retired: `materialize_contracts.py` and `export-tokens.py` wrote the legacy
+fragmented contract set and a DTCG export whose empty `color` group made the
+contrast preflight pass falsely. Neither is on any primary path.
+

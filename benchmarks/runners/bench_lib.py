@@ -395,6 +395,14 @@ def run_claude(prompt: str, cwd: pathlib.Path, *, session_id: str | None = None,
     started = time.monotonic()
     env = dict(os.environ)
     env.update(claude_settings_env())
+    # The Skill's PreToolUse boundary resolves through
+    # `${LOOM_CLAUDE_HOME:-~/.claude}/skills/spec-prototype/scripts/execution_boundary.py`.
+    # Left unset, that hits the operator's `~/.claude/skills/spec-prototype`,
+    # which is usually a symlink to the live repo skill: a stable-variant
+    # session would then run the candidate boundary against baseline docs.
+    # Pin the variable to the session's own workspace so every variant loads
+    # the boundary shipped beside it.
+    env["LOOM_CLAUDE_HOME"] = str(cwd / ".claude")
     try:
         proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=timeout_s, env=env)
     except subprocess.TimeoutExpired:
