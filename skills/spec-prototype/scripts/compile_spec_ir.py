@@ -889,6 +889,16 @@ def compile_canonical_ir(
     if not tension_text:
         tension_text = None
 
+    # Physical anchor is an explicit Stage 1 decision; category-based guesses
+    # must not silently determine the device chassis.
+    physical_anchor_match = re.search(
+        r"^\s*[-*]?\s*(?:\*\*)?(?:Physical Anchor|physical_anchor)(?:\*\*)?\s*[:：]\s*([^\n]+)",
+        disc_text,
+        re.IGNORECASE | re.MULTILINE,
+    )
+    physical_anchor = physical_anchor_match.group(1).strip().strip("`* ") if physical_anchor_match else ""
+    physical_anchor = re.sub(r"^physical_anchor\s*:\s*", "", physical_anchor, flags=re.IGNORECASE).strip()
+
     # Extract Reality Anchors
     anchors_text = extract_section(disc_text, r"###?\s*.*(?:Reality.*Anchors?|现实双地锚|地锚|Industry\s+Benchmarks?|Benchmarks?)")
     anchors = []
@@ -1099,7 +1109,7 @@ def compile_canonical_ir(
             "tokens_css": "prototype/shared/tokens.css",
             "tokens_json": "prototype/contracts/tokens/t1.json",
             "human_spec_md": f"prototype/specifications/{slice_id}/{candidate_id}.spec.md",
-            "prototype_html": f"prototype/experiments/{slice_id}/{candidate_id}/index.html",
+            "prototype_html": f"prototype/experiments/{slice_id}/anchor/index.html",
         },
     }
 
@@ -1123,6 +1133,7 @@ def compile_canonical_ir(
     intent_extracted: Dict[str, Any] = {
         "core_tension": tension_text,
         "declared_surfaces": declared_surfaces,
+        "physical_anchor": physical_anchor,
     }
     intent_violations = [
         {"key": spec["key"], "label": spec["label"], "section": spec["section"],
@@ -1168,6 +1179,18 @@ def compile_canonical_ir(
 
     # Tier admission boundary: a consumer requiring `execution_spec` refuses a
     # Stage-1-only IR with the missing-state message instead of admitting it.
+    if required_tier in {"stage2", "stage_2", "prototype"} and not physical_anchor:
+        raise IncompleteStageContractError(
+            [{
+                "key": "physical_anchor",
+                "label": "物理锚点 (physical_anchor)",
+                "section": "Stage 1 §2 (Physical Anchor Declaration)",
+                "form": "- Physical Anchor: <declared chassis or none>",
+                "example": "- Physical Anchor: desktop workstation",
+            }],
+            header="Stage 2 原型入口被阻断：discussion.md 必须显式声明 Physical Anchor；无设备锚点时填写 none。",
+        )
+
     if required_tier == "execution_spec" and spec_tier != "execution_spec":
         missing = format_missing_sections(violations) if violations else \
             "state_model (domain_states / interaction_states / data_scenarios / stress_fixtures) 或 actions 缺失"
@@ -1371,6 +1394,12 @@ def main():
     parser.add_argument("--output-md", help="Output markdown path (default: prototype/specifications/<slice>/<cand>.spec.md)")
     parser.add_argument("--fragment", help="Optional Stage 3/4 verification JSON fragment path (default: prototype/contracts/compiled/<slice>/state_model.slice.json)")
     parser.add_argument(
+        "--required-tier",
+        choices=["intent_spec", "execution_spec", "stage2"],
+        default="intent_spec",
+        help="Require Stage 2 anchor admission or the full execution-spec tier.",
+    )
+    parser.add_argument(
         "--allow-incomplete",
         action="store_true",
         help="DEBUG ONLY: skip the stage-boundary completeness gate and emit IR with missing required sections (default: fail).",
@@ -1391,6 +1420,7 @@ def main():
             viewports=args.viewports,
             allow_incomplete=args.allow_incomplete,
             fragment_path=Path(args.fragment).resolve() if args.fragment else None,
+            required_tier=args.required_tier,
         )
     except IncompleteStageContractError as exc:
         sys.stderr.write(f"{exc}\n")

@@ -180,15 +180,9 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
             entries.append(entry)
         return entries
 
-    # OOUX business entities are the domain objects the surface manipulates —
-    # NOT the UI surfaces themselves. The IR carries them as domain_states'
-    # object ids (the things that have lifecycle); surfaces stay in their own
-    # field so layout and domain model stop being conflated.
-    entity_ids = [
-        item.get("id")
-        for item in (state_model.get("domain_states") or [])
-        if isinstance(item, dict) and item.get("id")
-    ]
+    # Domain-state identifiers name lifecycle states, not business entities.
+    # The current canonical IR has no independent object collection to project.
+    entity_ids: List[str] = []
     semantic_contract = {
         "domain_thesis": sources.get("core_tension"),
         "design_intent": dict(sources.get("design_intent") or {}),
@@ -480,7 +474,7 @@ def extract_field(content: str, label: str, default: str = "") -> str:
     # The authored line may carry an annotation between the label and its value,
     # e.g. `- Content language (locked): en-US`. The annotation is descriptive
     # prose, not part of the value, so it is matched and discarded.
-    pattern = rf"^- {re.escape(label)}(?: \([^)]*\))?:[ \t]*(.+)$"
+    pattern = rf"^- (?:\*\*)?{re.escape(label)}(?:\*\*)?(?: \([^)]*\))?:[ \t]*(.+)$"
     match = re.search(pattern, content, re.MULTILINE)
     return match.group(1).strip() if match else default
 
@@ -1851,7 +1845,7 @@ def assemble(root: Path, slice_id: str, *, lint: bool = True, exploratory: bool 
         "domain_thesis": domain_thesis.get("product_thesis", brand_title),
         "design_intent": dict(canonical_ir_data.get("sources", {}).get("design_intent") or {}) if canonical_ir_data else {},
         "ruthless_omissions": list(canonical_ir_data.get("sources", {}).get("ruthless_omissions") or []) if canonical_ir_data else [],
-        "primary_entities": [e.get("name", "entity") for e in ooux_entities] if ooux_entities else [slice_id],
+        "primary_entities": [e["name"] for e in ooux_entities if e.get("name")],
         "domain_states": [{"name": s, "type": "domain_state", "authority": "explicit", "source": "c1.md#states"} for s in explicit_domain_states],
         "experience_states": [{"name": s, "type": "experience_state", "authority": "derived", "source": "r1.md#assertions"} for s in derived_experience_states],
         "ui_transient_states": [{"name": s, "type": "ui_transient_state", "authority": "derived", "source": "c1.md#actions"} for s in derived_transient_states],

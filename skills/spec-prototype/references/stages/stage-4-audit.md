@@ -46,12 +46,17 @@ confirmation, or interaction tracing fails, record the scope as `unverified`, no
 passed. Inspect the actual screenshots before making visual claims. A static check
 supports a review; it does not establish visual quality.
 
-**Visual assertion hard rule — capture unavailable**: when `capture.mjs` cannot
-produce real rendered screenshots (browser startup failure, environment unavailability,
-CI headless failure), ALL visual assertions — hierarchy, composition, color contrast,
-spacing, motion, typography — are immediately downgraded to `[hypothesis]`. They may
-NOT serve as evidence for `Validated` authority status. Record explicitly in
-`prototype/discussion.md`: `visual_evidence: unverified (no rendered captures)`.
+**Visual assertion hard rule — evidence provenance**: record in
+`prototype/discussion.md` the `visual_evidence` reference, whether
+`capture_reflects_current_state` is `true` or `false`, and the concrete visual
+conclusion drawn from the current capture. An old capture may be retained for history,
+but `capture_reflects_current_state: false` cannot support a verified finding or
+`Validated` authority status. When `capture.mjs` cannot produce real rendered
+screenshots (browser startup failure, environment unavailability, CI headless failure),
+ALL visual assertions — hierarchy, composition, color contrast, spacing, motion,
+typography — are immediately downgraded to `[hypothesis]`. They may NOT serve as
+evidence for `Validated` authority status. Record explicitly in `prototype/discussion.md`:
+`visual_evidence: unverified (no rendered captures)`.
 A source-code inspection of HTML/CSS is NOT a substitute for rendered visual
 evidence; inferring visual quality from markup is a fabrication, not a finding.
 

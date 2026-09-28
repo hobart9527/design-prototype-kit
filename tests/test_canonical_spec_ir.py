@@ -28,6 +28,7 @@ COMPLETE_DISCUSSION = """# Design Discussion: Terminal Cluster Workbench
 - Operational through-put vs Catastrophic Bus-Hang Failures.
 
 ## 2. 现实双地锚 (Reality Benchmark Anchors)
+- Physical Anchor: desktop workstation
 - Operational Grounding: Slurm + Run:ai
 - Kinetic Grounding: Vernier Caliper detents
 
@@ -284,6 +285,7 @@ STAGE1_DISCUSSION = """# Design Discussion: Reading Sanctuary
 - Deep Contemplation vs Digital Attention Economy.
 
 ## 2. 现实双地锚 (Reality Benchmark Anchors)
+- Physical Anchor: desktop workstation
 - Operational Grounding: iA Writer
 - Kinetic Grounding: Paperback page turns
 
@@ -300,6 +302,27 @@ def _write_discussion(tmp_path: Path, text: str) -> Path:
     disc.parent.mkdir(parents=True)
     disc.write_text(text, encoding="utf-8")
     return tmp_path
+
+
+def test_stage2_entry_requires_an_explicit_physical_anchor(tmp_path: Path):
+    unanchored = STAGE1_DISCUSSION.replace("- Physical Anchor: desktop workstation\n", "")
+    root = _write_discussion(tmp_path, unanchored)
+
+    with pytest.raises(IncompleteStageContractError, match="physical_anchor"):
+        compile_canonical_ir(
+            root=root, slice_id="reading-sanctuary", stage="hero_probe", required_tier="stage2")
+
+    disc = root / "prototype/discussion.md"
+    disc.write_text(
+        unanchored.replace(
+            "## 2. 现实双地锚 (Reality Benchmark Anchors)",
+            "## 2. 现实双地锚 (Reality Benchmark Anchors)\n- Physical Anchor: none",
+        ),
+        encoding="utf-8",
+    )
+    ir = compile_canonical_ir(
+        root=root, slice_id="reading-sanctuary", stage="hero_probe", required_tier="stage2")
+    assert ir["spec_tier"] == "intent_spec"
 
 
 def test_stage1_intent_spec_compiles_and_validates(tmp_path: Path):
@@ -389,7 +412,7 @@ def test_handoff_packet_routes_canonical_spec(tmp_path: Path):
 
     pkt = pillar_packet(tmp_path, spec_file)
     assert pkt["slice_id"] == "test-slice"
-    assert pkt["candidate_id"] == "r1.spec"
+    assert pkt["candidate_id"] == "r1"
     assert pkt["prototype_write_scope"] == "prototype/experiments/test-slice/r1/"
     assert pkt["evidence_write_scope"] == "prototype/evidence/test-slice/r1/"
     assert "tokens_css" in pkt["references"]
@@ -432,7 +455,7 @@ def test_assemble_envelope_canonical_lint_and_status(tmp_path: Path):
             "tokens_css": "prototype/shared/tokens.css",
             "tokens_json": "prototype/contracts/tokens/t1.json",
             "human_spec_md": f"prototype/specifications/{slice_id}/r1.spec.md",
-            "prototype_html": f"prototype/experiments/{slice_id}/r1/index.html"
+            "prototype_html": f"prototype/experiments/{slice_id}/anchor/index.html"
         }
     }
     (compiled_dir / "r1.spec.json").write_text(json.dumps(ir_data), encoding="utf-8")
@@ -508,7 +531,7 @@ def test_lint_canonical_spec_ir_schema_and_boundary(tmp_path: Path):
             "tokens_css": "prototype/shared/tokens.css",
             "tokens_json": "prototype/contracts/tokens/t1.json",
             "human_spec_md": f"prototype/specifications/{slice_id}/r1.spec.md",
-            "prototype_html": f"prototype/experiments/{slice_id}/r1/index.html"
+            "prototype_html": f"prototype/experiments/{slice_id}/anchor/index.html"
         }
     }
     (compiled_dir / "r1.spec.json").write_text(json.dumps(valid_ir), encoding="utf-8")
@@ -532,6 +555,7 @@ primary_surface: "cockpit-main"
 # Surface Specification: Incident Commander Cockpit
 
 ## 1. Problem Framing & Drivers (支柱 1-2: 价值与真实地锚)
+- Physical Anchor: desktop workstation
 - **Core Tension**: `Throughput vs Liability` (秒级止血处置吞吐 vs 误操作责任风险).
 - **Design Driver**: `tension` | `failure_mode` (脑裂状态下操作员盲目重启集群).
 - **Reality Anchors**:
@@ -674,7 +698,9 @@ def test_canonical_envelope_anchors_and_states_carry_derived_authority(tmp_path:
     for a in anchors:
         assert a["authority"] == "derived", f"Anchor {a} must carry derived authority"
 
-    # Domain states must be derived, not explicit
+    assert env["semantic_contract"]["primary_entities"] == []
+    assert ir["state_model"]["domain_states"]
+    # Domain states remain states and must be derived, not entities.
     domain_states = env["semantic_contract"]["domain_states"]
     assert len(domain_states) > 0
     for ds in domain_states:

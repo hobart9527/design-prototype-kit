@@ -1116,10 +1116,26 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Telemetry and code font family", "authority": default_auth},
     }
 
+    def duration_value(value: str) -> Dict[str, Any]:
+        match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*(ms|s)\s*", value)
+        if not match:
+            raise ValueError(f"Invalid DTCG duration token: {value}")
+        return {"value": float(match.group(1)) if "." in match.group(1) else int(match.group(1)), "unit": match.group(2)}
+
     motion_tokens: Dict[str, Any] = {
-        "duration-fast": {"$value": m.get("duration_fast", "80ms"), "$type": "duration", "$description": "Fast tactile duration", "authority": default_auth},
-        "duration-normal": {"$value": m.get("duration_normal", "180ms"), "$type": "duration", "$description": "Normal transition duration", "authority": default_auth},
-        "ease-hud": {"$value": m.get("ease_hud", "cubic-bezier(0.16, 1, 0.3, 1)"), "$type": "cubicBezier", "$description": "HUD snappy curve", "authority": default_auth},
+        "duration-fast": {"$value": duration_value(m.get("duration_fast", "80ms")), "$type": "duration", "$description": "Fast tactile duration", "authority": default_auth},
+        "duration-normal": {"$value": duration_value(m.get("duration_normal", "180ms")), "$type": "duration", "$description": "Normal transition duration", "authority": default_auth},
+        "ease-hud": {"$value": [0.16, 1, 0.3, 1], "$type": "cubicBezier", "$description": "HUD snappy curve", "authority": default_auth},
+        "spring-settle": {
+            "$value": {
+                "duration": duration_value(m.get("duration_normal", "180ms")),
+                "delay": {"value": 0, "unit": "ms"},
+                "timingFunction": "{ease-hud}",
+            },
+            "$type": "transition",
+            "$description": "Settling transition",
+            "authority": default_auth,
+        },
     }
 
     # Structured 3-Tier Organization
@@ -1133,44 +1149,43 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
 
     semantics = {
         "surface": {
-            "base": {"$value": "{primitives.color.surface.$value}", "$type": "color", "$description": "Base canvas and container surface", "authority": default_auth},
-            "elevated": {"$value": "{primitives.color.surface-raised.$value}", "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": default_auth},
-            "sunken": {"$value": "{primitives.color.bg-base.$value}", "$type": "color", "$description": "Sunken instrument well or canvas backdrop", "authority": default_auth},
+            "base": {"$value": "{primitives.color.surface}", "$type": "color", "$description": "Base canvas and container surface", "authority": default_auth},
+            "elevated": {"$value": "{primitives.color.surface-raised}", "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": default_auth},
+            "sunken": {"$value": "{primitives.color.bg-base}", "$type": "color", "$description": "Sunken instrument well or canvas backdrop", "authority": default_auth},
         },
         "text": {
-            "primary": {"$value": "{primitives.color.text-primary.$value}", "$type": "color", "$description": "Primary high-contrast typography", "authority": default_auth},
-            "secondary": {"$value": "{primitives.color.text-secondary.$value}", "$type": "color", "$description": "Supplementary metadata and labels", "authority": default_auth},
-            "muted": {"$value": "{primitives.color.text-tertiary.$value}", "$type": "color", "$description": "De-emphasized or disabled controls", "authority": default_auth},
+            "primary": {"$value": "{primitives.color.text-primary}", "$type": "color", "$description": "Primary high-contrast typography", "authority": default_auth},
+            "secondary": {"$value": "{primitives.color.text-secondary}", "$type": "color", "$description": "Supplementary metadata and labels", "authority": default_auth},
+            "muted": {"$value": "{primitives.color.text-tertiary}", "$type": "color", "$description": "De-emphasized or disabled controls", "authority": default_auth},
         },
         "action": {
-            "primary": {"$value": "{primitives.color.primary.$value}", "$type": "color", "$description": "Primary action trigger", "authority": default_auth},
-            "primary-hover": {"$value": "{primitives.color.primary-hover.$value}", "$type": "color", "$description": "Primary hover state", "authority": default_auth},
+            "primary": {"$value": "{primitives.color.primary}", "$type": "color", "$description": "Primary action trigger", "authority": default_auth},
+            "primary-hover": {"$value": "{primitives.color.primary-hover}", "$type": "color", "$description": "Primary hover state", "authority": default_auth},
         },
         "status": {
-            "nominal": {"$value": "{primitives.color.status-running.$value}", "$type": "color", "$description": "Nominal operational state", "authority": default_auth},
-            "warning": {"$value": "{primitives.color.status-warning.$value}", "$type": "color", "$description": "Warning state or capacity threshold", "authority": default_auth},
-            "danger": {"$value": "{primitives.color.status-danger.$value}", "$type": "color", "$description": "Critical failure or alert", "authority": default_auth},
+            "nominal": {"$value": "{primitives.color.status-running}", "$type": "color", "$description": "Nominal operational state", "authority": default_auth},
+            "warning": {"$value": "{primitives.color.status-warning}", "$type": "color", "$description": "Warning state or capacity threshold", "authority": default_auth},
+            "danger": {"$value": "{primitives.color.status-danger}", "$type": "color", "$description": "Critical failure or alert", "authority": default_auth},
         }
     }
 
     components = {
         "input": {
-            "bg": {"$value": "{primitives.color.bg-base.$value}", "$type": "color", "$description": "Input field background", "authority": default_auth},
-            "border": {"$value": "{primitives.color.border.$value}", "$type": "color", "$description": "Input field boundary", "authority": default_auth},
-            "focus": {"$value": "{primitives.color.primary.$value}", "$type": "color", "$description": "Input focus ring color", "authority": default_auth},
+            "bg": {"$value": "{primitives.color.bg-base}", "$type": "color", "$description": "Input field background", "authority": default_auth},
+            "border": {"$value": "{primitives.color.border}", "$type": "color", "$description": "Input field boundary", "authority": default_auth},
+            "focus": {"$value": "{primitives.color.primary}", "$type": "color", "$description": "Input focus ring color", "authority": default_auth},
         },
         "card": {
-            "bg": {"$value": "{primitives.color.surface.$value}", "$type": "color", "$description": "Card surface background", "authority": default_auth},
-            "border": {"$value": "{primitives.color.border.$value}", "$type": "color", "$description": "Card boundary", "authority": default_auth},
+            "bg": {"$value": "{primitives.color.surface}", "$type": "color", "$description": "Card surface background", "authority": default_auth},
+            "border": {"$value": "{primitives.color.border}", "$type": "color", "$description": "Card boundary", "authority": default_auth},
         },
         "table": {
-            "row-hover": {"$value": "{primitives.color.surface-raised.$value}", "$type": "color", "$description": "Table row hover highlight", "authority": default_auth},
-            "border": {"$value": "{primitives.color.border-dim.$value}", "$type": "color", "$description": "Table divider hairline", "authority": default_auth},
+            "row-hover": {"$value": "{primitives.color.surface-raised}", "$type": "color", "$description": "Table row hover highlight", "authority": default_auth},
+            "border": {"$value": "{primitives.color.border-dim}", "$type": "color", "$description": "Table divider hairline", "authority": default_auth},
         }
     }
 
-    return {
-        "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
+    result = {
         "$description": "Machine-compiled 3-Tier DTCG token specification with authority provenance.",
         "$extensions": {
             "design-prototype-kit": {
@@ -1189,6 +1204,37 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         "typography": typography_tokens,
         "motion": motion_tokens,
     }
+
+    def namespace_authority(node: Any) -> None:
+        if isinstance(node, dict):
+            if "$value" in node:
+                authority = node.pop("authority", None)
+                if authority is not None:
+                    extensions = node.setdefault("$extensions", {})
+                    extensions.setdefault("design-prototype-kit", {})["authority"] = authority
+            for key, value in node.items():
+                if key != "$extensions":
+                    namespace_authority(value)
+        elif isinstance(node, list):
+            for value in node:
+                namespace_authority(value)
+
+    namespace_authority(result)
+    return result
+
+
+def _token_source_digest(source_text: str, mode: str) -> str:
+    """Digest only authored inputs that can change generated token values."""
+    dials = parse_5dials(source_text)
+    dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
+    inputs = {
+        "dials": dict(sorted(dials.items())),
+        "colors": dict(sorted(dynamic_colors.items())),
+        "craft_stack": dict(sorted(parse_craft_stack(source_text, dials).items())),
+        "authority": "explicit_human" if _has_confirmed_token_authority(source_text) else "derived",
+    }
+    payload = json.dumps(inputs, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _resolve_token_source(discussion_path: str, mode: str = "formal") -> str:
@@ -1229,7 +1275,7 @@ def compile_tokens(
     computed["provenance"] = {
         "source": str(discussion_path),
         "mode": mode,
-        "digest": "sha256:" + hashlib.sha256(disc_text.encode("utf-8")).hexdigest(),
+        "digest": _token_source_digest(disc_text, mode),
         "dials": dict(sorted(dials.items())),
     }
 
@@ -1301,7 +1347,7 @@ def _render_sealed_css(source_text: str, source_path: str, mode: str) -> str:
     computed["provenance"] = {
         "source": source_path,
         "mode": mode,
-        "digest": "sha256:" + hashlib.sha256(source_text.encode("utf-8")).hexdigest(),
+        "digest": _token_source_digest(source_text, mode),
         "dials": dict(sorted(dials.items())),
     }
     return generate_css(computed)
@@ -1343,7 +1389,7 @@ def check_tokens_sync(css_path: str, discussion_path: str, mode: str = "formal")
             "css_path": str(css_p),
             "drift": f"token source not found: {disc_p}",
         }
-    current_digest = "sha256:" + hashlib.sha256(source_text.encode("utf-8")).hexdigest()
+    current_digest = _token_source_digest(source_text, seal_mode)
 
     if provenance["digest"] != current_digest:
         return {

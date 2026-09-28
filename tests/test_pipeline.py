@@ -252,7 +252,7 @@ def test_canonical_5_stage_active_simulation_and_artifact_standards():
         tokens_json_path = REPO / "prototype/contracts/tokens/t1.json"
         if tokens_json_path.is_file():
             token_data = json.loads(tokens_json_path.read_text(encoding="utf-8"))
-            assert "$schema" in token_data
+            assert "$schema" not in token_data
             assert "color" in token_data
             assert token_data["color"]["primary"]["$value"] == "#00f0ff"
 
@@ -261,7 +261,7 @@ def test_canonical_5_stage_active_simulation_and_artifact_standards():
     dials = {"energy": "quiet", "finish": "machined-industrial", "density": "dense", "weight": "dense-tactile", "seriousness": "solemn"}
     tokens = compile_mod.compute_tokens(dials, "plasma-cyan")
     generated_dtcg = compile_mod.generate_dtcg_json(tokens)
-    assert "$schema" in generated_dtcg
+    assert "$schema" not in generated_dtcg
     assert "color" in generated_dtcg
     assert "primary" in generated_dtcg["color"]
     assert generated_dtcg["color"]["primary"]["$value"].startswith("#")
@@ -366,7 +366,7 @@ record: prototype-specification
     out_json = tmp_path / "tokens_gen.json"
     compile_mod.compile_tokens(str(discussion), str(out_css), str(out_json))
     assert out_css.is_file() and "--radius-outer" in out_css.read_text(encoding="utf-8")
-    assert out_json.is_file() and "$schema" in out_json.read_text(encoding="utf-8")
+    assert out_json.is_file() and "$schema" not in out_json.read_text(encoding="utf-8")
     # The retired Markdown token contract has no emission seam at all.
     import inspect
     assert "output_md_path" not in inspect.signature(compile_mod.compile_tokens).parameters

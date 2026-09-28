@@ -468,7 +468,7 @@ def packet(root: Path, spec: str) -> dict:
 
 def pillar_packet(root: Path, spec_path: Path) -> dict:
     slice_id = spec_path.parent.name
-    candidate_id = spec_path.stem
+    candidate_id = spec_path.name.removesuffix(".spec.md").removesuffix(".md")
     required = {
         "product": root / "prototype/product.md",
         "surface_map": root / "prototype/contracts/surface-maps/m1.md",
@@ -687,7 +687,8 @@ def freeze(root: Path, spec: str) -> dict:
     )
     if status_match:
         status = status_match.group(1).strip().lower()
-        if status not in ("candidate", "provisional", "sealed provisional", "validated", "frozen", "frozen approved"):
+        normalized_status = status.replace("_", " ")
+        if normalized_status not in ("candidate", "provisional", "sealed provisional", "validated", "frozen", "frozen approved"):
             raise HandoffError(f"Specification compilation status must be candidate, provisional, validated, or frozen to freeze, got: {status}")
 
     # Harmonize evidence discovery across standard locations:
@@ -768,7 +769,23 @@ def freeze(root: Path, spec: str) -> dict:
         # Freezing a design scope never exercises implementation. These remain
         # explicitly pending whether or not the approval is spec-only.
         "implementation_validation": {name: "pending" for name in PENDING_IMPLEMENTATION_DIMENSIONS},
-        "frozen_artifacts": [pkt["specification"], *pkt["required_reads"][1:]] + ([evidence_record] if evidence_record else [])
+        "frozen_artifacts": list({
+            artifact["path"]: artifact
+            for artifact in [
+                pkt["specification"],
+                *pkt["required_reads"][1:],
+                *[
+                    retained(root, str(path.relative_to(root)))
+                    for path in (
+                        root / f"prototype/contracts/compiled/{pkt['slice_id']}/{pkt['candidate_id']}.spec.json",
+                        root / "prototype/contracts/tokens/t1.json",
+                        root / f"prototype/experiments/{pkt['slice_id']}/anchor/index.html",
+                    )
+                    if path.is_file()
+                ],
+                evidence_record,
+            ] if artifact
+        }.values()),
     }
     # Persist freeze-manifest.json to evidence scope
     evidence_dir = root / "prototype" / "evidence" / pkt["slice_id"] / pkt["candidate_id"]

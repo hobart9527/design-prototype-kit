@@ -67,7 +67,7 @@ def test_export_tokens_parses_template_to_valid_dtcg(tmp_path: Path):
 |---|---|---|
 | `--duration-fast` | `150ms` | Micro interaction |
 | `--ease-out` | `cubic-bezier(0, 0, 0.2, 1)` | Enter view |
-| `--spring-settle` | `180 / 12 / 1` | Settle |
+| `--spring-settle` | `180ms / 0ms / cubic-bezier(0.2, 0, 0, 1)` | Settle |
 """, encoding="utf-8")
 
     out_json = tmp_path / "tokens.json"
@@ -76,20 +76,63 @@ def test_export_tokens_parses_template_to_valid_dtcg(tmp_path: Path):
     assert out_json.is_file()
 
     data = json.loads(out_json.read_text(encoding="utf-8"))
-    assert "$schema" in data
+    assert "$schema" not in data  # DTCG 2025.10 publishes no official JSON Schema URL.
     assert "color" in data
     assert data["color"]["primary"]["$value"] == "#0055ff"
     assert data["color"]["primary"]["$type"] == "color"
     assert data["color"]["primary"]["$description"] == "Primary action"
+    assert data["spacing"]["2"]["$value"] == {"value": 8, "unit": "px"}
 
     assert "spacing" in data
-    assert data["spacing"]["1"]["$value"] == "4px"
+    assert data["spacing"]["1"]["$value"] == {"value": 4, "unit": "px"}
     assert data["spacing"]["1"]["$type"] == "dimension"
 
     assert "motion" in data
     assert data["motion"]["duration-fast"]["$type"] == "duration"
+    assert data["motion"]["duration-fast"]["$value"] == {"value": 150, "unit": "ms"}
     assert data["motion"]["ease-out"]["$type"] == "cubicBezier"
+    assert data["motion"]["ease-out"]["$value"] == [0, 0, 0.2, 1]
     assert data["motion"]["spring-settle"]["$type"] == "transition"
+    assert data["motion"]["spring-settle"]["$value"] == {
+        "duration": {"value": 180, "unit": "ms"},
+        "delay": {"value": 0, "unit": "ms"},
+        "timingFunction": [0.2, 0, 0, 1],
+    }
+    assert data["motion"]["duration-fast"]["$value"] == {"value": 150, "unit": "ms"}
+
+
+def test_css_export_uses_structured_dtcg_values():
+    sys.path.insert(0, str(SCRIPT.parent))
+    from importlib.machinery import SourceFileLoader
+    export = SourceFileLoader("export_tokens", str(SCRIPT)).load_module()
+
+    tokens = export.parse_tokens_css(
+        ":root { --bg-surface: #ffffff; --text-primary: #111111; "
+        "--space-2: 8px; --duration-fast: 150ms; "
+        "--ease-out: cubic-bezier(0, 0, 0.2, 1); "
+        "--motion-spring-settle: 180ms / 0ms / cubic-bezier(0.2, 0, 0, 1); }"
+    )
+    assert tokens["bg"]["surface"]["$type"] == "color"
+    assert tokens["text"]["primary"]["$type"] == "color"
+    assert tokens["space"]["2"]["$value"] == {"value": 8, "unit": "px"}
+    assert tokens["duration"]["fast"]["$value"] == {"value": 150, "unit": "ms"}
+    assert tokens["ease"]["out"]["$value"] == [0, 0, 0.2, 1]
+    assert tokens["motion"]["spring-settle"]["$value"] == {
+        "duration": {"value": 180, "unit": "ms"},
+        "delay": {"value": 0, "unit": "ms"},
+        "timingFunction": [0.2, 0, 0, 1],
+    }
+
+
+def test_canonical_dtcg_uses_spec_2025_10_shapes():
+    ct = _load_compiler()
+    data = ct.generate_dtcg_json(ct.compute_tokens({}))
+
+    assert "$schema" not in data  # DTCG 2025.10 defines no official JSON Schema URL.
+    assert data["semantics"]["surface"]["base"]["$value"] == "{primitives.color.surface}"
+    assert data["primitives"]["motion"]["duration-fast"]["$value"]["unit"] == "ms"
+    assert "authority" not in data["primitives"]["color"]["surface"]
+    assert data["primitives"]["color"]["surface"]["$extensions"]["design-prototype-kit"]["authority"]
 
 
 def test_export_tokens_stdout_and_missing_file(tmp_path: Path):
@@ -136,8 +179,8 @@ def test_export_tokens_parses_two_column_breakpoints(tmp_path: Path):
     data = json.loads(out_json.read_text(encoding="utf-8"))
     assert "breakpoints" in data
     assert set(data["breakpoints"].keys()) == {"mobile", "tablet", "desktop", "wide"}
-    assert data["breakpoints"]["mobile"]["$value"] == "390px"
-    assert data["breakpoints"]["wide"]["$value"] == "1600px"
+    assert data["breakpoints"]["mobile"]["$value"] == {"value": 390, "unit": "px"}
+    assert data["breakpoints"]["wide"]["$value"] == {"value": 1600, "unit": "px"}
 
 
 def test_token_authority_requires_token_specific_confirmation():
@@ -259,6 +302,32 @@ def test_source_edit_marks_out_of_sync_even_with_matching_dials(tmp_path: Path):
 
     sync = ct.check_tokens_sync(str(css_path), str(root / "prototype/discussion.md"))
     assert sync["state"] == "out_of_sync"
+
+
+def test_discussion_non_token_edits_do_not_stale_tokens(tmp_path: Path):
+    ct = _load_compiler()
+    root = _compile_tokens_from_discussion(tmp_path)
+    discussion = root / "prototype/discussion.md"
+    discussion.write_text(
+        discussion.read_text(encoding="utf-8") + "\n## Stage 4 review\n- visual_evidence: unverified\n",
+        encoding="utf-8",
+    )
+
+    sync = ct.check_tokens_sync(str(root / "prototype/shared/tokens.css"), str(discussion))
+    assert sync["state"] == "in_sync", sync
+
+
+def test_token_input_edit_marks_tokens_out_of_sync(tmp_path: Path):
+    ct = _load_compiler()
+    root = _compile_tokens_from_discussion(tmp_path)
+    discussion = root / "prototype/discussion.md"
+    discussion.write_text(
+        discussion.read_text(encoding="utf-8").replace("#d6f56b", "#aa33cc"),
+        encoding="utf-8",
+    )
+
+    sync = ct.check_tokens_sync(str(root / "prototype/shared/tokens.css"), str(discussion))
+    assert sync["state"] == "out_of_sync", sync
 
 
 def test_palette_only_edit_cannot_pass_dial_annotation_freshness(tmp_path: Path):

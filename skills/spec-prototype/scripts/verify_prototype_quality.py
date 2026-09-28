@@ -1066,7 +1066,9 @@ if __name__ == "__main__":
         ]
         html_path = next((p for p in candidates if p.is_file()), candidates[0])
         token_path = root / "prototype/shared/tokens.css"
-        spec_path = root / f"prototype/specifications/{slice_id}/r1.md"
+        canonical_spec = root / f"prototype/specifications/{slice_id}/r1.spec.md"
+        legacy_spec = root / f"prototype/specifications/{slice_id}/r1.md"
+        spec_path = canonical_spec if canonical_spec.is_file() else legacy_spec
         contract_path = str(spec_path) if spec_path.is_file() else (args.contract or "")
         sys.exit(0 if assert_quality(str(html_path), str(token_path), args.strict_divergence, contract_path) else 1)
 

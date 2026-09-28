@@ -156,6 +156,12 @@ def test_spec_only_approval_freezes_without_html_artifact(tmp_path: Path):
     assert manifest["authority_status"] == "frozen_approved"
     assert manifest["approval"]["spec_only"] is True
     assert manifest["approval"]["decision_id"] == "D-1"
+    frozen_paths = {artifact["path"] for artifact in manifest["frozen_artifacts"]}
+    assert "prototype/specifications/reader/r1.md" in frozen_paths
+    assert "prototype/contracts/tokens/t1.md" in frozen_paths
+    assert "prototype/contracts/compiled/reader/r1.spec.json" not in frozen_paths
+    assert "prototype/contracts/tokens/t1.json" not in frozen_paths
+    assert "prototype/experiments/reader/anchor/index.html" not in frozen_paths
     # Selecting a ready spec requires no build; the design scope is retained.
     assert manifest["approval"]["scope"] == {"slice_id": "reader", "candidate_id": "r1"}
     assert not list(tmp_path.rglob("*.html"))

@@ -148,7 +148,7 @@ prototype/
 **Refusal List (绝对拒止)**:
 1. NEVER author legacy 6-piece contract files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`).
 2. NEVER author a duplicate `prototype/product.md` — all product facts and dialectic context belong in `prototype/discussion.md`.
-3. NEVER run `materialize_contracts.py` in primary delivery.
+3. NEVER run `materialize_contracts.py` in primary delivery. `assemble_envelope.py` is a compatibility/benchmark helper, not an authoring or dispatch stage; canonical Spec IR and the directly authored anchor remain authoritative.
 
 The discussion record also carries the two blocks that make a delivery evaluable:
 **Success metrics** (how the work will be judged — product outcomes with an

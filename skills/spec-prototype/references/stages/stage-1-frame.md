@@ -48,7 +48,7 @@ prototype/
 **Banned in Primary Delivery**:
 - NEVER author legacy 6-piece files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`).
 - NEVER author a duplicate `prototype/product.md` — all product facts and dialectic context belong in `prototype/discussion.md`.
-- NEVER run `materialize_contracts.py` in primary delivery.
+- NEVER run `materialize_contracts.py` in primary delivery. `assemble_envelope.py` remains a compatibility/benchmark helper only; it is not an authoring or dispatch stage.
 
 Keep `prototype/discussion.md` as the concise human-readable decision and evidence
 record. For a formal prototype, use `google-design-md/v2` frontmatter and semantic
@@ -72,6 +72,15 @@ The brief needs only the applicable parts of:
 Do not fill every Nine Pillar, Five Axis, state, surface, or Break Protocol vector.
 Keep the human brief about decisions; machine IR and CSS tokens are compiled outputs.
 
+## Physical Anchor Declaration
+
+Before a formal runnable prototype enters Stage 2, declare its physical chassis in
+`prototype/discussion.md` as an explicit anchor (for example, `desktop workstation`,
+`mobile device`, or `physical_anchor: none` when no device-shaped anchor applies).
+Do not infer the chassis from product category, references, or generic device defaults.
+An undeclared anchor blocks formal Stage 2; a declared `none` is an intentional
+non-device decision, not missing information.
+
 ## Sealed Provisional Baseline Closure
 
 For a formal runnable prototype, establish the applicable sealed provisional Spec
@@ -81,9 +90,10 @@ request to seal or freeze the whole product.
 ## Formal prototype compilation
 
 When a runnable formal prototype is requested, author the minimum contract in
-`prototype/discussion.md`, then run the documented `compile_spec_ir.py` and
-`compile_tokens.py` commands in one shell invocation. The compiler creates the machine
-IR and human `.spec.md` view; fix actionable compiler errors at their authored source.
+`prototype/discussion.md`, then run the documented `compile_spec_ir.py --required-tier stage2` and
+`compile_tokens.py` commands in one shell invocation. The Stage 2 tier refuses to compile
+without an explicit Physical Anchor declaration (including `none` when no device anchor applies).
+The compiler creates the machine IR and human `.spec.md` view; fix actionable compiler errors at their authored source.
 Do not inspect compiler source to learn design decisions. Lightweight exploration,
 spec-only discussion, and local review do not require the full formal pipeline.
 

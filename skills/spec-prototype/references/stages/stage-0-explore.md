@@ -36,6 +36,12 @@ brief plus evidence, never a sealed contract and never an approved artifact.
 5. **Research conclusions are legal output without build authorization.** A
    no-build exploration may close with sourced research conclusions and the
    updated discussion record; building is never a precondition for a legal exit.
+6. **Resume at the first value-producing step.** Before spending further time,
+   inspect the current Resume record for completed work, remaining runtime, and
+   any explicit budget cap. Continue from the first unfinished stage; do not repeat
+   completed research or recapture unchanged evidence. If the cap or session ends
+   first, retain the partial result, record the blocker and exact next action in
+   Resume, and report `PARTIAL` rather than implying completion.
 
 ## Gated Output
 

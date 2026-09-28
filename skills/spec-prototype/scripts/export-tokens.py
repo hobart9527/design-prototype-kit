@@ -37,9 +37,7 @@ SECTION_TYPE_MAP = {
 
 
 def parse_tokens_markdown(content: str) -> dict[str, Any]:
-    tokens: dict[str, Any] = {
-        "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
-    }
+    tokens: dict[str, Any] = {}
 
     # Extract metadata from identity section if present
     identity_match = re.search(r"##\s+Identity\s*\n(.*?)(?=\n##|\Z)", content, re.DOTALL)
@@ -126,10 +124,59 @@ def parse_tokens_markdown(content: str) -> dict[str, Any]:
                 elif name.startswith("spring-"):
                     token_type = "transition"
 
+            token_value: Any = val
+            if token_type == "dimension":
+                dimension = re.fullmatch(r"\s*(-?\d+(?:\.\d+)?)\s*(px|rem|em)\s*", val)
+                if not dimension:
+                    raise ValueError(f"Invalid DTCG dimension token: {val}")
+                amount, unit = dimension.groups()
+                token_value = {
+                    "value": float(amount) if "." in amount else int(amount),
+                    "unit": unit,
+                }
+            elif token_type == "duration":
+                duration = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*(ms|s)\s*", val)
+                if not duration:
+                    raise ValueError(f"Invalid DTCG duration token: {val}")
+                amount, unit = duration.groups()
+                token_value = {
+                    "value": float(amount) if "." in amount else int(amount),
+                    "unit": unit,
+                }
+            elif token_type == "cubicBezier":
+                curve = re.fullmatch(r"\s*cubic-bezier\(\s*([^)]*)\s*\)\s*", val, re.IGNORECASE)
+                if not curve:
+                    raise ValueError(f"Invalid DTCG cubicBezier token: {val}")
+                token_value = [float(point.strip()) for point in curve.group(1).split(",")]
+                if len(token_value) != 4:
+                    raise ValueError(f"Invalid DTCG cubicBezier token: {val}")
+            elif token_type == "transition":
+                transition = re.fullmatch(
+                    r"\s*(\d+(?:\.\d+)?)\s*(ms|s)\s*/\s*(\d+(?:\.\d+)?)\s*(ms|s)\s*/\s*cubic-bezier\(\s*([^)]+)\s*\)\s*",
+                    val,
+                    re.IGNORECASE,
+                )
+                if not transition:
+                    raise ValueError(f"Invalid DTCG transition token: {val}")
+                duration, duration_unit, delay, delay_unit, curve = transition.groups()
+                points = [float(point.strip()) for point in curve.split(",")]
+                if len(points) != 4:
+                    raise ValueError(f"Invalid DTCG transition token: {val}")
+                token_value = {
+                    "duration": {
+                        "value": float(duration) if "." in duration else int(duration),
+                        "unit": duration_unit,
+                    },
+                    "delay": {
+                        "value": float(delay) if "." in delay else int(delay),
+                        "unit": delay_unit,
+                    },
+                    "timingFunction": points,
+                }
+
             token_obj: dict[str, Any] = {
-                "$value": val,
+                "$value": token_value,
                 "$type": token_type,
-                "authority": "frozen_spec",
                 "$extensions": {
                     "design-prototype-kit": {
                         "authority": "frozen_spec",
@@ -150,9 +197,7 @@ def parse_tokens_markdown(content: str) -> dict[str, Any]:
 
 
 def parse_tokens_css(content: str) -> dict[str, Any]:
-    tokens: dict[str, Any] = {
-        "$schema": "https://design-tokens.github.io/community-group/format/v1.0.0/schema.json",
-    }
+    tokens: dict[str, Any] = {}
     # Match --name: value;
     matches = re.findall(r"(--[a-zA-Z0-9_-]+)\s*:\s*([^;]+);", content)
     for raw_name, raw_val in matches:
@@ -163,22 +208,63 @@ def parse_tokens_css(content: str) -> dict[str, Any]:
         group_name = parts[0]
         sub_name = parts[1] if len(parts) > 1 else var_name
         token_type = SECTION_TYPE_MAP.get(group_name, "other")
-        if group_name == "color":
+        if group_name == "color" or re.match(r"^(?:bg|text|accent|status|border|seal)-", var_name):
             token_type = "color"
         elif group_name in ("space", "spacing", "bp", "radius"):
             token_type = "dimension"
-        elif group_name == "motion" or group_name in ("duration", "ease"):
-            if "ease" in var_name:
-                token_type = "cubicBezier"
-            elif "duration" in var_name:
-                token_type = "duration"
+        elif group_name == "duration" or (group_name == "motion" and "duration" in var_name):
+            token_type = "duration"
+        elif group_name == "ease" or (group_name == "motion" and "ease" in var_name):
+            token_type = "cubicBezier"
+        elif group_name == "motion":
+            token_type = "transition"
+
+        token_value: Any = val
+        if token_type in {"dimension", "duration"}:
+            measure = re.fullmatch(r"\s*(-?\d+(?:\.\d+)?)\s*(px|rem|em|ms|s)\s*", val)
+            if measure:
+                amount, unit = measure.groups()
+                token_value = {
+                    "value": float(amount) if "." in amount else int(amount),
+                    "unit": unit,
+                }
             else:
-                token_type = "transition"
+                raise ValueError(f"Invalid DTCG {token_type} token: {val}")
+        elif token_type == "cubicBezier":
+            curve = re.fullmatch(r"\s*cubic-bezier\(\s*([^)]*)\s*\)\s*", val, re.IGNORECASE)
+            if not curve:
+                raise ValueError(f"Invalid DTCG cubicBezier token: {val}")
+            token_value = [float(point.strip()) for point in curve.group(1).split(",")]
+            if len(token_value) != 4:
+                raise ValueError(f"Invalid DTCG cubicBezier token: {val}")
+        elif token_type == "transition":
+            transition = re.fullmatch(
+                r"\s*(\d+(?:\.\d+)?)\s*(ms|s)\s*/\s*(\d+(?:\.\d+)?)\s*(ms|s)\s*/\s*cubic-bezier\(\s*([^)]+)\s*\)\s*",
+                val,
+                re.IGNORECASE,
+            )
+            if not transition:
+                raise ValueError(f"Invalid DTCG transition token: {val}")
+            duration, duration_unit, delay, delay_unit, curve = transition.groups()
+            points = [float(point.strip()) for point in curve.split(",")]
+            if len(points) != 4:
+                raise ValueError(f"Invalid DTCG transition token: {val}")
+            token_value = {
+                "duration": {
+                    "value": float(duration) if "." in duration else int(duration),
+                    "unit": duration_unit,
+                },
+                "delay": {
+                    "value": float(delay) if "." in delay else int(delay),
+                    "unit": delay_unit,
+                },
+                "timingFunction": points,
+            }
 
         if group_name not in tokens:
             tokens[group_name] = {}
         tokens[group_name][sub_name] = {
-            "$value": val,
+            "$value": token_value if token_type in {"dimension", "duration", "cubicBezier", "transition"} else val,
             "$type": token_type,
         }
     return tokens
