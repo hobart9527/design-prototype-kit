@@ -31,8 +31,10 @@ official Google schema and does not imply Material Design adoption.
 The brief needs only the applicable parts of:
 
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.
-- **Experience direction** — product-specific hierarchy, tone, visual mechanism,
-  references and what is deliberately conventional. Five Axes are optional.
+- **Experience direction & Five Axes calibration** — product-specific hierarchy, tone,
+  visual mechanism, references and what is deliberately conventional. Five Axes are optional
+  continuous coordinates on relevant dimensions, balancing 70% familiarity with 1 signature
+  relationship/moment under the 70/30 innovation boundary.
 - **Spatial anatomy** — primary surface and only context surfaces needed by this slice.
 - **Actions & states** — consequential task, visible result, recovery, and states needed
   to express or test it.

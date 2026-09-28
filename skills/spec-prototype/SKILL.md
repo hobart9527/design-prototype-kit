@@ -61,11 +61,17 @@ Evidence lens labels retained for lineage review: **Archetype A: Greenfield 0-to
 ## Design Method (设计本体与决策节奏)
 
 Use the **Nine Pillars**—Value, Research, Object, Journey, Topology, Attention,
-Expression, Interaction, Resilience—to find the consequential design problem. Use the
-**Double Diamond** to open alternatives only where uncertainty is real, then converge
+Expression, Interaction, Resilience—as the unique, complete design ontology to diagnose
+and frame the consequential problem. Do not treat the Nine Pillars as a bureaucratic
+form to fill; they are analytical lenses. Engage in deep dialectic dialogue only on the
+specific pillars carrying material tension or uncertainty.
+
+Use the **Double Diamond** to diverge only where uncertainty is real, then converge
 on a coherent experience. The **Five Axes** (Density, Energy, Materiality, Rhythm,
-Character) are optional vocabulary for describing its sensory direction, not a UI
-recipe. Craft methods are tools chosen for the problem, not mandatory stages.
+Character) are continuous sensory coordinates to calibrate and discuss aesthetic direction—never
+a forced CSS formula or arbitrary score. Maintain the **70/30 Innovation Boundary**: preserve
+70% familiar mental models for navigation and spatial expectations, while concentrating
+creative craft and novelty into the 30% resolving the slice's **Signature Moment**.
 
 Ground product facts in the brief and workspace. Never invent capabilities,
 integrations, user research, or approval. Mark professional inference `[derived]`,
@@ -133,7 +139,7 @@ official Google standard. Write only sections relevant to the requested scope; d
 fill a matrix for completeness. Keep `explicit`, `observed`, `derived`, `hypothesis`,
 and `unknown` distinctions visible.
 
-## Craft Standard (现代设计工艺)
+## Craft Standard (现代设计工艺与三层工程沉淀)
 
 Make the output feel authored for this product, not decorated from a house style.
 Use realistic content and task-driven hierarchy; make density, typography, color,
@@ -144,6 +150,17 @@ The applicable hard floors remain: WCAG/accessibility and honest evidence, visib
 (`R_inner = max(0, R_outer - P)`), `tabular-nums` for changing/aligned numeric data,
 and touch targets of at least 44×44px in touch contexts. Techniques beyond these
 floors are contextual choices, not global recipes.
+
+### P9+ Modern Craft Execution
+- **Subtle Materiality & Borders**: Translucent micro-borders (`rgba(255,255,255,0.08)` or `rgba(0,0,0,0.08)`), dual-layer ambient/contact shadows, and 1px inset specular highlights on dark elevated cards.
+- **Micro-Kinetic Affordance**: Buttons yield on `:active` with subtle micro-compression (`scale(0.985)`), animated via damping curves (`cubic-bezier(0.16, 1, 0.3, 1)`).
+- **Typographic Precision**: System font stack (`Inter`, `Geist`, `SF Pro`), antialiased rendering, tight font scale hierarchy, and `tabular-nums` numeric stabilization.
+
+### Downstream Engineering Assets (三层工程交付资产)
+Deliver artifacts ready for subsequent frontend generation:
+1. **`tokens.json` & `tokens.css`**: W3C DTCG-compliant tokens capturing semantic color, spacing, radii, typography, and elevation scales.
+2. **`spec.md`**: Single-source specification mapping component topology, state machines (`default | loading | stressed | empty | error`), and accessibility invariants.
+3. **`index.html`**: Clean, self-contained, accessible interactive implementation directly translatable into production frontend components.
 
 ## Delivery Mechanics (静默、最小化)
 
