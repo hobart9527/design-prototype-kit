@@ -447,7 +447,7 @@ def check_spec_completeness(root: Path, slice_id: str, *, lint: bool = True) -> 
     if missing:
         raise ValueError(
             f"Stage 1 Spec Contract incomplete. Missing required artifacts: {', '.join(missing)}. "
-            f"Either compile canonical IR (compile_spec_ir.py) or materialize legacy contract pillars."
+            f"Either compile canonical IR (compile_spec_ir.py) or author the legacy contract pillars."
         )
 
     if lint:  # the formal entry runs the real lint, not a parallel copy of it

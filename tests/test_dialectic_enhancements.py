@@ -8,48 +8,7 @@ SCRIPTS = REPO / "skills/spec-prototype/scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from materialize_contracts import materialize
 import verify_prototype_quality
-
-
-def test_discussion_decision_record_ingestion(tmp_path: Path):
-    """Verify materialize_contracts compiles directly from prototype/discussion.md as the sole authority."""
-    proto = tmp_path / "prototype"
-    proto.mkdir(parents=True, exist_ok=True)
-    disc = proto / "discussion.md"
-    disc.write_text("""# Test Discussion
-
-## Decision Record
-- Product Title: Authority Ledger Suite
-- Core Tension: Throughput vs Liability
-- Physical Metaphor: Customs Clearance Scale
-- Dominant Baseline: Linear + Bloomberg
-- Reality Anchors: Bloomberg Terminal (320px dock), Linear (keyboard shortcut sovereignty)
-- Density: compact
-- Rhythm: deliberate
-- Seed Palette: Void Slate (#101418), Accent Seal (#B3352B)
-- Perceptual Falsification Criteria: Operator distinguishes draft from seal in 5 seconds
-""", encoding="utf-8")
-
-    results = materialize(tmp_path, "ledger-slice", force=True, phase="all")
-    assert "product" in results
-    assert "foundation" in results
-    assert "specification" in results
-
-    # Verify product.md received structured values
-    prod_text = (tmp_path / "prototype/product.md").read_text(encoding="utf-8")
-    assert "Authority Ledger Suite" in prod_text
-    assert "Throughput vs Liability" in prod_text
-    assert "Linear + Bloomberg" in prod_text
-
-    # Verify f1.md received structured values
-    f1_text = (tmp_path / "prototype/contracts/foundation/f1.md").read_text(encoding="utf-8")
-    assert "Customs Clearance Scale" in f1_text
-    assert "Density: compact" in f1_text
-
-    # Verify r1.md received 5-second falsification test
-    r1_text = (tmp_path / "prototype/specifications/ledger-slice/r1.md").read_text(encoding="utf-8")
-    assert "Operator distinguishes draft from seal in 5 seconds" in r1_text
 
 
 def test_action_identity_gate_covers_canonical_spec_and_paired_legacy_contract(tmp_path: Path, capsys):

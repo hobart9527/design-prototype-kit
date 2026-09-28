@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Independent Stage 1 Spec Contract Linter.
 
-Verifies that materialized Stage 1 design contracts meet quality floors,
+Verifies that authored Stage 1 design contracts meet quality floors,
 authenticity requirements, and anti-contamination boundaries before Stage 2 build.
 """
 

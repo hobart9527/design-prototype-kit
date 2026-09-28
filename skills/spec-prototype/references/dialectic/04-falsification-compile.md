@@ -34,7 +34,7 @@ Verify pipeline:
 4. Stage 1 lifecycle advances to `sealed_provisional`.
 
 **Banned in Primary Delivery**:
-NEVER run `materialize_contracts.py` or write legacy fragmented contracts (`f1.md`, `m1.md`, `t1.md`, `c1.md`, `r1.md`, `product.md`). The single unified RFC specification is `r1.spec.md`.
+NEVER write legacy fragmented contracts (`f1.md`, `m1.md`, `t1.md`, `c1.md`, `r1.md`, `product.md`). The single unified RFC specification is `r1.spec.md`.
 
 ## 5. Design Brief Format (`google-design-md/v2`)
 

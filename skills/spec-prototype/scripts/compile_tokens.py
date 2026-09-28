@@ -1067,7 +1067,7 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
 
     Produces structured 3-tier architecture (Primitives -> Semantics -> Components)
     with explicit authority provenance and metadata, while preserving backward-compatible
-    top-level groups for export-tokens.py and downstream CLI consumption.
+    top-level groups for downstream CLI consumption.
     """
     c = tokens["colors"]
     s = tokens["space"]

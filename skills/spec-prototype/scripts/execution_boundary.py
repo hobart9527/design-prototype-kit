@@ -174,17 +174,6 @@ def shell_read_single(command, root):
         return
     if tool in {'node', 'python3', 'python3.14'} and len(args) > 1:
         script = Path(args[1]).resolve()
-        if tool in {'python3', 'python3.14'} and script == SKILL/'scripts/export-tokens.py':
-            require(len(args) == 5 and args[3] == '--output',
-                    'Token export requires one retained source and --output revision.json.')
-            source, output = Path(args[2]), Path(args[4])
-            require(source.is_absolute() and output.is_absolute(),
-                    'Token export paths must be absolute.')
-            require(source.suffix == '.md' and source.is_file() and not source.is_symlink(),
-                    'Export a retained Markdown token revision in this project.')
-            require(not output.is_symlink() and output.resolve() == source.resolve().with_suffix('.json'),
-                    'Token export belongs beside its source with the same revision name.')
-            return
         # The installed `scripts/` directory is the manifest. A per-name
         # whitelist drifted from the shipped set repeatedly (a retired helper
         # stayed listed, a live one went missing), so admission is now "a

@@ -48,7 +48,7 @@ prototype/
 **Banned in Primary Delivery**:
 - NEVER author legacy 6-piece files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`).
 - NEVER author a duplicate `prototype/product.md` — all product facts and dialectic context belong in `prototype/discussion.md`.
-- NEVER run `materialize_contracts.py` in primary delivery. `assemble_envelope.py` remains a compatibility/benchmark helper only; it is not an authoring or dispatch stage.
+- NEVER generate the legacy fragmented contract set in primary delivery. `assemble_envelope.py` remains a compatibility/benchmark helper only; it is not an authoring or dispatch stage.
 
 Keep `prototype/discussion.md` as the concise human-readable decision and evidence
 record. For a formal prototype, use `google-design-md/v2` frontmatter and semantic

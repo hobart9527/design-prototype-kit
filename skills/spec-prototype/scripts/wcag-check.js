@@ -49,8 +49,8 @@ if (args.length === 0) {
  *
  * - `compile_tokens.py` writes a flat top-level `color` group plus a 3-tier
  *   `primitives.color` mirror.
- * - `export-tokens.py` (CSS path) groups tokens by CSS custom-property prefix,
- *   so `--bg-void` becomes group `bg`, never `color`.
+ * - A CSS custom-property-prefix export groups tokens by prefix, so `--bg-void`
+ *   becomes group `bg`, never `color`. Retained for hand-authored token files.
  *
  * Both are adapted explicitly. Neither is inferred: a schema this tool does not
  * recognize yields no colors, which is a failure below rather than a pass.
@@ -90,9 +90,8 @@ function collectColors(content) {
     walkColors(content.color, colors, ['color']);
     return colors;
   }
-  // Fallback for the CSS-prefix schema (`bg`, `text`, `accent`, `status`, …)
-  // emitted by export-tokens.py. Non-color groups yield no hex leaf and are
-  // simply not adopted.
+  // Fallback for the CSS-prefix schema (`bg`, `text`, `accent`, `status`, …).
+  // Non-color groups yield no hex leaf and are simply not adopted.
   for (const [key, value] of Object.entries(content)) {
     if (key.startsWith('$')) continue;
     if (value && typeof value === 'object' && !Array.isArray(value)) {

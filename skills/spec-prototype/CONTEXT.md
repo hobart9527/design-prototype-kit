@@ -102,8 +102,7 @@ They do not prescribe order, weight, page count, state count or style.
   language, and the scoped experience obligations with their pinned upstream
   references. The retired `product.md` / `m1.md` / `f1.md` / `c1.md` / `r1.md`
   files are legacy inputs: readable on a tree that predates the IR, never
-  generated, never bound back in. `materialize_contracts.py` is not on any
-  primary path.
+  generated, never bound back in.
 - Specification compiles existing decisions without redefining them.
 - Discussion owns actual approval/delegation provenance and the active frontier.
 - Builder owns bounded specimen implementation; Critic owns independent advice.
@@ -128,5 +127,7 @@ unclear, that is the defect to fix — not a reason to add another script.
 
 Retired: `materialize_contracts.py` and `export-tokens.py` wrote the legacy
 fragmented contract set and a DTCG export whose empty `color` group made the
-contrast preflight pass falsely. Neither is on any primary path.
+contrast preflight pass falsely. Both are deleted; the legacy pillar set is
+read-only input on trees that predate the IR, and `compile_tokens.py` is the sole
+token writer.
 

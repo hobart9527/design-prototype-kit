@@ -33,7 +33,6 @@ def _load(name: str, path: Path):
     return mod
 
 eval_signals = _load("eval_signals", BENCHMARKS / "evaluate_design_signals.py")
-mat_contracts = _load("mat_contracts", SCRIPTS / "materialize_contracts.py")
 verify_quality = _load("verify_quality", SCRIPTS / "verify_prototype_quality.py")
 
 
@@ -56,13 +55,6 @@ def test_missing_prototype_file_fails_assert_quality():
         result = verify_quality.assert_quality(str(fake_html), str(fake_tokens))
         # assert_quality returns False or non-empty failure list when required artifact missing
         assert result is False or (isinstance(result, list) and len(result) > 0)
-
-
-def test_unresolved_action_verbs_remain_hypothesis():
-    """Contract Safety: Missing explicit action verbs must be marked as hypothesis, never frozen fact."""
-    actions = mat_contracts.extract_action_verbs("Empty discussion text without table", "custom-slice")
-    assert len(actions) > 0
-    assert "hypothesis" in actions[0]["impact"].lower()
 
 
 def test_handoff_manifest_structure_decouples_renderer_and_visual():
@@ -334,72 +326,6 @@ def test_build_authority_gate_blocks_formal_candidate_with_hypotheses(tmp_path: 
 
     with pytest.raises(ValueError, match="Build Authority Gate"):
         boundary_mod.check(event)
-
-
-def test_frontend_contract_projection_schema_and_validity(tmp_path: Path):
-    """v10.1 Frontend Contract Projection: Ensure machine-readable contract is generated with complete state and action models."""
-    mat_mod = _load("materialize_contracts", SCRIPTS / "materialize_contracts.py")
-    try:
-        import yaml
-    except ImportError:
-        yaml = None
-
-    proto = tmp_path / "prototype"
-    proto.mkdir(parents=True, exist_ok=True)
-    (proto / "product.md").write_text("# SRE Platform\n## Core Tension\n- 极致吞吐 vs 误触高危\n", encoding="utf-8")
-    # 1. First test: without authored state machine and responsive rules, compiler must NOT invent them
-    (proto / "discussion.md").write_text(
-        "# Discussion\n"
-        "## Action Verbs\n"
-        "| Action ID | Trigger Button | Modal Header | Commit Button | Toast | Impact |\n"
-        "|---|---|---|---|---|---|\n"
-        "| drain-node | Drain Node | Confirm Node Drain | Execute Drain | Drain Complete | Irreversible eviction of batch workload |\n"
-        "| isolate-region | Isolate Region | Emergency Region Isolation | Authorize Isolation | Region Isolated | High hazard traffic reroute |\n",
-        encoding="utf-8"
-    )
-
-    res = mat_mod.materialize(tmp_path, "commander-hero", force=True)
-    assert "frontend_contract" in res
-    fe_file = Path(res["frontend_contract"])
-    assert fe_file.is_file()
-
-    content = fe_file.read_text(encoding="utf-8")
-    assert "contract_version: '1.0'" in content or 'contract_version: "1.0"' in content
-    assert "commander-hero" in content
-
-    if yaml is not None:
-        data = yaml.safe_load(content)
-        assert data["slice_id"] == "commander-hero"
-        assert "provenance" in data
-        assert "structure" in data
-        # De-inference assertion: unauthored states and responsive rules report unspecified rather than guessing
-        assert data["state_machine"]["status"] == "unspecified"
-        assert data["responsive_rules"]["status"] == "unspecified"
-        assert "drain-node" in data["interaction_verbs"]
-        assert data["interaction_verbs"]["drain-node"]["hazard_level"] == "high"
-
-    # 2. Second test: when state machine and responsive rules are authored, they are accurately projected
-    (proto / "discussion.md").write_text(
-        "# Discussion\n"
-        "## Responsive\n"
-        "- desktop: 1280px split-rack canvas\n"
-        "- mobile: 390px bottom-sheet stack\n"
-        "## State Machine\n"
-        "- ready: Baseline telemetry streaming\n"
-        "- confirming: Modal confirmation dialog active\n"
-        "## Action Verbs\n"
-        "| Action ID | Trigger Button | Modal Header | Commit Button | Toast | Impact |\n"
-        "|---|---|---|---|---|---|\n"
-        "| drain-node | Drain Node | Confirm Node Drain | Execute Drain | Drain Complete | Irreversible eviction of batch workload |\n",
-        encoding="utf-8"
-    )
-    res2 = mat_mod.materialize(tmp_path, "commander-hero", force=True)
-    if yaml is not None:
-        data2 = yaml.safe_load(Path(res2["frontend_contract"]).read_text(encoding="utf-8"))
-        assert "ready" in data2["state_machine"]["states"]
-        assert "confirming" in data2["state_machine"]["states"]
-        assert "1280px split-rack canvas" in data2["responsive_rules"]["desktop"]
-        assert "390px bottom-sheet stack" in data2["responsive_rules"]["mobile"]
 
 
 def test_critic_finding_classifications_and_targeted_refinement():

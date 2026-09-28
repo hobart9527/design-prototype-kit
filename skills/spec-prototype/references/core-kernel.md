@@ -72,6 +72,6 @@ The entire design prototype lifecycle is consolidated into four high-density ass
 3. `prototype/shared/tokens.css` — sole physical token layer compiled by DTCG.
 4. `prototype/experiments/<slice>/anchor/index.html` — sole runnable prototype implementation.
 
-Never create legacy fragmented contract files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`) or duplicate `prototype/product.md`. Never run `materialize_contracts.py` in primary delivery.
+Never create legacy fragmented contract files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`) or duplicate `prototype/product.md`. Those files are readable on a tree that predates the IR and are never generated.
 
 The main designer directly writes design records and executable prototype output within the bounded `prototype/` scope. Never edit OpenSpec, and never substitute `prototype/discussion.md` with `prototype/README.md`.

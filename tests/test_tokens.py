@@ -1,10 +1,8 @@
-"""Guardrails for the spec-prototype DTCG token exporter script."""
+"""Guardrails for the spec-prototype DTCG token compiler."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
-import subprocess
-import sys
 import importlib.util
 
 import pytest
@@ -12,7 +10,6 @@ import pytest
 pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "skills/spec-prototype/scripts/export-tokens.py"
 COMPILE_SCRIPT = ROOT / "skills/spec-prototype/scripts/compile_tokens.py"
 
 
@@ -33,97 +30,6 @@ def _is_gray(hex_code: str) -> bool:
     return max(r, g, b) - min(r, g, b) == 0
 
 
-def _run(tokens_path: Path, output_path: Path | None = None) -> tuple[int, str, str]:
-    args = [sys.executable, str(SCRIPT), str(tokens_path)]
-    if output_path:
-        args.extend(["--output", str(output_path)])
-    res = subprocess.run(args, text=True, capture_output=True)
-    return res.returncode, res.stdout, res.stderr
-
-
-def test_export_tokens_parses_template_to_valid_dtcg(tmp_path: Path):
-    sample_tokens = tmp_path / "tokens.md"
-    sample_tokens.write_text("""# Design Tokens
-
-## Identity
-- Foundation revision: v1
-- Tokens revision: v1
-- Generated at: 2026-09-11
-
-## Color
-| Token | Value | Usage |
-|---|---|---|
-| `--color-primary` | `#0055ff` | Primary action |
-| `--color-surface` | `#ffffff` | Background |
-
-## Spacing
-| Token | Value | Usage |
-|---|---|---|
-| `--space-1` | `4px` | Micro gap |
-| `--space-2` | `8px` | Small gap |
-
-## Motion
-| Token | Value | Usage |
-|---|---|---|
-| `--duration-fast` | `150ms` | Micro interaction |
-| `--ease-out` | `cubic-bezier(0, 0, 0.2, 1)` | Enter view |
-| `--spring-settle` | `180ms / 0ms / cubic-bezier(0.2, 0, 0, 1)` | Settle |
-""", encoding="utf-8")
-
-    out_json = tmp_path / "tokens.json"
-    code, stdout, stderr = _run(sample_tokens, out_json)
-    assert code == 0, stderr
-    assert out_json.is_file()
-
-    data = json.loads(out_json.read_text(encoding="utf-8"))
-    assert "$schema" not in data  # DTCG 2025.10 publishes no official JSON Schema URL.
-    assert "color" in data
-    assert data["color"]["primary"]["$value"] == "#0055ff"
-    assert data["color"]["primary"]["$type"] == "color"
-    assert data["color"]["primary"]["$description"] == "Primary action"
-    assert data["spacing"]["2"]["$value"] == {"value": 8, "unit": "px"}
-
-    assert "spacing" in data
-    assert data["spacing"]["1"]["$value"] == {"value": 4, "unit": "px"}
-    assert data["spacing"]["1"]["$type"] == "dimension"
-
-    assert "motion" in data
-    assert data["motion"]["duration-fast"]["$type"] == "duration"
-    assert data["motion"]["duration-fast"]["$value"] == {"value": 150, "unit": "ms"}
-    assert data["motion"]["ease-out"]["$type"] == "cubicBezier"
-    assert data["motion"]["ease-out"]["$value"] == [0, 0, 0.2, 1]
-    assert data["motion"]["spring-settle"]["$type"] == "transition"
-    assert data["motion"]["spring-settle"]["$value"] == {
-        "duration": {"value": 180, "unit": "ms"},
-        "delay": {"value": 0, "unit": "ms"},
-        "timingFunction": [0.2, 0, 0, 1],
-    }
-    assert data["motion"]["duration-fast"]["$value"] == {"value": 150, "unit": "ms"}
-
-
-def test_css_export_uses_structured_dtcg_values():
-    sys.path.insert(0, str(SCRIPT.parent))
-    from importlib.machinery import SourceFileLoader
-    export = SourceFileLoader("export_tokens", str(SCRIPT)).load_module()
-
-    tokens = export.parse_tokens_css(
-        ":root { --bg-surface: #ffffff; --text-primary: #111111; "
-        "--space-2: 8px; --duration-fast: 150ms; "
-        "--ease-out: cubic-bezier(0, 0, 0.2, 1); "
-        "--motion-spring-settle: 180ms / 0ms / cubic-bezier(0.2, 0, 0, 1); }"
-    )
-    assert tokens["bg"]["surface"]["$type"] == "color"
-    assert tokens["text"]["primary"]["$type"] == "color"
-    assert tokens["space"]["2"]["$value"] == {"value": 8, "unit": "px"}
-    assert tokens["duration"]["fast"]["$value"] == {"value": 150, "unit": "ms"}
-    assert tokens["ease"]["out"]["$value"] == [0, 0, 0.2, 1]
-    assert tokens["motion"]["spring-settle"]["$value"] == {
-        "duration": {"value": 180, "unit": "ms"},
-        "delay": {"value": 0, "unit": "ms"},
-        "timingFunction": [0.2, 0, 0, 1],
-    }
-
-
 def test_canonical_dtcg_uses_spec_2025_10_shapes():
     ct = _load_compiler()
     data = ct.generate_dtcg_json(ct.compute_tokens({}))
@@ -133,54 +39,6 @@ def test_canonical_dtcg_uses_spec_2025_10_shapes():
     assert data["primitives"]["motion"]["duration-fast"]["$value"]["unit"] == "ms"
     assert "authority" not in data["primitives"]["color"]["surface"]
     assert data["primitives"]["color"]["surface"]["$extensions"]["design-prototype-kit"]["authority"]
-
-
-def test_export_tokens_stdout_and_missing_file(tmp_path: Path):
-    code, stdout, stderr = _run(tmp_path / "nonexistent.md")
-    assert code == 1
-    assert "not found" in stderr
-
-def test_export_preserves_existing_different_revision_bytes(tmp_path):
-    source = tmp_path/'v1.md'
-    source.write_text('## Color\n| --color-primary | #123456 | Action |\n')
-    output = source.with_suffix('.json')
-    output.write_text('retained export')
-    code, stdout, stderr = _run(source, output)
-    assert code == 1
-    assert output.read_text() == 'retained export'
-
-def test_export_cannot_overwrite_source_or_symlink_target(tmp_path):
-    source = tmp_path/'v1.md'
-    source.write_text('## Color\n| --color-primary | #123456 | Action |\n')
-    original = source.read_bytes()
-    assert _run(source, source)[0] == 1
-    output = source.with_suffix('.json')
-    output.symlink_to(source)
-    assert _run(source, output)[0] == 1
-    assert source.read_bytes() == original
-
-
-def test_export_tokens_parses_two_column_breakpoints(tmp_path: Path):
-    sample_tokens = tmp_path / "tokens.md"
-    sample_tokens.write_text("""# Design Tokens
-
-## Breakpoints
-| Token | Value |
-|---|---|
-| `--bp-mobile` | `390px` |
-| `--bp-tablet` | `768px` |
-| `--bp-desktop` | `1280px` |
-| `--bp-wide` | `1600px` |
-""", encoding="utf-8")
-
-    out_json = tmp_path / "tokens.json"
-    code, stdout, stderr = _run(sample_tokens, out_json)
-    assert code == 0, stderr
-    data = json.loads(out_json.read_text(encoding="utf-8"))
-    assert "breakpoints" in data
-    assert set(data["breakpoints"].keys()) == {"mobile", "tablet", "desktop", "wide"}
-    assert data["breakpoints"]["mobile"]["$value"] == {"value": 390, "unit": "px"}
-    assert data["breakpoints"]["wide"]["$value"] == {"value": 1600, "unit": "px"}
 
 
 def test_token_authority_requires_token_specific_confirmation():

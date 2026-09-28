@@ -130,9 +130,9 @@ is `prototype/shared/tokens.css` compiled by `compile_tokens.py`, which also emi
 the DTCG `prototype/contracts/tokens/t1.json`; the JSON is derived packaging, not
 design authority. Specifications name the token path and digest. At token freeze,
 run the contrast preflight against the compiled `t1.json`, which carries the flat
-`color` group consumed by `wcag-check.js`. A `export-tokens.py` re-export does not
-carry that group, so pointing `wcag-check.js` at it yields an empty set and a
-falsely passing preflight. Preserve existing output on failure; never overwrite a
+`color` group consumed by `wcag-check.js`. A Markdown-table re-export that groups
+tokens by CSS prefix does not carry that group, so pointing `wcag-check.js` at it
+yields an empty set and a falsely passing preflight. Preserve existing output on failure; never overwrite a
 different export or rewrite frozen artifacts to fix packaging. Report a missing
 export as an execution limitation until the permitted helper succeeds.
 

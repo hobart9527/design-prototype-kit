@@ -1,13 +1,11 @@
 """CPC-003 / CPC-004 end-to-end regression defense for semantic freedom.
 
-One chain, five seams, no invented fact at any of them:
+Four seams, no invented fact at any of them:
 
-1. An unspecified discussion platform materializes into a contract that retains
-   `unknown` instead of fabricating an operating-system target.
-2. The token compiler stays neutral when no dial is authored.
-3. The envelope offers advisory candidate patterns instead of locking one.
-4. The Builder contract is bounded by the five integrity categories.
-5. The Critic evaluates the accessibility floor without aesthetic gatekeeping.
+1. The token compiler stays neutral when no dial is authored.
+2. The envelope offers advisory candidate patterns instead of locking one.
+3. The Builder contract is bounded by the five integrity categories.
+4. The Critic evaluates the accessibility floor without aesthetic gatekeeping.
 
 These are mechanism checks against the authored seam, not live-session evidence.
 Every fixture lives in `tmp_path`; the repository is read, never written.
@@ -30,43 +28,11 @@ sys.path.insert(0, str(SCRIPTS))
 
 import assemble_envelope  # noqa: E402
 import compile_tokens  # noqa: E402
-import materialize_contracts  # noqa: E402
-import prototype_context  # noqa: E402
-
 BUILDER = ROOT / "agents/spec-prototype-builder.md"
 CRITIC = ROOT / "agents/spec-prototype-critic.md"
 SLICE = "console"
 
-# A consumer booking discussion with a mobile viewport and touch input but no
-# authored OS: the exact shape that used to promote itself into an iOS runtime.
-UNSPECIFIED_PLATFORM_DISCUSSION = """# Discussion
-- Product: Concierge Booking
-- Baseline: Baseline 4: Consumer Mobile
-- Viewport: 390px touch surface with booking confirmation flows
-## Declared Surfaces
-- Primary: booking-flow
-- Contextual: booking-detail
-"""
-
-
-# --- seam 1: discussion -> materialized contract -----------------------------
-
-
-def test_unspecified_platform_materializes_as_unknown(tmp_path):
-    proto = tmp_path / "prototype"
-    proto.mkdir(parents=True, exist_ok=True)
-    (proto / "discussion.md").write_text(UNSPECIFIED_PLATFORM_DISCUSSION, encoding="utf-8")
-    materialize_contracts.materialize(tmp_path, "booking-flow", phase="1")
-
-    product = (proto / "product.md").read_text(encoding="utf-8")
-    assert not re.search(r"target-context:\s*(?:ios|android)\b", product, re.IGNORECASE)
-    section = prototype_context.parse_section(product, "product")
-    assert section["target_context"] == "unknown"
-    assert section["device_context"] == "mobile"  # retained as a device fact, not an OS
-    assert section["input_context"] == "touch"
-
-
-# --- seam 2: token compilation stays neutral ---------------------------------
+# --- seam 1: token compilation stays neutral ---------------------------------
 
 
 def test_token_compilation_stays_neutral_without_authored_dials():
@@ -89,7 +55,7 @@ def test_token_compilation_stays_neutral_without_authored_dials():
     assert "machined-industrial" not in css
 
 
-# --- seam 3: envelope candidate patterns stay advisory ------------------------
+# --- seam 2: envelope candidate patterns stay advisory ------------------------
 
 
 def _write(path: Path, text: str) -> None:
@@ -161,7 +127,7 @@ def test_an_authored_pattern_is_the_only_selection_route(tmp_path):
     assert "operational-canvas" in env["candidate_patterns"]  # alternatives stay visible
 
 
-# --- seam 4: builder contract bounded by five integrity categories -----------
+# --- seam 3: builder contract bounded by five integrity categories -----------
 
 
 def test_builder_contract_is_bounded_by_the_five_integrity_categories():
@@ -172,7 +138,7 @@ def test_builder_contract_is_bounded_by_the_five_integrity_categories():
     assert "Five Core Integrity Categories" in text
 
 
-# --- seam 5: critic evaluates the floor, not aesthetic taste ------------------
+# --- seam 4: critic evaluates the floor, not aesthetic taste ------------------
 
 
 def test_critic_keeps_three_craft_invariants_hard_and_aesthetic_craft_advisory():
