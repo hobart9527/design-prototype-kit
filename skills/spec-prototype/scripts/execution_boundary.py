@@ -10,9 +10,25 @@ import re
 import shlex
 import sys
 
-from handoff import packet
+from handoff import packet_for
 
 SKILL = Path(__file__).resolve().parents[1]
+
+
+def admit_skill_root(value) -> Path:
+    """Resolve an envelope's declared skill_root to an admitted Skill tree.
+
+    The hook is loaded from wherever the Skill is installed for the operator
+    (`~/.claude/skills/spec-prototype` or a project's `.claude/skills/...`),
+    while a session may run a byte-identical copy staged inside its own
+    workspace. Physical equality with this hook's own tree therefore cannot be
+    the sole admission rule. Admit the same tree instead: the resolved root,
+    or any `spec-prototype` tree carrying the installed scripts.
+    """
+    tree = Path(value).expanduser().resolve()
+    if tree == SKILL or (tree.name == 'spec-prototype' and (tree / 'scripts' / 'execution_boundary.py').is_file()):
+        return tree
+    raise ValueError('Dispatch must use this same installed Skill root.')
 
 
 def require(condition, message):
@@ -68,8 +84,7 @@ def dispatch(args, active):
     data = json.loads(args['prompt'])
     root = Path(data['repository_root']).resolve()
     require(root == active, 'Dispatch must stay in the active discussion repository.')
-    require(Path(data['skill_root']).resolve() == SKILL,
-            'Dispatch must use this same installed Skill root.')
+    admit_skill_root(data['skill_root'])
     if data.get('mode') == 'direction-probe':
         probe(root, data)
     elif data.get('mode') == 'lean-builder-envelope':
@@ -124,11 +139,11 @@ def dispatch(args, active):
         if target_env in ('formal-candidate', 'formal') and has_hyp:
             raise ValueError('Build Authority Gate: Formal candidate build blocked because envelope contains unvalidated [Hypothesis] actions. Run as direction probe or confirm explicit authority.')
     else:
-        require(data == packet(root, data['specification']['path']),
+        require(data == packet_for(root, data['specification']['path']),
                 'Pass the exact handoff.py packet JSON unchanged to Builder.')
 
 
-def shell_read(command, root):
+def shell_read_single(command, root):
     # A small argv seam, not a heuristic shell-write detector.
     require(not any(c in command for c in '\n\r;|&><`$'),
             'Use a single read command or installed helper; delegate shell execution to Builder.')
@@ -185,6 +200,38 @@ def shell_read(command, root):
     raise ValueError('Use read-only tools or a bounded Builder for this command.')
 
 
+def shell_read(command, root):
+    if '&&' in command:
+        # A chained read/helper sequence: each segment must pass single shell_read independently.
+        # Single '&', pipes, redirections or other shell metacharacters remain forbidden.
+        require(not any(c in command for c in '\n\r;|><`$'),
+                'Use a single read command or installed helper; delegate shell execution to Builder.')
+        segments = command.split('&&')
+        require(bool(segments) and all(s.strip() for s in segments), 'Empty command in chain.')
+        for seg in segments:
+            require('&' not in seg, 'Use a single read command or installed helper; delegate shell execution to Builder.')
+            shell_read_single(seg.strip(), root)
+        return
+    shell_read_single(command, root)
+
+
+def boundary_status(record: Path) -> str | None:
+    """Return 'active', 'released', or None from discussion.md declarations.
+
+    Prefers the canonical ## Resume block if present; falls back to the tail of
+    the document for minimal/legacy records.
+    """
+    try:
+        text = record.read_text(encoding='utf-8')
+    except OSError:
+        return None
+    resume_text = text.split("## Resume", 1)[1].split("\n## ", 1)[0] if "## Resume" in text else text
+    values = re.findall(r'^- Execution boundary:\s*(active|released)\s*$', resume_text, re.M)
+    if not values and "## Resume" in text:
+        values = re.findall(r'^- Execution boundary:\s*(active|released)\s*$', text, re.M)
+    return values[-1] if values else None
+
+
 def active_root(cwd):
     # Shell cwd may be a child directory. The nearest existing discussion owns
     # the scope; never infer lifecycle from a code file or tokens.
@@ -192,13 +239,11 @@ def active_root(cwd):
         record = root/'prototype/discussion.md'
         require(not record.is_symlink(), 'Discussion scope must be a regular project record, not a symlink.')
         if record.is_file():
-            values = re.findall(r'^- Execution boundary: (active|released)\s*$', record.read_text(), re.M)
-            if not values:
-                return None  # Legacy records can be updated through native Write/Edit.
-            if values == ['released']:
+            status = boundary_status(record)
+            if status == 'active':
+                return root
+            if status in ('released', None):
                 return None
-            require(values == ['active'], 'Record Execution boundary: active or released once in discussion.md.')
-            return root
     return None
 
 
@@ -235,7 +280,7 @@ def check(payload):
                     require(target == discussion and not discussion.is_symlink(),
                             'Create prototype/discussion.md first, before other design artifacts.')
             return
-        if 'Execution boundary: released' in record.read_text():
+        if boundary_status(record) == 'released':
             return
         if tool in {'Write', 'Edit', 'MultiEdit'}:
             target = (cwd/args['file_path']).resolve()

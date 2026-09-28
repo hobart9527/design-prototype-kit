@@ -363,3 +363,51 @@ def test_incomplete_restored_baseline_is_refused(tmp_path, monkeypatch):
         bl.ensure_baseline()
     message = str(excinfo.value)
     assert "restored" in message and "CONTEXT.md" in message, message
+
+
+def _transcript(config_root: pathlib.Path, session_id: str, records) -> pathlib.Path:
+    d = config_root / "some-project"
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / f"{session_id}.jsonl"
+    p.write_text("\n".join(json.dumps(r) for r in records) + "\n", encoding="utf-8")
+    return p
+
+
+def test_transcript_estimate_reads_the_recorded_cli_cost(tmp_path):
+    # The transcript's totalCostUSD is the CLI's own receipt. Token heuristics
+    # were measured against a real session and are not defensible: summing every
+    # usage record over-bills a resumed session, and pricing only the largest
+    # request under-bills it by an order of magnitude.
+    sid = "s-recorded"
+    _transcript(tmp_path, sid, [
+        {"totalCostUSD": 0.5, "message": {"role": "assistant", "model": "flash",
+                                          "usage": {"input_tokens": 1000, "output_tokens": 50}}},
+        {"type": "file-history-delta", "totalCostUSD": None},
+        {"totalCostUSD": 3.25, "message": {"role": "assistant", "model": "flash",
+                                           "usage": {"input_tokens": 9000, "output_tokens": 70}}},
+    ])
+    assert bl.estimate_cost_from_transcript(sid, config_root=tmp_path) == 3.25
+
+
+def test_transcript_estimate_stays_none_when_no_cost_was_recorded(tmp_path):
+    # A hard timeout mid-turn writes usage but no terminal cost. Missing
+    # evidence stays missing — never a token-derived guess, never $0.
+    sid = "s-no-receipt"
+    _transcript(tmp_path, sid, [
+        {"message": {"role": "assistant", "model": "flash",
+                     "usage": {"input_tokens": 9000, "output_tokens": 70}}},
+    ])
+    assert bl.estimate_cost_from_transcript(sid, config_root=tmp_path) is None
+
+
+def test_transcript_estimate_stays_none_without_a_transcript(tmp_path):
+    assert bl.estimate_cost_from_transcript("missing-session", config_root=tmp_path) is None
+
+
+def test_estimated_cumulative_cost_replaces_rather_than_adds_to_the_total():
+    # CLI totalCostUSD is cumulative; resume turns ratchet to the latest figure.
+    # Timed-out calls bound the spend by adding the per-turn budget as an upper bound.
+    src = (pathlib.Path(bl.__file__).parent / "run_claude_session.py").read_text(encoding="utf-8")
+    assert "if out.get(\"cost_estimated\"):" in src
+    assert "total_cost = max(total_cost, call_cost) + timeout_bound" in src
+    assert "total_cost = max(total_cost, call_cost)" in src

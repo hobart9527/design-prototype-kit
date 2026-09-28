@@ -527,6 +527,15 @@ def pillar_packet(root: Path, spec_path: Path) -> dict:
     }
 
 
+def packet_for(root: Path, spec: str | Path) -> dict:
+    """Canonical packet dispatch router: routes .spec.md to pillar_packet, legacy to packet."""
+    root = root.resolve()
+    spec_path = within(root, str(spec))
+    if spec_path.name.endswith(".spec.md") or spec_path.stem.endswith(".spec"):
+        return pillar_packet(root, spec_path)
+    return packet(root, str(spec))
+
+
 APPROVAL_STATUSES = ("confirmed", "delegated")
 
 # A decision row that only announces a future approval binds nothing. Any of
@@ -661,11 +670,7 @@ def freeze(root: Path, spec: str) -> dict:
     spec_path = within(root, spec)
     if spec_path.parent.name == "briefs":
         raise HandoffError("Cannot freeze an exploration brief; formal Specification approval is required")
-    # Route canonical IR spec (.spec.md) to pillar_packet(); legacy r1.md uses packet().
-    if spec_path.suffix == ".md" and spec_path.stem.endswith(".spec"):
-        pkt = pillar_packet(root, spec_path)
-    else:
-        pkt = packet(root, spec)
+    pkt = packet_for(root, spec)
     binding = approval_binding(root, pkt["slice_id"], pkt["candidate_id"])
     # The entry requirement guards a scope that claims prototype implementation.
     # Every approval other than a spec-only one keeps that requirement, and an
@@ -960,11 +965,7 @@ def main() -> int:
             for item in results:
                 print(f"`{item['path']}`, sha256:{item['sha256']}")
         elif args.command == "packet":
-            spec_p = (args.root.resolve() / args.spec) if not Path(args.spec).is_absolute() else Path(args.spec)
-            if spec_p.stem.endswith(".spec"):
-                result = pillar_packet(args.root.resolve(), spec_p)
-            else:
-                result = packet(args.root, args.spec)
+            result = packet_for(args.root.resolve(), args.spec)
             print(json.dumps(result, ensure_ascii=False, indent=2))
         elif args.command == "freeze":
             print(json.dumps(freeze(args.root, args.spec), ensure_ascii=False, indent=2))
