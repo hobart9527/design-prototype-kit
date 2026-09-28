@@ -162,21 +162,23 @@ Deliver artifacts ready for subsequent frontend generation:
 2. **`spec.md`**: Single-source specification mapping component topology, state machines (`default | loading | stressed | empty | error`), and accessibility invariants.
 3. **`index.html`**: Clean, self-contained, accessible interactive implementation directly translatable into production frontend components.
 
-## Delivery Mechanics (静默、最小化)
+## Delivery Mechanics (单脑贯通 · 极速交付)
 
-Load only the active stage procedure and the one craft reference that resolves a live
-question. The main designer owns design records; `spec-prototype-builder` owns runnable
-prototype code; `spec-prototype-critic` provides independent design critique when the
-work is consequential. Existing scripts and the native execution boundary handle
-compilation, write scope, capture, and handoff. Do not narrate or reimplement that
-plumbing in the design conversation. See the execution boundary before the first
-prototype write, and the relevant stage file only when that stage is active.
+The main designer owns the entire design lifecycle end-to-end: framing, code synthesis,
+visual verification, and downstream asset emission. There is NO mandatory delegation to
+external subagents (Builder or Critic) on the primary delivery path.
 
-When a Critic finding needs code repair, dispatch a **fresh bounded Builder Agent** with
-the exact repair scope; never use `SendMessage` to revive an exited Agent or poll with
-`ScheduleWakeup`. If bounded synchronous repair cannot complete within the available
-turn, record the finding as unresolved and finish. Never claim a state was verified
-from a screenshot unless the capture exercised that state and the evidence is distinct.
+1. **Direct Materialization**: The main designer writes runnable prototype code directly
+   to `prototype/experiments/<slice_id>/anchor/index.html` (and companion `shared/tokens.css`,
+   `specifications/<slice_id>/r1.spec.md`, `experiments/<slice_id>/envelope.json`). No multi-turn
+   agent translation overhead.
+2. **Visual Inspection**: The main designer runs `capture.mjs` directly, reads the resulting
+   `.png` viewports/states with the `Read` tool, visually reviews hierarchy and contrast,
+   and applies in-place refinements immediately.
+3. **Optional External Delegation**: Specialized subagents (`spec-prototype-builder`,
+   `spec-prototype-critic`) exist solely for optional, detached background explorations or
+   formal external reviews when explicitly demanded by the user—never as an obligatory
+   blocking gate on the main path.
 
 ## Design record ownership
 
@@ -185,25 +187,10 @@ records, never in a root-level design document or `prototype/README.md`. A discu
 request creates no runnable HTML/JS prototype; retain the design outcome in the discussion
 record when the repository workflow requires a durable artifact.
 
-## Native role boundary
+## Native execution boundary
 
-Read [the native execution boundary](references/04-governance/execution-boundary.md) before a
-write, runnable probe, formal build or independent review. The main designer
-writes Markdown design records. Only `spec-prototype-builder` writes executable
-prototype output, from the exact retained direction brief or handoff packet and
-within its bounded prototype/evidence scopes.
-
-Coordinator dispatches `spec-prototype-builder` (or fallback `general-purpose` / `claude` if host agent registry lacks specialized builder) via standard `Agent` tool call with the exact envelope JSON string:
-1. Synthesize envelope: `python3 skills/spec-prototype/scripts/assemble_envelope.py --slice <slice_id> --output prototype/experiments/<slice_id>/envelope.json`
-2. Read the resulting JSON file.
-3. Call `Agent(subagent_type="spec-prototype-builder", prompt=envelope_json_string)`. If `spec-prototype-builder` is unavailable in the host agent environment, fall back to `Agent(subagent_type="general-purpose", prompt=envelope_json_string)`. The `prompt` parameter must be the raw JSON string without conversational prose, matching the PreToolUse hook parser.
-
-Coordinator dispatches `spec-prototype-critic` for independent review at Stage 4 (验):
-1. Execute multi-viewport captures: `node skills/spec-prototype/scripts/capture.mjs <target_url> --output prototype/evidence/probes/<slice_id>/ --viewports 320,390,1280 --states <declared_applicable_states>`
-2. Run static verification: `python3 skills/spec-prototype/scripts/verify_prototype_quality.py <target_html> prototype/shared/tokens.css --contract prototype/specifications/<slice_id>/r1.spec.md` (legacy multi-file trees use `r1.md`)
-3. Call `Agent(subagent_type="spec-prototype-critic", prompt=...)` supplying the target HTML path, specification path, static check output, and explicit paths to captured `.png` screenshots. Critic must inspect the actual rendered visual images using the `Read` tool before issuing judgments.
-
-The native Hook enforces tool shape and write ownership only while the nearest
-`prototype/discussion.md` records `Execution boundary: active`. It does not own
-product meaning, approval, design quality or artifact lifecycle. Never cite Hook
-permission as evidence that a design decision is correct or approved.
+The main designer directly authors design contracts and runnable prototypes within the
+`prototype/` directory. When running helper commands, invoke installed scripts directly
+or via single-pass compound calls. The native hook protects against workspace escape and
+ensures writes remain strictly bounded within the project's `prototype/` hierarchy.
+Never cite Hook permission as evidence that a design decision is correct or approved.

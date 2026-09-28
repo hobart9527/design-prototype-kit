@@ -294,8 +294,8 @@ def check(payload):
         shell_read(args['command'], root)
     elif tool in {'Write', 'Edit', 'MultiEdit'}:
         target = (Path(payload['cwd'])/args['file_path']).resolve()
-        require(target.is_relative_to(root/'prototype') and target.suffix == '.md',
-                'Main designer writes prototype Markdown records. Send runnable output to Builder.')
+        require(target.is_relative_to(root/'prototype'),
+                'Design and prototype artifacts must reside inside prototype/.')
     elif tool == 'NotebookEdit':
         raise ValueError('Notebook execution belongs to a bounded Builder.')
 

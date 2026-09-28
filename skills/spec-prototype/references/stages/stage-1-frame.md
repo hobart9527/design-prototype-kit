@@ -81,6 +81,6 @@ added when the work reaches them; do not pre-complete downstream decisions.
 ## Exit
 
 A design brief answers the current question and clearly separates facts, decisions,
-proposals, and open risks. For a formal prototype, compile its applicable contract,
-then continue directly to Builder dispatch in the same turn when requested and
-possible. A checkpoint is recovery context, not an approval gate.
+proposals, and open risks. For a formal prototype, synthesize its applicable contract
+and code directly in the same turn when requested and possible. A checkpoint is recovery
+context, not an approval gate.

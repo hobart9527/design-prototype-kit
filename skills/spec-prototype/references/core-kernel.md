@@ -67,7 +67,6 @@ full-product; out-of-scope dependencies are disclosed, never silently added.
 ## 7. Storage and Role Discipline
 
 All design records go to `prototype/discussion.md` (mandatory entry index) and
-`prototype/*.md`. The main designer writes Markdown design records; only
-`spec-prototype-builder` writes executable prototype output within its bounded
-scope. Never edit OpenSpec, and never substitute `prototype/discussion.md` with
-`prototype/README.md`.
+`prototype/*.md`. The main designer directly writes design records and executable
+prototype output within the bounded `prototype/` scope. Never edit OpenSpec, and
+never substitute `prototype/discussion.md` with `prototype/README.md`.
