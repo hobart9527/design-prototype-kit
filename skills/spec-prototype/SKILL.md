@@ -100,7 +100,10 @@ gates. The normal path is **Frame → Propose → Make → Look → Refine**:
    accessibility, and product fit. A clean static check is not a design review.
 5. **Refine** — fix the few consequential weaknesses at their owning layer. Normally
    one focused refinement pass suffices; stop when the question is answered and state
-   any material uncertainty honestly.
+   any material uncertainty honestly. When the request is a *move* rather than a
+   repair — "bolder", "quieter", "tighten it up", a variant, a hardening pass — use
+   the named [refine operators](references/operators.md), which express each move as
+   a single-axis delta on the spine rather than as house style.
 
 The stages and that path are one vocabulary, mapped one-to-one: **Stage 0** is a
 bounded exploration before Frame; **Frame** = Stage 1, **Propose** = Stage 2,

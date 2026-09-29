@@ -77,6 +77,14 @@ Calibrate concentric radii formulas, kinetic press detents, and tabular numerics
 ### Method 7: The Break Protocol (Pillar: Resilience)
 Stress-test string overflow, zero-item empty state recovery CTA, and 320px fold integrity.
 
+### Method 8: Refine Operators (single-axis moves)
+Refinement expressed in the spine's own language: each operator names the axis or
+pillar it moves, the from → to, what it holds constant, and its falsifier. The
+operator table, the `variant` axis map, and the `break` protocol are owned by
+[`../operators.md`](../operators.md); this method cites them and never restates
+their contents. A move that cannot name its target is a redirection, not a
+refinement.
+
 ---
 
 ## 4. Open Physical Substrates & Composable Patterns (开放物理地质场与参考模式)

@@ -141,7 +141,14 @@ independent verification from self-review.
 Repair in place at the owning layer. Optional detached work may still use a
 bounded `spec-prototype-builder` for a mechanical, scope-locked change, but never
 as the primary authoring path and never as a blocking gate. Allow one focused
-repair pass. If it cannot complete within the available turn, record the review as
+repair pass.
+
+When the repair is a *move* rather than a defect fix — the user asks for bolder,
+quieter, tighter, a variant, or a hardening pass — make it as a named
+[refine operator](../operators.md): state the target axis or pillar, the from → to,
+what is held constant, and the falsifier. A move that cannot name its target is a
+redirection, not a refinement, and belongs back in the divergence generator. One
+operator per pass: two moves at once are attributable to neither. If it cannot complete within the available turn, record the review as
 `PARTIAL` in `prototype/discussion.md`, name the open finding and unverified
 scope, and stop; do not burn the remaining wall clock waiting.
 

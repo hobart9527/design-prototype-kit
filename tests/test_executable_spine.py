@@ -184,3 +184,68 @@ def test_review_template_carries_a_row_for_every_pillar():
     assert "Findings" in template
     # A finding names its owning pillar, so the same observation is filed once.
     assert "| Concern and location/state | Pillar |" in template
+
+# -- P4: operators are single-axis moves --------------------------------------
+
+OPERATORS = REFS / "operators.md"
+
+OPERATOR_TABLE = ("bolder", "quieter", "distill", "typeset", "colorize",
+                  "animate", "layout", "harden", "clarify")
+
+
+def test_every_refine_operator_is_a_single_axis_move():
+    operators = _read(OPERATORS)
+    for name in OPERATOR_TABLE:
+        assert f"| {name} |" in operators, f"operator missing from the table: {name}"
+    # Each operator carries the four fields that make the delta reviewable.
+    for field in ("Target", "From → To", "Held constant", "Falsifier"):
+        assert field in operators, f"operator contract omits {field}"
+
+
+def test_operators_speak_the_spine_language_not_a_house_style():
+    """`bolder` is a move on Energy, not a mood — the target column says so."""
+    operators = _read(OPERATORS)
+    for axis in ("Density", "Energy", "Materiality", "Rhythm", "Character"):
+        assert axis in operators, f"operator targets never name the {axis} axis"
+    for pillar in ("Topology", "Resilience", "Value", "Journey"):
+        assert pillar in operators, f"operator targets never name the {pillar} pillar"
+
+
+def test_one_operator_per_pass_and_the_floor_never_trades():
+    operators = _read(OPERATORS)
+    assert "One operator per pass" in operators
+    assert "The craft floor is not an axis and never trades against one" in operators
+
+
+def test_a_move_that_cannot_name_its_target_is_a_redirection():
+    """The boundary between refine and diverge must be stated, not implied."""
+    operators = _read(OPERATORS)
+    assert "it is a redirection, and" in operators
+    assert "divergence generator" in operators
+
+
+def test_variant_varies_exactly_one_axis():
+    operators = _read(OPERATORS)
+    for axis in ("Structure", "Density", "Emphasis", "Type", "Voice"):
+        assert f"| {axis} |" in operators, f"variant axis missing: {axis}"
+    assert "vary\nexactly one primary axis" in operators or "exactly one primary axis" in operators
+
+
+def test_break_is_the_harden_operator_run_past_the_nominal_case():
+    operators = _read(OPERATORS)
+    assert "four vectors" in operators
+    # Stress vectors stay parasitic on real domain entities.
+    assert "parasitic on authentic domain entities" in operators
+    assert "not a licence to keep the damage" in operators
+
+
+def test_operators_do_not_reopen_the_contract():
+    operators = _read(OPERATORS)
+    assert "do not reopen the Direction Contract" in operators
+    assert "it was a redirection" in operators
+
+
+def test_stage4_refines_through_operators():
+    audit = _read(AUDIT)
+    assert "refine operator" in audit
+    assert "One\noperator per pass" in audit or "One operator per pass" in audit
