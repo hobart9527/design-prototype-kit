@@ -1072,6 +1072,67 @@ def test_the_template_declares_every_machine_list_as_a_contract_block():
     for kind in _CONTRACT_KINDS:
         assert f"```contract:{kind}" in template, f"contract:{kind} has no shipped example"
 
+def test_the_contract_block_outranks_the_frontmatter_carrier(tmp_path: Path):
+    """One authoritative carrier, and it is the block.
+
+    `viewports`/`required_states` were also readable from the slice frontmatter,
+    and the frontmatter won — so `contract:viewports` was a block the compiler
+    ignored, while the template taught writing it. Every other contract kind
+    takes its block as authoritative; an ignored block is a declaration dropped
+    in silence, which is what the blocks exist to remove.
+    """
+    record = (REPO / "skills/spec-prototype/templates/discussion.md").read_text(
+        encoding="utf-8").replace("<slice_id>", "cockpit")
+    record = (record
+              .replace("viewports: [390, 1280]", "viewports: [777]")
+              .replace("required_states: [state-draft, state-sealed]",
+                       "required_states: [state-frontmatter]")
+              .replace("```contract:viewports\n- 390\n- 1280\n```",
+                       "```contract:viewports\n- 900\n- 1000\n```")
+              .replace("```contract:required_states\n- state-draft\n- state-sealed\n```",
+                       "```contract:required_states\n- state-block\n```"))
+    # The exemplary prose keeps a `320px` figure, which is the stray token the
+    # prose scan used to read out of a sentence and outrun the declared scope.
+    assert "320px" in record
+
+    ir = compile_canonical_ir(root=_write_discussion(tmp_path, record),
+                              slice_id="cockpit", stage="hero_probe")
+
+    assert ir["scope"]["verification_scope"]["viewports"] == [900, 1000]
+    assert ir["scope"]["verification_scope"]["required_states"] == ["state-block"]
+
+def test_the_verification_scope_falls_back_without_a_block(tmp_path: Path):
+    """A record that predates the blocks still resolves: frontmatter, then prose."""
+    from_frontmatter = (PARTITIONED_DISCUSSION
+                        .replace('slice_id: "cluster-overview"',
+                                 'slice_id: "cluster-overview"\nviewports: [1440]\nrequired_states: [state-fm]')
+                        .replace("### 6. Viewport 与强制测试状态\n- `Viewport`: `390px` / `1280px`\n"
+                                 "- `Required States`: `state-draft`, `state-sealed`", ""))
+    ir = compile_canonical_ir(root=_write_discussion(tmp_path, from_frontmatter),
+                              slice_id="cluster-overview", stage="hero_probe")
+    assert ir["scope"]["verification_scope"]["viewports"] == [1440]
+    assert ir["scope"]["verification_scope"]["required_states"] == ["state-fm"]
+
+def test_a_stray_pixel_figure_does_not_outrun_a_declared_viewport(tmp_path: Path):
+    """Prose is the last resort, because a sentence is not a breakpoint.
+
+    The template's own exemplary prose names `320px`. When the prose scan ran
+    before the frontmatter, that mention replaced the authored list.
+    """
+    from compile_spec_ir import _viewports_prose
+
+    assert _viewports_prose("Do not use a 320px viewport here.") == [320]
+
+    declared = (PARTITIONED_DISCUSSION
+                .replace('slice_id: "cluster-overview"',
+                         'slice_id: "cluster-overview"\nviewports: [390, 1280]')
+                .replace("### 6. Viewport 与强制测试状态\n- `Viewport`: `390px` / `1280px`\n"
+                         "- `Required States`: `state-draft`, `state-sealed`",
+                         "- The 320px fold is a stress vector, not a breakpoint."))
+    ir = compile_canonical_ir(root=_write_discussion(tmp_path, declared),
+                              slice_id="cluster-overview", stage="hero_probe")
+    assert ir["scope"]["verification_scope"]["viewports"] == [390, 1280]
+
 def test_a_contract_states_block_is_the_machine_ssot(tmp_path: Path):
     """When a block exists it wins, and prose never becomes a second declaration."""
     from compile_spec_ir import (parse_data_scenarios, parse_domain_states,

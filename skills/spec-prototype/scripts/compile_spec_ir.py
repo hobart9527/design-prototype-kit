@@ -1100,6 +1100,9 @@ def parse_viewports(text: str) -> List[int]:
     block = _viewports_from_contract_block(text)
     if block is not None:
         return block
+    return _viewports_prose(text)
+def _viewports_prose(text: str) -> List[int]:
+    """The compatibility scan: any `NNNpx` in the text, most fragile route."""
     out: List[int] = []
     for m in re.finditer(r"(?<!\d)(\d{3,4})\s*px", text):
         v = int(m.group(1))
@@ -1295,6 +1298,10 @@ def parse_required_states(text: str) -> List[str]:
     block = _required_states_from_contract_block(text)
     if block is not None:
         return block
+    return _required_states_labeled(text) or _required_states_prose(text)
+
+def _required_states_labeled(text: str) -> List[str]:
+    """The labelled prose form: `- Required States: state-a, state-b`."""
     out: List[str] = []
     seen: set = set()
 
@@ -1312,8 +1319,23 @@ def parse_required_states(text: str) -> List[str]:
             continue
         for tok in re.findall(r"[`*]?([a-z0-9][a-z0-9_-]*)[`*]?", m.group(1), re.IGNORECASE):
             _add(tok)
+    return out
+
+def _required_states_prose(text: str) -> List[str]:
+    """The compatibility scan for required states, most fragile route.
+
+    The bare `state-*` sweep is separate from the labelled form above: a record
+    whose only declaration is the label must be resolved by `parse_required_states`
+    before this wider sweep runs, or the sweep reads `state-` tokens out of the
+    template's own frontmatter and prose and outruns the authored label.
+    """
+    out: List[str] = []
+    seen: set = set()
     for tok in re.findall(r"[`*]?(state-[a-z0-9][a-z0-9_-]*)[`*]?", text, re.IGNORECASE):
-        _add(tok)
+        clean = tok.strip().strip("`*\"'").lower()
+        if clean and clean not in seen:
+            seen.add(clean)
+            out.append(clean)
     return out
 
 
@@ -1759,13 +1781,31 @@ def compile_canonical_ir(
     has_action_contracts = bool(actions)
     spec_tier = "execution_spec" if (has_state_machine and has_action_contracts) else "intent_spec"
 
-    fm_vps = fm_data.get("viewports")
-    resolved_fm_vps = [int(v) for v in fm_vps if str(v).isdigit()] if (fm_vps and isinstance(fm_vps, list)) else []
-    resolved_vps = list(viewports) if viewports else (frag_data.get("viewports") or (resolved_fm_vps if resolved_fm_vps else parse_viewports(slice_text)))
-
-    fm_states = fm_data.get("required_states")
-    resolved_fm_states = [str(s).strip() for s in fm_states if str(s).strip()] if (fm_states and isinstance(fm_states, list)) else []
-    resolved_req_states = frag_data.get("required_states") or (resolved_fm_states if resolved_fm_states else parse_required_states(slice_text))
+    # Verification scope resolution order, most authoritative first:
+    #   1. an explicit `--viewports` override (the caller's decision)
+    #   2. this slice's `contract:` block
+    #   3. a Stage 3/4 verification fragment (an explicit machine artifact)
+    #   4. the slice frontmatter field (a declared compatibility carrier)
+    #   5. the prose scan (inferred, most fragile)
+    # The block outranks the frontmatter: every other contract kind takes its
+    # block as authoritative, and a frontmatter that won would make
+    # `contract:viewports` an authoritative-looking block the compiler ignores —
+    # a declaration dropped in silence, which is what the blocks exist to remove.
+    # Prose stays last so a stray `NNNpx` in a sentence never outruns a declared
+    # viewport, which is how the template's exemplary `320px` prose used to
+    # replace the frontmatter's authored list.
+    resolved_vps = (list(viewports) if viewports
+                    else (_viewports_from_contract_block(slice_text)
+                          or frag_data.get("viewports")
+                          or ([int(v) for v in fm_data.get("viewports", []) if str(v).isdigit()]
+                              if isinstance(fm_data.get("viewports"), list) else [])
+                          or _viewports_prose(slice_text)))
+    resolved_req_states = (_required_states_from_contract_block(slice_text)
+                           or _required_states_labeled(slice_text)
+                           or frag_data.get("required_states")
+                           or ([str(s).strip() for s in fm_data.get("required_states", []) if str(s).strip()]
+                               if isinstance(fm_data.get("required_states"), list) else [])
+                           or _required_states_prose(slice_text))
 
     ir = {
         "schema_version": "prototype-spec/v1",
