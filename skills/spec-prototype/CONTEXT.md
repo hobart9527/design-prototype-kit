@@ -118,6 +118,7 @@ unclear, that is the defect to fix — not a reason to add another script.
 |---|---|---|---|
 | `execution_boundary.py` | Tool-call admission, and write-time validation of `intent.json` | tool-call payload | Skill hook (automatic) |
 | `compile_spec_ir.py` | The Spec IR and its `.spec.md` view | `prototype/intent.json`, `discussion.md` | Stage 5 Handoff prose |
+| `spec_contract_blocks.py` | The `contract:<kind>` block loader, its per-kind normalisers and the admit checks (never run alone; `compile_spec_ir.py` re-exports it) | `discussion.md` | `compile_spec_ir` |
 | `compile_tokens.py` | `tokens.css` and the DTCG `t1.json` | `discussion.md`, Five Axes | Stage 5 Handoff prose |
 | `verify_prototype_quality.py` | Legacy HTML quality audit helper (advisory / test utility) | authored HTML | test harnesses |
 | `authority_fidelity.py` | The authority-fidelity check: an action claiming `explicit` must be backed by a `confirmed`/`delegated` row in the discussion's Decisions table | Spec IR, `discussion.md` | Stage 5 Handoff freeze |

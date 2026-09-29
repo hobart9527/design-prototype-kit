@@ -4,7 +4,11 @@
 > authoritative form — a fenced `contract:<kind>` YAML block — and one prose form
 > kept only for records that predate it. This file states the rule and the
 > registry. `compile_spec_ir.py` is the sole parsing authority; it is not a
-> second specification of the formats, which live in the blocks below.
+> second specification of the formats, which live in the blocks below. The block
+> loader and its admit checks live in `scripts/spec_contract_blocks.py`, and
+> `compile_spec_ir.py` re-exports every name from it — the prose parsers and the
+> block registry are two halves of one contract, so a change to one is a change
+> to both.
 
 ## Why the block is authoritative
 
