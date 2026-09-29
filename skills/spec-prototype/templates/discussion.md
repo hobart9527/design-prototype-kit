@@ -199,6 +199,7 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
   - `[inv/wcag-contrast]` (`blocking` · `dom_computed`): 核心文本必须满足 WCAG 2.2 AA (>= 4.5:1)，操作按钮 >= 3.0:1
   - `[inv/token-inheritance]` (`blocking` · `dom_computed`): 100% 继承 `prototype/shared/tokens.css`，0 内联 hex
   - `[inv/action-safety]` (`blocking` · `dom_event`): 高危排空必须弹出 `<dialog>` 二次确认；模态内必须确保双人签发可被快速/确定性解锁；提交后 DOM 必须渲染明确的状态反馈（含 "已排空" 或 "排空中"）；且必须持久展示可触达的 "撤回 / 撤销 / 回滚" 动作按钮。
+  - `[inv/discoverable-critical-path]` (`blocking` · `dom_query`): 关键路径上的控制不得仅以 `title` 提示、悬停浮层或散文说明其前置条件。每一步执行后，下一步的触发点必须在同一快照中直接可点；前置未满足时，必须就地呈现解锁入口（可点的席位切换、可点的补全动作），而不是渲染一个静止的禁用按钮。
 - **The Break Protocol**:
   - `[stress/unbreakable-string]`: 超长节点标识与微服务名自动截断，禁止破坏横向布局
   - `[stress/zero-data]`: 0 异常机器时展示常态自愈健康指示，严禁白屏
@@ -225,7 +226,7 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
 - **Rhythm: Compression & Release (anti-uniform-grid)**:
 - **Data Floor: Reference Benchmarks & Zero Naked Metrics**:
 - **Action Verb Semantic Continuity Check**:
-- **Strict Token Inheritance** (`<link rel="stylesheet" href="../../shared/tokens.css">`, zero inline hex):
+- **Strict Token Inheritance** (consume the compiled `visual_directives.token_link_tag` verbatim; never retype the relative depth, zero inline hex):
 
 ### Stage 4: Four-Dimensional Audit & Review Portal (验 - 全息走查与吸收)
 - **Review Portal Harness (`prototype/review-portal.html`)**:

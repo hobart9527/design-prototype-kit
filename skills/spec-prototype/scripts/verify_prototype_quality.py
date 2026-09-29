@@ -19,6 +19,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import authority_fidelity  # noqa: E402
 import prototype_context  # noqa: E402
 
 
@@ -1070,6 +1071,45 @@ def coverage_failures(html: Path, contract_path: Path | str | None = None) -> li
     return failures
 
 
+# References that are not paths inside the delivered artifact: bare fragments,
+# absolute schemes, and protocol-relative URLs.
+_EXTERNAL_PREFIXES = ("#", "http://", "https://", "mailto:", "data:", "javascript:", "//")
+
+# `<link>` relations that carry a file reference. Every other rel (`preconnect`,
+# `dns-prefetch`, `canonical`) names a target, not a file in the tree.
+_ASSET_LINK_RELS = (
+    "stylesheet", "icon", "shortcut icon", "apple-touch-icon", "manifest",
+)
+
+
+def check_relative_refs(html: Path, dom: "_Document") -> tuple[list[str], list[str]]:
+    """Unresolvable relative references, split into navigation and assets.
+
+    Every relative reference must resolve inside the delivered prototype scope.
+    Stylesheet links are checked alongside anchors because a `<link href>` that
+    404s is a broken delivery: exempting it here only moved the discovery
+    downstream to the benchmark judge, which reads every href. One rule, one
+    place, no blind spot.
+
+    `runtime_judge.navigation_integrity` checks the same defect from the
+    benchmark side. The two implementations are deliberately separate — a
+    candidate skill must not be graded by its own code — and
+    `tests/test_check_parity.py` pins them to agree.
+    """
+    broken_nav: list[str] = []
+    broken_assets: list[str] = []
+    for tag_name, attr in (("a", "href"), ("link", "href"), ("script", "src"), ("img", "src")):
+        for el in dom.tags(tag_name):
+            ref = el.get(attr)
+            if not ref or ref.startswith(_EXTERNAL_PREFIXES):
+                continue
+            if tag_name == "link" and el.get("rel").lower() not in _ASSET_LINK_RELS:
+                continue
+            if not (html.parent / ref.split("?")[0].split("#")[0]).resolve().exists():
+                (broken_assets if tag_name != "a" else broken_nav).append(f"{tag_name}[{attr}]={ref}")
+    return broken_nav, broken_assets
+
+
 def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                    contract_path: str | None = None) -> bool:
     html = Path(html_path)
@@ -1123,6 +1163,26 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if missing:
         failures.append("contract assertion: declared items absent from DOM: " + ", ".join(missing[:5]))
 
+    # Authority fidelity: an action's `authority: explicit` is a claim that the
+    # user stated the mechanism, so it is checked against the provenance record
+    # the discussion keeps. This runs here rather than in the compiler because it
+    # needs the discussion text, and it runs here rather than only downstream
+    # because a promotion the skill ships is a promotion the skill should refuse.
+    ir_file = _ir_contract_path(Path(contract_path)) if contract_path else None
+    if ir_file and ir_file.is_file():
+        discussion_file = next(
+            (p for p in (html.parent, *html.parents) if (p / "discussion.md").is_file()),
+            None,
+        )
+        if discussion_file:
+            try:
+                ir_actions = json.loads(ir_file.read_text(encoding="utf-8")).get("actions") or []
+            except (json.JSONDecodeError, OSError):
+                ir_actions = []
+            failures.extend(authority_fidelity.check_action_authority(
+                ir_actions, (discussion_file / "discussion.md").read_text(encoding="utf-8")
+            ))
+
     # Hard floor: reject raw inline hex colors in style attributes (enforces token inheritance)
     raw_style_hex = [
         el.get("style") for el in dom.with_attr("style")
@@ -1131,19 +1191,16 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     if raw_style_hex:
         failures.append(f"craft assertion: raw inline hex colors in style attributes ({len(raw_style_hex)} found; use CSS custom properties / var(--...))")
 
-    # Navigation integrity: every relative href must resolve inside the delivered prototype scope
-    broken_nav = []
-    # Only navigable anchors are checked here: stylesheet/asset links are validated by token inheritance.
-    for el in dom.tags("a"):
-        href = el.get("href")
-        if not href or href.startswith(("#", "http://", "https://", "mailto:", "data:", "javascript:")):
-            continue
-        if not (html.parent / href).resolve().exists():
-            broken_nav.append(href)
+    broken_nav, broken_assets = check_relative_refs(html, dom)
     if broken_nav:
         failures.append(
             "navigation assertion: relative href(s) do not resolve inside the artifact "
             f"({', '.join(sorted(set(broken_nav))[:4])}); link only to delivered surfaces or render a disabled affordance"
+        )
+    if broken_assets:
+        failures.append(
+            "asset assertion: relative asset reference(s) do not resolve inside the artifact "
+            f"({', '.join(sorted(set(broken_assets))[:4])}); link the compiled token_link_tag exactly"
         )
 
     # Accessibility floor: conditional prefers-reduced-motion when animations or transitions are present

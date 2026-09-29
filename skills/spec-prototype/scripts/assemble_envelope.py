@@ -275,7 +275,10 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
             "ui_transient_states": [],
             "feedback": {"continuity": "preserve-context", "visible": bool(feedback_message),
                          **({"message": feedback_message} if feedback_message else {})},
-            "authority": action.get("authority", "inferred"),
+            # Same vocabulary the compiler emits (`explicit | derived | proposed
+            # | hypothesis`). The old `inferred` default was a third level for
+            # one field, and it sat outside the IR schema's enum.
+            "authority": action.get("authority", "derived"),
             "origin": action.get("origin"),
             "source": _ir_pointer(ref, f"actions/{index}"),
         })
@@ -287,7 +290,7 @@ def _canonical_ir_fields(ir: Dict[str, Any], ref: str) -> Dict[str, Any]:
          "severity": invariant.get("severity", "blocking"),
          "verification": invariant.get("verification_method", "runtime"),
          "source": _ir_pointer(ref, f"invariants/{index}"),
-         "authority": invariant.get("authority", "inferred")}
+         "authority": invariant.get("authority", "derived")}
         for index, invariant in enumerate(ir.get("invariants") or [])
     ]
 

@@ -218,8 +218,19 @@ def test_contract_actions_yaml_is_authoritative_and_fails_closed():
 ```"""
     parsed = parse_action_verbs(actions)
     assert [item["id"] for item in parsed] == ["action-enter"]
-    assert parsed[0]["authority"] == "explicit"
+    # An unmarked entry is a designer's mechanism, not a user-confirmed fact.
+    # The old default of `explicit` promoted every authored action into
+    # user-confirmed authority and rode that claim into the Builder payload,
+    # where `authority` separates user-stated domain states from derived ones.
+    assert parsed[0]["authority"] == "derived"
     assert parsed[0]["feedback"] == "Saved"
+
+    # The claim is authored, not assumed: marking it is honoured, and an
+    # unknown level fails closed rather than defaulting to something.
+    marked = actions.replace("  verb: submit", "  authority: explicit\n  verb: submit")
+    assert parse_action_verbs(marked)[0]["authority"] == "explicit"
+    with pytest.raises(ValueError, match="invalid authority"):
+        parse_action_verbs(actions.replace("  verb: submit", "  authority: confirmed\n  verb: submit"))
 
     duplicate = actions.replace(
         "  feedback: Saved",

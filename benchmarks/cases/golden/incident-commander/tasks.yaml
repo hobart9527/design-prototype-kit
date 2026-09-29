@@ -8,7 +8,7 @@ tasks:
     required_outcomes:
       - id: worker_identified
         check: text_present
-        pattern: "worker|node|节点|主机|实例"
+        pattern: "worker|node|节点|主机|实例|机器"
       - id: impact_context_visible
         check: text_present
         pattern: "影响|下游|服务|区域|region|集群"
@@ -26,13 +26,13 @@ tasks:
         check: dialog_open
       - id: confirmation_language_present
         check: text_present
-        pattern: "确认|排空|drain|Drain"
+        pattern: "确认|排空|drain|Drain|复核|签发"
       - id: state_feedback_after_action
         check: text_present
         pattern: "已排空|排空中|draining|已完成|处理中|回滚|撤销"
       - id: recovery_or_safe_exit_available
         check: text_present
-        pattern: "撤销|回滚|终止|取消|undo|Undo|rollback"
+        pattern: "撤销|回滚|终止|取消|undo|Undo|rollback|撤回"
 
   - id: mobile-incident-status
     critical: false

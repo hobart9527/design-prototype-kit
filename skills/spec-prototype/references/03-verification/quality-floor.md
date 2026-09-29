@@ -22,6 +22,7 @@ An experience fails the Floor if any of the following occurs:
   - Basic Ergonomic Breakdown: An operator cannot locate primary system status or complete the main loop without reading manual prose. Domain-specific heuristics are evaluated under [Craft Guidelines](#2-quality-criteria-craft-conviction-and-resonance) and domain context rather than rigid global floors.
 - **Craft invariants (hard defects within their applicable scope):**
   - Commit controls require perceptible `:active` press feedback. Plain links and pure navigation are out of scope.
+  - A critical-path control never states its prerequisite only in a `title` tooltip, a hover layer or prose. After each step, the next trigger is directly clickable in the same snapshot; while a prerequisite is unmet, the unlocking affordance itself is present and clickable (a seat switch, a completion action) rather than a dead disabled button. A disabled control whose only explanation is a tooltip is a required failure, not a polish note.
   - A rounded child nested inside a rounded parent with padding `P` satisfies `R_in = max(0, R_out - P)` (1px measurement tolerance).
   - Numeric values that update in place or align in columns use `font-variant-numeric: tabular-nums`; prose numbers are out of scope.
   - A check that cannot run is `Not verified`, never a pass.

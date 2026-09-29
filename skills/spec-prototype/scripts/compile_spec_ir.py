@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -427,6 +428,9 @@ def _parse_contract_yaml_blocks(text: str, kind: str) -> List[Dict[str, Any]]:
     return blocks
 
 
+AUTHORITY_LEVELS = ("explicit", "derived", "proposed", "hypothesis")
+
+
 def _action_from_contract_block(block: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Normalize one contract:actions YAML entry to the IR action shape."""
     action_id = str(block.get("id") or "").strip()
@@ -442,13 +446,23 @@ def _action_from_contract_block(block: Dict[str, Any]) -> Optional[Dict[str, Any
         raise ValueError(f"contract:actions {action_id} has invalid proximity_level") from exc
     if proximity_level < 1:
         raise ValueError(f"contract:actions {action_id} proximity_level must be >= 1")
+    # Authority is authored, not assumed. An action declared in the discussion's
+    # contract block is a designer's mechanism unless the author marks it
+    # otherwise, so the unmarked default is `derived` — never `explicit`, which
+    # would promote an unconfirmed mechanism into a user-confirmed fact.
+    authority = str(block.get("authority") or "derived").strip().lower()
+    if authority not in AUTHORITY_LEVELS:
+        raise ValueError(
+            f"contract:actions {action_id} has invalid authority {authority!r}; "
+            f"expected one of {', '.join(AUTHORITY_LEVELS)}"
+        )
     entry: Dict[str, Any] = {
         "id": action_id,
         "verb": required["verb"],
         "trigger": required["trigger"],
         "proximity_level": proximity_level,
         "commit_action": required["commit"],
-        "authority": "explicit",
+        "authority": authority,
         "origin": "discussion.md#contract:actions",
     }
     for opt in ("feedback", "consequence"):
@@ -543,7 +557,10 @@ def parse_action_verbs(text: str) -> List[Dict[str, Any]]:
             "trigger": fields.get("trigger") or (f"{key} key" if key else ""),
             "proximity_level": proximity,
             "commit_action": fields.get("commit") or verb,
-            "authority": "inferred",
+            # Read off a prose lifecycle clause rather than an authored
+            # contract block, so nothing marked it. Same vocabulary as the
+            # structured path: `derived` is the designer's mechanism.
+            "authority": "derived",
             "origin": "discussion.md",
         }
         if fields.get("feedback"):
@@ -836,6 +853,24 @@ def parse_meso_directives(text: str, navigation_topology: str) -> Dict[str, Dict
     if "data_syntax" in authored:
         directives["visual_directives"] = {"data_syntax": authored["data_syntax"]}
     return directives
+
+
+def resolve_token_link(root: Path, target_html: str) -> Dict[str, str]:
+    """Compute the tokens stylesheet link from the anchor's real depth.
+
+    The relative depth from `prototype/experiments/<slice>/anchor/index.html`
+    to `prototype/shared/tokens.css` is a property of the tree, not a fact to
+    be retyped in prose. Deriving it here means the Builder consumes a resolved
+    link instead of miscalculating `../../` versus `../../../`, and the
+    navigation check downstream can never disagree with the delivered file.
+    """
+    tokens_css = root / "prototype/shared/tokens.css"
+    target_dir = (root / target_html).parent
+    rel_href = os.path.relpath(tokens_css, target_dir).replace(os.sep, "/")
+    return {
+        "token_stylesheet_ref": rel_href,
+        "token_link_tag": f'<link rel="stylesheet" href="{rel_href}">',
+    }
 
 
 NON_SURFACE_NAMES = {
@@ -1174,6 +1209,10 @@ def compile_canonical_ir(
         "actions": actions,
         "invariants": invariants,
         **meso,
+        "visual_directives": {
+            **(meso.get("visual_directives") or {}),
+            **resolve_token_link(root, f"prototype/experiments/{slice_id}/anchor/index.html"),
+        },
         "artifacts_binding": {
             "tokens_css": "prototype/shared/tokens.css",
             "tokens_json": "prototype/contracts/tokens/t1.json",

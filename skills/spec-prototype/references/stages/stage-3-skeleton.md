@@ -100,10 +100,27 @@ share one atomic vocabulary. Synonym drift is forbidden.
 
 ## Strict Token Inheritance
 
-Every secondary surface links the global stylesheet:
-`<link rel="stylesheet" href="../../shared/tokens.css">`. Inline hex colors and
+Every secondary surface links the global stylesheet using the compiled
+`visual_directives.token_link_tag` verbatim. Never retype the relative depth by
+hand: the anchor sits at `prototype/experiments/<slice>/anchor/index.html`, so
+the path to `prototype/shared/tokens.css` is a property of the tree that the
+compiler resolves (`../../../shared/tokens.css` for the canonical anchor, but
+read it from the IR rather than reconstructing it). Inline hex colors and
 hard-coded pixel margins are eliminated to preserve the design system's one-way
 truth inheritance.
+
+## Critical-Path Discoverability
+
+A multi-surface skeleton multiplies the places a prerequisite can hide. Every
+consequential action's full execution path must stay visible from visible cues
+alone: after each step, the next trigger is directly clickable in the same
+snapshot, and an unmet prerequisite shows its unlocking affordance as a real
+control, never as a `title` tooltip on a dead button. A gate that renders
+disabled while its unlock lives in a tooltip is unreachable to anyone who does
+not already know the model — the condition is
+`[inv/discoverable-critical-path]` in the Stage 1 invariant list, and the Floor
+clause is in
+[`../03-verification/quality-floor.md`](../03-verification/quality-floor.md).
 
 ## Exit
 

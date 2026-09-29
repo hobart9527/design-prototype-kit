@@ -69,10 +69,17 @@ def _run_sessions(cases, variants, repeats, matrix_dir, args) -> list:
                 else:
                     # Without a session cap, an auto-continued staged session dies
                     # with "per-call budget exhausted and no session budget set" -
-                    # BLOCKED, last turn's work stranded. Default to 3 per-call
-                    # budgets: enough for stage-1 + builder + verification on one
-                    # continuation, still bounded.
-                    per_call = args.budget_usd if args.budget_usd is not None else 6.0
+                    # BLOCKED, last turn's work stranded. The cap must be a
+                    # multiple of the per-call budget the runner will actually
+                    # apply, which is the case policy when no CLI override is
+                    # given. Reading it from the case keeps the two numbers from
+                    # diverging: a hard-coded default here once produced a $18
+                    # session cap against an $8 per-call cap, so the third call
+                    # could never start.
+                    if args.budget_usd is not None:
+                        per_call = args.budget_usd
+                    else:
+                        per_call = bl.case_budget_usd(case_id) or 6.0
                     cmd += ["--session-budget-usd", str(round(per_call * 3, 2))]
                 if args.rejudge:
                     cmd += ["--rejudge"]

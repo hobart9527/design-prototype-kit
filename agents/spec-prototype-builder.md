@@ -175,9 +175,13 @@ Honor the product's real domain, not a generic web shell.
   fixture data MUST be authored in the declared language. Never mix half-English /
   half-Chinese unless a secondary bilingual representation is explicitly declared.
 - **Design Token Invariance**: Link the shared tokens stylesheet in `<head>` using the
-  exact `token_link_tag` (or `<link rel="stylesheet" href="{token_stylesheet_ref}">` / `visual_directives.token_link_tag`).
-  NEVER guess or manually miscalculate relative path depth (e.g. inside `prototype/experiments/<slice>/anchor/index.html`,
-  the relative path to `prototype/shared/tokens.css` is strictly `../../../shared/tokens.css`, never `../../`).
+  exact `token_link_tag` (or `<link rel="stylesheet" href="{token_stylesheet_ref}">` /
+  `visual_directives.token_link_tag`) supplied in the payload. That value is resolved at
+  compile time from the anchor's real depth in the tree — copy it verbatim.
+  NEVER reconstruct or manually miscalculate relative path depth. The anchor sits at
+  `prototype/experiments/<slice>/anchor/index.html`, so the correct depth is whatever the
+  compiled `token_stylesheet_ref` says (`../../../shared/tokens.css` for the canonical
+  anchor); a hand-counted `../../` resolves outside the delivered scope and 404s.
   Do NOT redeclare or shadow
   `:root { ... }` custom properties in `<style>`. Consume the declared tokens
   (`var(--bg-void)`, `var(--bg-surface)`, `var(--text-primary)`, `var(--accent-primary)`,

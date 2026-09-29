@@ -106,6 +106,21 @@ def case_dir(case_id: str) -> pathlib.Path:
     return found[case_id]
 
 
+def case_budget_usd(case_id: str) -> float | None:
+    """The per-call budget the runner applies when no CLI override is given.
+
+    `run_case.run_one` falls back to the case policy's
+    `max_budget_usd_per_turn`. Callers that need to derive a session cap must
+    read the same number from the same place, or the two diverge.
+    """
+    try:
+        policy = (load_case(case_id)["meta"] or {}).get("run_policy") or {}
+    except BenchBlocked:
+        return None
+    value = policy.get("max_budget_usd_per_turn")
+    return float(value) if value is not None else None
+
+
 def load_case(case_id: str) -> dict:
     cdir = case_dir(case_id)
     meta = load_yaml(cdir / "case.yaml")

@@ -224,7 +224,8 @@
           "proximity_level": { "type": "integer", "minimum": 0, "maximum": 4 },
           "commit_action": { "type": "string" },
           "feedback": { "type": "string" },
-          "consequence": { "type": "string" }
+          "consequence": { "type": "string" },
+          "authority": { "type": "string", "enum": ["explicit", "derived", "proposed", "hypothesis"], "description": "Authored evidence status of the declared action. `explicit` only when the user stated it; an unmarked contract:actions entry compiles to `derived`." }
         }
       }
     },
@@ -276,6 +277,14 @@
         "data_syntax": {
           "type": "string",
           "description": "Authored syntax for compact alignment and micro-trend data constructs."
+        },
+        "token_stylesheet_ref": {
+          "type": "string",
+          "description": "Path from the anchor to the shared tokens stylesheet, resolved by the compiler from the anchor's real depth. Never retyped by hand."
+        },
+        "token_link_tag": {
+          "type": "string",
+          "description": "The exact `<link rel=\"stylesheet\" ...>` tag the anchor must carry, so relative depth is a property of the tree rather than a hand-counted literal."
         }
       }
     },
