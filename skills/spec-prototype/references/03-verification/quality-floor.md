@@ -4,43 +4,30 @@ Read before recommending a direction, reviewing a connected experience or
 accepting a prototype. Quality is the fitness and coherence of the whole product
 experience, not visual polish, checklist completion or an aggregate score.
 
-## Floor versus Quality separation
+## Objective Floor vs Qualitative Craft Separation
 
-Evaluation strictly separates non-negotiable **Floor** from aspirational **Quality**:
+Evaluation strictly separates non-negotiable **The Floor (Absolute closure — zero tolerance)** (verified by browser/runtime facts) from aspirational **Quality Criteria (Craft, conviction, and resonance)** (Qualitative Design Craft):
 
-### 1. The Floor (Absolute closure — zero tolerance)
-An experience fails the Floor if any of the following occurs:
-- Semantic drift or unsupported product capabilities attributed to source truth.
+### 1. The Objective Floor (Zero Tolerance Runtime Facts)
+An experience fails the Floor only if any of the following objective runtime defects occurs:
+- Unhandled JS exceptions or fatal page crash during rendering.
+- Stylesheet link broken or inline hex colors bypassing `shared/tokens.css` inheritance.
+- Horizontal containment failure (scrollWidth > clientWidth) at standard viewports.
+- Basic WCAG 2.2 AA accessibility failures: text contrast below 4.5:1 against surface, focus completely invisible, or missing basic keyboard navigation.
 - Fabricated approval provenance or false claims of independent review.
-- Silent no-ops, broken cancel/close/reopen/retry branches, or unhandled errors.
-- Basic WCAG 2.2 AA accessibility failures (contrast, focus traps, pointer targets); tokens intended for long-form data/text must achieve WCAG AAA (7:1 contrast) under static analysis.
-- Inline hex colors or hardcoded styling bypassing `shared/tokens.css` inheritance.
-- False claims of verification without actual browser execution traces or without a verified `review-portal.html` multi-view walkthrough harness.
-- Metaphor entity disguise: renaming or disguising core business objects into physics or sci-fi metaphors (e.g. calling tasks particles, calling risk controls detent rods).
-- Ergonomic Reality Gate failures:
-  - Missing Dual-Channel Affordance: Critical keyboard shortcuts or gestural interactions lack visible, accessible GUI buttons or controls.
-  - Basic Ergonomic Breakdown: An operator cannot locate primary system status or complete the main loop without reading manual prose. Domain-specific heuristics are evaluated under [Craft Guidelines](#2-quality-criteria-craft-conviction-and-resonance) and domain context rather than rigid global floors.
-- **Craft invariants (hard defects within their applicable scope):**
+- Silent dead buttons: clickable action buttons that trigger zero DOM or state change.
+- **Craft invariants (hard defects strictly within their applicable scope):**
   - Commit controls require perceptible `:active` press feedback. Plain links and pure navigation are out of scope.
-  - A critical-path control never states its prerequisite only in a `title` tooltip, a hover layer or prose. After each step, the next trigger is directly clickable in the same snapshot; while a prerequisite is unmet, the unlocking affordance itself is present and clickable (a seat switch, a completion action) rather than a dead disabled button. A disabled control whose only explanation is a tooltip is a required failure, not a polish note.
-  - A rounded child nested inside a rounded parent with padding `P` satisfies `R_in = max(0, R_out - P)` (1px measurement tolerance).
+  - A rounded child nested inside a rounded parent with padding `P` satisfies $R_{in} = \max(0, R_{out} - P)$ (1px measurement tolerance).
   - Numeric values that update in place or align in columns use `font-variant-numeric: tabular-nums`; prose numbers are out of scope.
-  - A check that cannot run is `Not verified`, never a pass.
-
-- Technical shallowness & toy-demo collapse: Presenting a trivially linear, toy mockup that strips away essential domain mechanics (e.g. non-linear branching in DAG workflows, temporal baselines in telemetry) under the pretext of omission.
-- Stale Template Plagiarism & Execution Evasion: Rote copy-pasting of prior design mockups, stale entity names, or hardcoded topologies without fresh Stage 1 divergence reasoning. Verification harness enforces anti-stagnation rules against placeholder content.
-
-**Non-dilution rule**: a confirmed Floor violation is a failure on sight — never
-averaged down because the overall craft is strong, the surface is minor, or the
-prototype is otherwise impressive. A shortened report is acceptable; an
-unreported blocker is not.
+  - A check that cannot run is recorded as `Not verified`, never an automated pass.
 
 ### 2. Quality Criteria (Craft, conviction, and resonance)
-Above the Floor, design merit is judged by qualitative evidence across core dimensions:
-- **Domain Verisimilitude & Professional Credibility (专业欺骗感与领域自洽性)**: The interface demonstrates genuine structural and behavioral depth. An experienced domain practitioner sitting in front of the screen immediately perceives it as an authentic, high-depth production instrument or lifeworld tool.
-- **Sense & Kinetic Clarity**: Physical or somatic mechanics resolve operational tensions; dynamic signals (such as throughput pulses or status transitions) deliver immediate situational awareness rather than superficial decoration.
-- **IA & Topology**: Information architecture reflects task priority and authentic entity relationships; non-linear topologies preserve context across branches and secondary workflows.
-- **Contextual Craft & Density**: Metrics feature legible reference benchmarks (scales, gridlines, event markers, micro-sparklines); density calibrated to high signal-to-noise ratio without cramped text or vacuum voids.
+Above the Floor, design merit is judged by human aesthetic review and discussion:
+- **Visual Expression & Typography**: Appropriate hierarchy, intentional scale contrast, and fit with the chosen modern design vocabulary ([`../02-craft-methods/modern-style-vocabulary.md`](../02-craft-methods/modern-style-vocabulary.md)).
+- **Information Architecture & Density**: Clean scan paths, intentional grouping, and high signal-to-noise ratio.
+- **Motion & Somatic Feel**: Meaningful state transitions and spring deceleration curves without gratuitous decoration.
+- **No Mechanical Blockers**: Aesthetic suggestions, card layouts, and color choices are discussion points between designer and human reviewer, never blocking script errors.
 
 ## Contextual Craft Guidelines & Heuristics (optional)
 
@@ -198,25 +185,6 @@ not an arbitrary tool, screenshot or token quota.
 - Combining propositions creates a successor proposition and needs renewed
   rationale and evidence.
 
-## Verifiable assertion check
-
-Before verified acceptance, Builder accounts for each Foundation assertion with
-`pass | fail | unverified | n/a`. Record the expected value or relationship, actual
-observation, precise evidence location and scope reason where applicable. Separate
-clauses such as stored data, visible result, feedback and keyboard continuation;
-a suite exit code or logged event cannot stand in for all of them.
-
-Required failures or unverified checks block a `verified` implementation verdict.
-Exploratory failure is learning, not permission to claim success. Contradictory
-raw evidence overrides a summarized pass until resolved. Changing the requirement
-to make a failed implementation pass requires an explicit successor design/spec
-decision, not a silent repair.
-
-The assertion account includes **reachable-control closure**. A happy-path pass
-does not cover another enabled exit from the same state. Verify state cleanup and
-focus/meaning continuity after cancel, close or reset, then re-enter before
-claiming the subsequent submit/retry path works.
-
 ## Anti-generic and evidence discipline
 
 “Anti-generic” means refusing context-free defaults, not enforcing a signature
@@ -236,33 +204,6 @@ An acceptance record links the run command/output, task traces, applicable state
 coverage, actual-size rendered views, keyboard/focus and reduced-motion evidence,
 relevant accessibility checks and per-assertion results. Mark the result
 inconclusive when available evidence cannot answer the review question.
-
-## Generated-output fingerprint check
-
-Audit-side detector — fingerprints are not fixed style bans. A concise, product-specific
-anti-slop brief may pass only relevant tells to Builder dispatch. Confirm each against
-the authored product intent; combinations, not single values, are the concern.
-An individual color or word is not a violation by itself.
-
-- **Color-combination fingerprints**: combinations such as a dark purple-black
-  base paired with violet glow, pink-to-cyan or rainbow gradients, or stacked neon
-  accents with blur/glow. These are review leads only: judge against the product's
-  authored intent, brand evidence and rendered result; no palette is inherently
-  generic or forbidden.
-- **Fake-chrome fingerprints**: a hardcoded device-status bar, signal/battery
-  cluster, browser URL bar, traffic lights or device bezel drawn inside a prototype.
-  Confirm these are misleading in the actual product context; they are appropriate
-  when the product itself is a browser, device preview or design canvas.
-- **Placeholder-content fingerprints**: the literal strings `Lorem`,
-  `John Doe`, `Acme`-style generic company names, `example.` email domains;
-  the same metric value repeated across 3+ unrelated cards; uniformly round
-  numbers where real observation produces irregular values; consecutive
-  identical timestamps.
-- **Register infidelity (two-way)**: the Foundation declared a loud/raw/dense
-  register but delivery silently reverts to polished defaults (soft shadows,
-  uniform radii, generous whitespace) — or declared quiet/polished but delivery
-  forces grain, torn edges or brutalist borders. Both directions are Floor
-  failures when the declared register cites evidence.
 
 ## Verification honesty
 
@@ -286,6 +227,5 @@ redundant finding — report the cheaper fix instead.
 |---|---|
 | A Floor violation softened because the prototype is otherwise impressive | Report it on sight; craft never averages away a blocker |
 | An unrun check recorded as pass | Mark it `Not verified` and say what would verify it |
-| A detector fingerprint reported without confirming the rendered output | Confirm against the running prototype, or drop it |
-| Register judged only for under-expression | Check both directions: loud-reverted-to-polished and quiet-forced-to-gritty |
+| An aesthetic choice treated as an automated blocker | Discuss it with the human reviewer; do not block builds |
 | A remediation that adds code where deletion or platform behavior suffices | Replace it with the cheapest rung that solves the defect |

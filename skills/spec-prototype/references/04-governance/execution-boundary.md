@@ -26,11 +26,6 @@ target/checkpoint is terminal for that attempt. Do not change agent type, retry,
 or mutate the packet to evade the boundary; the main designer keeps authoring the
 prototype directly.
 
-After creating or materially updating `prototype/discussion.md`, the main
-designer may run `python3 <skill-home>/scripts/check-discussion.py
-<repository-root>`. This is a structural completeness check only; it is not a
-readiness gate, approval source, or Runtime lifecycle.
-
 ## Main tools
 
 Use Read/Glob/Grep and available read-only research/browser tools. Native writes
@@ -42,7 +37,7 @@ For Bash use one command: `pwd`, `ls`, `cat`, `head`, `tail`, `wc`, `rg` (withou
 preprocessor), `git status --short`, `git status --short --branch`, or
 `git rev-parse --show-toplevel`. Installed scripts may run by their absolute path:
 Node for preview; Python for
-check-discussion and handoff.
+handoff.
 The bounded token export command in [artifact lifecycle](artifact-lifecycle.md)
 is also permitted: absolute retained token source and same-revision JSON output
 inside this project's token directory, with no extra arguments or symlink escape.
@@ -52,6 +47,10 @@ call is a role/format diagnostic: correct it without seeking another approval
 when the underlying design work is already authorized.
 
 ## Formal handoff packet
+
+`lint_spec_contracts.py` is a Stage 5 optional handoff lint helper, not a design-time
+gate. It is admitted through the execution boundary only when explicitly invoked with
+`--root` and `--slice` arguments for formal delivery validation.
 
 Prepare prototype handoff artifacts in the current project with their bounded
 scopes, not a separate worktree: packet paths and target evidence belong to this

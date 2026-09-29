@@ -72,41 +72,19 @@ The brief needs only the applicable parts of:
 Do not fill every Nine Pillar, Five Axis, state, surface, or Break Protocol vector.
 Keep the human brief about decisions; machine IR and CSS tokens are compiled outputs.
 
-## Physical Anchor Declaration
+## Physical Anchor Declaration (Optional Guidance)
 
-Before a formal runnable prototype enters Stage 2, declare its physical chassis in
-`prototype/discussion.md` as an explicit anchor (for example, `desktop workstation`,
-`mobile device`, or `physical_anchor: none` when no device-shaped anchor applies).
-Do not infer the chassis from product category, references, or generic device defaults.
-An undeclared anchor blocks formal Stage 2; a declared `none` is an intentional
-non-device decision, not missing information.
+Declare the anticipated physical chassis or usage context in `prototype/discussion.md`
+if known (for example, `desktop workstation`, `mobile device`, or `physical_anchor: none`).
+This provides structural guidance for layout choices without acting as a blocking gate
+against beginning prototype exploration.
 
-## Sealed Provisional Baseline Closure
+## Progressive Prototyping Without Pre-Spec Lock
 
-For a formal runnable prototype, establish the applicable sealed provisional Spec
-baseline before runnable code. A focused design brief or exploration is not itself a
-request to seal or freeze the whole product.
-
-## Formal prototype compilation
-
-When a runnable formal prototype is requested, write the Stage 1 machine contract
-to `prototype/intent.json` (copy `templates/intent.json`), then run the documented
-`compile_spec_ir.py --required-tier stage2` and `compile_tokens.py` commands in one
-shell invocation. The compiler creates the machine IR and human `.spec.md` view;
-fix actionable compiler errors at their authored source.
-
-`prototype/intent.json` carries the Stage 1 fields — `slice_id`, `core_tension`,
-`declared_surfaces`, and `physical_anchor` — as JSON, so no field has to be
-recovered from prose. The boundary validates the file against
-`schemas/intent.v1.json` as you write it: a rejected write names the failing
-field, and you fix it in the same step. `prototype/discussion.md` remains the
-human co-creation record and the Resume ledger; it is no longer the machine
-interface.
-
-The Stage 2 tier refuses to compile without an explicit Physical Anchor
-declaration (including `none` when no device anchor applies).
-Do not inspect compiler source to learn design decisions. Lightweight exploration,
-spec-only discussion, and local review do not require the full formal pipeline.
+Stage 1 produces the problem framing and design brief in `prototype/discussion.md`.
+Writing code in Stage 2 does not require a prior sealed Spec or pre-compiled Spec IR:
+visual exploration and rapid prototyping precede formal contract compilation.
+Formal compilation to `intent.json` / Spec IR occurs upon engineering handoff (Stage 5).
 
 ## Required parser anchors
 
@@ -123,14 +101,9 @@ tier from these parser-compatible headings:
 - **Primary**: `surface/<id>`
 ```
 
-Add frontmatter `spec_schema: "google-design-md/v2"`, `slice_id`, and only the
-applicable `authority`, `stage`, `viewports`, `required_states`, and `primary_surface`.
-Use semantic headings accepted by the contract parser. Later execution details can be
-added when the work reaches them; do not pre-complete downstream decisions.
-
 ## Exit
 
 A design brief answers the current question and clearly separates facts, decisions,
-proposals, and open risks. For a formal prototype, synthesize its applicable contract
-and code directly in the same turn when requested and possible. A checkpoint is recovery
-context, not an approval gate.
+proposals, and open risks. Continue directly to Stage 2 to explore 2–3 distinct visual
+and structural directions through rapid prototyping without waiting on pre-spec locks.
+A checkpoint is recovery context, not an approval gate.

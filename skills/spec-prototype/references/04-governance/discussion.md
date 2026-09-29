@@ -14,9 +14,7 @@ owner; product/source revision; active artifact/evidence references; next action
 and its prerequisite.
 
 If an existing record lacks Resume, prepend the current fields and retain earlier
-rationale below. File existence alone is not valid resume state. After a material
-update, run `scripts/check-discussion.py <repository-root>` when available; it
-checks record shape only.
+rationale below. File existence alone is not valid resume state.
 
 A review/advice-only request remains read-only unless the user requests a record.
 A no-build request can still retain requested Markdown design work. If the user

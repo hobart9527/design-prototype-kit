@@ -22,16 +22,17 @@ Specify concrete test vectors:
 - **Rapid Double Activation**: Idempotent state lock.
 
 ## 4. Single-Direction Contract Compilation Trigger
-Do NOT write Markdown files manually. Execute:
+During Stage 0–3 exploration, prototypes are authored directly without pre-spec locks.
+At Stage 5 Engineering Handoff (or when formal contracts are explicitly requested):
 ```bash
 python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice-id>
 python3 skills/spec-prototype/scripts/compile_tokens.py
 ```
 Verify pipeline:
-1. `r1.spec.json` compiled and schema-validated (canonical machine IR).
+1. `r1.spec.json` compiled and schema-validated (canonical machine IR for downstream).
 2. `r1.spec.md` rendered as the single-file human RFC view.
 3. `tokens.css` compiled with domain tokens preserved (plus `t1.json`).
-4. Stage 1 lifecycle advances to `sealed_provisional`.
+4. Stage 5 lifecycle advances to `frozen_approved` or downstream delivery.
 
 **Banned in Primary Delivery**:
 NEVER write legacy fragmented contracts (`f1.md`, `m1.md`, `t1.md`, `c1.md`, `r1.md`, `product.md`). The single unified RFC specification is `r1.spec.md`.

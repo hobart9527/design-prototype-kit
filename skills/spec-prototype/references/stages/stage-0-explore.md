@@ -54,6 +54,5 @@ brief plus evidence, never a sealed contract and never an approved artifact.
 ## Exit
 
 Legal exit is the direction probe report — with screenshots only when a probe
-was actually built — or an explicit promotion into [Stage 1](stage-1-frame.md)
-when the direction becomes a formal candidate and therefore requires a sealed
-provisional Spec.
+was actually built — or progression into [Stage 1](stage-1-frame.md) or [Stage 2](stage-2-probe.md)
+to continue refining the prototype. Spec compilation is deferred to Stage 5 handoff.

@@ -35,10 +35,11 @@ The system defines two closely coordinated lifecycle models: the **Authority Lif
 
 | Authority Lifecycle (`authority status`) | Applicable Stage | Artifact File Lifecycle | Mutability & Handoff Semantics |
 |---|---|---|---|
-| **Draft** | Stage 0 (Explore), Stage 1 in-progress | `draft` | Mutable exploration. Relative paths, no cryptographic hash-locks. Bi-directional iterative updates allowed. |
-| **Sealed Provisional** | Stage 1 baseline closure, Stage 2 (Probe), Stage 3 (Skeleton) | `draft` (sealed baseline) | Gate baseline. Canonical artifacts materialized (`prototype/contracts/compiled/<slice_id>/r1.spec.json`, `prototype/specifications/<slice_id>/r1.spec.md`, `prototype/shared/tokens.css`). Probes and skeletons are authorized against this baseline. Code experiments may falsify and reopen it. |
-| **Validated** | Stage 4 (Audit / Tuning) | `draft` (evidence-cleared) | Evidence-absorbed. Engineering DOM, Break Protocol, and visual captures pass. Defect deltas applied; awaiting human signoff. |
-| **Frozen Approved** | Stage 5 (Silent Governance) | `frozen` | Immutable delivery. Bound by SHA-256 digests via `handoff.py freeze`. Downstream engineering delivery (Loom Entry 2) admission state. Any subsequent modification requires an explicit successor revision (`superseded`). |
+| **Draft** | Stage 0 (Explore), Stage 1 (Frame), Stage 2 (Directions), Stage 3 (Make) | `draft` | Mutable exploration. Relative paths, direct prototype authoring, no cryptographic hash-locks. Tokens and prototypes iterate freely without prior Spec compilation. |
+| **Validated** | Stage 4 (Look / Refine) | `draft` (evidence-cleared) | Human design review and visual inspection complete; key feedback absorbed and stabilized. |
+| **Frozen Approved** | Stage 5 (Silent Governance / Handoff) | `frozen` | Immutable delivery. Spec IR (`r1.spec.json`), RFC specification (`r1.spec.md`), and DTCG tokens (`t1.json`) compiled and bound by SHA-256 digests via `handoff.py freeze`. Downstream engineering delivery admission state. Any subsequent modification requires an explicit successor revision (`superseded`). |
+
+*(Note: Legacy status values like `Sealed Provisional` remain readable for backward compatibility on historical candidate records).*
 
 ## Dual-track artifact lifecycle: Exploration vs Formal Delivery
 

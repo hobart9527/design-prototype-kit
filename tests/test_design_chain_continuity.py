@@ -132,7 +132,7 @@ def test_lightweight_routes_not_forced_through_full_product():
     content = _read(STAGE_3)
     section = content[content.index("Coverage Selection before Expansion"): content.index("Derived Surface Topology Rollout")]
     assert "not forced" in section
-    assert "sealed provisional" in section.lower()
+    assert "lightweight routes stay valid" in section.lower()
 
 
 def test_usage_route_table_keeps_lightweight_examples():
@@ -144,16 +144,15 @@ def test_usage_route_table_keeps_lightweight_examples():
 # --- Formal candidate requirement preserved ---------------------------------
 
 
-def test_formal_candidate_still_requires_sealed_provisional_spec():
+def test_formal_candidate_requires_validated_spec_at_handoff():
     kernel = _read(CORE_KERNEL)
-    assert "Sealed Provisional Spec Contract" in kernel
-    assert "Sealed Provisional" in kernel
+    assert "Spec as Downstream Delivery Contract" in kernel or "Spec as Downstream" in kernel
+    assert "Frozen Approved" in kernel
 
 
 def test_authority_lifecycle_unchanged():
     content = _read(CORE_KERNEL)
     assert "Draft" in content
-    assert "Sealed Provisional" in content
     assert "Validated" in content
     assert "Frozen Approved" in content
 

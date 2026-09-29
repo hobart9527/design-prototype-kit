@@ -35,9 +35,9 @@ artifact and authority, not a filename or token's presence, select the route:
 
 | Intent | Evidence to confirm | Route |
 |---|---|---|
-| **Explore** | User seeks alternatives, a visual direction, or a falsifiable probe. | Direction probe or one slice; use only the stages needed to answer the question. |
-| **Specify** | User asks for durable contracts, IA, tokens, or handoff. | Stage 1 contract formulation, then the stages needed to validate the contract. |
-| **Prototype** | User asks for a runnable disposable screen or interaction. | Build the smallest bounded slice after its required spec evidence exists. |
+| **Explore** | User seeks alternatives, a visual direction, or a falsifiable probe. | Direction probe or multi-direction slots (`dirs/{a,b,c}`); rapid visual exploration. |
+| **Specify** | User asks for durable contracts, IA, tokens, or handoff. | Stage 5 contract compilation and handoff packet freeze. |
+| **Prototype** | User asks for a runnable screen or interaction. | Build the prototype directly in HTML/CSS without prior spec locks; extract spec at handoff. |
 | **Review / repair** | User asks to critique or polish an existing surface. | Targeted review and in-place delta; preserve existing behavior and lineage. |
 
 Workspace assets are contextual evidence after intent classification. Existing
@@ -125,12 +125,14 @@ Use Primary, Contextual, and Supporting relationships, not a fixed screen count.
 freeze/handoff command binds the selected `specifications/<slice_id>/r1.spec.md`
 when the user requests a frozen handoff.
 
-Formal prototypes still require the applicable sealed provisional Spec before code.
+Formal prototypes do not require a prior sealed Spec before writing code:
+visual exploration and rapid prototyping precede formal contract compilation.
 A direction probe, spec-only request, and local review keep their lightweight routes.
 When a runnable prototype is requested, continue from the design brief to the first
 working artifact in the same turn when possible; checkpoints are recovery notes, not
 approval rituals. End with a useful artifact or a concise, truthful blocker—not a
 waiting loop. A Stage 4 result may be `PARTIAL` when evidence or runtime is unavailable.
+Engineering handoff (Stage 5) extracts and compiles the formal Spec once the design converges.
 
 ## Minimal Design Record & Four High-Density Deliverables (单脑四联装)
 

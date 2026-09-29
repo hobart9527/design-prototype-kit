@@ -65,7 +65,6 @@ def test_documented_script_commands_are_admitted_by_the_boundary(tmp_path, monke
 # a new undocumented helper fails this test until it is either documented or
 # removed. Documenting a name means the author can find it; silence does not.
 UNDOCUMENTED_BACKLOG = {
-    "check-assertions.py",
     "generate_review_portal.py",
     "lint_spec_contracts.py",
 }

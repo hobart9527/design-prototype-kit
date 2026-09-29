@@ -7,24 +7,28 @@ handoff.
 
 ## Headless Pipeline Execution
 
-1. **DTCG compilation**:
+1. **Spec Compilation from Validated Design**:
+   `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>`
+   compiles the human decision record into the canonical machine IR (`r1.spec.json`)
+   and RFC specification view (`r1.spec.md`).
+2. **DTCG Token Compilation**:
    `python3 skills/spec-prototype/scripts/compile_tokens.py` (default
    `--output-json prototype/contracts/tokens/t1.json`) compiles
    `shared/tokens.css` into a W3C DTCG standard `tokens.json`. The compiled output
    carries the flat `color` group that the contrast preflight consumes.
-   *Note on token flow discipline*: `--reconcile-from-css` is strictly an exploratory Stage 1~2 utility. In Stage 5, token definitions are frozen and immutable; bidirectional writebacks to discussion.md are prohibited to preserve upstream SHA-256 seal integrity.
+   *Note on token flow discipline*: Direct authoring of `tokens.css` is standard in Stage 1~3 exploration. In Stage 5, token definitions are frozen and immutable; bidirectional writebacks to discussion.md are prohibited to preserve upstream SHA-256 seal integrity.
    **Do not substitute a Markdown-table token export for this step.** A re-export
    that groups tokens by CSS custom-property prefix omits the flat `color` group,
    so `wcag-check.js` reads an empty set and exits 0 with `allPass: true` — a
    false pass. `compile_tokens.py` is the only writer of the Stage 5 preflight
    target.
-2. **WCAG static preflight**:
+3. **WCAG static preflight**:
    `node skills/spec-prototype/scripts/wcag-check.js prototype/contracts/tokens/t1.json --level AA`
    checks critical text and figures against **WCAG 2.2 AA (4.5:1)**; long-reading
    and key data text should pursue **WCAG AAA (7:1)**. This is a static contrast
    preflight only — it does not replace full runtime accessibility review
    (keyboard focus management, screen-reader landmarks, reachable touch targets).
-3. **SHA-256 asset identity binding / freeze**:
+4. **SHA-256 asset identity binding / freeze**:
 
    `python3 skills/spec-prototype/scripts/handoff.py freeze --root . --spec prototype/specifications/<slice_id>/r1.spec.md`
 

@@ -95,7 +95,6 @@ enabled no-op, stale state or unexercised required branch blocks `verified`.
 Trace/measurement names a falsifiable anchor: a command, a retained artifact path, or a
 measured value with a unit. A check that could not fail for the asserted risk is not
 evidence, and a passing mechanical gate does not stand in for an unbound assertion.
-`scripts/check-assertions.py --foundation <path> --evidence <path>` enforces this.
 
 - Reachable-control closure (cancel/close/retry/reset paths exercised and clean): `pass | fail | n/a`
 - Design merit claims left for professional review:

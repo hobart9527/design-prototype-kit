@@ -32,18 +32,7 @@ def _load(name: str, path: Path):
     spec.loader.exec_module(mod)
     return mod
 
-eval_signals = _load("eval_signals", BENCHMARKS / "evaluate_design_signals.py")
 verify_quality = _load("verify_quality", SCRIPTS / "verify_prototype_quality.py")
-
-
-def test_empty_prototype_directory_is_unverified():
-    """Missing evidence is unverified, not a failed design-quality score."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        empty_dir = Path(tmpdir)
-        res = eval_signals.evaluate_design_signals(empty_dir, "test-slice")
-        assert res["status"] == "UNVERIFIED"
-        assert res["signal_coverage_pct"] is None
-        assert res["passed_checks"] == 0
 
 
 def test_missing_prototype_file_fails_assert_quality():
@@ -148,7 +137,7 @@ def test_three_tier_semantic_tokens_and_dtcg_authority():
         assert "$type" in primary_color
         assert "$value" in primary_color
         assert "$description" in primary_color
-        assert primary_color["authority"] == "derived"
+        assert primary_color.get("authority") == "derived" or primary_color.get("$extensions", {}).get("design-prototype-kit", {}).get("authority") == "derived"
 
         # 2. Test Single-Direction Authority Chain: Human Confirmation -> explicit_human
         disc.write_text(
@@ -164,7 +153,8 @@ def test_three_tier_semantic_tokens_and_dtcg_authority():
         )
         compile_mod.compile_tokens(str(disc), str(out_css), str(out_json))
         dtcg_confirmed = json.loads(out_json.read_text(encoding="utf-8"))
-        assert dtcg_confirmed["primitives"]["color"]["primary"]["authority"] == "explicit_human"
+        confirmed_color = dtcg_confirmed["primitives"]["color"]["primary"]
+        assert confirmed_color.get("authority") == "explicit_human" or confirmed_color.get("$extensions", {}).get("design-prototype-kit", {}).get("authority") == "explicit_human"
 
 
 def test_v10_1_five_axes_optionality_and_composable_envelope():
@@ -554,21 +544,20 @@ def test_stage1_sealed_provisional_and_stage5_frozen_approved_terminology():
     stage1_text = (REPO / "skills/spec-prototype/references/stages/stage-1-frame.md").read_text(encoding="utf-8")
 
     # SKILL.md
-    assert "Formal prototypes still require the applicable sealed provisional Spec before code." in skill_text
-    assert "Draft → Sealed Provisional → Validated → Frozen Approved" in kernel_text
+    assert "visual exploration and rapid prototyping precede formal contract compilation" in skill_text
+    assert "Draft → Validated → Frozen Approved" in kernel_text
     assert "authority lifecycle" in skill_text
     assert "Silent Governance & Frozen Approved Delivery" in stage5_text
 
     # core-kernel.md (active authority-lifecycle owner)
-    assert "Draft → Sealed Provisional → Validated → Frozen Approved" in kernel_text
-    assert "Sealed Provisional" in kernel_text
+    assert "Draft → Validated → Frozen Approved" in kernel_text
     assert "Frozen Approved" in kernel_text
     assert "04-governance/artifact-lifecycle.md" in kernel_text
 
     # Stage owners
     assert "Silent Governance & Frozen Approved Delivery" in stage5_text
     assert "04-governance/artifact-lifecycle.md" in stage5_text
-    assert "Sealed Provisional Baseline Closure" in stage1_text
+    assert "Progressive Prototyping Without Pre-Spec Lock" in stage1_text
 
 
 

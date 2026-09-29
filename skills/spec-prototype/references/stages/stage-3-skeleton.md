@@ -28,8 +28,7 @@ contexts:
   selection. A dependency outside the selection is disclosed, never silently added.
 - **Lightweight routes stay valid**: a bounded direction probe, a spec-only request,
   or a local refinement keeps its route and is not forced through full-product
-  enumeration; a formal candidate still requires its applicable sealed provisional
-  Spec.
+  enumeration. Downstream engineering handoff compiles and binds the formal Spec upon freeze.
 - **One obligation reconciler, two coverages**: selected and full-product coverage
   execute and report through `prototype_context.reconcile_obligations`. Only a
   `full-product` selection authorizes automatic continuation across batches; a

@@ -20,28 +20,10 @@ def _load(name: str, filename: str):
     return mod
 
 handoff = _load("handoff", "handoff.py")
-assertions = _load("assertions", "check-assertions.py")
 boundary = _load("boundary", "execution_boundary.py")
 
 def _sha256(b: bytes) -> str:
     return f"sha256:{hashlib.sha256(b).hexdigest()}"
-
-def test_assertion_matching_chinese_and_exact_equality():
-    fh = "| Assertion | Rationale | Surfaces | Method | Required or exploratory |\n|---|---|---|---|---|\n"
-    eh = "| Foundation assertion/probe requirement and clause | Required/exploratory | Expected | Exact trace/measurement | Result |\n|---|---|---|---|---|\n"
-
-    # 1. Chinese assertion succeeds on exact match with falsifiable anchor
-    c_assert = "关闭弹窗后焦点返回原按钮"
-    f_content = fh + f"| {c_assert} | 恢复上下文 | 弹窗 | 键盘 | required |\n"
-    e_content = eh + f"| {c_assert} | required | 通过 | `trace.json` | pass |\n"
-    assert assertions.evaluate(f_content, e_content) == []
-
-    # 2. Substring prefix does not override a subsequent exact failure
-    long_assert = "Focus returns to opener after closing dialog"
-    f_sub = fh + f"| {long_assert} | context | modal | keyboard | required |\n"
-    e_sub = eh + f"| Focus | exploratory | initial focus ok | `init.json` | pass |\n| {long_assert} | required | lost focus | `close.json` | fail |\n"
-    violations = assertions.evaluate(f_sub, e_sub)
-    assert any("not resolved (fail)" in v for v in violations)
 
 def test_handoff_packet_without_preexisting_html_and_template_surface_map(tmp_path: Path):
     root = tmp_path
@@ -398,12 +380,12 @@ record: prototype-specification
     assert "44×44px" in builder_md
     assert "single-pass" in builder_md.lower()
 
-    # 8. Verify SKILL.md and core-kernel.md declare the Spec-First invariant
+    # 8. Verify SKILL.md and core-kernel.md declare the Prototype-first & downstream Spec invariant
     core_kernel = (SKILL / "references/core-kernel.md").read_text(encoding="utf-8")
-    assert ("Sealed Provisional Spec Contract" in core_kernel or
-            "Sealed Provisional" in core_kernel)
+    assert ("Draft → Validated → Frozen Approved" in core_kernel or
+            "Prototype as Exploratory Medium" in core_kernel)
     skill_md = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-    assert "Formal prototypes still require the applicable sealed provisional Spec before code." in skill_md
+    assert "visual exploration and rapid prototyping precede formal contract compilation" in skill_md
     assert "prototype/discussion.md" in skill_md
     assert "spec-prototype-builder" in skill_md
 
@@ -719,10 +701,8 @@ record: prototype-specification
 
 
 def test_execution_boundary_admits_craft_helpers():
-    """wcag-check.js and check-assertions.py are installed read helpers."""
+    """wcag-check.js is an installed read helper."""
     boundary.shell_read("node skills/spec-prototype/scripts/wcag-check.js --slice console", Path("/tmp/root"))
-    boundary.shell_read("python3 skills/spec-prototype/scripts/check-assertions.py a b", Path("/tmp/root"))
-    boundary.shell_read("python3.14 skills/spec-prototype/scripts/check-assertions.py a b", Path("/tmp/root"))
     with pytest.raises(ValueError):
         boundary.shell_read("python3 skills/spec-prototype/scripts/rogue.py a", Path("/tmp/root"))
 

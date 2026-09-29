@@ -13,9 +13,26 @@ approval. The canonical IR and envelope carry the constraints. Spend the remaini
 freedom on coherent hierarchy, composition, typography, density, interaction, content,
 and product-specific craft.
 
-## 1. Establish Authority & Scope: the Canonical IR is the Authority
+## 1. Establish Authority & Scope
 
-The envelope's **7-field canonical IR** is the primary consumption contract. Read it
+### Direct Brief Path (no compiled envelope)
+
+When no compiled envelope or canonical IR exists — the typical case during Stage 0–3
+exploration — derive constraints directly from:
+
+1. `prototype/discussion.md` — product thesis, core tension, Five-Axes calibration,
+   confirmed decisions, and the Project Taste Ledger.
+2. `prototype/shared/tokens.css` — if present, inherit tokens; otherwise author them
+   directly.
+3. `references/02-craft-methods/craft-floor.md` — the generating-side Verify and
+   Refuse floors.
+
+Skip the IR consumption protocol below and proceed to §2 Design Before Markup.
+
+### Formal Envelope Path (compiled IR present)
+
+When a compiled envelope exists (Stage 5 handoff or formal dispatch), the envelope's
+**7-field canonical IR** is the primary consumption contract. Read it
 before any legacy projection:
 
 - **`identity`** — slice identity, authority lifecycle, build authority, target path, source ref.
@@ -33,14 +50,10 @@ consult them for nuance, but never let a legacy key contradict the canonical IR,
 treat a `reference_pattern` (editorial-reading, somatic-touchflow, operational-canvas,
 dense-console) as a rigid template to clone verbatim.
 
-> **Verifiability expectation (no new gate, just predictability):** every declared
-> `action_contracts[].id` and every entity in `semantic_contract` will be asserted
-> **verbatim** back against your rendered HTML by `verify_prototype_quality.py` and
-> the Critic. Bind them exactly: each interactive control that realizes an authored
-> action carries `data-action="<action-id>"`, and — when it targets a specific
-> entity — `data-entity-id="<entity-id>"` plus an `aria-label` that names that
-> entity (e.g. `aria-label="排空 node-sg2-batch3"`). Never let a blanket `title`
-> attribute collapse several rows into one identical accessible name.
+> **Verifiability expectation (no new gate, just predictability):** Interactive controls
+> that realize authored actions should carry descriptive attributes (e.g. `data-action="<action-id>"`
+> or clear IDs/classes) and accessible labels so that actions can be verified in automated traces
+> and user walkthroughs. Never let a blanket `title` attribute collapse several rows into one identical accessible name.
 
 ### Separated state structure
 
@@ -126,25 +139,20 @@ when adding motion. A visual preference is not a hard floor.
 
 ## 2. Hard Execution Turn Budget & Single-Pass Write Invariant
 
-Tool turns are an execution-safety budget, not a design constraint: use the minimum necessary. Single-page prototype synthesis MUST be fast, atomic, and bounded:
-- **Turn 1 (Single-Pass Full Write)**:
-  Synthesize and output the COMPLETE self-contained HTML directly via a single `Write` tool call to `target_html_path`.
-  DO NOT chunk, do NOT use `Edit` repeatedly for initial construction, and do NOT leave placeholder comments (`<!-- TODO -->`).
-- **Turn 2 (Quality Gate Verification)**:
-  Run the exact pre-baked `verification_command` from the envelope using the `Bash` tool.
-  - If output is `STATIC: pass`, proceed immediately to Turn 3.
-  - If output reports `STATIC: fail`, perform ONE atomic `Write` (or targeted `Edit`) to fix the exact failed assertion, then re-verify.
-- **Turn 3 (Multi-Viewport & Multi-State Evidence Capture)**:
-  Run the exact pre-baked `capture_command` from the envelope using the `Bash` tool.
-- **Turn 4 (Receipt)**:
-  Return the verified receipt text.
+Prototype synthesis should be focused, atomic, and bounded:
+- **Construction**:
+  Synthesize the self-contained HTML directly to `target_html_path`.
+  Write clean, complete structure without leaving placeholder comments (`<!-- TODO -->`).
+- **Objective Preflight & Evidence Capture**:
+  Run the capture tool (`capture_command` or `node capture.mjs`) to verify rendering facts (no JS errors, styles applied, no horizontal overflow) and record viewport snapshots.
+  - If styling or rendering errors occur, perform targeted edits to fix the root cause.
+- **Receipt**:
+  Return the delivery receipt with captured evidence.
 
 ### Anti-Runaway & Fail-Fast Boundaries (严禁越界与失控调试)
 
-- **Hard Tool Budget (Max 6 tool calls)**: The entire build, verify, capture, and receipt workflow MUST complete within 6 tool calls. Once this budget is exhausted, immediately emit the final delivery receipt with current status.
 - **No Background Daemons**: NEVER launch background HTTP servers (`python3 -m http.server`), persistent node processes, or long-running daemons.
-- **No Workspace Escapes**: NEVER search, read, or execute tools/scripts outside the current workspace and declared `skill_root` (e.g. NEVER inspect `~/.codex`, `/Users/hobart/.codex`, global `node_modules`, or system applications like `/Applications/Google Chrome.app`). All permitted tools (`verification_command`, `capture_command`) are pre-baked in the envelope.
-- **No Gate Source Reverse-Engineering**: NEVER read, `sed`, `grep`, or otherwise inspect the source of `verify_prototype_quality.py`, `capture.mjs`, `compile_spec_ir.py`, `compile_tokens.py`, or any other gate/script under `skill_root/scripts/`. The envelope's `verification_contract.static_checklist` enumerates everything the verifier asserts — satisfy the checklist directly in the authored HTML. Reading gate source to reverse-engineer assertions is a bounded-authority violation, not research; run the pre-baked `verification_command` instead and read its failure output.
+- **No Workspace Escapes**: NEVER search, read, or execute tools/scripts outside the current workspace and declared `skill_root` (e.g. NEVER inspect `~/.codex`, `/Users/hobart/.codex`, global `node_modules`, or system applications like `/Applications/Google Chrome.app`).
 - **Upstream Defect Fail-Fast**: If an upstream artifact (`tokens.css`, `r1.spec.json`, or script dependency) is broken, syntax-invalid, or missing runtime dependencies:
   - Do NOT attempt to repair upstream assets or build alternative browser automation rigs.
   - If visual capture fails or renders unstyled due to upstream token/CSS syntax errors, record the exact diagnostic (`BLOCKER: <upstream-asset> broken: <reason>`) in the delivery receipt and EXIT immediately.

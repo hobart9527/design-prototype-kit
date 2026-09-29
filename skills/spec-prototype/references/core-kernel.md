@@ -9,35 +9,36 @@ stage; the kernel is small and always loaded, stage procedures and the deeper
 `references/` modules load on demand. The detailed stage routing and delegation
 map is owned by [SKILL.md](../SKILL.md).
 
-## 1. Spec as Durable Contract, Prototype as Disposable Proof
+## 1. Prototype as Exploratory Medium, Spec as Downstream Delivery Contract
 
-The Design Specification is the durable, authored contract. A prototype is
-disposable evidence used to validate it. Never promote a mutable prototype
-record to contract authority, and never let prototype drift redefine meaning
-backward.
+Prototypes are the rapid working medium for visual and interactive discovery,
+allowing progressive co-creation and human aesthetic judgment without prior
+cryptographic or specification locks. The Design Specification is extracted and
+compiled from the validated, frozen design as the durable contract for engineering
+handoff. Never let unverified prototype drift redefine engineering meaning
+backward without human confirmation.
 
 ## 2. Authority Lifecycle (authority status)
 
-`Draft → Sealed Provisional → Validated → Frozen Approved`
+`Draft → Validated → Frozen Approved`
 
-- **Draft** — active exploration; subject to change.
-- **Sealed Provisional** — Stage 1 baseline the probe is authorized against.
-- **Validated** — Stage 4 evidence absorbed and re-verified.
-- **Frozen Approved** — Stage 5 immutable candidate bound by SHA-256 manifest.
+- **Draft** — active visual exploration and prototype iteration; mutable, no pre-spec lock required.
+- **Validated** — Stage 4 design consensus achieved and visual/interaction evidence absorbed.
+- **Frozen Approved** — Stage 5 immutable candidate bound by SHA-256 manifest and compiled Spec IR for engineering delivery.
 
 Freeze binds the immutable candidate Specification
-(`prototype/specifications/<slice_id>/r1.spec.md`), never a mutable product record.
+(`prototype/specifications/<slice_id>/r1.spec.md`), extracted upon delivery, never a mutable exploratory record.
 The full authority-to-artifact lifecycle mapping, mutability rules and revision
 semantics are owned by
 [`04-governance/artifact-lifecycle.md`](04-governance/artifact-lifecycle.md);
 this kernel states the states and delegates the details.
 
-## 3. Zero Prototype Code Without a Sealed Provisional Spec Contract
+## 3. Zero Downstream Handoff Without a Validated Spec Contract
 
-For formal candidate delivery, no runnable prototype is authored before the
-sealed provisional Spec Contract exists. Lightweight routes (direction probe,
-spec-only discussion, local refinement) are not forced through a full-product
-contract; they keep their own bounded routes.
+Runnable prototypes require no prior sealed Spec during design exploration:
+rapid visual feedback and progressive iteration precede formalization. However,
+zero downstream engineering handoff or freeze is authorized without a compiled,
+validated Spec Contract. Exploration stays agile; engineering handoff stays formal.
 
 ## 4. Evidence Protocol
 

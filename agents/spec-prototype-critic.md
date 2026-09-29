@@ -51,10 +51,25 @@ stale, or bound to a different source/dependency revision, or when `capture_fail
 `browser_unavailable` is reported, state that consequence explicitly and withhold the affected visual
 claims instead of restating the producer's summary.
 
-Judge the projected envelope through its **7-field canonical IR** first — `identity`,
-`semantic_contract`, `layout_directives`, `visual_directives`, `action_contracts`,
-`verification_contract`, `open_design_space` — and treat the legacy `constraint_envelope` /
-`creative_envelope` projections as advisory mirrors, never as a competing authority. Read the
+### Direct Brief Path (no compiled envelope)
+
+When no compiled envelope or canonical IR exists — the typical case during Stage 0–3
+exploration — review the prototype against:
+
+1. `prototype/discussion.md` — product thesis, core tension, Five-Axes calibration,
+   confirmed decisions, and the Project Taste Ledger.
+2. `references/03-verification/quality-floor.md` — the objective Floor and craft floors.
+3. The rendered prototype evidence (screenshots, task traces).
+
+Skip the IR consumption protocol below and proceed to §Exercise professional design judgment.
+
+### Formal Envelope Path (compiled IR present)
+
+When a compiled envelope exists, judge the projected envelope through its **7-field
+canonical IR** first — `identity`, `semantic_contract`, `layout_directives`,
+`visual_directives`, `action_contracts`, `verification_contract`, `open_design_space`
+— and treat the legacy `constraint_envelope` / `creative_envelope` projections as
+advisory mirrors, never as a competing authority. Read the
 separated state structure as authored: `semantic_contract.domain_states` is explicit-authored
 (contractual), while `experience_states` (empty, error) and `ui_transient_states` stay derived.
 Do not fault a prototype for omitting a state the source never declared, and do not demand a
@@ -90,27 +105,19 @@ cancel/close followed by re-entry, retry and reset where present. Flag a silent
 no-op, stale state or untested enabled branch as an implementation defect or
 missing evidence; aggregate passing checks do not override it.
 
-### Tiered evidence protocol (L1/L2/L3)
+### Objective Preflight and Craft Floors
 
-Quality verification runs as a three-tier evidence chain mirroring
-`scripts/verify_prototype_quality.py`:
+Quality verification focuses on observable rendering facts and the three non-negotiable craft invariants:
 
-- **L1 — DOM/ARIA/`data-state` structural checks:** static source inspection of
-  markup, roles, ARIA attributes and `data-state` wiring. Always available.
-- **L2 — computed-style and craft-floor checks:** token application, computed
-  styles, and the three hard craft invariants; available only when a reachable
-  headless browser exists. A confirmed craft-floor violation blocks. A missing
-  browser yields `Not verified`, never a pass.
-- **L3 — screenshot comparison:** best-effort visual capture comparison.
-  Non-blocking, and cannot waive an L2 hard-floor failure.
+- **Objective Rendering Facts**: No unhandled JS exceptions, tokens/styles actively applied, no horizontal viewport clipping, and reachable buttons not silently dead.
+- **Craft Floors (Non-negotiable Defects within scope)**:
+  1. Commit controls require perceptible `:active` press feedback (plain links and navigation out of scope).
+  2. Nested rounded containers satisfy $R_{in} = \max(0, R_{out} - P)$ (1px tolerance).
+  3. Dynamic or column-aligned numeric values require `tabular-nums`.
 
-When the browser, fonts, or GPU are missing, report `environment_not_ready`
-naming the tier reached (`L1`/`L2`). Craft-floor checks that require rendered
-styles are then `Not verified`, never passed. A missing environment is an
-explicit degradation, never misreported as a code-assertion failure. Read the
-run's `TIER L1/L2/L3` and `ENVIRONMENT: not_ready` output to know which tiers
-actually ran and why the rest did not. Do not claim `verified` acceptance while
-a scoped craft floor remains unverified.
+Above these objective floors, aesthetic, typographic, and stylistic choices are professional advice and design suggestions, never automated build blockers. Human preference and taste govern design direction.
+
+When the browser is unavailable, record visual checks as `Not verified` rather than failing, and proceed with static inspection.
 
 ## Exercise professional design judgment
 

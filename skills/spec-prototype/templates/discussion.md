@@ -82,6 +82,15 @@ different propositions when a choice remains. No candidate quota applies.
 | ID | Decision or authoritative section link | Status | Reason / evidence | Actual user quote + turn/date or source locator + delegated scope | User source (`confirmed \| delegated \| synthetic-fixture`) | Affected artifacts / minimal owning scope |
 |---|---|---|---|---|---|---|
 
+## Project Taste & Visual Language Ledger (项目品味与视觉档案)
+
+Records user style preferences, chosen aesthetics, and rejected visual approaches across iterations:
+
+| Direction / Vocabulary | Disposition (`chosen \| rejected \| under-review`) | Core Reason & User Feedback | Reference Benchmark | Applicable Scope |
+|---|---|---|---|---|
+| (e.g. Swiss Editorial) | chosen | Clean hierarchy, high legibility for incident timeline | Linear, Substack | Global typography & rhythm |
+| (e.g. Neon Cyberpunk) | rejected | Excessive visual noise, distracting during high stress | - | Color palette |
+
 Status: `proposed | confirmed | delegated | needs-evidence | superseded`.
 Only an actual user decision or an explicit prior delegation can populate
 `confirmed`/`delegated`; AI recommendations, Builder receipts, Critic reports and
@@ -115,7 +124,7 @@ impact context.
 ---
 spec_schema: "google-design-md/v2"
 slice_id: "<slice_id>"
-authority: "sealed_provisional"
+authority: "draft"
 stage: "hero_probe"
 viewports: [390, 1280]
 required_states: [state-draft, state-sealed]
@@ -216,7 +225,7 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
 - **Physical Token Entity (`prototype/shared/tokens.css`)**:
 - **Component Boundary**: Native-First HTML5 (`<dialog>`, `<details>`, `<form>`) + token recipes (zero heavy JS framework)
 - **Rendered Physical Evidence**: `prototype/evidence/probes/<slice_id>/1280.png`, `390.png`
-- **Gate Status (`confirmed` | `delegated`)**:
+- **Direction Status (`confirmed` | `delegated`)**:
 
 ### Stage 3: Full IA Surface Rollout (拓 - 信息架构全量展开)
 - **Derived Surface Topology Structure**:
