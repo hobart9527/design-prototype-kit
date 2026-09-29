@@ -28,11 +28,18 @@ A core failure of rule-heavy systems is elevating specific techniques to rigid q
 
 | Invariant (体验不变式 · 必须满足) | Candidate Techniques (候选手艺 · 按需选用) | Anti-Pattern to Avoid |
 |---|---|---|
-| **Perceptible Immediate Feedback**: Consequential actions must provide instant, visible, non-destructive feedback. | A press detent authored from the surface's own tokens (`transform: scale(var(--press-scale))`), background shift, inset shadow, border detent, tactile spring. | Mandating one global press scale everywhere, or breaking layout during press. |
+| **Perceptible Immediate Feedback**: Consequential actions must provide instant, visible, non-destructive feedback. | A press detent authored from the surface's own tokens (`transform: scale(var(--press-scale))`), background shift, inset shadow, border detent, tactile spring. **Default recipe:** `--press-scale: 0.96` with a 90–140ms transition; a spring or an inset shadow where the surface is tactile rather than flat. | Mandating one global press scale everywhere, or breaking layout during press. |
 | **Contextual Data Grounding**: Key numbers must carry baseline, unit, or comparative context. | Inline units, thresholds, rated ceilings, status badges, delta arrows, compact sparklines. | Forcing SVG sparklines into focused reading or document canvases. |
-| **Harmonious Geometry**: Container borders and nested elements must maintain optical concentricity. | $R_{\text{in}} = \max(0, R_{\text{out}} - P)$, matched corner radii, optical alignment. | Disjointed nested rounded corners causing visual distortion. |
-| **Numeric Stability**: Tabular metrics, timers, and quantities must not jitter during updates. | `font-variant-numeric: tabular-nums`, monospace digits, dedicated figure columns. | Shifting layouts when digits fluctuate from 1 to 8. |
-| **Structural Resilience (Break Protocol)**: Surfaces must gracefully withstand edge data without collapse. | `text-overflow: ellipsis`, flex-wrap containment, actionable empty CTA, 320px fold integrity. | Dead empty screens with zero recovery path or runaway horizontal overflow. |
+| **Harmonious Geometry**: Container borders and nested elements must maintain optical concentricity. | $R_{\text{in}} = \max(0, R_{\text{out}} - P)$, matched corner radii, optical alignment. **Default recipe:** `calc(var(--radius-outer) - var(--pad))` declared once as a token, never a hand-computed constant. | Disjointed nested rounded corners causing visual distortion. |
+| **Numeric Stability**: Tabular metrics, timers, and quantities must not jitter during updates. | `font-variant-numeric: tabular-nums`, monospace digits, dedicated figure columns. **Default recipe:** `tabular-nums` on the numeric element, not on `body`; a column that aligns is the trigger, not a font choice. | Shifting layouts when digits fluctuate from 1 to 8. |
+| **Structural Resilience (Break Protocol)**: Surfaces must gracefully withstand edge data without collapse. | `text-overflow: ellipsis`, flex-wrap containment, actionable empty CTA, 320px fold integrity. **Default recipe:** `min-width: 0` on flex children and `overflow-wrap: anywhere` on identifiers, at a declared 320px floor. | Dead empty screens with zero recovery path or runaway horizontal overflow. |
+
+**Default recipes are starting points, not house numbers.** A recipe may be
+overridden per surface, but the override carries its reason in the brief or the
+Direction Contract: "this surface uses `--press-scale: 0.98` because the control
+is a full-width row on a touch device" is a decision; silently keeping or dropping
+the default is not. What is never permitted is a surface with *no* value — an
+unstated default is indistinguishable from an unmade choice.
 
 ---
 

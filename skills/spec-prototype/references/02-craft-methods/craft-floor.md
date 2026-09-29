@@ -12,27 +12,47 @@ this file cites it and never restates its numbers.
 Checks on the built result, not on intentions. Run them together in the batched
 inspection pass, not as separate screenshot trips.
 
-- **Press feedback:** every commit control (submit, confirm, apply, destructive
-  action) shows a perceptible `:active` change. Plain links and pure navigation
-  are out of scope. The value is authored per surface, never copied as a house
-  number; the defect is a missing detent, not a particular scale.
-- **Touch targets:** interactive controls measure at least 44×44px in touch
-  contexts.
-- **Concentric radii:** a rounded child inside a rounded parent with padding `P`
-  satisfies `R_inner = max(0, R_outer − P)` within 1px.
-- **Numeric stability:** values that update in place or align in columns carry
-  `font-variant-numeric: tabular-nums`; prose numbers are out of scope.
-- **Browser surfaces:** the parts you did not draw still carry the design. Text
+- **Press feedback** `CRAFT-PRESS-DETENT`: every commit control (submit, confirm,
+  apply, destructive action) shows a perceptible `:active` change. Plain links and
+  pure navigation are out of scope. The value is authored per surface, never copied
+  as a house number; the defect is a missing detent, not a particular scale.
+- **Touch targets** `CRAFT-TOUCH-TARGET`: interactive controls measure at least
+  44×44px in touch contexts.
+- **Concentric radii** `CRAFT-CONCENTRIC-RADII`: a rounded child inside a rounded
+  parent with padding `P` satisfies `R_inner = max(0, R_outer − P)` within 1px.
+- **Numeric stability** `CRAFT-TABULAR-NUMS`: values that update in place or align
+  in columns carry `font-variant-numeric: tabular-nums`; prose numbers are out of
+  scope.
+- **Browser surfaces** `CRAFT-SELECTION` `CRAFT-CARET` `CRAFT-SCROLLBAR`
+  `CRAFT-FOCUS-RING`: the parts you did not draw still carry the design. Text
   selection, the caret, custom scrollbars, focus rings, underline offset, and
   tabular numerals ship with browser defaults belonging to no design system.
   Theme them from the palette. This is the cheapest signal that a page was built
   rather than assembled, and the one that gets skipped most reliably.
-- **Real content and real assets:** plausible domain copy, real names, and the
-  number of items the surface will actually carry. When no credible image asset
-  exists, rearrange the layout and drop the slot — never fill it with a gradient
-  blob, a gray box, or a decorative SVG standing in for a picture.
-- **Theme origin:** light or dark is chosen from the use scene — who, where, under
-  what ambient light — not from the product's category.
+- **Real content and real assets** `CRAFT-REAL-CONTENT`: plausible domain copy,
+  real names, and the number of items the surface will actually carry. When no
+  credible image asset exists, rearrange the layout and drop the slot — never fill
+  it with a gradient blob, a gray box, or a decorative SVG standing in for a
+  picture.
+- **Theme origin** `CRAFT-THEME-ORIGIN`: light or dark is chosen from the use
+  scene — who, where, under what ambient light — not from the product's category.
+
+### Rule IDs are the anchor
+
+The bold ids above are not decoration. They are the join between this prose and
+the machine checks, and they resolve in both directions:
+
+- `python3 skills/spec-prototype/scripts/detect.py --artifact <file>` runs every
+  rule that *can* be read off the artifact and reports it under its id. A rule
+  whose detector is absent is returned as `prose_only` with the reason it cannot
+  be mechanised, so "not machine-checkable" is a recorded status rather than a
+  silent gap.
+- The benchmark's `slop_detector.py` carries its own ids (`SLOP-001` … `SLOP-025`);
+  `detect.py`'s `BENCHMARK_ANCHORS` maps each one onto the craft-floor id it
+  checks, so the two rule sets cannot drift apart unnoticed.
+
+A rule added here without an id is invisible to that join. Add the id when you
+add the rule; a detector is optional, an id is not.
 
 ## Refuse
 
@@ -40,23 +60,24 @@ These are the category's defaults, not bans. The brief's own words can earn any
 of them back; reaching for one while the axis is free means the choice was not
 made. When you catch one, rewrite the element rather than softening it.
 
-- **Same-size card grids** — icon + heading + text repeated as the page
-  structure. Cards are the lazy container; nested cards are always wrong. Earn
-  it: a genuinely peer set of comparable objects.
+- **Same-size card grids** `CRAFT-CARD-GRID-EARNED` — icon + heading + text
+  repeated as the page structure. Cards are the lazy container; nested cards are
+  always wrong. Earn it: a genuinely peer set of comparable objects.
 - **Hero-metric template** — one large number, a small label, supporting stats,
   an accent. Earn it: the number is the product and its context is real.
-- **Eyebrow or kicker above a heading.** No brief earns this one back: the
-  heading carries its own weight. Delete the label.
+- **Eyebrow or kicker above a heading** `CRAFT-NO-EYEBROW`. No brief earns this
+  one back: the heading carries its own weight. Delete the label.
 - **Section numbers** (`01 / 02 / 03`) unless the sequence itself carries
   information the reader needs.
-- **Gradient text** for emphasis. Emphasis comes from weight, size, or space.
+- **Gradient text** `CRAFT-NO-GRADIENT-TEXT` for emphasis. Emphasis comes from
+  weight, size, or space.
 - **Glass and blur as decoration** rather than a specific, justified effect.
 - **Ghost cards** — a 1px border sitting under a wide soft shadow. Declare
   elevation once: border or shadow, not both.
 - **Decorative chrome standing in for content** — sparklines, progress rings, and
   soft-shadowed rounded rectangles with nothing to say.
-- **Emoji or Unicode glyphs as the icon system.** Icons are drawn: a real library
-  or authored SVG, one consistent stroke and weight.
+- **Emoji or Unicode glyphs as the icon system** `CRAFT-NO-EMOJI-ICON`. Icons are
+  drawn: a real library or authored SVG, one consistent stroke and weight.
 - **A modal** for a task that needs neither interruption nor protected focus.
 - **Monospace as a costume** for "technical" rather than for code, data, or
   measurement.

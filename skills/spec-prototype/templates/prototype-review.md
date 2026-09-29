@@ -83,11 +83,29 @@ Any confirmed item here is an immediate BLOCK — never averaged away by craft o
 - Not-verified checks (unrun checks recorded as `unverified`, never passed):
 - Cheaper-fix accountability (remediations must use the cheapest viable rung):
 
+## Pillar coverage (every pillar gets a row, including the ones not examined)
+
+`not reviewed` is not a pass: a review with unreviewed pillars is `PARTIAL`
+however clean the reviewed ones are. See
+`references/stages/stage-4-audit.md` for what each pillar's row owns.
+
+| Pillar | Status | Findings | Reason, when `not reviewed` |
+|---|---|---|---|
+| Value | `reviewed | not reviewed` | | |
+| Research | | | |
+| Object | | | |
+| Journey | | | |
+| Topology | | | |
+| Attention | | | |
+| Expression | | | |
+| Interaction | | | |
+| Resilience | | | |
+
 ## Consequential concerns and revision
 
-| Concern and location/state | Impact/severity | Classification | Owning layer | Intervention | Evidence that would show improvement |
-|---|---|---|---|---|---|
-| | | `fact | expert judgment | preference | implementation defect | missing evidence` | | | |
+| Concern and location/state | Pillar | Impact/severity | Classification | Owning layer | Intervention | Evidence that would show improvement |
+|---|---|---|---|---|---|---|
+| | | | `fact | expert judgment | preference | implementation defect | missing evidence` | | | |
 
 - Before/after evidence:
 - Upstream decision reopened:

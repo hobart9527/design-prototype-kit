@@ -126,3 +126,61 @@ def test_contract_blocks_match_the_fidelity_judge():
     language = _read(LANGUAGE)
     for block in cfj.BLOCKS:
         assert block in language, f"judge block {block} is not declared by the Skill"
+
+# -- P3: the build loop closes ------------------------------------------------
+
+AUDIT = REFS / "stages/stage-4-audit.md"
+REVIEW_TEMPLATE = SKILL / "templates/prototype-review.md"
+METHODS = REFS / "01-foundations/design-methods.md"
+
+
+def test_default_recipes_live_in_the_techniques_column():
+    """A number belongs in the Techniques column; the Invariants column stays invariant."""
+    methods = _read(METHODS)
+    assert "--press-scale: 0.96" in methods, \
+        "the press detent needs a default recipe, not just a shape"
+    assert "Default recipe" in methods
+    # The override rule: a recipe is a starting point, and an unstated default is
+    # indistinguishable from an unmade choice.
+    assert "starting points, not house numbers" in methods
+    assert "reason in the brief" in methods
+
+
+def test_the_review_reads_the_render_against_the_contract():
+    audit = _read(AUDIT)
+    assert "Read the render against the Direction Contract" in audit
+    for block in ("THESIS", "OWN-WORLD", "STORY", "FIRST VIEWPORT", "FORM", "FINISH"):
+        assert block in audit, f"the contract read does not check {block}"
+    # A declared block that is not observable is a build finding, not a contract edit.
+    assert "not the contract" in audit
+    assert "not amend the contract to match what got built" in audit
+
+
+def test_inspection_is_capped_at_two_batched_rounds():
+    audit = _read(AUDIT)
+    assert "Two batched inspection rounds" in audit
+    assert "Round one" in audit and "Round two" in audit
+    assert "record what remains open as a PARTIAL finding" in audit, \
+        "an uncapped review never ends; the cap must name its exit"
+
+
+def test_the_review_is_organised_by_pillar_with_unreviewed_named():
+    audit = _read(AUDIT)
+    assert "organised by Pillar" in audit
+    for pillar in ("Value", "Research", "Object", "Journey", "Topology",
+                   "Attention", "Expression", "Interaction", "Resilience"):
+        assert pillar in audit, f"the pillar table omits {pillar}"
+    assert "not reviewed" in audit
+    assert "not a pass" in audit, \
+        "an unreviewed pillar must not read as covered"
+
+
+def test_review_template_carries_a_row_for_every_pillar():
+    template = _read(REVIEW_TEMPLATE)
+    assert "Pillar coverage" in template
+    for pillar in ("Value", "Research", "Object", "Journey", "Topology",
+                   "Attention", "Expression", "Interaction", "Resilience"):
+        assert f"| {pillar} |" in template, f"the review template has no row for {pillar}"
+    assert "Findings" in template
+    # A finding names its owning pillar, so the same observation is filed once.
+    assert "| Concern and location/state | Pillar |" in template

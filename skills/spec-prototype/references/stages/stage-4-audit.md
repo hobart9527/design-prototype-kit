@@ -37,6 +37,70 @@ purpose of this stage.
    focused pass is normally sufficient. Continue only when the user changes scope or
    new evidence exposes a new cause.
 
+### Read the render against the Direction Contract, pillar by pillar
+
+The review has a second half that is not a defect hunt: take the Direction Contract
+([`../01-foundations/design-language.md`](../01-foundations/design-language.md)) and
+ask, of the *actual render*, whether each declared block is observable. This is the
+check that catches a direction that was locked in words and then not built.
+
+| Contract block | The question the render must answer |
+|---|---|
+| THESIS | Is the first viewport's claim visible without reading the copy? |
+| OWN-WORLD | Does the surface belong to the named world, or to dashboard chrome? |
+| STORY | Is the task's shape readable from the layout alone? |
+| FIRST VIEWPORT | Does the opening frame carry the product's own subject, not a template header? |
+| FORM | Do the Five Axes the contract names read as those axes? |
+| FINISH | Is the craft floor met on the rendered pixels (`detect.py` plus the capture read)? |
+
+A block that is declared and not observable is a finding, and its owning layer is
+the build — not the contract. Do not amend the contract to match what got built;
+that inverts the authority the contract exists to hold. Pillars that the contract
+does not name are not audited here: this is a fidelity check, not a second review.
+
+### Two batched inspection rounds, then stop
+
+Inspection is batched, not iterative. Round one takes every capture the review needs
+in one trip — all declared viewports, the states that can change the judgment, and
+the render-defect scan — and the contract read above. Round two re-inspects only
+what round one's repair actually touched. After round two the review ends: record
+what remains open as a `PARTIAL` finding with its unverified scope rather than
+opening a third round. A review that keeps finding new causes is usually re-reading
+the same cause at a new location; name the cause and stop.
+
+### The review is organised by Pillar
+
+A review that lists observations in the order they were noticed hides its own
+gaps. Organise it by the Nine Pillars instead
+([`../01-foundations/design-methods.md`](../01-foundations/design-methods.md)), so
+that a pillar nobody looked at is visible as a row rather than absent from the
+report.
+
+| Pillar | Owning question in this review | The craft domains it reads |
+|---|---|---|
+| **Value** | Does the surface still serve the stated product outcome? | brief fidelity, copy, the proposition |
+| **Research** | Do the empirical claims hold against what was actually built? | rut, benchmarks, measured priors |
+| **Object** | Are the entities, their content and their authority intact? | content realism, data semantics |
+| **Journey** | Does the task hold end to end, including interruption and return? | task trace, recovery, continuity |
+| **Topology** | Does the surface architecture still answer the task? | layout, navigation, responsive recomposition |
+| **Attention** | Is the first-glance hierarchy the one the product needs? | composition, density, type scale |
+| **Expression** | Do the Five Axes read as the contract declared them? | typography, colour, material, motion |
+| **Interaction** | Are the decisive exchanges honest and reversible? | actions, states, feedback, `:active` detents |
+| **Resilience** | Does it survive the stress vectors without collapse? | break protocol, empty/long/error states, a11y |
+
+Rules that keep the pillar view honest:
+
+- **Every pillar gets a row, including the ones you did not examine.** Write
+  `not reviewed` for those, with the reason. A pillar silently omitted from the
+  report reads as covered; the row is what prevents that.
+- **A finding names its pillar.** The same observation can belong to two; pick the
+  owning one — the layer that would change to fix it — and cross-reference the
+  other rather than filing it twice.
+- **`not reviewed` is not a pass.** Do not sum rows into a verdict. A review with
+  unreviewed pillars is `PARTIAL` regardless of how clean the reviewed ones are.
+- Pillar coverage is not a quota: a small change may legitimately touch two pillars
+  and mark seven unreviewed. The rule is that the seven are *named*.
+
 ## Capture and evidence
 
 Use `capture.mjs` for rendered evidence when available, with only the relevant
