@@ -484,6 +484,9 @@ def _contract_items(path: Path | None) -> list[str]:
     in_actions = False
     in_assertions = False
     in_shortcuts = False
+    # The value appended for the row just processed, if any: a separator row
+    # retracts it, because a header is only knowable from the row that follows.
+    last_row_value: object = None
     text = path.read_text(encoding="utf-8")
 
     # A legacy specification `r1.md` pairs with a slice contract `c1.md`. A
@@ -538,11 +541,34 @@ def _contract_items(path: Path | None) -> list[str]:
                 in_shortcuts = False
                 in_ledger = False
 
+            # A separator row proves the previous table row was that table's
+            # header, so the row is retracted. Recognising a header by structure
+            # rather than by a list of known column names is what keeps a
+            # renderer-introduced table (`| Decision | … |`) from contributing
+            # its header as an item; the literal list below stays for a legacy
+            # table written without a separator.
+            if re.match(r"^\|(?:\s*:?-+:?\s*\|)+$", line.strip()):
+                if last_row_value is not None and items and items[-1] == last_row_value:
+                    items.pop()
+                last_row_value = None
+                continue
+
+            # The retraction target is one line wide: only the row immediately
+            # above a separator is its candidate header, so every other line
+            # (prose, a blank, any table row) clears it.
+            last_row_value = None
             if not line.strip().startswith("|"):
                 continue
             # Table separator rows and header cells never become contract items.
             cells = [re.sub(r"[*`]", "", c).strip() for c in line.strip().strip("|").split("|")]
             if not cells or not cells[0]:
+                continue
+            # `compile_spec_ir.py` renders an empty list as an italic note in the
+            # first cell and leaves the rest blank ("_No validated shared rules
+            # compiled from this Spec IR._"). That is the renderer saying it has
+            # nothing, not an authored item, and it must not enter the assertion
+            # set — the header rows above it are skipped for the same reason.
+            if cells[0].startswith("_") and not any(cells[1:]):
                 continue
             first_lower = cells[0].lower()
             if first_lower in {"action id", "assertion", "reality breaker", "shortcut key", "token", "surface", "ledger zone", "---"}:
@@ -575,6 +601,7 @@ def _contract_items(path: Path | None) -> list[str]:
                     items.append(feedback_tuple)
             elif not in_assertions and not in_shortcuts and not in_ledger:
                 items.append(cells[0])
+                last_row_value = cells[0]
     return [it for it in items if it]
 
 

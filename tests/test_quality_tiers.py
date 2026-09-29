@@ -224,6 +224,42 @@ def test_contract_items_from_ir_skip_table_headers_and_placeholders(tmp_path):
     assert action_ids == {"action-acknowledge", "action-resolve"}
 
 
+def test_table_headers_are_retracted_by_structure_not_by_known_column_names(tmp_path):
+    """Regression: a header row is the row that a separator row follows.
+
+    The literal column-name list only knows the tables this repo authors. A table
+    the renderer introduces (`| Decision | … |`) or one an author writes with new
+    column names (`| Entity | Notes |`) has a header the list does not contain, and
+    its first cell used to enter the assertion set as a DOM assertion — the r8b
+    false positive reached by a third path.
+    """
+    contract = tmp_path / "prototype/specifications/slice-c/r1.spec.md"
+    contract.parent.mkdir(parents=True, exist_ok=True)
+    contract.write_text(
+        "# Spec\n## 3.5 Product-Validated Design Rules\n"
+        "| Decision | Value or behavior | Scope / variation | Evidence | Transfer boundary |\n"
+        "|---|---|---|---|---|\n"
+        "| Reuse the bench grid | sticky headers | grid | research | none |\n",
+        encoding="utf-8",
+    )
+    assert vpq._contract_items(contract) == ["Reuse the bench grid"]
+
+
+def test_a_separator_row_retracts_only_the_row_directly_above_it(tmp_path):
+    """A separator is one row's underline, not the last row emitted anywhere.
+
+    A blank or prose line between a row and a separator means the separator does
+    not belong to that row, so a legitimate item must survive it.
+    """
+    contract = tmp_path / "prototype/specifications/slice-d/r1.spec.md"
+    contract.parent.mkdir(parents=True, exist_ok=True)
+    contract.write_text(
+        "# Spec\n## Notes\n| bench-grid | three columns |\n\n|---|\n",
+        encoding="utf-8",
+    )
+    assert vpq._contract_items(contract) == ["bench-grid"]
+
+
 def test_contract_items_fall_back_to_markdown_without_ir(tmp_path):
     """Without a paired IR JSON, legacy markdown parsing still applies."""
     contract = tmp_path / "prototype/specifications/slice-b/r1.spec.md"
