@@ -17,14 +17,22 @@ purpose of this stage.
    controls; concentric nested radii (`R_inner = max(0, R_outer - P)`);
    `font-variant-numeric: tabular-nums` for aligned or changing values; and 44×44px
    touch targets in touch contexts. Reduced-motion behavior applies when motion is used.
-3a. **Render defect scan** against the actual captures — overlay positioning,
+3a. **Write the design judgment first, from the render.** Steps 1–2 produce a
+   judgment made by looking, before any rule output exists. Fix it in writing
+   before running a scan: a reviewer who reads the hit list first reviews the hit
+   list, and what no rule encodes goes unseen — the review degrades into
+   reconciling machine output item by item. The order is judgment, then evidence,
+   then reconciliation.
+3b. **Render defect scan** against the actual captures — overlay positioning,
    elements wider than their container, identifiers broken mid-token, sticky
    layers covering content, and the empty/long states. The list and its failure
    modes are owned by
    [`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md).
 
-   Run the machine scans before the visual read, so the eye starts from the
-   mechanical defects and spends its attention on judgment:
+   Now introduce the detector evidence, and reconcile it against the judgment
+   already written — a hit the eye missed is re-inspected on the render, a
+   judgment the scans contradict is re-checked, and neither side overrides the
+   other without that look:
    - `python3 skills/spec-prototype/scripts/detect.py --artifact <file>` for the
      craft-floor rules that are machine-readable.
    - `python3 benchmarks/judges/slop_detector.py --artifacts <artifact-dir>` for the
@@ -33,10 +41,10 @@ purpose of this stage.
      icon systems and the rest. `detect.py`'s `BENCHMARK_ANCHORS` maps the subset it
      can also read; the detector catches the remainder. A detector hit is a lead:
      confirm it against the render before it counts as a finding.
-3b. **Narrowest-viewport read**: at the smallest declared width the surface still
+3c. **Narrowest-viewport read**: at the smallest declared width the surface still
    answers its own question. Recomposed structure, or an honest `PARTIAL` — a
    compressed desktop is a defect, not a pass.
-3c. **Signature-mechanism delivery**: every mechanism the proposition depends on
+3d. **Signature-mechanism delivery**: every mechanism the proposition depends on
    is observable in the render. Two-person control, reversibility, and audit
    claims are checked against what the artifact actually does; an unimplemented
    promise is recorded as such rather than described as delivered.
@@ -44,6 +52,11 @@ purpose of this stage.
    normally no more than three. State location/state, user impact, owning layer, and
    smallest useful intervention. Separate fact, design judgment, preference, and
    missing evidence; do not invent problems to fill a quota.
+   **Taste is not evidence.** Disagreeing with a density, a radius, or a tone the
+   contract chose is a preference, recorded as one and never filed as a finding. A
+   finding needs a failed trigger: a floor, a declared contract block, a task that
+   cannot be completed, or a stress case that breaks. The converse holds too: a
+   direction that wins on looks while breaking a floor is a defect, not a candidate.
 5. Refine at the owning layer, then inspect the affected view or task again. One
    focused pass is normally sufficient. Continue only when the user changes scope or
    new evidence exposes a new cause.

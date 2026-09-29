@@ -29,6 +29,7 @@ import json
 import os
 import re
 import sys
+import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -161,6 +162,75 @@ def extract_section(text: str, heading_pattern: str, next_heading_pattern: Optio
             break
         captured.append(line)
     return "\n".join(captured).strip()
+
+
+# One record, partitioned by lifecycle: product truth and the visual world are
+# shared, while each slice owns a `## Slice: <slice_id>` block. Fences are
+# tracked so a YAML comment inside a frontmatter fence is not read as a heading.
+_SLICE_HEADING_RE = re.compile(r"^(#{1,6})\s+Slice\s*[:：]\s*`?([A-Za-z0-9][A-Za-z0-9_-]*)`?\s*$", re.IGNORECASE)
+_FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
+_BLOCK_FRONTMATTER_RE = re.compile(
+    r"(?:\A\s*|^(?:```|~~~)[A-Za-z]*[ \t]*\n)(---[ \t]*\n.*?\n(?:---|\.\.\.)[ \t]*)(?:\n|\Z)",
+    re.DOTALL | re.MULTILINE)
+
+
+def split_slice_blocks(text: str) -> tuple[str, Dict[str, List[str]]]:
+    """Partition discussion.md into its shared zones and its per-slice blocks.
+
+    A slice block runs from its `Slice: <id>` heading to the next heading at the
+    same or a higher level. Everything outside every block is shared.
+    """
+    shared: List[str] = []
+    blocks: Dict[str, List[List[str]]] = {}
+    current: Optional[str] = None
+    level = 0
+    in_fence = False
+    for line in text.splitlines():
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+        elif not in_fence:
+            heading_m = _ATX_HEADING_RE.match(line)
+            slice_m = _SLICE_HEADING_RE.match(line)
+            if slice_m:
+                current, level = slice_m.group(2), len(slice_m.group(1))
+                blocks.setdefault(current, []).append([])
+                continue
+            if heading_m and current is not None and len(heading_m.group(1)) <= level:
+                current = None
+        (blocks[current][-1] if current is not None else shared).append(line)
+    return "\n".join(shared), {sid: ["\n".join(b) for b in bs] for sid, bs in blocks.items()}
+
+
+def resolve_slice_scope(text: str, slice_id: str) -> tuple[str, Optional[str]]:
+    """Return (shared text, this slice's block), or (text, None) for a legacy record.
+
+    Once a record declares slice blocks, a slice without its own block is a hard
+    failure: falling back to the whole file would compile another slice's
+    viewports and states into this one.
+    """
+    shared, blocks = split_slice_blocks(text)
+    if not blocks:
+        return text, None
+    found = blocks.get(slice_id) or []
+    if len(found) != 1:
+        problem = "未声明" if not found else f"重复声明 {len(found)} 次"
+        raise IncompleteStageContractError(
+            [{
+                "key": "slice_block",
+                "label": f"slice 区块 ({slice_id})",
+                "section": f"## Slice: {slice_id}",
+                "form": "每个 slice 恰好一个 `## Slice: <slice_id>` 区块",
+                "example": f"已声明的 slice: {', '.join(sorted(blocks))}",
+            }],
+            header=f"compile_spec_ir: discussion.md 按 slice 分区，但 slice `{slice_id}` {problem}，编译中止。",
+        )
+    return shared, found[0]
+
+
+def parse_block_frontmatter(block: str) -> Dict[str, Any]:
+    """Parse a slice block's frontmatter: bare at its start, or its first fenced `---` block."""
+    m = _BLOCK_FRONTMATTER_RE.search(block)
+    return parse_frontmatter(m.group(1))[0] if m else {}
 
 
 # ---------------------------------------------------------------------------
@@ -416,7 +486,11 @@ def _parse_contract_yaml_blocks(text: str, kind: str) -> List[Dict[str, Any]]:
     if matches and yaml is None:
         raise ValueError(f"contract:{kind} requires PyYAML to parse its authoritative block")
     for m in matches:
-        body = m.group(1).strip()
+        # Dedent before stripping: a fence nested under a bullet carries a common
+        # indent, and `strip()` alone removes it from the first line only, leaving
+        # line 2 at column 4 under a line-1 item at column 0 — which PyYAML reads
+        # as an over-indented mapping ("mapping values are not allowed here").
+        body = textwrap.dedent(m.group(1)).strip()
         try:
             loaded = yaml.safe_load(body)
         except yaml.YAMLError as exc:
@@ -939,6 +1013,31 @@ def compile_canonical_ir(
     fm_data, body_text = parse_frontmatter(disc_text)
     intent = load_intent_contract(root)
 
+    # Lifecycle scope: product-level facts read the shared zones; slice-level
+    # facts read the shared zones plus this slice's block; verification scope
+    # reads this slice's block alone. A legacy record without slice blocks is
+    # one implicit slice and reads the whole file at every level.
+    shared_text, slice_block = resolve_slice_scope(disc_text, slice_id)
+    if slice_block is None:
+        product_text = scope_text = slice_text = disc_text
+    else:
+        product_text = shared_text
+        scope_text = shared_text + "\n" + slice_block
+        slice_text = slice_block
+        block_fm = parse_block_frontmatter(slice_block)
+        if block_fm.get("slice_id") and str(block_fm["slice_id"]) != slice_id:
+            raise IncompleteStageContractError(
+                [{
+                    "key": "slice_id",
+                    "label": "slice 身份 (slice_id)",
+                    "section": f"## Slice: {slice_id}",
+                    "form": "区块 frontmatter 的 slice_id 必须等于区块标题",
+                    "example": f"标题 `{slice_id}`，frontmatter `{block_fm['slice_id']}`",
+                }],
+                header="compile_spec_ir: slice 区块标题与其 frontmatter 的 slice_id 不一致，编译中止。",
+            )
+        fm_data = {**fm_data, **block_fm}
+
     # Optional Stage 3/4 incremental verification fragment overlay
     # (e.g. prototype/contracts/compiled/<slice>/state_model.slice.json or explicit path)
     frag_data = {}
@@ -960,7 +1059,7 @@ def compile_canonical_ir(
     if fm_data.get("title"):
         product_title = str(fm_data["title"]).strip()
     else:
-        title_m = re.search(r"#\s*(?:Design\s*Discussion|Surface\s*Specification|Prototype\s*Specification):\s*([^\n]+)", disc_text, re.IGNORECASE)
+        title_m = re.search(r"#\s*(?:Design\s*Discussion|Surface\s*Specification|Prototype\s*Specification):\s*([^\n]+)", product_text, re.IGNORECASE)
         product_title = title_m.group(1).strip() if title_m else slice_id.replace("-", " ").title()
     product_id = re.sub(r"[^a-z0-9]+", "-", product_title.lower()).strip("-") or "product"
 
@@ -974,11 +1073,11 @@ def compile_canonical_ir(
     # prose recovery stays as the fallback for records that predate intent.json.
     tension_text = str(intent.get("core_tension") or "").strip() or None
     if not tension_text:
-        tension_text = extract_section(disc_text, r"###?\s*.*(?:Core\s+Tension|Problem\s+Framing|Tension|业务与用户极端张力|极端张力|张力)")
+        tension_text = extract_section(product_text, r"###?\s*.*(?:Core\s+Tension|Problem\s+Framing|Tension|业务与用户极端张力|极端张力|张力)")
     if not tension_text and fm_data.get("core_tension"):
         tension_text = str(fm_data["core_tension"]).strip()
     if not tension_text:
-        m_tension = re.search(r"[-*]?\s*\**Core\s+Tension\**\s*[:：]\s*`?([^`\n]+)`?", disc_text, re.IGNORECASE)
+        m_tension = re.search(r"[-*]?\s*\**Core\s+Tension\**\s*[:：]\s*`?([^`\n]+)`?", product_text, re.IGNORECASE)
         if m_tension:
             tension_text = m_tension.group(1).strip()
     # Absent authored tension stays None: never fabricate a domain claim that
@@ -994,14 +1093,14 @@ def compile_canonical_ir(
     if not physical_anchor:
         physical_anchor_match = re.search(
         r"^\s*[-*]?\s*(?:\*\*)?(?:Physical Anchor|physical_anchor)(?:\s+Declaration)?(?:\*\*)?\s*[:：]\s*([^\n]+)",
-        disc_text,
+        product_text,
         re.IGNORECASE | re.MULTILINE,
     )
         physical_anchor = physical_anchor_match.group(1).strip().strip("`* ") if physical_anchor_match else ""
         physical_anchor = re.sub(r"^physical_anchor\s*:\s*", "", physical_anchor, flags=re.IGNORECASE).strip()
 
     # Extract Reality Anchors
-    anchors_text = extract_section(disc_text, r"###?\s*.*(?:Reality.*Anchors?|现实双地锚|地锚|Industry\s+Benchmarks?|Benchmarks?)")
+    anchors_text = extract_section(product_text, r"###?\s*.*(?:Reality.*Anchors?|现实双地锚|地锚|Industry\s+Benchmarks?|Benchmarks?)")
     anchors = []
     for line in anchors_text.splitlines():
         line = line.strip()
@@ -1012,18 +1111,18 @@ def compile_canonical_ir(
 
     # Extract 三大冷酷舍弃 (Ruthless Omissions) - a real authority source that
     # previously had no parser and was silently discarded.
-    ruthless_omissions = parse_ruthless_omissions(disc_text)
+    ruthless_omissions = parse_ruthless_omissions(product_text)
 
     # Extract 5-Dial Register
-    style_text = extract_section(disc_text, r"###?\s*.*(?:5-Dial|风格寄存器|Style Register)")
-    five_axes = parse_5_dial_register(style_text or disc_text)
+    style_text = extract_section(product_text, r"###?\s*.*(?:5-Dial|风格寄存器|Style Register)")
+    five_axes = parse_5_dial_register(style_text or product_text)
 
     # Optional craft declarations remain open when the author leaves them unset.
-    craft_stack = parse_craft_stack(style_text or disc_text, five_axes)
-    design_intent = parse_design_intent(disc_text)
+    craft_stack = parse_craft_stack(style_text or product_text, five_axes)
+    design_intent = parse_design_intent(product_text)
 
     # Extract OOUX / Surfaces
-    surfaces_text = extract_section(disc_text, r"###?\s*.*(?:OOUX|实体拓扑|Surfaces?|Spatial\s+Anatomy|Anatomy|表面分配)")
+    surfaces_text = extract_section(slice_text, r"###?\s*.*(?:OOUX|实体拓扑|Surfaces?|Spatial\s+Anatomy|Anatomy|表面分配)")
     declared_surfaces = []
     primary_surface = fm_data.get("primary_surface")
     for line in surfaces_text.splitlines():
@@ -1085,27 +1184,27 @@ def compile_canonical_ir(
     # or merged from an explicit Stage 3/4 verification fragment (state_model.slice.json).
     # No template value is injected: a missing taxonomy is a hard failure below,
     # not a silent empty array that would freeze downstream as unverifiable.
-    domain_states = frag_data.get("domain_states") or parse_domain_states(disc_text)
-    interaction_states = frag_data.get("interaction_states") or parse_interaction_states(disc_text)
-    data_scenarios = frag_data.get("data_scenarios") or parse_data_scenarios(disc_text)
-    stress_fixtures = frag_data.get("stress_fixtures") or parse_stress_fixtures(disc_text)
+    domain_states = frag_data.get("domain_states") or parse_domain_states(scope_text)
+    interaction_states = frag_data.get("interaction_states") or parse_interaction_states(scope_text)
+    data_scenarios = frag_data.get("data_scenarios") or parse_data_scenarios(scope_text)
+    stress_fixtures = frag_data.get("stress_fixtures") or parse_stress_fixtures(scope_text)
 
     # Invariants: ONLY discussion/Spec-authored invariants reach the IR. The
     # former hardcoded telemetry/4096 GPU template entries were injected
     # heuristics with no authored source and are retired: an unauthored
     # discussion emits `[]`, never a template.
-    invariants = parse_authored_invariants(disc_text)
+    invariants = parse_authored_invariants(scope_text)
 
     # Actions: derived strictly from authored key bindings in discussion.md.
     # The former hardcoded "检视实体"/"确定隔离排空" verbs were never extracted from
     # the source and are removed; when no binding exists, actions stays empty.
-    actions = parse_action_verbs(disc_text)
+    actions = parse_action_verbs(scope_text)
 
     # Semantic latch: an authored Action Verbs section that fails to project
     # into IR actions is a silent semantic loss (format drift between template
     # and parser), not an empty contract. Fail loudly at compile time instead
     # of letting the Builder receive an empty action_contracts payload.
-    authored_action_ids = _authored_action_ids(disc_text)
+    authored_action_ids = _authored_action_ids(scope_text)
     extracted_action_ids = {a.get("id") for a in actions}
     if authored_action_ids and authored_action_ids != extracted_action_ids:
         missing = sorted(authored_action_ids - extracted_action_ids)
@@ -1127,8 +1226,8 @@ def compile_canonical_ir(
 
     # Meso assembly slots: authored massing/kinematics/data_syntax declarations,
     # with an undeclared massing smoothing to a topology-derived fallback.
-    nav_topology = parse_navigation_topology(disc_text, fm_data)
-    meso = parse_meso_directives(disc_text, nav_topology or "stacked-flow")
+    nav_topology = parse_navigation_topology(scope_text, fm_data)
+    meso = parse_meso_directives(scope_text, nav_topology or "stacked-flow")
 
     # Progressive tier stamping: the IR emits the tier it can legitimately
     # derive. A full state machine AND action contracts present (authored here
@@ -1142,11 +1241,11 @@ def compile_canonical_ir(
 
     fm_vps = fm_data.get("viewports")
     resolved_fm_vps = [int(v) for v in fm_vps if str(v).isdigit()] if (fm_vps and isinstance(fm_vps, list)) else []
-    resolved_vps = list(viewports) if viewports else (frag_data.get("viewports") or (resolved_fm_vps if resolved_fm_vps else parse_viewports(disc_text)))
+    resolved_vps = list(viewports) if viewports else (frag_data.get("viewports") or (resolved_fm_vps if resolved_fm_vps else parse_viewports(slice_text)))
 
     fm_states = fm_data.get("required_states")
     resolved_fm_states = [str(s).strip() for s in fm_states if str(s).strip()] if (fm_states and isinstance(fm_states, list)) else []
-    resolved_req_states = frag_data.get("required_states") or (resolved_fm_states if resolved_fm_states else parse_required_states(disc_text))
+    resolved_req_states = frag_data.get("required_states") or (resolved_fm_states if resolved_fm_states else parse_required_states(slice_text))
 
     ir = {
         "schema_version": "prototype-spec/v1",
@@ -1198,7 +1297,7 @@ def compile_canonical_ir(
         "foundation": {
             "five_axes": five_axes,
             "craft_stack": craft_stack,
-            "palette_discipline": parse_palette_discipline(disc_text),
+            "palette_discipline": parse_palette_discipline(product_text),
         },
         "state_model": {
             "domain_states": domain_states,

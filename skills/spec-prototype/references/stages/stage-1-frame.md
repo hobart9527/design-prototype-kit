@@ -63,6 +63,16 @@ sections documented in [`../spec-md-contract.md`](../spec-md-contract.md). This 
 Skill-owned, parser-compatible format inspired by Google Design.md; it is not an
 official Google schema and does not imply Material Design adoption.
 
+The record is one file partitioned by lifecycle, not split across files: **product
+truth** (audience, purpose, constraints — Stage 1 framing), the **visual world**
+(Direction Contract, Five Axes, taste ledger — one owner for every surface), and one
+`## Slice: <slice_id>` block per slice carrying its frontmatter, surfaces, states,
+actions, invariants and Stage 2–5 record. Framing collects product truth first; the
+visual world is locked through a direction decision, never inferred from init. The
+compiler reads each slice's verification scope from its own block alone, so a second
+slice is added by appending a block, never by widening the first. The shape is owned
+by [`../../templates/discussion.md`](../../templates/discussion.md).
+
 The brief needs only the applicable parts of:
 
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.

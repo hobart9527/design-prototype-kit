@@ -20,6 +20,12 @@
   the direction is understood.
 - Invariants are explicit only when they matter to this slice. Do not turn every
   design preference into a DOM/CSS gate.
+- Slice scope: once `prototype/discussion.md` holds `## Slice: <slice_id>` blocks,
+  the slice frontmatter lives inside its block and must name the same `slice_id`.
+  `--slice <id>` reads viewports and required states from that block alone, and
+  surfaces, states, actions, invariants and stress fixtures from that block plus the
+  shared zones. A missing or duplicated block aborts; it never falls back to the
+  whole file. A record without slice blocks is one implicit slice (legacy form).
 
 ## Illustrative rich slice (not a required template)
 

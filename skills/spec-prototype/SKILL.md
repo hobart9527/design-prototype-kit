@@ -176,7 +176,9 @@ failure, known limitations, and what each verdict means). Both are authored for
 the person who will open the artifact; both live in `discussion.md` and are
 updated as evidence arrives.
 
-Keep `prototype/discussion.md` as the decision and evidence ledger. Use the canonical
+Keep `prototype/discussion.md` as the decision and evidence ledger — one book,
+partitioned by lifecycle: product truth, the shared visual world, then one
+`## Slice: <slice_id>` block per slice. Use the canonical
 `google-design-md/v2` Markdown contract for formal slices: YAML frontmatter plus
 semantic sections for problem/drivers, experience direction, spatial anatomy, states
 and actions, and resilience/invariants. The existing

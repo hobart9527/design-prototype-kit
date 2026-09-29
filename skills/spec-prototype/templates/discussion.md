@@ -1,9 +1,21 @@
 # Design discussion
 
+One record, partitioned by lifecycle. **Product truth** changes almost never,
+the **visual world** is shared by every surface once locked, and each **slice**
+owns one self-contained `## Slice: <slice_id>` block that runs to the next `##`
+heading. `compile_spec_ir.py --slice <slice_id>` reads product-level facts from
+the shared zones and slice-level facts — surfaces, states, actions, invariants,
+stress fixtures, viewports, required states — from that block, and the
+verification scope from that block alone, so one slice's scope never leaks into
+another. A record with no slice block is read as one implicit slice (legacy
+form). Add a slice by appending a block; never widen an existing block to cover
+a second slice.
+
 ## Resume
 
 - Execution boundary: active
 - Product archetype basis (`greenfield | feature-extension | refinement-audit`):
+- Active slice (the `## Slice: <slice_id>` block this pass works in):
 - Active track / current decision:
 - Route basis (`visual-first | IA-first | IA-only | visual-only | spec-only | review-only | continuation | local-repair`), with source:
 - Requested scope and stopping point:
@@ -22,7 +34,11 @@
 uncertainty, not a mandatory Track A/Track B sequence. The route contract in
 `references/04-governance/discussion.md` owns permitted stopping and exit.
 
-## Cold-start inference & seed status
+## Product truth (产品真理 · 受众、目的、约束)
+
+Owns what the product is and for whom. Visual choices never live here.
+
+### Cold-start inference & seed status
 
 - Physical Anchor: `<declared chassis, e.g. desktop workstation / mobile device, or none>`
   State the real-world object or space whose physicality drives the spatial
@@ -51,7 +67,7 @@ inference from a pain narrative, a persona convention or industry practice is
   below with impact and owner.
 - Unknowns that could change the current decision, impact and owner: (required when any dimension is unknown)
 
-## Working understanding (Nine Pillars Canonical Ontology)
+### Working understanding (Nine Pillars Canonical Ontology)
 
 | Pillar | Focus | Current statement | Evidence status (`explicit | observed | derived | hypothesis | unknown`) | Source / impact / owner |
 |---|---|---|---|---|---|
@@ -68,6 +84,85 @@ inference from a pain narrative, a persona convention or industry practice is
 Ask only about unknowns that could materially change a consequential decision.
 Proceed on sourced, delegated or reversible details and label assumptions.
 
+### Problem Framing & Drivers (支柱 1-2: 价值与真实地锚)
+- **Core Tension**: `Throughput vs Liability` (例如：秒级止血吞吐 vs 误操作不可逆风险)
+- **Design Driver**: `tension` | `failure_mode` (例如：信息过载与误判一键排空生产节点)
+- **Reference Benchmarks**:
+  - `Adopt`: Datadog 密集状态矩阵、Linear 键盘高响应与紧凑排版
+  - `Refuse`: 消费级多步配置向导、高侵入式全屏遮罩
+- **Material Non-transfer Boundaries (Non-transfer)**: 物理仪表触觉可迁移，但严禁脱离数字媒介的伪材质伪阴影
+- **OOUX Cardinality-to-Layout Anchor**: `1:1` Canvas | `1:N` Master-Detail | `N:M` Relational Graph
+- **Ruthless Omissions (三大冷酷舍弃 · 绝不脑补未要求的系统能力)**:
+  1. 舍弃事后复盘报告与图表导出（“收尾”仅代表结束事故处理流程，严禁脑补“一键复盘导出/审计归档”等未声明能力）
+  2. 舍弃全局集群配置编辑能力（当前视口仅做应急定位与排空止血）
+  3. 舍弃复杂外部权限审批流（仅保留本地主备指挥官双签）
+- **Content Language (Locked)**: `zh-Hans`
+
+### Success metrics
+
+State how this work will be judged — by the user, not by the agent. Metrics are
+product outcomes and observable behaviors, never "the prototype exists".
+
+| ID | Metric | Baseline | Target | How it is observed | Status (`[explicit] | [derived] | [hypothesis]`) |
+|---|---|---|---|---|---|---|---|
+| | | | | | |
+
+Rules:
+- Every metric names its observation method: a task a person performs, a number a
+  real system reports, or a specific capture. "Feels better" is not a metric.
+- A metric the sources never stated carries `[derived]` or `[hypothesis]` and is
+  labeled as the agent's proposal awaiting the user's confirmation.
+- Do not invent telemetry, analytics, or research that does not exist. If a metric
+  cannot currently be observed, say so in the observation column rather than
+  promising instrumentation.
+
+## Visual world (视觉世界 · 全产品共享)
+
+Owns what the product looks like once a direction is locked. One owner for every
+slice: a slice that needs a different world reopens this zone through a decision
+row; it never redeclares the world inside its own block.
+
+### Direction Contract
+
+Author the six blocks once the direction is locked
+(`references/01-foundations/design-language.md`); leave them empty before then.
+
+- **THESIS**:
+- **OWN-WORLD**:
+- **STORY**:
+- **FIRST VIEWPORT**:
+- **FORM**:
+- **FINISH**:
+
+### Experience Foundation & Five Axes (支柱 6-7: 视觉刻度与五轴)
+- **5-Dial Style Register**:
+  - `density`: `dense` (微型间距、高信息吞吐、紧凑行高)
+  - `energy`: `kinetic` (80ms 高瞬态响应、触觉回弹)
+  - `materiality`: `coated_instrument_dark` (深色物理仪器质感)
+  - `rhythm`: `fluid` (无阻尼过渡，支持极速键盘行进)
+  - `character`: `technical` (高精密度机械感，等宽数字对齐)
+- **Cognitive Budgeting Allocation**:
+  - Zero-learning baseline: 惯用导航与高可预测表格 (0 认知成本)
+  - High-yield borrowing: 应急主交互区域引入精准微动效
+- **Atmospheric Undertone & Concentric Radius check**:
+  - Concentric Radius check: 内外容器圆角同心差对齐
+  - Atmospheric Undertone: 依据亮度阶差建立连续空间深度
+- **Seed Palette & Tokens**:
+  - `--bg-void`: `#0b0f10`
+  - `--bg-surface`: `#141a1d`
+  - `--text-primary`: `#e6edf3`
+  - `--accent-primary`: `#ff4444` (警报强调)
+  - `--accent-seal`: `#ff3333` (不可逆操作终极印章)
+
+### Project Taste & Visual Language Ledger (项目品味与视觉档案)
+
+Records user style preferences, chosen aesthetics, and rejected visual approaches across iterations:
+
+| Direction / Vocabulary | Disposition (`chosen \| rejected \| under-review`) | Core Reason & User Feedback | Reference Benchmark | Applicable Scope |
+|---|---|---|---|---|
+| (e.g. Swiss Editorial) | chosen | Clean hierarchy, high legibility for incident timeline | Linear, Substack | Global typography & rhythm |
+| (e.g. Neon Cyberpunk) | rejected | Excessive visual noise, distracting during high stress | - | Color palette |
+
 ## Candidate propositions (when a material choice is open)
 
 | ID | Product question | Generative mechanism | Same task/content specimen | Convention retained | Focal Signature Relationship | Benefit / trade-off cost / learning burden | Falsification / transfer evidence | Status |
@@ -81,15 +176,6 @@ different propositions when a choice remains. No candidate quota applies.
 
 | ID | Decision or authoritative section link | Status | Reason / evidence | Actual user quote + turn/date or source locator + delegated scope | User source (`confirmed \| delegated \| synthetic-fixture`) | Affected artifacts / minimal owning scope |
 |---|---|---|---|---|---|---|
-
-## Project Taste & Visual Language Ledger (项目品味与视觉档案)
-
-Records user style preferences, chosen aesthetics, and rejected visual approaches across iterations:
-
-| Direction / Vocabulary | Disposition (`chosen \| rejected \| under-review`) | Core Reason & User Feedback | Reference Benchmark | Applicable Scope |
-|---|---|---|---|---|
-| (e.g. Swiss Editorial) | chosen | Clean hierarchy, high legibility for incident timeline | Linear, Substack | Global typography & rhythm |
-| (e.g. Neon Cyberpunk) | rejected | Excessive visual noise, distracting during high stress | - | Color palette |
 
 Status: `proposed | confirmed | delegated | needs-evidence | superseded`.
 Only an actual user decision or an explicit prior delegation can populate
@@ -111,14 +197,18 @@ citing the pain quote as its authority is an authority promotion: derived
 lifecycle mechanisms carry `derived` evidence status with the pain point as
 impact context.
 
+A decision that binds one slice names its `slice_id` in the scope column;
+`handoff.py` binds a freeze only to rows that name its slice.
+
 ## Open frontier
 
 | ID | Question | Depends on | Impact | Recommendation | Owner |
 |---|---|---|---|---|---|
 
-## Canonical 5-Stage Design Engine Record
+## Slice: <slice_id>
 
-### Stage 1: Understand & Frame (破 - 双钻与契约定义)
+Stage 1 contract plus the Stage 2–5 record for this slice only. Copy the whole
+block to start another slice; the frontmatter `slice_id` must equal the heading.
 
 ```yaml
 ---
@@ -134,46 +224,20 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
 ---
 ```
 
-#### 1. Problem Framing & Drivers (支柱 1-2: 价值与真实地锚)
-- **Core Tension**: `Throughput vs Liability` (例如：秒级止血吞吐 vs 误操作不可逆风险)
-- **Design Driver**: `tension` | `failure_mode` (例如：信息过载与误判一键排空生产节点)
-- **Reference Benchmarks**:
-  - `Adopt`: Datadog 密集状态矩阵、Linear 键盘高响应与紧凑排版
-  - `Refuse`: 消费级多步配置向导、高侵入式全屏遮罩
-- **Material Non-transfer Boundaries (Non-transfer)**: 物理仪表触觉可迁移，但严禁脱离数字媒介的伪材质伪阴影
-- **OOUX Cardinality-to-Layout Anchor**: `1:1` Canvas | `1:N` Master-Detail | `N:M` Relational Graph
-- **Ruthless Omissions (三大冷酷舍弃 · 绝不脑补未要求的系统能力)**:
-  1. 舍弃事后复盘报告与图表导出（“收尾”仅代表结束事故处理流程，严禁脑补“一键复盘导出/审计归档”等未声明能力）
-  2. 舍弃全局集群配置编辑能力（当前视口仅做应急定位与排空止血）
-  3. 舍弃复杂外部权限审批流（仅保留本地主备指挥官双签）
-- **Content Language (Locked)**: `zh-Hans`
+### Divergence seeds
 
-#### 2. Experience Foundation & Five Axes (支柱 6-7: 视觉刻度与五轴)
-- **5-Dial Style Register**:
-  - `density`: `dense` (微型间距、高信息吞吐、紧凑行高)
-  - `energy`: `kinetic` (80ms 高瞬态响应、触觉回弹)
-  - `materiality`: `coated_instrument_dark` (深色物理仪器质感)
-  - `rhythm`: `fluid` (无阻尼过渡，支持极速键盘行进)
-  - `character`: `technical` (高精密度机械感，等宽数字对齐)
-- **Cognitive Budgeting Allocation**:
-  - Zero-learning baseline: 惯用导航与高可预测表格 (0 认知成本)
-  - High-yield borrowing: 应急主交互区域引入精准微动效
-- **Atmospheric Undertone & Concentric Radius check**:
-  - Concentric Radius check: 内外容器圆角同心差对齐
-  - Atmospheric Undertone: 依据亮度阶差建立连续空间深度
-- **Seed Palette & Tokens**:
-  - `--bg-void`: `#0b0f10`
-  - `--bg-surface`: `#141a1d`
-  - `--text-primary`: `#e6edf3`
-  - `--accent-primary`: `#ff4444` (警报强调)
-  - `--accent-seal`: `#ff3333` (不可逆操作终极印章)
+Drawn, not chosen: `python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --write`
+fills this table from the OS entropy pool before any direction HTML is written.
+The seed fixes the incidental choices the direction does not argue for; the
+challenger is fused at step 4, or refused with its reason. Leave the table absent
+until a divergence is actually being run.
 
-#### 3. Spatial Anatomy & Surface Topology (支柱 3-5: 空间与层级)
+### Spatial Anatomy & Surface Topology (支柱 3-5: 空间与层级)
 - **Primary Operational Surface**: `surfaces/<slice_id>-main` (核心主控工作台，承载高频研判与操作)
 - **Contextual Surface**: `surfaces/<slice_id>-drawer` (下钻检视抽屉，不脱离主视区)
 - **Supporting / Glance Surface**: `surfaces/<slice_id>-mobile` (390px 移动端只读扫视哨兵)
 
-#### 4. State Taxonomy & Action Lifecycle (支柱 8: 交互与原子动作闭环)
+### State Taxonomy & Action Lifecycle (支柱 8: 交互与原子动作闭环)
 - **Domain States**:
   - `domain/nominal` (常规态): 全部节点健康
   - `domain/avalanche-alert` (雪崩告警): 异常节点聚集扩散
@@ -203,7 +267,7 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
   机器权威来源为上述 YAML；下方散文只解释，不得另行声明不同 ID 或生命周期。
 - **Decisive Exchange 3-Frame Verification**: 触发 (Frame 1: 80ms) -> 提交 (Frame 2: 150ms) -> 结果 (Frame 3: 持久)
 
-#### 5. Verifiable Invariants & Break Protocol (支柱 9: 韧性与证伪门禁)
+### Verifiable Invariants & Break Protocol (支柱 9: 韧性与证伪门禁)
 - **Verifiable Design Invariants**:
   - `[inv/wcag-contrast]` (`blocking` · `dom_computed`): 核心文本必须满足 WCAG 2.2 AA (>= 4.5:1)，操作按钮 >= 3.0:1
   - `[inv/token-inheritance]` (`blocking` · `dom_computed`): 100% 继承 `prototype/shared/tokens.css`，0 内联 hex
@@ -261,25 +325,7 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
 - **WCAG Static Contrast Audit**:
 - **Handoff Manifest (`prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json` / SHA-256 integrity)**:
 
-## Success metrics
-
-State how this work will be judged — by the user, not by the agent. Metrics are
-product outcomes and observable behaviors, never "the prototype exists".
-
-| ID | Metric | Baseline | Target | How it is observed | Status (`[explicit] | [derived] | [hypothesis]`) |
-|---|---|---|---|---|---|---|---|
-| | | | | | |
-
-Rules:
-- Every metric names its observation method: a task a person performs, a number a
-  real system reports, or a specific capture. "Feels better" is not a metric.
-- A metric the sources never stated carries `[derived]` or `[hypothesis]` and is
-  labeled as the agent's proposal awaiting the user's confirmation.
-- Do not invent telemetry, analytics, or research that does not exist. If a metric
-  cannot currently be observed, say so in the observation column rather than
-  promising instrumentation.
-
-## Reviewer's evaluation guide
+### Reviewer's evaluation guide
 
 Written for the person who will open the prototype and judge it. It states what to
 look at and what would count as a failure, so the review is not a taste contest.
@@ -295,7 +341,7 @@ look at and what would count as a failure, so the review is not a taste contest.
   `[hypothesis]`, so a gap is not mistaken for a defect or a defect for a gap.
 - **Verdict options**: what "accept", "accept with changes", and "reject" mean here.
 
-## Evidence and changes
+### Evidence and changes
 
 - Research and review links:
 - Facts / expert judgments / preferences / hypotheses / observations:

@@ -74,9 +74,20 @@ def test_divergence_generator_owns_the_develop_phase():
     text = _read(GENERATOR)
     assert "## 4. Divergence Generator" in text
     assert "Owner: Double Diamond / Develop" in text
-    for step in ("Name the rut", "Generate from the lifeworld", "Assign seeds",
+    for step in ("Name the rut", "Generate from the lifeworld", "Draw seeds",
                  "Fuse a challenger", "Two-axis verdict", "Donate the loser"):
         assert step in text, f"generator step missing: {step}"
+
+
+def test_seeds_come_from_entropy_not_from_the_designer():
+    """The step is a mechanism, not a request the model can satisfy by choosing."""
+    text = _read(GENERATOR)
+    assert "draw_seed.py" in text, "the generator must name the script that draws"
+    assert "do not choose them" in text
+    # The draw is the shipped mechanism, so it must exist and be self-describing.
+    script = _read(SKILL / "scripts/draw_seed.py")
+    assert "secrets.randbelow" in script
+    assert "Secrets" in script or "OS entropy pool" in script
 
 
 def test_divergence_generator_sources_from_the_domain_not_the_catalog():

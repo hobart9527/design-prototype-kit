@@ -884,3 +884,160 @@ def test_action_contracts_preserve_commit_and_proximity(tmp_path: Path):
     assert "排空完成" in act["commit_action"]
     assert act["origin"] == "discussion.md#contract:actions"
     assert act["consequence"] == "事故关闭并进入复盘"
+
+
+# One record partitioned by lifecycle: shared product truth and visual world,
+# then one self-contained block per slice.
+PARTITIONED_DISCUSSION = """# Design Discussion: Terminal Cluster Workbench
+
+## 1. 业务与用户极端张力 (Core Tension)
+- Operational through-put vs Catastrophic Bus-Hang Failures.
+
+## 2. 现实双地锚 (Reality Benchmark Anchors)
+- Physical Anchor: desktop workstation
+
+## 4. 5-Dial 风格寄存器 (5-Dial Style Register)
+- Density: dense
+
+## Slice: cluster-overview
+
+```yaml
+---
+slice_id: "cluster-overview"
+---
+```
+
+### 3. 项目级状态模型 (State Model)
+- `domain/cluster-nominal` (集群常态): 全部节点健康。
+- `interaction/inspecting` (检视中): 抽屉展开。
+- `data/cold-metrics` (冷指标): 首次加载。
+
+### 5. OOUX 实体拓扑与表面分配
+- **主工作区 (Primary)**: `console/cluster-overview`
+
+### 6. Viewport 与强制测试状态
+- `Viewport`: `390px` / `1280px`
+- `Required States`: `state-draft`, `state-sealed`
+
+### 7. 破坏协议 (Break Protocol)
+- `stress/bus-hang` | Vector: `NVLink 挂起` | Expected: `定位故障节点`。
+
+## Slice: archive-browser
+
+### 3. 项目级状态模型 (State Model)
+- `domain/archive-frozen` (归档冻结): 只读。
+- `interaction/restoring` (恢复中): 恢复进行。
+- `data/cold-archive` (冷归档): 远端存储。
+
+### 5. OOUX 实体拓扑与表面分配
+- **主工作区 (Primary)**: `console/archive-browser`
+
+### 6. Viewport 与强制测试状态
+- `Viewport`: `768px`
+- `Required States`: `state-archived`
+
+### 7. 破坏协议 (Break Protocol)
+- `stress/cold-restore` | Vector: `远端冷恢复` | Expected: `进度与可取消`。
+"""
+
+
+def test_a_slice_block_does_not_leak_into_another_slice(tmp_path: Path):
+    """Verification scope and states come from this slice's block only."""
+    root = _write_discussion(tmp_path, PARTITIONED_DISCUSSION)
+
+    ir = compile_canonical_ir(root=root, slice_id="cluster-overview", stage="hero_probe")
+
+    assert ir["scope"]["verification_scope"]["viewports"] == [390, 1280]
+    assert ir["scope"]["verification_scope"]["required_states"] == ["state-draft", "state-sealed"]
+    assert [s["id"] for s in ir["state_model"]["domain_states"]] == ["domain/cluster-nominal"]
+    assert [s["id"] for s in ir["state_model"]["stress_fixtures"]] == ["stress/bus-hang"]
+    assert ir["scope"]["topology_scope"]["declared_surfaces"] == ["cluster-overview"]
+    # Product truth is shared across slices.
+    assert "Bus-Hang" in ir["sources"]["core_tension"]
+
+
+def test_each_slice_compiles_from_its_own_block(tmp_path: Path):
+    root = _write_discussion(tmp_path, PARTITIONED_DISCUSSION)
+
+    ir = compile_canonical_ir(root=root, slice_id="archive-browser", stage="hero_probe")
+
+    assert ir["scope"]["verification_scope"]["viewports"] == [768]
+    assert ir["scope"]["verification_scope"]["required_states"] == ["state-archived"]
+    assert [s["id"] for s in ir["state_model"]["domain_states"]] == ["domain/archive-frozen"]
+    assert "Bus-Hang" in ir["sources"]["core_tension"]
+
+
+def test_a_partitioned_record_without_the_slice_block_aborts(tmp_path: Path):
+    """Falling back to the whole file would compile another slice's scope."""
+    root = _write_discussion(tmp_path, PARTITIONED_DISCUSSION)
+
+    with pytest.raises(IncompleteStageContractError, match="## Slice: billing"):
+        compile_canonical_ir(root=root, slice_id="billing", stage="hero_probe")
+
+
+def test_a_slice_block_frontmatter_must_match_its_heading(tmp_path: Path):
+    root = _write_discussion(
+        tmp_path, PARTITIONED_DISCUSSION.replace('slice_id: "cluster-overview"', 'slice_id: "other"'))
+
+    with pytest.raises(IncompleteStageContractError, match="slice_id"):
+        compile_canonical_ir(root=root, slice_id="cluster-overview", stage="hero_probe")
+
+
+def test_an_indented_contract_block_parses_like_a_flush_one():
+    """A fence nested under a bullet carries a common indent.
+
+    Stripping before dedenting removed it from the first line only, leaving the
+    second at column 4 under a line-1 item at column 0, which PyYAML rejects as
+    "mapping values are not allowed here".
+    """
+    indented = """- **Action Verb Lifecycle**:
+  ```contract:actions
+  - id: action-enter
+    verb: submit
+    trigger: Enter
+    proximity_level: 4
+    commit: Commit
+    feedback: Saved
+  ```"""
+    parsed = parse_action_verbs(indented)
+    assert [item["id"] for item in parsed] == ["action-enter"]
+    assert parsed[0]["commit_action"] == "Commit"
+
+
+def test_the_template_contract_block_is_machine_parseable():
+    """The template is the authoring SSOT: its own actions block must parse."""
+    template = (REPO / "skills/spec-prototype/templates/discussion.md").read_text(encoding="utf-8")
+    assert [item["id"] for item in parse_action_verbs(template)] == [
+        "action-space", "action-enter", "action-escape"]
+
+
+
+def test_draw_seed_records_into_the_slice_block(tmp_path: Path):
+    """The draw lands in this slice's block, and re-running replaces it."""
+    from draw_seed import draw, load_challengers, render_block, write_block, VOCABULARY
+
+    root = _write_discussion(tmp_path, PARTITIONED_DISCUSSION)
+    record = root / "prototype/discussion.md"
+
+    picks = draw(3, load_challengers(VOCABULARY))
+    write_block(record, "cluster-overview", render_block(picks))
+    write_block(record, "cluster-overview", render_block(draw(3, load_challengers(VOCABULARY))))
+
+    text = record.read_text(encoding="utf-8")
+    assert text.count("### Divergence seeds") == 1
+    start = text.index("## Slice: cluster-overview")
+    end = text.index("## Slice: archive-browser")
+    assert "### Divergence seeds" in text[start:end]
+    # The other slice's block is untouched, and its scope still compiles alone.
+    assert "### Divergence seeds" not in text[end:]
+    ir = compile_canonical_ir(root=root, slice_id="archive-browser", stage="hero_probe")
+    assert ir["scope"]["verification_scope"]["viewports"] == [768]
+
+
+def test_draw_seed_requires_the_slice_block(tmp_path: Path):
+    """A seed belongs to a slice; there is nowhere to record it without one."""
+    from draw_seed import DrawError, write_block
+
+    root = _write_discussion(tmp_path, "# Design discussion\n\n## Product truth\n\nno slices here\n")
+    with pytest.raises(DrawError, match="## Slice: cockpit"):
+        write_block(root / "prototype/discussion.md", "cockpit", "### Divergence seeds\n")

@@ -99,15 +99,29 @@ the only gate, and it is checked on the two directions side by side.
    candidate names its world, its organising principle (what determines what goes
    where), and its native reading order. At least one candidate must come from a
    world no other product in this category currently occupies.
-3. **Assign seeds.** Give each candidate a distinct seed integer, recorded with it.
-   The seed varies the *incidental* choices the design does not argue for — which
-   face, which neutral temperature, which corner family. Two directions must not
-   converge on the same incidental decisions by default; without a declared seed
-   they reliably do, and the divergence is spent before the structure differs.
-4. **Fuse a challenger (optional, at most one per candidate).** Take one vocabulary
-   from [`../02-craft-methods/modern-style-vocabulary.md`](../02-craft-methods/modern-style-vocabulary.md)
-   and fuse its *techniques* into the candidate without replacing the candidate's
-   organising principle. A fusion that leaves the organising principle unchanged is
+3. **Draw seeds — do not choose them.** The seed varies the *incidental* choices
+   the design does not argue for — which face, which neutral temperature, which
+   corner family. Two directions must not converge on the same incidental
+   decisions by default, and a seed the designer picks is not a defence against
+   that: asked for an integer, a model returns the same few every time, so the
+   step collapses into a formality and the divergence is spent before the
+   structure differs. Draw them from a real entropy source instead:
+
+   ```
+   python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --write
+   ```
+
+   The script draws one seed per candidate from the OS entropy pool, derives the
+   incidental triple from it, and draws a challenger vocabulary without
+   replacement — then records the whole draw as a `### Divergence seeds` table
+   inside the slice's block, so the record carries the entropy that produced it.
+   Re-running replaces the block rather than appending. The draw is the
+   mechanism; the prose request was the thing that never worked.
+4. **Fuse a challenger (optional, at most one per candidate).** Take the
+   vocabulary step 3 drew from
+   [`../02-craft-methods/modern-style-vocabulary.md`](../02-craft-methods/modern-style-vocabulary.md)
+   — or refuse it, with the reason recorded — and fuse its *techniques* into the
+   candidate without replacing the candidate's organising principle. A fusion that leaves the organising principle unchanged is
    a reskin and is recorded as such. The catalog is read for technique, never
    selected as an identity.
 
