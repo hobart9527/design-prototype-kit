@@ -280,6 +280,30 @@ def test_domain_sections_answer_only_their_own_questions():
     assert visual.count("| Deliver |") == 0
 
 
+CRAFT_REFS = sorted((REFS / "02-craft-methods").glob("*.md"))
+
+
+def test_no_craft_reference_restates_the_mothers_phases():
+    """The collapse is a rule about the library, not a one-file edit.
+
+    Every domain answer table in every craft reference is the two rows the
+    domain owns; Define and Deliver are answered once, by the mother table.
+    A restated row is a second owner, and a second owner drifts.
+    """
+    for path in CRAFT_REFS:
+        text = _read(path)
+        assert text.count("| Define |") == 0, \
+            f"{path.name} restates the mother's Define phase"
+        assert text.count("| Deliver |") == 0, \
+            f"{path.name} restates the mother's Deliver phase"
+        assert text.count("Specialized Double Diamond workflow") == 0, \
+            f"{path.name} keeps the duplicated workflow heading"
+        # A domain table that does not name the owner reads as the owner.
+        tables = text.count("| Phase | This domain's answer |")
+        assert text.count("which owns the four phases, their order and their hand-back") == tables, \
+            f"{path.name} has {tables} domain tables but does not cite the mother for each"
+
+
 def test_the_kernel_delegates_the_legacy_inventory():
     """The always-loaded kernel states the prohibition; the owner keeps the list."""
     kernel = _read(KERNEL)

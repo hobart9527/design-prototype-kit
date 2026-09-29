@@ -17,18 +17,16 @@ Sections in this pillar:
 
 ## Product voice that helps people act
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Original product facts/terminology, desired relationship, current UI moments and content/locale constraints.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
 
-| Phase | Work and concrete hand-back |
+| Phase | This domain's answer |
 |---|---|
-| Discover — listen to the situation | Inspect audience language, emotional context and current copy in real frames. Separate inaccurate facts, unclear meaning and weak voice. |
-| Define — set voice and moment intent | Choose stable warmth/formality/directness with evidence and the meaning each moment must convey. Keep factual promises fixed while identifying where tone should change. |
-| Develop — write contextual alternatives | Develop plain and characterful versions of representative invitation, action, explanation, failure and return lines where relevant. Compare them with the actual controls, values and available space. |
-| Deliver — read the complete exchange | Check clarity, consequence, tone continuity and localization/content stress across states. Revise the misleading or awkward line at its cause; retain exact selected copy, variables and usage limits in existing artifacts. |
+| **Discover** | Inspect audience language, emotional context and current copy in real frames. Separate inaccurate facts, unclear meaning and weak voice. |
+| **Develop** | Develop plain and characterful versions of representative invitation, action, explanation, failure and return lines where relevant. Compare them with the actual controls, values and available space. |
 
 **Retained execution record:** Moment/state → source facts/canonical terms → intended tone → chosen exact string/variables → context/control → stress example → rendered/flow evidence and unresolved meaning.
 

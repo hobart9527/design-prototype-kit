@@ -39,12 +39,12 @@ or a long transaction. Use sourced objects/operations; IA owns organization and
 interaction-craft owns transition behavior. This method chooses representations
 and task patterns before component styling or library selection.
 
-| Double Diamond phase | Work and hand-back |
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
 |---|---|
-| Discover | Inventory real records, fields, units, ranges, missing values and task frequency. Walk what must be found, compared or changed together; retain source constraints and the uncertain decision. |
-| Define | State the question users must answer and information they need simultaneously. Fix data meaning, action scope and a representative difficult case before selecting containers. |
-| Develop | Compare credible representations or work patterns using the same records and task. Include an outlier, a missing value and long content when the data permits; measure precision, recall work and navigation cost. |
-| Deliver | Answer the intended question from the rendered display, then perform the authorized action and return. Verify values, scope and retained context. Hand selected representation, field/encoding rules and task evidence to Foundation/Contract/Specification. |
+| **Discover** | Real records, fields, units, ranges, missing values and task frequency. |
+| **Develop** | Credible representations compared on the same records and task, including an outlier and long content. |
 
 ### Choose representations from the question
 

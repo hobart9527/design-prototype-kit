@@ -19,18 +19,16 @@ Sections in this pillar:
 
 ## Develop an interaction model around the user's judgment
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Sourced tasks/operations, current objects and state constraints, audience/input context and actual content.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
 
-| Phase | Work and concrete hand-back |
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect the judgment | Walk intent, evidence, action and result from visible cues; identify recall, switching, discovery or control friction without inventing a failing user study. |
-| Define — frame the interaction problem | State what mental or physical work should improve and which semantics remain fixed. Define the decisive exchange and its consequence, interruption and return needs. |
-| Develop — prototype different mechanisms | Compare suitable direct, staged, contextual or structured control models on the same task. Make before/during/after concrete; inspect control choice and feedback through Builder when runtime behavior matters. |
-| Deliver — exercise and specify | Perform the exchange with relevant keyboard/touch, error/retry and return. Refine the mechanism or control, then retain state-linked behavior, exact context/focus rules and evidence in the Surface Map/Contract/Specification. |
+| **Discover** | Walk intent, evidence, action and result from visible cues; identify recall, switching, discovery or control friction without inventing a failing user study. |
+| **Develop** | Compare suitable direct, staged, contextual or structured control models on the same task. Make before/during/after concrete; inspect control choice and feedback through Builder when runtime behavior matters. |
 
 **Retained execution record:** Task/intent → visible evidence/control → source-state/precondition → action → pending/result → focus/context preserved → correction/return → implementation/evidence reference.
 
@@ -270,18 +268,16 @@ transition or spring behavior and tune it in the real runtime.
 Retain endpoints, timing/configuration, interruption/settle rule and the product
 reason. Treat presets as hypotheses to tune, not craft credentials.
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Authorized component transitions, selected spatial/material language, input methods and actual rendering runtime.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
 
-| Phase | Work and concrete hand-back |
+| Phase | This domain's answer |
 |---|---|
-| Discover — observe the exchange | Walk the operation and identify where immediate response, continuity, attention or emotional punctuation is missing. Observe its frequency, distance and interruption conditions; keep a competent still transition as a baseline. |
-| Define — bound the motion intent | Choose the information the motion must communicate, which element leads and what stays anchored. Set acceptable attention/latency cost, final semantic state and a reduced-motion alternative. Decide whether the unresolved question is rhythm, spatial mapping or expressiveness. |
-| Develop — implement and tune candidates | Choose cut/color/fade/spatial/layout/spring technique for the actual runtime. Specify endpoints, origin, duration/easing or spring parameters. Builder makes a small playable comparison; vary a consequential parameter and inspect onset/travel/settling at normal speed. |
-| Deliver — replay and retain | Test repeated/reversed input, slow result, navigation and reduced motion. Check state truth and observed frame/layout behavior. Tune the recipe and replay the same exchange; retain exact configuration plus time-based evidence, then hand it to the existing specification/review. |
+| **Discover** | Walk the operation and identify where immediate response, continuity, attention or emotional punctuation is missing. Observe its frequency, distance and interruption conditions; keep a competent still transition as a baseline. |
+| **Develop** | Choose cut/color/fade/spatial/layout/spring technique for the actual runtime. Specify endpoints, origin, duration/easing or spring parameters. Builder makes a small playable comparison; vary a consequential parameter and inspect onset/travel/settling at normal speed. |
 
 **Retained execution record:** Transition ID → source/target state → trigger → animated element/property → from/to values/origin → delay/duration/easing or spring configuration → interrupt/settle rule → reduced-motion implementation → source file → event/clip evidence. Endpoint screenshots alone leave choreography unverified.
 
@@ -418,18 +414,16 @@ share the same trigger rhythm, restraint, and accessibility requirements as visu
 
 ## Component recipes that preserve the design
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** The current task/Contract, selected or provisional language/tokens, real content ranges and available primitives.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
 
-| Phase | Work and concrete hand-back |
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect the component job | Inventory consequential decisions and available controls. Inspect a reference or existing component in relevant states, including its actual dimensions, typography, borders, spacing and semantics when observable. Identify what people must compare and retain. |
-| Define — frame the judgment and constraints | State what the person must recognize or compare and which information relationships must hold. Determine applicable state predicates and their priority from the product/Contract; distinguish the product fact, current view state and operation feedback. Keep unresolved representation/anatomy choices open. |
-| Develop — construct and translate a recipe | Compare credible representations/anatomies for the defined judgment; develop the promising component/state compositions. Translate the chosen reference or authored property into exact token-bound selectors/variants in the actual stack, retaining semantic attributes and focus behavior. Produce a state strip and a composed task instance through Builder. |
-| Deliver — exercise and propagate | Inspect appearance, real inputs, content stress, pending/retry and return. Repair the shared recipe or return a design conflict to its owner; rerun the same state sequence. Propagate the validated recipe to other instances and retain exact implementation mapping, not only descriptive rules. |
+| **Discover** | Inventory consequential decisions and available controls. Inspect a reference or existing component in relevant states, including its actual dimensions, typography, borders, spacing and semantics when observable. Identify what people must compare and retain. |
+| **Develop** | Compare credible representations/anatomies for the defined judgment; develop the promising component/state compositions. Translate the chosen reference or authored property into exact token-bound selectors/variants in the actual stack, retaining semantic attributes and focus behavior. Produce a state strip and a composed task instance through Builder. |
 
 **Retained execution record:** Component → primitive/file/export → anatomy → state predicate/precedence → semantic attribute → token roles → concrete class/selector/variant → evidence checkpoint. Mark genuinely inapplicable states; do not produce eight fictional states merely to fill a table.
 
@@ -613,18 +607,16 @@ require a new renderer or dependency.
 
 ## Retrieve knowledge to resolve a concrete design question
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Actual repository/platform/stack, inherited assets, current component need and selected expression.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
 
-| Phase | Work and concrete hand-back |
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect the need and runtime | Read existing primitives/versions and isolate the missing task/state capability. Retrieve a small relevant candidate set with the task/platform query below; inspect real exports and examples rather than trusting package reputation. |
-| Define — establish fit criteria | Specify semantics, input/focus, content range, theming freedom and performance conditions the primitive must preserve. Separate necessary capability from attractive default styling. |
-| Develop — prove fit | Compare retention/customization/substitution where useful. Use the existing component-implementation owner to make one authorized proof-of-fit composition in the actual stack, with the consequential states and token treatment. |
-| Deliver — choose with evidence | Run stack and visible-behavior checks, record exact source/export/version and supported limits, and adopt or reject. If theming breaks behavior or required capability is absent, repair the adapter or compare another candidate and repeat the same checks. |
+| **Discover** | Read existing primitives/versions and isolate the missing task/state capability. Retrieve a small relevant candidate set with the task/platform query below; inspect real exports and examples rather than trusting package reputation. |
+| **Develop** | Compare retention/customization/substitution where useful. Use the existing component-implementation owner to make one authorized proof-of-fit composition in the actual stack, with the consequential states and token treatment. |
 
 **Retained execution record:** Need → query/source/version → required capability → observed proof-of-fit → chosen primitive/export/file → token/state adapter → rejected alternative/reason → checks/limits. Component implementation owns executable adoption; this reference owns discovery/comparison.
 

@@ -34,12 +34,12 @@ Load only for in-scope sensitive data/permissions, AI-assisted decisions or
 cross-role/channel handoffs. Product understanding owns authority and allowed
 operations; these methods communicate them without adding product capabilities.
 
-| Double Diamond phase | Work and hand-back |
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
 |---|---|
-| Discover | Trace who supplies information, who sees/acts on it, what the system actually knows and who owns the next step. Locate uncertainty or a consequential boundary. |
-| Define | State what users must understand and control before relying on this step; retain sourced limits and which outcome would make the design misleading. |
-| Develop | Compare the relevant evidence, explanation and control placement through the complete exchange below. Preserve the same permissions and consequences. |
-| Deliver | Walk an ordinary and a relevant failure/exception case from each affected perspective. Hand exact wording, visibility, state and next-step rules to the existing owners with evidence. |
+| **Discover** | Who supplies information, who sees or acts on it, what the system knows, and who owns the next step. |
+| **Develop** | Evidence, explanation and control placement compared through the complete exchange, permissions preserved. |
 
 ### Sensitive or consequential action
 
@@ -143,12 +143,12 @@ assistive access or degraded connectivity. [Quality floor](../03-verification/qu
 accessibility requirements; this method develops usable alternatives within them.
 Use actual supported platforms and conditions, not every imaginable environment.
 
-| Double Diamond phase | Work and hand-back |
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
 |---|---|
-| Discover | Identify audience capabilities, device/input, scripts/locales and network conditions supported by the brief. Inspect real content, browser/platform capabilities and where the task breaks. |
-| Define | Name the task relationship to preserve under each relevant condition and the competing costs. Separate known requirements from unsupported platform assumptions. |
-| Develop | Compare a layout/control/content adaptation on the same task. Resolve semantic structure, reading order, input alternatives and locale formatting with actual specimens. |
-| Deliver | Exercise applicable conditions and retain observed evidence separately from simulated or unavailable checks. Hand concrete adaptations to tokens/Specification and unverified capabilities to Review. |
+| **Discover** | Audience capabilities, device/input, scripts/locales and network conditions the brief supports. |
+| **Develop** | A layout/control/content adaptation on the same task, with semantic structure and input alternatives resolved. |
 
 ### Spatial and input adaptation
 
@@ -202,18 +202,16 @@ implementation pointers; a length stress fixture alone does not prove translatio
 
 ## Diagnose generic or mismatched expression
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** The actual output, raw product intent, intended language and available reference/evidence; not detector flags alone.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
 
-| Phase | Work and concrete hand-back |
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect symptoms without rationale | Inspect the whole frame and actual task. Locate what feels generic, noisy, dull or misleading; compare a relevant strong reference and distinguish observation from taste. |
-| Define — diagnose the owning weakness | Choose whether the problem is interpretation, proposition, composition, asset, interaction or execution. State a positive design aim and the strongest relationship to preserve; do not equate a hue or genre with failure. |
-| Develop — construct a replacement | Use the relevant craft method to develop a better relationship on the same content/task. Change the causal design choice rather than deleting a list of fashionable effects or inventing new product facts. |
-| Deliver — compare and return | Inspect before/after and the affected companion state. Retain the change only when the intended experience improves; otherwise revisit the diagnosis. Send evidence to the existing quality cycle, with no automatic restart based on aesthetic trait counts. |
+| **Discover** | Inspect the whole frame and actual task. Locate what feels generic, noisy, dull or misleading; compare a relevant strong reference and distinguish observation from taste. |
+| **Develop** | Use the relevant craft method to develop a better relationship on the same content/task. Change the causal design choice rather than deleting a list of fashionable effects or inventing new product facts. |
 
 **Retained execution record:** Symptom/location → evidence → owning diagnosis → positive aim → relationship preserved → attempted replacement → same-target comparison → disposition/remaining issue.
 
@@ -248,18 +246,16 @@ into a calm product merely to appear original. Fix the cause, not a forbidden hu
 
 ## Criticism that changes the design
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Original product source, actual target and scope, intended language after initial inspection, and permitted evidence tools.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
 
-| Phase | Work and concrete hand-back |
+| Phase | This domain's answer |
 |---|---|
-| Discover — establish the task and examine the work | Derive the task, supported actions/objects and required contexts from the original source before the target. Then inspect composition before designer rationale; attempt core task, recovery and return where runnable. Sample relevant viewports/states and record what was actually observed, judging visual craft from rendered actual-size views as [Quality bar](../03-verification/quality-floor.md) requires. An unrendered proposal has different evidence from a live interface. |
-| Define — frame the important gaps | Account for applicable craft areas and the seven quality dimensions. Separate objective defects, expert judgments and preferences; identify consequential user impact and the owning decision without allowing a total score to hide a weak area. |
-| Develop — direct an owning revision | Recommend specific interventions and evidence that would show improvement, protecting the strongest idea. Main reconciles against original facts and dispatches the responsible design/Builder work; Critic does not edit or select on the user’s behalf. |
-| Deliver — verify the changed target | Reinspect the same task/frame and relevant transfer after repair. Retain first and revised evidence, resolved/unresolved claims and acceptance limits. Return to diagnosis when the intervention fails; the existing quality/lifecycle rules own the bounded cycle and final decision. |
+| **Discover** | Derive the task, supported actions/objects and required contexts from the original source before the target. Then inspect composition before designer rationale; attempt core task, recovery and return where runnable. Sample relevant viewports/states and record what was actually observed, judging visual craft from rendered actual-size views as [Quality bar](../03-verification/quality-floor.md) requires. An unrendered proposal has different evidence from a live interface. |
+| **Develop** | Recommend specific interventions and evidence that would show improvement, protecting the strongest idea. Main reconciles against original facts and dispatches the responsible design/Builder work; Critic does not edit or select on the user’s behalf. |
 
 **Retained execution record:** Area/state/location → observed evidence → effect/severity → fact/judgment/preference → owning revision → preservation target → before/after result → pass/fail/unverified/scope reason. Numeric scoring uses the separately pinned rubric; inspection is not user research.
 
