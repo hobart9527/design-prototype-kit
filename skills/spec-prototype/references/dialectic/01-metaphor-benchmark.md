@@ -69,11 +69,13 @@ and its *mental model* (what certainty or speed it buys the operator), plus the
 transfer boundary — what the metaphor must not be read to mean.
 
 ## 3. Modern Digital Benchmark Calibration (5-Axis: Character)
-Pair each physical metaphor with authentic digital benchmarks — state what to adopt and what to refuse:
-- *Linear*: Adopt keyboard sovereignty, rapid status advancement; REFUSE low-friction dismissiveness of serious commits.
-- *Bloomberg Terminal*: Adopt high-density information throughput, multi-pane concurrency; REFUSE uncurated visual noise.
-- *Stripe / Apple*: Adopt progressive disclosure, trustworthy typographic hierarchy; REFUSE generic bloated card padding.
-- *GitHub PR*: Adopt diff collation, explicit approval lineage; REFUSE raw engineering jargon.
+
+Pair each physical metaphor with an authentic digital benchmark. The reference set —
+which products, the specific observable mechanism each is cited for, and what to
+refuse — is owned by [`../05-benchmarks/reference-set.md`](../05-benchmarks/reference-set.md);
+read it here rather than recalling a product name from memory. A benchmark cited
+without its mechanism is a name-drop, and the mechanism is the only part you can
+check your own build against.
 
 ## 4. Divergence Generator (Double Diamond: Develop)
 
@@ -108,6 +110,12 @@ the only gate, and it is checked on the two directions side by side.
    organising principle. A fusion that leaves the organising principle unchanged is
    a reskin and is recorded as such. The catalog is read for technique, never
    selected as an identity.
+
+   Calibrate the fused candidate against the reference set
+   ([`../05-benchmarks/reference-set.md`](../05-benchmarks/reference-set.md)): name
+   the observable mechanism you are borrowing and the one you are refusing. A
+   candidate justified by "like Linear" without naming Linear's mechanism has no
+   evidence behind it and does not pass this step.
 5. **Two-axis verdict — the gate.** Before building, compare each pair of
    candidates and name the **two or more axes** on which they differ. **Structure
    must be one of them**: the two candidates must not share an organising principle,

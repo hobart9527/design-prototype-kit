@@ -209,9 +209,14 @@ runnable write. Two additional method references are available on demand:
   primary interaction involves a language model, generative system, or agentic
   workflow — streaming output, uncertainty representation, human-in-the-loop
   confirmation, multi-turn spatial logic, agentic step visibility.
+- **`references/05-benchmarks/reference-set.md`**: load at Divergence Generator
+  step 4 and whenever a direction's rationale cites a real product. It owns the
+  reference set — the observable mechanism each benchmark is cited for — and is
+  the anchor for the upper bound that the craft floor does not cover.
 
 These files occupy the Minimal Reading List's fourth slot alongside visual-craft;
-load at most one of them per active stage frontier.
+load at most one of them per active stage frontier, except the reference set,
+which is read with the divergence step that needs it.
 
 Material, elevation, motion and typographic technique beyond those floors are
 contextual choices resolved from the product's evidence, never a global recipe.

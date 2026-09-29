@@ -413,6 +413,32 @@ def test_stage5_states_the_real_token_flow():
     assert "one-way" in stage5
 
 
+BENCHMARKS = REFS / "05-benchmarks/reference-set.md"
+
+
+def test_the_upper_bound_has_an_anchor_of_its_own():
+    """The floor catches slop; something must anchor what good looks like."""
+    text = _read(BENCHMARKS)
+    assert "anchor for the upper bound" in text
+    # A name is not evidence: every entry carries an observable mechanism.
+    assert "observable mechanism" in text
+    assert "costume failure" in text
+    # The reference set is links and mechanisms; images stay with the run.
+    assert "never committed" in text
+
+
+def test_the_benchmark_section_delegates_to_the_reference_set():
+    """One owner: the generator cites it rather than recalling product names."""
+    dialectic = _read(DIALECTIC)
+    assert "05-benchmarks/reference-set.md" in dialectic
+    assert "read it here rather than recalling a product name" in dialectic
+
+
+def test_the_reference_set_is_routed_from_the_skill():
+    skill = _read(SKILL / "SKILL.md")
+    assert "05-benchmarks/reference-set.md" in skill
+
+
 def test_the_token_export_template_uses_the_canonical_path():
     template = _read(SKILL / "templates/discussion.md")
     assert "prototype/dist/tokens.json" not in template, \
