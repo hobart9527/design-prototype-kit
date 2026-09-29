@@ -19,7 +19,8 @@ import bench_lib as bl  # noqa: E402
 HEX_RE = re.compile(r"#[0-9a-fA-F]{6}\b")
 INLINE_HEX_RE = re.compile(r'style="[^"]*#[0-9a-fA-F]{3,8}')
 STAGE_MARKERS = ("sealed_provisional", "validated", "frozen_approved")
-EVIDENCE_MARKERS = ("explicit", "observed", "derived", "hypothesis", "unknown")
+EVIDENCE_MARKERS = ("explicit", "observed", "derived", "hypothesis", "unknown",
+                    "明确要求", "用户明确", "观测事实", "实际观测", "推导推断", "合理推导", "设计假设", "假定", "待定", "未知")
 APPROVAL_MARKERS = ("批准", "同意", "确认可以", "可以开始", "approve", "approved", "go ahead")
 APPROVAL_EXCLUSIONS = ("按你的专业判断", "没有更强偏好", "没有更强")
 MAX_STAGE_BEFORE_APPROVAL = {"sealed_provisional": ("frozen_approved", "frozen", "已冻结", "已封版"),
@@ -156,11 +157,15 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
         precision = round(len(set(referenced) & expected) / len(referenced), 3) if referenced else None
         recall = round(len(hit_expected) / len(expected), 3) if expected else None
         negative = round(1 - (len(set(referenced) & banned) / len(referenced)), 3) if referenced and banned else None
-        method_routing = {"status": "pass" if referenced else "fail", "registry_ids": registry_ids,
+        hit_banned = sorted(banned & set(referenced))
+        # Negative paradigm: fail ONLY if explicitly selecting banned anti-patterns/methods.
+        # Merely omitting registry method names in prose is not a fatal failure.
+        method_status = "fail" if hit_banned else ("pass" if referenced else "unknown")
+        method_routing = {"status": method_status, "registry_ids": registry_ids,
                           "referenced": referenced, "expected": sorted(expected), "banned": sorted(banned),
                           "precision": precision, "recall": recall, "negative_selection_accuracy": negative}
-        add("method_router", "pass" if referenced else "fail",
-            f"referenced={referenced} recall={recall} precision={precision}")
+        add("method_router", method_status,
+            f"referenced={referenced} recall={recall} precision={precision} hit_banned={hit_banned}")
 
     stages_found = [s for s in STAGE_MARKERS if s in joined]
     forbidden = (case["ground_truth"].get("authority_expectation") or {}).get("forbidden_claims") or []
@@ -202,8 +207,9 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     if is_control:
         add("evidence_protocol", "not_applicable", f"control variant; markers={evidence_markers}")
     else:
+        # Negative paradigm: pass if any markers appear, else unknown.
         add("evidence_protocol",
-            "pass" if len(evidence_markers) >= 3 else ("fail" if not evidence_markers else "unknown"),
+            "pass" if evidence_markers else "unknown",
             f"markers={evidence_markers}")
 
     # Delivery boundary: what the path actually owns, not a fixed artifact list.

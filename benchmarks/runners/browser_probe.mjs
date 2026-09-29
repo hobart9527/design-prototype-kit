@@ -160,6 +160,11 @@ const CLICK_JS = (match, matchAction) => `(() => {
   scored.sort((a, b) => b.score - a.score);
   const el = scored[0].el;
   el.scrollIntoView({ block: "center" });
+  if (el.tagName.toLowerCase() === "select" && el.options && el.options.length > 1) {
+    el.selectedIndex = (el.selectedIndex + 1) % el.options.length;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
   el.click();
   return { clicked: (el.getAttribute("aria-label") || el.innerText || "").trim().slice(0, 90), tag: el.tagName.toLowerCase() };
 })()`;

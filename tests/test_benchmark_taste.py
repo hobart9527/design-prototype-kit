@@ -76,6 +76,18 @@ def test_slop_detector_flags_unthemed_browser_surfaces_and_missing_press_detent(
     assert "SLOP-018" in result["counts"], "a commit control with no :active detent is a finding"
 
 
+def test_slop_detector_does_not_flag_layout_panel_wrapping_cards(tmp_path):
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><body>
+    <div class="layout-panel">
+      <div class="header">Cluster Grid</div>
+      <div class="card">Item 1</div>
+      <div class="card">Item 2</div>
+    </div>
+    </body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-004" not in result["counts"], "layout panels wrapping sibling cards must not trigger nested card slop"
+
+
 def test_slop_detector_without_artifacts_is_blocked_not_passing(tmp_path):
     result = sd.detect(tmp_path)
     assert result["status"] == "blocked"

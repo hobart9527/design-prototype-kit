@@ -57,6 +57,19 @@ def test_touch_target_evidence_must_be_recorded():
     assert invalid["status"] == "unverified"
 
 
+def test_dialog_open_accepts_consequence_disclosure_fallback():
+    task = {"id": "drain", "required_outcomes": [{"id": "dialog", "check": "dialog_open"}]}
+    # Native dialog present
+    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
+        {"dialogs": 1, "text": "simple"}]})["status"] == "pass"
+    # No dialog, but explicit consequence disclosure in snapshot text
+    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
+        {"dialogs": 0, "text": "下线前核对：确认该节点流量已摘除，后果不可逆"}]})["status"] == "pass"
+    # Neither dialog nor consequence disclosure
+    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
+        {"dialogs": 0, "text": "some unrelated content"}]})["status"] == "fail"
+
+
 def test_verified_dimension_survives_an_unverifiable_sibling():
     task = SCROLL_TASK | {"required_outcomes": SCROLL_TASK["required_outcomes"] + [
         {"id": "touch", "check": "min_touch_target", "px": 44},

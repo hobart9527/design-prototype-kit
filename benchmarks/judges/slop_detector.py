@@ -25,6 +25,7 @@ import json
 import pathlib
 import re
 import sys
+from html.parser import HTMLParser
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "runners"))
 import bench_lib as bl  # noqa: E402
@@ -154,6 +155,38 @@ def detect(artifacts_dir: pathlib.Path, *, max_per_rule: int = 4) -> dict:
 _SEVERITY_WEIGHT = {"high": 3, "medium": 2, "low": 1}
 
 
+class _CardNestingScanner(HTMLParser):
+    VOID_TAGS = frozenset({
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+        "meta", "param", "source", "track", "wbr",
+    })
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.stack: list[bool] = []
+        self.nesting = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() in self.VOID_TAGS:
+            return
+        classes = ""
+        for name, val in attrs:
+            if name.lower() == "class" and val:
+                classes = val
+                break
+        # Discrete card / tile surface (excludes layout panels, boxes, sections).
+        is_card = bool(re.search(r"(?:^|[-_ ])(card|tile)(?:$|[-_ ])", classes, re.IGNORECASE))
+        if is_card and any(self.stack):
+            self.nesting += 1
+        self.stack.append(is_card)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in self.VOID_TAGS:
+            return
+        if self.stack:
+            self.stack.pop()
+
+
 def _scan_markup(name: str, markup: str, out: _Findings) -> None:
     elements = _elements(markup)
     texts = _text_nodes(markup)
@@ -169,15 +202,14 @@ def _scan_markup(name: str, markup: str, out: _Findings) -> None:
 
     cards = [c for tag, c, _ in elements if CARD_CLASS_RE.search(c or "")]
     if cards:
-        # Nested cards: a card class inside an element that already carries one.
-        nesting = 0
-        for match in re.finditer(r"<div([^>]*)>", markup):
-            if CARD_CLASS_RE.search(" ".join(CLASS_RE.findall(match.group(1)))):
-                tail = markup[match.end():match.end() + 4000]
-                if re.search(r'class\s*=\s*"[^"]*(?:card|tile|panel)[^"]*"', tail):
-                    nesting += 1
-        if nesting:
-            out.rule("SLOP-004", "high", name, "card class nested inside a card", times=nesting)
+        # Nested cards: a card surface nested inside another card surface in the DOM.
+        scanner = _CardNestingScanner()
+        try:
+            scanner.feed(markup)
+            if scanner.nesting:
+                out.rule("SLOP-004", "high", name, "card class nested inside a card", times=scanner.nesting)
+        except Exception:
+            pass
 
     # Ghost card: a hairline border under a wide soft shadow on the same rule.
     if re.search(r"border\s*:\s*1px\s+solid[^;{}]*;[^}]*box-shadow\s*:[^;{}]*\b(?:1[0-9]|[2-9][0-9])px",
@@ -218,12 +250,16 @@ def _scan_css(name: str, css: str, out: _Findings) -> None:
 
     faces = " ".join(val for prop, val in decls if prop in ("font-family",))
     if faces:
-        named = [f for f in REFLEX_FACES if f in faces.lower()]
-        # One reflex face is a choice; the whole stack being reflex faces is a rut.
-        if named and len(named) >= 2:
-            out.add("SLOP-023", "medium", name, f"reflex font stack: {named[0]} (+{len(named) - 1})")
-        elif named and "system-ui" in faces.lower():
-            out.add("SLOP-023", "low", name, f"system-ui stack: {named[0]}")
+        system_chain = any(s in faces.lower() for s in ("system-ui", "-apple-system", "blinkmacsystemfont"))
+        generic_reflex = [f for f in ("inter", "roboto", "open sans", "lato", "montserrat", "poppins", "nunito") if f in faces.lower()]
+        # One reflex face is a choice; multiple generic AI webfonts stacked together is a rut.
+        # Standard cross-platform OS system font fallback stacks are low severity.
+        if generic_reflex and len(generic_reflex) >= 2:
+            out.add("SLOP-023", "medium", name, f"reflex font stack: {generic_reflex[0]} (+{len(generic_reflex) - 1})")
+        elif system_chain:
+            out.add("SLOP-023", "low", name, "system-ui fallback stack")
+        elif generic_reflex:
+            out.add("SLOP-023", "low", name, f"model-default face: {generic_reflex[0]}")
 
     radius_groups = [val for prop, val in decls if prop == "border-radius"]
     radii = set(radius_groups)

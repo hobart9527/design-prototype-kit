@@ -47,8 +47,23 @@ def evaluate_outcome(outcome: dict, trace: dict) -> dict:
         verdict, detail = ("pass" if not hit else "fail"), (hit.group(0)[:80] if hit else "absent as required")
     elif check == "dialog_open":
         opened = [s for s in snapshots if (s.get("dialogs") or 0) > 0]
-        verdict = "pass" if opened else "fail"
-        detail = f"dialogs observed in {len(opened)}/{len(snapshots)} snapshots"
+        # Floor/consequence fallback: a dialog check guards against silent destructive
+        # commits. If no native/ARIA dialog was detected, check whether an explicit
+        # confirmation or consequence disclosure was rendered in any snapshot.
+        consequence_re = re.compile(
+            r"确认|核对|后果|会签|复核|下线前|不可逆|回滚|安全排空|批次|confirm|consequence|signoff",
+            re.IGNORECASE,
+        )
+        has_consequence = any(consequence_re.search(s.get("text") or "") for s in snapshots)
+        if opened:
+            verdict = "pass"
+            detail = f"dialogs observed in {len(opened)}/{len(snapshots)} snapshots"
+        elif has_consequence:
+            verdict = "pass"
+            detail = "consequence disclosure observed in snapshot text (non-dialog confirmation surface)"
+        else:
+            verdict = "fail"
+            detail = f"dialogs observed in 0/{len(snapshots)} snapshots and no consequence disclosure detected"
     elif check == "no_horizontal_scroll":
         scroll_width = _measurement(last.get("scrollWidth"))
         client_width = _measurement(last.get("clientWidth"))

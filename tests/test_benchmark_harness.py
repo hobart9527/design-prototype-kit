@@ -230,6 +230,18 @@ def test_session_prompt_carries_no_hidden_case_inputs():
         assert forbidden not in prompt
 
 
+def test_evidence_protocol_accepts_chinese_markers(tmp_path):
+    root = tmp_path / "artifacts"
+    root.mkdir()
+    (root / "discussion.md").write_text("# 决策记录\n用户明确要求集群下线前必须二次会签。\n实际观测错误率超标。\n", encoding="utf-8")
+    (root / "index.html").write_text("<html><body>Test</body></html>", encoding="utf-8")
+    (root / "tokens.css").write_text(":root {}", encoding="utf-8")
+    case = bl.load_case("incident-commander")
+    result = runtime_judge.judge(case, root, variant="candidate_skill")
+    check = next(c for c in result["checks"] if c["id"] == "evidence_protocol")
+    assert check["status"] == "pass"
+
+
 def test_aggregate_report_blocks_promotion_on_a_hard_gate(tmp_path):
     run_dir = tmp_path / "c" / "candidate_skill" / "run1"
     run_dir.mkdir(parents=True)
