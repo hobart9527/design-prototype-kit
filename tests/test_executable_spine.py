@@ -249,3 +249,54 @@ def test_stage4_refines_through_operators():
     audit = _read(AUDIT)
     assert "refine operator" in audit
     assert "One\noperator per pass" in audit or "One operator per pass" in audit
+
+# -- P5: governance slimmed, spine untouched -----------------------------------
+
+VISUAL = REFS / "02-craft-methods/visual-craft.md"
+
+
+def test_the_double_diamond_is_defined_once():
+    """Seven copies of the same four phases is not seven times the rigour."""
+    methods = _read(METHODS)
+    assert "The Double Diamond mother table" in methods
+    for phase in ("Discover", "Define", "Develop", "Deliver"):
+        assert f"| {phase} |" in methods, f"the mother table omits {phase}"
+
+    visual = _read(VISUAL)
+    assert "specialised to this domain" in visual
+    assert visual.count("specialised to this domain") == 7, \
+        "each visual-craft section keeps one domain answer"
+    assert "Specialized Double Diamond workflow" not in visual, \
+        "the seven duplicated phase tables must stay collapsed"
+
+
+def test_domain_sections_answer_only_their_own_questions():
+    """A specialised section keeps Discover/Develop; Define and Deliver are the mother's."""
+    visual = _read(VISUAL)
+    assert "This domain's answer" in visual
+    assert visual.count("| Discover |") == 7
+    assert visual.count("| Develop |") == 7
+    assert visual.count("| Define |") == 0
+    assert visual.count("| Deliver |") == 0
+
+
+def test_the_kernel_delegates_the_legacy_inventory():
+    """The always-loaded kernel states the prohibition; the owner keeps the list."""
+    kernel = _read(KERNEL)
+    assert "04-governance/artifact-lifecycle.md" in kernel
+    assert "contracts/surface-maps/m1.md" not in kernel, \
+        "the retirement inventory belongs to its owner, not the resident kernel"
+
+
+def test_skill_refusal_list_points_at_the_owner():
+    skill = _read(SKILL / "SKILL.md")
+    assert "Refusal List" in skill
+    assert "artifact-lifecycle.md" in skill
+    assert "contracts/surface-maps/m1.md" not in skill, \
+        "the refusal list cites the owner rather than restating the inventory"
+
+
+def test_stage1_cites_the_retirement_owner():
+    stage1 = _read(STAGE1)
+    assert "artifact-lifecycle.md" in stage1
+    assert "contracts/surface-maps/m1.md" not in stage1

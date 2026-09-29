@@ -45,10 +45,10 @@ prototype/
 └── experiments/<slice>/anchor/index.html   # 【唯一物化源】高保真、可交互、可独立运行的现代原型
 ```
 
-**Banned in Primary Delivery**:
-- NEVER author legacy 6-piece files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`).
-- NEVER author a duplicate `prototype/product.md` — all product facts and dialectic context belong in `prototype/discussion.md`.
-- NEVER generate the legacy fragmented contract set in primary delivery. `assemble_envelope.py` remains a compatibility/benchmark helper only; it is not an authoring or dispatch stage.
+**Banned in Primary Delivery**: never author the legacy fragmented contract set or a
+duplicate `prototype/product.md`, and never treat `assemble_envelope.py` as an
+authoring or dispatch stage. The retirement inventory and migration rules are owned by
+[`../04-governance/artifact-lifecycle.md`](../04-governance/artifact-lifecycle.md).
 
 Keep `prototype/discussion.md` as the concise human-readable decision and evidence
 record. For a formal prototype, use `google-design-md/v2` frontmatter and semantic

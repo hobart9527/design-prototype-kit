@@ -155,11 +155,15 @@ prototype/
 ```
 
 **Refusal List (绝对拒止)**:
-1. NEVER author legacy 6-piece contract files (`contracts/foundation/f1.md`, `contracts/surface-maps/m1.md`, `contracts/tokens/t1.md`, `contracts/slices/.../c1.md`, `specifications/.../r1.md`).
-2. NEVER author a duplicate `prototype/product.md` — all product facts and dialectic context belong in `prototype/discussion.md`.
-3. NEVER generate the legacy fragmented contract set in primary delivery. `assemble_envelope.py` is a compatibility/benchmark helper, not an authoring or dispatch stage; canonical Spec IR and the directly authored anchor remain authoritative.
-4. NEVER author duplicate or nested review portals (e.g. under `experiments/.../prototype/review-portal.html`). The only valid portal location is `prototype/review-portal.html`.
-5. NEVER loop repeatedly on visual guesswork or trial-and-error shell patches. Read the structured `diagnostics_summary` from `capture.mjs` directly for one-shot rendering and craft convergence.
+1. NEVER author the legacy fragmented contract set or a duplicate `prototype/product.md`.
+   The exact retirement list, its canonical paths and the migration rules are owned by
+   [`references/04-governance/artifact-lifecycle.md`](references/04-governance/artifact-lifecycle.md);
+   all product facts and dialectic context belong in `prototype/discussion.md`.
+2. NEVER generate the legacy fragmented contract set in primary delivery. `assemble_envelope.py`
+   is a compatibility/benchmark helper, not an authoring or dispatch stage; canonical Spec IR
+   and the directly authored anchor remain authoritative.
+3. NEVER author duplicate or nested review portals (e.g. under `experiments/.../prototype/review-portal.html`). The only valid portal location is `prototype/review-portal.html`.
+4. NEVER loop repeatedly on visual guesswork or trial-and-error shell patches. Read the structured `diagnostics_summary` from `capture.mjs` directly for one-shot rendering and craft convergence.
 
 The discussion record also carries the two blocks that make a delivery evaluable:
 **Success metrics** (how the work will be judged — product outcomes with an

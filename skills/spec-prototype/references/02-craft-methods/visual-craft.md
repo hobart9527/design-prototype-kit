@@ -44,18 +44,16 @@ Sections in this pillar:
 
 ## From insight to authored expression
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Product facts, audience/context evidence, inherited identity and the current opportunity.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
 
-| Phase | Work and concrete hand-back |
+| Phase | This domain's answer |
 |---|---|
-| Discover — open the problem | Inspect the actual subject, audience moments and references. Explore possible emotional or perceptual needs before naming a material; separate observed needs from imagined scenes. Retain the evidence and competing interpretations. |
-| Define — choose the challenge | State the intended change in perception/use, the value it protects and the trade-off. Select a suitable creative lens; specify what must remain familiar and which product capabilities cannot change. |
-| Develop — construct expressions | Develop materially different answers to that challenge. For material work choose material+environment, then derive lighting, layering, edges and finish; for another lens resolve equivalent visible/behavioral relationships. Compose real content and a contrasting task, not a mood-word menu. |
-| Deliver — test and hand back | Inspect the rendered proposals before explanation; compare effect, use and costs. Refine the strongest relationship and recommend through the existing decision. Hand selected rules to color/type/composition/component work; return to Define if the metaphor depends on unsupported product meaning. |
+| **Discover** | The metaphor's material and its contrasting-task evidence |
+| **Develop** | Material + environment chosen, then lighting / layering / edges / finish derived from it. |
 
 **Retained execution record:** In the existing study/Foundation retain: source → challenge → lens → visible rule → applicable surface/state → resolved property/value or implementation freedom → comparison evidence. Material rules include light direction/softness, surface layers, edge roles and finish; include only properties the chosen language uses.
 
@@ -246,18 +244,17 @@ When a treatment is unsettled, compare controlled alternatives on the same
 content and task. Retain the selected relationship, exact values, product reason,
 scope and transfer evidence in the existing design artifacts.
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Product emotional/operational intent, inherited palette/theme scope, actual content and a representative composition.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
-| Phase | Work and concrete hand-back |
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect color conditions | Inspect identity/reference images, light conditions, adjacent surfaces, image colors and current state meanings. Consider whether dullness comes from field lightness, hue relationships, chroma, area or competing emphasis; do not assume the accent hue is the cause. |
-| Define — set the color problem | State the intended whole-frame feeling and current decision emphasis. Identify stable semantic meanings, theme scope and the relationship to explore; define visual-fit and readability evidence before palette generation. |
-| Develop — build palettes in context | Choose and vary a suitable hue relationship, derive focal/support/rest colors and lighter/stronger role variants, then map canvas/text/action/selection/status. Render controlled alternatives on the same content/layout, plus a consequential state; use the color-development method below. |
-| Deliver — verify and extract | Compare actual page color and state meaning, measure real foreground/background pairs, revise the responsible role/ramp and rerender. Extract exact selected runtime-compatible tokens and their component uses; transfer to a second surface before the existing language decision. |
+| **Discover** | The colour conditions actually inspected (light, adjacency, image colour, state meaning) |
+| **Develop** | A varied hue relationship mapped to canvas / text / action / selection / status. |
 
 **Retained execution record:** Retain role → exact value → paired background/foreground → meaning/state → intended emphasis → component selector/use → measured/rendered evidence. Derived colors must resolve in the actual runtime. A palette file without its composed pairings is not the completed output.
 
@@ -393,18 +390,17 @@ table explains the system; the rendered relationships demonstrate its quality.
 
 ## Typography as voice and reading structure
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Real multilingual content/roles, available fonts, inherited language and target reading/scan tasks.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
-| Phase | Work and concrete hand-back |
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect reading conditions | Read the actual text and font specimens; inspect script coverage, length, numerals, current hierarchy and device conditions. Identify whether the issue is voice, scan order, sustained reading or fit. |
-| Define — choose the typographic challenge | Specify intended voice and reading priority, role distinctions and constraints. Choose the relationship worth varying while preserving settled palette/content. |
-| Develop — compose and resolve specimens | Develop credible role/family relationships with actual text. Tune size, weight, width, leading, measure and tracking together; inspect loaded glyphs and compare layouts at actual scale. |
-| Deliver — stress and hand off | Read wide/narrow/enlarged and dense companion specimens. Refine the responsible role rather than shrinking everything; retain exact family/source/fallback and metric values, screenshots and limitations for tokens/Builder. |
+| **Discover** | The reading conditions read off real text and real specimens |
+| **Develop** | Role and family relationships tuned against actual text at actual scale. |
 
 **Retained execution record:** Role → actual font/source/fallback → size/weight/leading/tracking/numeral settings → measure/wrap behavior → scope → specimen/runtime evidence.
 
@@ -570,21 +566,20 @@ aggregate visual score cannot compensate for a weak applicable typography facet.
 
 ## Compose attention, relationships and rhythm
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
+
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
+|---|---|
+| **Discover** | The content relationships that must stay adjacent |
+| **Develop** | Materially different spatial arrangements resolved on the same content. |
 
 **Enter with:** Real content priorities and ranges, current language and viewport.
 Use retained page responsibilities from the Surface Topology when available; an
 early expression probe may use a provisional frame/task brief without freezing
 page boundaries.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
-
-| Phase | Work and concrete hand-back |
-|---|---|
-| Discover — inspect content relationships | Identify what must be compared, read, acted on and revisited; inspect visual mass and current grouping without assuming a grid. |
-| Define — choose the spatial problem | State the intended reading/decision path and which relationships must stay adjacent. Name the current conflict and a criterion for useful density or expressive balance. |
-| Develop — construct relationship layouts | Sketch materially different spatial arrangements on the same content. Resolve columns, alignment, widths, spacing rhythm, anchors and deliberate exceptions; Builder renders the credible candidates. |
-| Deliver — recompose and specify | Inspect actual size, intermediate/narrow widths, long content and enlarged text. Revise grouping or geometry at its cause. Retain concrete grid/width/spacing constraints and responsive transformations with evidence for the selected composition. |
 
 **Retained execution record:** Content region → priority/adjacency → grid/flow placement → min/max/fluid sizing → role spacing/alignment → breakpoint or content-fit transition → overflow/disclosure rule → rendered evidence.
 
@@ -646,18 +641,17 @@ exception, mobile transformation and trade-off in the existing design artifacts.
 
 ## Art direction for images and illustration
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Actual subject/content, truthful sources, available authorized asset tools, frame/role and intended visual language.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
-| Phase | Work and concrete hand-back |
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect subjects and assets | Inventory real images and missing needs; inspect quality, aspect, focal detail, rights/source and series variation. Clarify what must be depicted accurately and what can be illustrative. |
-| Define — frame the image brief | Set the communicative role, required subject truth, slot/content constraints and intended effect. Distinguish inherited art-direction rules from open hypotheses about medium, viewpoint, lighting, palette relation and crop. Define credibility and expressive-fit checks before choosing those treatments. |
-| Develop — acquire and compose candidates | Develop credible treatments for the open hypotheses and source or generate candidates with the available permitted tools. Build an actual-size image/series comparison in its UI slots, including narrow crops and mixed-content conditions. Improve the source/treatment rather than masking a weak image behind effects. |
-| Deliver — select and integrate | Inspect subject recognition, visual coherence, crop, alt/fallback and UI attention. Refine or replace failed assets, then retain exact selected paths, crop rules and source metadata; verify key secondary surfaces and missing-image behavior when applicable. |
+| **Discover** | The real assets inventoried and the needs they leave open |
+| **Develop** | Credible treatments built at actual size in their UI slots. |
 
 **Retained execution record:** Asset role → exact path/URL/source → subject/truth status → art-direction parameters → aspect/focal crop/object-fit → alt/decorative treatment → fallback → component use → actual render evidence.
 
@@ -716,18 +710,17 @@ rules, actual rendered evidence and unresolved asset quality in existing records
 
 ## Entry composition and meaningful imagery
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** The actual entry surface job, current task/IA constraints, product proposition, available assets and viewport.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
-| Phase | Work and concrete hand-back |
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect the arrival | Determine why people arrive and what they expect immediately. Inspect actual content and credible references; consider work, orientation, reading, persuasion or experience without assigning an entry type from industry. |
-| Define — choose the opening duty | State the first recognition, decision and next action. Decide what earns initial visual weight and what must remain accessible. Establish asset feasibility and the continuity expected in the next task. |
-| Develop — compose plausible structures | Use the type-, subject-, relationship- or experience-led approaches below to construct relevant alternatives. Specify anchors, reading sequence, asset crop and action placement with actual content; Builder implements inspectable representative frames. |
-| Deliver — verify the declared structure | Inspect first glance, deliberate reading and next action at wide/narrow sizes. Refine the weak relationship; retain the chosen structure, asset, type/space roles and rendering evidence. Builder must not silently replace it with a cheaper or more dramatic opening. |
+| **Discover** | Why people arrive and what they expect immediately |
+| **Develop** | Type-, subject-, relationship- or experience-led structures with actual content. |
 
 **Retained execution record:** Entry job → primary/secondary anchors → reading order → named action → asset source/subject/crop/fallback → role-based composition → narrow transformation → next-task continuity → screenshots and unresolved claims. Store in existing Foundation/Specification; no parallel theme authority.
 
@@ -768,18 +761,17 @@ with an ordinary, competent version to see what the expressive choice contribute
 
 ## Iconography that explains actions
 
-### Specialized Double Diamond workflow
+### Double Diamond, specialised to this domain
 
 **Enter with:** Actual actions/object meanings, existing icon assets/family, adjacent text and required states/sizes.
 
-Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md).
 
-| Phase | Work and concrete hand-back |
+Follow the shared execution/return rules in [the method library](../01-foundations/design-methods.md), which owns the four phases, their order and their hand-back. This section answers only its own two questions:
+
+| Phase | This domain's answer |
 |---|---|
-| Discover — inspect meaning and sources | Inventory intended concepts and easily confused neighbors. Inspect available families and real glyph exports or vector sources; distinguish navigation/actions, brand symbols and user content. |
-| Define — set recognition and family rules | Choose which controls need visible labels and which familiar symbols can stand alone. Define optical weight, detail, perspective and selected-state relationship appropriate to the language. |
-| Develop — build a contextual glyph board | Shortlist meaningful candidates for unresolved concepts. Render them beside actual labels and neighboring actions at intended sizes, including selected/disabled appearances where relevant. Adjust optical sizing/centering and retain exact glyph sources. |
-| Deliver — verify and map instances | Check recognition/ambiguity through the available expert or user evidence, inspect missing glyphs, keyboard/touch names and actual focus/hit regions. Replace the ambiguous glyph or revise family rules, rerender, then map every used action to its exact implementation. |
+| **Discover** | The intended concepts and their easily confused neighbours |
+| **Develop** | A contextual glyph board rendered beside real labels at intended sizes. |
 
 **Retained execution record:** Action/meaning → glyph ID → library version/import or SVG path → viewBox/optical size/offset/stroke → color role → visible/accessibility label → state treatment → file/instance → board/input evidence.
 

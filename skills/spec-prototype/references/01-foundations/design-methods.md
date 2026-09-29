@@ -4,6 +4,25 @@
 
 This reference serves as the **Craft Library** under the Nine Pillars ontology. Craft methods provide generative rigor and falsification techniques, but **techniques never masquerade as universal quality floors**. Experience invariants govern quality; techniques supply candidate implementations.
 
+### The Double Diamond mother table
+
+Every craft reference that works a domain runs the same four phases. They are
+defined once, here; a domain section states only how *its* domain answers the
+Discover and Develop questions, and never restates the phases.
+
+| Phase | The work | The hand-back |
+|---|---|---|
+| **Discover** | Inspect the actual subject, conditions and references for this domain. Separate what was observed from what was imagined, and retain competing interpretations. | The evidence, and the specific condition the domain must answer |
+| **Define** | State the intended change, the value it protects, and the trade-off. Name what must remain familiar and which product capabilities cannot change. | The challenge, the lens chosen, and the criteria for judging it |
+| **Develop** | Build materially different answers to that challenge, on real content and a contrasting task — never a mood-word menu. | The candidates, and the visible/behavioural rule each one rests on |
+| **Deliver** | Inspect the rendered proposals before explaining them; compare effect, use and cost. Refine the strongest relationship. | The selected rule, its resolved values, and the evidence for it |
+
+The phases are a discipline, not a sequence to complete: a domain that enters
+with the challenge already settled may begin at Develop, and one that finds its
+Develop candidates all failing returns to Define. What is not permitted is
+skipping Discover's *evidence* — a candidate built on an unexamined assumption is
+a preference, not a proposal.
+
 ---
 
 ## 1. The Nine Pillars Canonical Ontology (九柱设计本体)
