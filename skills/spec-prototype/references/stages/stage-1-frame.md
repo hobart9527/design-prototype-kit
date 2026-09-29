@@ -137,6 +137,29 @@ tier from these parser-compatible headings:
 - **Primary**: `surface/<id>`
 ```
 
+The state model and resilience sections have a machine form too, and a record that
+reaches Stage 5 without it compiles to `intent_spec` and is refused at the
+`execution_spec` boundary. `compile_spec_ir.py` is the sole parsing authority; the
+forms below are its admission rules, not a second specification:
+
+```markdown
+## 3. State Model
+- `domain/<id>` (业务状态名称): 一句话语义描述
+- `interaction/<id>` (交互状态名称): 一句话语义描述
+- `data/<id>` (数据场景名称): 一句话语义描述
+
+## 7. Break Protocol
+- `stress/<id>` | Vector: `破坏向量` | Expected: `期望恢复行为`
+
+## Design Invariants
+- `inv/<id>` | 断言 | severity: blocking | verification: computed_style
+```
+
+Each bullet is admitted only when it starts with the list marker; a token named
+inside a prose line is a mention, not a declaration. A `stress/` bullet needs both
+`Vector:` and `Expected:` — a fixture with one of the two is not a usable fixture
+and is dropped. `severity` defaults to `advisory` and `verification` to `manual`.
+
 ## Exit
 
 A design brief answers the current question and clearly separates facts, decisions,

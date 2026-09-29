@@ -731,23 +731,42 @@ def parse_domain_states(text: str) -> List[Dict[str, Any]]:
 
 
 def parse_interaction_states(text: str) -> List[str]:
-    """Extract authored interaction states declared as `interaction/<id>` tokens."""
+    """Extract authored interaction states declared as `interaction/<id>` bullets.
+
+    Admission is bullet-anchored: the token must be the first thing after the
+    list marker. A token that merely appears inside a prose line is a mention,
+    not a declaration, and admitting it would let commentary invent a state.
+    Further tokens on the same bullet are admitted, so the authored
+    `- `interaction/idle`, `interaction/inspecting`` form still reads.
+    """
     out: List[str] = []
     seen: set = set()
-    for m in re.finditer(r"[`*]*(interaction/[a-z0-9][a-z0-9_-]*)[`*]*", text, re.IGNORECASE):
-        tok = m.group(1).lower()
-        if tok in seen:
+    for line in text.splitlines():
+        if not re.match(r"^\s*[-*]\s*[`*]*(?:interaction/|domain/|data/|stress/)",
+                        line, re.IGNORECASE):
             continue
-        seen.add(tok)
-        out.append(tok)
+        for m in re.finditer(r"[`*]*(interaction/[a-z0-9][a-z0-9_-]*)[`*]*", line, re.IGNORECASE):
+            tok = m.group(1).lower()
+            if tok in seen:
+                continue
+            seen.add(tok)
+            out.append(tok)
     return out
 
 
 def parse_data_scenarios(text: str) -> List[Dict[str, Any]]:
-    """Extract authored data scenarios declared as `data/<id>` bullets."""
+    """Extract authored data scenarios declared as `data/<id>` bullets.
+
+    Bullet-anchored for the same reason as `parse_interaction_states`: only a
+    declared bullet is a scenario, and a token named in prose is not one.
+    """
     out: List[Dict[str, Any]] = []
     seen: set = set()
-    for m in re.finditer(r"[`*]*(data/[a-z0-9][a-z0-9_-]*)[`*]*([^\n]*)", text, re.IGNORECASE):
+    for line in text.splitlines():
+        m = re.match(r"^\s*[-*]\s*[`*]*(data/[a-z0-9][a-z0-9_-]*)[`*]*(.*)$",
+                     line, re.IGNORECASE)
+        if not m:
+            continue
         tok = m.group(1).lower()
         if tok in seen:
             continue
@@ -801,6 +820,11 @@ def parse_required_states(text: str) -> List[str]:
 
     Admitted from: an explicit `Required States` line (or `Mandatory Test States`),
     or any standalone backticked `state-*` token. Nothing is derived or defaulted.
+
+    The label is anchored at line start. The contract prose names the label
+    without one ("required states — from that block"), and an unanchored search
+    turns that sentence into a declaration whose payload is the rest of the
+    sentence, admitting ordinary English words as test states.
     """
     out: List[str] = []
     seen: set = set()
@@ -811,7 +835,12 @@ def parse_required_states(text: str) -> List[str]:
             seen.add(clean)
             out.append(clean)
 
-    for m in re.finditer(r"(?:Required[ \t]+States?|Mandatory[ \t]+Test[ \t]+States?|强制测试状态)[ \t]*[:：]?[ \t]*([^\n]*)", text, re.IGNORECASE):
+    label = re.compile(r"^\s*[-*]?\s*[`*]*(?:Required[ \t]+States?|Mandatory[ \t]+Test[ \t]+States?|强制测试状态)[`*]*[ \t]*[:：]?[ \t]*(.*)$",
+                       re.IGNORECASE)
+    for line in text.splitlines():
+        m = label.match(line)
+        if not m:
+            continue
         for tok in re.findall(r"[`*]?([a-z0-9][a-z0-9_-]*)[`*]?", m.group(1), re.IGNORECASE):
             _add(tok)
     for tok in re.findall(r"[`*]?(state-[a-z0-9][a-z0-9_-]*)[`*]?", text, re.IGNORECASE):

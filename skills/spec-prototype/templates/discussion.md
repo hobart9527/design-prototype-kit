@@ -11,6 +11,15 @@ another. A record with no slice block is read as one implicit slice (legacy
 form). Add a slice by appending a block; never widen an existing block to cover
 a second slice.
 
+**Machine forms.** The record is also the compiler's input, and four lists have a
+parse form the prose does not: `domain/<id>` (名称): 描述, `interaction/<id>`, `data/<id>`,
+and `stress/<id>` | Vector: … | Expected: …; plus `inv/<id>` | 断言 | severity: … |
+verification: …. Each is admitted only from a bullet that starts with it, and a
+`stress/` bullet without both `Vector:` and `Expected:` is dropped. The rules and
+the invariants in this template are the shipped examples; replace their content,
+keep their shape. A slice missing any of the four state classes compiles to
+`intent_spec` and is refused at the Stage 5 `execution_spec` boundary.
+
 ## Resume
 
 - Execution boundary: active
@@ -242,6 +251,13 @@ until a divergence is actually being run.
   - `domain/nominal` (常规态): 全部节点健康
   - `domain/avalanche-alert` (雪崩告警): 异常节点聚集扩散
   - `domain/quarantined` (已隔离): 机器安全下线
+- **Interaction States**:
+  - `interaction/idle` (待命): 无焦点动作，等待操作者命中。
+  - `interaction/inspecting` (检视中): 命中节点、抽屉展开、等待确认。
+  - `interaction/committing` (提交中): 不可逆动作已触发，等待结果回执。
+- **Data Scenarios**:
+  - `data/cold-cache` (冷缓存): 首次加载、缓存未命中、指标抖动。
+  - `data/burst-traffic` (流量峰值): 遭遇 10x 流量峰值时的批处理渲染。
 - **Action Verb Lifecycle (必须包含破坏性操作的确认与回滚出口)**:
   ```contract:actions
   - id: action-space
@@ -268,15 +284,15 @@ until a divergence is actually being run.
 - **Decisive Exchange 3-Frame Verification**: 触发 (Frame 1: 80ms) -> 提交 (Frame 2: 150ms) -> 结果 (Frame 3: 持久)
 
 ### Verifiable Invariants & Break Protocol (支柱 9: 韧性与证伪门禁)
-- **Verifiable Design Invariants**:
-  - `[inv/wcag-contrast]` (`blocking` · `dom_computed`): 核心文本必须满足 WCAG 2.2 AA (>= 4.5:1)，操作按钮 >= 3.0:1
-  - `[inv/token-inheritance]` (`blocking` · `dom_computed`): 100% 继承 `prototype/shared/tokens.css`，0 内联 hex
-  - `[inv/action-safety]` (`blocking` · `dom_event`): 高危排空必须弹出 `<dialog>` 二次确认；模态内必须确保双人签发可被快速/确定性解锁；提交后 DOM 必须渲染明确的状态反馈（含 "已排空" 或 "排空中"）；且必须持久展示可触达的 "撤回 / 撤销 / 回滚" 动作按钮。
-  - `[inv/discoverable-critical-path]` (`blocking` · `dom_query`): 关键路径上的控制不得仅以 `title` 提示、悬停浮层或散文说明其前置条件。每一步执行后，下一步的触发点必须在同一快照中直接可点；前置未满足时，必须就地呈现解锁入口（可点的席位切换、可点的补全动作），而不是渲染一个静止的禁用按钮。
-- **The Break Protocol**:
-  - `[stress/unbreakable-string]`: 超长节点标识与微服务名自动截断，禁止破坏横向布局
-  - `[stress/zero-data]`: 0 异常机器时展示常态自愈健康指示，严禁白屏
-  - `[stress/320px-fold]`: 320px / 390px 视口单列自然流动，全容器 box-sizing: border-box，严格消除横向溢出滚动条（scrollWidth == clientWidth）
+- **Verifiable Design Invariants** (`inv/<id>` | 断言 | `severity:` | `verification:`，机器权威来源，下方散文不得另立 ID):
+  - `inv/wcag-contrast` | 核心文本必须满足 WCAG 2.2 AA (>= 4.5:1)，操作按钮 >= 3.0:1 | severity: blocking | verification: computed_style
+  - `inv/token-inheritance` | 100% 继承 `prototype/shared/tokens.css`，0 内联 hex | severity: blocking | verification: computed_style
+  - `inv/action-safety` | 高危排空必须弹出 `<dialog>` 二次确认；模态内必须确保双人签发可被快速/确定性解锁；提交后 DOM 必须渲染明确的状态反馈（含 "已排空" 或 "排空中"）；且必须持久展示可触达的 "撤回 / 撤销 / 回滚" 动作按钮 | severity: blocking | verification: dom_query
+  - `inv/discoverable-critical-path` | 关键路径上的控制不得仅以 `title` 提示、悬停浮层或散文说明其前置条件；每一步执行后，下一步的触发点必须在同一快照中直接可点，前置未满足时必须就地呈现解锁入口而不是渲染静止禁用按钮 | severity: blocking | verification: dom_query
+- **The Break Protocol** (`stress/<id>` | `Vector:` 破坏向量 | `Expected:` 期望恢复行为，两者缺一不构成可用夹具):
+  - `stress/unbreakable-string` | Vector: 超长节点标识与微服务名 | Expected: 自动截断，禁止破坏横向布局
+  - `stress/zero-data` | Vector: 0 异常机器空状态 | Expected: 展示常态自愈健康指示，严禁白屏
+  - `stress/320px-fold` | Vector: 320px / 390px 视口 | Expected: 单列自然流动，全容器 box-sizing: border-box，严格消除横向溢出滚动条（scrollWidth == clientWidth）
 
 ### Stage 2: Proposition & Probe (立 - 核心主交互物化)
 - **Hero Screen Anchor Target**: `prototype/experiments/<slice_id>/anchor/index.html` (or probe path)

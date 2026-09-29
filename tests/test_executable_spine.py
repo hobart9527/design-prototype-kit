@@ -115,6 +115,9 @@ def test_stage2_executes_the_generator_before_authoring():
     assert "divergence judge" in stage2, \
         "the prose verdict is re-checked on the built slots"
     assert "challenger source, not a direction menu" in stage2
+    # The draw is a command the stage runs, not a step the model remembers to take.
+    assert "draw_seed.py --slice" in stage2
+    assert "never choose them" in stage2
 
 
 # -- Direction Contract is the chain, compressed -------------------------------

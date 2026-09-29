@@ -87,8 +87,8 @@ primary_surface: "<primary-surface-id>"
 - `data/<data-id>`: 真实数据场景说明
 
 ## 5. Resilience, Reality Breakers & Invariants
-- `stress/<fixture-id>` | Vector: <破坏性输入> ➔ Expected: <预期自愈与容错行为>
-- `inv/<id>` | <不变量描述> | severity: blocking | verif: dom_query
+- `stress/<fixture-id>` | Vector: <破坏性输入> | Expected: <预期自愈与容错行为>
+- `inv/<id>` | <不变量描述> | severity: blocking | verification: dom_query
 ```
 
 Legacy section headings (`Stage 1 §1`, `Stage 1 §3`, `Stage 1 §5`, `Stage 1 §8`) remain fully supported for backwards compatibility.

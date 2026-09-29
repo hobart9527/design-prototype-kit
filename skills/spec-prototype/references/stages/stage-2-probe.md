@@ -22,8 +22,10 @@ analogies where helpful, but are never forced upon digital-native products.
 The path is visual-first:
 1. **Diverge before authoring.** Run the six-step Divergence Generator
    ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4):
-   name the category rut, generate 3 lifeworld-sourced candidates, assign seeds, fuse at
-   most one catalog challenger each, then pass the two-axis verdict. The verdict is a gate:
+   name the category rut, generate 3 lifeworld-sourced candidates, draw the seeds with
+   `python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --write` (never
+   choose them — a self-picked integer converges, which is what the step exists to prevent),
+   fuse at most one catalog challenger each, then pass the two-axis verdict. The verdict is a gate:
    a pair differing on fewer than two axes — or on two axes without **Structure**, the
    mandatory axis — is merged and replaced, not built. Record the
    rut, the candidates, the seeds, and the verdict in `prototype/discussion.md`.

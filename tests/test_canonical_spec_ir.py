@@ -1011,6 +1011,76 @@ def test_the_template_contract_block_is_machine_parseable():
         "action-space", "action-enter", "action-escape"]
 
 
+def test_the_template_compiles_to_the_execution_tier(tmp_path: Path):
+    """A record written to the template reaches Stage 5 without a late refusal.
+
+    The template is what an author copies. If its own state model, invariants or
+    stress fixtures are in a form the compiler does not admit, the gap surfaces
+    only at the `execution_spec` boundary — after Stages 2-4 are already built.
+    The template must therefore compile strict, with no missing-section note.
+    """
+    root = _write_discussion(
+        tmp_path,
+        (REPO / "skills/spec-prototype/templates/discussion.md")
+        .read_text(encoding="utf-8").replace("<slice_id>", "cockpit"),
+    )
+
+    ir = compile_canonical_ir(root=root, slice_id="cockpit", stage="hero_probe")
+
+    assert ir["spec_tier"] == "execution_spec"
+    assert [s["id"] for s in ir["state_model"]["domain_states"]] == [
+        "domain/nominal", "domain/avalanche-alert", "domain/quarantined"]
+    assert ir["state_model"]["interaction_states"] == [
+        "interaction/idle", "interaction/inspecting", "interaction/committing"]
+    assert [d["id"] for d in ir["state_model"]["data_scenarios"]] == [
+        "data/cold-cache", "data/burst-traffic"]
+    assert [s["id"] for s in ir["state_model"]["stress_fixtures"]] == [
+        "stress/unbreakable-string", "stress/zero-data", "stress/320px-fold"]
+    assert [i["id"] for i in ir["invariants"]] == [
+        "inv/wcag-contrast", "inv/token-inheritance",
+        "inv/action-safety", "inv/discoverable-critical-path"]
+    assert ir["scope"]["verification_scope"]["required_states"] == [
+        "state-draft", "state-sealed"]
+
+
+def test_a_state_named_in_prose_is_not_a_declaration():
+    """Only a bullet declares a state; a token mentioned in a sentence does not.
+
+    The partitioning preamble names `interaction/`-shaped tokens while explaining
+    the record shape. An unanchored scan reads that sentence as a declaration and
+    lets commentary invent states, which is how a stray token becomes a state the
+    design never had.
+    """
+    from compile_spec_ir import parse_data_scenarios, parse_interaction_states
+
+    prose = (
+        "The record declares `interaction/inspecting` and `data/cold-cache` inside "
+        "its state section, and `stress/bus-hang` inside the break protocol.\n"
+        "- `interaction/committing` (提交中): 已触发。\n"
+        "- `data/burst-traffic` (流量峰值): 批处理渲染。\n"
+    )
+
+    assert parse_interaction_states(prose) == ["interaction/committing"]
+    assert [d["id"] for d in parse_data_scenarios(prose)] == ["data/burst-traffic"]
+
+
+def test_a_required_states_label_needs_its_payload():
+    """A sentence that names the label without one declares no states.
+
+    The partitioning preamble says "required states — from that block". An
+    unanchored label search admits the rest of that sentence, and the ordinary
+    English words in it become test states.
+    """
+    from compile_spec_ir import parse_required_states
+
+    prose = ("the compiler reads product-level facts from the shared zones and "
+             "slice-level facts — surfaces, states, actions, invariants, "
+             "required states — from that block, and the verification scope\n"
+             "- `Required States`: `state-draft`, `state-sealed`\n")
+
+    assert parse_required_states(prose) == ["state-draft", "state-sealed"]
+
+
 
 def test_draw_seed_records_into_the_slice_block(tmp_path: Path):
     """The draw lands in this slice's block, and re-running replaces it."""

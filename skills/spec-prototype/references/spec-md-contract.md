@@ -104,16 +104,16 @@ primary_surface: "cockpit-main"
 
 ## 5. Resilience, Reality Breakers & Invariants (支柱 8-9: 破坏协议与验收门禁)
 - **Four-Dimensional Reality Breakers (Break Protocol)**:
-  - `stress/long-service-name` | Vector: `120 字符超长微服务名称` ➔ Expected: `单行省略截断 + Tooltip 完整展示，容器不换行撑爆`
-  - `stress/zero-alert` | Vector: `无告警空状态` ➔ Expected: `展示健康绿标与上次巡检时间戳，禁止展示白屏`
-  - `stress/network-lag` | Vector: `断网或 504 Gateway Timeout` ➔ Expected: `操作按钮进入禁用重试态，保留输入草稿不丢失`
+  - `stress/long-service-name` | Vector: `120 字符超长微服务名称` | Expected: `单行省略截断 + Tooltip 完整展示，容器不换行撑爆`
+  - `stress/zero-alert` | Vector: `无告警空状态` | Expected: `展示健康绿标与上次巡检时间戳，禁止展示白屏`
+  - `stress/network-lag` | Vector: `断网或 504 Gateway Timeout` | Expected: `操作按钮进入禁用重试态，保留输入草稿不丢失`
 - **Mandatory Test States**:
   - `state-draft`: 草稿未提交态，严禁点亮 `--accent-seal`
   - `state-sealed`: 已冻结确认态，必须渲染不可逆操作封印标
 - **Design Invariants (物理验收断言)**:
-  - `inv/wcag-contrast` | 核心文本与背景对比度必须满足 WCAG AA 4.5:1 | severity: blocking | verif: computed_style
-  - `inv/horizontal-fit` | 320px 视口无水平滚动条 | severity: blocking | verif: dom_query
-  - `inv/destructive-guard` | 破坏性止血操作必须具备二次物理确认锁 | severity: blocking | verif: dom_query
+  - `inv/wcag-contrast` | 核心文本与背景对比度必须满足 WCAG AA 4.5:1 | severity: blocking | verification: computed_style
+  - `inv/horizontal-fit` | 320px 视口无水平滚动条 | severity: blocking | verification: dom_query
+  - `inv/destructive-guard` | 破坏性止血操作必须具备二次物理确认锁 | severity: blocking | verification: dom_query
 ```
 
 ---
