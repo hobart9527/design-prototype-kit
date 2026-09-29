@@ -474,9 +474,12 @@ def _contract_items(path: Path | None) -> list[str]:
         return []
     ir_path = _ir_contract_path(path)
     if ir_path:
+        # The paired IR settles the assertion set whether or not it is empty: a
+        # `.spec.md` is that IR's rendering, so falling through to the Markdown
+        # here would read the renderer's own header and placeholder rows back as
+        # authored declarations. An IR that declares nothing declares nothing.
         items, _ = _ir_contract_items(ir_path)
-        if items:
-            return items
+        return items
     items: list[str] = []
     in_actions = False
     in_assertions = False

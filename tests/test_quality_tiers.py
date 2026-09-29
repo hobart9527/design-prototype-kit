@@ -237,6 +237,25 @@ def test_contract_items_fall_back_to_markdown_without_ir(tmp_path):
     assert "Bench Grid" in items
 
 
+def test_a_paired_ir_settles_the_assertion_set_even_when_it_is_empty(tmp_path):
+    """Regression: a canonical `.spec.md` whose IR parses to nothing declares nothing.
+
+    The `.spec.md` is that IR's rendering, so falling through to the Markdown when
+    the IR yields no items reads the renderer's own header (`Decision`) and
+    placeholder row back as authored declarations — the false positive that drove
+    the r8b sandbox into a self-repair loop, reached by a second path.
+    """
+    contract = _write_canonical_contract(tmp_path)
+    ir_path = tmp_path / "prototype/contracts/compiled/slice-a/r1.spec.json"
+    ir_path.write_text(
+        json.dumps({"schema_version": "prototype-spec/v1", "scope": {}, "state_model": {},
+                    "actions": []}),
+        encoding="utf-8",
+    )
+    assert vpq._contract_items(contract) == []
+    assert vpq._contract_action_ids(contract) == set()
+
+
 def test_l1_replay_passes_on_placeholder_only_spec(tmp_path):
     """End-to-end L1 replay: a spec whose only table rows are placeholders and
     whose IR-declared surfaces appear in the DOM must pass the contract gate."""
