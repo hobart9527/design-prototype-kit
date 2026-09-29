@@ -1085,6 +1085,47 @@ _ASSET_LINK_RELS = (
 )
 
 
+def check_token_binding(html: Path, dom: "_Document", tokens: Path) -> list[str]:
+    """The delivered document must bind the very stylesheet whose tokens are checked.
+
+    This is a fact about the document, not about the rendering environment, so it
+    is settled from the parsed tree and never degrades. Without it, a prototype
+    that links no stylesheet at all — so that no token, radius, or numeric rule
+    can be in effect — passed L1, and every check that needed the style engine
+    was recorded as `environment_not_ready` exactly as a genuinely missing
+    browser is. A defect and an environment gap are different facts and must not
+    share a downgrade channel.
+
+    Two bindings count: a `<link rel="stylesheet">` resolving to this artifact,
+    and an `@import` of it. Any other stylesheet the document links is additive
+    and is left alone.
+    """
+    try:
+        expected = tokens.resolve()
+    except OSError:
+        expected = tokens
+
+    def binds(candidate: Path) -> bool:
+        try:
+            return candidate.resolve() == expected
+        except OSError:
+            return candidate == expected
+
+    for el in dom.tags("link"):
+        if el.get("rel").lower() != "stylesheet":
+            continue
+        ref = el.get("href").strip()
+        if ref and binds(html.parent / ref.split("?")[0].split("#")[0]):
+            return []
+    for imported in re.findall(r"@import\s+(?:url\()?['\"]?([^'\")\s;]+)", dom.style_text, re.IGNORECASE):
+        if binds(html.parent / imported.split("?")[0].split("#")[0]):
+            return []
+    return [
+        "token binding assertion: the document binds no stylesheet resolving to the token "
+        f"artifact ({tokens}); a prototype whose token stylesheet is unlinked has no token "
+        "inheritance to verify, so link it with the compiled token_link_tag"
+    ]
+
 def check_relative_refs(html: Path, dom: "_Document") -> tuple[list[str], list[str]]:
     """Unresolvable relative references, split into navigation and assets.
 
@@ -1142,6 +1183,11 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         failures.append("interaction assertion: no declarative or imperative event binding")
     if not dom.controls():
         failures.append("interaction assertion: no reachable control")
+
+    # The token stylesheet is the document's one-way inheritance source; whether
+    # it is bound is a static fact, so it blocks here rather than degrading with
+    # the style engine (see check_token_binding).
+    failures.extend(check_token_binding(html, dom, tokens))
 
     contract_file = Path(contract_path) if contract_path else None
     declared = _contract_items(contract_file)
@@ -1409,8 +1455,11 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         print("ENVIRONMENT: not_ready (degraded to tier "
               f"{LAST_TIER_EVIDENCE['tier_reached']})")
     if LAST_TIER_EVIDENCE.get("craft_floor_not_verified"):
+        # A not-verified craft floor is an environment gap, not a code-assertion
+        # failure. Reporting it for the operator is right; returning False here
+        # made the run's verdict depend on whether a browser was reachable —
+        # the same code passed in CI and failed on a machine without one.
         print("CRAFT FLOORS: not_verified (" + str(LAST_TIER_EVIDENCE["craft_floor_not_verified"]) + ")")
-        return False
     for advisory in advisories:
         print(f"  [advisory] {advisory}")
     if failures:

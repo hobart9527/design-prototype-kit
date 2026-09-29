@@ -533,7 +533,7 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
 
     # 1. HTML uses var(--bg-void) but lacks var(--radius-) and font-variant-numeric
     bad_html = tmp_path / "bad.html"
-    bad_html.write_text("""<!DOCTYPE html><html><body>
+    bad_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css"></head><body>
 <main id="app" class="panel">
   <button id="btn-action" onclick="void(0)" style="color: var(--bg-void);">Run</button>
 </main>
@@ -544,7 +544,7 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
 
     # 2. HTML adds var(--radius-outer) and tabular-nums, but still lacks keyboard listener and hashchange
     semi_html = tmp_path / "semi.html"
-    semi_html.write_text("""<!DOCTYPE html><html><body>
+    semi_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css"></head><body>
 <main id="app" class="panel" style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;">
   <button id="btn-action" onclick="void(0)">Run</button>
 </main>
@@ -553,7 +553,7 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
 
     # 3. HTML adds keydown listener, overflow containment, and hashchange state machine hook -> passes
     good_html = tmp_path / "good.html"
-    good_html.write_text("""<!DOCTYPE html><html><body>
+    good_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css"></head><body>
 <main id="app" class="panel" style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums; overflow: hidden;">
   <button id="btn-action" onclick="void(0)" style="min-width: 44px; min-height: 44px;">Run</button>
 </main>
@@ -564,6 +564,42 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
 </script>
 </body></html>""", encoding="utf-8")
     assert verify_mod.assert_quality(str(good_html), str(tokens_css), contract_path=str(spec_md)) is True
+
+def test_the_document_must_bind_the_token_stylesheet_it_declares(tmp_path: Path):
+    """A prototype that links no stylesheet cannot have inherited any token.
+
+    Every check that consumes a token value — radius, numeric presentation,
+    accent discipline — is read from the document's own declarations, so a
+    document that binds no stylesheet was previously checked against tokens
+    that could not have been in effect, and passed. It also degraded L2 with
+    `environment_not_ready`, reporting a missing browser where the real fact
+    was a missing stylesheet.
+    """
+    verify_mod = _load("verify_quality", "verify_prototype_quality.py")
+    tokens_css = tmp_path / "tokens.css"
+    tokens_css.write_text(":root { --radius-outer: 8px; }\n", encoding="utf-8")
+
+    unbound = tmp_path / "unbound.html"
+    unbound.write_text("""<!DOCTYPE html><html><head><style>
+:root { --radius-outer: 8px; }
+</style></head><body>
+<main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums; overflow: hidden;">
+  <button onclick="void(0)" style="min-width: 44px; min-height: 44px;">Run</button>
+</main>
+<script>
+  window.addEventListener('keydown', () => {});
+  window.addEventListener('hashchange', () => {});
+  document.body.setAttribute('data-state', 'default');
+</script>
+</body></html>""", encoding="utf-8")
+    assert verify_mod.assert_quality(str(unbound), str(tokens_css)) is False
+
+    # Binding it by an @import is a real binding, so the same document passes.
+    bound = tmp_path / "bound.html"
+    bound.write_text(unbound.read_text(encoding="utf-8").replace(
+        "<style>\n:root { --radius-outer: 8px; }\n</style>",
+        '<style>\n@import "tokens.css";\n</style>'), encoding="utf-8")
+    assert verify_mod.assert_quality(str(bound), str(tokens_css)) is True
 
 
 def test_topology_context_and_convention_cli(tmp_path: Path):
