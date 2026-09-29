@@ -115,7 +115,9 @@ def test_execution_boundary_freeze_rejects_foreign_root(tmp_path: Path):
 def test_canonical_design_references_and_floors():
     stage1_text = (SKILL / "references/stages/stage-1-frame.md").read_text(encoding="utf-8")
     assert "smallest useful design brief" in stage1_text
-    assert "Five Axes are optional" in stage1_text
+    assert "All five axes" in stage1_text and "accounted for at direction" in stage1_text
+    assert "Five Axes are optional" not in stage1_text, \
+        "an optional axis register is indistinguishable from a model default"
     assert "## Required parser anchors" in stage1_text
     assert "google-design-md/v2" in stage1_text
     assert "official Google schema" in stage1_text

@@ -62,3 +62,63 @@ def test_stress_script_targets_preview_frame():
     assert "loadView" in html
     # Stress toggle must rewrite the preview iframe URL, not a static anchor.
     assert "preview-frame" in html
+
+
+# CRR-SCN-005: the C1 co-creation decision bar.
+
+DIRECTIONS = [
+    {"id": "feed-a", "name": "Direction A [feed]", "url": "experiments/feed/dirs/a/index.html"},
+    {"id": "feed-b", "name": "Direction B [feed]", "url": "experiments/feed/dirs/b/index.html"},
+]
+
+
+def decision_portal() -> str:
+    return generate_review_portal.build_portal_html(SURFACES, title="Fixture Portal",
+                                                    directions=DIRECTIONS)
+
+
+def test_decision_bar_offers_each_candidate():
+    html = decision_portal()
+    assert "data-decision-bar" in html
+    for d in DIRECTIONS:
+        assert f'data-variant="{d["id"]}"' in html
+
+
+def test_decision_bar_carries_all_four_verdicts():
+    html = decision_portal()
+    for verdict in ("approve", "steer", "re-roll", "canon"):
+        assert f'data-verdict="{verdict}"' in html
+
+
+def test_decision_bar_reads_the_variant_from_the_url():
+    html = decision_portal()
+    assert "variant=" in html
+    assert "variantFromHash" in html, "a reviewer must be able to hand over a URL, not prose"
+
+
+def test_steer_and_reroll_require_a_reason():
+    html = decision_portal()
+    assert "decision-reason" in html
+    assert "needs a reason" in html
+
+
+def test_decision_bar_is_absent_with_a_single_direction():
+    """A control that cannot change the outcome is worse than no control."""
+    html = generate_review_portal.build_portal_html(
+        SURFACES, title="Fixture Portal", directions=DIRECTIONS[:1])
+    assert "data-decision-bar" not in html
+
+
+def test_discover_directions_excludes_the_converged_anchor(tmp_path):
+    for slot in ("a", "b"):
+        p = tmp_path / f"prototype/experiments/feed/dirs/{slot}/index.html"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("<html></html>", encoding="utf-8")
+    anchor = tmp_path / "prototype/experiments/feed/anchor/index.html"
+    anchor.parent.mkdir(parents=True, exist_ok=True)
+    anchor.write_text("<html></html>", encoding="utf-8")
+
+    found = generate_review_portal.discover_directions(tmp_path)
+    ids = {d["id"] for d in found}
+    assert ids == {"feed-a", "feed-b"}, f"the anchor is not a candidate: {ids}"
+    assert all("anchor" not in d["url"] for d in found)

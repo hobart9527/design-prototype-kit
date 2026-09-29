@@ -73,7 +73,11 @@ low-energy + high-materiality, or an underground live-venue wall under
 high-energy + raw materiality. Never bind a physical metaphor to one axis value:
 any mapping may be executed at any position the product's evidence earns. Every
 axis value cites evidence from the product's context; an axis set by habit or
-model default is an invalid derivation.
+model default is an invalid derivation. An axis the product's evidence does not
+yet settle is recorded `open` with its reason — that is a decision about
+uncertainty, not a silent default, and it stays open rather than being filled
+with a plausible-looking value. What is invalid is the axis that is neither
+valued-with-evidence nor explicitly open.
 
 2. **Typographic Punch & Rhythm**:
    - Typography is the voice of the product. Do not use monotonous 14px/16px ladders.
@@ -113,6 +117,33 @@ Every proposition that could change a direction records this causal chain:
 The mechanism is generative, not a catalogue lookup. References and analogies
 must name what transfers and what does not. Never translate a metaphor into an
 unsupported object, diagnosis, permission or product capability.
+
+### The Direction Contract is this chain, compressed
+
+When a direction is locked, publish it as a **Direction Contract** — the chain above
+compressed to what a reader can *see* on a screen. Author it under a
+`## Direction Contract` heading in `prototype/discussion.md`, in six labelled blocks.
+The contract is a projection of the chain, not a second proposition: every block cites
+the chain step it compresses, and no block may introduce a claim the chain does not carry.
+
+| Contract block | Compresses | What it states |
+|---|---|---|
+| **THESIS** | 1 · product thesis | The one committed idea, in a sentence a reader could disagree with. |
+| **OWN-WORLD** | 2 · generative lens | The world the surface lives in and its organising principle. |
+| **STORY** | 3 · specimen | The task and content held constant, in the order the reader meets them. |
+| **FIRST VIEWPORT** | 5 · Signature Relationship | What the first screen claims, before any scroll. |
+| **FORM** | 4 · convention retained | What stays familiar so knowledge transfers, and the structure that carries it. |
+| **FINISH** | craft floor | The material execution: surfaces, states, and the browser's own parts. |
+
+Two chain steps deliberately have **no block**: *6 · benefit, cost and learning burden*
+and *7 · falsification and transfer test*. They are accounting and a test, not something
+a viewer sees, so they stay in the record beside the contract. Their absence from the
+contract is not permission to skip them — a direction locked without its accounting and
+its falsification test is not locked.
+
+The contract is checked against the built artifact, block by block. A block that is
+declared here and absent in the render is a finding; a block that is absent here cannot
+be scored as fulfilled.
 
 ### Summarize the proposition without replacing it
 

@@ -75,6 +75,51 @@ Pair each physical metaphor with authentic digital benchmarks — state what to 
 - *Stripe / Apple*: Adopt progressive disclosure, trustworthy typographic hierarchy; REFUSE generic bloated card padding.
 - *GitHub PR*: Adopt diff collation, explicit approval lineage; REFUSE raw engineering jargon.
 
+## 4. Divergence Generator (Double Diamond: Develop)
+
+**Owner: Double Diamond / Develop.** The divergence source is the domain's own
+lifeworld — never the style catalog. A direction pair drawn from a five-item style
+list is not a divergence; it is two draws from one distribution, and the two draws a
+model reliably makes are the same two every time (dense instrument, then Swiss grid).
+`modern-style-vocabulary.md` is a **challenger source**, not the generator: it enters
+at step 4 to mutate a domain-sourced candidate, never at step 2 to supply one.
+
+Run the six steps in order. Steps 1–3 happen before any HTML is written; step 5 is
+the only gate, and it is checked on the two directions side by side.
+
+1. **Name the rut.** State in one sentence what this category's default surface
+   looks like — the thing every product in this space already is. This is the
+   attractor the directions must move away from. Naming it is what makes the move
+   deliberate; an unnamed rut is the one you fall back into.
+2. **Generate from the lifeworld.** Author 3 candidates, each sourced from a
+   *cultural world the domain actually lives in* — the room, the publication, the
+   instrument, the ritual, the record — not from an aesthetic adjective. Each
+   candidate names its world, its organising principle (what determines what goes
+   where), and its native reading order. At least one candidate must come from a
+   world no other product in this category currently occupies.
+3. **Assign seeds.** Give each candidate a distinct seed integer, recorded with it.
+   The seed varies the *incidental* choices the design does not argue for — which
+   face, which neutral temperature, which corner family. Two directions must not
+   converge on the same incidental decisions by default; without a declared seed
+   they reliably do, and the divergence is spent before the structure differs.
+4. **Fuse a challenger (optional, at most one per candidate).** Take one vocabulary
+   from [`../02-craft-methods/modern-style-vocabulary.md`](../02-craft-methods/modern-style-vocabulary.md)
+   and fuse its *techniques* into the candidate without replacing the candidate's
+   organising principle. A fusion that leaves the organising principle unchanged is
+   a reskin and is recorded as such. The catalog is read for technique, never
+   selected as an identity.
+5. **Two-axis verdict — the gate.** Before building, compare each pair of
+   candidates and name the **two or more axes** on which they differ. Structure is
+   the primary axis; the others are density, energy, materiality, rhythm, character,
+   and reading order. A pair differing on fewer than two axes is one direction
+   counted twice — merge it and generate a replacement. Palette alone is never an
+   axis. This is the check the divergence judge re-runs on the built slots, so a
+   verdict that only holds in prose fails on the artifact.
+6. **Donate the loser.** A direction that loses selection still donates its best
+   mechanism — a control, an ordering, a state treatment — to the winner, or the
+   donation is explicitly recorded as refused with its reason. Directions are not
+   discarded; the non-selected work is where the compound interest sits.
+
 ## 4. Settlement
 Upon user selection, lock the primary metaphor (or its declared absence — a
 physical metaphor is an optional anchor with an explicit transfer / non-transfer

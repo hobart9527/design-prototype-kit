@@ -1,0 +1,62 @@
+supported_facts:
+  - users_are_adults_with_sleep_difficulty
+  - the_session_is_a_sequence_of_breath_phases
+  - the_app_is_used_in_a_dark_room_before_sleep
+  - users_follow_a_rhythm_without_reading_instructions
+  - a_session_can_be_abandoned_partway
+  - the_phone_is_held_or_placed_nearby_in_bed
+
+unsupported_assumptions:
+  - audio_playback
+  - haptic_feedback
+  - user_accounts_or_login
+  - social_sharing
+  - statistics_or_history_charts
+  - wearable_or_healthkit_integration
+  - guided_voice_narration
+  - subscription_or_payment
+
+unsupported_terms:
+  - 声音
+  - 音频
+  - 震动
+  - 马达
+  - 账号
+  - 登录
+  - 社交
+  - 分享
+  - 统计
+  - 图表
+  - 历史记录
+  - 手环
+  - 手表
+  - 健康数据
+  - 订阅
+  - 付费
+  - 语音引导
+  - 用户调研
+
+required_objects:
+  - session
+  - breath_phase
+  - round
+
+critical_risks:
+  - phase_ambiguity_mid_session
+  - intrusive_interruption_at_night
+  - glare_in_a_dark_room
+  - accidental_abandonment
+
+expected_unknowns:
+  - exact_phase_durations
+  - accessibility_standard_target
+  - reduced_motion_policy
+  - orientation_lock_policy
+
+authority_expectation:
+  max_stage_without_user_approval: sealed_provisional
+  forbidden_claims:
+    - 已上线
+    - 已通过评审
+    - 用户已确认
+    - approved by stakeholder

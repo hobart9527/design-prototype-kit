@@ -1,0 +1,28 @@
+# Judges only. Never copied into a run workspace. No fixed colours, layouts or
+# decoration requirements: every dimension is a property of the outcome.
+semantic:
+  - information_interpretable
+  - domain_objects_faithful
+  - evidence_not_promoted
+
+task:
+  - phase_legible_without_text
+  - quiet_exit_available
+  - touch_comfortable
+
+visual:
+  - sensory_coherence
+  - motion_restrained
+  - night_comfort
+  - signature_product_specific
+
+delivery:
+  - contract_implementable
+  - tokens_complete
+  - responsive_behavior_declared
+
+anti_patterns:
+  - dashboard of breathing statistics
+  - bouncing cartoon animation
+  - pure black with a blinding white heading
+  - modal confirmation before a quiet exit

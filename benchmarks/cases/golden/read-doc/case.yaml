@@ -1,0 +1,49 @@
+id: read-doc
+category: public-document-reading
+difficulty: medium
+suite: [golden, calibration]
+tension_class: signature_opportunity
+
+run_policy:
+  repeats: 3
+  timeout_seconds: 1800
+  max_turns: 24
+  max_budget_usd_per_turn: 8.0
+
+variants:
+  - no_skill
+  - stable_skill
+  - candidate_skill
+
+surfaces:
+  expected:
+    - desktop
+    - mobile
+
+viewports:
+  required: [390, 1280]
+
+capabilities_under_test:
+  - product_understanding
+  - long_form_reading
+  - typographic_craft
+  - context_preservation
+  - responsive
+
+evaluation:
+  semantic: true
+  task_trace: true
+  visual_pairwise: true
+  taste: true
+  frontend_reproduction: false
+
+method_expectation:
+  must_consider:
+    - reading-measure
+    - progressive-disclosure
+  relevant:
+    - editorial-rhythm
+    - dense-information
+  should_not_select:
+    - dense-operational-console
+    - form-ergonomics

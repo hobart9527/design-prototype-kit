@@ -1,0 +1,41 @@
+tasks:
+  - id: start-and-follow
+    critical: true
+    start:
+      state: idle
+      viewport: 390
+    goal: 开始一次练习，并看到当前处于哪个呼吸阶段。
+    required_outcomes:
+      - id: phase_visible_without_reading
+        check: element_count_min
+        selector: "[class*=phase], [class*=breath], [class*=inhale], [class*=exhale], [data-phase]"
+        count: 1
+      - id: no_horizontal_scroll
+        check: no_horizontal_scroll
+
+  - id: quiet-abandon
+    critical: true
+    start:
+      state: session_active
+      viewport: 390
+    goal: 安静地结束或退出一次进行中的练习。
+    required_outcomes:
+      - id: exit_reachable
+        check: text_present
+        pattern: "结束|停止|退出|完成|放弃|close|Close"
+      - id: no_blocking_confirm
+        check: text_absent
+        pattern: "确定要|确认要|真的要"
+      - id: no_horizontal_scroll
+        check: no_horizontal_scroll
+
+  - id: touch-comfort
+    critical: false
+    start:
+      state: idle
+      viewport: 390
+    goal: 躺着单手操作时，触控目标足够大。
+    required_outcomes:
+      - id: touch_targets
+        check: min_touch_target
+        px: 44

@@ -102,7 +102,7 @@ def test_matrix_runs_candidate_before_stable_control(tmp_path, monkeypatch):
         type("Args", (), {
             "model": None, "max_turns": None, "timeout": None,
             "budget_usd": None, "task_trace": False, "max_task_steps": 8,
-            "visual": False, "session_budget_usd": 5.0, "rejudge": False,
+            "visual": False, "taste": False, "session_budget_usd": 5.0, "rejudge": False,
             "open": False,
         })(),
     )

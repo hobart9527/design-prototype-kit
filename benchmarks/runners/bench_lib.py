@@ -163,20 +163,29 @@ def report_only(case_id: str) -> dict:
 # -- mock user ----------------------------------------------------------------
 
 def parse_mock_user(text: str) -> dict:
+    """Held facts, decision answers, and direction choices, from the hidden record.
+
+    `## Decision Answers` covers clarifying questions. `## Direction Choice` covers the
+    co-creation stopping points: a session that presents candidate directions at C0/C1
+    gets a *choice* back, so the stopping point is exercised rather than assumed. Both
+    feed one rule list, because both answer the same shape of question.
+    """
     rules, fallback, section = [], "", ""
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("## "):
             section = stripped[3:].strip().lower()
             continue
-        if section == "decision answers" and stripped.startswith("- ") and ":" in stripped:
+        if section in ("decision answers", "direction choice") and stripped.startswith("- ") and ":" in stripped:
             keywords, _, answer = stripped[2:].partition(":")
             keys = [k.strip() for k in re.split(r"[|｜]", keywords) if k.strip()]
             if keys:
-                rules.append({"keywords": keys, "answer": answer.strip()})
+                rules.append({"keywords": keys, "answer": answer.strip(),
+                              "kind": "direction" if section == "direction choice" else "decision"})
         elif section == "fallback" and stripped and not stripped.startswith("#"):
             fallback = (fallback + " " + stripped).strip()
-    return {"rules": rules, "fallback": fallback or "没有更强偏好，按你的专业判断进行。"}
+    return {"rules": rules, "fallback": fallback or "没有更强偏好，按你的专业判断进行。",
+            "direction_rules": sum(1 for r in rules if r.get("kind") == "direction")}
 
 
 def mock_reply(question: str, rules: list, fallback: str) -> str:

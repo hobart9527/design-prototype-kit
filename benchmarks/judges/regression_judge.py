@@ -37,6 +37,81 @@ def _dimension_status(run: dict, dimension: str):
     return None
 
 
+def _taste_status(run: dict):
+    """Taste-layer regression signal, or None when the run carries no taste evidence.
+
+    Two independent signals, either of which can regress: the deterministic slop
+    score (lower is better) and the blind taste verdicts. The slop score compares
+    only when both arms measured it — a missing score is unverified, never zero.
+    """
+    slop = run.get("slop") or {}
+    taste = (run.get("taste") or {}).get("result") or {}
+    fidelity = (run.get("contract_fidelity") or {}).get("result") or {}
+    divergence = (run.get("divergence") or {}).get("verdict")
+    cocreation = (run.get("cocreation") or {}).get("verdict")
+    if (slop.get("status") != "detected" and not taste and not fidelity and not divergence
+            and not cocreation):
+        return None
+    verdicts = []
+    if taste.get("ai_slop_verdict"):
+        verdicts.append({"signal": "ai_slop_verdict", "value": taste["ai_slop_verdict"]})
+    if taste.get("first_viewport_thesis"):
+        verdicts.append({"signal": "first_viewport_thesis", "value": taste["first_viewport_thesis"]})
+    if taste.get("category_guessability"):
+        verdicts.append({"signal": "category_guessability", "value": taste["category_guessability"]})
+    blocks = fidelity.get("blocks") or []
+    if blocks:
+        verdicts.append({"signal": "contract_blocks_fulfilled",
+                         "value": sum(1 for b in blocks if b.get("verdict") == "fulfilled")})
+        verdicts.append({"signal": "contract_blocks_absent",
+                         "value": sum(1 for b in blocks if b.get("verdict") == "absent")})
+    if divergence:
+        verdicts.append({"signal": "divergence_verdict", "value": divergence})
+    if cocreation:
+        verdicts.append({"signal": "cocreation_verdict", "value": cocreation})
+    return {"slop_score": slop.get("slop_score") if slop.get("status") == "detected" else None,
+            "signals": verdicts}
+
+
+# Ranked so a move up the list is a regression. Anything unranked is unverifiable.
+_SLOP_RANK = {"pass": 0, "borderline": 1, "fail": 2}
+_THESIS_RANK = {"present": 0, "weak": 1, "absent": 2}
+_GUESS_RANK = {"low": 0, "medium": 1, "high": 2}
+_DIVERGENCE_RANK = {"divergent": 0, "shared_skeleton": 1, "pseudo_divergence": 2,
+                    "duplicate": 3, "recolouring": 3, "not_measured": 0, "insufficient": 0}
+# A session that revealed a decision instead of sharing one is worse than one that
+# asked; a false confirmation is worse still, because it claims authority it lacks.
+_COCREATION_RANK = {"co_created": 0, "not_measured": 0, "partial": 1, "reveal_only": 2,
+                    "false_confirmation": 3}
+_TASTE_RANKS = {"ai_slop_verdict": _SLOP_RANK, "first_viewport_thesis": _THESIS_RANK,
+                "category_guessability": _GUESS_RANK, "divergence_verdict": _DIVERGENCE_RANK,
+                "cocreation_verdict": _COCREATION_RANK}
+
+
+def _taste_regression(cand: dict, stable: dict) -> list:
+    """Ranked taste signals where the candidate is worse than the control.
+
+    Only ranked signals compare; a signal absent on either arm is skipped rather
+    than treated as a win or a loss.
+    """
+    out = []
+    stable_signals = {s["signal"]: s["value"] for s in (stable.get("signals") or [])}
+    for item in cand.get("signals") or []:
+        ranks = _TASTE_RANKS.get(item["signal"])
+        if not ranks or item["signal"] not in stable_signals:
+            continue
+        cand_rank, stable_rank = ranks.get(item["value"]), ranks.get(stable_signals[item["signal"]])
+        if cand_rank is None or stable_rank is None:
+            continue
+        if cand_rank > stable_rank:
+            out.append({"signal": item["signal"], "stable": stable_signals[item["signal"]],
+                        "candidate": item["value"]})
+    cand_slop, stable_slop = cand.get("slop_score"), stable.get("slop_score")
+    if isinstance(cand_slop, (int, float)) and isinstance(stable_slop, (int, float)) and cand_slop > stable_slop:
+        out.append({"signal": "slop_score", "stable": stable_slop, "candidate": cand_slop})
+    return out
+
+
 def judge(runs: list) -> dict:
     index = {(r.get("case_id"), r.get("variant"), r.get("repeat", 1)): r for r in runs}
     regressions, improvements, missing = [], [], []
@@ -71,6 +146,25 @@ def judge(runs: list) -> dict:
                                        "stable": stable_status, "candidate": cand_status})
         if not compared:
             missing.append({"case_id": case_id, "repeat": repeat, "why": "no dimension recorded on both arms"})
+
+        # Taste is a separate dimension with its own evidence: it compares only
+        # when both arms measured it, and its own verdicts are ranked, not scored.
+        cand_taste, stable_taste = _taste_status(run), _taste_status(stable)
+        if cand_taste and stable_taste:
+            compared = True
+            taste_regressions = _taste_regression(cand_taste, stable_taste)
+            for item in taste_regressions:
+                regressions.append({"case_id": case_id, "repeat": repeat, "dimension": "taste",
+                                    "stable": item["stable"], "candidate": item["candidate"],
+                                    "signal": item["signal"]})
+            if not taste_regressions:
+                verified_pairs.append({"case_id": case_id, "repeat": repeat, "dimension": "taste",
+                                       "stable": stable_taste.get("slop_score"),
+                                       "candidate": cand_taste.get("slop_score")})
+        elif cand_taste or stable_taste:
+            unverifiable.append({"case_id": case_id, "repeat": repeat, "dimension": "taste",
+                                 "stable": "measured" if stable_taste else "unmeasured",
+                                 "candidate": "measured" if cand_taste else "unmeasured"})
     pairs = sum(1 for (case_id, variant, _r) in index if variant == "candidate_skill"
                 and (case_id, "stable_skill", _r) in index)
     if regressions:

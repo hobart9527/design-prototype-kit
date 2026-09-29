@@ -54,8 +54,16 @@ that was not performed is recorded as `unverified`.
 The Nine Pillars (Value · Research · Object · Journey · Topology · Attention ·
 Expression · Interaction · Resilience) are the unique design substance. The
 Double Diamond governs when to diverge and converge. The Five Axes (Density ·
-Energy · Materiality · Rhythm · Character) calibrate sensory direction and are
-optional — never a forced CSS formula, never a fixed pixel checklist.
+Energy · Materiality · Rhythm · Character) calibrate sensory direction.
+
+The Five Axes register is **required at direction lock**, and never a forced CSS
+formula or a fixed pixel checklist. Required means every axis is *accounted for*,
+not that every axis carries a value: each of the five carries either a value with
+its cited product evidence, or an explicit `open` with the reason it stays free.
+An axis left blank is indistinguishable from an axis decided by model default —
+which is why silence is the one outcome this kernel forbids. This closes the hole
+that "optional" left open while keeping the register a decision, not a form to
+fill.
 
 ## 6. Semantic Preservation and Coverage Selection
 

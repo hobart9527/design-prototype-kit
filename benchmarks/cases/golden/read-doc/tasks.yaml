@@ -1,0 +1,39 @@
+tasks:
+  - id: locate-clause
+    critical: true
+    start:
+      state: document_open
+      viewport: 1280
+    goal: 从长文中定位到某一条款，并看到它在章节中的位置。
+    required_outcomes:
+      - id: clause_number_visible
+        check: text_present
+        pattern: "第[一二三四五六七八九十百零0-9]+条|第[0-9]+条|条款|条 "
+      - id: no_horizontal_scroll
+        check: no_horizontal_scroll
+
+  - id: compare-versions
+    critical: true
+    start:
+      state: document_open
+      viewport: 1280
+    goal: 看到当前条款相对现行版本的差异标注，并能分辨新增与删除。
+    required_outcomes:
+      - id: version_context_visible
+        check: text_present
+        pattern: "现行|修订|新增|删除|征求意见|版本|差异|修改"
+      - id: no_horizontal_scroll
+        check: no_horizontal_scroll
+
+  - id: mobile-read
+    critical: false
+    start:
+      state: document_open
+      viewport: 390
+    goal: 在手机宽度下连续阅读长文而不横向溢出。
+    required_outcomes:
+      - id: mobile_no_horizontal_scroll
+        check: no_horizontal_scroll
+      - id: mobile_touch_targets
+        check: min_touch_target
+        px: 44

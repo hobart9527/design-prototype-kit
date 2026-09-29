@@ -69,9 +69,13 @@ specific pillars carrying material tension or uncertainty.
 Use the **Double Diamond** to diverge only where uncertainty is real, then converge
 on a coherent experience. The **Five Axes** (Density, Energy, Materiality, Rhythm,
 Character) are continuous sensory coordinates to calibrate and discuss aesthetic direction—never
-a forced CSS formula or arbitrary score. Maintain the **70/30 Innovation Boundary**: preserve
-70% familiar mental models for navigation and spatial expectations, while concentrating
-creative craft and novelty into the 30% resolving the slice's **Signature Moment**.
+a forced CSS formula or arbitrary score. All five are accounted for at direction lock:
+a value with its evidence, or an explicit `open` with its reason. Maintain the
+**70/30 Innovation Boundary**: preserve 70% familiar mental models for navigation and
+spatial expectations, while concentrating creative craft and novelty into the 30%
+resolving the slice's **Signature Moment**. The product's **mode** (Operate · Read ·
+Persuade · Experience) modulates that split — see
+[`stage-1-frame.md`](references/stages/stage-1-frame.md).
 
 Ground product facts in the brief and workspace. Never invent capabilities,
 integrations, user research, or approval. Mark professional inference `[derived]`,

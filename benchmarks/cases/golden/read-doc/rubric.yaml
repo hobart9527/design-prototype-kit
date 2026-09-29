@@ -1,0 +1,28 @@
+# Judges only. Never copied into a run workspace. No fixed colours, layouts or
+# decoration requirements: every dimension is a property of the outcome.
+semantic:
+  - information_interpretable
+  - domain_objects_faithful
+  - evidence_not_promoted
+
+task:
+  - clause_locatable
+  - version_difference_legible
+  - reading_position_kept
+
+visual:
+  - reading_measure_and_rhythm
+  - hierarchy_clear
+  - expression_coherent
+  - restraint
+
+delivery:
+  - contract_implementable
+  - tokens_complete
+  - responsive_behavior_declared
+
+anti_patterns:
+  - dashboard chrome wrapped around a document
+  - uniform card grid standing in for clauses
+  - red/green diff that cannot say which side is which
+  - dark cyber theme for a public legal document

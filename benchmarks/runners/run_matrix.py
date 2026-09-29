@@ -64,6 +64,8 @@ def _run_sessions(cases, variants, repeats, matrix_dir, args) -> list:
                     cmd += ["--task-trace", "--max-task-steps", str(args.max_task_steps)]
                 if args.visual:
                     cmd += ["--visual"]
+                if args.taste:
+                    cmd += ["--taste"]
                 if args.session_budget_usd is not None:
                     cmd += ["--session-budget-usd", str(args.session_budget_usd)]
                 else:
@@ -118,6 +120,8 @@ def _rejudge_existing(cases, variants, repeats, matrix_dir, args) -> list:
                     cmd += ["--task-trace", "--max-task-steps", str(args.max_task_steps)]
                 if args.visual:
                     cmd += ["--visual"]
+                if args.taste:
+                    cmd += ["--taste"]
                 proc = subprocess.run(cmd, capture_output=True, text=True)
                 if proc.stderr.strip():
                     bl.eprint(proc.stderr.strip()[-800:])
@@ -179,6 +183,8 @@ def main() -> int:
     parser.add_argument("--task-trace", action="store_true")
     parser.add_argument("--max-task-steps", type=int, default=6)
     parser.add_argument("--visual", action="store_true")
+    parser.add_argument("--taste", action="store_true",
+                        help="run the taste and contract-fidelity vision judges (implies --visual)")
     parser.add_argument("--pairwise", action="store_true")
     parser.add_argument("--frontend-reproduction", action="store_true")
     parser.add_argument("--run-id", default=None)

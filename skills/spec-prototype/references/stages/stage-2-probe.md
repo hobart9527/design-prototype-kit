@@ -9,25 +9,39 @@ or the primary core interaction prototype.
 Stage 2 derives layout and spatial organization from authentic domain workflows
 and modern design vocabularies ([`../02-craft-methods/modern-style-vocabulary.md`](../02-craft-methods/modern-style-vocabulary.md)).
 
+That file is a **challenger source, not a direction menu**: read it at step 4 of the
+Divergence Generator to fuse a technique, never at step 2 to pick an identity. The
+directions themselves come from the domain's lifeworld. Selecting two styles from its
+table is the failure mode the generator exists to prevent.
+
 Physical anchors (e.g. cockpit, workbench, paper codex) serve as optional structural
 analogies where helpful, but are never forced upon digital-native products.
 
 ## Direct Materialization & Multi-Direction Exploration
 
 The path is visual-first:
-1. **Divergent directions**: Author 2 distinct directions in physical slots
-   (`prototype/experiments/<slice_id>/dirs/a/index.html` and `dirs/b/index.html`),
-   applying contrasting styles from `modern-style-vocabulary.md` (e.g. Dense Instrument vs Swiss Grid).
+1. **Diverge before authoring.** Run the six-step Divergence Generator
+   ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4):
+   name the category rut, generate 3 lifeworld-sourced candidates, assign seeds, fuse at
+   most one catalog challenger each, then pass the two-axis verdict. The verdict is a gate:
+   a pair differing on fewer than two axes is merged and replaced, not built. Record the
+   rut, the candidates, the seeds, and the verdict in `prototype/discussion.md` — the
+   verdict is re-checked on the built slots by the divergence judge, so a claim that lives
+   only in prose will not survive.
+2. **Author 2 distinct directions in physical slots**
+   (`prototype/experiments/<slice_id>/dirs/a/index.html` and `dirs/b/index.html`).
    Keep layout and styling independent without file collision.
-2. **Author tokens**: Directly write or adjust `prototype/shared/tokens.css` (or local directional tokens)
+3. **Author tokens**: Directly write or adjust `prototype/shared/tokens.css` (or local directional tokens)
    to calibrate theme, contrast, and layout rhythm. No pre-compilation from discussion prose is mandated.
-3. **Capture & inspect**: Capture rendered views via `node skills/spec-prototype/scripts/capture.mjs`.
+4. **Capture & inspect**: Capture rendered views via `node skills/spec-prototype/scripts/capture.mjs`.
    Inspect the structured `diagnostics_summary` returned directly in stdout:
    verify zero horizontal overflow (`horizontal_overflow: false`), styles applied (`stylesheets_applied: true`),
    and craft floors (`has_active_feedback: true`, `has_tabular_nums: true`) in one quick step.
-4. **Converge**: Select or synthesize the winning direction into the anchor prototype
+5. **Converge**: Select or synthesize the winning direction into the anchor prototype
    (`prototype/experiments/<slice_id>/anchor/index.html`) for deeper state and coverage expansion in Stage 3.
-5. **Path Singleton**: Any preview or review portal must strictly reside at `prototype/review-portal.html`.
+   The losing direction donates its best mechanism to the winner, or the donation is
+   recorded as refused with its reason (generator step 6).
+6. **Path Singleton**: Any preview or review portal must strictly reside at `prototype/review-portal.html`.
    Never author or copy review portals under nested paths (e.g. `experiments/.../prototype/`).
 
 Read [`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md)

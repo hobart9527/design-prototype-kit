@@ -78,6 +78,49 @@ or high-consequence semantic choice merits a pause; an internal reversible choic
 does not. A bare “continue” resumes already authorized work but selects no pending
 alternative.
 
+## Co-creation stopping points (C0 · C1 · C2)
+
+Diverge and converge are the AI's work; the *choice between materially different
+directions* is the human's. Three named stopping points mark where that choice is
+actually available. They are not stages and not approval gates on internal work — they
+are the moments where a human decision changes what gets built, so stopping there is
+the difference between co-creation and a reveal.
+
+| Point | After | The human is deciding | Cost to redirect |
+|---|---|---|---|
+| **C0** | rut named, lifeworld candidates generated, seeds assigned — **before any HTML** | Which worlds are worth building; whether a candidate is off-brief | Minutes. Nothing has been authored. |
+| **C1** | two directions built and captured, two-axis verdict recorded | Which direction carries the product, or that both miss and why | One build cycle. The divergence is already visible. |
+| **C2** | convergence into the anchor; Direction Contract published | Whether the committed direction and its contract are locked | The anchor exists; a change here reopens the contract. |
+
+Rules that keep these honest:
+
+- **Present, never announce.** At each point show the actual candidates or captures
+  with the trade-off stated — not a status report. A stopping point with nothing to
+  compare is not a stopping point.
+- **C0 is the cheap one; do not skip it.** Steering at C0 costs minutes; the same
+  steering at C1 costs a build cycle. A session that presents only at C1 has spent
+  the human's budget before asking.
+- **A stop is not a stall.** If the human does not respond, apply the unattended
+  fallback below rather than waiting. Do not re-ask the same question.
+- **C2 publishes the contract.** The Direction Contract
+  ([`../01-foundations/design-language.md`](../01-foundations/design-language.md))
+  is written at C2, and its blocks are what the review portal and the fidelity judge
+  read back.
+
+### Unattended fallback
+
+When no human answer arrives, the session continues on a recorded provisional basis —
+it never silently treats its own recommendation as approval:
+
+1. Choose the direction the two-axis verdict and the product evidence support.
+2. Record the choice as `proposed` with its rationale and the falsification question
+   that would overturn it.
+3. Keep the non-selected direction's donation on the record (generator step 6).
+4. Mark the lock `provisional` in the Direction Contract until a human confirms it.
+
+A provisional lock is honest progress, not a substitute for authority. It must never be
+reported as `confirmed`.
+
 ## Routes and legal exits
 
 Routes describe requested stopping points, not stages:

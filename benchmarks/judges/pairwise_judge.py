@@ -43,7 +43,10 @@ def judge(case: dict, screenshots: dict, workdir: pathlib.Path, *, model: str | 
         # One representative viewport keeps the vision judge affordable; more
         # images multiply cost without changing the preference signal much.
         for index, src in enumerate((screenshots.get(label) or [])[-1:]):
-            src = pathlib.Path(src)
+            # Resolve before linking: a symlink target is interpreted relative to
+            # the link's own directory, so a caller-relative path stages a broken
+            # link and the judge reads nothing.
+            src = pathlib.Path(src).resolve()
             dst = workdir / f"{label}-{index}-{src.name}"
             if not dst.exists():
                 dst.symlink_to(src)

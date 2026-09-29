@@ -144,7 +144,159 @@ def build_coverage_html(reconciliation: Dict[str, object] | None) -> str:
         + "".join(rows) + "</table></section>")
 
 
-def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Review Portal", verification: Dict[str, str] | None = None) -> str:
+def discover_directions(root: Path) -> List[Dict[str, str]]:
+    """The exploration slots a session authored, as decision candidates.
+
+    A slot is a *candidate direction* only when it is one: `dirs/<letter>/index.html`
+    under an experiment. The anchor is the converged result, not a candidate, so it is
+    excluded — a picker offering the winner beside its own inputs asks a question that
+    has already been answered.
+    """
+    directions: List[Dict[str, str]] = []
+    exp_dir = root / "prototype/experiments"
+    if not exp_dir.is_dir():
+        return directions
+    for slot in sorted(exp_dir.glob("*/dirs/*/index.html")):
+        slot_id = slot.parent.name
+        slice_name = slot.parent.parent.parent.name
+        directions.append({
+            "id": f"{slice_name}-{slot_id}",
+            "name": f"Direction {slot_id.upper()} [{slice_name}]",
+            "url": slot.relative_to(root / "prototype").as_posix(),
+        })
+    return directions
+
+
+def build_decision_html(directions: List[Dict[str, str]]) -> str:
+    """The co-creation decision bar: pick a direction, then approve, steer or re-roll.
+
+    Rendered only when there is more than one candidate: with a single direction there
+    is no choice to put to a human, and a control that cannot change the outcome is
+    worse than no control. The verdict is written to `location.hash` so a reviewer can
+    hand the session a URL carrying their decision instead of prose.
+    """
+    if len(directions) < 2:
+        return ""
+    picks = "".join(
+        f'<button class="pick-btn" data-variant="{d["id"]}" '
+        f'onclick="pickVariant(\'{d["id"]}\', this)">{d["name"]}</button>'
+        for d in directions)
+    return (
+        '<section id="co-creation" data-decision-bar>'
+        '<h2>Direction Decision (C1)</h2>'
+        '<p>Two-axis verdict recorded. Pick the direction that carries the product, '
+        'or steer / re-roll with a reason.</p>'
+        f'<div class="pick-row">{picks}</div>'
+        '<div class="verdict-row">'
+        '<button class="verdict-btn" data-verdict="approve" onclick="recordVerdict(\'approve\', this)">APPROVE</button>'
+        '<button class="verdict-btn" data-verdict="steer" onclick="recordVerdict(\'steer\', this)">STEER</button>'
+        '<button class="verdict-btn" data-verdict="re-roll" onclick="recordVerdict(\'re-roll\', this)">RE-ROLL</button>'
+        '<button class="verdict-btn" data-verdict="canon" onclick="recordVerdict(\'canon\', this)">EXIT TO CANON</button>'
+        '</div>'
+        '<label class="reason-label" for="decision-reason">Reason (required for steer / re-roll)</label>'
+        '<input id="decision-reason" class="reason-input" type="text" '
+        'placeholder="what this direction must change, or why both miss">'
+        '<p class="decision-out" data-decision-out>No decision recorded yet.</p>'
+        '</section>')
+
+
+def _decision_style() -> str:
+    return """
+    #co-creation {
+      background: var(--bg-base, #0b0f17);
+      border-bottom: 1px solid var(--border-dim, #1e293b);
+      padding: var(--space-3, 12px) var(--space-4, 16px);
+      font-size: 12px;
+    }
+    #co-creation h2 { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    #co-creation p { color: var(--text-secondary, #94a3b8); margin-bottom: 8px; }
+    .pick-row, .verdict-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .pick-btn, .verdict-btn {
+      background: var(--bg-surface, #0f172a);
+      border: 1px solid var(--border-dim, #1e293b);
+      color: var(--text-secondary, #94a3b8);
+      padding: 5px 12px;
+      font-family: var(--font-mono, monospace);
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .pick-btn.active, .verdict-btn.active {
+      border-color: var(--accent-primary, #00f0ff);
+      color: var(--accent-primary, #00f0ff);
+    }
+    .pick-btn:active, .verdict-btn:active { transform: translateY(1px); }
+    .reason-label { display: block; color: var(--text-secondary, #94a3b8); margin-bottom: 4px; }
+    .reason-input {
+      width: 100%;
+      background: var(--bg-void, #05070a);
+      border: 1px solid var(--border-dim, #1e293b);
+      color: var(--text-primary, #e2e8f0);
+      padding: 6px 8px;
+      font-family: var(--font-mono, monospace);
+      font-size: 11px;
+      border-radius: 3px;
+    }
+    .decision-out { margin-top: 8px; font-family: var(--font-mono, monospace); }
+"""
+
+
+def _decision_script() -> str:
+    return """
+    var currentVariant = null;
+    var currentVerdict = null;
+
+    function variantFromHash() {
+      var m = /(?:^|[#&])variant=([^&]+)/.exec(location.hash || '');
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+
+    // A URL carrying ?variant= opens on that candidate, so a reviewer can hand the
+    // session a link instead of describing which direction they mean.
+    function pickVariant(id, btn) {
+      currentVariant = id;
+      document.querySelectorAll('.pick-btn').forEach(function (b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      var dir = DIRECTIONS.filter(function (d) { return d.id === id; })[0];
+      if (dir) { loadView(dir.url, null); }
+      location.hash = 'variant=' + encodeURIComponent(id);
+      renderDecision();
+    }
+
+    function recordVerdict(verdict, btn) {
+      currentVerdict = verdict;
+      document.querySelectorAll('.verdict-btn').forEach(function (b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      renderDecision();
+    }
+
+    function renderDecision() {
+      var out = document.querySelector('[data-decision-out]');
+      if (!out) return;
+      var reason = (document.getElementById('decision-reason') || {}).value || '';
+      var needsReason = currentVerdict === 'steer' || currentVerdict === 're-roll';
+      if (!currentVariant) { out.textContent = 'Pick a direction first.'; return; }
+      if (needsReason && !reason.trim()) {
+        out.textContent = currentVerdict.toUpperCase() + ' needs a reason before it can be recorded.';
+        return;
+      }
+      out.textContent = 'DECISION: ' + currentVerdict.toUpperCase() + ' on ' + currentVariant
+        + (reason.trim() ? ' — ' + reason.trim() : '');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var reason = document.getElementById('decision-reason');
+      if (reason) { reason.addEventListener('input', renderDecision); }
+      var initial = variantFromHash();
+      if (initial) {
+        var btn = document.querySelector('.pick-btn[data-variant="' + initial + '"]');
+        if (btn) { pickVariant(initial, btn); }
+      }
+    });
+"""
+
+
+def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Review Portal", verification: Dict[str, str] | None = None, directions: List[Dict[str, str]] | None = None) -> str:
     default_url = surfaces[0]["url"] if surfaces else "about:blank"
     verification = verification or {}
     verified = (
@@ -164,6 +316,9 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
         )
     btn_group_html = "\n      ".join(btn_html_list)
     default_url_json = json.dumps(default_url)
+    directions = directions or []
+    directions_json = json.dumps(directions)
+    decision_html = build_decision_html(directions)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -298,8 +453,8 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       background: var(--status-running, #10b981);
       box-shadow: 0 0 6px var(--status-running, #10b981);
     }}
-  </style>
-</head>
+{_decision_style()}
+  </style></head>
 <body>
   <div class="portal-nav">
     <div class="portal-title">
@@ -320,6 +475,8 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       <button class="vp-btn" data-break-protocol="empty" data-stress="empty" onclick="setBreakProtocol('empty', this)">BREAK: EMPTY</button>
     </div>
   </div>
+
+  {decision_html}
 
   <div class="portal-frame-box">
     <div class="viewport-frame" data-viewport-frame="100%">
@@ -344,6 +501,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
   </div>
 
   <script>
+    var DIRECTIONS = {directions_json};
     var currentView = {default_url_json};
     var currentStress = null;
     var STRESS_QUERY = {{
@@ -388,6 +546,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     function setViewportWidth(w) {{
       setViewport(w, document.querySelector('[data-viewport="' + w + '"]'));
     }}
+{_decision_script()}
   </script>
 </body>
 </html>
@@ -413,7 +572,8 @@ def main():
             verification = json.loads(manifest.read_text(encoding="utf-8")).get("verification", {})
         except (json.JSONDecodeError, OSError):
             verification = {}
-    html = build_portal_html(surfaces, verification=verification)
+    directions = discover_directions(root)
+    html = build_portal_html(surfaces, verification=verification, directions=directions)
     coverage_html = ""
     reconciliation = read_coverage(root)
     if reconciliation:
@@ -425,6 +585,8 @@ def main():
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
     print(f"Generated review portal with {len(surfaces)} surfaces -> {out_path}")
+    if directions:
+        print(f"Decision bar carries {len(directions)} candidate direction(s)")
 
     if args.open:
         import subprocess

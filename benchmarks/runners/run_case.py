@@ -18,11 +18,16 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 sys.path.insert(0, str(bl_dir := (pathlib.Path(__file__).resolve().parents[1] / "judges")))
 import bench_lib as bl  # noqa: E402
 import collect_artifacts  # noqa: E402
+import contract_fidelity_judge
+import cocreation_judge  # noqa: E402
+import divergence_judge  # noqa: E402
 import run_claude_session  # noqa: E402
 import run_task_trace  # noqa: E402
 import runtime_judge  # noqa: E402
 import semantic_judge  # noqa: E402
+import slop_detector  # noqa: E402
 import task_judge  # noqa: E402
+import taste_judge  # noqa: E402
 import visual_manifest  # noqa: E402
 
 
@@ -54,7 +59,7 @@ def _run_provenance(variant: str, out_dir: pathlib.Path) -> dict:
 
 def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *, model: str | None,
             max_turns: int | None, timeout_s: int | None, budget_usd: float | None,
-            do_task_trace: bool, max_task_steps: int, do_visual: bool,
+            do_task_trace: bool, max_task_steps: int, do_visual: bool, do_taste: bool = False,
             session_budget_usd: float | None = None, rejudge: bool = False,
             auto_open: bool = False) -> dict:
     case = bl.load_case(case_id)
@@ -75,6 +80,8 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
         "status": "INCONCLUSIVE",
         "metrics": {},
         "runtime": None, "semantic": None, "task": None, "visual": None, "contract": None,
+        "slop": None, "taste": None, "divergence": None, "contract_fidelity": None,
+        "cocreation": None,
         "notes": [], "artifacts": None, "provenance": None,
     }
 
@@ -200,6 +207,41 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
         except Exception as exc:
             result["notes"].append(f"visual capture error: {exc}")
 
+    # TASTE EVIDENCE. The deterministic scan always runs; the vision judges need
+    # screenshots, so they stay unverified when capture did not happen rather than
+    # inventing a score from the source text.
+    try:
+        result["slop"] = slop_detector.detect(artifacts_dir)
+        bl.write_json(out_dir / "slop-findings.json", result["slop"])
+    except Exception as exc:
+        result["notes"].append(f"slop detector error: {exc}")
+    try:
+        result["divergence"] = divergence_judge.judge(artifacts_dir)
+        bl.write_json(out_dir / "divergence.json", result["divergence"])
+    except Exception as exc:
+        result["notes"].append(f"divergence judge error: {exc}")
+    # Co-creation is read from the session transcript, not the artifact: a beautiful
+    # prototype built without ever offering a choice is the case it exists to catch.
+    try:
+        result["cocreation"] = cocreation_judge.judge(out_dir)
+        bl.write_json(out_dir / "cocreation.json", result["cocreation"])
+    except Exception as exc:
+        result["notes"].append(f"cocreation judge error: {exc}")
+    if do_taste:
+        shots = [v["screenshot"] for v in ((result["visual"] or {}).get("viewports") or [])
+                 if v.get("screenshot")]
+        try:
+            result["taste"] = taste_judge.judge(case, shots, out_dir / "taste-work", model=model)
+            bl.write_json(out_dir / "taste-judgement.json", result["taste"])
+        except Exception as exc:
+            result["notes"].append(f"taste judge error: {exc}")
+        try:
+            result["contract_fidelity"] = contract_fidelity_judge.judge(
+                case, artifacts_dir, shots, out_dir / "contract-work", model=model)
+            bl.write_json(out_dir / "contract-fidelity.json", result["contract_fidelity"])
+        except Exception as exc:
+            result["notes"].append(f"contract fidelity judge error: {exc}")
+
     # PROVENANCE (what actually ran, archived result files excluded so re-judging is stable)
     # A re-judge already preserved the original session's identity above; hashing
     # the current tree here would replace it with a post-dated revision.
@@ -263,9 +305,12 @@ def main() -> int:
     pre_args, _ = parser.parse_known_args()
     _case_eval = (bl.load_case(pre_args.case).get("meta") or {}).get("evaluation") or {}
     parser.set_defaults(task_trace=bool(_case_eval.get("task_trace")),
-                        visual=bool(_case_eval.get("visual_pairwise")))
+                        visual=bool(_case_eval.get("visual_pairwise")),
+                        taste=bool(_case_eval.get("taste")))
     parser.add_argument("--task-trace", dest="task_trace", action="store_true")
     parser.add_argument("--visual", dest="visual", action="store_true")
+    parser.add_argument("--taste", dest="taste", action="store_true",
+                        help="run the vision taste and contract-fidelity judges (needs screenshots)")
     parser.add_argument("--max-task-steps", type=int, default=6)
     parser.add_argument("--session-budget-usd", type=float, default=None)
     parser.add_argument("--rejudge", action="store_true",
@@ -277,6 +322,7 @@ def main() -> int:
     result = run_one(args.case, args.variant, args.repeat, pathlib.Path(args.matrix_dir), model=args.model,
                      max_turns=args.max_turns, timeout_s=args.timeout, budget_usd=args.budget_usd,
                      do_task_trace=args.task_trace, max_task_steps=args.max_task_steps, do_visual=args.visual,
+                     do_taste=args.taste,
                      session_budget_usd=args.session_budget_usd, rejudge=args.rejudge,
                      auto_open=args.open)
     if args.out:

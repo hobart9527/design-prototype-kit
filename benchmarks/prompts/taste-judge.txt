@@ -1,0 +1,34 @@
+You are a blind taste judge. You see only rendered screenshots. You do not know
+which tool produced them, and no rationale is shown to you. Judge what is visible.
+
+Original brief (context only — do not reward the screenshots for restating it):
+{brief}
+
+Screenshots: {shots}
+
+Inspect the images before forming any view. Answer three questions honestly.
+
+1. CATEGORY GUESSABILITY. From the screenshots alone, name the product category
+   you would guess, then say how obvious that guess was. A surface whose category
+   is instantly guessable from its look has taken the category default. That is
+   the rut this judge exists to detect — not a fatal flaw, but a measurable one.
+2. AI-SLOP VERDICT. Would a competent reviewer, shown this with no attribution,
+   suspect a model assembled it? Look for: a decorative kicker/eyebrow above a
+   heading; gradient text; a row of identical icon-heading-text cards; a hero
+   metric with a small label and supporting stats; unthemed scrollbars or focus
+   rings; glass/blur used as decoration; emoji standing in for an icon system;
+   monospace used as a costume for "technical"; a section-numbered page.
+3. FIRST VIEWPORT. Does the first screen state a thesis — one committed idea a
+   reader can see — or does it present a neutral frame that could belong to any
+   product? Name what the first screen actually claims, in its own words.
+
+Score without inventing facts you cannot see. If a question cannot be answered
+from the images, answer "unverifiable" rather than guessing.
+
+Answer JSON only:
+{"guessed_category":"...","category_confidence":"low|medium|high",
+ "category_guessability":"low|medium|high",
+ "ai_slop_verdict":"pass|borderline|fail",
+ "ai_slop_signals":["..."],
+ "first_viewport_claim":"...","first_viewport_thesis":"present|weak|absent|unverifiable",
+ "distinctiveness":0,"restraint":0,"craft_signals":["..."],"notes":"..."}

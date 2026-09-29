@@ -108,6 +108,37 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
             "inline_hex_failures": sum(1 for r in subset
                                        if any(c["id"] == "token_inheritance" and c["status"] == "fail"
                                               for c in ((r.get("runtime") or {}).get("checks") or []))),
+            "slop_score": _mean([(r.get("slop") or {}).get("slop_score") for r in subset]),
+            "slop_high_findings": sum(((r.get("slop") or {}).get("by_severity") or {}).get("high", 0)
+                                      for r in subset),
+            "taste_judged": sum(1 for r in subset if (r.get("taste") or {}).get("status") == "judged"),
+            "ai_slop_fail": sum(1 for r in subset
+                                if ((r.get("taste") or {}).get("result") or {}).get("ai_slop_verdict") == "fail"),
+            "category_guessable_high": sum(
+                1 for r in subset
+                if ((r.get("taste") or {}).get("result") or {}).get("category_guessability") == "high"),
+            "first_viewport_thesis_present": sum(
+                1 for r in subset
+                if ((r.get("taste") or {}).get("result") or {}).get("first_viewport_thesis") == "present"),
+            "divergence_verdicts": sorted({
+                (r.get("divergence") or {}).get("verdict") for r in subset
+                if (r.get("divergence") or {}).get("verdict")}),
+            "contract_blocks_fulfilled": _mean([
+                sum(1 for b in (((r.get("contract_fidelity") or {}).get("result") or {}).get("blocks") or [])
+                    if b.get("verdict") == "fulfilled") for r in subset
+                if ((r.get("contract_fidelity") or {}).get("result") or {}).get("blocks")]),
+            "contract_blocks_absent": _mean([
+                sum(1 for b in (((r.get("contract_fidelity") or {}).get("result") or {}).get("blocks") or [])
+                    if b.get("verdict") == "absent") for r in subset
+                if ((r.get("contract_fidelity") or {}).get("result") or {}).get("blocks")]),
+            "cocreation_verdicts": sorted({
+                (r.get("cocreation") or {}).get("verdict") for r in subset
+                if (r.get("cocreation") or {}).get("verdict")}),
+            "cocreation_before_build": sum(
+                1 for r in subset
+                if ((r.get("cocreation") or {}).get("signals") or {}).get("c0_before_build")),
+            "cocreation_measured": sum(
+                1 for r in subset if (r.get("cocreation") or {}).get("status") == "measured"),
         }
 
     hard_gates = {
@@ -116,6 +147,18 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         "critical_task_break": sum(1 for r in runs if (r.get("task") or {}).get("critical_task_break")),
         "critical_accessibility_violation": sum(1 for r in runs if _critical_accessibility_violation(r)),
     }
+
+    slop_rules: dict[str, dict] = {}
+    for run in runs:
+        variant = run.get("variant")
+        if not variant:
+            continue
+        severity_of = {f["rule"]: f["severity"]
+                       for f in ((run.get("slop") or {}).get("findings") or [])}
+        bucket = slop_rules.setdefault(variant, {})
+        for rule, count in ((run.get("slop") or {}).get("counts") or {}).items():
+            entry = bucket.setdefault(rule, {"count": 0, "severity": severity_of.get(rule, "low")})
+            entry["count"] += count
 
     judged_pairs = [p for p in pairwise if p.get("status") == "judged" and p.get("result")]
     preference = {"alpha_wins": 0, "beta_wins": 0, "tie": 0}
@@ -224,6 +267,7 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
                 [(f.get("contract") or {}).get("reinterpretation_rate") for f in frontend]),
             "frontend_contract_gaps": sum(len((f.get("contract") or {}).get("contract_gaps") or []) for f in frontend),
         },
+        "slop_rules": slop_rules,
         "regression": regression,
         "pairwise": pairwise,
         "frontend": frontend,
@@ -260,6 +304,35 @@ def render_markdown(report: dict) -> str:
             f"{data['task_success_rate']} | {data['method_recall']} | "
             f"{data['semantic_gate_pass']}/{data['semantic_gate_fail']}/{data['semantic_gate_unverified']} | "
             f"{data['artifact_turns']} | {data['cost_usd']} |")
+    lines += ["", "## Taste (measured, not asserted)", "",
+              "| variant | slop score | high findings | taste judged | ai-slop fail | category guessable (high) | thesis present | contract blocks fulfilled/absent |",
+              "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for variant, data in report["per_variant"].items():
+        lines.append(
+            f"| {variant} | {data['slop_score']} | {data['slop_high_findings']} | {data['taste_judged']} | "
+            f"{data['ai_slop_fail']} | {data['category_guessable_high']} | "
+            f"{data['first_viewport_thesis_present']} | "
+            f"{data['contract_blocks_fulfilled']}/{data['contract_blocks_absent']} |")
+    lines += ["", "Deterministic slop scan runs on every run; the taste and contract-fidelity judges "
+              "need screenshots and stay unverified when capture did not happen. Divergence verdicts "
+              f"observed: {json.dumps(sorted({v for d in report['per_variant'].values() for v in d['divergence_verdicts']}))}.",
+              "", "### Co-creation (was the choice offered?)", "",
+              "| variant | measured | asked before building | verdicts |",
+              "| --- | --- | --- | --- |"]
+    for variant, data in report["per_variant"].items():
+        lines.append(
+            f"| {variant} | {data['cocreation_measured']} | {data['cocreation_before_build']} | "
+            f"{json.dumps(data['cocreation_verdicts'])} |")
+    lines += ["", "Read from the session transcript: a session that revealed a decision instead "
+              "of offering one is `reveal_only`, and one that claimed a confirmed lock without "
+              "ever presenting a candidate is `false_confirmation`.",              "", "### Slop findings by rule", "",
+              "| variant | rule | count | severity |",
+              "| --- | --- | --- | --- |"]
+    slop_rules = report.get("slop_rules") or {}
+    for variant in sorted(slop_rules):
+        for rule, entry in sorted(slop_rules[variant].items(), key=lambda kv: (-kv[1]["count"], kv[0])):
+            lines.append(f"| {variant} | {rule} | {entry['count']} | {entry['severity']} |")
+
     pairwise_metrics = report["metrics"]
     lines += ["", "## Pairwise (blind)", "",
               json.dumps(pairwise_metrics["pairwise_preference"], ensure_ascii=False),

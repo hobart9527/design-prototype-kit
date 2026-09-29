@@ -1,0 +1,60 @@
+supported_facts:
+  - readers_are_citizens_lawyers_and_planners
+  - the_document_is_a_long_legal_draft
+  - clauses_are_numbered_and_cited_across_documents
+  - a_current_version_exists_to_compare_against
+  - desktop_reading_is_primary_and_mobile_is_secondary
+  - no_account_or_online_submission_is_required
+
+unsupported_assumptions:
+  - user_accounts_or_login
+  - comment_submission_backend
+  - ai_summary_or_question_answering
+  - translation_to_other_languages
+  - pdf_export
+  - collaborative_annotation
+  - push_notifications
+  - analytics_on_reading_behaviour
+
+unsupported_terms:
+  - 用户登录
+  - 账号系统
+  - 在线提交意见
+  - 提交意见
+  - AI 摘要
+  - AI摘要
+  - 智能问答
+  - 多语言
+  - PDF 导出
+  - 协作批注
+  - 推送通知
+  - 阅读时长统计
+  - 用户调研
+  - 用户访谈
+  - 竞品分析
+
+required_objects:
+  - clause
+  - chapter
+  - version
+  - annotation
+
+critical_risks:
+  - citation_ambiguity
+  - reading_fatigue
+  - version_confusion
+  - lost_reading_position
+
+expected_unknowns:
+  - exact_comment_submission_flow
+  - accessibility_standard_target
+  - offline_requirement_scope
+  - print_stylesheet
+
+authority_expectation:
+  max_stage_without_user_approval: sealed_provisional
+  forbidden_claims:
+    - 已上线
+    - 已通过评审
+    - 用户已确认
+    - approved by stakeholder

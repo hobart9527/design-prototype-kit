@@ -60,17 +60,36 @@ The brief needs only the applicable parts of:
 
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.
 - **Experience direction & Five Axes calibration** — product-specific hierarchy, tone,
-  visual mechanism, references and what is deliberately conventional. Five Axes are optional
-  continuous coordinates on relevant dimensions, balancing 70% familiarity with 1 signature
-  relationship/moment under the 70/30 innovation boundary.
+  visual mechanism, references and what is deliberately conventional. All five axes
+  (Density · Energy · Materiality · Rhythm · Character) are accounted for at direction
+  lock: each carries a value with the product evidence that earned it, or an explicit
+  `open` with its reason. An axis left silent is a defect — it reads as a model default,
+  not a decision. This register is not a form to fill and not a CSS formula; `open` is a
+  legitimate, recorded outcome.
+- **Innovation budget, modulated by mode** — name the product's **mode** first, then
+  let it set the split. The default is 70% familiar / 30% Signature Moment; the mode
+  moves it, and the chosen split is recorded with its reason:
+
+  | Mode | When it applies | Split (familiar / signature) | Why the shift |
+  |---|---|---|---|
+  | **Operate** | Expert operator, high consequence, repeated daily use | 80 / 20 | Relearning cost is paid on every shift; the signature lives in the one moment the tool exists for. |
+  | **Read** | Long-form document, clause, or reference the user must trust | 75 / 25 | The measure and the text carry the experience; novelty competes with legibility. |
+  | **Persuade** | First-contact surface whose job is to earn a second visit | 60 / 40 | The user owes nothing yet; convention transfers no trust it has not already earned. |
+  | **Experience** | The sensory/kinetic quality *is* the product (breath, sound, rhythm) | 65 / 35 | The felt quality is the function, so craft is load-bearing rather than decorative. |
+
+  A product may carry more than one mode across surfaces; name the mode per surface
+  rather than averaging them into one number. Never spend the signature budget on a
+  surface the user visits once and never on one they visit a thousand times.
 - **Spatial anatomy** — primary surface and only context surfaces needed by this slice.
 - **Actions & states** — consequential task, visible result, recovery, and states needed
   to express or test it.
 - **Resilience & invariants** — only risks that could invalidate this design; distinguish
   hard requirements from preference and hypothesis.
 
-Do not fill every Nine Pillar, Five Axis, state, surface, or Break Protocol vector.
-Keep the human brief about decisions; machine IR and CSS tokens are compiled outputs.
+Do not fill every Nine Pillar, state, surface, or Break Protocol vector. The Five
+Axes are the one exception: account for all five, but a value is not owed where the
+product has not earned one — `open` with its reason is a complete entry. Keep the
+human brief about decisions; machine IR and CSS tokens are compiled outputs.
 
 ## Physical Anchor Declaration (Optional Guidance)
 
