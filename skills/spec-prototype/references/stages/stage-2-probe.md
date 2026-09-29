@@ -24,10 +24,13 @@ The path is visual-first:
    ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4):
    name the category rut, generate 3 lifeworld-sourced candidates, assign seeds, fuse at
    most one catalog challenger each, then pass the two-axis verdict. The verdict is a gate:
-   a pair differing on fewer than two axes is merged and replaced, not built. Record the
-   rut, the candidates, the seeds, and the verdict in `prototype/discussion.md` — the
-   verdict is re-checked on the built slots by the divergence judge, so a claim that lives
-   only in prose will not survive.
+   a pair differing on fewer than two axes — or on two axes without **Structure**, the
+   mandatory axis — is merged and replaced, not built. Record the
+   rut, the candidates, the seeds, and the verdict in `prototype/discussion.md`.
+   Then run the divergence judge on the built slots before converging:
+   `python3 benchmarks/judges/divergence_judge.py --artifacts prototype/experiments/<slice_id>/dirs`.
+   Its verdict is `divergent` only when the two tag sequences actually differ, so a
+   prose verdict that the artifact does not support is caught here, not at review.
 2. **Author 2 distinct directions in physical slots**
    (`prototype/experiments/<slice_id>/dirs/a/index.html` and `dirs/b/index.html`).
    Keep layout and styling independent without file collision.
@@ -117,8 +120,12 @@ for downstream Loom Entry 2 engineering delivery.
 ## Stage 2 Anchor Presentation Pause
 
 Once the first surface is materialized, present real viewport screenshots at the
-runtime-derived `inspection_contract.mandatory_viewports` carried by the assembled
-payload — never a hardcoded viewport list.
+**authored** viewport widths — the `NNNpx` widths declared in
+`prototype/discussion.md` and recovered by
+[`compile_spec_ir.py`](../../scripts/compile_spec_ir.py)'s `parse_viewports`, the same
+set the Spec IR binds as `scope.verification_scope.viewports`. Never a hardcoded
+viewport list, and never the assembled envelope payload: that payload is produced
+only by `assemble_envelope.py`, which the Refusal List keeps off the primary path.
 
 This is a presentation, not a gate. Show what was built and say plainly what the
 user's confirmation would change; then keep working under the authorized scope.

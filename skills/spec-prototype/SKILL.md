@@ -22,11 +22,14 @@ It is the small, always-loaded source (<100 lines) for fundamental guardrails: S
 Do NOT unconditionally read all reference modules or stage procedures at launch.
 Treat `references/stages/` (`stage-0-explore.md` ~ `stage-5-freeze.md`) and the other files under `references/` as strictly on-demand reference modules beyond the always-loaded core kernel.
 Only read the specific file matching the currently active stage or frontier.
-**Minimal Reading List (最小阅读清单)**: a full pipeline pass reads at most 4 reference
-files — the core kernel (once), the active stage file, the execution boundary (before
-first write/build), and at most one craft reference actually cited by the active
-method set. Reading more than one file per stage frontier is a discipline violation;
-fact-finding belongs to repository sources (the user brief, `prototype/discussion.md`), not Skill prose.
+**Minimal Reading List (最小阅读清单)**: beyond the always-loaded core kernel, read
+only what the active frontier cites — the active stage file, the execution boundary
+before the first write/build, and the craft references that frontier names. There is
+no per-stage file cap: a stage that cites a reference is meant to be read with it, and
+a cap the stage procedure contradicts is not a discipline, it is a false rule. The
+discipline is narrower and real: do not read a reference the active stage does not
+cite, and do not pre-load later stages. Fact-finding belongs to repository sources
+(the user brief, `prototype/discussion.md`), not Skill prose.
 
 ## Entry Intent & Contextual Routing (意图优先，资产为证)
 

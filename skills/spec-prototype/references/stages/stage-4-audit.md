@@ -14,7 +14,7 @@ purpose of this stage.
    not interaction.
 3. Check only applicable non-negotiable floors: source fidelity; working declared
    actions and recovery; WCAG/accessibility; visible `:active` feedback on commit
-   controls; concentric nested radii (`R_inner = max(0, R_outer - P`);
+   controls; concentric nested radii (`R_inner = max(0, R_outer - P)`);
    `font-variant-numeric: tabular-nums` for aligned or changing values; and 44×44px
    touch targets in touch contexts. Reduced-motion behavior applies when motion is used.
 3a. **Render defect scan** against the actual captures — overlay positioning,
@@ -22,6 +22,17 @@ purpose of this stage.
    layers covering content, and the empty/long states. The list and its failure
    modes are owned by
    [`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md).
+
+   Run the machine scans before the visual read, so the eye starts from the
+   mechanical defects and spends its attention on judgment:
+   - `python3 skills/spec-prototype/scripts/detect.py --artifact <file>` for the
+     craft-floor rules that are machine-readable.
+   - `python3 benchmarks/judges/slop_detector.py --artifacts <artifact-dir>` for the
+     full slop/rut set (`SLOP-001` … `SLOP-025`) — purple-on-dark gradients, glass
+     and blur as decoration, pill radii on large containers, ghost cards, emoji
+     icon systems and the rest. `detect.py`'s `BENCHMARK_ANCHORS` maps the subset it
+     can also read; the detector catches the remainder. A detector hit is a lead:
+     confirm it against the render before it counts as a finding.
 3b. **Narrowest-viewport read**: at the smallest declared width the surface still
    answers its own question. Recomposed structure, or an honest `PARTIAL` — a
    compressed desktop is a defect, not a pass.
@@ -98,6 +109,12 @@ Rules that keep the pillar view honest:
   other rather than filing it twice.
 - **`not reviewed` is not a pass.** Do not sum rows into a verdict. A review with
   unreviewed pillars is `PARTIAL` regardless of how clean the reviewed ones are.
+- **A `prose_only` rule is a finding you must write, not one you may skip.** When
+  `detect.py` returns a rule as `prose_only`, the machine has declared it cannot
+  read the artifact — the judgment is yours and it is owed. Every `prose_only` rule
+  that applies to the surface gets an explicit pass-or-finding line in the report.
+  Leaving it unwritten is not a quiet pass: it is the same `not reviewed` state, and
+  it carries the same `PARTIAL` consequence as an unexamined pillar.
 - Pillar coverage is not a quota: a small change may legitimately touch two pillars
   and mark seven unreviewed. The rule is that the seven are *named*.
 

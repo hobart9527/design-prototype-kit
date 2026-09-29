@@ -324,3 +324,97 @@ def test_stage1_cites_the_retirement_owner():
     stage1 = _read(STAGE1)
     assert "artifact-lifecycle.md" in stage1
     assert "contracts/surface-maps/m1.md" not in stage1
+
+
+# -- The audit fixes: owners named correctly, gaps closed ----------------------
+
+STAGE3 = REFS / "stages/stage-3-skeleton.md"
+STAGE5 = REFS / "stages/stage-5-freeze.md"
+JUDGE = REPO / "benchmarks/judges/divergence_judge.py"
+SLOP = REPO / "benchmarks/judges/slop_detector.py"
+DIALECTIC = REFS / "dialectic/01-metaphor-benchmark.md"
+
+
+def test_stage3_cites_the_real_owner_of_the_data_floor():
+    """A stage that names the wrong owner sends the author to an empty file.
+
+    `quality-floor.md` carries the runtime Floor; the Zero Naked Metrics rule is
+    owned by Method 4 in the method library. Citing the first for the second is a
+    broken reference, not a style choice.
+    """
+    stage3 = _read(STAGE3)
+    assert "quality-floor.md" not in stage3, \
+        "the data floor is not owned by quality-floor.md"
+    assert "design-methods.md" in stage3
+    assert "Method 4" in stage3
+
+
+def test_the_direction_divergence_threshold_has_one_owner():
+    """A gate stated at two thresholds is two gates, and the looser one wins."""
+    judge = _read(JUDGE)
+    dialectic = _read(DIALECTIC)
+    language = _read(LANGUAGE)
+    # The judge's own rule: structure is the primary axis.
+    assert "Structure is the primary axis" in judge
+    # The generator states the same gate and names the judge as its re-run.
+    assert "Structure must be one of them" in dialectic
+    assert "divergence judge" in dialectic
+    # design-language.md must not carry a second threshold.
+    assert "at least three of these dimensions" not in language, \
+        "a second threshold in the language file drifts from the gate"
+    assert "not stated here" in language
+
+
+def test_stage2_derives_viewports_without_the_off_path_helper():
+    """The Refusal List keeps assemble_envelope.py off the path; the stage must too."""
+    stage2 = _read(STAGE2)
+    # The helper may be named only to forbid it; it may never be the source.
+    assert "mandatory_viewports" not in stage2, \
+        "the stage cannot require a payload only the off-path helper produces"
+    assert "keeps off the primary path" in stage2
+    assert "parse_viewports" in stage2
+
+
+def test_the_dialectic_topics_are_routed():
+    """An unrouted topic in a lazy-load library is a dead module."""
+    stage1 = _read(STAGE1)
+    for topic in ("02-topology-scaffolding", "03-sensory-kinetic",
+                  "04-falsification-compile"):
+        assert topic in stage1, f"dialectic topic {topic} has no route from Stage 1"
+
+
+def test_stage4_runs_both_machine_scans():
+    """detect.py reads the craft floor; slop_detector carries the rest of the set."""
+    audit = _read(AUDIT)
+    assert "slop_detector.py" in audit, \
+        "the slop set beyond detect.py's anchors is never machine-read"
+    assert "SLOP-" in audit
+    assert "detect.py" in audit
+
+
+def test_prose_only_rules_are_owed_a_written_judgment():
+    audit = _read(AUDIT)
+    assert "prose_only" in audit
+    assert "not a quiet pass" in audit
+
+
+def test_operators_carry_a_symptom_to_axis_diagnosis():
+    """Convergence needs a diagnosis path, not only a prescription table."""
+    operators = _read(OPERATORS)
+    assert "From a symptom to an axis" in operators
+    # The boundary: a symptom that resolves to a pillar is a redirection.
+    assert "not an operator" in operators
+
+
+def test_stage5_states_the_real_token_flow():
+    """compile_tokens reads discussion, not the css it writes."""
+    stage5 = _read(STAGE5)
+    assert "does not read" in stage5 and "tokens.css" in stage5
+    assert "one-way" in stage5
+
+
+def test_the_token_export_template_uses_the_canonical_path():
+    template = _read(SKILL / "templates/discussion.md")
+    assert "prototype/dist/tokens.json" not in template, \
+        "dist/ is a retired path; the canonical export is contracts/tokens/t1.json"
+    assert "prototype/contracts/tokens/t1.json" in template

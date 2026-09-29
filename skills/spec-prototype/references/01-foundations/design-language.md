@@ -251,13 +251,15 @@ fashionable ingredients. Keep the semantic constraints, representative content,
 task, viewport and review question constant so the trade-off remains legible.
 
 **Direction diversity requirement**: when presenting multiple exploration
-directions, silently classify each along structure, density, emphasis, type
-voice and chromatic temperature, and verify that any two directions genuinely
-fork on at least three of these dimensions. Three close cousins of one solution
-(e.g. differing only in lightness) is an invalid set — the exploration has not
-happened yet. Diversity yields only where the product evidence genuinely locks
-a register region; inside a locked region, directions differentiate on the
-other dimensions.
+directions, classify each along structure, density, emphasis, type voice and
+chromatic temperature. The pass/fail threshold is **not** stated here: the
+divergence gate owns it
+([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md),
+step 5 — two axes minimum, Structure mandatory), and this section must not carry
+a second number that drifts from it. Three close cousins of one solution (e.g.
+differing only in lightness) is an invalid set — the exploration has not happened
+yet. Diversity yields only where the product evidence genuinely locks a register
+region; inside a locked region, directions differentiate on the other dimensions.
 
 ## Compose the language as one product experience
 

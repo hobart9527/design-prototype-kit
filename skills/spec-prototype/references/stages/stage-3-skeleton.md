@@ -86,9 +86,10 @@ this stage states the intent and delegates the numbers.
 
 Zero Naked Metrics is enforced: business metrics, micro-sparklines, and status
 badges must carry a context reference (range, threshold band, baseline marker, or
-event point). Floors are defined in
-[`../03-verification/quality-floor.md`](../03-verification/quality-floor.md);
-this module cites them and does not duplicate them.
+event point). The floor itself is owned by
+[`Method 4`](../01-foundations/design-methods.md#method-4-zero-naked-metrics--micro-sparklines-pillars-expression--attention)
+in the method library; this module states the intent and cites the owner rather
+than restating the rule.
 
 ## Content Mechanics & Action Verb Lifecycle
 
@@ -117,9 +118,9 @@ snapshot, and an unmet prerequisite shows its unlocking affordance as a real
 control, never as a `title` tooltip on a dead button. A gate that renders
 disabled while its unlock lives in a tooltip is unreachable to anyone who does
 not already know the model — the condition is
-`[inv/discoverable-critical-path]` in the Stage 1 invariant list, and the Floor
-clause is in
-[`../03-verification/quality-floor.md`](../03-verification/quality-floor.md).
+`[inv/discoverable-critical-path]`, authored in the slice's
+`prototype/discussion.md` invariant list (the record shape is owned by
+[`../../templates/discussion.md`](../../templates/discussion.md)).
 
 ## Exit
 

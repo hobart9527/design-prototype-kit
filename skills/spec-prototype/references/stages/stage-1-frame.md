@@ -26,6 +26,13 @@ open alternatives only when a consequential choice is genuinely unresolved.
      to produce. When evidence already determines the direction (an extension of an
      existing product, a settled convention, a delegated choice), one proposition is
      correct and the others are waste.
+
+   When the round's active uncertainty is one of the three below, load its dialectic
+   topic — each is selectable, not sequenced, and each is entered only when that
+   uncertainty is the one blocking the direction:
+   - Topology & resistance → [`../dialectic/02-topology-scaffolding.md`](../dialectic/02-topology-scaffolding.md)
+   - Materiality & energy → [`../dialectic/03-sensory-kinetic.md`](../dialectic/03-sensory-kinetic.md)
+   - Resilience & gate → [`../dialectic/04-falsification-compile.md`](../dialectic/04-falsification-compile.md)
 5. Define only the surfaces, actions, states, and stress cases needed to guide the
    requested slice. Leave the rest open; never invent capability to fill a section.
 

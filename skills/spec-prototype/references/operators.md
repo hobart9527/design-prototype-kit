@@ -28,6 +28,27 @@ it belongs in the divergence generator
 instead. A move that changes three axes at once produces an unattributable result:
 the comparison teaches nothing and the next decision starts from zero.
 
+### From a symptom to an axis (diagnose before you prescribe)
+
+"Something feels off" is not a target. Read the symptom, name the axis or pillar
+it actually lives on, then pick the operator whose Target matches — do not reach
+for the operator whose *name* sounds closest to the complaint:
+
+| The symptom you can actually observe | The axis or pillar it lives on | Operator |
+|---|---|---|
+| Everything competes for the eye; nothing leads | Attention / Emphasis | `distill` |
+| Correct but inert — it does not respond to the hand | Energy | `animate`, or `bolder` on the press/commit moment only |
+| Cramped, or so airy the task loses its thread | Density | `layout` |
+| Type is doing no work: flat scale, one weight, loose measure | Character / Type | `typeset` |
+| Colour is decorative rather than informational | Materiality | `colorize` (or `quieter` when it is over-coloured) |
+| Loses its footing under long content, empty data or a narrow viewport | Resilience pillar | `harden` |
+| You cannot say what it is for after five seconds | Value / Journey pillar | **not an operator** — this is a redirection |
+
+The last row is the boundary. A symptom that resolves to a *pillar* rather than an
+axis is a structural failure, not a refinement, and it goes back to the divergence
+generator or the Stage 1 proposition. Refining a surface whose job is unclear only
+makes the wrong thing smoother.
+
 **The craft floor is not an axis and never trades against one.** Every operator is
 bound by [`02-craft-methods/craft-floor.md`](02-craft-methods/craft-floor.md). A
 move that wins on looks while failing a hard floor is a bug with a nice surface.

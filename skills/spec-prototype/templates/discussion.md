@@ -257,7 +257,7 @@ declared_surfaces: ["cockpit-main", "detail-drawer"]
 - **Controlled Absorption Loop (Feedback $\to$ `tokens.css` / slices $\to$ Re-verify)**:
 
 ### Stage 5: Silent Governance Compilation (冻 - 静默封版与工件交付)
-- **DTCG Export (`prototype/dist/tokens.json`)**:
+- **DTCG Export (`prototype/contracts/tokens/t1.json`, the `compile_tokens.py --output-json` default)**:
 - **WCAG Static Contrast Audit**:
 - **Handoff Manifest (`prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json` / SHA-256 integrity)**:
 

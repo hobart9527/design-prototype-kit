@@ -109,12 +109,17 @@ the only gate, and it is checked on the two directions side by side.
    a reskin and is recorded as such. The catalog is read for technique, never
    selected as an identity.
 5. **Two-axis verdict — the gate.** Before building, compare each pair of
-   candidates and name the **two or more axes** on which they differ. Structure is
-   the primary axis; the others are density, energy, materiality, rhythm, character,
-   and reading order. A pair differing on fewer than two axes is one direction
-   counted twice — merge it and generate a replacement. Palette alone is never an
-   axis. This is the check the divergence judge re-runs on the built slots, so a
-   verdict that only holds in prose fails on the artifact.
+   candidates and name the **two or more axes** on which they differ. **Structure
+   must be one of them**: the two candidates must not share an organising principle,
+   because a pair that keeps the tree and moves only its colours, spacing or type is
+   one direction counted twice, however it is dressed. The remaining axes are
+   density, energy, materiality, rhythm, character and reading order. A pair
+   differing on fewer than two axes, or on two axes without Structure, is a failed
+   gate — merge it and generate a replacement. Palette alone is never an axis. This
+   is the check the benchmark's divergence judge re-runs on the built slots
+   (`benchmarks/judges/divergence_judge.py`), whose verdict is `divergent` only when
+   the tag sequence differs; a verdict that holds in prose but not on the artifact
+   fails.
 6. **Donate the loser.** A direction that loses selection still donates its best
    mechanism — a control, an ordering, a state treatment — to the winner, or the
    donation is explicitly recorded as refused with its reason. Directions are not
