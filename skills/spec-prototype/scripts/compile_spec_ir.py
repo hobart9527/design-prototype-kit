@@ -1634,7 +1634,11 @@ def compile_canonical_ir(
     five_axes = parse_5_dial_register(style_text or product_text)
 
     # Optional craft declarations remain open when the author leaves them unset.
-    craft_stack = parse_craft_stack(style_text or product_text, five_axes)
+    # Read at slice scope, like the state model and the actions: the four craft
+    # axes are per-surface decisions, and the template authors them inside the
+    # slice block. Reading only `product_text` left a slice's `contract:craft`
+    # block unread — a declaration the compiler silently dropped.
+    craft_stack = parse_craft_stack(scope_text, five_axes)
     design_intent = parse_design_intent(product_text)
 
     # Extract OOUX / Surfaces

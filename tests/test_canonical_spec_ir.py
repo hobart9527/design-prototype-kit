@@ -1041,6 +1041,19 @@ def test_the_template_compiles_to_the_execution_tier(tmp_path: Path):
         "inv/action-safety", "inv/discoverable-critical-path"]
     assert ir["scope"]["verification_scope"]["required_states"] == [
         "state-draft", "state-sealed"]
+    # Every block the template ships must actually reach the IR. A block the
+    # compiler never reads is a declaration dropped in silence, which is the
+    # failure the blocks exist to remove — including for the template itself.
+    assert ir["foundation"]["five_axes"] == {
+        "density": "dense", "energy": "kinetic", "materiality": "coated_instrument_dark",
+        "rhythm": "fluid", "character": "technical"}
+    assert ir["foundation"]["palette_discipline"]["accent_seal"] == "var(--accent-seal, #ff3333)"
+    assert ir["foundation"]["craft_stack"] == {
+        "surface_optics": "coated_instrument_dark", "spatial_geometry": "concentric-nested",
+        "micro_typography": "tabular-numeric", "data_marks": "micro-trend-compact"}
+    assert ir["layout_directives"]["massing_pattern"] == "canvas-inspector"
+    assert ir["interaction_spec"]["kinematics"] == "focus-restore-250ms"
+    assert ir["visual_directives"]["data_syntax"] == "micro-trend-compact"
 
 def test_the_template_declares_every_machine_list_as_a_contract_block():
     """The template's own form must be the authoritative one, not the prose one.
