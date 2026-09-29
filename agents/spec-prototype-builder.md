@@ -375,6 +375,7 @@ Honor declared platform invariants; when a platform contract is unauthored, stat
   environment, target, and dependency identity actually used. Invoke the capture script with the
   declared identity:
   `node capture.mjs <url> --output <dir> --target-path <path> --target-platform <platform> --runtime <runtime> --source-revision <rev> [--dep <ref>=<digest>] [--repo-root <repo>]`.
+  `capture.mjs` outputs a structured `diagnostics_summary` in stdout (`horizontal_overflow`, `stylesheets_applied`, `craft_checks`). Read it directly from the tool output to confirm craft and rendering integrity. Never perform repeated trial-and-error capture loops or redundant regex patches when `diagnostics_summary` is clean.
   Requested viewport widths, a filename, or a target-platform label are NOT native validation. A
   browser render on desktop Chromium stays `browser_execution: html-browser` even when the target
   platform is `android` or `ios`; record such native validation as `unverified` until it is

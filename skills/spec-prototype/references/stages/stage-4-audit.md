@@ -40,7 +40,11 @@ purpose of this stage.
 ## Capture and evidence
 
 Use `capture.mjs` for rendered evidence when available, with only the relevant
-viewports and declared states. A state is captured only if its trigger was applied and
+viewports and declared states. `capture.mjs` automatically reports a structured
+`diagnostics_summary` alongside viewport screenshots.
+`syncReviewPortal` maintains a single canonical portal at `prototype/review-portal.html`.
+Never create or copy ad-hoc review portals under nested paths (such as `experiments/.../prototype/review-portal.html`).
+A state is captured only if its trigger was applied and
 the page confirmed it; filenames alone are not proof. If browser startup, state
 confirmation, or interaction tracing fails, record the scope as `unverified`, not
 passed. Inspect the actual screenshots before making visual claims. A static check

@@ -154,11 +154,51 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
               });
             }
           }
+
+          let hasActiveRule = false;
+          let stylesheetsApplied = false;
+          try {
+            for (const sheet of document.styleSheets) {
+              try {
+                if (sheet.cssRules && sheet.cssRules.length > 0) {
+                  stylesheetsApplied = true;
+                  for (const rule of sheet.cssRules) {
+                    if (rule.selectorText && rule.selectorText.includes(":active")) {
+                      hasActiveRule = true;
+                    }
+                  }
+                }
+              } catch {}
+            }
+          } catch {}
+
+          let hasTabularNums = false;
+          for (const el of document.querySelectorAll("td, th, span, div, p, code")) {
+            const text = el.textContent || "";
+            if (/\d/.test(text)) {
+              const comp = window.getComputedStyle(el);
+              if (comp.fontVariantNumeric && comp.fontVariantNumeric.includes("tabular-nums")) {
+                hasTabularNums = true;
+                break;
+              }
+              if (comp.fontFeatureSettings && (comp.fontFeatureSettings.includes("tnum") || comp.fontFeatureSettings.includes('"tnum" 1'))) {
+                hasTabularNums = true;
+                break;
+              }
+            }
+          }
+
+          const hasOverflow = de.scrollWidth > de.clientWidth + 1;
+
           return {
             scrollWidth: de.scrollWidth,
             clientWidth: de.clientWidth,
             scrollHeight: de.scrollHeight,
             clientHeight: de.clientHeight,
+            horizontal_overflow: hasOverflow,
+            stylesheets_applied: stylesheetsApplied,
+            has_active_feedback: hasActiveRule,
+            has_tabular_nums: hasTabularNums,
             small_touch_targets: smallTargets.slice(0, 10),
             small_touch_target_count: smallTargets.length,
             dialog_present: Boolean(document.querySelector("dialog")),
@@ -594,7 +634,18 @@ async function main() {
     const metadata = buildCaptureMetadata(result, metadataOptions);
     const recording = recordHandoffEvidence(outputDir, result, metadata, { repoRoot });
     syncReviewPortal(autoOpen);
-    process.stdout.write(JSON.stringify({ ...result, metadata, evidence_record: recording }, null, 2) + "\n");
+    const diagnostics_summary = {
+      status: result.status,
+      runtime_errors: result.runtime_errors || [],
+      horizontal_overflow: Object.entries(result.viewport_metrics || {}).some(([, m]) => m && m.horizontal_overflow),
+      stylesheets_applied: Object.entries(result.viewport_metrics || {}).every(([, m]) => m && m.stylesheets_applied),
+      craft_checks: {
+        has_active_feedback: Object.entries(result.viewport_metrics || {}).some(([, m]) => m && m.has_active_feedback),
+        has_tabular_nums: Object.entries(result.viewport_metrics || {}).some(([, m]) => m && m.has_tabular_nums),
+      },
+      small_touch_targets_count: Object.values(result.viewport_metrics || {}).reduce((acc, m) => acc + (m?.small_touch_target_count || 0), 0),
+    };
+    process.stdout.write(JSON.stringify({ ...result, diagnostics_summary, metadata, evidence_record: recording }, null, 2) + "\n");
     process.exit(0);
   } else {
     // A failed capture is a result, not silence: emit explicit metadata and never

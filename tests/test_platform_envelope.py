@@ -614,6 +614,14 @@ def test_boundary_scope_closes_on_a_trailing_released_declaration(tmp_path):
     assert execution_boundary.active_root(root) is None
 
 
+def test_boundary_scope_active_for_nonempty_discussion_without_explicit_marker(tmp_path):
+    root = tmp_path / "project"
+    (root / "prototype").mkdir(parents=True)
+    (root / "prototype/discussion.md").write_text(
+        "# 事故处置台 · 决策与事实台账\n\n- 产品定位: SRE 应急指挥台\n", encoding="utf-8")
+    assert execution_boundary.active_root(root) == root
+
+
 def test_dispatch_admits_canonical_spec_pillar_packet(tmp_path):
     """Execution boundary admits handoff packet for canonical .spec.md via pillar_packet."""
     import handoff

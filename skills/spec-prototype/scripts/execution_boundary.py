@@ -240,7 +240,9 @@ def boundary_status(record: Path) -> str | None:
     values = re.findall(r'^- Execution boundary:\s*(active|released)\s*$', resume_text, re.M)
     if not values and "## Resume" in text:
         values = re.findall(r'^- Execution boundary:\s*(active|released)\s*$', text, re.M)
-    return values[-1] if values else None
+    if values:
+        return values[-1]
+    return 'active' if text.strip() else None
 
 
 def active_root(cwd):
@@ -353,7 +355,7 @@ def check(payload):
             return
         if tool in {'Write', 'Edit', 'MultiEdit'}:
             target = (cwd/args['file_path']).resolve()
-            if target.is_relative_to(record.parent):
+            if target.is_relative_to(record.parent) and (not record.is_file() or record.stat().st_size == 0):
                 require(target == record.resolve(),
                         'Update the legacy prototype/discussion.md record before other design artifacts.')
         return

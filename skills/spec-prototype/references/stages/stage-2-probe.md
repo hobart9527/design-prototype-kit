@@ -15,16 +15,20 @@ analogies where helpful, but are never forced upon digital-native products.
 ## Direct Materialization & Multi-Direction Exploration
 
 The path is visual-first:
-1. **Divergent directions**: Author 2–3 distinct directions in physical slots
-   (`prototype/experiments/<slice_id>/dirs/{a,b,c}/index.html`), allowing independent
-   layout and styling without file collision.
+1. **Divergent directions**: Author 2 distinct directions in physical slots
+   (`prototype/experiments/<slice_id>/dirs/a/index.html` and `dirs/b/index.html`),
+   applying contrasting styles from `modern-style-vocabulary.md` (e.g. Dense Instrument vs Swiss Grid).
+   Keep layout and styling independent without file collision.
 2. **Author tokens**: Directly write or adjust `prototype/shared/tokens.css` (or local directional tokens)
    to calibrate theme, contrast, and layout rhythm. No pre-compilation from discussion prose is mandated.
 3. **Capture & inspect**: Capture rendered views via `node skills/spec-prototype/scripts/capture.mjs`.
-   Inspection verifies objective rendering facts (no JS errors, styles applied, no horizontal overflow)
-   while human visual review selects the winning direction.
-4. **Converge**: Once a direction is selected, promote it to the anchor prototype
+   Inspect the structured `diagnostics_summary` returned directly in stdout:
+   verify zero horizontal overflow (`horizontal_overflow: false`), styles applied (`stylesheets_applied: true`),
+   and craft floors (`has_active_feedback: true`, `has_tabular_nums: true`) in one quick step.
+4. **Converge**: Select or synthesize the winning direction into the anchor prototype
    (`prototype/experiments/<slice_id>/anchor/index.html`) for deeper state and coverage expansion in Stage 3.
+5. **Path Singleton**: Any preview or review portal must strictly reside at `prototype/review-portal.html`.
+   Never author or copy review portals under nested paths (e.g. `experiments/.../prototype/`).
 
 Read [`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md)
 before the first write of runnable code; it holds the generating-side Verify and
