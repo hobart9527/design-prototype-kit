@@ -168,6 +168,13 @@ prototype/
 3. NEVER author duplicate or nested review portals (e.g. under `experiments/.../prototype/review-portal.html`). The only valid portal location is `prototype/review-portal.html`.
 4. NEVER loop repeatedly on visual guesswork or trial-and-error shell patches. Read the structured `diagnostics_summary` from `capture.mjs` directly for one-shot rendering and craft convergence.
 
+The machine-read lists in `discussion.md` — states, stress fixtures, invariants,
+required states, viewports, actions, axes, craft, tokens, meso — are declared in
+fenced `contract:<kind>` YAML blocks. The block is authoritative and fails closed;
+the prose forms are a compatibility route for older records. The registry of kinds
+and their fields is owned by
+[`references/04-governance/machine-contract.md`](references/04-governance/machine-contract.md).
+
 The discussion record also carries the two blocks that make a delivery evaluable:
 **Success metrics** (how the work will be judged — product outcomes with an
 observation method, never "the prototype exists") and a **Reviewer's evaluation

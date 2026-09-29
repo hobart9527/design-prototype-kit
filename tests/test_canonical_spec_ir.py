@@ -1042,6 +1042,128 @@ def test_the_template_compiles_to_the_execution_tier(tmp_path: Path):
     assert ir["scope"]["verification_scope"]["required_states"] == [
         "state-draft", "state-sealed"]
 
+def test_the_template_declares_every_machine_list_as_a_contract_block():
+    """The template's own form must be the authoritative one, not the prose one.
+
+    Prose inference is the route with the silent-mis-parse history: every field
+    it reads is guessed from a sentence. A template that teaches the prose form
+    teaches the fragile form, so the shipped example must be blocks.
+    """
+    template = (REPO / "skills/spec-prototype/templates/discussion.md").read_text(encoding="utf-8")
+    for kind in ("states", "stress", "invariants", "required_states", "viewports",
+                 "actions", "axes", "craft", "tokens", "meso"):
+        assert f"```contract:{kind}" in template, f"the template never declares contract:{kind}"
+    # The contract kinds the loaders know and the ones the template teaches are
+    # one list; a kind the template omits is a kind no author will write.
+    from compile_spec_ir import _CONTRACT_KINDS
+    for kind in _CONTRACT_KINDS:
+        assert f"```contract:{kind}" in template, f"contract:{kind} has no shipped example"
+
+def test_a_contract_states_block_is_the_machine_ssot(tmp_path: Path):
+    """When a block exists it wins, and prose never becomes a second declaration."""
+    from compile_spec_ir import (parse_data_scenarios, parse_domain_states,
+                                 parse_interaction_states)
+
+    doc = """## 3. State Model
+- `domain/from-prose` (散文态): 只应被块覆盖。
+
+```contract:states
+- id: domain/from-block
+  label: 块态
+  description: 机器权威。
+- id: interaction/idle
+  description: 待命。
+- id: data/cold-cache
+  description: 冷缓存。
+```
+"""
+    assert [s["id"] for s in parse_domain_states(doc)] == ["domain/from-block"]
+    assert [s["label"] for s in parse_domain_states(doc)] == ["块态"]
+    assert parse_interaction_states(doc) == ["interaction/idle"]
+    assert [d["id"] for d in parse_data_scenarios(doc)] == ["data/cold-cache"]
+
+def test_contract_blocks_fail_closed_on_an_authoring_error():
+    """A declared block is deliberate, so an unknown value is an error, not a skip.
+
+    The prose path falls back to a weaker enum value on a typo; the block path
+    cannot, because the author stated it explicitly and a silent downgrade would
+    ship a gate they never chose.
+    """
+    from compile_spec_ir import (_invariants_from_contract_block, _states_from_contract_block,
+                                 _stress_from_contract_block)
+
+    with pytest.raises(ValueError, match="unknown prefix"):
+        _states_from_contract_block("```contract:states\n- id: widget/x\n  description: X\n```")
+    with pytest.raises(ValueError, match="description"):
+        _states_from_contract_block("```contract:states\n- id: domain/a\n```")
+    with pytest.raises(ValueError, match="duplicate id"):
+        _states_from_contract_block(
+            "```contract:states\n- id: domain/a\n  description: A\n"
+            "- id: domain/a\n  description: A\n```")
+    with pytest.raises(ValueError, match="missing required"):
+        _stress_from_contract_block("```contract:stress\n- id: stress/x\n  vector: v\n```")
+    with pytest.raises(ValueError, match="invalid severity"):
+        _invariants_from_contract_block(
+            "```contract:invariants\n- id: inv/a\n  statement: s\n  severity: critical\n```")
+    with pytest.raises(ValueError, match="invalid verification"):
+        _invariants_from_contract_block(
+            "```contract:invariants\n- id: inv/a\n  statement: s\n  verification: eyeball\n```")
+    # No block at all is not an error: it selects the prose fallback.
+    assert _states_from_contract_block("- `domain/a`: A\n") is None
+
+def test_a_declaration_the_compiler_drops_is_reported_not_silently_lost(tmp_path: Path):
+    """A machine-shaped bullet that parsed nothing out is a compile failure.
+
+    This is the defect class that surfaced as a late `execution_spec` refusal:
+    the author wrote a declaration, the parser admitted nothing, and the run
+    continued with the field empty. The line that caused it must be named.
+    """
+    root = _write_discussion(tmp_path, PARTITIONED_DISCUSSION.replace(
+        "- `stress/bus-hang` | Vector: `NVLink 挂起` | Expected: `定位故障节点`。",
+        "- `stress/bus-hang` | Vector: `NVLink 挂起`。"))
+
+    with pytest.raises(IncompleteStageContractError) as excinfo:
+        compile_canonical_ir(root=root, slice_id="cluster-overview", stage="hero_probe")
+
+    assert "unadmitted_machine_bullet" in str(excinfo.value)
+    assert "stress/bus-hang" in str(excinfo.value)
+
+def test_a_misspelled_contract_kind_is_reported_not_silently_ignored(tmp_path: Path):
+    """A fence naming an unregistered kind reads as no block at all.
+
+    The misspelling silently hands the field to the prose fallback, which is the
+    same silent drop one level up: the author declared a contract and the
+    compiler read nothing. The registry is what makes the fence meaningful, so a
+    fence outside it is named.
+    """
+    root = _write_discussion(tmp_path, PARTITIONED_DISCUSSION.replace(
+        "### 6. Viewport 与强制测试状态\n- `Viewport`: `390px` / `1280px`",
+        "```contract:viewport\n- 390\n- 1280\n```"))
+
+    with pytest.raises(IncompleteStageContractError) as excinfo:
+        compile_canonical_ir(root=root, slice_id="cluster-overview", stage="hero_probe")
+
+    assert "unknown_contract_kind" in str(excinfo.value)
+    assert "contract:viewport" in str(excinfo.value)
+
+def test_a_contract_states_block_missing_a_class_is_reported(tmp_path: Path):
+    root = _write_discussion(tmp_path, PARTITIONED_DISCUSSION.replace(
+        "### 3. 项目级状态模型 (State Model)\n"
+        "- `domain/cluster-nominal` (集群常态): 全部节点健康。\n"
+        "- `interaction/inspecting` (检视中): 抽屉展开。\n"
+        "- `data/cold-metrics` (冷指标): 首次加载。",
+        "### 3. 项目级状态模型 (State Model)\n"
+        "```contract:states\n"
+        "- id: domain/cluster-nominal\n  label: 集群常态\n  description: 全部节点健康。\n"
+        "- id: interaction/inspecting\n  description: 抽屉展开。\n"
+        "```"))
+
+    with pytest.raises(IncompleteStageContractError) as excinfo:
+        compile_canonical_ir(root=root, slice_id="cluster-overview", stage="hero_probe")
+
+    assert "incomplete_state_block" in str(excinfo.value)
+    assert "data_scenarios" in str(excinfo.value)
+
 
 def test_a_state_named_in_prose_is_not_a_declaration():
     """Only a bullet declares a state; a token mentioned in a sentence does not.

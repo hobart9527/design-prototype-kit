@@ -150,14 +150,50 @@ primary_surface: "<surface-id>"
 - **Primary**: `surface/<id>`
 - <additional surface only if needed by this slice>
 
+```contract:viewports
+- 390
+- 1280
+```
+
 ## 4. Actions & States (when behavior is in scope)
 - <authored task, visible action, result, and recovery>
-- Required States: `<state-id>` # only when state capture is needed
+
+```contract:states
+- id: domain/<state-id>
+  label: 业务状态名称
+  description: 一句话语义描述
+- id: interaction/<state-id>
+  description: 一句话交互描述
+- id: data/<data-id>
+  description: 真实数据场景说明
+```
+
+```contract:required_states
+- <state-id>
+```
 
 ## 5. Resilience & Invariants (when relevant)
 - <material failure/stress case and expected behavior>
-- <blocking invariant, with an observable verification method>
+
+```contract:stress
+- id: stress/<fixture-id>
+  vector: 破坏性输入
+  expected: 预期自愈与容错行为
 ```
+
+```contract:invariants
+- id: inv/<id>
+  statement: <blocking invariant, with an observable verification method>
+  severity: blocking
+  verification: dom_query
+```
+```
+
+The lists the compiler reads as fact are declared in fenced `contract:<kind>`
+blocks. The block is authoritative; prose explains it and is never a second
+declaration. A block fails closed on an authoring error — an unknown prefix, a
+missing field, a duplicate id, an out-of-enum severity — while the prose
+compatibility route falls back silently. Prefer the block.
 
 The existing rich sections and legacy multi-file format remain supported. This
 minimal form clarifies the entry contract; it does not replace those compatibility

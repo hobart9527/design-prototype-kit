@@ -82,13 +82,32 @@ primary_surface: "<primary-surface-id>"
 - **移动扫视图 (Glance)**: `surface/<id>`
 
 ## 4. State Models & Action Lifecycle
-- `domain/<state-id>`: 一句话语义描述
-- `interaction/<state-id>`: 一句话交互描述
-- `data/<data-id>`: 真实数据场景说明
-
-## 5. Resilience, Reality Breakers & Invariants
-- `stress/<fixture-id>` | Vector: <破坏性输入> | Expected: <预期自愈与容错行为>
-- `inv/<id>` | <不变量描述> | severity: blocking | verification: dom_query
+```contract:states
+- id: domain/<state-id>
+  label: 业务状态名称
+  description: 一句话语义描述
+- id: interaction/<state-id>
+  description: 一句话交互描述
+- id: data/<data-id>
+  description: 真实数据场景说明
 ```
 
-Legacy section headings (`Stage 1 §1`, `Stage 1 §3`, `Stage 1 §5`, `Stage 1 §8`) remain fully supported for backwards compatibility.
+## 5. Resilience, Reality Breakers & Invariants
+```contract:stress
+- id: stress/<fixture-id>
+  vector: 破坏性输入
+  expected: 预期自愈与容错行为
+```
+
+```contract:invariants
+- id: inv/<id>
+  statement: 不变量描述
+  severity: blocking
+  verification: dom_query
+```
+```
+
+The prose forms remain readable for a record that predates the blocks, but the
+fenced block is the authoritative one and fails closed on an authoring error.
+Legacy section headings (`Stage 1 §1`, `Stage 1 §3`, `Stage 1 §5`, `Stage 1 §8`)
+remain fully supported for backwards compatibility.

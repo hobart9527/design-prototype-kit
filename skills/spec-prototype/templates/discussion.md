@@ -11,14 +11,20 @@ another. A record with no slice block is read as one implicit slice (legacy
 form). Add a slice by appending a block; never widen an existing block to cover
 a second slice.
 
-**Machine forms.** The record is also the compiler's input, and four lists have a
-parse form the prose does not: `domain/<id>` (名称): 描述, `interaction/<id>`, `data/<id>`,
-and `stress/<id>` | Vector: … | Expected: …; plus `inv/<id>` | 断言 | severity: … |
-verification: …. Each is admitted only from a bullet that starts with it, and a
-`stress/` bullet without both `Vector:` and `Expected:` is dropped. The rules and
-the invariants in this template are the shipped examples; replace their content,
-keep their shape. A slice missing any of the four state classes compiles to
-`intent_spec` and is refused at the Stage 5 `execution_spec` boundary.
+**Machine forms.** The record is also the compiler's input, and the lists the
+compiler reads as fact are declared in fenced `contract:<kind>` YAML blocks —
+`contract:states`, `contract:stress`, `contract:invariants`,
+`contract:required_states`, `contract:viewports`, `contract:actions`,
+`contract:axes`, `contract:craft`, `contract:tokens`, `contract:meso`. The block
+is authoritative; prose explains it and is never a second declaration. A bullet
+outside a block is admitted only when it matches the parser's prose rule exactly,
+and one that names a contract token without matching is reported as an
+unadmitted declaration rather than dropped in silence. The blocks in this
+template are the shipped examples; replace their content, keep their shape. A
+YAML value that contains `: ` or begins with a special character must be
+double-quoted, or the loader reads it as structure and the block fails to parse.
+A slice missing any of the three state classes compiles to `intent_spec` and is
+refused at the Stage 5 `execution_spec` boundary.
 
 ## Resume
 
@@ -145,11 +151,20 @@ Author the six blocks once the direction is locked
 
 ### Experience Foundation & Five Axes (支柱 6-7: 视觉刻度与五轴)
 - **5-Dial Style Register**:
-  - `density`: `dense` (微型间距、高信息吞吐、紧凑行高)
-  - `energy`: `kinetic` (80ms 高瞬态响应、触觉回弹)
-  - `materiality`: `coated_instrument_dark` (深色物理仪器质感)
-  - `rhythm`: `fluid` (无阻尼过渡，支持极速键盘行进)
-  - `character`: `technical` (高精密度机械感，等宽数字对齐)
+
+```contract:axes
+density: dense
+energy: kinetic
+materiality: coated_instrument_dark
+rhythm: fluid
+character: technical
+```
+
+- `density`: `dense` (微型间距、高信息吞吐、紧凑行高)
+- `energy`: `kinetic` (80ms 高瞬态响应、触觉回弹)
+- `materiality`: `coated_instrument_dark` (深色物理仪器质感)
+- `rhythm`: `fluid` (无阻尼过渡，支持极速键盘行进)
+- `character`: `technical` (高精密度机械感，等宽数字对齐)
 - **Cognitive Budgeting Allocation**:
   - Zero-learning baseline: 惯用导航与高可预测表格 (0 认知成本)
   - High-yield borrowing: 应急主交互区域引入精准微动效
@@ -157,6 +172,12 @@ Author the six blocks once the direction is locked
   - Concentric Radius check: 内外容器圆角同心差对齐
   - Atmospheric Undertone: 依据亮度阶差建立连续空间深度
 - **Seed Palette & Tokens**:
+
+```contract:tokens
+accent_seal: "#ff3333"
+accent_policy: 仅用于不可逆操作的终极印章，常规强调使用 --accent-primary
+```
+
   - `--bg-void`: `#0b0f10`
   - `--bg-surface`: `#141a1d`
   - `--text-primary`: `#e6edf3`
@@ -242,22 +263,56 @@ challenger is fused at step 4, or refused with its reason. Leave the table absen
 until a divergence is actually being run.
 
 ### Spatial Anatomy & Surface Topology (支柱 3-5: 空间与层级)
+
+```contract:viewports
+- 390
+- 1280
+```
+
+```contract:meso
+massing_pattern: canvas-inspector
+kinematics: focus-restore-250ms
+data_syntax: micro-trend-compact
+```
+
+```contract:craft
+surface_optics: coated_instrument_dark
+spatial_geometry: concentric-nested
+micro_typography: tabular-numeric
+data_marks: micro-trend-compact
+```
+
 - **Primary Operational Surface**: `surfaces/<slice_id>-main` (核心主控工作台，承载高频研判与操作)
 - **Contextual Surface**: `surfaces/<slice_id>-drawer` (下钻检视抽屉，不脱离主视区)
 - **Supporting / Glance Surface**: `surfaces/<slice_id>-mobile` (390px 移动端只读扫视哨兵)
 
 ### State Taxonomy & Action Lifecycle (支柱 8: 交互与原子动作闭环)
-- **Domain States**:
-  - `domain/nominal` (常规态): 全部节点健康
-  - `domain/avalanche-alert` (雪崩告警): 异常节点聚集扩散
-  - `domain/quarantined` (已隔离): 机器安全下线
-- **Interaction States**:
-  - `interaction/idle` (待命): 无焦点动作，等待操作者命中。
-  - `interaction/inspecting` (检视中): 命中节点、抽屉展开、等待确认。
-  - `interaction/committing` (提交中): 不可逆动作已触发，等待结果回执。
-- **Data Scenarios**:
-  - `data/cold-cache` (冷缓存): 首次加载、缓存未命中、指标抖动。
-  - `data/burst-traffic` (流量峰值): 遭遇 10x 流量峰值时的批处理渲染。
+
+```contract:states
+- id: domain/nominal
+  label: 常规态
+  description: 全部节点健康
+- id: domain/avalanche-alert
+  label: 雪崩告警
+  description: 异常节点聚集扩散
+- id: domain/quarantined
+  label: 已隔离
+  description: 机器安全下线
+- id: interaction/idle
+  description: 无焦点动作，等待操作者命中。
+- id: interaction/inspecting
+  description: 命中节点、抽屉展开、等待确认。
+- id: interaction/committing
+  description: 不可逆动作已触发，等待结果回执。
+- id: data/cold-cache
+  description: 首次加载、缓存未命中、指标抖动。
+- id: data/burst-traffic
+  description: 遭遇 10x 流量峰值时的批处理渲染。
+```
+
+- **Domain States**: `domain/nominal` (常规态) / `domain/avalanche-alert` (雪崩告警) / `domain/quarantined` (已隔离)
+- **Interaction States**: `interaction/idle` / `interaction/inspecting` / `interaction/committing`
+- **Data Scenarios**: `data/cold-cache` (冷缓存) / `data/burst-traffic` (流量峰值)
 - **Action Verb Lifecycle (必须包含破坏性操作的确认与回滚出口)**:
   ```contract:actions
   - id: action-space
@@ -284,15 +339,45 @@ until a divergence is actually being run.
 - **Decisive Exchange 3-Frame Verification**: 触发 (Frame 1: 80ms) -> 提交 (Frame 2: 150ms) -> 结果 (Frame 3: 持久)
 
 ### Verifiable Invariants & Break Protocol (支柱 9: 韧性与证伪门禁)
-- **Verifiable Design Invariants** (`inv/<id>` | 断言 | `severity:` | `verification:`，机器权威来源，下方散文不得另立 ID):
-  - `inv/wcag-contrast` | 核心文本必须满足 WCAG 2.2 AA (>= 4.5:1)，操作按钮 >= 3.0:1 | severity: blocking | verification: computed_style
-  - `inv/token-inheritance` | 100% 继承 `prototype/shared/tokens.css`，0 内联 hex | severity: blocking | verification: computed_style
-  - `inv/action-safety` | 高危排空必须弹出 `<dialog>` 二次确认；模态内必须确保双人签发可被快速/确定性解锁；提交后 DOM 必须渲染明确的状态反馈（含 "已排空" 或 "排空中"）；且必须持久展示可触达的 "撤回 / 撤销 / 回滚" 动作按钮 | severity: blocking | verification: dom_query
-  - `inv/discoverable-critical-path` | 关键路径上的控制不得仅以 `title` 提示、悬停浮层或散文说明其前置条件；每一步执行后，下一步的触发点必须在同一快照中直接可点，前置未满足时必须就地呈现解锁入口而不是渲染静止禁用按钮 | severity: blocking | verification: dom_query
-- **The Break Protocol** (`stress/<id>` | `Vector:` 破坏向量 | `Expected:` 期望恢复行为，两者缺一不构成可用夹具):
-  - `stress/unbreakable-string` | Vector: 超长节点标识与微服务名 | Expected: 自动截断，禁止破坏横向布局
-  - `stress/zero-data` | Vector: 0 异常机器空状态 | Expected: 展示常态自愈健康指示，严禁白屏
-  - `stress/320px-fold` | Vector: 320px / 390px 视口 | Expected: 单列自然流动，全容器 box-sizing: border-box，严格消除横向溢出滚动条（scrollWidth == clientWidth）
+
+```contract:required_states
+- state-draft
+- state-sealed
+```
+
+```contract:invariants
+- id: inv/wcag-contrast
+  statement: "核心文本必须满足 WCAG 2.2 AA (>= 4.5:1)，操作按钮 >= 3.0:1"
+  severity: blocking
+  verification: computed_style
+- id: inv/token-inheritance
+  statement: "100% 继承 prototype/shared/tokens.css，0 内联 hex"
+  severity: blocking
+  verification: computed_style
+- id: inv/action-safety
+  statement: "高危排空必须弹出 <dialog> 二次确认；模态内必须确保双人签发可被快速/确定性解锁；提交后 DOM 必须渲染明确的状态反馈（含 \"已排空\" 或 \"排空中\"）；且必须持久展示可触达的 \"撤回 / 撤销 / 回滚\" 动作按钮"
+  severity: blocking
+  verification: dom_query
+- id: inv/discoverable-critical-path
+  statement: "关键路径上的控制不得仅以 title 提示、悬停浮层或散文说明其前置条件；每一步执行后，下一步的触发点必须在同一快照中直接可点，前置未满足时必须就地呈现解锁入口而不是渲染静止禁用按钮"
+  severity: blocking
+  verification: dom_query
+```
+
+```contract:stress
+- id: stress/unbreakable-string
+  vector: "超长节点标识与微服务名"
+  expected: "自动截断，禁止破坏横向布局"
+- id: stress/zero-data
+  vector: "0 异常机器空状态"
+  expected: "展示常态自愈健康指示，严禁白屏"
+- id: stress/320px-fold
+  vector: "320px / 390px 视口"
+  expected: "单列自然流动，全容器 box-sizing: border-box，严格消除横向溢出滚动条（scrollWidth == clientWidth）"
+```
+
+- **Verifiable Design Invariants** (机器权威来源为上方 `contract:invariants`；下方散文只解释，不得另立 ID)
+- **The Break Protocol** (机器权威来源为上方 `contract:stress`；两者缺一不构成可用夹具)
 
 ### Stage 2: Proposition & Probe (立 - 核心主交互物化)
 - **Hero Screen Anchor Target**: `prototype/experiments/<slice_id>/anchor/index.html` (or probe path)

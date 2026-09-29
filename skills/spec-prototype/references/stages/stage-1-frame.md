@@ -59,7 +59,11 @@ authoring or dispatch stage. The retirement inventory and migration rules are ow
 
 Keep `prototype/discussion.md` as the concise human-readable decision and evidence
 record. For a formal prototype, use `google-design-md/v2` frontmatter and semantic
-sections documented in [`../spec-md-contract.md`](../spec-md-contract.md). This is a
+sections documented in [`../spec-md-contract.md`](../spec-md-contract.md). The
+authoritative form of every machine-read list, and the registry of what each
+`contract:<kind>` block admits, are owned by
+[`../04-governance/machine-contract.md`](../04-governance/machine-contract.md).
+This is a
 Skill-owned, parser-compatible format inspired by Google Design.md; it is not an
 official Google schema and does not imply Material Design adoption.
 
@@ -140,25 +144,63 @@ tier from these parser-compatible headings:
 The state model and resilience sections have a machine form too, and a record that
 reaches Stage 5 without it compiles to `intent_spec` and is refused at the
 `execution_spec` boundary. `compile_spec_ir.py` is the sole parsing authority; the
-forms below are its admission rules, not a second specification:
+forms below are its admission rules, not a second specification.
+
+Write the lists the compiler reads as fact in fenced `contract:<kind>` blocks.
+The block is authoritative and fails closed on an authoring error — an unknown
+prefix, a missing field, a duplicate id, an out-of-enum severity. A `domain/` and
+`data/` entry carries a `description`; an `interaction/` entry is an id alone.
+A YAML value containing `: ` or starting with a special character must be quoted.
 
 ```markdown
 ## 3. State Model
-- `domain/<id>` (业务状态名称): 一句话语义描述
-- `interaction/<id>` (交互状态名称): 一句话语义描述
-- `data/<id>` (数据场景名称): 一句话语义描述
-
-## 7. Break Protocol
-- `stress/<id>` | Vector: `破坏向量` | Expected: `期望恢复行为`
-
-## Design Invariants
-- `inv/<id>` | 断言 | severity: blocking | verification: computed_style
+```contract:states
+- id: domain/<id>
+  label: 业务状态名称
+  description: 一句话语义描述
+- id: interaction/<id>
+  description: 一句话交互描述
+- id: data/<id>
+  description: 一句话数据场景说明
 ```
 
-Each bullet is admitted only when it starts with the list marker; a token named
-inside a prose line is a mention, not a declaration. A `stress/` bullet needs both
-`Vector:` and `Expected:` — a fixture with one of the two is not a usable fixture
-and is dropped. `severity` defaults to `advisory` and `verification` to `manual`.
+## 6. Viewport 与强制测试状态
+```contract:viewports
+- 390
+- 1280
+```
+```contract:required_states
+- state-a
+- state-b
+```
+
+## 7. Break Protocol
+```contract:stress
+- id: stress/<id>
+  vector: 破坏向量
+  expected: 期望恢复行为
+```
+
+## Design Invariants
+```contract:invariants
+- id: inv/<id>
+  statement: 断言
+  severity: blocking
+  verification: computed_style
+```
+```
+
+The prose forms (`- `domain/<id>` (label): description`, `- `stress/<id>` | Vector:
+… | Expected: …`, `- `inv/<id>` | 断言 | severity: …`) remain readable for a record
+that predates the blocks. They are the compatibility route, not the recommended
+one: prose admission is inferred, so it is where a mis-parse comes from. A
+`stress/` bullet needs both `Vector:` and `Expected:`; one missing a field is not
+a usable fixture. `severity` defaults to `advisory` and `verification` to `manual`.
+
+A machine-shaped bullet that names a contract token but matches no admission rule
+is reported as an unadmitted declaration and aborts the compile, rather than being
+dropped while the run continues with the field empty. That report is the signal
+that a declaration was written in a form the compiler does not read.
 
 ## Exit
 

@@ -246,6 +246,11 @@ def parse_block_frontmatter(block: str) -> Dict[str, Any]:
 #
 # `heading`  : human-readable section anchor the author must add.
 # `required` : violation tuple fields: key, section, markdown form, example.
+#
+# `form` names the authoritative ```contract:<kind>``` block first and the prose
+# fallback second. The block is what an author should write; the prose form is
+# the compatibility route for a record that predates it, and it is the route
+# with the silent-mis-parse history, so it is never the recommended one.
 # ---------------------------------------------------------------------------
 _STATE_SECTION = "Stage 1 §3 (项目级状态模型)"
 _SURFACES_SECTION = "Stage 1 §5 (OOUX 实体拓扑与表面分配)"
@@ -255,42 +260,42 @@ _REQUIRED_SECTIONS: List[Dict[str, Any]] = [
         "key": "domain_states",
         "label": "领域状态 (domain_states)",
         "section": _STATE_SECTION,
-        "form": "- `domain/<state-id>` (业务状态名称): 一句话语义描述",
+        "form": "```contract:states``` → `- id: domain/<state-id>` + `description:`（回退散文形：`- `domain/<state-id>` (业务状态名称): 一句话语义描述`）",
         "example": "- `domain/cluster-nominal` (集群常态): 全部节点健康、张量流水线满负荷吞吐。",
     },
     {
         "key": "interaction_states",
         "label": "交互状态 (interaction_states)",
         "section": _STATE_SECTION,
-        "form": "- `interaction/<state-id>`: 一句话语义描述",
+        "form": "```contract:states``` → `- id: interaction/<state-id>` + `description:`（回退散文形：`- `interaction/<state-id>`: 一句话语义描述`）",
         "example": "- `interaction/inspecting` (检视中): 操作者命中节点、抽屉展开、等待确认。",
     },
     {
         "key": "data_scenarios",
         "label": "数据场景 (data_scenarios)",
         "section": _STATE_SECTION,
-        "form": "- `data/<scenario-id>`: 一句话语义描述",
+        "form": "```contract:states``` → `- id: data/<scenario-id>` + `description:`（回退散文形：`- `data/<scenario-id>`: 一句话语义描述`）",
         "example": "- `data/cold-tensor-cache` (冷张量缓存): 首次加载、缓存未命中、指标抖动。",
     },
     {
         "key": "stress_fixtures",
         "label": "破坏性压测夹具 (stress_fixtures)",
         "section": "Stage 1 §4 (破坏协议 / Break Protocol)",
-        "form": "- `stress/<fixture-id>` | Vector: `破坏向量` | Expected: `期望恢复行为`",
+        "form": "```contract:stress``` → `- id: stress/<fixture-id>` + `vector:` + `expected:`（回退散文形：`- `stress/<fixture-id>` | Vector: `破坏向量` | Expected: `期望恢复行为``）",
         "example": "- `stress/nvlink-bus-hang` | Vector: `NVLink 链路挂起 6 秒` | Expected: `2 秒内定位故障节点并显示降级徽标`。",
     },
     {
         "key": "viewports",
         "label": "目标视口宽度 (viewports)",
         "section": f"{_SURFACES_SECTION} 或 Stage 1 §6 (Viewport / 设备视口)",
-        "form": "- `Viewport`: `320px` / `1280px`；行内出现 `NNNpx` 即被采纳",
+        "form": "```contract:viewports``` → `- 390` / `- \"1280px\"`（回退散文形：`- `Viewport`: `320px` / `1280px``，行内出现 `NNNpx` 即被采纳）",
         "example": "- `Viewport`: `390px` (phone) / `1280px` (desktop)",
     },
     {
         "key": "required_states",
         "label": "强制测试状态 (required_states)",
         "section": f"{_SURFACES_SECTION} 或 Stage 1 §6 (Viewport / 设备视口)",
-        "form": "- `Required States`: `state-a`, `state-b`（行内以反引号包裹 `state-*` 标记，至少一项）",
+        "form": "```contract:required_states``` → `- state-a`（回退散文形：`- `Required States`: `state-a`, `state-b``）",
         "example": "- `Required States`: `state-draft`, `state-sealed`",
     },
 ]
@@ -368,8 +373,13 @@ def parse_5_dial_register(text: str) -> Dict[str, str]:
 
     The Five Axes are optional calibration, so an unset axis is never filled
     with a default that would reach the Builder as if it were authored.
+
+    Priority 0: a ```contract:axes``` block is the machine SSOT.
     """
-    axes = ("density", "energy", "materiality", "rhythm", "character")
+    block = _axes_from_contract_block(text)
+    if block is not None:
+        return block
+    axes = _AXES
     dials: Dict[str, str] = {}
     # Look for `- \`?(\w+)\`?: \`?([^\`\n]+)\`?`
     for line in text.splitlines():
@@ -379,14 +389,8 @@ def parse_5_dial_register(text: str) -> Dict[str, str]:
             val = m.group(2).strip().lower()
             if key in axes:
                 dials[key] = val
-            # Legacy dial aliases mirror compile_tokens.LEGACY_DIAL_MAP exactly;
-            # the same key never maps to two different axes.
-            elif key == "finish":
-                dials["materiality"] = val
-            elif key == "weight":
-                dials["materiality"] = val
-            elif key == "seriousness":
-                dials["character"] = val
+            elif key in _AXIS_ALIASES:
+                dials[_AXIS_ALIASES[key]] = val
     return {axis: dials[axis] for axis in axes if axis in dials}
 
 def parse_palette_discipline(text: str) -> Dict[str, str]:
@@ -394,7 +398,12 @@ def parse_palette_discipline(text: str) -> Dict[str, str]:
 
     A signature accent is a per-product decision; absent an authored
     `--accent-seal` token the compiler must not supply a colour or a rule.
+
+    Priority 0: a ```contract:tokens``` block is the machine SSOT.
     """
+    block = _tokens_from_contract_block(text)
+    if block is not None:
+        return block
     discipline: Dict[str, str] = {}
     seal = re.search(r"--accent-seal`?\s*[:：]\s*`?(#[0-9a-fA-F]{3,8})", text)
     if seal:
@@ -475,16 +484,26 @@ def _parse_action_clause(clause: str) -> Dict[str, str]:
     return fields
 
 
-def _parse_contract_yaml_blocks(text: str, kind: str) -> List[Dict[str, Any]]:
-    """Parse fenced ```contract:<kind>``` YAML blocks — the machine SSOT form.
+# The machine contract kinds. Every list the compiler reads as fact has exactly
+# one authoritative form — a fenced ```contract:<kind>``` YAML block — and one
+# prose form kept only for records that predate the block. This tuple is the
+# single declaration of what a kind is; the loaders below, the missing-section
+# report and the unadmitted-bullet check all read it, so the format cannot be
+# restated in four places and drift.
+_CONTRACT_KINDS = ("actions", "states", "stress", "invariants", "required_states",
+                   "viewports", "axes", "craft", "tokens", "meso")
 
-    When the author writes structured contract blocks, they are authoritative:
-    parse them with the YAML loader and skip prose heuristics for that kind.
+def _contract_yaml_values(text: str, kind: str) -> List[Any]:
+    """Load every fenced ```contract:<kind>``` block, raw, in document order.
+
+    One fence is one YAML document, and the value may be a mapping, a list of
+    mappings, or a list of scalars (`required_states`, `viewports`).
+    Normalisation belongs to the caller, so this stays a loader.
     """
-    blocks: List[Dict[str, Any]] = []
     matches = list(re.finditer(rf"^[ \t]*```contract:{kind}\s*\n(.*?)^[ \t]*```", text, re.DOTALL | re.MULTILINE))
     if matches and yaml is None:
         raise ValueError(f"contract:{kind} requires PyYAML to parse its authoritative block")
+    values: List[Any] = []
     for m in matches:
         # Dedent before stripping: a fence nested under a bullet carries a common
         # indent, and `strip()` alone removes it from the first line only, leaving
@@ -492,14 +511,425 @@ def _parse_contract_yaml_blocks(text: str, kind: str) -> List[Dict[str, Any]]:
         # as an over-indented mapping ("mapping values are not allowed here").
         body = textwrap.dedent(m.group(1)).strip()
         try:
-            loaded = yaml.safe_load(body)
+            values.append(yaml.safe_load(body))
         except yaml.YAMLError as exc:
             raise ValueError(f"invalid contract:{kind} YAML: {exc}") from exc
+    return values
+
+def _parse_contract_yaml_blocks(text: str, kind: str) -> List[Dict[str, Any]]:
+    """Parse fenced ```contract:<kind>``` YAML blocks — the machine SSOT form.
+
+    When the author writes structured contract blocks, they are authoritative:
+    parse them with the YAML loader and skip prose heuristics for that kind.
+    """
+    blocks: List[Dict[str, Any]] = []
+    for loaded in _contract_yaml_values(text, kind):
         entries = loaded if isinstance(loaded, list) else [loaded]
         if not entries or any(not isinstance(entry, dict) for entry in entries):
             raise ValueError(f"contract:{kind} must contain a mapping or list of mappings")
         blocks.extend(entries)
     return blocks
+
+def _require_mapping_entries(kind: str, loaded: Any) -> List[Dict[str, Any]]:
+    """Normalise one block document to a list of mappings, or fail closed."""
+    entries = loaded if isinstance(loaded, list) else [loaded]
+    if not entries or any(not isinstance(entry, dict) for entry in entries):
+        raise ValueError(f"contract:{kind} must contain a mapping or list of mappings")
+    return entries
+
+def _scalar_list(raw: Any, kind: str, field: str) -> List[str]:
+    """Normalise a scalar, a comma list, or a YAML list into trimmed strings."""
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        raw = re.split(r"[,，、]", raw)
+    if not isinstance(raw, list):
+        raise ValueError(f"contract:{kind} {field} must be a list or a comma-separated string")
+    return [str(item).strip() for item in raw if str(item).strip()]
+
+_STATE_PREFIXES = ("domain", "interaction", "data")
+
+def _states_from_contract_block(text: str):
+    """Normalise ```contract:states``` into (domain, interaction, data), or None.
+
+    None means no block is present, so the caller falls back to the prose form.
+    Every other outcome fails closed: an unknown prefix, a missing description
+    and a duplicate id are authoring errors, not entries to skip.
+
+    `description` is required for `domain/` and `data/` because the IR carries
+    it; `interaction_states` is a plain id list by contract, so an interaction
+    entry needs no description and is not asked for one.
+    """
+    values = _contract_yaml_values(text, "states")
+    if not values:
+        return None
+    domain: List[Dict[str, Any]] = []
+    interaction: List[str] = []
+    data: List[Dict[str, Any]] = []
+    seen: set = set()
+    for loaded in values:
+        for entry in _require_mapping_entries("states", loaded):
+            sid = str(entry.get("id") or "").strip().lower()
+            if not sid:
+                raise ValueError("contract:states entry missing required field(s): id")
+            prefix = sid.split("/", 1)[0]
+            if prefix not in _STATE_PREFIXES:
+                raise ValueError(
+                    f"contract:states {sid} has an unknown prefix; expected one of "
+                    + ", ".join(f"{p}/" for p in _STATE_PREFIXES))
+            if sid in seen:
+                raise ValueError(f"contract:states contains duplicate id: {sid}")
+            seen.add(sid)
+            if prefix == "interaction":
+                interaction.append(sid)
+                continue
+            description = str(entry.get("description") or "").strip()
+            if not description:
+                raise ValueError(f"contract:states {sid} missing required field(s): description")
+            label = str(entry.get("label") or "").strip() or sid.split("/", 1)[1]
+            if prefix == "domain":
+                domain.append({"id": sid, "label": label, "description": description})
+            else:
+                data.append({"id": sid, "description": description})
+    return domain, interaction, data
+
+def _stress_from_contract_block(text: str):
+    """Normalise ```contract:stress``` into break-protocol fixtures, or None."""
+    values = _contract_yaml_values(text, "stress")
+    if not values:
+        return None
+    out: List[Dict[str, Any]] = []
+    seen: set = set()
+    for loaded in values:
+        for entry in _require_mapping_entries("stress", loaded):
+            fid = str(entry.get("id") or "").strip().lower()
+            vector = str(entry.get("vector") or "").strip()
+            expected = str(entry.get("expected") or entry.get("expected_behavior") or "").strip()
+            missing = [k for k, v in (("id", fid), ("vector", vector), ("expected", expected)) if not v]
+            if missing:
+                raise ValueError("contract:stress entry missing required field(s): " + ", ".join(missing))
+            if not fid.startswith("stress/"):
+                raise ValueError(f"contract:stress {fid} must be named stress/<id>")
+            if fid in seen:
+                raise ValueError(f"contract:stress contains duplicate id: {fid}")
+            seen.add(fid)
+            out.append({"id": fid, "vector": vector, "expected_behavior": expected})
+    return out
+
+_INV_SEVERITIES = ("blocking", "warning", "advisory")
+_INV_VERIFICATIONS = ("computed_style", "dom_query", "screenshot_review", "manual")
+
+def _invariants_from_contract_block(text: str):
+    """Normalise ```contract:invariants``` into authored invariants, or None.
+
+    An unknown severity or verification fails closed. The prose form silently
+    falls back to `advisory`/`manual`, which turns a typo into a weaker gate the
+    author never chose; the block is explicit, so it can be held to that.
+    """
+    values = _contract_yaml_values(text, "invariants")
+    if not values:
+        return None
+    out: List[Dict[str, Any]] = []
+    seen: set = set()
+    for loaded in values:
+        for entry in _require_mapping_entries("invariants", loaded):
+            inv_id = str(entry.get("id") or "").strip()
+            statement = str(entry.get("statement") or "").strip()
+            missing = [k for k, v in (("id", inv_id), ("statement", statement)) if not v]
+            if missing:
+                raise ValueError("contract:invariants entry missing required field(s): " + ", ".join(missing))
+            if not inv_id.startswith("inv/"):
+                raise ValueError(f"contract:invariants {inv_id} must be named inv/<id>")
+            if inv_id in seen:
+                raise ValueError(f"contract:invariants contains duplicate id: {inv_id}")
+            seen.add(inv_id)
+            severity = str(entry.get("severity") or "advisory").strip().lower()
+            if severity not in _INV_SEVERITIES:
+                raise ValueError(
+                    f"contract:invariants {inv_id} has invalid severity {severity!r}; "
+                    f"expected one of {', '.join(_INV_SEVERITIES)}")
+            verification = str(
+                entry.get("verification") or entry.get("verification_method") or "manual").strip().lower()
+            if verification not in _INV_VERIFICATIONS:
+                raise ValueError(
+                    f"contract:invariants {inv_id} has invalid verification {verification!r}; "
+                    f"expected one of {', '.join(_INV_VERIFICATIONS)}")
+            applies_to = entry.get("applies_to")
+            out.append({
+                "id": inv_id,
+                "upstream_ref": "discussion.md",
+                "statement": statement,
+                "severity": severity,
+                "applies_to": _scalar_list(applies_to, "invariants", "applies_to"),
+                "verification_method": verification,
+                "authority": "authored",
+            })
+    return out
+
+def _required_states_from_contract_block(text: str):
+    """Normalise ```contract:required_states``` into state ids, or None."""
+    values = _contract_yaml_values(text, "required_states")
+    if not values:
+        return None
+    out: List[str] = []
+    seen: set = set()
+    for loaded in values:
+        raw = loaded.get("required_states", loaded.get("states")) if isinstance(loaded, dict) else loaded
+        tokens = _scalar_list(raw, "required_states", "required_states")
+        if not tokens:
+            raise ValueError("contract:required_states must name at least one state")
+        for token in tokens:
+            clean = token.strip("`*\"'").lower()
+            if not clean:
+                raise ValueError("contract:required_states contains an empty state id")
+            if clean in seen:
+                continue
+            seen.add(clean)
+            out.append(clean)
+    return out
+
+def _viewports_from_contract_block(text: str):
+    """Normalise ```contract:viewports``` into sorted pixel widths, or None."""
+    values = _contract_yaml_values(text, "viewports")
+    if not values:
+        return None
+    out: List[int] = []
+    for loaded in values:
+        raw = loaded.get("viewports") if isinstance(loaded, dict) else loaded
+        if raw is None:
+            raise ValueError("contract:viewports must name at least one width")
+        if not isinstance(raw, list):
+            raw = [raw]
+        for item in raw:
+            try:
+                width = int(str(item).strip().lower().removesuffix("px").strip())
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"contract:viewports has a non-numeric width: {item!r}") from exc
+            if not 200 <= width <= 4000:
+                raise ValueError(f"contract:viewports width out of range (200-4000): {width}")
+            if width not in out:
+                out.append(width)
+    return sorted(out)
+
+_AXES = ("density", "energy", "materiality", "rhythm", "character")
+# Legacy dial aliases mirror compile_tokens.LEGACY_DIAL_MAP exactly; the same key
+# never maps to two different axes.
+_AXIS_ALIASES = {"finish": "materiality", "weight": "materiality", "seriousness": "character"}
+
+def _axes_from_contract_block(text: str):
+    """Normalise ```contract:axes``` into the authored Five Axes, or None."""
+    values = _contract_yaml_values(text, "axes")
+    if not values:
+        return None
+    dials: Dict[str, str] = {}
+    for loaded in values:
+        if not isinstance(loaded, dict):
+            raise ValueError("contract:axes must contain a mapping of axis to value")
+        for key, val in loaded.items():
+            name = _AXIS_ALIASES.get(str(key).strip().lower(), str(key).strip().lower())
+            value = str(val or "").strip().lower()
+            if not value:
+                raise ValueError(f"contract:axes {key} has an empty value")
+            if name not in _AXES:
+                raise ValueError(
+                    f"contract:axes has an unknown axis {key!r}; expected one of "
+                    f"{', '.join(_AXES)} (aliases: {', '.join(sorted(_AXIS_ALIASES))})")
+            dials[name] = value
+    return {axis: dials[axis] for axis in _AXES if axis in dials}
+
+_CRAFT_AXES = ("surface_optics", "spatial_geometry", "micro_typography", "data_marks")
+
+def _craft_from_contract_block(text: str):
+    """Normalise ```contract:craft``` into the authored craft stack, or None."""
+    values = _contract_yaml_values(text, "craft")
+    if not values:
+        return None
+    stack: Dict[str, str] = {}
+    for loaded in values:
+        if not isinstance(loaded, dict):
+            raise ValueError("contract:craft must contain a mapping of axis to value")
+        for key, val in loaded.items():
+            name = str(key).strip().lower()
+            value = str(val or "").strip().lower()
+            if not value:
+                raise ValueError(f"contract:craft {key} has an empty value")
+            if name not in _CRAFT_AXES:
+                raise ValueError(
+                    f"contract:craft has an unknown axis {key!r}; expected one of {', '.join(_CRAFT_AXES)}")
+            stack[name] = value
+    return {axis: stack[axis] for axis in _CRAFT_AXES if axis in stack}
+
+def _tokens_from_contract_block(text: str):
+    """Normalise ```contract:tokens``` into palette discipline, or None."""
+    values = _contract_yaml_values(text, "tokens")
+    if not values:
+        return None
+    discipline: Dict[str, str] = {}
+    for loaded in values:
+        if not isinstance(loaded, dict):
+            raise ValueError("contract:tokens must contain a mapping")
+        for key, val in loaded.items():
+            name = str(key).strip().lower()
+            value = str(val or "").strip()
+            if name == "accent_seal":
+                if not re.fullmatch(r"#[0-9a-fA-F]{3,8}", value):
+                    raise ValueError(f"contract:tokens accent_seal must be a hex colour, got {value!r}")
+                discipline["accent_seal"] = f"var(--accent-seal, {value})"
+            elif name == "accent_policy":
+                if not value:
+                    raise ValueError("contract:tokens accent_policy is empty")
+                discipline["accent_policy"] = value
+            else:
+                raise ValueError(
+                    f"contract:tokens has an unknown key {key!r}; expected accent_seal, accent_policy")
+    return discipline
+
+_MESO_KEYS = ("massing_pattern", "kinematics", "data_syntax")
+
+def _meso_from_contract_block(text: str):
+    """Normalise ```contract:meso``` into authored assembly slots, or None."""
+    values = _contract_yaml_values(text, "meso")
+    if not values:
+        return None
+    authored: Dict[str, str] = {}
+    for loaded in values:
+        if not isinstance(loaded, dict):
+            raise ValueError("contract:meso must contain a mapping")
+        for key, val in loaded.items():
+            name = str(key).strip().lower()
+            value = str(val or "").strip().lower()
+            if not value:
+                raise ValueError(f"contract:meso {key} has an empty value")
+            if name not in _MESO_KEYS:
+                raise ValueError(
+                    f"contract:meso has an unknown key {key!r}; expected one of {', '.join(_MESO_KEYS)}")
+            authored[name] = value
+    return authored
+
+def _machine_bullets(text: str) -> List[str]:
+    """Return bullets that look like machine declarations, fenced code excluded.
+
+    Fenced blocks are the authoritative form, so their contents are never
+    scanned; a fence's own opening line is skipped with them.
+    """
+    bullets: List[str] = []
+    in_fence = False
+    for line in text.splitlines():
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        stripped = line.strip()
+        if stripped.startswith(("-", "*")):
+            bullets.append(stripped)
+    return bullets
+
+# token -> the prose admission rule its parser applies. A bullet that names the
+# token but does not satisfy the rule is a declaration the compiler dropped.
+# This is the mirror of the parsers, kept beside them so the two cannot drift
+# silently: a parser that tightens its rule and does not tighten this one makes
+# every legitimate bullet report as unadmitted, and the test suite says so.
+_PROSE_ADMISSION: "Dict[str, Any]" = {
+    "domain/": re.compile(r"^\s*[-*]\s*[`*]*domain/", re.IGNORECASE),
+    "interaction/": re.compile(r"^\s*[-*]\s*[`*]*interaction/", re.IGNORECASE),
+    "data/": re.compile(r"^\s*[-*]\s*[`*]*data/", re.IGNORECASE),
+    "stress/": re.compile(r"^\s*[-*]\s*[`*]*stress/", re.IGNORECASE),
+    "inv/": re.compile(r"^\s*[-*]\s*[`*]*inv/", re.IGNORECASE),
+    "Required States": re.compile(r"^\s*[-*]?\s*[`*]*(?:Required[ \t]+States?|Mandatory[ \t]+Test[ \t]+States?|强制测试状态)", re.IGNORECASE),
+    "Viewport": re.compile(r"Viewport", re.IGNORECASE),
+    "axes": re.compile(r"^\s*[-*]\s*[`*]*(?:" + "|".join(_AXES + tuple(_AXIS_ALIASES) + _CRAFT_AXES + _MESO_KEYS) + r")[`*]*\s*[:：]", re.IGNORECASE),
+}
+
+def _unadmitted_machine_bullets(text: str) -> List[Dict[str, str]]:
+    """Find machine-shaped bullets the compiler parsed nothing out of.
+
+    The failure this closes is a silent drop: the author writes a declaration in
+    a form the parser does not admit, the compiler admits nothing, and the run
+    continues with the field empty — so the gap surfaces stages later, at the
+    `execution_spec` boundary, instead of at the line that caused it.
+
+    A bullet that names a contract token, is not a lead-in to a `contract:`
+    block, and does not satisfy that token's prose admission rule is reported.
+    A bullet with no contract token is prose and is ignored.
+    """
+    unadmitted: List[Dict[str, str]] = []
+    for bullet in _machine_bullets(text):
+        token = next((t for t in _PROSE_ADMISSION if t in bullet), None)
+        if token is None:
+            continue
+        if "contract:" in bullet:
+            continue  # a lead-in to the authoritative block, not a declaration
+        if not _PROSE_ADMISSION[token].search(bullet):
+            continue
+        # The token's rule matched, so the parser's own field requirements are
+        # what can still drop it: a stress bullet without both fields, an
+        # invariant without a statement.
+        if token == "stress/":
+            dropped = not (re.search(r"Vector\s*[:：]", bullet, re.IGNORECASE)
+                           and re.search(r"Expected", bullet, re.IGNORECASE))
+        elif token == "inv/":
+            dropped = "|" not in bullet
+        else:
+            dropped = False
+        if not dropped:
+            continue
+        unadmitted.append({
+            "key": "unadmitted_machine_bullet",
+            "label": "未获采纳的机器声明行 (unadmitted machine bullet)",
+            "section": "discussion.md → 状态模型 / 破坏协议 / 不变量",
+            "form": "机器列表请用 ```contract:<kind>``` 块声明；散文形须完整匹配解析器的采纳规则，否则该行不会被采纳",
+            "example": bullet,
+        })
+    return unadmitted
+
+def _unknown_contract_kinds(text: str) -> List[Dict[str, str]]:
+    """Report a `contract:<kind>` fence whose kind is not in the registry.
+
+    A misspelled kind reads as no block at all, so the prose fallback silently
+    takes over — the same silent-drop failure as an unadmitted bullet, one level
+    up. The fence named a contract, so it is held to the registry.
+    """
+    known = set(_CONTRACT_KINDS)
+    out: List[Dict[str, str]] = []
+    seen: set = set()
+    for m in re.finditer(r"^[ \t]*```contract:([A-Za-z0-9_-]*)", text, re.MULTILINE):
+        kind = m.group(1).strip()
+        if kind in known or kind in seen:
+            continue
+        seen.add(kind)
+        out.append({
+            "key": "unknown_contract_kind",
+            "label": "未注册的契约块类型 (unknown contract kind)",
+            "section": "discussion.md → ```contract:<kind>```",
+            "form": "契约块类型必须在注册表内：" + ", ".join(_CONTRACT_KINDS),
+            "example": f"```contract:{kind}```",
+        })
+    return out
+
+def _unadmitted_state_kinds(text: str) -> List[Dict[str, str]]:
+    """Report a `contract:states` block that leaves a state class empty.
+
+    A state class the author declared nothing for compiles to an empty list, and
+    the tier drops to `intent_spec` — a late, indirect signal. Naming the missing
+    class at compile time says which list the author forgot.
+    """
+    block = _states_from_contract_block(text)
+    if block is None:
+        return []
+    domain, interaction, data = block
+    present = {"domain_states": bool(domain), "interaction_states": bool(interaction),
+               "data_scenarios": bool(data)}
+    missing = [key for key, ok in present.items() if not ok]
+    if not missing:
+        return []
+    return [{
+        "key": "incomplete_state_block",
+        "label": "状态契约块缺状态类 (incomplete contract:states)",
+        "section": "discussion.md → ```contract:states```",
+        "form": "每个状态类至少一条：`domain/`、`interaction/`、`data/`",
+        "example": "contract:states 缺少 " + ", ".join(missing),
+    }]
 
 
 AUTHORITY_LEVELS = ("explicit", "derived", "proposed", "hypothesis")
@@ -661,7 +1091,15 @@ def parse_action_verbs(text: str) -> List[Dict[str, Any]]:
 
 
 def parse_viewports(text: str) -> List[int]:
-    """Extract authored viewport widths (`NNNpx`) from discussion.md, else []."""
+    """Extract authored viewport widths.
+
+    Priority 0: a ```contract:viewports``` block is the machine SSOT. Otherwise
+    the prose scan admits any `NNNpx` in the text, which is why the block exists:
+    a stray pixel figure in a paragraph is not a declared breakpoint.
+    """
+    block = _viewports_from_contract_block(text)
+    if block is not None:
+        return block
     out: List[int] = []
     for m in re.finditer(r"(?<!\d)(\d{3,4})\s*px", text):
         v = int(m.group(1))
@@ -714,7 +1152,15 @@ def _split_label_description(rest: str, fallback_label: str):
 
 
 def parse_domain_states(text: str) -> List[Dict[str, Any]]:
-    """Extract authored domain states declared as `domain/<id>` bullets."""
+    """Extract authored domain states.
+
+    Priority 0: a ```contract:states``` block is the machine SSOT. Otherwise the
+    prose bullet form (`domain/<id>` (label): description) is read for records
+    that predate the block.
+    """
+    block = _states_from_contract_block(text)
+    if block is not None:
+        return block[0]
     out: List[Dict[str, Any]] = []
     seen: set = set()
     for line in text.splitlines():
@@ -738,7 +1184,12 @@ def parse_interaction_states(text: str) -> List[str]:
     not a declaration, and admitting it would let commentary invent a state.
     Further tokens on the same bullet are admitted, so the authored
     `- `interaction/idle`, `interaction/inspecting`` form still reads.
+
+    Priority 0: a ```contract:states``` block is the machine SSOT.
     """
+    block = _states_from_contract_block(text)
+    if block is not None:
+        return block[1]
     out: List[str] = []
     seen: set = set()
     for line in text.splitlines():
@@ -759,7 +1210,12 @@ def parse_data_scenarios(text: str) -> List[Dict[str, Any]]:
 
     Bullet-anchored for the same reason as `parse_interaction_states`: only a
     declared bullet is a scenario, and a token named in prose is not one.
+
+    Priority 0: a ```contract:states``` block is the machine SSOT.
     """
+    block = _states_from_contract_block(text)
+    if block is not None:
+        return block[2]
     out: List[Dict[str, Any]] = []
     seen: set = set()
     for line in text.splitlines():
@@ -791,7 +1247,15 @@ def parse_stress_fixtures(text: str) -> List[Dict[str, Any]]:
     A fixture is admitted only when BOTH its destructive Vector and its
     Expected recovery behavior are authored; a token without them is not a
     usable fixture and must not be counted as satisfying the contract.
+
+    Priority 0: a ```contract:stress``` block is the machine SSOT. The block
+    fails closed on a half-authored fixture, because there the author declared
+    the fixture deliberately; the prose scan still drops one, because there the
+    line may be a mention rather than a declaration.
     """
+    block = _stress_from_contract_block(text)
+    if block is not None:
+        return block
     out: List[Dict[str, Any]] = []
     for line in text.splitlines():
         m = re.search(r"[`*]*(stress/[a-z0-9][a-z0-9_-]*)[`*]*(.*)$", line, re.IGNORECASE)
@@ -825,7 +1289,12 @@ def parse_required_states(text: str) -> List[str]:
     without one ("required states — from that block"), and an unanchored search
     turns that sentence into a declaration whose payload is the rest of the
     sentence, admitting ordinary English words as test states.
+
+    Priority 0: a ```contract:required_states``` block is the machine SSOT.
     """
+    block = _required_states_from_contract_block(text)
+    if block is not None:
+        return block
     out: List[str] = []
     seen: set = set()
 
@@ -853,8 +1322,13 @@ def parse_craft_stack(text: str, five_axes: Dict[str, str]) -> Dict[str, str]:
 
     Unspecified axes remain open; they are not inferred from domain words or
     filled with a house style.
+
+    Priority 0: a ```contract:craft``` block is the machine SSOT.
     """
-    axes = ("surface_optics", "spatial_geometry", "micro_typography", "data_marks")
+    block = _craft_from_contract_block(text)
+    if block is not None:
+        return block
+    axes = _CRAFT_AXES
     stack: Dict[str, str] = {}
     for line in text.splitlines():
         m = re.search(r"[`*]*(surface_optics|spatial_geometry|micro_typography|data_marks)[`*]*\s*[:：]\s*[`*]*([^`\n]+)[`*]*", line, re.IGNORECASE)
@@ -881,11 +1355,18 @@ def parse_authored_invariants(text: str) -> List[Dict[str, Any]]:
       - `inv/<id>` | <statement> | severity: blocking | verification: computed_style
     `severity` defaults to advisory and `verification` to manual; unknown
     severities fall back to advisory rather than fabricating an enum value.
+
+    Priority 0: a ```contract:invariants``` block is the machine SSOT. It fails
+    closed on an unknown severity or verification, because the author declared
+    it; the prose form keeps its lenient fallback.
     """
+    block = _invariants_from_contract_block(text)
+    if block is not None:
+        return block
     sec = extract_section(text, r"###?\s*.*(?:Invariants|不变式|Design\s+Invariants|Design\s+Rules|设计规则|Resilience|Acceptance\s+Gates?)")
     out: List[Dict[str, Any]] = []
-    severities = {"blocking", "warning", "advisory"}
-    verifications = {"computed_style", "dom_query", "screenshot_review", "manual"}
+    severities = set(_INV_SEVERITIES)
+    verifications = set(_INV_VERIFICATIONS)
     for line in sec.splitlines():
         m = re.match(r"^[-*]\s*[`*]*(inv/[^`*|:：\s]+)[`*]*\s*[|:：]\s*(.+)$", line.strip())
         if not m:
@@ -929,19 +1410,25 @@ def parse_meso_directives(text: str, navigation_topology: str) -> Dict[str, Dict
     `` `massing_pattern`: <value> ``-style bullets are taken verbatim; an
     undeclared massing smooths to a topology-derived fallback without blocking
     compilation. Kinematics and data_syntax are emitted only when authored.
+
+    Priority 0: a ```contract:meso``` block is the machine SSOT.
     """
-    authored: Dict[str, str] = {}
-    for line in text.splitlines():
-        m = re.search(
-            r"[`*]*(massing_pattern|kinematics|data_syntax)[`*]*\s*[:：]\s*[`]*([^`\n]+)",
-            line,
-            re.IGNORECASE,
-        )
-        if m:
-            key = m.group(1).strip().lower()
-            val = m.group(2).strip().lower().rstrip("`* \t")
-            if val and key not in authored:
-                authored[key] = val
+    block = _meso_from_contract_block(text)
+    if block is not None:
+        authored = block
+    else:
+        authored = {}
+        for line in text.splitlines():
+            m = re.search(
+                r"[`*]*(massing_pattern|kinematics|data_syntax)[`*]*\s*[:：]\s*[`]*([^`\n]+)",
+                line,
+                re.IGNORECASE,
+            )
+            if m:
+                key = m.group(1).strip().lower()
+                val = m.group(2).strip().lower().rstrip("`* \t")
+                if val and key not in authored:
+                    authored[key] = val
 
     if "massing_pattern" in authored:
         massing = authored["massing_pattern"]
@@ -1366,6 +1853,17 @@ def compile_canonical_ir(
         for spec in _REQUIRED_SECTIONS
         if not extracted.get(spec["key"])
     ]
+    # A declaration the compiler dropped and a state class the block left empty
+    # are structural, not "not yet authored": the author wrote them and the
+    # compiler lost them. They abort at every tier — routing them through the
+    # intent-tier note would report them as a stage the run has not reached yet,
+    # which is how a silent drop stays silent.
+    structural_violations = (_unadmitted_machine_bullets(scope_text)
+                             + _unadmitted_state_kinds(scope_text)
+                             + _unknown_contract_kinds(scope_text))
+    if structural_violations and not allow_incomplete:
+        raise IncompleteStageContractError(structural_violations)
+    violations += structural_violations
     intent_extracted: Dict[str, Any] = {
         "core_tension": tension_text,
         "declared_surfaces": declared_surfaces,
