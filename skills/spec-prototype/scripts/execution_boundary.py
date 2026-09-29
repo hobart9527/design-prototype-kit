@@ -307,6 +307,30 @@ def validate_intent(path: Path, text: str) -> None:
         )
 
 
+def spec_view_advisory(target: Path) -> str | None:
+    """A canonical `.spec.md` view with no compiled IR yet: remind, never block.
+
+    The IR is authored at Stage 5, so an absent IR is a legal intermediate
+    state while the design is still converging. The advisory fires at the
+    moment the view is written — when the reminder is still actionable —
+    rather than at delivery, when the missing IR is only a verdict.
+    """
+    if not target.name.endswith('.spec.md'):
+        return None
+    parts = target.parts
+    if 'specifications' not in parts:
+        return None
+    slice_id = parts[parts.index('specifications') + 1] if parts.index('specifications') + 1 < len(parts) else ''
+    stem = target.name.removesuffix('.spec.md')
+    ir = target.parents[2] / 'contracts/compiled' / slice_id / f'{stem}.spec.json'
+    if ir.is_file():
+        return None
+    return (f'{target.name} written with no compiled IR '
+            f'(contracts/compiled/{slice_id}/{stem}.spec.json absent). '
+            "The canonical view is the IR's rendering; run "
+            f'compile_spec_ir.py --slice {slice_id} at Stage 5 before handoff.')
+
+
 def _edited_text(args, target: Path) -> str:
     """Reconstruct the post-edit text so validation sees the resulting file."""
     if 'content' in args:
@@ -369,14 +393,26 @@ def check(payload):
                 'Design and prototype artifacts must reside inside prototype/.')
         if target.name == 'intent.json':
             validate_intent(target, _edited_text(args, target))
+        advisory = spec_view_advisory(target)
+        if advisory:
+            payload.setdefault('hookSpecificOutput', {}).update({
+                'hookEventName': 'PreToolUse',
+                'additionalContext': advisory,
+            })
     elif tool == 'NotebookEdit':
         raise ValueError('Notebook execution is out of scope for design prototype authoring.')
 
 
 def main():
+    payload = {}
     try:
-        check(json.load(sys.stdin))
+        payload = json.load(sys.stdin)
+        check(payload)
         result = {}
+        advisory = payload.get('hookSpecificOutput', {}).get('additionalContext')
+        if advisory:
+            result = {'hookSpecificOutput': {'hookEventName': 'PreToolUse',
+                      'additionalContext': advisory}}
     except (ValueError, KeyError, TypeError, OSError) as error:
         result = {'hookSpecificOutput': {'hookEventName': 'PreToolUse',
                   'permissionDecision': 'deny',

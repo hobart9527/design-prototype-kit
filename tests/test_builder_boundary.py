@@ -107,11 +107,24 @@ def test_a_canonical_view_without_its_ir_is_still_a_boundary_failure(tmp_path):
 
 
 def test_a_run_with_no_prototype_at_all_is_a_boundary_failure(tmp_path):
-    """Reading the boundary off the spec layer alone would pass an empty delivery."""
+    """An empty delivery is a boundary failure even though it is not an orphan."""
     _artifact(tmp_path, "prototype/discussion.md", "# Discussion\n" + "x" * 300 + "\n")
     assertion = _boundary(tmp_path)
     assert assertion["status"] == "fail"
     assert "html=0" in assertion["detail"]
+
+
+def test_a_spec_only_delivery_is_within_the_boundary(tmp_path):
+    """A spec-only route is explicit (SKILL.md keeps it lightweight), so the
+    boundary must not demand an HTML prototype — `artifact_present` owns that
+    separately, and requiring it here would double-count the same absence.
+    """
+    _artifact(tmp_path, "prototype/discussion.md", "# Discussion\n" + "x" * 300 + "\n")
+    _artifact(tmp_path, "prototype/specifications/slice/r1.spec.md", "# Spec\n")
+    _artifact(tmp_path, "prototype/contracts/compiled/slice/r1.spec.json", "{}")
+    assertion = _boundary(tmp_path)
+    assert assertion["status"] == "pass"
+    assert "html=0 spec_ir=1 spec_views=1" in assertion["detail"]
 
 
 def test_the_null_arm_reports_not_applicable(tmp_path):

@@ -32,6 +32,7 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
     turns: list[dict] = []
     transcript: list[dict] = []
     status, note = "INCONCLUSIVE", ""
+    blocked_reason = ""
     total_cost = 0.0
     model_seen: set[str] = set()
     records_path = workspace / "session-records.jsonl"
@@ -103,6 +104,7 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             turns[-1] = turn
             if session_budget_usd and total_cost >= session_budget_usd:
                 status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
+                blocked_reason = "session_budget"
                 break
             prompt = ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
                       "不要重新规划已完成的部分。")
@@ -114,21 +116,26 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             turns[-1] = turn
             if session_budget_usd and total_cost >= session_budget_usd:
                 status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
+                blocked_reason = "session_budget"
                 break
             if not session_budget_usd:
                 status, note = "BLOCKED", "per-call budget exhausted and no session budget set"
+                blocked_reason = "per_call_budget"
                 break
             prompt = ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
                       "不要重新规划已完成的部分。")
             continue
         if out["status"] != "completed":
             status, note = "BLOCKED", f"turn {turn['turn']} {out['status']}: {turn['stderr']}"
+            blocked_reason = "wall_clock" if out["status"] == "timeout" else out["status"]
             break
         if len(turns) >= max_turns:
             status, note = "BLOCKED", f"max_turns={max_turns} reached without a terminal answer"
+            blocked_reason = "max_turns"
             break
         if session_budget_usd and total_cost >= session_budget_usd:
             status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)} >= ${session_budget_usd})"
+            blocked_reason = "session_budget"
             break
 
         text = out["result"] or ""
@@ -151,9 +158,11 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
         if not bl.workspace_components(workspace)["has_html"]:
             if len(turns) >= max_turns:
                 status, note = "BLOCKED", f"max_turns={max_turns} reached without any runnable prototype"
+                blocked_reason = "max_turns"
                 break
             if session_budget_usd and total_cost >= session_budget_usd:
                 status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
+                blocked_reason = "session_budget"
                 break
             turn["prompt_kind"] = "auto_continue"
             turns[-1] = turn
@@ -176,6 +185,7 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
         "variant": variant,
         "status": status,
         "note": note,
+        "blocked_reason": blocked_reason or None,
         "session_id": session_id,
         "model": ",".join(sorted(model_seen)) or (model or "cli-default"),
         "workspace": str(workspace),

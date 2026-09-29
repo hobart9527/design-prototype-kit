@@ -213,8 +213,13 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     # compiled spec at all. Requiring the spec layer unconditionally failed such
     # a run for stopping where the Skill told it to stop.
     #
-    # What the boundary does enforce is coherence of the spec layer once it
-    # exists: the canonical view and its IR arrive together, never one alone.
+    # The boundary measures coherence of the spec layer alone once it exists:
+    # the canonical view and its IR arrive together, never one alone. It does
+    # NOT require an HTML prototype — a spec-only delivery is an explicit route
+    # (SKILL.md keeps "a direction probe, spec-only request, and local review"
+    # on their lightweight routes), and `artifact_present` already owns the
+    # empty-delivery case, so requiring HTML here would double-count it and
+    # would fail a spec-only run for choosing a route the Skill permits.
     # A frozen baseline kept the historical shape it was frozen with — a legacy
     # `specifications/<slice>/r1.md` and no IR — the same exemption
     # `bench_lib.REQUIRED_BASELINE_ENTRIES` already makes for its tree.
@@ -227,9 +232,14 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     is_baseline = variant == "stable_skill"
     orphaned_ir = bool(spec_ir) and not spec_views
     orphaned_view = bool(spec_views) and not spec_ir and not is_baseline
-    boundary_ok = bool(html_files) and not orphaned_ir and not orphaned_view
-    add("builder_boundary",
-        "pass" if boundary_ok else ("not_applicable" if variant == "no_skill" else "fail"),
+    nothing_delivered = not html_files and not spec_ir and not spec_views
+    if nothing_delivered:
+        boundary_status = "not_applicable" if variant == "no_skill" else "fail"
+    elif orphaned_ir or orphaned_view:
+        boundary_status = "not_applicable" if variant == "no_skill" else "fail"
+    else:
+        boundary_status = "not_applicable" if variant == "no_skill" else "pass"
+    add("builder_boundary", boundary_status,
         f"html={len(html_files)} spec_ir={len(spec_ir)} spec_views={len(spec_views)} "
         f"legacy_views={len(legacy_views)} "
         f"envelopes={len(list(artifacts_dir.rglob('envelope.json')))}")
