@@ -627,6 +627,88 @@ def _evidence_state(html: Path) -> dict[str, str]:
     return {}
 
 
+def _capture_receipt(html: Path) -> dict | None:
+    """The structured capture record the renderer wrote, or None when there is none.
+
+    `None` means the receipt is absent or predates the structured form, which is an
+    unknown to degrade on — never evidence that a capture was missing.
+    """
+    for parent in [html.parent, *html.parents]:
+        manifest = parent / "prototype/evidence/handoff-manifest.json"
+        if manifest.is_file():
+            try:
+                verification = json.loads(manifest.read_text(encoding="utf-8")).get("verification") or {}
+            except (json.JSONDecodeError, OSError):
+                return None
+            evidence = verification.get("metadata", {}).get("evidence") if isinstance(verification, dict) else None
+            return evidence if isinstance(evidence, dict) else None
+    return None
+
+
+def declared_viewports(text: str) -> list[int]:
+    """The viewports a discussion declares, from authored structure only.
+
+    Priority 0 is the slice block's `viewports:` list, then a `contract:viewports`
+    block. Both are authored machine declarations. The compatibility prose scan is
+    deliberately NOT used here: this list is compared against physical capture
+    receipts, and a stray `NNNpx` in a paragraph is not a declared breakpoint — the
+    same reason `compile_spec_ir.parse_viewports` gates its own prose route.
+    """
+    import compile_spec_ir as _csi  # sibling module, imported lazily
+
+    frontmatter = _csi.parse_block_frontmatter(text)
+    declared = frontmatter.get("viewports")
+    if isinstance(declared, list):
+        widths: list[int] = []
+        for item in declared:
+            match = re.search(r"\d+", str(item))
+            if match:
+                width = int(match.group(0))
+                if 200 <= width <= 4000 and width not in widths:
+                    widths.append(width)
+        if widths:
+            return sorted(widths)
+    return _csi._viewports_from_contract_block(text) or []
+
+
+def check_viewport_receipts(html: Path) -> list[str]:
+    """A declared viewport no capture receipt covers is an unverified claim.
+
+    The receipt is keyed by viewport, so it can substantiate exactly one thing: that
+    this width was rendered and measured. A discussion that declares `[390, 1280]`
+    while the record holds one capture has asserted coverage it never obtained — the
+    r18 finding where 390px fixes were reported "verified" with no 390 capture at all.
+    This reads the two structures and joins them; it never scans the prose, because a
+    scanner over free text is the brittle-matching class that already cost a run.
+
+    An absent or pre-structured receipt is an unknown, not a gap: it degrades the
+    tier rather than failing a plan the record simply did not describe.
+    """
+    receipt = _capture_receipt(html)
+    if receipt is None:
+        return []
+    metrics = receipt.get("viewport_metrics")
+    if not isinstance(metrics, dict) or not metrics:
+        return []
+    captured = {int(k) for k in metrics if str(k).isdigit()}
+    discussion = next(
+        (p for p in (html.parent, *html.parents) if (p / "prototype/discussion.md").is_file()),
+        None,
+    )
+    if discussion is None:
+        return []
+    declared = declared_viewports((discussion / "prototype/discussion.md").read_text(encoding="utf-8"))
+    missing = sorted(set(declared) - captured)
+    if not missing:
+        return []
+    return [
+        "evidence assertion: declared viewport(s) with no capture receipt: "
+        + ", ".join(f"{w}px" for w in missing)
+        + f" (record holds {', '.join(f'{w}px' for w in sorted(captured)) or 'none'})"
+        "; capture each declared width or drop the claim from the discussion"
+    ]
+
+
 def _extract_section_text(text: str, *keywords: str) -> str:
     lines: list[str] = []
     in_sec = False
@@ -1266,6 +1348,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     ]
     if raw_style_hex:
         failures.append(f"craft assertion: raw inline hex colors in style attributes ({len(raw_style_hex)} found; use CSS custom properties / var(--...))")
+
+    # A declared viewport with no capture receipt is an unverified claim: the
+    # receipt is keyed by viewport and can substantiate only that width.
+    failures.extend(check_viewport_receipts(html))
 
     broken_nav, broken_assets = check_relative_refs(html, dom)
     if broken_nav:

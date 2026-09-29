@@ -426,3 +426,67 @@ def test_l1_accent_discipline_reads_selector_and_body_from_one_rule(tmp_path):
 <script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
 </body></html>""", encoding="utf-8")
     assert vpq.assert_quality(str(leaky), str(tokens), contract_path=str(contract)) is False
+
+
+# -- receipt reconciliation ----------------------------------------------------
+# A capture receipt is keyed by viewport, so it can substantiate exactly one
+# claim: that this width was rendered and measured. The r18 candidate declared
+# `viewports: [390, 1280]` and reported its 390px touch-target fix "verified"
+# while the record held a single 1280 capture — a claim with no receipt behind it.
+
+def _receipt_workspace(tmp_path: Path, declared: str, captured: list[int]) -> Path:
+    """A workspace shaped like the renderer's: discussion + html + manifest."""
+    html = tmp_path / "prototype/experiments/slice/anchor/index.html"
+    html.parent.mkdir(parents=True, exist_ok=True)
+    html.write_text("<!doctype html><html><body><h1>x</h1></body></html>", encoding="utf-8")
+    (tmp_path / "prototype/discussion.md").write_text(
+        "# Discussion\n## Slice: slice\n\n```yaml\n---\nspec_schema: \"google-design-md/v2\"\n"
+        f"viewports: {declared}\n---\n```\n",
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "prototype/evidence/handoff-manifest.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({"verification": {"status": "captured_pending_review", "metadata": {
+        "evidence": {"viewport_metrics": {str(w): {"scrollWidth": w} for w in captured}}}}}),
+        encoding="utf-8")
+    return html
+
+
+def test_a_declared_viewport_with_no_capture_receipt_is_blocked(tmp_path):
+    """The r18 shape: two widths declared, one captured, the other reported verified."""
+    html = _receipt_workspace(tmp_path, "[390, 1280]", [1280])
+    failures = vpq.check_viewport_receipts(html)
+    assert len(failures) == 1
+    assert "390px" in failures[0]
+    assert "1280px" in failures[0], "the record's own coverage must be named"
+
+
+def test_every_declared_viewport_captured_is_clean(tmp_path):
+    html = _receipt_workspace(tmp_path, "[390, 1280]", [390, 1280])
+    assert vpq.check_viewport_receipts(html) == []
+
+
+def test_an_absent_structured_receipt_degrades_rather_than_fails(tmp_path):
+    """A record the renderer never wrote is an unknown, not a delivered gap."""
+    html = _receipt_workspace(tmp_path, "[390, 1280]", [1280])
+    manifest = tmp_path / "prototype/evidence/handoff-manifest.json"
+    manifest.write_text(json.dumps({"verification": {"status": "captured_pending_review"}}),
+                        encoding="utf-8")
+    assert vpq.check_viewport_receipts(html) == []
+
+
+def test_a_pixel_figure_in_prose_is_not_a_declared_viewport(tmp_path):
+    """Brittleness guard: the join reads authored structure, never free text.
+
+    `320px` appears in a paragraph here and nowhere as a declaration. Scanning
+    prose for `NNNpx` is exactly the brittle matching that drove the r8b
+    self-repair loop, so it must not be reintroduced as the receipt oracle.
+    """
+    html = _receipt_workspace(tmp_path, "[1280]", [1280])
+    discussion = tmp_path / "prototype/discussion.md"
+    discussion.write_text(
+        discussion.read_text(encoding="utf-8") + "\n320px 视口下也做过一次人工检查。\n",
+        encoding="utf-8",
+    )
+    assert vpq.declared_viewports(discussion.read_text(encoding="utf-8")) == [1280]
+    assert vpq.check_viewport_receipts(html) == []

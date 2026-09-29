@@ -206,16 +206,32 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
             "pass" if len(evidence_markers) >= 3 else ("fail" if not evidence_markers else "unknown"),
             f"markers={evidence_markers}")
 
-    # Delivery boundary: the single-brain path compiles the canonical IR and
-    # authors the anchor directly, so `envelope.json` is an optional
-    # compatibility artifact, not the proof of delivery. Requiring it marked
-    # every conforming single-brain run as a boundary failure. Read the
-    # products the path actually owns: the canonical IR plus the spec view.
+    # Delivery boundary: what the path actually owns, not a fixed artifact list.
+    # `envelope.json` is an optional compatibility artifact, and the Stage 5
+    # freeze is an optional mechanic gated on the user requesting a frozen
+    # handoff, so a design-only Stage 4 delivery conforms while shipping no
+    # compiled spec at all. Requiring the spec layer unconditionally failed such
+    # a run for stopping where the Skill told it to stop.
+    #
+    # What the boundary does enforce is coherence of the spec layer once it
+    # exists: the canonical view and its IR arrive together, never one alone.
+    # A frozen baseline kept the historical shape it was frozen with — a legacy
+    # `specifications/<slice>/r1.md` and no IR — the same exemption
+    # `bench_lib.REQUIRED_BASELINE_ENTRIES` already makes for its tree.
     spec_ir = [name for name in texts if name.endswith(".spec.json")]
-    spec_views = [name for name in texts if name.endswith(".spec.md")]
+    canonical_views = [name for name in texts if name.endswith(".spec.md")]
+    legacy_views = [name for name in texts
+                    if "/specifications/" in "/" + name.replace("\\", "/")
+                    and name.endswith("/r1.md")]
+    spec_views = canonical_views + legacy_views
+    is_baseline = variant == "stable_skill"
+    orphaned_ir = bool(spec_ir) and not spec_views
+    orphaned_view = bool(spec_views) and not spec_ir and not is_baseline
+    boundary_ok = bool(html_files) and not orphaned_ir and not orphaned_view
     add("builder_boundary",
-        "pass" if spec_ir and spec_views else ("not_applicable" if variant == "no_skill" else "fail"),
-        f"spec_ir={len(spec_ir)} spec_views={len(spec_views)} "
+        "pass" if boundary_ok else ("not_applicable" if variant == "no_skill" else "fail"),
+        f"html={len(html_files)} spec_ir={len(spec_ir)} spec_views={len(spec_views)} "
+        f"legacy_views={len(legacy_views)} "
         f"envelopes={len(list(artifacts_dir.rglob('envelope.json')))}")
 
     inline_hex = sum(len(INLINE_HEX_RE.findall(text)) for text in html_files.values())
