@@ -130,8 +130,11 @@ def build_coverage_html(reconciliation: Dict[str, object] | None) -> str:
                 delivery=obligation["delivery"], evidence=obligation["evidence"],
                 blocker=obligation["blocker"] or "-"))
     return (
-        '<section id="coverage-reconciliation">'
-        f'<h2>Coverage: {reconciliation.get("coverage")} (rev {reconciliation.get("revision")})</h2>'
+        '<section id="coverage-reconciliation" class="portal-collapsible">'
+        '<details>'
+        f'<summary>📋 Coverage: {reconciliation.get("coverage")} (rev {reconciliation.get("revision")}) · '
+        f'Completion: {"met" if completion else "withheld"}</summary>'
+        '<div class="collapsible-content">'
         f'<p>In round: {", ".join(reconciliation.get("in_round") or []) or "none"}</p>'
         f'<p>Outside this round: {", ".join(reconciliation.get("outside_round") or []) or "none"}</p>'
         f'<p>Declared but absent: {", ".join(reconciliation.get("missing_delivery") or []) or "none"}</p>'
@@ -141,7 +144,7 @@ def build_coverage_html(reconciliation: Dict[str, object] | None) -> str:
         + f'<p data-completion="{str(completion).lower()}">'
         f'Completion: {"met" if completion else "withheld"}</p>'
         "<table><tr><th>Surface</th><th>Scope</th><th>Delivery</th><th>Evidence</th><th>Blocker</th></tr>"
-        + "".join(rows) + "</table></section>")
+        + "".join(rows) + "</table></div></details></section>")
 
 
 def discover_directions(root: Path) -> List[Dict[str, str]]:
@@ -182,7 +185,10 @@ def build_decision_html(directions: List[Dict[str, str]]) -> str:
         f'onclick="pickVariant(\'{d["id"]}\', this)">{d["name"]}</button>'
         for d in directions)
     return (
-        '<section id="co-creation" data-decision-bar>'
+        '<section id="co-creation" data-decision-bar class="portal-collapsible">'
+        '<details>'
+        '<summary>🎯 Direction Decision (C1) — Co-creation Review Bar (Click to toggle)</summary>'
+        '<div class="collapsible-content">'
         '<h2>Direction Decision (C1)</h2>'
         '<p>Two-axis verdict recorded. Pick the direction that carries the product, '
         'or steer / re-roll with a reason.</p>'
@@ -197,22 +203,42 @@ def build_decision_html(directions: List[Dict[str, str]]) -> str:
         '<input id="decision-reason" class="reason-input" type="text" '
         'placeholder="what this direction must change, or why both miss">'
         '<p class="decision-out" data-decision-out>No decision recorded yet.</p>'
-        '</section>')
+        '</div></details></section>')
 
 
 def _decision_style() -> str:
     return """
-    #co-creation {
+    .portal-collapsible {
       background: var(--bg-base, #0b0f17);
       border-bottom: 1px solid var(--border-dim, #1e293b);
-      padding: var(--space-3, 12px) var(--space-4, 16px);
-      font-size: 12px;
+      font-size: 11px;
+    }
+    .portal-collapsible details {
+      width: 100%;
+    }
+    .portal-collapsible summary {
+      padding: 6px 16px;
+      cursor: pointer;
+      user-select: none;
+      color: var(--text-secondary, #94a3b8);
+      font-family: var(--font-mono, monospace);
+      font-size: 11px;
+      outline: none;
+      transition: color 0.15s;
+    }
+    .portal-collapsible summary:hover {
+      color: var(--text-primary, #e2e8f0);
+    }
+    .portal-collapsible .collapsible-content {
+      padding: 10px 16px 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background: var(--bg-surface, #0f172a);
     }
     #co-creation h2 { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
     #co-creation p { color: var(--text-secondary, #94a3b8); margin-bottom: 8px; }
     .pick-row, .verdict-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
     .pick-btn, .verdict-btn {
-      background: var(--bg-surface, #0f172a);
+      background: var(--bg-void, #05070a);
       border: 1px solid var(--border-dim, #1e293b);
       color: var(--text-secondary, #94a3b8);
       padding: 5px 12px;
@@ -238,6 +264,21 @@ def _decision_style() -> str:
       border-radius: 3px;
     }
     .decision-out { margin-top: 8px; font-family: var(--font-mono, monospace); }
+    #coverage-reconciliation table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-family: var(--font-mono, monospace);
+      font-size: 11px;
+    }
+    #coverage-reconciliation th, #coverage-reconciliation td {
+      border: 1px solid var(--border-dim, #1e293b);
+      padding: 4px 8px;
+      text-align: left;
+    }
+    #coverage-reconciliation th {
+      background: var(--bg-surface-raised, #1e293b);
+    }
 """
 
 
@@ -416,27 +457,29 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     }}
     .portal-frame-box {{
       flex: 1;
+      min-height: 0;
       width: 100%;
-      height: calc(100vh - 48px - 36px);
       background: var(--bg-void, #05070a);
       display: flex;
-      justify-content: center;
-      align-items: stretch;
       overflow: auto;
-      padding: 10px 0;
+      padding: 10px;
+      box-sizing: border-box;
     }}
     .viewport-frame {{
       width: 100%;
       max-width: 100%;
       height: 100%;
+      min-height: 100%;
+      margin: 0 auto;
       display: flex;
-      justify-content: center;
-      align-items: stretch;
+      flex-direction: column;
+      flex-shrink: 0;
       transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }}
     iframe {{
       width: 100%;
       height: 100%;
+      min-height: 0;
       border: 1px solid var(--border-dim, #1e293b);
       border-radius: var(--radius-outer, 6px);
       background: var(--bg-void, #05070a);
