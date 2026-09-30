@@ -9,9 +9,9 @@ run produces lives in one of them:
 
 | Object | Scope and owner | Lifecycle | May decide |
 |---|---|---|---|
-| Decision record — `prototype/discussion.md` | The evolvable human/agent co-creation ledger: Product Thesis, confirmed decisions, Five-Axes calibration, coverage selection, evidence status | always mutable; never a freeze subject | Problem framing, product thesis, actors/jobs/outcomes, the chosen proposition and its trade-off, coverage, and what stays `[hypothesis]` |
+| Decision record — `prototype/discussion.md`, or the layered `prototype/truth.md` + `prototype/world.md` + `prototype/briefs/<slice>.md` | The evolvable human/agent co-creation ledger: Product Thesis, confirmed decisions, Five-Axes calibration, coverage selection, evidence status. The Decisions and authority table lives in `discussion.md` on a single-record tree, and in `truth.md` on a layered tree | always mutable; never a freeze subject | Problem framing, product thesis, actors/jobs/outcomes, the chosen proposition and its trade-off, coverage, and what stays `[hypothesis]` |
 | Slice specification — `prototype/specifications/<slice>/r1.spec.md` | The single-file RFC: IA topology, state machine, actions, Break protocol, invariants. Compiled from the canonical IR (`contracts/compiled/<slice>/r1.spec.json`) | `draft -> frozen -> superseded` | The slice's binding generation constraints; nothing new is authored here after compile |
-| Token stylesheet — `prototype/shared/tokens.css` (+ `contracts/tokens/t1.json`) | The compiled physical style layer. `discussion.md` is the sole token authority; the JSON is derived packaging | `draft -> frozen -> superseded` | The concrete colour, space, radius, type and motion values every surface inherits |
+| Token stylesheet — `prototype/shared/tokens.css` (+ `contracts/tokens/t1.json`) | The compiled physical style layer. The token authority is `discussion.md` on a single-record tree and `world.md` on a layered tree, never both; the JSON is derived packaging | `draft -> frozen -> superseded` | The concrete colour, space, radius, type and motion values every surface inherits |
 | Anchor artifact — `prototype/experiments/<slice>/anchor/index.html` | The runnable materialisation of one specification revision | `generated -> verified` or `blocked`; disposable evidence | Nothing; executable proof only |
 
 Retired contract files (`product.md`, `contracts/surface-maps/m1.md`,
@@ -60,8 +60,10 @@ absolute handoff integrity, artifacts operate in two explicit tracks:
 - Invoked only when design exploration has converged and the team is ready to hand off
   specifications to engineering delivery (Loom).
 - Artifacts transition `draft -> frozen`. `handoff.py freeze` calculates immutable SHA256
-  digests across the four canonical assets: `discussion.md`, `r1.spec.md`,
-  `tokens.css` (`t1.json`), and the anchor `index.html`.
+  digests across the retained delivery assets: `r1.spec.md`,
+  `tokens.css` (`t1.json`), and the anchor `index.html`. The design record
+  (`discussion.md`, or the layered `truth.md`/`world.md`/`briefs/`) stays evolvable
+  and is never a freeze subject.
 - In this track, bytes are strictly immutable; any subsequent change requires an explicit
   successor revision.
 
@@ -90,7 +92,7 @@ prototype/contracts/tokens/t1.md            # Subsumed by shared/tokens.css
 prototype/contracts/slices/<slice-id>/c1.md # Subsumed by r1.spec.md
 prototype/specifications/<slice-id>/r1.md   # Replaced by single-file r1.spec.md
 ```
-Primary delivery writes ONLY the Four Canonical High-Density Assets: `discussion.md`, `r1.spec.md`, `tokens.css`, and `index.html`.
+Primary delivery writes ONLY the design record (`discussion.md`, or the layered `truth.md`/`world.md`/`briefs/`), `r1.spec.md`, `tokens.css`, and `index.html`.
 
 ## Session intent and retained design
 

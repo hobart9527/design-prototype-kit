@@ -1,0 +1,256 @@
+{
+  "run_id": "candidate-cocreate-ic-r20",
+  "suite": "daily",
+  "generated_at": "20260930_194415",
+  "status": "INVALID_CONTROL",
+  "status_divergence": "control arm (stable_skill) tripped a hard gate: the stable baseline itself fabricated or escaped authority, so the paired verdict has no sound comparison basis. Re-run with a no_skill control (--variants candidate_skill,no_skill) and treat this report as candidate-side evidence only.",
+  "hard_gate_arms": [
+    "stable_skill"
+  ],
+  "cases": [
+    "incident-commander"
+  ],
+  "variants": [
+    "candidate_skill",
+    "stable_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "incident-commander",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "BLOCKED",
+      "metrics": {
+        "turns": 3,
+        "elapsed_seconds": 1799.48,
+        "cost_usd": 24.4592
+      },
+      "notes": [
+        "rejudged from stored artifacts (no new session)",
+        "provenance preserved from original run",
+        "session BLOCKED (from stored session summary)"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "9583bc31-a9a0-4128-aca0-0a41adcdcb73",
+        "workspace": "/tmp/design-bench/incident-commander/candidate_skill/20260930_002704-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    },
+    {
+      "case_id": "incident-commander",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "BLOCKED",
+      "metrics": {
+        "turns": 2,
+        "elapsed_seconds": 1799.08,
+        "cost_usd": 16.013
+      },
+      "notes": [
+        "rejudged from stored artifacts (no new session)",
+        "provenance preserved from original run",
+        "session BLOCKED (from stored session summary)"
+      ],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "0692edc3-8366-485a-94b5-9400f8e3429b",
+        "workspace": "/tmp/design-bench/incident-commander/stable_skill/20260930_010110-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 1,
+    "authority_escape": 0,
+    "critical_task_break": 0,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 0,
+      "blocked": 1,
+      "task_success_rate": 1.0,
+      "method_recall": 0.75,
+      "method_precision": 0.75,
+      "semantic_gate_pass": 1,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 2,
+      "artifact_turns": 3.0,
+      "cost_usd": 24.4592,
+      "elapsed_seconds": 1799.5,
+      "inline_hex_failures": 0,
+      "slop_score": 15.0,
+      "slop_high_findings": 2,
+      "taste_judged": 1,
+      "ai_slop_fail": 0,
+      "category_guessable_high": 1,
+      "first_viewport_thesis_present": 1,
+      "divergence_verdicts": [
+        "divergent"
+      ],
+      "contract_blocks_fulfilled": null,
+      "contract_blocks_absent": null,
+      "cocreation_verdicts": [
+        "not_measured"
+      ],
+      "cocreation_before_build": 0,
+      "cocreation_measured": 1
+    },
+    "stable_skill": {
+      "runs": 1,
+      "completed": 0,
+      "blocked": 1,
+      "task_success_rate": 1.0,
+      "method_recall": 0.75,
+      "method_precision": 0.429,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 2.0,
+      "cost_usd": 16.013,
+      "elapsed_seconds": 1799.1,
+      "inline_hex_failures": 0,
+      "slop_score": 10.0,
+      "slop_high_findings": 2,
+      "taste_judged": 1,
+      "ai_slop_fail": 0,
+      "category_guessable_high": 1,
+      "first_viewport_thesis_present": 1,
+      "divergence_verdicts": [
+        "not_measured"
+      ],
+      "contract_blocks_fulfilled": 5.0,
+      "contract_blocks_absent": 0.0,
+      "cocreation_verdicts": [
+        "not_measured"
+      ],
+      "cocreation_before_build": 0,
+      "cocreation_measured": 1
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 2,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "3a59ff41d749a20c2ac869ab691aa277e9a697d02ddab65813cbd03d7fda6d60",
+      "eaef47d006b43b566d6209f25aa2aa205168e48f03a9f921e74726930068c396"
+    ],
+    "disclosure": "all 2 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_agreement": null,
+    "pairwise_confidence_counts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "pairwise_cost_usd": 0,
+    "pairwise_cost_recorded": 0,
+    "pairwise_cost_missing": 0,
+    "pairwise_cost_total_complete": true,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "slop_rules": {
+    "candidate_skill": {
+      "SLOP-002": {
+        "count": 2,
+        "severity": "high"
+      },
+      "SLOP-003": {
+        "count": 1,
+        "severity": "medium"
+      },
+      "SLOP-014": {
+        "count": 3,
+        "severity": "low"
+      },
+      "SLOP-017": {
+        "count": 1,
+        "severity": "medium"
+      },
+      "SLOP-019": {
+        "count": 1,
+        "severity": "medium"
+      }
+    },
+    "stable_skill": {
+      "SLOP-002": {
+        "count": 2,
+        "severity": "high"
+      },
+      "SLOP-017": {
+        "count": 2,
+        "severity": "medium"
+      }
+    }
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "REGRESSION",
+    "pairs_compared": 1,
+    "compared_dimensions": 4,
+    "verified_dimensions": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "task",
+        "stable": "pass",
+        "candidate": "pass"
+      }
+    ],
+    "unverifiable_dimensions": [],
+    "regressions": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "taste",
+        "stable": 10,
+        "candidate": 15,
+        "signal": "slop_score"
+      }
+    ],
+    "improvements": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "fail",
+        "candidate": "pass"
+      },
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "dimension": "semantic",
+        "stable": "fail",
+        "candidate": "pass"
+      }
+    ],
+    "missing_pairs": []
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "incident-commander/candidate_skill: session blocked",
+    "incident-commander/stable_skill: session blocked"
+  ]
+}

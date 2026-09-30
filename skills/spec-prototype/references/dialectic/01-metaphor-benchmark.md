@@ -105,7 +105,7 @@ the only gate, and it is checked on the two directions side by side.
    decisions by default, and a seed the designer picks is not a defence against
    that: asked for an integer, a model returns the same few every time, so the
    step collapses into a formality and the divergence is spent before the
-   structure differs. Draw them from a real entropy source instead:
+   structure differs. Draw them from a real entropy source instead (optional; skip or print-only when the record cannot take the block):
 
    ```
    python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --write
@@ -138,9 +138,9 @@ the only gate, and it is checked on the two directions side by side.
    density, energy, materiality, rhythm, character and reading order. A pair
    differing on fewer than two axes, or on two axes without Structure, is a failed
    gate — merge it and generate a replacement. Palette alone is never an axis. This
-   is the check the benchmark's divergence judge re-runs on the built slots
-   (`benchmarks/judges/divergence_judge.py`), whose verdict is `divergent` only when
-   the tag sequence differs; a verdict that holds in prose but not on the artifact
+   is the check the benchmark's divergence judge re-runs on the built slots (a
+   benchmark-side judge, not a delivery command), whose verdict is `divergent` only
+   when the tag sequence differs; a verdict that holds in prose but not on the artifact
    fails.
 6. **Donate the loser.** A direction that loses selection still donates its best
    mechanism — a control, an ordering, a state treatment — to the winner, or the

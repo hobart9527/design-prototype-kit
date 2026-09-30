@@ -11,6 +11,15 @@ another. A record with no slice block is read as one implicit slice (legacy
 form). Add a slice by appending a block; never widen an existing block to cover
 a second slice.
 
+**Two layouts, one seam.** This template is the single-record layout. The
+peer **layered** layout splits the same record into `prototype/truth.md`
+(product facts and the **Decisions and authority** table that `handoff.py
+freeze` reads), `prototype/world.md` (the visual world and sole token
+authority), and `prototype/briefs/<slice_id>.md` (one slice per file).
+Templates for those three live beside this one. Both layouts load through
+`read_design_record(root, slice_id)` in `spec_contract_blocks.py`; pick one
+per project and stay in it.
+
 **Machine forms.** The record is also the compiler's input, and the lists the
 compiler reads as fact are declared in fenced `contract:<kind>` YAML blocks —
 `contract:states`, `contract:stress`, `contract:invariants`,
@@ -46,7 +55,7 @@ refused at the Stage 5 `execution_spec` boundary.
   stage boundary awaiting review, or an explicit session limit.
 
 “Active track” is retained for checker compatibility and means the current
-uncertainty, not a mandatory Track A/Track B sequence. The route contract in
+uncertainty, not a mandatory sequence. The route contract in
 `references/04-governance/discussion.md` owns permitted stopping and exit.
 
 ## Product truth (产品真理 · 受众、目的、约束)
@@ -175,14 +184,13 @@ character: technical
 
 ```contract:tokens
 accent_seal: "#ff3333"
-accent_policy: 仅用于不可逆操作的终极印章，常规强调使用 --accent-primary
+accent_policy: 常规强调使用 --accent-primary；仅在有不可逆或高风险时刻时另声明信号色
 ```
 
   - `--bg-void`: `#0b0f10`
   - `--bg-surface`: `#141a1d`
   - `--text-primary`: `#e6edf3`
   - `--accent-primary`: `#ff4444` (警报强调)
-  - `--accent-seal`: `#ff3333` (不可逆操作终极印章)
 
 ### Project Taste & Visual Language Ledger (项目品味与视觉档案)
 
@@ -379,52 +387,15 @@ data_marks: micro-trend-compact
 - **Verifiable Design Invariants** (机器权威来源为上方 `contract:invariants`；下方散文只解释，不得另立 ID)
 - **The Break Protocol** (机器权威来源为上方 `contract:stress`；两者缺一不构成可用夹具)
 
-### Stage 2: Proposition & Probe (立 - 核心主交互物化)
-- **Hero Screen Anchor Target**: `prototype/experiments/<slice_id>/anchor/index.html` (or probe path)
-- **Craft Library & Geometric Invariants**:
-  - Concentric Radius check ($R_{inner} = \max(0, R_{outer} - padding)$):
-  - Optical Alignment applied (1-2px asymmetric nudge):
-  - Tabular Numerics (`font-variant-numeric: tabular-nums` for counters/metrics):
-- **Atmospheric Undertone (Anti-sterile gray bias)**:
-- **Tactile Physics & Micro-dynamics** (perceptible feedback, `cubic-bezier(0.16, 1, 0.3, 1)`, calibrated settled state):
-- **Physical Token Entity (`prototype/shared/tokens.css`)**:
-- **Component Boundary**: Native-First HTML5 (`<dialog>`, `<details>`, `<form>`) + token recipes (zero heavy JS framework)
-- **Rendered Physical Evidence**: `prototype/evidence/probes/<slice_id>/1280.png`, `390.png`
-- **Direction Status (`confirmed` | `delegated`)**:
+### Later-stage evidence (Stages 2–5)
 
-### Stage 3: Full IA Surface Rollout (拓 - 信息架构全量展开)
-- **Derived Surface Topology Structure**:
-  - Primary Operational Surfaces:
-  - Secondary Contextual Surfaces:
-  - Supporting Administrative Surfaces:
-- **Rhythm: Compression & Release (anti-uniform-grid)**:
-- **Data Floor: Reference Benchmarks & Zero Naked Metrics**:
-- **Action Verb Semantic Continuity Check**:
-- **Strict Token Inheritance** (consume the compiled `visual_directives.token_link_tag` verbatim; never retype the relative depth, zero inline hex):
-
-### Stage 4: Four-Dimensional Audit & Review Portal (验 - 全息走查与吸收)
-- **Review Portal Harness (`prototype/review-portal.html`)**:
-- **Decisive Exchange 3-Frame Verification / Inspection** (`Intent` → `Detent` → `Settled`):
-- **The Break Protocol Stress Checkpoints**:
-  - [ ] Unbroken long string overflow & wrap
-  - [ ] 0 items (Contextual agency & creation bait)
-  - [ ] 1 item (Minimum layout containment)
-  - [ ] 1000 items (Scroll containment & viewport stability)
-- **Five Operational States**:
-  - [ ] Loading (Skeleton)
-  - [ ] Empty (Contextual CTA)
-  - [ ] Partial (Degraded)
-  - [ ] Error (In-place diagnostic & one-click retry)
-  - [ ] Overflow (Extreme length wrapping)
-- **Track A & Track B Verification**:
-  - Track A (Machine Floor): Zero raw hex, 100% token inheritance, WCAG AA / AAA static pass, zero console errors
-  - Track B (Ergonomic Reality Floor): 5-second test or somatic intuition, dual-channel affordance, zero metaphor contamination
-- **Controlled Absorption Loop (Feedback $\to$ `tokens.css` / slices $\to$ Re-verify)**:
-
-### Stage 5: Silent Governance Compilation (冻 - 静默封版与工件交付)
-- **DTCG Export (`prototype/contracts/tokens/t1.json`, the `compile_tokens.py --output-json` default)**:
-- **WCAG Static Contrast Audit**:
-- **Handoff Manifest (`prototype/evidence/<slice_id>/<candidate_id>/freeze-manifest.json` / SHA-256 integrity)**:
+Stages 2–5 do not own fill-in fields here. Their procedures live in `references/stages/`;
+what they produce is evidence, recorded where it is made: captures under
+`prototype/evidence/`, the token stylesheet `prototype/shared/tokens.css`, the review
+portal `prototype/review-portal.html`, the export `prototype/contracts/tokens/t1.json`
+and the freeze manifest. Write a line in this record only for a decision that a later
+pass must not lose, and give it a status; do not pre-author empty rows for stages that
+have not run.
 
 ### Reviewer's evaluation guide
 

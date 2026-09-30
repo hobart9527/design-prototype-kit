@@ -88,6 +88,69 @@ def test_slop_detector_does_not_flag_layout_panel_wrapping_cards(tmp_path):
     assert "SLOP-004" not in result["counts"], "layout panels wrapping sibling cards must not trigger nested card slop"
 
 
+def test_slop_detector_reads_prose_arrows_as_typography_not_iconography(tmp_path):
+    """`→` between runbook steps and `↗` on a trend readout are typography.
+
+    r20 was judged REGRESSION off this rule alone: the arrows block
+    (U+2190–U+21FF) sat inside the emoji character class, so every Chinese
+    process line scored a `high` finding and the candidate was ranked sloppier
+    than a control arm that had merely measured zero by shipping no HTML.
+    """
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html",
+           "<html><body><p>· 提名 → 待放行 → 排空(可回滚) → 已下线</p>"
+           "<p>错误率 4.2% ↗ 基线 0.3%</p>"
+           "<button>↩ 回滚</button></body></html>")
+    result = sd.detect(tmp_path)
+    assert "SLOP-009" not in result["counts"], result["findings"]
+
+
+def test_slop_detector_flags_a_glyph_holding_an_icons_slot(tmp_path):
+    """The rule's actual subject: a glyph standing where an icon belongs."""
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html",
+           "<html><body><span>⚠ 遥测断流</span><span>🔒 锁定</span>"
+           "<p>处置完成 🎉 全流程无人工介入</p></body></html>")
+    result = sd.detect(tmp_path)
+    assert "SLOP-009" in result["counts"], result["findings"]
+
+
+def test_slop_detector_does_not_score_the_harness_review_portal(tmp_path):
+    """The portal is the Skill's operational wrapper, not authored design surface.
+
+    `runtime_judge` excludes it from the candidate's artifacts; the taste score
+    has to make the same exemption or it charges the candidate for the harness.
+    """
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+:root { --ink: oklch(0.2 0.01 250); --accent: oklch(0.6 0.12 30); }
+.metric { font-variant-numeric: tabular-nums; caret-color: var(--accent); }
+::selection { background: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); }
+::-webkit-scrollbar { width: 10px; }
+</style></head><body><p class="metric">42 kg</p></body></html>""")
+    _write(tmp_path, "prototype/review-portal.html",
+           "<html><head><style>.metric{font-size:32px;transition:all .3s}"
+           ".p{border-radius:9999px}</style></head><body>"
+           "<span>⚠ 遥测断流</span></body></html>")
+    result = sd.detect(tmp_path)
+    assert "review-portal.html" not in " ".join(result["files_scanned"]), result["files_scanned"]
+    assert result["slop_score"] == 0, result["findings"]
+
+
+def test_slop_severity_counts_match_the_reported_findings(tmp_path):
+    """`by_severity` and the findings list must agree, capped list included.
+
+    Before this, severity counted every match while the list capped per rule, so
+    a report could announce more high findings than it could name.
+    """
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html",
+           "<html><head><style>" + "".join(
+               f".row{i}{{border-left:4px solid #f00}}" for i in range(6)) +
+           "</style></head><body></body></html>")
+    result = sd.detect(tmp_path)
+    for level in ("high", "medium", "low"):
+        assert result["by_severity"][level] == sum(
+            1 for f in result["findings"] if f["severity"] == level), level
+
+
 def test_slop_detector_without_artifacts_is_blocked_not_passing(tmp_path):
     result = sd.detect(tmp_path)
     assert result["status"] == "blocked"

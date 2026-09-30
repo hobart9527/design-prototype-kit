@@ -39,8 +39,12 @@ RULE_RE = re.compile(r"([a-zA-Z-]+)\s*:\s*([^;{}]+)")
 FONT_VAR_NUM_RE = re.compile(r"font-variant-numeric\s*:\s*[^;}]*(tabular-nums|lining-nums)")
 # Heading text that is a bare ordinal or a decorative kicker.
 ORDINAL_HEADING_RE = re.compile(r"^\s*(?:0[1-9]|1[0-9])\s*$")
+# Pictographs borrowed to stand in an icon's place. The arrows block
+# (U+2190–U+21FF) is deliberately excluded: `→` between runbook steps and `↗`
+# on a trend readout are typography, not borrowed iconography, and flagging them
+# measures the artifact's prose rather than its design.
 EMOJI_RE = re.compile(
-    "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF←-⇿✀-➿]")
+    "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF]")
 GRADIENT_TEXT_RE = re.compile(r"background-clip\s*:\s*text", re.IGNORECASE)
 SIDE_STRIPE_RE = re.compile(r"border-(?:left|right)\s*:\s*([2-9]|\d{2,})px\s+solid", re.IGNORECASE)
 # The model-default faces: reaching for one of these as the *only* face means the
@@ -108,6 +112,13 @@ def detect(artifacts_dir: pathlib.Path, *, max_per_rule: int = 4) -> dict:
     findings = _Findings()
     markup_by_file, css_by_file = {}, {}
     for name, text in texts.items():
+        # The review portal is an operational wrapper the Skill emits from the
+        # coverage record, not authored design surface. `runtime_judge` already
+        # excludes it from the candidate's artifacts; a taste score that kept
+        # reading it charged the candidate for the harness (four of r19's nine
+        # findings and seven of r20's twelve points came from there alone).
+        if name.rsplit("/", 1)[-1] == "review-portal.html":
+            continue
         if name.endswith((".html", ".htm")):
             markup_by_file[name] = text
         elif name.endswith(".css"):
@@ -133,7 +144,9 @@ def detect(artifacts_dir: pathlib.Path, *, max_per_rule: int = 4) -> dict:
             capped.append(item)
         else:
             overflow[item["rule"]] = overflow.get(item["rule"], 0) + 1
-    by_severity = {level: sum(1 for f in findings.items if f["severity"] == level)
+    # Severity counts mirror the capped list the report ranks from; counting the
+    # overflow too would report more high findings than it ever names.
+    by_severity = {level: sum(1 for f in capped if f["severity"] == level)
                    for level in ("high", "medium", "low")}
     severity_of = {}
     for item in findings.items:
@@ -141,7 +154,7 @@ def detect(artifacts_dir: pathlib.Path, *, max_per_rule: int = 4) -> dict:
     return {
         "judge": "slop_detector",
         "status": "detected",
-        "files_scanned": sorted(texts),
+        "files_scanned": sorted(set(markup_by_file) | {n.split("::")[0] for n in css_by_file}),
         "findings": capped,
         "counts": dict(sorted(findings.counts.items())),
         "counts_truncated": overflow,
@@ -191,7 +204,9 @@ def _scan_markup(name: str, markup: str, out: _Findings) -> None:
     elements = _elements(markup)
     texts = _text_nodes(markup)
 
-    emoji_hits = [t for t in texts if EMOJI_RE.search(t)]
+    # A glyph that *leads* a text node is occupying an icon's slot — the shape
+    # this rule is about. One appearing mid-sentence is prose.
+    emoji_hits = [t for t in texts if EMOJI_RE.match(t)]
     if emoji_hits:
         out.add("SLOP-009", "high", name, f"emoji/glyph as icon: {emoji_hits[0]}")
 

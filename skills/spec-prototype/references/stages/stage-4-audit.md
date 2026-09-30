@@ -35,12 +35,11 @@ purpose of this stage.
    other without that look:
    - `python3 skills/spec-prototype/scripts/detect.py --artifact <file>` for the
      craft-floor rules that are machine-readable.
-   - `python3 benchmarks/judges/slop_detector.py --artifacts <artifact-dir>` for the
-     full slop/rut set (`SLOP-001` … `SLOP-025`) — purple-on-dark gradients, glass
-     and blur as decoration, pill radii on large containers, ghost cards, emoji
-     icon systems and the rest. `detect.py`'s `BENCHMARK_ANCHORS` maps the subset it
-     can also read; the detector catches the remainder. A detector hit is a lead:
-     confirm it against the render before it counts as a finding.
+   - The slop/rut set (purple-on-dark gradients, glass and blur as decoration, pill radii
+     on large containers, ghost cards, emoji icon systems and the rest) is a
+     benchmark-side judge, not a delivery gate: read the render for these yourself.
+     `detect.py`'s `BENCHMARK_ANCHORS` maps the machine-readable subset. A detector
+     hit is a lead: confirm it against the render before it counts as a finding.
 3c. **Narrowest-viewport read**: at the smallest declared width the surface still
    answers its own question. Recomposed structure, or an honest `PARTIAL` — a
    compressed desktop is a defect, not a pass.
@@ -145,7 +144,7 @@ passed. Inspect the actual screenshots before making visual claims. A static che
 supports a review; it does not establish visual quality.
 
 **Visual assertion hard rule — evidence provenance**: record in
-`prototype/discussion.md` the `visual_evidence` reference, whether
+the design record (the brief on a layered tree, or `prototype/discussion.md`) the `visual_evidence` reference, whether
 `capture_reflects_current_state` is `true` or `false`, and the concrete visual
 conclusion drawn from the current capture. An old capture may be retained for history,
 but `capture_reflects_current_state: false` cannot support a verified finding or
@@ -153,7 +152,7 @@ but `capture_reflects_current_state: false` cannot support a verified finding or
 screenshots (browser startup failure, environment unavailability, CI headless failure),
 ALL visual assertions — hierarchy, composition, color contrast, spacing, motion,
 typography — are immediately downgraded to `[hypothesis]`. They may NOT serve as
-evidence for `Validated` authority status. Record explicitly in `prototype/discussion.md`:
+evidence for `Validated` authority status. Record explicitly in the design record:
 `visual_evidence: unverified (no rendered captures)`.
 A source-code inspection of HTML/CSS is NOT a substitute for rendered visual
 evidence; inferring visual quality from markup is a fabrication, not a finding.
@@ -179,7 +178,7 @@ quieter, tighter, a variant, or a hardening pass — make it as a named
 what is held constant, and the falsifier. A move that cannot name its target is a
 redirection, not a refinement, and belongs back in the divergence generator. One
 operator per pass: two moves at once are attributable to neither. If it cannot complete within the available turn, record the review as
-`PARTIAL` in `prototype/discussion.md`, name the open finding and unverified
+`PARTIAL` in the design record (the slice's brief or `prototype/discussion.md`), name the open finding and unverified
 scope, and stop; do not burn the remaining wall clock waiting.
 
 ## Break Protocol

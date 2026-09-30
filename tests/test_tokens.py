@@ -320,3 +320,59 @@ def test_compile_tokens_accepts_explicit_legacy_token_source_path(tmp_path: Path
     # An explicit path stays readable as-authored; only generation of the
     # retired sibling is gone.
     assert "#d6f56b" in out_css.read_text(encoding="utf-8")
+
+
+def test_layered_tree_tokens_are_checked_against_the_sealed_source(tmp_path: Path):
+    """A layered tree has world.md and no discussion.md: the lint's freshness fuse must
+    follow the seal to world.md instead of demanding the single-record path."""
+    ct = _load_compiler()
+    world = tmp_path / "prototype/world.md"
+    world.parent.mkdir(parents=True)
+    world.write_text("""# World
+
+## Confirmed Decisions
+- Energy: steady
+- --accent-primary: #d6f56b
+- --bg-surface: #080b0b
+""", encoding="utf-8")
+    css = tmp_path / "prototype/shared/tokens.css"
+    ct.compile_tokens(str(world), str(css))
+    assert not (tmp_path / "prototype/discussion.md").exists()
+
+    import sys
+    scripts = str(ROOT / "skills/spec-prototype/scripts")
+    sys.path.insert(0, scripts)
+    try:
+        import lint_spec_contracts as lint
+        source = lint._token_source_path(tmp_path, css)
+    finally:
+        sys.path.remove(scripts)
+    assert source == world
+    assert ct.check_tokens_sync(str(css), str(source))["state"] == "in_sync"
+
+
+def test_layered_tree_confirmation_in_truth_md_grants_token_authority(tmp_path: Path):
+    """The Decisions table lives in truth.md, the token values in world.md: a confirmed
+    palette row in truth.md must make the compiled authority explicit_human, and the
+    sealed stylesheet must stay in sync with that reading."""
+    ct = _load_compiler()
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    (proto / "truth.md").write_text(
+        "# Truth\n\n| decision | status | note |\n| --- | --- | --- |\n"
+        "| palette | confirmed | user selected palette |\n", encoding="utf-8")
+    world = proto / "world.md"
+    world.write_text("# World\n\n- Energy: steady\n- --accent-primary: #d6f56b\n- --bg-surface: #080b0b\n",
+                     encoding="utf-8")
+    css = proto / "shared/tokens.css"
+    out_json = proto / "contracts/tokens/t1.json"
+    ct.compile_tokens(str(world), str(css), str(out_json))
+
+    assert "explicit_human" in out_json.read_text(encoding="utf-8")
+    assert ct.check_tokens_sync(str(css), str(world))["state"] == "in_sync"
+
+    # Without the sibling confirmation the same world.md stays derived.
+    (proto / "truth.md").write_text("# Truth\n", encoding="utf-8")
+    ct.compile_tokens(str(world), str(css), str(out_json))
+    assert "explicit_human" not in out_json.read_text(encoding="utf-8")
+

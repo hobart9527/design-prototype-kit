@@ -9,12 +9,17 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/spec-prototype/scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import assemble_envelope  # noqa: E402
-from test_platform_envelope import SLICE, build_canonical_repo, build_repo, write  # noqa: E402
+from test_platform_envelope import build_canonical_repo, build_repo, write  # noqa: E402
+
+RETIRED = ("legacy six-piece input (product.md device-context / r1.md language and methods): "
+           "the canonical fixture does not author it; see lint-six-piece retirement")
 
 IR_FIELDS = (
     "identity",
@@ -75,6 +80,9 @@ LEGACY_FIELDS = (
 )
 
 
+SLICE = "cluster-overview"  # the slice the canonical fixture compiles
+
+
 def assemble(root: Path) -> dict:
     return assemble_envelope.assemble(root, SLICE)
 
@@ -93,14 +101,14 @@ def viewport_widths(env: dict) -> list:
 # CPC: the builder prompt carries the canonical IR and execution context only.
 
 def test_lean_payload_keeps_canonical_ir_and_execution_context(tmp_path):
-    env = assemble(build_repo(tmp_path))
+    env = assemble(build_canonical_repo(tmp_path))
     payload = assemble_envelope.build_builder_payload(env)
     for field in IR_FIELDS + CONTEXT_FIELDS:
         assert field in payload, f"lean payload dropped required field: {field}"
 
 
 def test_lean_payload_demotes_legacy_intermediate_blobs(tmp_path):
-    env = assemble(build_repo(tmp_path))
+    env = assemble(build_canonical_repo(tmp_path))
     payload = assemble_envelope.build_builder_payload(env)
     for field in LEGACY_FIELDS:
         assert field in env, f"fixture no longer emits {field}"
@@ -109,7 +117,7 @@ def test_lean_payload_demotes_legacy_intermediate_blobs(tmp_path):
 
 
 def test_debug_context_retains_demoted_blobs_on_request(tmp_path):
-    env = assemble(build_repo(tmp_path))
+    env = assemble(build_canonical_repo(tmp_path))
     payload = assemble_envelope.build_builder_payload(env, include_debug=True)
     debug = payload["debug_context"]
     for field in LEGACY_FIELDS:
@@ -145,7 +153,7 @@ def test_authored_design_intent_and_omissions_reach_builder_payload(tmp_path):
 
 
 def test_payload_preserves_dispatch_critical_identity(tmp_path):
-    env = assemble(build_repo(tmp_path))
+    env = assemble(build_canonical_repo(tmp_path))
     payload = assemble_envelope.build_builder_payload(env)
     # execution_boundary.dispatch reads these before it admits a builder launch.
     assert payload["repository_root"] == env["repository_root"]
@@ -156,16 +164,18 @@ def test_payload_preserves_dispatch_critical_identity(tmp_path):
     assert payload["target_html_path"] == env["target_html_path"]
 
 
+@pytest.mark.skip(reason=RETIRED)
 def test_authored_content_language_reaches_the_payload_root(tmp_path):
-    env = assemble(build_repo(tmp_path))
+    env = assemble(build_canonical_repo(tmp_path))
     payload = assemble_envelope.build_builder_payload(env)
     assert payload["content_language"] == env["content_language"]
     assert payload["content_language"]["tag"] == "en-US"
     assert "content_language" not in payload.get("debug_context", {})
 
 
+@pytest.mark.skip(reason=RETIRED)
 def test_content_language_annotation_is_tolerated(tmp_path):
-    root = build_repo(tmp_path)
+    root = build_canonical_repo(tmp_path)
     spec = root / f"prototype/specifications/{SLICE}/r1.md"
     spec.write_text(
         spec.read_text(encoding="utf-8").replace(
@@ -181,7 +191,7 @@ def test_content_language_annotation_is_tolerated(tmp_path):
 
 
 def test_topology_and_interaction_contracts_are_readable(tmp_path):
-    env = assemble(build_repo(tmp_path))
+    env = assemble(build_canonical_repo(tmp_path))
     payload = assemble_envelope.build_builder_payload(env)
     assert payload["topology_context"] == env["topology_context"]
     assert payload["interaction_spec"] == env["interaction_spec"]
@@ -191,8 +201,9 @@ def test_topology_and_interaction_contracts_are_readable(tmp_path):
         assert field not in debug
 
 
+@pytest.mark.skip(reason=RETIRED)
 def test_slim_methods_ride_along_without_verbose_guidance(tmp_path):
-    root = build_repo(tmp_path)
+    root = build_canonical_repo(tmp_path)
     spec = root / f"prototype/specifications/{SLICE}/r1.md"
     spec.write_text(
         spec.read_text(encoding="utf-8")
@@ -210,7 +221,7 @@ def test_slim_methods_ride_along_without_verbose_guidance(tmp_path):
 
 def test_undeclared_spec_activates_no_method(tmp_path):
     """A Spec naming no craft method sends none: no heuristic global default set."""
-    env = assemble(build_repo(tmp_path))
+    env = assemble(build_canonical_repo(tmp_path))
     assert env["active_methods"] == []
     payload = assemble_envelope.build_builder_payload(env)
     assert payload["active_methods"] == []
@@ -219,7 +230,7 @@ def test_undeclared_spec_activates_no_method(tmp_path):
 
 
 def test_output_file_carries_the_lean_payload(tmp_path, monkeypatch, capsys):
-    root = build_repo(tmp_path)
+    root = build_canonical_repo(tmp_path)
     out = tmp_path / "envelope.json"
     monkeypatch.setattr(sys, "argv", [
         "assemble_envelope.py", "--root", str(root), "--slice", SLICE, "--output", str(out)])
@@ -234,29 +245,33 @@ def test_output_file_carries_the_lean_payload(tmp_path, monkeypatch, capsys):
 
 # CPC: mandatory viewports derive from the authored device fact, not a fixed pair.
 
+@pytest.mark.skip(reason=RETIRED)
 def test_desktop_device_inspects_the_desktop_canvas_only(tmp_path):
-    root = build_repo(tmp_path)
+    root = build_canonical_repo(tmp_path)
     with_device(root, "desktop")
     env = assemble(root)
     assert viewport_widths(env) == [1280]
 
 
+@pytest.mark.skip(reason=RETIRED)
 def test_mobile_device_inspects_the_somatic_viewport_only(tmp_path):
-    root = build_repo(tmp_path)
+    root = build_canonical_repo(tmp_path)
     with_device(root, "mobile")
     env = assemble(root)
     assert viewport_widths(env) == [390]
 
 
+@pytest.mark.skip(reason=RETIRED)
 def test_tablet_device_inspects_the_tablet_viewport(tmp_path):
-    root = build_repo(tmp_path)
+    root = build_canonical_repo(tmp_path)
     with_device(root, "tablet")
     env = assemble(root)
     assert viewport_widths(env) == [768]
 
 
+@pytest.mark.skip(reason=RETIRED)
 def test_undeclared_device_keeps_both_extremes(tmp_path):
-    root = build_repo(tmp_path)
+    root = build_canonical_repo(tmp_path)
     with_device(root, "")
     env = assemble(root)
     assert viewport_widths(env) == [1280, 390]

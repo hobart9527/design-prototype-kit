@@ -3,18 +3,23 @@
 The main designer owns the full design lifecycle inside `prototype/`: interpretation,
 Markdown records, and the runnable HTML/CSS/JS it authors directly. No external role
 sits on the primary path. The native Skill hook persists through the session. Its
-adapter applies only
-where the nearest `prototype/discussion.md` records `Execution boundary: active`.
-Initialize that field before design actions; keep it active while awaiting design
-answers and throughout building/review. On an actual switch to other work or
-finished delivery, record `released`; on design resume, restore `active` before
-acting. Releasing is not a workaround for a blocked design action. These are
-existing discussion scope facts, not a second approval or Runtime lifecycle.
+adapter applies only where the design record is active. On a single-record tree the
+adapter checks the nearest `prototype/discussion.md` for `Execution boundary: active`.
+On a layered tree (`prototype/truth.md` or `prototype/world.md` present without
+`discussion.md`) the layered anchor's existence is the active record. Initialize
+that field before design actions on a single-record tree; keep it active while
+awaiting design answers and throughout building/review. On an actual switch to
+other work or finished delivery, record `released`; on design resume, restore
+`active` before acting. Releasing is not a workaround for a blocked design action.
+These are existing design-record scope facts, not a second approval or Runtime
+lifecycle.
 
-When no discussion record exists, the adapter permits only the first design
-write to `prototype/discussion.md`; other prototype artifacts wait until that
-record establishes scope. This prevents silent loss of the canonical resume
-record without making the adapter an approval or readiness owner.
+When no design record exists, the adapter permits only the first design write to
+the record itself — `prototype/discussion.md` on a single-record tree, or
+`prototype/truth.md` / `prototype/world.md` / `prototype/briefs/<slice>.md` on a
+layered one. Other prototype artifacts wait until the record establishes scope.
+This prevents silent loss of the canonical resume record without making the
+adapter an approval or readiness owner.
 
 The adapter checks native Write/Edit/Bash and helper dispatches. It does not
 decide actual-user approval, Track completion or design merit;
@@ -30,9 +35,10 @@ prototype directly.
 
 Use Read/Glob/Grep and available read-only research/browser tools. Native writes
 are Markdown design/research/Review records under the repository's `prototype/`.
-All design models, IA plans, and discussion notes MUST be written to
-`prototype/discussion.md` (and canonical `prototype/*.md` artifacts), never to
-root-level ad-hoc files such as `DESIGN.md` or left unpersisted in terminal output.
+All design models, IA plans, and discussion notes MUST be written to the design
+record (whether `prototype/discussion.md` or the layered `truth.md`/`world.md`/
+`briefs/` set) and canonical `prototype/*.md` artifacts, never to root-level
+ad-hoc files such as `DESIGN.md` or left unpersisted in terminal output.
 For Bash use one command: `pwd`, `ls`, `cat`, `head`, `tail`, `wc`, `rg` (without a
 preprocessor), `git status --short`, `git status --short --branch`, or
 `git rev-parse --show-toplevel`. Installed scripts may run by their absolute path:
@@ -49,8 +55,11 @@ when the underlying design work is already authorized.
 ## Formal handoff packet
 
 `lint_spec_contracts.py` is a Stage 5 optional handoff lint helper, not a design-time
-gate. It is admitted through the execution boundary only when explicitly invoked with
-`--root` and `--slice` arguments for formal delivery validation.
+gate. It validates the canonical Spec IR (schema, tier admission, tokens freshness,
+boundary) and is admitted through the execution boundary only when explicitly invoked
+with `--root` and `--slice` arguments for formal delivery validation. The legacy
+six-piece contract lint is retired: a tree without the compiled IR reports the missing
+IR rather than demanding retired files.
 
 Prepare prototype handoff artifacts in the current project with their bounded
 scopes, not a separate worktree: packet paths and target evidence belong to this

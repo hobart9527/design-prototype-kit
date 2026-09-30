@@ -112,11 +112,14 @@ def test_stage2_executes_the_generator_before_authoring():
     stage2 = _read(STAGE2)
     assert "Diverge before authoring" in stage2
     assert "two-axis verdict" in stage2
-    assert "divergence judge" in stage2, \
-        "the prose verdict is re-checked on the built slots"
+    assert "benchmarks/judges" not in stage2, \
+        "the boundary hook denies non-shipped helpers: no judge command in the stage prose"
+    assert "compare the built slots yourself" in stage2, \
+        "the prose verdict is re-checked on the built slots by the designer"
     assert "challenger source, not a direction menu" in stage2
     # The draw is a command the stage runs, not a step the model remembers to take.
     assert "draw_seed.py --slice" in stage2
+    assert "optionally draw" in stage2, "the draw is an optional entropy source, not a gate"
     assert "never choose them" in stage2
 
 
@@ -397,13 +400,14 @@ def test_the_dialectic_topics_are_routed():
         assert topic in stage1, f"dialectic topic {topic} has no route from Stage 1"
 
 
-def test_stage4_runs_both_machine_scans():
-    """detect.py reads the craft floor; slop_detector carries the rest of the set."""
+def test_stage4_keeps_the_slop_judge_on_the_benchmark_side():
+    """detect.py is the delivery scan; the slop set is read from the render, not run."""
     audit = _read(AUDIT)
-    assert "slop_detector.py" in audit, \
-        "the slop set beyond detect.py's anchors is never machine-read"
-    assert "SLOP-" in audit
     assert "detect.py" in audit
+    assert "slop_detector.py" not in audit, \
+        "slop_detector is a benchmark-side judge, not a delivery command"
+    assert "benchmark-side judge" in audit
+    assert "BENCHMARK_ANCHORS" in audit
 
 
 def test_prose_only_rules_are_owed_a_written_judgment():

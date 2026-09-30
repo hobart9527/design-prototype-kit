@@ -27,9 +27,10 @@ brief plus evidence, never a sealed contract and never an approved artifact.
    real-world Reference Benchmarks rather than invented anchors.
 3. **No-build discipline.** A no-build request ("只讨论", "不制作页面") forbids
    runnable HTML/JS/CSS prototypes. It still **MANDATES** recording the design
-   model and decisions in `prototype/discussion.md` as the central index. Never
-   write proposals to arbitrary repository root files, and never leave them
-   solely in chat dialogue.
+   model and decisions in the design record as the central index —
+   `prototype/discussion.md` on a single-record tree, or `prototype/truth.md` +
+   `prototype/world.md` on a layered tree. Never write proposals to arbitrary
+   repository root files, and never leave them solely in chat dialogue.
 4. **Evidence honesty.** Keep claims labelled `explicit | observed | derived |
    hypothesis | unknown`. A probe screenshot proves a rendered direction; it does
    not prove ergonomic viability or aesthetic fitness.
@@ -45,7 +46,8 @@ brief plus evidence, never a sealed contract and never an approved artifact.
 
 ## Gated Output
 
-- `prototype/discussion.md` updated with the probe record and Resume section.
+- `prototype/truth.md` (or `prototype/discussion.md` on a single-record tree)
+  updated with the probe record and Resume section.
 - Optional single direction probe artifact under `prototype/experiments/`.
 - A direction probe report stating the surviving direction, the falsification
   boundary, and what was consciously sacrificed. Screenshots are attached only

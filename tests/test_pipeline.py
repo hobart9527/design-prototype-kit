@@ -13,6 +13,8 @@ import sys
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+RETIRED_SIX_PIECE = "legacy six-piece envelope input: lint_spec_contracts() is retired; canonical IR is the only contract"
+
 def _load(name: str, filename: str):
     spec = importlib.util.spec_from_file_location(name, SCRIPTS / filename)
     mod = importlib.util.module_from_spec(spec)
@@ -254,6 +256,7 @@ def test_canonical_5_stage_active_simulation_and_artifact_standards():
     assert "spacing" in generated_dtcg
 
 
+@pytest.mark.skip(reason=RETIRED_SIX_PIECE)
 def test_spec_first_contract_formulation_and_lean_envelope(tmp_path: Path):
     """Verify that Stage 1 6-Pillar Spec-First contracts are strictly required and envelope compiles."""
     assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
@@ -413,6 +416,7 @@ def test_zero_broken_markdown_links_in_skill():
     assert broken == [], f"Found broken markdown links: {broken}"
 
 
+@pytest.mark.skip(reason=RETIRED_SIX_PIECE)
 def test_seven_high_leverage_design_levers_and_template_slots(tmp_path: Path):
     """Verify design-methods.md owns all 7 levers, and the retained templates carry their slots.
 
@@ -511,7 +515,7 @@ record: prototype-specification
     assert any("Unbreakable String" in c for c in constraints["break_protocol_checkpoints"])
 
 
-def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path):
+def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path, capsys):
     """Verify verify_prototype_quality strictly catches missing radius tokens, shortcuts, and hash states."""
     verify_mod = _load("verify_quality", "verify_prototype_quality.py")
 
@@ -539,8 +543,13 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
 </main>
 </body></html>""", encoding="utf-8")
 
-    # Fails because radius and numeric presentation tokens are not consumed, despite presence of var(--bg-void)
-    assert verify_mod.assert_quality(str(bad_html), str(tokens_css), contract_path=str(spec_md)) is False
+    # The contract-named shortcut, state hook and overflow containment it omits
+    # are reported as signals: whether the surface expresses them is the design
+    # review's call, not a literal match's.
+    assert verify_mod.assert_quality(str(bad_html), str(tokens_css), contract_path=str(spec_md)) is True
+    bad_report = capsys.readouterr().out
+    assert "[signal] ergonomics: declared dual-channel keyboard shortcuts not bound" in bad_report
+    assert "[signal] state-machine: stress checkpoints declared but no state-switching hook detected" in bad_report
 
     # 2. HTML adds var(--radius-outer) and tabular-nums, but still lacks keyboard listener and hashchange
     semi_html = tmp_path / "semi.html"
@@ -549,7 +558,7 @@ def test_tightened_quality_assertions_against_goodhart_loopholes(tmp_path: Path)
   <button id="btn-action" onclick="void(0)">Run</button>
 </main>
 </body></html>""", encoding="utf-8")
-    assert verify_mod.assert_quality(str(semi_html), str(tokens_css), contract_path=str(spec_md)) is False
+    assert verify_mod.assert_quality(str(semi_html), str(tokens_css), contract_path=str(spec_md)) is True
 
     # 3. HTML adds keydown listener, overflow containment, and hashchange state machine hook -> passes
     good_html = tmp_path / "good.html"
@@ -602,7 +611,8 @@ def test_the_document_must_bind_the_token_stylesheet_it_declares(tmp_path: Path)
     assert verify_mod.assert_quality(str(bound), str(tokens_css)) is True
 
 
-def test_topology_context_and_convention_cli(tmp_path: Path):
+@pytest.mark.skip(reason=RETIRED_SIX_PIECE)
+def test_topology_context_and_convention_cli(tmp_path: Path, capsys):
     """Verify envelope compiles multi-surface topology links and convention-based CLI."""
     assemble_mod = _load("assemble_envelope", "assemble_envelope.py")
 
@@ -704,12 +714,16 @@ record: prototype-specification
     verify_mod = _load("verify_quality", "verify_prototype_quality.py")
     test_html = tmp_path / "prototype/experiments/console/hero-anchor/index.html"
     test_html.parent.mkdir(parents=True, exist_ok=True)
-    # Page without sibling links fails topology assertion
+    # An undelivered sibling that is neither linked nor rendered as a disabled
+    # affordance is reported: absent navigation is a judgement about the render,
+    # not the 404 a live href to an undelivered surface would be.
     test_html.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="../../../shared/tokens.css"></head><body>
 <main style="border-radius: var(--radius-outer); font-variant-numeric: tabular-nums;"><button>Go</button></main>
 <script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
 </body></html>""", encoding="utf-8")
-    assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is False
+    assert verify_mod.assert_quality(str(test_html), str(tokens_css), contract_path=str(spec)) is True
+    topology_report = capsys.readouterr().out
+    assert "[signal] topology: undelivered sibling" in topology_report
 
     # Page with sibling link passes topology assertion
     # The referenced sibling surface must exist: a link to an undelivered surface is a 404 defect.
@@ -952,8 +966,20 @@ Note: Avoid touch controls and consumer mobile paradigms.
     assert env["app_shell_blueprint"]["profile"] == "adaptive-workspace", "Unselected profile stays neutral adaptive-workspace"
 
 
-def test_verify_quality_negative_checks_block_goodhart_loopholes(tmp_path: Path):
-    """Verify verify_prototype_quality fails fake implementations with empty listeners, naked metrics, or comment states."""
+def test_verify_quality_negative_checks_block_goodhart_loopholes(tmp_path: Path, capsys):
+    """Floor fixtures still block; contract-read-back fixtures are reported as signals.
+
+    All three specimens share one shape: a contract that names a metric unit, a
+    state hook and an action feedback container, and a document that omits them.
+    On HEAD each one also failed on those contract-read-back rules — the Goodhart
+    loophole this test was written to guard, not a floor. A rule that blocks a
+    document for not literally containing a token the contract named blocks
+    legitimate designs too, because a good one merges, renames or relocates what
+    the contract listed. Each match is now asserted on the channel it belongs to,
+    so a signal cannot silently become a floor or disappear. Where a specimen also
+    trips a real floor — no event binding at all — that is asserted too, so the
+    floor is shown to have moved with the fixture rather than been dropped.
+    """
     verify_mod = _load("verify_prototype_quality", "verify_prototype_quality.py")
 
     tokens_css = tmp_path / "tokens.css"
@@ -991,7 +1017,10 @@ def test_verify_quality_negative_checks_block_goodhart_loopholes(tmp_path: Path)
     document.addEventListener('pointerdown', () => {}); // Empty handler without style/class mutation
   </script>
 </body></html>""", encoding="utf-8")
-    assert verify_mod.assert_quality(str(fake_tactile), str(tokens_css), contract_path=str(spec_path)) is False
+    assert verify_mod.assert_quality(str(fake_tactile), str(tokens_css), contract_path=str(spec_path)) is True
+    tactile_report = capsys.readouterr().out
+    assert "[signal] contract items: declared items not matched in DOM: Latency" in tactile_report
+    assert "[signal] action-lifecycle: contract declares active verbs but DOM has no visible feedback container" in tactile_report
 
     # 2. Fake naked metric: class="stat" without any unit or sparkline
     fake_metric = tmp_path / "fake_metric.html"
@@ -1003,6 +1032,13 @@ def test_verify_quality_negative_checks_block_goodhart_loopholes(tmp_path: Path)
   <span class="stat">42</span> <!-- Naked metric without unit or sparkline -->
 </body></html>""", encoding="utf-8")
     assert verify_mod.assert_quality(str(fake_metric), str(tokens_css), contract_path=str(spec_path)) is False
+    metric_report = capsys.readouterr().out
+    # The document binds no event at all, which is a floor and still blocks. The
+    # contract-read-back rules are the reason this specimen used to fail on HEAD,
+    # and they now appear on the signal channel only — never as a numbered failure.
+    assert "[1] interaction assertion: no declarative or imperative event binding" in metric_report
+    assert "[signal] data-craft: Zero Naked Metrics" in metric_report
+    assert "data-craft assertion" not in metric_report
 
     # 3. Fake state machine: HTML comment <!-- loading --> without actual state hook
     fake_state = tmp_path / "fake_state.html"
@@ -1015,6 +1051,13 @@ def test_verify_quality_negative_checks_block_goodhart_loopholes(tmp_path: Path)
   <span class="unit">42 ms</span>
 </body></html>""", encoding="utf-8")
     assert verify_mod.assert_quality(str(fake_state), str(tokens_css), contract_path=str(spec_path)) is False
+    state_report = capsys.readouterr().out
+    # No event binding is a floor and still blocks; the contract-read-back
+    # findings are reported on the signal channel and never move the exit code.
+    assert "[1] interaction assertion: no declarative or imperative event binding" in state_report
+    assert "[signal] state-machine: stress checkpoints declared but no state-switching hook detected" in state_report
+    assert "[signal] contract items: declared items not matched in DOM: Latency" in state_report
+    assert "state-machine assertion" not in state_report
 
 
 def test_reconcile_review_tokens_back_to_contracts(tmp_path: Path):

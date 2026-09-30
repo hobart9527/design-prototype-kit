@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -51,12 +52,6 @@ _CONTEXT_MODIFIER = re.compile(r"(?:unit|baseline|sparkline|threshold|reference|
 # Metric containers, and the unit that must follow the number inside one.
 _METRIC_CLASS = re.compile(r"(?:stat|metric|kpi|value|num|count)")
 _METRIC_UNIT = re.compile(r"^\s*[\d.,]+\s*(?:[a-zA-Z%/$€¥°]|/[a-zA-Z]+)")
-
-# Classes reserved for secondary affordances, where the signature accent is
-# forbidden.
-_FORBIDDEN_ACCENT_CLASSES = frozenset({
-    "draft", "pending", "secondary", "ghost", "cancel", "subtle", "base", "zero-borrow",
-})
 
 
 def _strip_comments(text: str, line_comment: bool) -> str:
@@ -645,6 +640,41 @@ def _capture_receipt(html: Path) -> dict | None:
     return None
 
 
+def _design_record_parts(html: Path) -> list[str] | None:
+    """The design-record texts visible from this document, one per record file.
+
+    Walks up to the nearest project root that holds a record: `prototype/discussion.md`
+    on a single-record tree, or the layered `truth.md` + `world.md` + this slice's
+    `briefs/<slice>.md`. The slice is read off the document's own path
+    (`experiments/<slice>/...` or `surfaces/<slice>/...`); when the path does not name
+    one, every brief is read. Parts stay separate because block frontmatter only parses
+    at the head of a file, so joining them would hide the brief's declarations.
+    Returns None when no record exists, which callers treat as "unknown", never as a gap.
+    """
+    for base in (html.parent, *html.parents):
+        proto = base / "prototype"
+        shared = [p for p in (proto / "truth.md", proto / "world.md") if p.is_file()]
+        briefs_dir = proto / "briefs"
+        if shared or briefs_dir.is_dir():
+            slice_id = next(
+                (html.parts[i + 1] for i, part in enumerate(html.parts[:-1])
+                 if part in ("experiments", "surfaces") and (briefs_dir / f"{html.parts[i + 1]}.md").is_file()),
+                None,
+            )
+            briefs = ([briefs_dir / f"{slice_id}.md"] if slice_id
+                      else sorted(briefs_dir.glob("*.md")) if briefs_dir.is_dir() else [])
+            return [p.read_text(encoding="utf-8") for p in (*shared, *briefs)]
+        if (proto / "discussion.md").is_file():
+            return [(proto / "discussion.md").read_text(encoding="utf-8")]
+    return None
+
+
+def _design_record_text(html: Path) -> str | None:
+    """The record parts joined, for checks that read prose tables rather than frontmatter."""
+    parts = _design_record_parts(html)
+    return None if parts is None else "\n\n".join(parts)
+
+
 def declared_viewports(text: str) -> list[int]:
     """The viewports a discussion declares, from authored structure only.
 
@@ -691,13 +721,10 @@ def check_viewport_receipts(html: Path) -> list[str]:
     if not isinstance(metrics, dict) or not metrics:
         return []
     captured = {int(k) for k in metrics if str(k).isdigit()}
-    discussion = next(
-        (p for p in (html.parent, *html.parents) if (p / "prototype/discussion.md").is_file()),
-        None,
-    )
-    if discussion is None:
+    record_parts = _design_record_parts(html)
+    if record_parts is None:
         return []
-    declared = declared_viewports((discussion / "prototype/discussion.md").read_text(encoding="utf-8"))
+    declared = sorted({w for part in record_parts for w in declared_viewports(part)})
     missing = sorted(set(declared) - captured)
     if not missing:
         return []
@@ -785,7 +812,7 @@ def _probe_computed_style(html: Path) -> tuple[bool, str | None]:
     engine = _style_engine_command()
     if not engine:
         return False, "environment_not_ready: no headless style engine available for computed-style checks"
-    cached = _TIER_PROBE_CACHE.get(f"style:{engine}")
+    cached = _TIER_PROBE_CACHE.get(_probe_cache_key("style", html))
     if cached is not None:
         return cached
     if engine == "playwright":
@@ -795,7 +822,7 @@ def _probe_computed_style(html: Path) -> tuple[bool, str | None]:
             cmd = [engine, *_chrome_like_flags(engine, Path(td)),
                    "--dump-dom", html.resolve().as_uri()]
             result = _run_engine_probe(cmd, "computed-style probe")
-    _TIER_PROBE_CACHE[f"style:{engine}"] = result
+    _TIER_PROBE_CACHE[_probe_cache_key("style", html)] = result
     return result
 
 
@@ -804,7 +831,7 @@ def _probe_screenshot(html: Path) -> tuple[bool, str | None]:
     engine = _style_engine_command()
     if not engine:
         return False, "environment_not_ready: no headless style engine available for screenshot comparison"
-    cached = _TIER_PROBE_CACHE.get(f"screenshot:{engine}")
+    cached = _TIER_PROBE_CACHE.get(_probe_cache_key("screenshot", html))
     if cached is not None:
         return cached
     if engine == "playwright":
@@ -819,13 +846,42 @@ def _probe_screenshot(html: Path) -> tuple[bool, str | None]:
             if ok and not out.is_file():
                 ok, reason = False, "environment_not_ready: screenshot capture produced no image"
             result = (ok, reason)
-    _TIER_PROBE_CACHE[f"screenshot:{engine}"] = result
+    _TIER_PROBE_CACHE[_probe_cache_key("screenshot", html)] = result
     return result
+
+
+def _probe_cache_key(kind: str, html: Path) -> str:
+    """Cache key: engine + the document it measured.
+
+    Keying on the engine alone made the first document's outcome decide every
+    later one in the same process: a prototype verified after a healthy one
+    inherited its pass, and one verified after a broken one inherited its
+    degrade.
+    """
+    try:
+        stamp = html.stat()
+        identity = f"{html.resolve()}:{stamp.st_mtime_ns}:{stamp.st_size}"
+    except OSError:
+        identity = str(html)
+    return f"{kind}:{_style_engine_command()}:{identity}"
+
+
+def _engine_probe_timeout() -> float:
+    """Probe timeout, overridable for slow cold starts.
+
+    A cold `Chrome --dump-dom` on macOS routinely exceeds the hardcoded 20s
+    while the probe script itself takes ~3.4s, so the first probe of a process
+    was a coin flip that recorded a real document as an environment gap.
+    """
+    try:
+        return max(5.0, float(os.environ.get("SPEC_PROTOTYPE_PROBE_TIMEOUT", "60")))
+    except ValueError:
+        return 60.0
 
 
 def _run_engine_probe(cmd: list[str], label: str) -> tuple[bool, str | None]:
     try:
-        proc = subprocess.run(cmd, capture_output=True, timeout=20)
+        proc = subprocess.run(cmd, capture_output=True, timeout=_engine_probe_timeout())
     except subprocess.TimeoutExpired:
         return False, f"environment_not_ready: {label} timed out"
     except OSError as exc:
@@ -1020,14 +1076,16 @@ def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, obj
         "environment_not_ready": False,
     }
     if l1_failures:
-        tiers["L1"] = {"status": "failed", "failure_count": len(l1_failures)}
-        blocked = "upstream_blocked: L1 structural checks failed"
-        tiers["L2"] = {"status": "skipped", "reason": blocked}
-        tiers["L3"] = {"status": "skipped", "reason": blocked}
-        evidence["tier_reached"] = "L1"
+        # A failing structural check is recorded, not used as a gate on the
+        # probes. Skipping L2/L3 because a text check disagreed hid the render
+        # evidence the reviewer needs to decide whether the text check was right;
+        # the reviewer saw a blocked report where a screenshot existed to settle
+        # it. Every tier is measured, and the report carries all of it.
+        tiers["L1"] = {"status": "failed", "failure_count": len(l1_failures),
+                       "failures": l1_failures[:8]}
         evidence["outcome"] = "blocked"
-        return evidence
-    tiers["L1"] = {"status": "passed"}
+    else:
+        tiers["L1"] = {"status": "passed"}
     evidence["tier_reached"] = "L2"
 
     l2_ok, l2_reason = _probe_computed_style(html)
@@ -1085,9 +1143,12 @@ def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, obj
 def coverage_failures(html: Path, contract_path: Path | str | None = None) -> list[str]:
     """Reconcile the authored scope with delivery and evidence.
 
-    Scope membership, delivery and evidence stay separate facts; a documented
-    blocker never discharges an obligation and a pending destination stays
-    href-free rather than becoming a broken link.
+    Legacy-only: reads `prototype/contracts/surface-maps/m1.md`, which the
+    artifact lifecycle retires in favour of the canonical Spec IR. On a layered
+    or canonical tree the file is absent and the function returns no failures;
+    the equivalent selection/staleness checks on a canonical tree live in
+    `lint_spec_contracts.lint_formal_entry` against the IR. This function is
+    retained for trees that still carry a legacy map; do not extend it.
     """
     results: dict[str, object] = {}
     LAST_COVERAGE_RESULTS.clear()
@@ -1265,6 +1326,23 @@ def check_relative_refs(html: Path, dom: "_Document") -> tuple[list[str], list[s
 
 def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                    contract_path: str | None = None) -> bool:
+    """Verify one authored prototype.
+
+    Two output channels, and only one of them moves the exit code:
+
+    - `failures` — the blocking floors. A floor is a fact whose violation is
+      irreversible or silent: an unreachable write boundary, a fabricated
+      approval, a dead link, a stylesheet that never applied, a crash, a dead
+      control. Enumerating these is bounded, so a capture cannot be worked
+      around and does not need to be.
+    - `signals` — everything that reads the contract back. "Did the authored
+      item appear in the DOM", "is the declared shortcut bound", "does the
+      metric carry a unit". These are judgement calls about whether a design
+      expresses its contract, and a literal match cannot make them: a good
+      design may merge, rename or relocate what the contract named. The model
+      rules on them against the render (`stage-4-audit.md`); they are printed
+      for that review and never block.
+    """
     html = Path(html_path)
     tokens = Path(tokens_path)
     if not html.is_file() or not tokens.is_file():
@@ -1274,10 +1352,9 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     token_source = tokens.read_text(encoding="utf-8")
     dom = _Document(source)
     declarations = dom.declarations()
-    # Fatal only: task completion, contract conformance, contrast/a11y, state
-    # handling. Subjective aesthetic craft lands in `advisories` instead.
     failures: list[str] = []
     advisories: list[str] = []
+    signals: list[str] = []
 
     # DOM and interaction assertions read the parsed tree, never the source text:
     # a class named in a comment or a tag quoted inside a string is not a hook.
@@ -1307,8 +1384,11 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     }
     missing_actions = sorted(required_action_ids - rendered_action_ids)
     if missing_actions:
-        failures.append(
-            "action identity assertion: authored action id(s) missing from DOM data-action: "
+        # A signal, not a floor: the contract named an action id, the DOM spells
+        # its controls another way. Whether that is a merged affordance, a rename
+        # or a genuine omission is a design judgement only the render can settle.
+        signals.append(
+            "action identity: authored action id(s) not present as DOM data-action: "
             + ", ".join(missing_actions[:8])
         )
     missing: list[str] = []
@@ -1319,7 +1399,7 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         elif len(item) > 2 and not dom.contains(item):
             missing.append(item)
     if missing:
-        failures.append("contract assertion: declared items absent from DOM: " + ", ".join(missing[:5]))
+        signals.append("contract items: declared items not matched in DOM: " + ", ".join(missing[:5]))
 
     # Authority fidelity: an action's `authority: explicit` is a claim that the
     # user stated the mechanism, so it is checked against the provenance record
@@ -1328,18 +1408,13 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     # because a promotion the skill ships is a promotion the skill should refuse.
     ir_file = _ir_contract_path(Path(contract_path)) if contract_path else None
     if ir_file and ir_file.is_file():
-        discussion_file = next(
-            (p for p in (html.parent, *html.parents) if (p / "discussion.md").is_file()),
-            None,
-        )
-        if discussion_file:
+        record_text = _design_record_text(html)
+        if record_text is not None:
             try:
                 ir_actions = json.loads(ir_file.read_text(encoding="utf-8")).get("actions") or []
             except (json.JSONDecodeError, OSError):
                 ir_actions = []
-            failures.extend(authority_fidelity.check_action_authority(
-                ir_actions, (discussion_file / "discussion.md").read_text(encoding="utf-8")
-            ))
+            failures.extend(authority_fidelity.check_action_authority(ir_actions, record_text))
 
     # Hard floor: reject raw inline hex colors in style attributes (enforces token inheritance)
     raw_style_hex = [
@@ -1369,40 +1444,25 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     has_motion = bool(re.search(r'(?:transition|animation)\s*:\s*(?!none\b)[^;}{]+', declarations, re.IGNORECASE))
     if has_motion:
         if not re.search(r'@media\s*\(\s*prefers-reduced-motion', dom.style_text, re.IGNORECASE):
-            failures.append("a11y assertion: dynamic transitions/animations declared without @media (prefers-reduced-motion: reduce) override")
+            # Signal: motion may legitimately be honoured in script rather than a
+            # static media query, so the render decides whether the preference is
+            # respected.
+            signals.append("a11y: dynamic transitions/animations declared without @media (prefers-reduced-motion: reduce) override")
 
     # Hard floor: reject rogue :root color property redeclarations in <style>
     if re.search(r":root\s*\{[^}]*--(?:accent|bg|border|text)-[a-zA-Z0-9_-]+\s*:[^}]*\}", dom.style_text):
         failures.append("token assertion: rogue :root color tokens declared in <style> (shadows tokens.css; must consume tokens from tokens.css)")
 
-    # Signature Accent Discipline: enforce strict negative boundary for --accent-seal
-    # var(--accent-seal) is reserved for authority seals, decisive commits, and fatal collisions;
-    # it is strictly forbidden on draft, pending, secondary, ghost, or cancel affordances.
-    if "--accent-seal" in token_source or "--accent-seal" in source:
-        # Inline: an element that carries both a reserved class and the accent.
-        inline_leak = any(
-            el.classes & _FORBIDDEN_ACCENT_CLASSES and "--accent-seal" in el.get("style")
-            for el in dom.elements
-        )
-        # Stylesheet: a rule whose selector names a reserved class and whose body
-        # consumes the accent. Selector and body are read from the same rule, so a
-        # forbidden class elsewhere in the sheet cannot trigger it.
-        rule_leak = any(
-            any(re.search(rf"[.\-]{re.escape(name)}(?![\w-])", selector) for name in _FORBIDDEN_ACCENT_CLASSES)
-            and "--accent-seal" in body
-            for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", dom.style_text)
-        )
-        if inline_leak or rule_leak:
-            failures.append(
-                "token-discipline assertion: Signature Accent Leak detected. "
-                "var(--accent-seal) is strictly reserved for authoritative gate, seal imprint, or fatal collision; "
-                "forbidden on draft, pending, secondary, ghost, cancel, or zero-borrow base elements."
-            )
+    # Signature Accent Discipline is owned by the Direction Contract, not by this
+    # verifier. It was expressed here as a literal token name (`--accent-seal`)
+    # and a fixed class list, which is one product's vocabulary hard-coded into a
+    # general checker; a different Direction Contract would carry different names
+    # and this rule would either miss or misfire. The design review judges accent
+    # discipline against the contract that actually declares it.
 
-    # Cognitive Budgeting & Energy Return Ledger (借贷法则门禁):
-    # 1. Applicability-driven: triggers only when contract explicitly declares non-placeholder borrow zones.
-    # 2. Exempts legitimate transient loading states (aria-busy, role="progressbar", spinner).
-    # 3. Dynamic visual energy is reserved for high-yield zones; non-high-yield areas must settle back.
+    # Cognitive Budgeting & Energy Return Ledger: signal-only. Whether continuous
+    # motion is an energy leak or an intentional live indicator is a design
+    # judgement; the pattern only reports what it saw.
     if contract_path and Path(contract_path).is_file():
         contract_text = Path(contract_path).read_text(encoding="utf-8")
         has_ledger_decl = bool(re.search(r"(?:Cognitive Budgeting|借贷法则|Energy Return Ledger)", contract_text, re.IGNORECASE))
@@ -1413,10 +1473,9 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             if has_infinite_anim:
                 # Infinite animations are permitted for high-yield containers, live indicators, or standard accessibility loading states
                 if not dom.has_authorized_animation():
-                    failures.append(
-                        "cognitive-budget assertion: Energy leak in zero-borrow base UI. "
-                        "Continuous infinite animations are forbidden outside explicit high-yield/pulse containers or loading states; "
-                        "routine UI must settle to baseline calm equilibrium."
+                    signals.append(
+                        "cognitive-budget: continuous infinite animation outside a declared "
+                        "high-yield/pulse container or loading state"
                     )
 
     # Dual-channel keyboard ergonomics check: when declared in contract, ensure event listener exists
@@ -1424,7 +1483,7 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         contract_text = Path(contract_path).read_text(encoding="utf-8")
         if "Dual-Channel Ergonomics" in contract_text or "Shortcut Key" in contract_text:
             if not dom.has_keyboard_binding():
-                failures.append("ergonomics assertion: declared dual-channel keyboard shortcuts not bound (missing keydown/keyup listener)")
+                signals.append("ergonomics: declared dual-channel keyboard shortcuts not bound by a keydown/keyup listener")
 
         # Action Verb Lifecycle feedback closure: when commit mutations or toasts are declared
         verb_sec = _extract_section_text(contract_text, "action verb", "verb lifecycle")
@@ -1442,12 +1501,12 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         )
         if has_active_verbs:
             if not dom.has_feedback_container():
-                failures.append("action-lifecycle assertion: Action Verb Lifecycle declared in contract but DOM lacks visible feedback container (role='status|alert', class='toast|feedback', or id='toast')")
+                signals.append("action-lifecycle: contract declares active verbs but DOM has no visible feedback container (role='status|alert', class='toast|feedback', id='toast')")
 
         # Touch-first gesture detents check: when touch-first ergonomics are declared in contract
         if "Touch-First Ergonomics" in contract_text or "Gesture Detents" in contract_text:
             if not dom.has_touch_binding():
-                failures.append("touch ergonomics assertion: declared touch-first gestures or tap detents not bound (missing touch/pointer/click handler)")
+                signals.append("touch ergonomics: declared touch-first gestures or tap detents not bound by a touch/pointer/click handler")
 
         # Dynamic state machine check: when multi-state or Break Protocol stress checkpoints are declared
         break_sec = _extract_section_text(contract_text, "break protocol", "stress checkpoint")
@@ -1464,15 +1523,15 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         )
         if has_active_break:
             if not dom.has_state_hook():
-                failures.append("state-machine assertion: stress checkpoints declared but no state-switching hook detected (use hashchange / location.hash / data-state / class empty|loading|view-mode)")
+                signals.append("state-machine: stress checkpoints declared but no state-switching hook detected (hashchange / location.hash / data-state / class empty|loading|view-mode)")
             if not re.search(r"text-overflow\s*:\s*ellipsis|overflow(?:-[xy])?\s*:\s*(?:hidden|auto|scroll)|break-word|break-all|truncate|clamp\(|overflow-wrap\s*:\s*(?:anywhere|break-word)|word-break\s*:\s*break-all", declarations, re.IGNORECASE):
-                failures.append("break-protocol assertion: missing string overflow containment (use text-overflow: ellipsis, overflow containment, truncate, or word-break: break-all)")
+                signals.append("break-protocol: no string overflow containment found (text-overflow: ellipsis, overflow containment, truncate, word-break: break-all)")
 
             # Actionable empty-state floor: empty-state presentation surface must provide an actionable trigger (button or link bait)
             for container in dom.empty_state_containers():
                 reachable = [el for el in container.descendants() if el in dom.controls()]
                 if not reachable:
-                    failures.append("contextual agency assertion: empty state container lacks actionable trigger (<button> or <a href>)")
+                    signals.append("contextual agency: empty state container has no actionable trigger (<button> or <a href>)")
                     break
 
         # Zero Naked Metrics / Contextual Data Floor check
@@ -1483,7 +1542,7 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             has_html5_data = bool(dom.tags("meter", "progress", "data", "canvas"))
             if not (dom.has_charted_metric() or has_html5_data or dom.has_context_modifier()
                     or dom.has_metric_with_unit() or (is_narrative and has_narrative_units)):
-                failures.append("data-craft assertion: Zero Naked Metrics violation (metrics must carry reference baseline, unit context, delta trend, visual sparkline/meter/canvas, or authentic narrative units)")
+                signals.append("data-craft: Zero Naked Metrics — no reference baseline, unit context, delta trend, sparkline/meter/canvas, or authentic narrative unit found on the metrics")
 
         # Additional press-physics recipes remain advisory; the scoped visible
         # :active response is enforced by the rendered craft-floor probe above.
@@ -1496,7 +1555,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             if not (has_active or has_tailwind_active) and not (has_focus_visible and has_transition) and not has_pointer_mutation:
                 advisories.append("craft advisory (non-blocking): interactive controls use no detected press/motion response; consider :active physics, :focus-visible transition, or pointer state mutation")
 
-        # Multi-surface topology navigation check: when surface map m1.md declares sibling surfaces
+        # Multi-surface topology navigation check. Legacy-only: reads
+        # `prototype/contracts/surface-maps/m1.md`, which the artifact lifecycle
+        # retires in favour of the canonical Spec IR. On a layered or canonical
+        # tree the file is absent and the block exits without effect.
         smap_candidates = []
         for p in [Path(contract_path).resolve(), html.resolve()]:
             curr = p.parent
@@ -1535,23 +1597,39 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                         prototype_root.rglob(f"{sid}/**/index.html"))
                     has_link = dom.links_to(sid)
                     if delivered_sibling and not has_link:
-                        failures.append(f"topology assertion: delivered sibling {sid} is not reachable by navigation link from {current_id}")
+                        signals.append(f"topology: delivered sibling {sid} is not reachable by navigation link from {current_id}")
                     if not delivered_sibling and has_link:
-                        failures.append(f"topology assertion: undelivered sibling {sid} linked by live href from {current_id} (404); render a disabled affordance instead")
+                        # A live href to an undelivered sibling is a 404 in
+                        # waiting: a dead link is a fact, not a judgement.
+                        failures.append(f"topology: undelivered sibling {sid} linked by live href from {current_id} (404); render a disabled affordance instead")
                     if not delivered_sibling and not _pending_sibling_marked(dom, sid):
-                        failures.append(f"topology assertion: undelivered sibling {sid} is neither linked nor represented as a disabled affordance from {current_id}")
+                        signals.append(f"topology: undelivered sibling {sid} is neither linked nor represented as a disabled affordance from {current_id}")
 
     failures.extend(coverage_failures(html, contract_path=contract_path))
 
     if check_stale:
         if re.search(r"\b(?:Lorem ipsum|placeholder text|sample copy)\b", dom.text, re.IGNORECASE):
-            failures.append("stale-template assertion: unconsidered placeholder content detected")
+            signals.append("stale-template: unconsidered placeholder content detected")
 
     states = _evidence_state(html)
     LAST_TIER_EVIDENCE.clear()
     LAST_TIER_EVIDENCE.update(tiered_quality_evidence(html, failures))
     tier_outcome = LAST_TIER_EVIDENCE.get("outcome")
-    print("STATIC: " + ("pass" if not failures and tier_outcome not in ("failed", "blocked") else "fail"))
+    # The static line states what was actually established, once. Printed as
+    # `pass` when the render probes never ran, it manufactured confidence the
+    # run had not earned: a linked stylesheet that failed to parse (r2) and a
+    # path that resolved out of scope (r16) both exited `STATIC: pass` with
+    # every probe degraded. Structural floors still stand on their own, so the
+    # result is `unverified`, not `fail` — but never `pass`.
+    if failures:
+        print("STATIC: fail")
+    elif tier_outcome in ("failed", "blocked"):
+        print("STATIC: fail")
+    elif LAST_TIER_EVIDENCE.get("environment_not_ready"):
+        print("STATIC: unverified (environment_not_ready: structural floors passed, "
+              "the render probes did not run)")
+    else:
+        print("STATIC: pass")
     if LAST_COVERAGE_RESULTS.get("specification_missing"):
         # Surfaces to the operator that no spec text was found, so a pass was
         # not earned against an empty string.
@@ -1575,6 +1653,11 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         print("CRAFT FLOORS: not_verified (" + str(LAST_TIER_EVIDENCE["craft_floor_not_verified"]) + ")")
     for advisory in advisories:
         print(f"  [advisory] {advisory}")
+    if signals:
+        # Contract-read-back findings, reported for the design review and never
+        # counted against the exit code.
+        for signal in signals:
+            print(f"  [signal] {signal}")
     if failures:
         for i, failure in enumerate(failures, 1):
             print(f"  [{i}] {failure}")

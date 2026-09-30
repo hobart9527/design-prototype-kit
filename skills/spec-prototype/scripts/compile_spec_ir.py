@@ -164,75 +164,6 @@ def extract_section(text: str, heading_pattern: str, next_heading_pattern: Optio
     return "\n".join(captured).strip()
 
 
-# One record, partitioned by lifecycle: product truth and the visual world are
-# shared, while each slice owns a `## Slice: <slice_id>` block. Fences are
-# tracked so a YAML comment inside a frontmatter fence is not read as a heading.
-_SLICE_HEADING_RE = re.compile(r"^(#{1,6})\s+Slice\s*[:：]\s*`?([A-Za-z0-9][A-Za-z0-9_-]*)`?\s*$", re.IGNORECASE)
-_FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
-_BLOCK_FRONTMATTER_RE = re.compile(
-    r"(?:\A\s*|^(?:```|~~~)[A-Za-z]*[ \t]*\n)(---[ \t]*\n.*?\n(?:---|\.\.\.)[ \t]*)(?:\n|\Z)",
-    re.DOTALL | re.MULTILINE)
-
-
-def split_slice_blocks(text: str) -> tuple[str, Dict[str, List[str]]]:
-    """Partition discussion.md into its shared zones and its per-slice blocks.
-
-    A slice block runs from its `Slice: <id>` heading to the next heading at the
-    same or a higher level. Everything outside every block is shared.
-    """
-    shared: List[str] = []
-    blocks: Dict[str, List[List[str]]] = {}
-    current: Optional[str] = None
-    level = 0
-    in_fence = False
-    for line in text.splitlines():
-        if _FENCE_RE.match(line):
-            in_fence = not in_fence
-        elif not in_fence:
-            heading_m = _ATX_HEADING_RE.match(line)
-            slice_m = _SLICE_HEADING_RE.match(line)
-            if slice_m:
-                current, level = slice_m.group(2), len(slice_m.group(1))
-                blocks.setdefault(current, []).append([])
-                continue
-            if heading_m and current is not None and len(heading_m.group(1)) <= level:
-                current = None
-        (blocks[current][-1] if current is not None else shared).append(line)
-    return "\n".join(shared), {sid: ["\n".join(b) for b in bs] for sid, bs in blocks.items()}
-
-
-def resolve_slice_scope(text: str, slice_id: str) -> tuple[str, Optional[str]]:
-    """Return (shared text, this slice's block), or (text, None) for a legacy record.
-
-    Once a record declares slice blocks, a slice without its own block is a hard
-    failure: falling back to the whole file would compile another slice's
-    viewports and states into this one.
-    """
-    shared, blocks = split_slice_blocks(text)
-    if not blocks:
-        return text, None
-    found = blocks.get(slice_id) or []
-    if len(found) != 1:
-        problem = "未声明" if not found else f"重复声明 {len(found)} 次"
-        raise IncompleteStageContractError(
-            [{
-                "key": "slice_block",
-                "label": f"slice 区块 ({slice_id})",
-                "section": f"## Slice: {slice_id}",
-                "form": "每个 slice 恰好一个 `## Slice: <slice_id>` 区块",
-                "example": f"已声明的 slice: {', '.join(sorted(blocks))}",
-            }],
-            header=f"compile_spec_ir: discussion.md 按 slice 分区，但 slice `{slice_id}` {problem}，编译中止。",
-        )
-    return shared, found[0]
-
-
-def parse_block_frontmatter(block: str) -> Dict[str, Any]:
-    """Parse a slice block's frontmatter: bare at its start, or its first fenced `---` block."""
-    m = _BLOCK_FRONTMATTER_RE.search(block)
-    return parse_frontmatter(m.group(1))[0] if m else {}
-
-
 # ---------------------------------------------------------------------------
 # Stage-boundary contract: sections the compiler REQUIRES in discussion.md.
 #
@@ -517,6 +448,13 @@ from spec_contract_blocks import (  # noqa: E402
     _unadmitted_state_kinds,
     _unknown_contract_kinds,
     _viewports_from_contract_block,
+    read_design_record,
+    split_slice_blocks,
+    parse_block_frontmatter,
+    _SLICE_HEADING_RE,
+    _FENCE_RE,
+    _ATX_HEADING_RE,
+    _BLOCK_FRONTMATTER_RE,
 )
 
 
@@ -1130,19 +1068,37 @@ def compile_canonical_ir(
     required_tier: str = "intent_spec",
 ) -> Dict[str, Any]:
     """Compile prototype/discussion.md into Canonical Specification IR."""
-    disc_path = root / "prototype/discussion.md"
-    disc_text = disc_path.read_text(encoding="utf-8") if disc_path.is_file() else ""
-    disc_digest = sha256_text(disc_text) if disc_text else ""
+    # One seam loads the record, whichever layout the tree uses: the layered
+    # truth/world/brief form, or the single discussion.md record. Everything
+    # below parses that assembled text, so the two layouts share one code path
+    # instead of forking the compiler.
+    record = read_design_record(root, slice_id)
+    disc_path = record.path
+    disc_text = record.text
+    disc_digest = record.digest
     fm_data, body_text = parse_frontmatter(disc_text)
     intent = load_intent_contract(root)
 
     # Lifecycle scope: product-level facts read the shared zones; slice-level
     # facts read the shared zones plus this slice's block; verification scope
-    # reads this slice's block alone. A legacy record without slice blocks is
-    # one implicit slice and reads the whole file at every level.
-    shared_text, slice_block = resolve_slice_scope(disc_text, slice_id)
-    if slice_block is None:
+    # reads this slice's block alone. The partition comes from the record seam,
+    # which resolves it by construction in the layered layout and by `## Slice:`
+    # splitting in the single-record one. A record the seam left unpartitioned
+    # is a legacy tree and reads the whole file at every level.
+    shared_text, slice_block = record.shared, record.slice_block
+    if shared_text is None:
         product_text = scope_text = slice_text = disc_text
+    elif slice_block is None:
+        raise IncompleteStageContractError(
+            [{
+                "key": "slice_block",
+                "label": f"slice 区块 ({slice_id})",
+                "section": f"## Slice: {slice_id}",
+                "form": "每个 slice 恰好一个 `## Slice: <slice_id>` 区块",
+                "example": f"已声明的 slice: {', '.join(sorted(split_slice_blocks(disc_text)[1]))}",
+            }],
+            header=f"compile_spec_ir: 记录已按 slice 分区，但 slice `{slice_id}` 未声明其区块，编译中止。",
+        )
     else:
         product_text = shared_text
         scope_text = shared_text + "\n" + slice_block
@@ -1158,6 +1114,22 @@ def compile_canonical_ir(
                     "example": f"标题 `{slice_id}`，frontmatter `{block_fm['slice_id']}`",
                 }],
                 header="compile_spec_ir: slice 区块标题与其 frontmatter 的 slice_id 不一致，编译中止。",
+            )
+        # In the layered layout the brief is the slice's entire block. A brief
+        # that omits the slice_id frontmatter cannot be told apart from a stray
+        # file under `prototype/briefs/`, so require the field there; a
+        # single-record tree keeps the field optional because the `## Slice:`
+        # heading already names the slice.
+        if record.path.name == "truth.md" and "slice_id" not in block_fm:
+            raise IncompleteStageContractError(
+                [{
+                    "key": "slice_id",
+                    "label": "slice 身份 (slice_id)",
+                    "section": f"prototype/briefs/{slice_id}.md frontmatter",
+                    "form": "frontmatter 必须声明 `slice_id` 字段且等于文件名",
+                    "example": f"---\nslice_id: \"{slice_id}\"\n---",
+                }],
+                header="compile_spec_ir: brief 未声明 slice_id frontmatter，编译中止。",
             )
         fm_data = {**fm_data, **block_fm}
 
@@ -1404,11 +1376,15 @@ def compile_canonical_ir(
             "title": product_title,
         },
         "sources": {
-            "discussion_ref": "prototype/discussion.md",
+            # The primary record file the seam loaded: `discussion.md` on a
+            # single-record tree, `truth.md` on a layered one. Naming
+            # discussion.md unconditionally would point provenance at a file the
+            # layered tree does not carry.
+            "discussion_ref": record.path.relative_to(root).as_posix(),
             "discussion_sha256": disc_digest,
-            # discussion.md carries no requirement/scenario taxonomy: emit none
-            # rather than fabricate REQ-*/SCN-* identifiers downstream could treat
-            # as traced upstream authority.
+            # The assembled record carries no requirement/scenario taxonomy: emit
+            # none rather than fabricate REQ-*/SCN-* identifiers downstream could
+            # treat as traced upstream authority.
             "requirements": [],
             "reality_anchors": anchors,
             "core_tension": tension_text,

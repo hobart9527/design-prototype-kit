@@ -21,16 +21,23 @@ def test_action_identity_gate_covers_canonical_spec_and_paired_legacy_contract(t
     tokens = tmp_path / "prototype/shared/tokens.css"
     tokens.parent.mkdir(parents=True)
     tokens.write_text(":root {}", encoding="utf-8")
+    # The document must bind the stylesheet whose tokens are checked, so the
+    # specimen links it explicitly rather than relying on a sibling path.
+    html.write_text(html.read_text(encoding="utf-8").replace(
+        "<main id='main'>", "<link rel=\"stylesheet\" href=\"../../shared/tokens.css\"><main id='main'>"
+    ), encoding="utf-8")
 
     canonical = tmp_path / "prototype/specifications/ledger-slice/r1.spec.md"
     canonical.parent.mkdir(parents=True)
     canonical.write_text(
         "# Spec\n## Action Verb Lifecycle\n- `action-enter`: submit\n"
         "- `action-escape`: undo\n", encoding="utf-8")
+    # An action id the DOM spells another way is a signal, not a floor: whether
+    # the control is merged, renamed or genuinely omitted is settled by the render.
     assert verify_prototype_quality.assert_quality(
-        str(html), str(tokens), contract_path=str(canonical)) is False
+        str(html), str(tokens), contract_path=str(canonical)) is True
     output = capsys.readouterr().out
-    assert "action identity assertion" in output
+    assert "[signal] action identity:" in output
     assert "action-escape" in output
 
     legacy = tmp_path / "prototype/specifications/ledger-slice/r1.md"
@@ -41,14 +48,20 @@ def test_action_identity_gate_covers_canonical_spec_and_paired_legacy_contract(t
         "# Slice contract\n## Action Verb Lifecycle\n- `action-space`: inspect\n",
         encoding="utf-8")
     assert verify_prototype_quality.assert_quality(
-        str(html), str(tokens), contract_path=str(legacy)) is False
+        str(html), str(tokens), contract_path=str(legacy)) is True
     output = capsys.readouterr().out
-    assert "action identity assertion" in output
+    assert "[signal] action identity:" in output
     assert "action-space" in output
 
 
 def test_signature_accent_discipline_gate(tmp_path: Path):
-    """Verify verify_prototype_quality catches --accent-seal usage on draft/secondary elements."""
+    """Signature-accent discipline is retired from the shared gate.
+
+    The rule hardcoded one product's token (`--accent-seal`) and eight reserved
+    class names, so a palette decision from one case reached every prototype.
+    Both specimen shapes now pass: the gate no longer has an opinion about an
+    accent's placement, and that judgement belongs to the design review.
+    """
     contract = tmp_path / "r1.md"
     contract.write_text("# Spec\n## Verifiable Design Assertions\n- item present\n", encoding="utf-8")
 
@@ -74,7 +87,7 @@ def test_signature_accent_discipline_gate(tmp_path: Path):
 </html>""", encoding="utf-8")
 
     passed_bad = verify_prototype_quality.assert_quality(str(bad_html), str(tokens), contract_path=str(contract))
-    assert passed_bad is False
+    assert passed_bad is True
 
     # 2. Legitimate accent-seal on authority seal element should pass
     good_html = tmp_path / "good.html"
@@ -108,8 +121,15 @@ def test_topology_scaffolding_includes_canvas():
     assert "Option C: Infinite Canvas & Contextual Inspector" in topo_doc
 
 
-def test_applicability_driven_cognitive_budget_gate(tmp_path: Path):
-    """Verify cognitive budget gate triggers only with concrete non-placeholder borrow declarations."""
+def test_applicability_driven_cognitive_budget_gate(tmp_path: Path, capsys):
+    """Cognitive budget is read against the contract, so it reports rather than blocks.
+
+    Whether a continuous animation is a legitimate loading indicator or
+    decorative noise at a particular location is a design judgement made on the
+    render. The signal still separates the two specimens: a contract that names
+    no borrow zone reports nothing, and a concrete zone reports the animation
+    that sits outside it.
+    """
     tokens = tmp_path / "tokens.css"
     tokens.write_text(":root { --action-primary: #334155; --radius-outer: 8px; font-variant-numeric: tabular-nums; }", encoding="utf-8")
 
@@ -166,7 +186,9 @@ def test_applicability_driven_cognitive_budget_gate(tmp_path: Path):
     configured_contract.write_text("# Spec\n## Cognitive Budgeting\n- High-Yield Borrow Zone: Primary telemetry grid\n", encoding="utf-8")
 
     passed_rogue = verify_prototype_quality.assert_quality(str(html_rogue), str(tokens), contract_path=str(configured_contract))
-    assert passed_rogue is False
+    assert passed_rogue is True
+    rogue_report = capsys.readouterr().out
+    assert "[signal] cognitive-budget:" in rogue_report
 
 
 def test_lint_spec_contracts_fail_closed_on_internal_error(tmp_path: Path, monkeypatch):
@@ -177,7 +199,6 @@ def test_lint_spec_contracts_fail_closed_on_internal_error(tmp_path: Path, monke
         raise RuntimeError("Simulated internal AST parser error")
 
     monkeypatch.setattr(lint_spec_contracts, "lint_formal_entry", crash_lint_formal_entry)
-    monkeypatch.setattr(lint_spec_contracts, "lint_spec_contracts", lambda root, slice_id: [])
 
     # Simulate main invocation
     test_args = ["lint_spec_contracts.py", "--root", str(tmp_path), "--slice", "test-slice"]

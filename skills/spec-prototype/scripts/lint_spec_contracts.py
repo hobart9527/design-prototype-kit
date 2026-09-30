@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Independent Stage 1 Spec Contract Linter.
+"""Canonical Spec IR linter.
 
-Verifies that authored Stage 1 design contracts meet quality floors,
-authenticity requirements, and anti-contamination boundaries before Stage 2 build.
+Validates the compiled Spec IR (`prototype/contracts/compiled/<slice>/r1.spec.json`)
+against JSON Schema Draft 2020-12, tier admission, the tokens freshness fuse, and
+boundary gates. The retired six-piece set (product.md, m1.md, f1.md, t1.md, c1.md,
+r1.md) is legacy input, readable by other tools but never linted as a requirement
+here: on a tree that predates the IR this script reports the missing IR instead of
+enforcing artifacts that must not be authored anymore.
 """
 
 from __future__ import annotations
@@ -24,118 +28,6 @@ class SpecLintError:
 
     def __str__(self) -> str:
         return f"[{self.severity}] {self.rule} in {self.file_path}: {self.message}"
-
-
-def lint_spec_contracts(root: Path, slice_id: str) -> List[SpecLintError]:
-    """Execute all completeness, authenticity, and boundary checks against Stage 1 contracts."""
-    errors: List[SpecLintError] = []
-
-    required_paths = {
-        "product": root / "prototype/product.md",
-        "surface_map": root / "prototype/contracts/surface-maps/m1.md",
-        "foundation": root / "prototype/contracts/foundation/f1.md",
-        "tokens_css": root / "prototype/shared/tokens.css",
-        "tokens_md": root / "prototype/contracts/tokens/t1.md",
-        "slice_contract": root / f"prototype/contracts/slices/{slice_id}/c1.md",
-        "specification": root / f"prototype/specifications/{slice_id}/r1.md",
-    }
-
-    # 1. Existence check
-    for name, p in required_paths.items():
-        if not p.is_file():
-            errors.append(SpecLintError("E001_FILE_MISSING", str(p), f"Required contract artifact {name} does not exist."))
-
-    if errors:
-        return errors
-
-    prod_text = required_paths["product"].read_text(encoding="utf-8")
-    f1_text = required_paths["foundation"].read_text(encoding="utf-8")
-    c1_text = required_paths["slice_contract"].read_text(encoding="utf-8")
-    r1_text = required_paths["specification"].read_text(encoding="utf-8")
-
-    # 2. Authentic Core Tension Check (Anti-fallback / Anti-contamination)
-    combined_tension_text = prod_text + "\n" + f1_text
-    tension_match = re.search(r"[-*+]?\s*(?:Core\s+Tension|Tension|张力)\s*[:=]\s*([^\n]+)", combined_tension_text, re.IGNORECASE)
-    if not tension_match or not tension_match.group(1).strip():
-        errors.append(SpecLintError("E002_TENSION_MISSING", "product.md / f1.md", "Core Tension declaration is missing. Define an authentic domain tension (e.g. 'Operational Throughput vs Incident Safety' or 'Frictionless Onboarding vs Deep Orchestration') in prototype/discussion.md before entering Stage 2."))
-    else:
-        declared_tension = tension_match.group(1).strip()
-        if declared_tension.lower().startswith("not yet") or declared_tension.lower().startswith("unresolved"):
-            errors.append(SpecLintError("E002_TENSION_UNRESOLVED", "product.md", f"Core Tension '{declared_tension}' is unresolved. As a P9 design copilot, establish a definitive business/UX tension in prototype/discussion.md to drive trade-off decisions."))
-        # Detect SRE ops fallback contaminating non-ops products
-        is_ops_domain = any(kw in (prod_text + " " + c1_text).lower() for kw in ("sre", "telemetry", "incident", "ops", "console", "cluster"))
-        if "Instant Operational Throughput vs Zero-Mistake Safety" in declared_tension and not is_ops_domain:
-            errors.append(SpecLintError("E002_TENSION_CONTAMINATED", "product.md", "Default SRE fallback tension ('Instant Operational Throughput vs Zero-Mistake Safety') contaminated a non-ops product contract. Formulate a domain-specific tension authentic to this product."))
-
-    # 3. Reality Anchors & Grounded Rationale Check (Consequential or grounded rationale required)
-    combined_anchors_text = prod_text + "\n" + f1_text
-    anchors_match = re.search(r"[-*+]?\s*(?:Reality\s+(?:Benchmark\s+)?Anchors?|Physical\s+Anchors?|对标|地锚)\s*[:=]\s*([^\n]+)", combined_anchors_text, re.IGNORECASE)
-    has_grounded_rationale = bool(re.search(r"(?:Grounding|Rationale|Physical Metaphor|Substrate|原创推导|物理隐喻|因果依据|设计理由)\s*[:=]\s*([^\n]+)", combined_anchors_text, re.IGNORECASE))
-    if not anchors_match and not has_grounded_rationale:
-        errors.append(SpecLintError("E003_ANCHORS_MISSING", "product.md / f1.md", "Neither Reality Benchmark Anchors nor grounded design rationale declared. Anchor the interface to real-world industrial or lifeworld baselines (e.g. Linear, Datadog, iA Writer, physical detents) in prototype/product.md."))
-
-    # 4. Content Language Check
-    disc_path = root / "prototype/discussion.md"
-    disc_text = disc_path.read_text(encoding="utf-8") if disc_path.is_file() else ""
-    combined_lang_text = prod_text + "\n" + c1_text + "\n" + r1_text + "\n" + disc_text
-    lang_match = re.search(r"(?:Content\s+Language|语种|语言)(?:\s*\([^)]*\))?\s*[:=]?\s*`?([a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*)`?", combined_lang_text, re.IGNORECASE)
-    if not lang_match or not lang_match.group(1).strip():
-        errors.append(SpecLintError("E004_LANGUAGE_UNLOCKED", "discussion.md / r1.md", "Content language is not explicitly declared or locked. Declare Content Language (e.g. 'zh-CN', 'en-US') in discussion.md or product.md to ensure copy consistency."))
-
-    # 5. Verifiable Assertions & Break Protocol Check
-    if "Verifiable Design Assertions" not in r1_text and "Required screenshot checkpoints" not in r1_text:
-        errors.append(SpecLintError("E005_ASSERTIONS_MISSING", "r1.md", "Verifiable Design Assertions section is missing."))
-
-    has_break = "The Break Protocol" in r1_text
-    break_na = bool(re.search(r"The Break Protocol.*?(?:N/A|Not Applicable|无需破坏压测|不适用)", r1_text, re.IGNORECASE))
-    if not has_break and not break_na:
-        errors.append(SpecLintError("E006_BREAK_PROTOCOL_MISSING", "r1.md", "The Break Protocol Stress Checkpoints section is missing from r1.md (declare stress vectors such as 0/1/1000 items, long string overflows, 320px fold, or explicit N/A with rationale)."))
-
-    # 6. Action Verb Lifecycle Check (Applicable -> Required, Not Applicable -> Explicit N/A)
-    has_verbs = "Action Verb" in c1_text
-    verbs_na = bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", c1_text, re.IGNORECASE))
-    if not has_verbs and not verbs_na:
-        errors.append(SpecLintError("E007_VERB_LIFECYCLE_MISSING", "c1.md", "Action Verb Lifecycle Table is missing from slice contract c1.md (declare atomic Trigger->Context->Commit->Feedback verbs or explicit N/A with rationale)."))
-    elif has_verbs:
-        # A declared Proximity level must be a real level: the ladder is the
-        # contract the Builder translates into a container, so an out-of-range
-        # value silently becomes a wrong interaction shape downstream. Scoped to
-        # the verb table so a "Level 5" elsewhere in the contract cannot trip it,
-        # and only a table that opted into the column is checked; a legacy table
-        # without it stays valid, its level inferred from the container.
-        section = re.search(r"##[^\n]*Action Verb Lifecycle[^\n]*\n(.*?)(?=\n##|\Z)", c1_text, re.S)
-        if section and "proximity" in section.group(1).lower():
-            invalid = sorted({int(level) for level in re.findall(r"\bLevel\s*([0-9]+)\b", section.group(1))
-                              if int(level) > 4})
-            if invalid:
-                errors.append(SpecLintError("E015_PROXIMITY_LEVEL_INVALID", "c1.md",
-                                            f"Container Proximity Level(s) {invalid} are outside the defined 0~4 ladder. "
-                                            "Levels above 4 have no container form; state the level that matches the hazard."))
-
-    # 7. Cross-Artifact Lifecycle Consistency Check
-    status_re = re.compile(r"^[ \t\-*+]*(?:Status|Lifecycle|Authority status)[ \t]*[:=][ \t]*`?([a-zA-Z0-9_\- ]+)`?", re.IGNORECASE | re.MULTILINE)
-    statuses: Dict[str, str] = {}
-    for name, text in [("f1", f1_text), ("c1", c1_text), ("r1", r1_text)]:
-        m = status_re.search(text)
-        if m:
-            statuses[name] = m.group(1).strip().lower()
-
-    if disc_text:
-        m = status_re.search(disc_text)
-        if m:
-            statuses["discussion"] = m.group(1).strip().lower()
-
-    # Check for glaring contradiction: draft/pending vs sealed/frozen
-    is_sealed = any("sealed" in s or "frozen" in s for s in statuses.values())
-    has_draft = any("draft" in s or "pending" in s for s in statuses.values())
-    if is_sealed and has_draft:
-        errors.append(SpecLintError(
-            "E016_LIFECYCLE_CONTRADICTION", "contracts",
-            f"Cross-artifact lifecycle contradiction detected across artifacts: {statuses}. "
-            "Artifacts cannot simultaneously declare draft/pending and sealed provisional."
-        ))
-
-    return errors
 
 
 def _read(path: Path) -> str:
@@ -201,13 +93,50 @@ def read_formal_context(root: Path, slice_id: str) -> Dict[str, object]:
     )
 
 
+def _token_source_path(root: Path, tokens_css: Path) -> Path:
+    """The token source this stylesheet was sealed from.
+
+    The seal names its own source, so a layered tree (world.md authority, no
+    discussion.md) is checked against the file it was compiled from instead of a
+    hard-coded single-record path.
+    """
+    import compile_tokens
+    sealed = (compile_tokens.read_tokens_provenance(str(tokens_css)) or {}).get("source", "")
+    candidates = []
+    if sealed:
+        sealed_path = Path(sealed)
+        candidates.append(sealed_path if sealed_path.is_absolute() else root / sealed_path)
+        candidates.append(sealed_path)
+    candidates += [root / "prototype/world.md", root / "prototype/discussion.md"]
+    return next((c for c in candidates if c.is_file()), candidates[-1])
+
+
 def lint_formal_entry(root: Path, slice_id: str) -> List[SpecLintError]:
     """Lint the formal entry itself: canonical paths, selected IDs, coverage authority.
 
-    Content lint (lint_spec_contracts) is a subset of this. Every failure keeps the
-    offending path and detail; nothing is repaired or widened on the caller's behalf.
+    The legacy content lint reads the six pillars (`product.md`, `m1.md`,
+    `f1.md`, `t1.md`, `c1.md`, `r1.md`), which the Refusal List forbids
+    authoring. On a tree that carries the canonical Spec IR those pillars are
+    replaced, not missing, so running the reader here reports `E001` for files
+    that must not exist and refuses every valid canonical delivery. The reader
+    is skipped when the IR is present; its own validation is the IR lint's job,
+    not this one's. Path, coverage and map-identity checks below still run on
+    both trees. Every failure keeps the offending path and detail; nothing is
+    repaired or widened on the caller's behalf.
     """
-    errors: List[SpecLintError] = list(lint_spec_contracts(root, slice_id))
+    candidate_id = "r1"
+    canonical_ir = root / f"prototype/contracts/compiled/{slice_id}/{candidate_id}.spec.json"
+    if canonical_ir.is_file():
+        errors: List[SpecLintError] = []
+    else:
+        # The six-piece content lint is retired; a tree without the IR gets one
+        # missing-authority error instead of demands to author retired files.
+        errors = [SpecLintError(
+            "E001_FILE_MISSING",
+            str(canonical_ir),
+            "Canonical Spec IR does not exist; compile it with compile_spec_ir.py --slice "
+            f"{slice_id}. The legacy six-piece contract set is retired and is never linted.",
+        )]
     resolved_root = root.resolve()
 
     # Canonical paths: no symlink and no escape out of the repository root.
@@ -331,7 +260,7 @@ def lint_canonical_spec_ir(root: Path, slice_id: str, candidate_id: str = "r1") 
     if tokens_css.is_file():
         try:
             import compile_tokens
-            sync = compile_tokens.check_tokens_sync(str(tokens_css), str(root / "prototype/discussion.md"))
+            sync = compile_tokens.check_tokens_sync(str(tokens_css), str(_token_source_path(root, tokens_css)))
         except Exception as exc:
             sync = {"state": "out_of_sync", "drift": f"freshness fuse failed to run: {type(exc).__name__}: {exc}"}
         if sync.get("state") == "out_of_sync":
@@ -365,7 +294,7 @@ def lint_formal_advisories(root: Path, slice_id: str) -> List[SpecLintError]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Lint Stage 1 Design Spec Contracts")
+    parser = argparse.ArgumentParser(description="Lint the canonical Spec IR")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Workspace root directory")
     parser.add_argument("--slice", type=str, required=True, help="Slice ID to lint")
     parser.add_argument("--candidate", type=str, default="r1", help="Candidate revision (e.g. r1)")
@@ -373,11 +302,19 @@ def main() -> None:
     parser.add_argument("--no-formal", action="store_true", help="Skip formal entry check")
     args = parser.parse_args()
 
-    if args.canonical_only or (args.root / f"prototype/contracts/compiled/{args.slice}/{args.candidate}.spec.json").is_file():
-        # When canonical IR is present or explicitly selected, run canonical IR schema and boundary lint
+    ir_path = args.root / f"prototype/contracts/compiled/{args.slice}/{args.candidate}.spec.json"
+    if args.canonical_only or ir_path.is_file():
+        # Canonical IR path: schema, tier admission, tokens freshness, boundary.
         errors = lint_canonical_spec_ir(args.root, args.slice, args.candidate)
     else:
-        errors = lint_spec_contracts(args.root, args.slice)
+        # The legacy six-piece lint is retired. A tree that predates the IR gets
+        # a single missing-IR error instead of a demand to author retired files.
+        errors = [SpecLintError(
+            "E001_FILE_MISSING",
+            str(ir_path),
+            "Canonical Spec IR does not exist; compile it with compile_spec_ir.py --slice "
+            f"{args.slice}. The legacy six-piece contract set is retired and is never linted here.",
+        )]
         if not args.no_formal:
             try:
                 formal_errors = lint_formal_entry(args.root, args.slice)
@@ -385,12 +322,12 @@ def main() -> None:
             except Exception as exc:
                 errors.append(SpecLintError("E099_INTERNAL_VALIDATOR_ERROR", "linter", f"Internal validator unexpected error: {type(exc).__name__}: {exc}"))
     if errors:
-        print(f"FAILED: Found {len(errors)} Stage 1 contract lint issues:")
+        print(f"FAILED: Found {len(errors)} Spec lint issues:")
         for err in errors:
             print(f"  - {err}")
         sys.exit(1)
     else:
-        print("PASS: Stage 1 Spec Contracts meet all quality, authenticity, and boundary floors.")
+        print("PASS: Canonical Spec IR meets schema, admission, and boundary floors.")
         sys.exit(0)
 
 

@@ -18,14 +18,16 @@ full causal proposition remains authoritative. Finish source writes before compi
 to obtain exact reference lines from final bytes. Retain those bytes; later
 changes follow the artifact lifecycle. Hashes prove identity, not approval. `prototype/discussion.md` is the working decision index; retain the candidate structure with its draft/approval status inside the canonical compiled spec at `prototype/contracts/compiled/<slice-id>/r1.spec.json` before freeze. Progress-only changes update the working index, not retained snapshots.
 
-Product sources own facts and object/lifecycle meaning; Foundation owns the
-integrated Design Proposition and expression system; Surface Map owns topology and
-global journeys; Slice Contract owns local behavior and applicability; Specification
-owns candidate/execution deltas. Copy none into another authority. A field-level
-override must be explicitly permitted by its owner; otherwise create a successor
-revision. Foundation cannot freeze independently of exact topology/product
-evidence that its proposition relies on. Working records point to these facts and
-retain actual approval provenance.
+Product truth owns facts and object/lifecycle meaning; the visual world owns the
+integrated Design Proposition, expression system and tokens; the slice brief owns
+local behavior, applicability and evidence; the Specification owns candidate and
+execution deltas. On a single-record tree these are the partitions of
+`prototype/discussion.md`; on a layered tree they are `truth.md`, `world.md` and
+`briefs/<slice>.md`. Copy none into another authority. A field-level override must
+be explicitly permitted by its owner; otherwise create a successor revision. The
+visual world cannot freeze independently of the product truth its proposition
+relies on. Working records point to these facts and retain actual approval
+provenance.
 
 For a spec-only request, provide complete ready or draft specs and remaining
 decisions. Actual user selection can freeze a design before implementation; label
@@ -105,7 +107,10 @@ record's decision rows; the canonical path is not exempt.
 Freeze binds an actual approval decision, not a matching phrase. The retained
 record must carry one decision row with status `confirmed | delegated` that names
 its approval or delegated-authority source and a locator (turn, original quote,
-date or retained source path). A planned, negated or override-only statement
+date or retained source path). On a single-record tree the row lives in
+`prototype/discussion.md`; on a layered tree it lives in `prototype/truth.md`
+(approval is product-scoped, so the layered layout keeps it on the product-truth
+file). A planned, negated or override-only statement
 never authorizes freeze, and there is no permissive fallback: a strict packet
 failure stays failed, and no `--force` or hook admission manufactures
 frozen-approved status. A mismatch is repaired at its authoring owner and the
@@ -153,9 +158,9 @@ filenames never prove freshness or executed behavior on their own.
 
 Use [Review](../../templates/prototype-review.md) to connect actual evidence to the
 review question and separately report professional design merit, task/experience
-evidence, engineering conformance and human choice. Keep working progress in
-`prototype/surface-map.md` and decision/source pointers in
-`prototype/discussion.md`; never copy authority into a second status document.
+evidence, engineering conformance and human choice. Keep working progress and decision/source pointers in the
+design record (`prototype/discussion.md`, or the layered `truth.md`/`world.md`/`briefs/`);
+never copy authority into a second status document.
 Spec-only selection preserves pending implementation/usability validation.
 Finish with exact references, actual coverage and the next unresolved decision
 or execution step. Ready specs do not require a build merely to be selected.

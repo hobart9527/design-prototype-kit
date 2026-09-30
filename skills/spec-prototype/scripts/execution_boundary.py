@@ -245,9 +245,28 @@ def boundary_status(record: Path) -> str | None:
     return 'active' if text.strip() else None
 
 
+def _layered_anchor(root: Path) -> Path | None:
+    """Return the layered design-record anchor file when one exists at this root.
+
+    The layered layout (`truth.md` + `world.md` + `briefs/<slice>.md`) is a peer
+    layout to the single `discussion.md`. The boundary must recognise either as
+    "a design record exists at this root", or layered trees can never proceed
+    past the record to their prototype.
+    """
+    for name in ('truth.md', 'world.md'):
+        candidate = root / 'prototype' / name
+        require(not candidate.is_symlink(),
+                'Discussion scope must be a regular project record, not a symlink.')
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def active_root(cwd):
-    # Shell cwd may be a child directory. The nearest existing discussion owns
-    # the scope; never infer lifecycle from a code file or tokens.
+    # Shell cwd may be a child directory. The nearest existing design record owns
+    # the scope; never infer lifecycle from a code file or tokens. A layered
+    # tree anchors on `truth.md`/`world.md`; a single-record tree anchors on
+    # `discussion.md` and consults its Resume block for the boundary status.
     for root in (cwd, *cwd.parents):
         record = root/'prototype/discussion.md'
         require(not record.is_symlink(), 'Discussion scope must be a regular project record, not a symlink.')
@@ -257,6 +276,12 @@ def active_root(cwd):
                 return root
             if status in ('released', None):
                 return None
+        # A layered tree carries no discussion.md; the anchor's existence is
+        # the record. An empty file is not yet a record (mirrors the
+        # `boundary_status` "empty text is not active" rule).
+        anchor = _layered_anchor(root)
+        if anchor is not None and anchor.stat().st_size > 0:
+            return root
     return None
 
 
@@ -265,7 +290,24 @@ def discussion_record(cwd):
         record = root/'prototype/discussion.md'
         if record.is_file() or record.is_symlink():
             return record
+        anchor = _layered_anchor(root)
+        if anchor is not None:
+            return anchor
     return None
+
+
+# The design record may be one `prototype/discussion.md`, or the layered
+# `prototype/truth.md` + `prototype/world.md` + `prototype/briefs/<slice>.md`.
+# Either way the record is written before any other design artifact, so the
+# first-artifact gate admits every record path and no other.
+_DESIGN_RECORD_NAMES = ('discussion.md', 'truth.md', 'world.md')
+
+
+def is_design_record(target: Path, root: Path) -> bool:
+    """Whether `target` is one of this root's design-record files."""
+    if target.parent == root/'prototype' and target.name in _DESIGN_RECORD_NAMES:
+        return True
+    return target.parent == root/'prototype/briefs' and target.suffix == '.md'
 
 
 def _pointer(error) -> str:
@@ -371,17 +413,18 @@ def check(payload):
             if tool in {'Write', 'Edit', 'MultiEdit'}:
                 target = (cwd/args['file_path']).resolve()
                 if target.is_relative_to(cwd/'prototype'):
-                    discussion = cwd/'prototype/discussion.md'
-                    require(target == discussion and not discussion.is_symlink(),
-                            'Create prototype/discussion.md first, before other design artifacts.')
+                    require(is_design_record(target, cwd) and not target.is_symlink(),
+                            'Create the design record (prototype/discussion.md, or '
+                            'prototype/truth.md + prototype/world.md) first, before '
+                            'other design artifacts.')
             return
         if boundary_status(record) == 'released':
             return
         if tool in {'Write', 'Edit', 'MultiEdit'}:
             target = (cwd/args['file_path']).resolve()
             if target.is_relative_to(record.parent) and (not record.is_file() or record.stat().st_size == 0):
-                require(target == record.resolve(),
-                        'Update the legacy prototype/discussion.md record before other design artifacts.')
+                require(is_design_record(target, record.parent.parent),
+                        'Update the design record before other design artifacts.')
         return
     if tool in {'Agent', 'Task'}:
         dispatch(args, root)

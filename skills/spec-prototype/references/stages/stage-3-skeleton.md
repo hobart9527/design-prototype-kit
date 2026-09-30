@@ -118,8 +118,8 @@ snapshot, and an unmet prerequisite shows its unlocking affordance as a real
 control, never as a `title` tooltip on a dead button. A gate that renders
 disabled while its unlock lives in a tooltip is unreachable to anyone who does
 not already know the model — the condition is
-`[inv/discoverable-critical-path]`, authored in the slice's
-`prototype/discussion.md` invariant list (the record shape is owned by
+`[inv/discoverable-critical-path]`, authored in the slice's design record
+(the brief's `contract:invariants` on a layered tree, or `prototype/discussion.md`; the record shape is owned by
 [`../../templates/discussion.md`](../../templates/discussion.md)).
 
 ## Exit

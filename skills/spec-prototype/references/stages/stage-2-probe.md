@@ -22,17 +22,18 @@ analogies where helpful, but are never forced upon digital-native products.
 The path is visual-first:
 1. **Diverge before authoring.** Run the six-step Divergence Generator
    ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4):
-   name the category rut, generate 3 lifeworld-sourced candidates, draw the seeds with
-   `python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --write` (never
-   choose them — a self-picked integer converges, which is what the step exists to prevent),
-   fuse at most one catalog challenger each, then pass the two-axis verdict. The verdict is a gate:
-   a pair differing on fewer than two axes — or on two axes without **Structure**, the
-   mandatory axis — is merged and replaced, not built. Record the
-   rut, the candidates, the seeds, and the verdict in `prototype/discussion.md`.
-   Then run the divergence judge on the built slots before converging:
-   `python3 benchmarks/judges/divergence_judge.py --artifacts prototype/experiments/<slice_id>/dirs`.
-   Its verdict is `divergent` only when the two tag sequences actually differ, so a
-   prose verdict that the artifact does not support is caught here, not at review.
+   name the category rut, generate 3 lifeworld-sourced candidates, optionally draw the
+   seeds with `python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id>
+   --record <the slice's brief or discussion record> --write` (an optional entropy source:
+   never choose them yourself — a self-picked integer converges; if the record has no `## Slice: <id>`
+   block, print the draw without `--write` and record it by hand), fuse at most one
+   catalog challenger each, then pass the two-axis verdict. The verdict is a judgment
+   call, not a script gate: a pair differing on fewer than two axes — or on two axes
+   without **Structure**, the mandatory axis — is merged and replaced, not built. Record
+   the rut, the candidates, the seeds, and the verdict in the design record (the slice's
+   `briefs/<slice>.md` on a layered tree, `prototype/discussion.md` otherwise).
+   Before converging, compare the built slots yourself from their captures: if the two
+   directions share the same region skeleton, the prose verdict was not delivered.
 2. **Author 2 distinct directions in physical slots**
    (`prototype/experiments/<slice_id>/dirs/a/index.html` and `dirs/b/index.html`).
    Keep layout and styling independent without file collision.
@@ -122,8 +123,8 @@ for downstream Loom Entry 2 engineering delivery.
 ## Stage 2 Anchor Presentation Pause
 
 Once the first surface is materialized, present real viewport screenshots at the
-**authored** viewport widths — the `NNNpx` widths declared in
-`prototype/discussion.md` and recovered by
+**authored** viewport widths — the `NNNpx` widths declared in the design record
+(the slice's `briefs/<slice>.md` on a layered tree, or `prototype/discussion.md`) and recovered by
 [`compile_spec_ir.py`](../../scripts/compile_spec_ir.py)'s `parse_viewports`, the same
 set the Spec IR binds as `scope.verification_scope.viewports`. Never a hardcoded
 viewport list, and never the assembled envelope payload: that payload is produced

@@ -14,9 +14,11 @@ re-exports every name here, so the two are one contract seen from two files.
 
 from __future__ import annotations
 
+import hashlib
 import re
 import textwrap
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, NamedTuple, Optional
 
 try:
     import yaml  # type: ignore
@@ -26,6 +28,211 @@ except ImportError:  # structured contract blocks require the authoritative YAML
 # A fence opens or closes a block; the loader and the section extractor share
 # this so a `##` inside a fence is not read as a heading.
 _FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
+
+# ATX heading grammar: 1-6 `#`, at least one space, optional closing `#` run.
+_ATX_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)(?:\s+#+)?\s*$")
+
+# One record, partitioned by lifecycle: product truth and the visual world are
+# shared, while each slice owns a `## Slice: <slice_id>` block. Fences are
+# tracked so a YAML comment inside a frontmatter fence is not read as a heading.
+_SLICE_HEADING_RE = re.compile(r"^(#{1,6})\s+Slice\s*[:：]\s*`?([A-Za-z0-9][A-Za-z0-9_-]*)`?\s*$", re.IGNORECASE)
+_BLOCK_FRONTMATTER_RE = re.compile(
+    r"(?:\A\s*|^(?:```|~~~)[A-Za-z]*[ \t]*\n)(---[ \t]*\n.*?\n(?:---|\.\.\.)[ \t]*)(?:\n|\Z)",
+    re.DOTALL | re.MULTILINE)
+
+
+def parse_frontmatter(text: str) -> tuple[Dict[str, Any], str]:
+    """Parse YAML-like frontmatter if present at the start of markdown text."""
+    if not text.startswith("---"):
+        return {}, text
+    lines = text.splitlines()
+    end_idx = -1
+    for i in range(1, len(lines)):
+        if lines[i].strip() in ("---", "..."):
+            end_idx = i
+            break
+    if end_idx == -1:
+        return {}, text
+
+    fm_lines = lines[1:end_idx]
+    body = "\n".join(lines[end_idx + 1:])
+    data: Dict[str, Any] = {}
+    current_key: Optional[str] = None
+
+    for line in fm_lines:
+        line_str = line.strip()
+        if not line_str or line_str.startswith("#"):
+            continue
+        # List item under current_key
+        if line_str.startswith("- ") and current_key:
+            item = line_str[2:].strip().strip("\"'")
+            try:
+                item_val: Any = int(item)
+            except ValueError:
+                item_val = item
+            if isinstance(data.get(current_key), list):
+                data[current_key].append(item_val)
+            else:
+                data[current_key] = [item_val]
+            continue
+        # Key-value pair
+        m = re.match(r"^([A-Za-z0-9_-]+)\s*[:：]\s*(.*)$", line_str)
+        if m:
+            key = m.group(1).strip()
+            val = m.group(2).strip()
+            # Strip trailing comments e.g. # comment
+            if " #" in val:
+                val = val.split(" #", 1)[0].strip()
+            current_key = key
+            if not val:
+                data[key] = []
+            elif val.startswith("[") and val.endswith("]"):
+                raw_items = [x.strip().strip("\"'") for x in val[1:-1].split(",") if x.strip()]
+                converted = []
+                for x in raw_items:
+                    try:
+                        converted.append(int(x))
+                    except ValueError:
+                        converted.append(x)
+                data[key] = converted
+            else:
+                data[key] = val.strip("\"'")
+    return data, body
+
+
+class DesignRecord(NamedTuple):
+    """One slice's design record, loaded from whichever layout the tree uses.
+
+    `text` is the whole assembled record; `shared` and `slice_block` are the
+    partition the compiler needs, resolved here because the layout determines
+    it. In the layered layout the partition is known by construction — truth.md
+    and world.md are shared, the slice's brief is its block — so it never
+    depends on a heading surviving inside an authored brief. In the
+    single-record layout the partition is discovered by splitting on `## Slice:`
+    headings, and a record with no such heading is one unpartitioned zone
+    (`shared is slice_block is None`), which is the legacy tree.
+
+    `parts` maps each contributing file's repo-relative path to its digest, so a
+    freeze retains exactly the files the compile read rather than one monolith.
+    `path` is the primary contributing file — `discussion.md` on a single-record
+    tree, `truth.md` on a layered one — so provenance names a file that exists
+    and is actually the source. `missing` names a required piece that is absent;
+    the caller admits it as an incomplete stage contract. Nothing here repairs or
+    fabricates a substitute.
+    """
+
+    path: Path
+    text: str
+    digest: str
+    parts: Dict[str, str]
+    missing: List[str]
+    shared: Optional[str]
+    slice_block: Optional[str]
+
+
+def _record_part(root: Path, path: Path) -> tuple[str, Dict[str, str]]:
+    text = path.read_text(encoding="utf-8")
+    return text, {path.relative_to(root).as_posix(): _record_digest(text)}
+
+
+def split_slice_blocks(text: str) -> tuple[str, Dict[str, List[str]]]:
+    """Partition a design record into its shared zones and its per-slice blocks.
+
+    A slice block runs from its `Slice: <id>` heading to the next heading at the
+    same or a higher level. Everything outside every block is shared.
+    """
+    shared: List[str] = []
+    blocks: Dict[str, List[List[str]]] = {}
+    current: Optional[str] = None
+    level = 0
+    in_fence = False
+    for line in text.splitlines():
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+        elif not in_fence:
+            heading_m = _ATX_HEADING_RE.match(line)
+            slice_m = _SLICE_HEADING_RE.match(line)
+            if slice_m:
+                current, level = slice_m.group(2), len(slice_m.group(1))
+                blocks.setdefault(current, []).append([])
+                continue
+            if heading_m and current is not None and len(heading_m.group(1)) <= level:
+                current = None
+        (blocks[current][-1] if current is not None else shared).append(line)
+    return "\n".join(shared), {sid: ["\n".join(b) for b in bs] for sid, bs in blocks.items()}
+
+
+def _record_digest(text: str) -> str:
+    return f"sha256:{hashlib.sha256(text.encode('utf-8')).hexdigest()}"
+
+
+def parse_block_frontmatter(block: str) -> Dict[str, Any]:
+    """Parse a slice block's frontmatter: bare at its start, or its first fenced `---` block."""
+    m = _BLOCK_FRONTMATTER_RE.search(block)
+    return parse_frontmatter(m.group(1))[0] if m else {}
+
+
+def read_design_record(root: Path, slice_id: str) -> DesignRecord:
+    """Load this slice's design record from either supported layout.
+
+    Layered layout: `prototype/truth.md` (product truth) and
+    `prototype/world.md` (the visual world, and the token authority) are the
+    shared zones, and `prototype/briefs/<slice_id>.md` is this slice's block.
+    Each slice compiles from its own brief, so another slice's viewports and
+    states cannot leak in by construction.
+
+    Single-record layout: `prototype/discussion.md` carries the shared zones and
+    its own `## Slice:` blocks, exactly as before. This branch is also what a
+    tree that predates the layering reads, so the seam adds a layout without
+    removing one.
+    """
+    root = Path(root)
+    truth = root / "prototype/truth.md"
+    world = root / "prototype/world.md"
+    discussion = root / "prototype/discussion.md"
+
+    if truth.is_file() or world.is_file():
+        bodies: List[str] = []
+        parts: Dict[str, str] = {}
+        for path in (truth, world):
+            if path.is_file():
+                text, digest = _record_part(root, path)
+                bodies.append(text)
+                parts.update(digest)
+        shared = "\n\n".join(bodies)
+        missing: List[str] = []
+        brief = root / f"prototype/briefs/{slice_id}.md"
+        slice_block: Optional[str] = None
+        if brief.is_file():
+            slice_block, digest = _record_part(root, brief)
+            parts.update(digest)
+        else:
+            missing.append(brief.relative_to(root).as_posix())
+        text = shared if slice_block is None else f"{shared}\n\n{slice_block}"
+        primary = truth if truth.is_file() else world
+        return DesignRecord(path=primary, text=text, digest=_record_digest(text),
+                            parts=parts, missing=missing, shared=shared,
+                            slice_block=slice_block)
+
+    if discussion.is_file():
+        text, parts = _record_part(root, discussion)
+        shared, blocks = split_slice_blocks(text)
+        if not blocks:
+            return DesignRecord(path=discussion, text=text, digest=_record_digest(text),
+                                parts=parts, missing=[], shared=None, slice_block=None)
+        found = blocks.get(slice_id) or []
+        # A partitioned record owes this slice exactly one block. Falling back
+        # to the whole file would compile another slice's viewports and states
+        # into this one, so an absent or doubled block is reported rather than
+        # absorbed.
+        missing = [] if len(found) == 1 else [f"prototype/discussion.md#Slice: {slice_id}"]
+        return DesignRecord(path=discussion, text=text, digest=_record_digest(text),
+                            parts=parts, missing=missing,
+                            shared=shared, slice_block=found[0] if len(found) == 1 else None)
+
+    return DesignRecord(path=discussion, text="", digest="", parts={}, missing=[],
+                        shared=None, slice_block=None)
+
 
 # How much authority an authored action carries. `explicit` is a claim that the
 # user stated the mechanism, so it is never the unmarked default.

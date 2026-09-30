@@ -109,7 +109,15 @@ def test_screenshot_tier_skipped_with_reason_when_style_engine_missing(tmp_path,
 
 
 def test_l1_failure_blocks_even_when_l2_l3_unavailable(tmp_path, monkeypatch):
-    """Boundary specimen: L1 structural failure blocks regardless of L2/L3."""
+    """Boundary specimen: an L1 structural failure blocks, and the probes still run.
+
+    The probes are no longer gated on L1. Skipping L2/L3 when a text check
+    disagreed hid the render evidence the reviewer needs to settle whether the
+    text check was right: the report said `blocked` where a screenshot existed to
+    decide it. Every tier is measured now, and the outcome is still `blocked`
+    because a floor failed. Environment gaps stay `environment_not_ready` and
+    never become code-assertion failures.
+    """
     monkeypatch.setattr(vpq, "_style_engine_command", lambda: None)
     monkeypatch.setattr(vpq, "_TIER_PROBE_CACHE", {})
 
@@ -123,11 +131,16 @@ def test_l1_failure_blocks_even_when_l2_l3_unavailable(tmp_path, monkeypatch):
     evidence = dict(vpq.LAST_TIER_EVIDENCE)
     tiers = evidence["tiers"]
     assert tiers["L1"]["status"] == "failed"
-    assert tiers["L2"]["status"] == "skipped"
+    assert "no inspectable semantic elements" in " ".join(tiers["L1"]["failures"])
+    # The probes are no longer gated on L1: with no style engine reachable both
+    # probe tiers record the environment gap, and neither is skipped on account
+    # of the L1 failure. The outcome is still `blocked` because a floor failed.
+    assert tiers["L2"]["status"] == "degraded"
+    assert "environment_not_ready" in str(tiers["L2"]["reason"])
     assert tiers["L3"]["status"] == "skipped"
-    assert "environment_not_ready" not in str(tiers["L2"].get("reason", "")) or True
+    assert "environment_not_ready" in str(tiers["L3"]["reason"])
     assert evidence["outcome"] == "blocked"
-    assert evidence["environment_not_ready"] is False
+    assert evidence["environment_not_ready"] is True
 
 
 def test_craft_probe_unavailable_degrades_l2_as_not_verified(tmp_path, monkeypatch):
@@ -388,7 +401,13 @@ def test_l1_structural_checks_read_the_dom_not_the_source_text(tmp_path, capsys)
 
 
 def test_l1_accent_discipline_reads_selector_and_body_from_one_rule(tmp_path):
-    """A reserved class elsewhere in the sheet cannot implicate an unrelated rule."""
+    """Signature-accent discipline is retired: the accent is not a floor.
+
+    A per-product reserved-class list was hardcoded in the shared gate, so one
+    product's palette reached every prototype. Both specimen shapes now pass: the
+    gate has no opinion about an accent's placement, and that judgement belongs
+    to the design review.
+    """
     tokens = tmp_path / "tokens.css"
     tokens.write_text(
         ":root { --accent-seal: #B3352B; --radius-outer: 8px; font-variant-numeric: tabular-nums; }",
@@ -413,7 +432,9 @@ def test_l1_accent_discipline_reads_selector_and_body_from_one_rule(tmp_path):
 </body></html>""", encoding="utf-8")
     assert vpq.assert_quality(str(clean), str(tokens), contract_path=str(contract)) is True
 
-    # The reserved class and the accent in the same rule is a leak.
+    # The same class and the accent in one rule is no longer a blocking defect:
+    # the reserved-class list was one product's palette, and a palette choice is
+    # design judgement rather than a floor.
     leaky = tmp_path / "leaky.html"
     leaky.write_text("""<!DOCTYPE html><html><head><link rel="stylesheet" href="tokens.css">
 <style>
@@ -425,7 +446,7 @@ def test_l1_accent_discipline_reads_selector_and_body_from_one_rule(tmp_path):
 </main>
 <script>window.addEventListener('keydown', ()=>{}); window.addEventListener('hashchange', ()=>{}); document.body.dataset.state='ideal';</script>
 </body></html>""", encoding="utf-8")
-    assert vpq.assert_quality(str(leaky), str(tokens), contract_path=str(contract)) is False
+    assert vpq.assert_quality(str(leaky), str(tokens), contract_path=str(contract)) is True
 
 
 # -- receipt reconciliation ----------------------------------------------------
@@ -473,6 +494,20 @@ def test_an_absent_structured_receipt_degrades_rather_than_fails(tmp_path):
     manifest.write_text(json.dumps({"verification": {"status": "captured_pending_review"}}),
                         encoding="utf-8")
     assert vpq.check_viewport_receipts(html) == []
+
+
+def test_a_layered_tree_declares_viewports_in_its_brief(tmp_path):
+    """No discussion.md on a layered tree: the receipt join must read briefs/<slice>.md,
+    not silently skip because the single-record file is absent."""
+    html = _receipt_workspace(tmp_path, "[1280]", [1280])
+    (tmp_path / "prototype/discussion.md").unlink()
+    (tmp_path / "prototype/truth.md").write_text("# Truth\n", encoding="utf-8")
+    (tmp_path / "prototype/briefs").mkdir()
+    (tmp_path / "prototype/briefs/slice.md").write_text(
+        "---\nspec_schema: \"google-design-md/v2\"\nslice_id: slice\n"
+        "viewports: [390, 1280]\n---\n", encoding="utf-8")
+    failures = vpq.check_viewport_receipts(html)
+    assert len(failures) == 1 and "390px" in failures[0]
 
 
 def test_a_pixel_figure_in_prose_is_not_a_declared_viewport(tmp_path):

@@ -8,6 +8,9 @@ from pathlib import Path
 import re
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from spec_contract_blocks import read_design_record  # noqa: E402
+
 
 class HandoffError(ValueError):
     pass
@@ -596,12 +599,22 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
     delegated-authority source plus a locator, and that is neither a planned nor
     a negated statement. The row's retained digest and any source it names are
     recorded so a later edit invalidates downstream admission.
+
+    The Decisions table lives in `prototype/discussion.md` on a single-record
+    tree, and in `prototype/truth.md` on a layered tree (approval is
+    product-scoped, so the layered layout keeps it on the product-truth file).
     """
-    record = root / "prototype" / "discussion.md"
-    if not record.is_file():
+    single = root / "prototype" / "discussion.md"
+    layered = root / "prototype" / "truth.md"
+    if layered.is_file():
+        record = layered
+    elif single.is_file():
+        record = single
+    else:
         raise HandoffError(
-            "Cannot freeze specification: prototype/discussion.md is missing; "
-            "record the actual approval or delegated-authority decision first."
+            "Cannot freeze specification: neither prototype/truth.md nor "
+            "prototype/discussion.md is present; record the actual approval or "
+            "delegated-authority decision first."
         )
     text = record.read_text(encoding="utf-8")
     selected: list[str] | None = None
@@ -634,10 +647,10 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
             "Cannot freeze specification: no actual approval or delegated-authority decision "
             f"for slice '{slice_id}' / '{candidate_id}'. A planned, negated or override-only "
             "statement, or a bare matching phrase, does not authorize freeze. Record the "
-            "decision and its locator in prototype/discussion.md."
+            f"decision and its locator in {record.relative_to(root).as_posix()}."
         )
     binding = {
-        "record": retained(root, "prototype/discussion.md"),
+        "record": retained(root, record.relative_to(root).as_posix()),
         "decision_id": _clean(selected[0]),
         "status": _normalized(selected[2]),
         "scope": {"slice_id": slice_id, "candidate_id": candidate_id},
@@ -754,6 +767,12 @@ def freeze(root: Path, spec: str) -> dict:
             scope_proj = {"unavailable": str(error)}
             platform_proj = {"unavailable": str(error)}
 
+    # The frozen design record is the exact set of files the compile read: one
+    # discussion.md on a single-record tree, or truth.md + world.md + this
+    # slice's brief on a layered one. Digests come from the same seam the
+    # compiler reads, so a freeze can never retain a file the compile did not
+    # consult, nor miss one it did.
+    design_record = read_design_record(root, pkt["slice_id"])
     frozen_manifest = {
         "status": "frozen",
         "authority_status": "frozen_approved",
@@ -764,6 +783,11 @@ def freeze(root: Path, spec: str) -> dict:
         "references": pkt["references"],
         "craft_reads": pkt["craft_reads"],
         "approval": binding,
+        "design_record": {
+            "digest": design_record.digest,
+            "parts": design_record.parts,
+            "missing": design_record.missing,
+        },
         "scope_projection": scope_proj,
         "platform_projection": platform_proj,
         # Freezing a design scope never exercises implementation. These remain
@@ -774,6 +798,7 @@ def freeze(root: Path, spec: str) -> dict:
             for artifact in [
                 pkt["specification"],
                 *pkt["required_reads"][1:],
+                *[retained(root, rel_path) for rel_path in sorted(design_record.parts)],
                 *[
                     retained(root, str(path.relative_to(root)))
                     for path in (

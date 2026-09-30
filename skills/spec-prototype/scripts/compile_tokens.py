@@ -416,6 +416,23 @@ def _has_confirmed_token_authority(source_text: str) -> bool:
     return False
 
 
+def _confirmed_authority_text(source_text: str, source_path: str | None) -> str:
+    """Text the confirmed-decision check reads.
+
+    On a layered tree the token values live in `world.md` while the Decisions
+    table (the only place a user's confirmation is recorded) lives in the sibling
+    `truth.md`. Reading `world.md` alone would leave authority `derived` forever,
+    so the sibling's text is added for the confirmation check only, never for
+    palette extraction, which stays with the token authority.
+    """
+    if source_path:
+        p = Path(source_path)
+        truth = p.parent / "truth.md"
+        if p.name == "world.md" and truth.is_file():
+            return source_text + "\n\n" + truth.read_text(encoding="utf-8")
+    return source_text
+
+
 def _hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
     h = hex_code.lstrip("#")
     if len(h) == 3:
@@ -1223,7 +1240,7 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _token_source_digest(source_text: str, mode: str) -> str:
+def _token_source_digest(source_text: str, mode: str, source_path: str | None = None) -> str:
     """Digest only authored inputs that can change generated token values."""
     dials = parse_5dials(source_text)
     dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
@@ -1231,14 +1248,15 @@ def _token_source_digest(source_text: str, mode: str) -> str:
         "dials": dict(sorted(dials.items())),
         "colors": dict(sorted(dynamic_colors.items())),
         "craft_stack": dict(sorted(parse_craft_stack(source_text, dials).items())),
-        "authority": "explicit_human" if _has_confirmed_token_authority(source_text) else "derived",
+        "authority": "explicit_human" if _has_confirmed_token_authority(
+            _confirmed_authority_text(source_text, source_path)) else "derived",
     }
     payload = json.dumps(inputs, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _resolve_token_source(discussion_path: str, mode: str = "formal") -> str:
-    """Read the authored token source. `discussion.md` is the sole authority.
+    """Read the authored token source: `discussion.md` on a single-record tree, `world.md` on a layered one.
 
     The legacy `prototype/contracts/foundation/f1.md` sibling is no longer
     consulted: it was a second token authority that could silently outrank the
@@ -1266,7 +1284,8 @@ def compile_tokens(
     # merely appears in the authored discussion is still agent-derived unless a
     # confirmed user decision record (the decision table's confirmed rows or an
     # explicit confirmed-decisions section) actually pins those values.
-    computed["authority"] = "explicit_human" if _has_confirmed_token_authority(disc_text) else "derived"
+    computed["authority"] = "explicit_human" if _has_confirmed_token_authority(
+        _confirmed_authority_text(disc_text, discussion_path)) else "derived"
 
     # One-way provenance seal: the compiled stylesheet records the sha256 of the
     # exact source it was derived from, so any later hand edit is detectable.
@@ -1275,7 +1294,7 @@ def compile_tokens(
     computed["provenance"] = {
         "source": str(discussion_path),
         "mode": mode,
-        "digest": _token_source_digest(disc_text, mode),
+        "digest": _token_source_digest(disc_text, mode, discussion_path),
         "dials": dict(sorted(dials.items())),
     }
 
@@ -1342,12 +1361,13 @@ def _render_sealed_css(source_text: str, source_path: str, mode: str) -> str:
     dials = parse_5dials(source_text)
     dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
     computed = compute_tokens(dials, dynamic_colors, mode=mode)
-    computed["authority"] = "explicit_human" if _has_confirmed_token_authority(source_text) else "derived"
+    computed["authority"] = "explicit_human" if _has_confirmed_token_authority(
+        _confirmed_authority_text(source_text, source_path)) else "derived"
     computed["craft_stack"] = parse_craft_stack(source_text, dials)
     computed["provenance"] = {
         "source": source_path,
         "mode": mode,
-        "digest": _token_source_digest(source_text, mode),
+        "digest": _token_source_digest(source_text, mode, source_path),
         "dials": dict(sorted(dials.items())),
     }
     return generate_css(computed)
@@ -1389,7 +1409,7 @@ def check_tokens_sync(css_path: str, discussion_path: str, mode: str = "formal")
             "css_path": str(css_p),
             "drift": f"token source not found: {disc_p}",
         }
-    current_digest = _token_source_digest(source_text, seal_mode)
+    current_digest = _token_source_digest(source_text, seal_mode, str(disc_p))
 
     if provenance["digest"] != current_digest:
         return {
@@ -1451,22 +1471,29 @@ class TokensOutOfSyncError(RuntimeError):
 
 def main():
     parser = argparse.ArgumentParser(description="Compile DTCG tokens from Stage 1 5-dial state machine.")
-    parser.add_argument("--discussion", default="prototype/discussion.md", help="Path to discussion.md")
+    parser.add_argument("--discussion", default=None, help="Path to discussion.md or world.md (default: autodetect world.md or discussion.md)")
     parser.add_argument("--output-css", default="prototype/shared/tokens.css", help="Target CSS file")
     parser.add_argument("--output-json", default="prototype/contracts/tokens/t1.json", help="Target DTCG JSON file")
     parser.add_argument("--mode", choices=("formal", "probe"), default="formal", help="formal: no inferred aesthetics (neutral scaffold); probe: permit heuristic palette inference")
     parser.add_argument("--check-sync", action="store_true", help="Verify tokens.css freshness against its source instead of compiling; exit 1 on out_of_sync")
     args = parser.parse_args()
 
+    discussion_path = args.discussion
+    if discussion_path is None:
+        if Path("prototype/world.md").is_file():
+            discussion_path = "prototype/world.md"
+        else:
+            discussion_path = "prototype/discussion.md"
+
     if args.check_sync:
-        result = check_tokens_sync(args.output_css, args.discussion, mode=args.mode)
+        result = check_tokens_sync(args.output_css, discussion_path, mode=args.mode)
         if result["state"] != "in_sync":
             print(f"[TOKEN FUSE] out_of_sync: {result.get('drift', '')}")
             sys.exit(1)
         print(f"[TOKEN FUSE] tokens.css is in sync with {result.get('digest')}")
         return
 
-    compile_tokens(args.discussion, args.output_css, args.output_json, mode=args.mode)
+    compile_tokens(discussion_path, args.output_css, args.output_json, mode=args.mode)
 
 
 if __name__ == "__main__":

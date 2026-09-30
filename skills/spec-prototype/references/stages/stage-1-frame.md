@@ -44,7 +44,10 @@ repository facts silently. Preserve settled and delegated choices on continuatio
 The entire design prototype lifecycle is consolidated into four high-density assets:
 ```text
 prototype/
-├── discussion.md                           # 【唯一决策源】人机共创、五轴校准、业务张力事实台账
+├── discussion.md                           # 【唯一决策源】单文件布局；分层布局下的 Resume 索引
+│   ├── truth.md                            #   分层布局：产品事实 + Decisions and authority 表
+│   ├── world.md                            #   分层布局：视觉世界与令牌权威
+│   └── briefs/<slice>.md                   #   分层布局：每个 slice 的表面策略与证据
 ├── specifications/<slice>/r1.spec.md       # 【唯一规范源】单文件完整 RFC：IA 拓扑、状态机、Break 协议
 ├── shared/
 │   └── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
@@ -57,25 +60,35 @@ duplicate `prototype/product.md`, and never treat `assemble_envelope.py` as an
 authoring or dispatch stage. The retirement inventory and migration rules are owned by
 [`../04-governance/artifact-lifecycle.md`](../04-governance/artifact-lifecycle.md).
 
-Keep `prototype/discussion.md` as the concise human-readable decision and evidence
-record. For a formal prototype, use `google-design-md/v2` frontmatter and semantic
-sections documented in [`../spec-md-contract.md`](../spec-md-contract.md). The
-authoritative form of every machine-read list, and the registry of what each
-`contract:<kind>` block admits, are owned by
+Keep the design record as the concise human-readable decision and evidence
+record. For a formal prototype, use `google-design-md/v2` frontmatter and
+semantic sections documented in [`../spec-md-contract.md`](../spec-md-contract.md).
+The authoritative form of every machine-read list, and the registry of what
+each `contract:<kind>` block admits, are owned by
 [`../04-governance/machine-contract.md`](../04-governance/machine-contract.md).
-This is a
-Skill-owned, parser-compatible format inspired by Google Design.md; it is not an
-official Google schema and does not imply Material Design adoption.
+This is a Skill-owned, parser-compatible format inspired by Google Design.md;
+it is not an official Google schema and does not imply Material Design adoption.
 
-The record is one file partitioned by lifecycle, not split across files: **product
-truth** (audience, purpose, constraints — Stage 1 framing), the **visual world**
-(Direction Contract, Five Axes, taste ledger — one owner for every surface), and one
-`## Slice: <slice_id>` block per slice carrying its frontmatter, surfaces, states,
-actions, invariants and Stage 2–5 record. Framing collects product truth first; the
-visual world is locked through a direction decision, never inferred from init. The
-compiler reads each slice's verification scope from its own block alone, so a second
-slice is added by appending a block, never by widening the first. The shape is owned
-by [`../../templates/discussion.md`](../../templates/discussion.md).
+The record has two valid layouts, both loaded through the same seam
+(`read_design_record(root, slice_id)` in `spec_contract_blocks.py`):
+
+- **single-record** — one `prototype/discussion.md`, partitioned by lifecycle:
+  **product truth** (audience, purpose, constraints — Stage 1 framing), the
+  **visual world** (Direction Contract, Five Axes, taste ledger — one owner
+  for every surface), and one `## Slice: <slice_id>` block per slice carrying
+  its frontmatter, surfaces, states, actions, invariants and Stage 2–5 record.
+  The Decisions table lives here.
+- **layered** — `prototype/truth.md` (product facts + the Decisions table),
+  `prototype/world.md` (visual world and sole token authority), and
+  `prototype/briefs/<slice_id>.md` (one slice per file). `discussion.md`
+  narrows to a thin resume seam.
+
+Either layout is admissible; pick one per project. In both layouts the
+compiler reads each slice's verification scope from its own block alone, so a
+second slice is added by appending a block (or a new brief), never by widening
+the first. Templates live under `../../templates/`: `discussion.md` for the
+single-record layout, `truth.md` + `world.md` + `briefs/_slice.md` for the
+layered one.
 
 The brief needs only the applicable parts of:
 
@@ -114,14 +127,16 @@ human brief about decisions; machine IR and CSS tokens are compiled outputs.
 
 ## Physical Anchor Declaration (Optional Guidance)
 
-Declare the anticipated physical chassis or usage context in `prototype/discussion.md`
+Declare the anticipated physical chassis or usage context in the design record
+(the shared `prototype/truth.md` on a layered tree, or `prototype/discussion.md`)
 if known (for example, `desktop workstation`, `mobile device`, or `physical_anchor: none`).
 This provides structural guidance for layout choices without acting as a blocking gate
 against beginning prototype exploration.
 
 ## Progressive Prototyping Without Pre-Spec Lock
 
-Stage 1 produces the problem framing and design brief in `prototype/discussion.md`.
+Stage 1 produces the problem framing and design brief in the design record
+(`prototype/truth.md` on a layered tree, or `prototype/discussion.md`).
 Writing code in Stage 2 does not require a prior sealed Spec or pre-compiled Spec IR:
 visual exploration and rapid prototyping precede formal contract compilation.
 Formal compilation to `intent.json` / Spec IR occurs upon engineering handoff (Stage 5).

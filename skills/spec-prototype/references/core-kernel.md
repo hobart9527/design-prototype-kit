@@ -76,7 +76,12 @@ full-product; out-of-scope dependencies are disclosed, never silently added.
 ## 7. Four High-Density Deliverables & Role Discipline
 
 The entire design prototype lifecycle is consolidated into four high-density assets:
-1. `prototype/discussion.md` — sole decision, dialectic, and product facts ledger.
+1. `prototype/discussion.md` — sole decision, dialectic, and product facts ledger on
+   a single-record tree; on a layered tree the same role is split across
+   `prototype/truth.md` (product facts and the Decisions and authority table),
+   `prototype/world.md` (the visual world and sole token authority), and
+   `prototype/briefs/<slice>.md` (one slice per file), with `discussion.md`
+   narrowing to a thin resume seam.
 2. `prototype/specifications/<slice>/r1.spec.md` — sole RFC spec contract (IA topology, states, Break Protocol).
 3. `prototype/shared/tokens.css` — sole physical token layer compiled by DTCG.
 4. `prototype/experiments/<slice>/anchor/index.html` — sole runnable prototype implementation.
@@ -90,4 +95,5 @@ restating it.
 
 The main designer directly writes design records and executable prototype output
 within the bounded `prototype/` scope. Never edit OpenSpec, and never substitute
-`prototype/discussion.md` with `prototype/README.md`.
+the design record (whether `prototype/discussion.md` or the layered `truth.md` /
+`world.md` / `briefs/` set) with `prototype/README.md`.

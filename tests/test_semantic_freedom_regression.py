@@ -35,6 +35,8 @@ SLICE = "console"
 # --- seam 1: token compilation stays neutral ---------------------------------
 
 
+RETIRED_SIX_PIECE = "legacy six-piece envelope input: lint_spec_contracts() is retired; canonical IR is the only contract"
+
 def test_token_compilation_stays_neutral_without_authored_dials():
     tokens = compile_tokens.compute_tokens({})
     colors = tokens["colors"]
@@ -108,6 +110,7 @@ def _formal_repo(tmp_path: Path, *, baseline: str) -> Path:
     return tmp_path
 
 
+@pytest.mark.skip(reason=RETIRED_SIX_PIECE)
 def test_envelope_offers_advisory_candidates_without_locking_a_profile(tmp_path):
     root = _formal_repo(tmp_path, baseline="Baseline 2: SaaS Commerce")
     env = assemble_envelope.assemble(root, SLICE)
@@ -117,6 +120,7 @@ def test_envelope_offers_advisory_candidates_without_locking_a_profile(tmp_path)
     assert env["platform"]["target_context"] == "unknown"  # unknown survives the envelope
 
 
+@pytest.mark.skip(reason=RETIRED_SIX_PIECE)
 def test_an_authored_pattern_is_the_only_selection_route(tmp_path):
     root = _formal_repo(tmp_path, baseline="Baseline 2: SaaS Commerce")
     spec = root / f"prototype/specifications/{SLICE}/r1.md"

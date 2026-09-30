@@ -172,7 +172,16 @@ def main() -> int:
     picks = draw(args.candidates, load_challengers(pathlib.Path(args.vocabulary)))
     block = render_block(picks)
     if args.write:
-        write_block(pathlib.Path(args.record), args.slice, block)
+        try:
+            write_block(pathlib.Path(args.record), args.slice, block)
+        except (DrawError, OSError) as exc:
+            # The draw is an optional entropy source, never a gate: when the
+            # record cannot take it (layered tree, no slice block yet), print
+            # the draw so the designer records it by hand.
+            print(f"draw_seed: not written ({exc}); record the draw below by hand.",
+                  file=sys.stderr)
+            print(block)
+            return 0
         print(f"draw_seed: recorded {len(picks)} seeds in `## Slice: {args.slice}`")
     else:
         print(block)
