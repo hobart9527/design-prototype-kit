@@ -314,6 +314,11 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
         btn_html_list.append(
             f'<button class="view-btn{active_cls}" onclick="loadView(\'{s["url"]}\', this)">{s["name"]}</button>'
         )
+    if directions:
+        for d in directions:
+            btn_html_list.append(
+                f'<button class="view-btn" onclick="loadView(\'{d["url"]}\', this)">{d["name"]}</button>'
+            )
     btn_group_html = "\n      ".join(btn_html_list)
     default_url_json = json.dumps(default_url)
     directions = directions or []
@@ -417,8 +422,17 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       display: flex;
       justify-content: center;
       align-items: stretch;
-      overflow: hidden;
+      overflow: auto;
       padding: 10px 0;
+    }}
+    .viewport-frame {{
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }}
     iframe {{
       width: 100%;
@@ -482,9 +496,6 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     <div class="viewport-frame" data-viewport-frame="100%">
       <iframe id="preview-frame" src="{default_url}"></iframe>
     </div>
-    <div class="viewport-frame" data-viewport-frame="1440px" hidden></div>
-    <div class="viewport-frame" data-viewport-frame="768px" hidden></div>
-    <div class="viewport-frame" data-viewport-frame="390px" hidden></div>
   </div>
 
   <div class="portal-status-bar">
@@ -525,11 +536,16 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     function setViewport(w, btn) {{
       document.querySelectorAll('[data-viewport]').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
-      document.querySelectorAll('.viewport-frame').forEach(function (f) {{
-        f.hidden = f.getAttribute('data-viewport-frame') !== w;
-      }});
+      var frameBox = document.querySelector('.viewport-frame');
       var frame = document.getElementById('preview-frame');
-      frame.style.width = w;
+      if (frameBox) {{
+        frameBox.style.width = w;
+        frameBox.style.maxWidth = w === '100%' ? '100%' : 'none';
+        frameBox.setAttribute('data-viewport-frame', w);
+      }}
+      if (frame) {{
+        frame.style.width = w === '100%' ? '100%' : w;
+      }}
     }}
 
     function setBreakProtocol(stress, btn) {{
