@@ -285,6 +285,10 @@ def _scan_css(name: str, css: str, out: _Findings) -> None:
     if METRIC_CLASS_RE.search(css) and not FONT_VAR_NUM_RE.search(css):
         out.add("SLOP-019", "medium", name, "metric classes without tabular-nums")
 
+    if re.search(r"transition[^;{}]*ease(?:-in-out|-in|-out)?\b", css, re.IGNORECASE):
+        if not re.search(r"spring-(?:snappy|gentle|bounce)", css):
+            out.add("SLOP-026", "medium", name, "mechanical ease curve without spring token reference")
+
 
 def _scan_document(markup_by_file: dict, all_css: str, out: _Findings) -> None:
     """Cross-file rules: browser surfaces and press detents."""

@@ -167,6 +167,15 @@ translation protocol lives in
 [`../01-foundations/design-language.md`](../01-foundations/design-language.md#qualitative-adjective-translation-protocol)
 and is cited here, not duplicated.
 
+## Progressive Escalation
+
+This floor is the default. It does not demand AAA accessibility, sub-millisecond
+interaction budgets, or multi-modal input primitives on every pass. Escalate
+only when the brief explicitly names them, when the artifact is headed for
+production handoff, or when the user invokes a P9+ polish review. Otherwise
+the floor keeps the work out of the category's defaults without turning every
+prototype into a certification exercise.
+
 The floor holds the mechanics; it never picks the direction. Once every check is
 green, spend the surface on the committed proposition — and when torn between
 refined and committed, commit.

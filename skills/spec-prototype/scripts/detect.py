@@ -72,6 +72,25 @@ def _has_emoji_icon(path: pathlib.Path) -> bool:
     return bool(emoji.search(_artifact_text(path)))
 
 
+def _has_surface_sheen(path: pathlib.Path) -> bool:
+    return bool(re.search(r"--surface-sheen\b", _artifact_text(path)))
+
+
+def _has_kinetic_spring(path: pathlib.Path) -> bool:
+    return bool(re.search(r"--spring-(?:snappy|gentle|bounce)\b", _artifact_text(path)))
+
+
+def _has_action_feedback(path: pathlib.Path) -> bool:
+    text = _artifact_text(path)
+    has_commit = bool(re.search(
+        r"(?:data-action|class)\s*=\s*[\"'][^\"']*(?:drain|delete|destroy|terminate|offline|rollback|deploy)",
+        text, re.IGNORECASE))
+    if not has_commit:
+        return False
+    return bool(re.search(
+        r"处理中|已排空|已完成|draining|撤销|回滚|rollback|undo", text, re.IGNORECASE))
+
+
 # -- registry ------------------------------------------------------------------
 # id -> (rule as the craft floor states it, kind, detector or None)
 # A `prose_only` entry names why it cannot be mechanised, so the reason is on the
@@ -118,6 +137,18 @@ RULES: dict[str, dict] = {
         "why": "needs the computed geometry of a nested pair, not a text scan; "
                "checked by verify_prototype_quality's rendered probe",
     },
+    "CRAFT-SURFACE-SHEEN": {
+        "prose": "elevated panels and dark surfaces simulate optical chamfers with hairline top highlights",
+        "kind": "check", "detector": _has_surface_sheen,
+    },
+    "CRAFT-KINETIC-SPRING": {
+        "prose": "transition and motion curves use organic spring physics rather than linear or mechanical ease",
+        "kind": "check", "detector": _has_kinetic_spring,
+    },
+    "CRAFT-ACTION-FEEDBACK": {
+        "prose": "destructive or high-stakes actions show consequence before commit, explicit status after, and a recovery route",
+        "kind": "check", "detector": _has_action_feedback,
+    },
     "CRAFT-TOUCH-TARGET": {
         "prose": "interactive controls measure at least 44x44px in touch contexts",
         "kind": "prose_only",
@@ -153,6 +184,7 @@ BENCHMARK_ANCHORS = {
     "SLOP-017": "CRAFT-SELECTION",
     "SLOP-018": "CRAFT-PRESS-DETENT",
     "SLOP-019": "CRAFT-TABULAR-NUMS",
+    "SLOP-026": "CRAFT-KINETIC-SPRING",
 }
 
 

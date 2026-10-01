@@ -137,6 +137,7 @@ On demand extensions:
 
 - **Surgical Prototype Scope**: Keep interactive prototypes self-contained, clean, and under 500 lines of HTML/CSS/JS. Avoid gratuitous mockup datasets or monolithic single-turn code generation that risk token bloat or inference timeouts.
 - **Strict Semantic Neutrality**: Never fabricate unprompted business-domain entities (e.g. do not introduce payment gateways, billing, or shift calendars unless the user explicitly requested them). Use neutral system primitives (`core-api`, `node-cluster`, `data-worker`).
+- **Graceful Degradation & Progressive Disclosure**: Hard gates should block only on semantic fabrication, authority escape, or critical task breaks. Craft and performance optimizations are advisory by default; escalate to blocking only when the user explicitly demands P9+ polish or the artifact is headed for production handoff.
 
 ## Single-Brain End-to-End Ownership (单脑贯通 · 极速交付)
 
