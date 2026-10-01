@@ -146,8 +146,19 @@ def slice_block_span(text: str, slice_id: str) -> tuple[int, int]:
 
 
 def write_block(record: pathlib.Path, slice_id: str, block: str) -> None:
-    """Replace the slice's seed block, or append it to the slice's block."""
+    """Replace the slice's seed block, or append it to the slice's block (supports single-record and layered briefs)."""
     text = record.read_text(encoding="utf-8")
+    # If the file is a layered brief (e.g. briefs/<slice_id>.md), it owns this slice by construction
+    if "briefs" in record.parts or record.name == f"{slice_id}.md":
+        existing = re.search(rf"^{re.escape(SEEDS_HEADING)}\b.*?(?=^#{{1,6}}\s|\Z)",
+                             text, re.MULTILINE | re.DOTALL)
+        if existing:
+            new_text = text[:existing.start()] + block + "\n" + text[existing.end():].lstrip("\n")
+        else:
+            new_text = text.rstrip("\n") + "\n\n" + block + "\n"
+        record.write_text(new_text, encoding="utf-8")
+        return
+
     start, end = slice_block_span(text, slice_id)
     body = text[start:end]
     existing = re.search(rf"^{re.escape(SEEDS_HEADING)}\b.*?(?=^#{{1,6}}\s|\Z)",

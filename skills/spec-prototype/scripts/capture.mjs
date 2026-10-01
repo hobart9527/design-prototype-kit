@@ -118,13 +118,12 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
         await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
         const stateConfirmation = await page.evaluate((expectedState) => {
           const declared = document.body?.dataset.state || document.documentElement.dataset.state || "";
-          const hashState = new URLSearchParams(location.hash.replace(/^#/, "")).get("state") || "";
           return {
             expected: expectedState,
-            observed: declared || hashState,
+            observed: declared,
             confirmed: expectedState === "default"
               ? !declared || declared === "default"
-              : declared === expectedState || hashState === expectedState,
+              : declared === expectedState,
           };
         }, state);
         stateConfirmations[prefix] = stateConfirmation;
@@ -411,6 +410,14 @@ export function buildCaptureMetadata(result, options = {}) {
     evidence: {
       kind: evidenceKind,
       screenshots: screenshotCount,
+      direction_contract_checklist: [
+        "THESIS: Does the primary view resolve the authentic product tension?",
+        "OWN-WORLD: Is the sensory vocabulary distinct and appropriate for this lifeworld?",
+        "STORY: Is the end-to-end journey visible and navigable from the canvas?",
+        "FIRST VIEWPORT: Is the initial fold immediately legible with zero cognitive friction?",
+        "FORM: Does the layout geometry match the OOUX cardinality (1:1, 1:N, N:M)?",
+        "FINISH: Are the craft floors (press feedback, tabular numbers, concentric radii) delivered?"
+      ],
       paths: Object.values(captures),
       runtime_errors: evidenceRuntimeErrors,
       failures: evidenceFailures,
@@ -502,15 +509,18 @@ function recordHandoffEvidence(outputDir, result, metadata, options = {}) {
   }
 }
 
-function syncReviewPortal(autoOpen = true) {
+function syncReviewPortal(autoOpen = true, repoRootPath = null) {
   try {
     const portalScript = path.join(__dirname, "generate_review_portal.py");
     if (fs.existsSync(portalScript)) {
       const pArgs = [portalScript];
+      if (repoRootPath) pArgs.push("--root", repoRootPath);
       if (autoOpen) pArgs.push("--open");
-      execFileSync("python3", pArgs, { stdio: "ignore" });
+      execFileSync("python3", pArgs, { stdio: "pipe" });
     }
-  } catch {}
+  } catch (err) {
+    process.stderr.write(`[warn] syncReviewPortal failed: ${err.message}\n`);
+  }
 }
 
 async function main() {
@@ -633,7 +643,7 @@ async function main() {
   if (result) {
     const metadata = buildCaptureMetadata(result, metadataOptions);
     const recording = recordHandoffEvidence(outputDir, result, metadata, { repoRoot });
-    syncReviewPortal(autoOpen);
+    syncReviewPortal(autoOpen, repoRoot);
     const diagnostics_summary = {
       status: result.status,
       runtime_errors: result.runtime_errors || [],

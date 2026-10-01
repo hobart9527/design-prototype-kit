@@ -11,21 +11,24 @@ open alternatives only when a consequential choice is genuinely unresolved.
    tension or opportunity. Mark unsupported inference `[derived]` or `[hypothesis]`.
 3. Inspect existing product patterns and up to two relevant references. Say what to
    adopt and refuse; references inform the decision, they do not dictate the UI.
-4. Form the design proposition: what relationship changes, why it helps, what
-   remains familiar, and its cost or learning burden. Offer alternatives only where
-   evidence leaves a real choice. Recommend one.
-   - **A new product defaults to 2–3 structurally distinct low-fidelity directions
-     before the main prototype.** The directions must differ in structure, not in
-     surface styling: a different organising principle, different primary object,
-     or a different pacing of the central task. Two recolourings of one layout is a
-     single direction counted twice.
-   - Keep each direction genuinely low-fidelity — enough to judge the structure and
-     the trade-off, not a finished screen. Compare them on the product question they
-     answer, not on polish.
+4. Form the design proposition through **Polarized Divergence**: define what
+   relationship changes, why it helps, what remains familiar, and the explicit trade-off.
+   - **Mandatory Polarized Hypotheses**: produce **at least 2 structurally opposing
+     hypotheses** before converging on the primary prototype. The directions must differ
+     in underlying chassis, mental model, information topology, or task pacing (e.g.
+     *Dense Matrix vs. Progressive Disclosure*, or *Conversational Prompting vs. Direct Visual Manipulation*).
+     Two restylings or color variants of one spatial layout is an invalid pseudo-direction.
+   - For each direction, articulate:
+     1. The organizing principle and primary entity.
+     2. What becomes effortless, and what trade-off or learning curve is accepted.
+     3. The recommended direction with clear professional rationale grounded in the brief.
+   - Keep each direction low-fidelity and evaluable on the product question it answers.
+     In unattended or autonomous runs, the recommended direction is recorded as
+     `proposed` / `provisional` in the Decisions table—never hallucinated as `confirmed`.
    - The user's choice of direction is the consequential decision this round exists
-     to produce. When evidence already determines the direction (an extension of an
-     existing product, a settled convention, a delegated choice), one proposition is
-     correct and the others are waste.
+     to produce. When evidence already predetermines the direction (an explicit extension
+     of an existing surface, a settled convention, or an explicit user delegation),
+     one proposition is correct and pseudo-alternatives are waste.
 
    When the round's active uncertainty is one of the three below, load its dialectic
    topic — each is selectable, not sequenced, and each is entered only when that
@@ -139,7 +142,7 @@ Stage 1 produces the problem framing and design brief in the design record
 (`prototype/truth.md` on a layered tree, or `prototype/discussion.md`).
 Writing code in Stage 2 does not require a prior sealed Spec or pre-compiled Spec IR:
 visual exploration and rapid prototyping precede formal contract compilation.
-Formal compilation to `intent.json` / Spec IR occurs upon engineering handoff (Stage 5).
+`intent.json` 是可选的 Stage 1 机器加速件，缺失时编译器直接从记录散文/契约块恢复。Formal compilation to Spec IR occurs upon engineering handoff (Stage 5).
 
 ## Required parser anchors
 

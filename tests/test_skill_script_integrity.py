@@ -111,3 +111,51 @@ def test_abort_wording_is_limited_to_aborting_paths():
     abort = compile_spec_ir.format_missing_sections(
         [{"key": "k", "label": "l", "section": "s", "form": "f", "example": "e"}])
     assert "编译中止" in abort
+
+
+def test_preview_probe_capture_prefix_falls_back_to_probe_dir(tmp_path):
+    """Probe shots live under `evidence/probes/<slice>/` (capture.mjs), while the
+    portal discovers probes at `experiments/<slice>/hero-anchor`. Without the
+    fallback every probe capture fell into the "Additional evidence" bucket."""
+    import subprocess, json as _json
+
+    probe_shots = [
+        "evidence/probes/slice-a/desktop-default-1280.png",
+        "evidence/probes/slice-a/mobile-default-390.png",
+        "evidence/other/shot-390.png",
+    ]
+    script = (
+        "const path = require(\"path\");\n"
+        "const src = require(\"fs\").readFileSync("
+        + repr(str(SCRIPTS / "preview.mjs")).replace("\'", "'")
+        + ", \"utf8\");\n"
+        "const start = src.indexOf(\"function capturesFor\");\n"
+        "let depth = 0, end = -1;\n"
+        "for (let i = src.indexOf(\"{\", start); i < src.length; i++) {\n"
+        "  if (src[i] === \"{\") depth++;\n"
+        "  else if (src[i] === \"}\") { depth--; if (depth === 0) { end = i + 1; break; } }\n"
+        "}\n"
+        "const capturesFor = new Function(\"path\", src.slice(start, end) + \"; return capturesFor;\")(path);\n"
+        "const shots = " + _json.dumps(probe_shots) + ";\n"
+        "const out = {\n"
+        "  probe: Object.fromEntries([...capturesFor(\"slice-a/hero-anchor\", shots).groups]\n"
+        "    .map(([k, v]) => [k, v])),\n"
+        "  direct: Object.fromEntries([...capturesFor(\"other\", shots).groups]\n"
+        "    .map(([k, v]) => [k, v])),\n"
+        "};\n"
+        "console.log(_JSON_PLACEHOLDER_(out));\n"
+    ).replace("_JSON_PLACEHOLDER_", "JSON.stringify")
+    result = subprocess.run(["node", "-e", script], capture_output=True, text=True, cwd=tmp_path)
+    assert result.returncode == 0, result.stderr
+    out = _json.loads(result.stdout)
+
+    probe_groups = out["probe"]
+    assert probe_groups, "probe captures must fall back to evidence/probes/<slice>/"
+    probe_bound = {v["shot"] for views in probe_groups.values() for v in views}
+    assert probe_bound == {
+        "evidence/probes/slice-a/desktop-default-1280.png",
+        "evidence/probes/slice-a/mobile-default-390.png",
+    }
+
+    direct_bound = {v["shot"] for views in out["direct"].values() for v in views}
+    assert "evidence/other/shot-390.png" in direct_bound

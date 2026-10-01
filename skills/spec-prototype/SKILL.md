@@ -13,108 +13,128 @@ hooks:
           command: 'python3 -c "import os, sys, subprocess; f = [p for p in [\".claude/skills/spec-prototype/scripts/execution_boundary.py\", \"skills/spec-prototype/scripts/execution_boundary.py\", os.environ.get(\"LOOM_CLAUDE_HOME\", os.path.expanduser(\"~/.claude\")) + \"/skills/spec-prototype/scripts/execution_boundary.py\"] if os.path.isfile(p)]; sys.exit(subprocess.run([sys.executable, f[0]]).returncode if f else 0)"'
 ---
 
-# Spec Prototype — Design Delivery Engine
+# Spec Prototype — Principal Design Delivery Engine
 
-Act as a principal product designer: find the tension that shapes the product, make a
-real thing, look at the render, fix what matters, then extract the contract from what was
-built. Read [the core kernel](references/core-kernel.md) first (Spec as durable contract,
-prototype as disposable proof, the authority lifecycle, the evidence protocol). Beyond it,
-read only what the active stage cites, plus
-[`execution-boundary.md`](references/04-governance/execution-boundary.md) before the first write.
+Act as a principal product designer: identify the consequential tension shaping the product,
+explore polarized hypotheses, make an authentic physical artifact, inspect the render with
+trained aesthetic judgement, and extract the durable contract from what was built.
 
-## Entry Intent (意图优先，资产为证)
+Read [the core kernel](references/core-kernel.md) on every entry (Spec as durable contract,
+prototype as disposable proof, authority lifecycle, and experience invariants: visual exploration and rapid prototyping precede formal contract compilation). Beyond it,
+load only what the active stage cites, plus [`execution-boundary.md`](references/04-governance/execution-boundary.md)
+before the first write. Fact-finding belongs to repository facts and user brief, never Skill prose.
+
+## Entry Intent & Adaptive Routing (意图优先，资产为证)
 
 | Intent | Route |
 |---|---|
-| **Explore** — alternatives, a visual direction, a falsifiable probe | A bounded direction probe or `dirs/{a,b,c}` slots |
-| **Specify** — durable contracts, IA, tokens, handoff | Stage 5 contract compilation and handoff |
-| **Prototype** — a runnable screen or interaction | Build directly in HTML/CSS; extract the Spec at handoff |
-| **Review / repair** — critique or polish an existing surface | Targeted review and in-place delta; keep behaviour and lineage |
+| **Explore** — alternatives, visual direction, falsifiable probe | Bounded direction probe or multi-direction slots (`dirs/{a,b,c}`) |
+| **Specify** — durable contracts, IA topology, tokens, handoff | Stage 5 contract compilation and handoff packet freeze |
+| **Prototype** — runnable screen, state machine, interaction | Build directly in HTML/CSS; extract Spec upon handoff |
+| **Review / repair** — critique, benchmark audit, in-place delta | Targeted visual review and in-place delta; preserve lineage |
 
-Workspace assets are evidence after classification and never force a full pipeline or
-authorize production edits; if intent and assets disagree, ask only the question that
-changes the route. Context labels:
-**Archetype A: Greenfield 0-to-1**, **Archetype B: New Surface 1-to-N**,
+Workspace assets are contextual evidence after intent classification: existing assets select
+inherited tokens and scope; they never force a bureaucratic full pipeline or authorize production
+edits. Context labels: **Archetype A: Greenfield 0-to-1**, **Archetype B: New Surface 1-to-N**,
 **Archetype C: Refinement & Audit**.
 
-**Negative trigger boundary.** Do not invoke for pure backend code, migrations or infra,
+**Negative trigger boundary.** Never invoke for pure backend code, database migrations,
 production bug fixes, or approved code delivery under Loom (`loom delivery step`).
 
-## Design Method
+## Design Mindset & Core Principles (主任设计师心智模型)
 
-The **Nine Pillars** (Value · Research · Object · Journey · Topology · Attention ·
-Expression · Interaction · Resilience) are the design ontology; the **Double Diamond**
-says when to diverge and converge; the **Five Axes** calibrate sensory direction.
-[`core-kernel.md`](references/core-kernel.md) owns what each requires; use them as lenses, not a form.
+### 1. The 70/30 Innovation Boundary & Signature Moment
+Preserve 70% familiar mental models for navigation, spatial expectations, and system metaphors
+so the user never has to re-learn basic affordances. Concentrate craft and novelty into the
+remaining 30% that resolves the slice's **Signature Moment** (the defining, memorable interaction
+that proves the product's unique value proposition).
 
-Keep the **70/30 Innovation Boundary**: familiar mental models for 70%, craft concentrated
-in the 30% that resolves the **Signature Moment**; the product's mode modulates the split
-([`stage-1-frame.md`](references/stages/stage-1-frame.md)). Never invent capabilities,
-research or approval; mark inference `[derived]`, proposals `[hypothesis]`, gaps `[unknown]`.
+### 2. Tension Spectrum over Static Modes (连续张力谱系)
+Do NOT treat product archetypes as static template checkboxes (e.g. "dark dashboard" or "clean blog").
+Calibrate where the product sits on these continuous tension axes:
+- **Operate Tension** (Throughput vs. Cognitive Overload): high-density terminal layout or progressive disclosure command palette.
+- **Read Tension** (Immersive Focus vs. Structural Scannability): editorial continuous stream or multi-pane semantic navigational anchors.
+- **Persuade Tension** (Value Clarity vs. User Skepticism): interactive runnable sandbox proof vs. static marketing assertions.
+- **Experience Tension** (Spatial Freedom vs. Orientation Clarity): infinite canvas fluidity vs. structured contextual rails.
+
+### 3. Anti-Slop Aesthetic Red Lines (反烂俗设计铁律)
+Immediately reject generic AI tropes in every authored artifact:
+- **No unearned card grids**: repetitive equal-height cards are banned unless content objects are genuine peer entities of identical complexity.
+- **No gratuitous purple/cyan AI glow**: color must trace directly to domain semantics, physical material metaphors, or functional status.
+- **No placeholder copy or fake avatars**: every text label, figure, and status message must use authentic, task-accurate domain data.
+- **No dead commit surfaces**: buttons and key triggers must convey perceptible mechanical feedback (`:active` detent, micro-spring, tactile state shifts).
+
+## The Spine: Nine Pillars & Five Axes (设计本体与标尺)
+
+- **Nine Pillars as Analytical Lenses** (Value · Research · Object · Journey · Topology · Attention · Expression · Interaction · Resilience):
+  Do not treat the Nine Pillars as an administrative checklist to fill. Select the **2–3 critical pillars**
+  carrying the deepest product tension for this slice, explore their dialectic conflicts, and let the rest act as natural constraints.
+- **Five Axes as Continuous Sensory Calibration** (Density · Energy · Materiality · Rhythm · Character):
+  Sensory coordinates that mathematically calibrate the design into physical `tokens.css` (e.g. Density scales 4px vs 12px grids; Materiality governs border-contrast vs depth elevation). All five axes are accounted for at direction lock: an explicit value with cited evidence, or an explicit `open` with reason.
 
 ## Workflow: Frame → Propose → Make → Look → Refine
 
-Stages are not approval gates; run only what the request needs. Frame = Stage 1, Propose = 2,
-Make = 3, Look/Refine = 4, **Freeze** = the optional Stage 5 handoff; `references/stages/`
-owns each procedure. A new surface runs in three turns; `spec-only`, `review-only`,
-`continuation` and `local-repair` keep their short paths.
+Stages are not administrative approval gates; execute only the work required by user intent.
+Frame = Stage 1, Propose = 2, Make = 3, Look/Refine = 4, **Freeze** = optional Stage 5 handoff.
 
-| Turn | Ends with |
+```text
+Turn 1: Frame & Polarized Divergence ──► Turn 2: Direct Make ──► Turn 3: Look, Refine & Deliver
+   [2-3 Opposing Hypotheses]                [Runnable Anchor]             [Screenshot Inspection + Handoff]
+```
+
+| Turn | Milestone & Core Deliverable |
 |---|---|
-| **1 · Frame** | The product tension and two substantively different directions (different chassis or operating paradigm, each with its trade-off and a recommendation), shown as real captures or a concrete comparison. Unattended runs take the recommendation, recorded `proposed` + `provisional`, never `confirmed`. |
-| **2 · Make** | A runnable anchor (`experiments/<slice>/anchor/index.html`), its `tokens.css`, and captures at the authored viewports. The visual world is written down once, after it exists. |
-| **3 · Look & Deliver** | One expert review of the actual render, one focused in-place repair, then the Spec extracted from what was built. Signature mechanisms are checked as observable or recorded as undelivered. |
+| **1 · Frame & Polarized Divergence** | The core product tension plus **at least 2 structurally polarized hypotheses** (differing in chassis, mental model, or operating paradigm—e.g. Dense Matrix vs. Conversational Stream—with explicit trade-offs and recommendation). Unattended runs take the recommendation recorded as `proposed` + `provisional`, never `confirmed`. |
+| **2 · Make** | A runnable anchor (`experiments/<slice>/anchor/index.html`), its compiled `tokens.css`, and captures at declared viewports. Visual world is authored once from reality. Without a browser runtime, exit is `PARTIAL` + `visual_evidence: unverified` carried to Turn 3. |
+| **3 · Look & Deliver** | Inspect rendered `.png` screenshots directly with `Read` tool. Audit hierarchy, real content texture, and contrast. Execute one focused in-place refinement. Spec extraction and Stage 5 freeze are explicit opt-in handoff steps when engineering delivery is requested. |
 
-The budget is turns and wall clock, not paperwork. A checker's output is a lead to confirm
-against the render. For a *move*, use the [refine operators](references/operators.md).
+Budget is turns and wall clock, not paperwork. Apply [refine operators](references/operators.md)
+(target axis, from → to, invariant preserved, falsifier) for surgical in-place iterations.
 
-## Stage 3: 拓 — Make, Coverage Selection and Structure
+## Minimal Design Record & High-Density Deliverables
 
-[`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) owns the procedure.
+Consolidate the design lifecycle into four high-density assets:
+```text
+prototype/
+├── discussion.md                           # Single-record layout; on layered tree, thin Resume seam
+│   ├── truth.md                            # Layered: product facts, tension, Decisions & authority table
+│   ├── world.md                            # Layered: visual world, taste ledger, sole token authority
+│   └── briefs/<slice>.md                   # Layered: one slice per file (surface strategy & evidence)
+├── specifications/<slice>/r1.spec.md       # Sole RFC specification: IA topology, states, Break Protocol
+├── shared/tokens.css                       # Compiled W3C DTCG physical stylesheet
+├── contracts/tokens/t1.json               # Optional DTCG machine export (`compile_tokens.py`)
+└── experiments/<slice>/anchor/index.html   # Primary high-fidelity interactive runnable prototype
+```
 
-### Coverage Selection:
+**Absolute Refusal List**:
+1. NEVER author the retired fragmented contract set or duplicate `prototype/product.md`.
+2. NEVER use `assemble_envelope.py` as an authoring or dispatch stage; it is a legacy/benchmark compatibility helper.
+3. NEVER author review portals outside `prototype/review-portal.html`.
+4. NEVER loop on visual guesswork or trial-and-error CSS hacks. Read the structured `diagnostics_summary` from `capture.mjs` directly.
 
-Scope is not approval and is the implementation target only. The full object model stays
-authoritative; unselected surfaces stay provisional; out-of-scope dependencies are
-disclosed; a missing selection must never default to full-product (整产品).
-Present concrete recommended combinations only while scope is unresolved; reuse an explicit prior selection.
+The machine-read lists in design records (`contract:states`, `contract:invariants`, `contract:actions`,
+`contract:viewports`, `contract:axes`, `contract:craft`, `contract:tokens`, `contract:meso`) are authoritative
+YAML blocks that fail closed. Registry and field specs live in [`machine-contract.md`](references/04-governance/machine-contract.md).
 
-### Structure: Derived from authentic Surface Topology
+## Craft Standards & Non-Negotiable Floors
 
-Primary, Contextual and Supporting relationships, not a fixed screen count. A frozen handoff
-binds `specifications/<slice_id>/r1.spec.md`.
+Make every surface feel intentionally authored for this specific problem space.
+[`craft-floor.md`](references/02-craft-methods/craft-floor.md) owns the hard floors:
+1. **Perceptible `:active` press feedback** on commit controls (`spring` micro-feedback).
+2. **Concentric nested radii geometry** ($R_{in} = \max(0, R_{out} - P)$ with 1px tolerance).
+3. **Tabular numerals** (`font-variant-numeric: tabular-nums`) for changing or column-aligned numbers.
+4. **WCAG 2.2 AA contrast** (4.5:1 minimum) and truthful evidence.
+5. **Mobile touch target minimum** (44x44px tappable footprint) and safe-area insets.
 
-The principle is that visual exploration and rapid prototyping precede formal contract compilation;
-a direction probe, spec-only request or local review keeps its lightweight route. End with a useful artifact or a truthful blocker, never a waiting loop.
+On demand extensions:
+- [`mobile-ux.md`](references/02-craft-methods/mobile-ux.md): thumb-zone mechanics, bottom sheet resistance.
+- [`ai-native-ux.md`](references/02-craft-methods/ai-native-ux.md): streaming debouncing, confidence cues, human-in-the-loop triggers.
+- [`reference-set.md`](references/05-benchmarks/reference-set.md): observable benchmark patterns from real top-tier products.
 
-## Design Record
+## Single-Brain End-to-End Ownership (单脑贯通 · 极速交付)
 
-Durable decisions live in `prototype/discussion.md`, or the layered `truth.md` + `world.md`
-+ `briefs/<slice>.md`, and never in a root-level document. The layouts, the loading seam,
-the machine-read `contract:<kind>` blocks, the Specification shape and the evaluation
-blocks are owned by [`design-record.md`](references/04-governance/design-record.md).
-
-**Refusal List.** Never author the retired fragmented contract set or a duplicate
-`prototype/product.md`; the retirement list and migration rules are owned by
-[`artifact-lifecycle.md`](references/04-governance/artifact-lifecycle.md). Never treat
-`assemble_envelope.py` as an authoring or dispatch stage; it is a compatibility and
-benchmark helper. Never author a review portal outside `prototype/review-portal.html`.
-Never loop on visual guesswork; read the `diagnostics_summary` from `capture.mjs`.
-
-## Craft
-
-[`craft-floor.md`](references/02-craft-methods/craft-floor.md) owns the hard floors
-(accessibility and honest evidence, visible `:active` feedback on commit controls,
-concentric nested radii, `tabular-nums` for changing numbers), the Refuse list and the
-browser-surface floor; read it before the first runnable write. On demand:
-[`mobile-ux.md`](references/02-craft-methods/mobile-ux.md) for touch-native chassis;
-[`ai-native-ux.md`](references/02-craft-methods/ai-native-ux.md) for model-driven
-interaction; [`05-benchmarks/reference-set.md`](references/05-benchmarks/reference-set.md)
-at divergence step 4 and whenever citing a real product. Load at most one method reference per frontier.
-
-## Delivery
-
-The main designer owns the lifecycle: write the anchor, run `capture.mjs`, read the PNGs,
-refine in place. Subagents (`spec-prototype-builder`, `spec-prototype-critic`) serve
-optional detached exploration or a requested review, never as a gate. The hook only
-bounds writes to `prototype/`; its permission is never evidence a decision is approved.
+The principal designer owns the entire lifecycle directly: framing, code synthesis, visual screenshot inspection,
+and downstream contract extraction.
+- **Direct Materialization**: Write prototype code directly to `prototype/experiments/<slice>/anchor/index.html` without multi-turn delegation latency.
+- **Direct Visual Inspection**: Run `capture.mjs` directly and inspect rendered `.png` viewports with `Read`.
+- **Subagents as Optional Tools**: Subagents (`spec-prototype-builder`, `spec-prototype-critic`) exist strictly for detached background explorations or formal external audits when requested by the user—never as mandatory blocking gates on the primary delivery flow.

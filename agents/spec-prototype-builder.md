@@ -393,7 +393,7 @@ Honor declared platform invariants; when a platform contract is unauthored, stat
 
 Return a concise receipt containing:
 - Target path and revision identity (path plus digest or equivalent revision identity);
-- Quality gate assertion results (`STATIC: pass`), verbatim verifier verdict line;
+- Quality gate assertion results, verbatim verifier signal line (e.g. `STATIC: pass` / `STATIC: fail`; a failed craft-floor tier now also returns non-zero exit, so read the tier records, not the STATIC line alone);
 - Capture metadata: runner, `browser_execution`, runtime, target platform, and the dependency identity
   bound to the captured pixels; state any declared platform whose validation remains `unverified`;
 - State and interaction coverage actually exercised;

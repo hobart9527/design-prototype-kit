@@ -103,10 +103,25 @@ function viewportLabel(width) {
 }
 
 function capturesFor(artifactId, shots) {
+  // Probes render at `experiments/<slice>/hero-anchor/index.html` (capture.mjs
+  // candidatePaths) but their shots land in `evidence/probes/<slice>/`, so the
+  // direct prefix finds nothing and the captures fall into the "Additional
+  // evidence" bucket. Fall back to the probe directory for the first path
+  // segment; non-probe artifacts keep the direct prefix only.
   const prefix = `evidence/${artifactId}/`;
+  const probePrefix = `evidence/probes/${artifactId.split("/")[0]}/`;
+  const direct = shots.filter((item) => item.startsWith(prefix));
+  // Fall back only for multi-segment probe ids whose direct prefix matched
+  // nothing; `evidence/probes/evidence/...` is the degenerate self-referential
+  // case where the artifact id itself starts with "probes/".
+  const isProbeId = artifactId.includes("/") && !probePrefix.startsWith("evidence/probes/evidence/");
+  const scoped =
+    direct.length > 0 || !isProbeId
+      ? direct
+      : shots.filter((item) => item.startsWith(probePrefix));
   const groups = new Map();
   const other = [];
-  for (const shot of shots.filter((item) => item.startsWith(prefix))) {
+  for (const shot of scoped) {
     const filename = path.posix.basename(shot);
     const directory = path.posix.dirname(shot);
     const match = filename.match(/^(?:(.+)[-_])?(\d{3,4})\.(png|jpg|jpeg|webp)$/i);

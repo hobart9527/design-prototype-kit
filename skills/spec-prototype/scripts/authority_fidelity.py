@@ -148,7 +148,15 @@ def check_action_authority(
                 "checked against the discussion record"
             )
             continue
-        backing = [r for r in rows if any(k in " ".join(r.values()) for k in keys)]
+        def _matches(row: dict) -> bool:
+            row_text = " ".join(row.values())
+            for k in keys:
+                # Use word-boundary regex if key is alphanumeric/ascii
+                if re.search(r"(?i)(?<![a-zA-Z0-9_-])" + re.escape(k) + r"(?![a-zA-Z0-9_-])", row_text):
+                    return True
+            return False
+
+        backing = [r for r in rows if _matches(r)]
         if not backing:
             failures.append(
                 f"authority-fidelity assertion: {aid} claims authority={level} "

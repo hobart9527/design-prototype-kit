@@ -348,6 +348,19 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     evidence_label = verification.get("evidence") or (
         f"Browser: {verification.get('browser', 'unverified')}, Visual: {verification.get('visual', 'unverified')}, Human: {verification.get('human', 'unverified')}"
     )
+    # Direction Contract six questions, read from the latest capture receipt; the
+    # review starts from these six, never from defect scanning alone.
+    metadata = verification.get("metadata") or {}
+    evidence_block = metadata.get("evidence") if isinstance(metadata, dict) else None
+    checklist = (evidence_block or {}).get("direction_contract_checklist") or []
+    checklist_items = "\n".join(
+        f"      <li>{item}</li>" for item in checklist
+    )
+    checklist_html = (
+        '<details class="direction-contract"><summary>Direction Contract six questions</summary>'
+        '<ol class="direction-contract-list">' + checklist_items + "</ol></details>"
+        if checklist else ""
+    )
 
     btn_html_list = []
     for i, s in enumerate(surfaces):
@@ -544,6 +557,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
   <div class="portal-status-bar">
     <div class="status-item">
       <div class="indicator-green"></div>
+      {checklist_html}
       <span>QUALITY HARNESS: {status_label} · {evidence_label}</span>
     </div>
     <div class="status-item">

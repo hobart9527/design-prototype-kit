@@ -525,3 +525,13 @@ def test_a_pixel_figure_in_prose_is_not_a_declared_viewport(tmp_path):
     )
     assert vpq.declared_viewports(discussion.read_text(encoding="utf-8")) == [1280]
     assert vpq.check_viewport_receipts(html) == []
+
+
+def test_multistate_viewport_receipt_keys_are_parsed(tmp_path):
+    """H1: multistate receipt keys like 'default-390' must be recognized by check_viewport_receipts."""
+    html = _receipt_workspace(tmp_path, "[390, 1280]", [])
+    manifest = tmp_path / "prototype/evidence/handoff-manifest.json"
+    manifest.write_text(json.dumps({"verification": {"status": "captured_pending_review", "metadata": {
+        "evidence": {"viewport_metrics": {"default-390": {"scrollWidth": 390}, "default-1280": {"scrollWidth": 1280}}}}}}),
+        encoding="utf-8")
+    assert vpq.check_viewport_receipts(html) == []

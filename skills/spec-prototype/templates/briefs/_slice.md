@@ -55,8 +55,9 @@ provenance live in `prototype/truth.md`. Do not restate either here.
 ```
 
 Add a `required_states:` frontmatter list, or a `contract:required_states` block, only
-with the state ids this slice will actually verify. Leave it out until they are known:
-the compiler reads what is authored and never invents a verification scope.
+with the state ids this slice will actually verify. Leave it out during exploration until
+they are known; before Turn 3 finalization and Stage 5 freeze this section must be filled,
+as freeze fails closed and lists missing items if left unauthored.
 
 ## Verifiable Invariants & Break Protocol
 

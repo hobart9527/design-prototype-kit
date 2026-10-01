@@ -720,7 +720,12 @@ def check_viewport_receipts(html: Path) -> list[str]:
     metrics = receipt.get("viewport_metrics")
     if not isinstance(metrics, dict) or not metrics:
         return []
-    captured = {int(k) for k in metrics if str(k).isdigit()}
+    captured = set()
+    for k in metrics:
+        # Handles pure viewport keys like '390' as well as state-viewport keys like 'default-390'
+        part = str(k).split("-")[-1]
+        if part.isdigit():
+            captured.add(int(part))
     record_parts = _design_record_parts(html)
     if record_parts is None:
         return []
@@ -1110,7 +1115,10 @@ def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, obj
         # The style engine renders; measure touch targets at mobile width so a
         # 44px violation surfaces at build time, not only at downstream judging.
         touch_ok, touch_reason = probe_touch_targets(html)
-        if not touch_ok and touch_reason and "environment_not_ready" not in touch_reason:
+        if touch_reason and "environment_not_ready" in touch_reason:
+            tiers["L2"] = {"status": "degraded", "reason": touch_reason}
+            evidence["environment_not_ready"] = True
+        elif not touch_ok and touch_reason:
             tiers["L2"] = {"status": "failed", "reason": touch_reason}
             evidence["tier_reached"] = "L2"
             evidence["outcome"] = "failed"
@@ -1658,9 +1666,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         # counted against the exit code.
         for signal in signals:
             print(f"  [signal] {signal}")
-    if failures:
-        for i, failure in enumerate(failures, 1):
-            print(f"  [{i}] {failure}")
+    if failures or tier_outcome in ("failed", "blocked"):
+        if failures:
+            for i, failure in enumerate(failures, 1):
+                print(f"  [{i}] {failure}")
         return False
     return True
 

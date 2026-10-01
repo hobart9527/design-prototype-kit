@@ -141,13 +141,18 @@ if (args[0].endsWith('.json') || fs.existsSync(args[0])) {
   const targetLevel = args.includes('--level') ? args[args.indexOf('--level') + 1] : 'AA';
   const threshold = targetLevel === 'AAA' ? 7.0 : 4.5;
   const results = [];
+  const skipped = [];
   let allPass = true;
 
   const SURFACE_NAMES = new Set(['surface', 'background', 'bg-base', 'bg-void', 'bg', 'canvas']);
   for (const [name, def] of Object.entries(colors)) {
     if (SURFACE_NAMES.has(name)) continue;
     const val = tokenHex(def, colors);
-    if (!val || !surface) continue;
+    if (!val) {
+      skipped.push({ token: name, value: def?.$value ?? null });
+      continue;
+    }
+    if (!surface) continue;
     const ratio = getContrast(val, surface);
     const pass = ratio >= threshold;
     if (!pass) allPass = false;
@@ -156,8 +161,9 @@ if (args[0].endsWith('.json') || fs.existsSync(args[0])) {
 
   // "No colors to check" is not "passed accessibility". A token file this tool
   // cannot measure is refused (non-zero exit) so an empty or unfamiliar schema
-  // can never masquerade as a WCAG AA/AAA pass.
-  if (!surface || results.length === 0) {
+  // can never masquerade as a WCAG AA/AAA pass — and neither can a partially
+  // readable one whose skipped tokens were silently dropped from the audit.
+  if (!surface || results.length === 0 || skipped.length > 0) {
     allPass = false;
     console.log(JSON.stringify({
       targetLevel,
@@ -165,9 +171,12 @@ if (args[0].endsWith('.json') || fs.existsSync(args[0])) {
       surface,
       allPass,
       results,
-      error: surface
-        ? 'No color tokens with a hex `$value` were found to contrast against the surface.'
-        : 'No surface/background color token was found; contrast cannot be measured.',
+      skipped,
+      error: !surface
+        ? 'No surface/background color token was found; contrast cannot be measured.'
+        : skipped.length > 0
+          ? `${skipped.length} color token(s) had no resolvable hex $value; contrast for them cannot be measured.`
+          : 'No color tokens with a hex `$value` were found to contrast against the surface.',
     }, null, 2));
     process.exit(1);
   }

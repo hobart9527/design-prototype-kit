@@ -305,3 +305,38 @@ def test_approval_does_not_bind_a_longer_slice_name(tmp_path: Path):
 
     with pytest.raises(handoff.HandoffError, match="no actual approval"):
         handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+
+
+def test_canonical_freeze_and_gate_roundtrip(tmp_path: Path):
+    canon_spec_row = (
+        "| D-1 | Spec-only design scope for reader | confirmed | design-only approval "
+        "| \"确认封版 only the specification, no prototype execution\" (turn 7, 2026-09-02) "
+        "| `prototype/specifications/reader/r1.spec.md` |\n"
+    )
+    spec = _build_root(tmp_path, decision_row=canon_spec_row, prototype_entry=False)
+    tokens_css = tmp_path / "prototype/shared/tokens.css"
+    tokens_css.parent.mkdir(parents=True, exist_ok=True)
+    tokens_css.write_text(":root { --primary: #000; }\n", encoding="utf-8")
+
+    canon_dir = tmp_path / "prototype/specifications/reader"
+    canon_spec = canon_dir / "r1.spec.md"
+    spec.rename(canon_spec)
+
+    manifest = handoff.freeze(tmp_path, canon_spec.relative_to(tmp_path).as_posix())
+    assert manifest["status"] == "frozen"
+    assert manifest["approval"]["scope"] == {"slice_id": "reader", "candidate_id": "r1"}
+
+    assert (tmp_path / "prototype/evidence/reader/r1/freeze-manifest.json").is_file()
+
+    gate_res = handoff.check_downstream_gate(tmp_path, "reader")
+    assert gate_res["gate"] == "passed", f"Gate blocked: {gate_res}"
+
+    adm = handoff.downstream_admission(tmp_path, "reader")
+    assert adm["gate"] == "passed", f"Admission blocked: {adm}"
+
+    disc = tmp_path / "prototype/discussion.md"
+    with disc.open("a", encoding="utf-8") as f:
+        f.write("\n- Progress note: reviewed the render\n")
+
+    adm_after = handoff.downstream_admission(tmp_path, "reader")
+    assert adm_after["gate"] == "passed", f"Admission blocked after note: {adm_after}"

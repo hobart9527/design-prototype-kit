@@ -66,8 +66,9 @@ Owns what the product is and for whom. Visual choices never live here.
 
 - Physical Anchor: `<declared chassis, e.g. desktop workstation / mobile device, or none>`
   State the real-world object or space whose physicality drives the spatial
-  chassis. An undeclared anchor blocks formal Stage 2; `none` is an intentional
-  non-device decision, not missing information.
+  chassis. This provides structural guidance for layout choices without acting
+  as a blocking gate; `none` is an intentional non-device decision, not missing
+  information.
 
 Infer silently from every workspace source before speaking. Each dimension's
 evidence status records what the *sources actually support* — `[explicit]`

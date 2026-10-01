@@ -395,23 +395,71 @@ def parse_5dials(discussion_text: str) -> Dict[str, str]:
     return parse_five_axes(discussion_text)
 
 
+_TOKEN_AUTHORITY_KEYWORDS = re.compile(r"色|palette|token|颜色|配色|色彩", re.IGNORECASE)
+# A confirmed record that pins `--accent-primary: #9333ea` names a token
+# decision even when it never spells the word "token".
+_CSS_HEX_PIN = re.compile(r"`?--[a-z][a-z0-9_-]*`?\s*:\s*`?#[0-9a-f]{3,8}`?", re.IGNORECASE)
+_STATUS_CELL = re.compile(r"^\s*(?:confirmed|delegated)\s*$", re.IGNORECASE)
+_ID_CELL = re.compile(r"^[A-Za-z]{1,4}[-–—]?\d{1,3}$|^[a-z0-9_.-]{1,12}$")
+
+
+def _names_token_decision(text: str) -> bool:
+    return bool(_TOKEN_AUTHORITY_KEYWORDS.search(text) or _CSS_HEX_PIN.search(text))
+
+
+def _row_grants_token_authority(cells: list[str]) -> bool:
+    """One Decisions-table row, already split into cells, judged for token authority.
+
+    The schema varies: the shipped truth.md table has 7 columns (ID | Decision |
+    Status | Reason | Quote | User source | Scope), hand-written records use a
+    minimal 3-column form (Decision | Status | Note). Rather than pinning
+    column numbers to one schema, the status cell is found by value and the
+    decision subject is read from the first cell that is neither an ID nor the
+    status; on wide tables the final column (affected scope) also counts. A
+    keyword in the reason/quote columns alone is a neighbouring decision
+    talking about tokens, not a user confirming the palette.
+    """
+    status_idx = next((i for i, c in enumerate(cells) if _STATUS_CELL.match(c)), None)
+    if status_idx is None:
+        return False
+    subject_idx = next(
+        (i for i, c in enumerate(cells)
+         if i != status_idx and c and not _ID_CELL.match(c)),
+        None,
+    )
+    if subject_idx is None:
+        return False
+    if _names_token_decision(cells[subject_idx]):
+        return True
+    # Wide tables only: the trailing affected-scope column. On a minimal
+    # 3-column row the last cell is a note the status already speaks for.
+    if len(cells) >= 5 and _names_token_decision(cells[-1]):
+        return True
+    return False
+
+
 def _has_confirmed_token_authority(source_text: str) -> bool:
     """True only when a real confirmed-decision record pins the token values.
 
     A seed palette the design agent authored in Stage 1 is derived work, not
     human authority, regardless of which token names it happens to spell.
-    Human authority requires an explicit confirmed-decisions section, or a
-    decision-table row whose status is `confirmed`/`delegated` AND whose scope
-    actually names the token/palette decision.
+    Human authority requires an explicit confirmed-decisions section whose body
+    names the token/palette decision, or a decision-table row whose status is
+    `confirmed`/`delegated` AND whose decision/scope cells actually name it.
     """
-    if re.search(r"^#{2,4}\s*(?:Confirmed|已确认)\s*(?:Decisions?|决策)", source_text, re.IGNORECASE | re.MULTILINE):
-        return True
+    for m in re.finditer(
+        r"^#{2,4}[^\n]*(?:Confirmed|已确认)[^\n]*(?:Decisions?|决策)[^\n]*\n(.*?)(?=\n#{2,4}\s|\Z)",
+        source_text, re.IGNORECASE | re.DOTALL | re.MULTILINE,
+    ):
+        if _names_token_decision(m.group(1)):
+            return True
     for line in source_text.splitlines():
         if not line.strip().startswith("|"):
             continue
-        if not re.search(r"\|\s*(?:confirmed|delegated)\s*\|", line, re.IGNORECASE):
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 3:
             continue
-        if re.search(r"色|palette|token|颜色|配色|色彩", line, re.IGNORECASE):
+        if _row_grants_token_authority(cells):
             return True
     return False
 
@@ -1264,7 +1312,12 @@ def _resolve_token_source(discussion_path: str, mode: str = "formal") -> str:
     legacy records readable as inputs without letting them be generated again.
     """
     disc_p = Path(discussion_path)
-    return disc_p.read_text(encoding="utf-8") if disc_p.is_file() else ""
+    if not disc_p.is_file():
+        raise FileNotFoundError(
+            f"Token source not found: {disc_p}. compile_tokens refuses to emit a "
+            "neutral scaffold for a missing source — check the path, or on a "
+            "layered tree pass --discussion prototype/world.md.")
+    return disc_p.read_text(encoding="utf-8")
 
 
 def compile_tokens(

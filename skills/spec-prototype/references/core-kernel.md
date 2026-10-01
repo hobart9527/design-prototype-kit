@@ -49,12 +49,27 @@ unsupported product capabilities, third-party integrations, or user-research
 claims. Platform facts that are unauthored remain `unknown`; native validation
 that was not performed is recorded as `unverified`.
 
-## 5. Rooted Design Ontology
+## 5. Rooted Design Ontology: Nine Pillars Lenses & Five Sensory Axes
 
 The Nine Pillars (Value · Research · Object · Journey · Topology · Attention ·
-Expression · Interaction · Resilience) are the unique design substance. The
-Double Diamond governs when to diverge and converge. The Five Axes (Density ·
-Energy · Materiality · Rhythm · Character) calibrate sensory direction.
+Expression · Interaction · Resilience) are the design ontology. They are NOT an
+administrative checklist or form to fill out linearly; they are **analytical lenses**
+used to locate the core dialectic tensions shaping the product slice. In Stage 1,
+identify the 2–3 pillars bearing the primary tension, resolve their trade-offs, and
+treat the remaining pillars as ambient constraints.
+
+The Double Diamond governs when to diverge and converge: **divergence is mandatory in
+Stage 1** (exploring at least 2 polarized structural hypotheses) before converging onto
+a physical anchor.
+
+The Five Axes (Density · Energy · Materiality · Rhythm · Character) are **continuous
+sensory coordinates** that calibrate the physical feeling of the product and directly
+inform DTCG token compilation:
+- **Density**: determines the structural spatial grid (4px tight vs 12px relaxed) and typography line-heights.
+- **Energy**: sets the physical transition velocity, spring curves, and feedback detents.
+- **Materiality**: defines depth hierarchy (flat hairline borders vs layered elevations, acrylic blurs, or optical surface finishes).
+- **Rhythm**: drives layout cadence (uniform modular cards vs asymmetric visual narrative).
+- **Character**: modulates chromatic intensity and emotional presence (5% surgical accent on tool surfaces vs immersive atmospheric branding).
 
 The Five Axes register is **required at direction lock**, and never a forced CSS
 formula or a fixed pixel checklist. Required means every axis is *accounted for*,
@@ -63,7 +78,8 @@ its cited product evidence, or an explicit `open` with the reason it stays free.
 An axis left blank is indistinguishable from an axis decided by model default —
 which is why silence is the one outcome this kernel forbids. This closes the hole
 that "optional" left open while keeping the register a decision, not a form to
-fill.
+fill. Authentic reference products (e.g. Linear, Stripe, Raycast, Vercel) serve
+as empirical anchors for these coordinates, not visual templates to clone blindly.
 
 ## 6. Semantic Preservation and Coverage Selection
 

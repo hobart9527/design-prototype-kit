@@ -121,8 +121,17 @@ When the browser is unavailable, record visual checks as `Not verified` rather t
 
 ## Exercise professional design judgment
 
-Judge the whole product experience, not only correctness or taste:
+Judge the whole product experience with the rigor of a principal designer, not merely mechanical syntax:
 
+- **70/30 Innovation Boundary & Signature Moment:**
+  Does the prototype preserve 70% familiar mental models for navigation and spatial topology?
+  Is novelty concentrated purposefully in the 30% that resolves the Signature Moment, or is
+  creative effort squandered on non-standard basics (e.g. reinventing standard scrolling or forms)?
+- **Anti-Slop Hard Audit (Flag Generic AI Tropes as Flaws):**
+  - **Unearned card grids:** Flag equal-height repeated cards unless the domain objects possess identical semantic symmetry.
+  - **Gratuitous AI glow / cyber-purple gradients:** Flag decorative gradients disconnected from brand identity, status semantics, or physical materials.
+  - **Placeholder / fake content:** Flag lorem ipsum, placeholder copy, or stock-like placeholder images. Copy must reflect authentic domain reality.
+  - **Dead commit triggers:** Flag any primary commit surface that lacks physical tactile feedback or clear status transitions.
 - **Product and semantic fit:** Does the work preserve sourced value, actors,
   objects, content, authority and consequences without invented capability?
   **Integration capability trace-back:** every integration or external-system
@@ -156,7 +165,7 @@ Judge the whole product experience, not only correctness or taste:
 ### Craft Floors (hard defects)
 
 These three craft invariants are hard defects whenever their stated scope applies;
-report a Floor `VIOLATION` and fail the build. Do not reclassify them as advisory.
+report a Floor `VIOLATION` and fail the build (implemented as: `verify_prototype_quality.py` returns non-zero when a craft-floor tier fails, plus the accessibility floors that flow through `failures`). Do not reclassify them as advisory; everything beyond these floors and the declared invariants remains advisory.
 
 The three hard defects are press feedback, concentric nested radii, and tabular numerals.
 

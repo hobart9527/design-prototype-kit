@@ -159,6 +159,8 @@ BENCHMARK_ANCHORS = {
 def scan(artifact: pathlib.Path) -> dict:
     """Run every mechanical rule against one artifact. Judgement rules are listed."""
     artifact = pathlib.Path(artifact)
+    if not artifact.is_file():
+        raise FileNotFoundError(f"Craft floor detector target artifact not found: {artifact}")
     findings, unchecked = [], []
     for rule_id, entry in sorted(RULES.items()):
         if entry["kind"] != "check":
@@ -194,7 +196,11 @@ def main() -> int:
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--out", default="-")
     args = parser.parse_args()
-    result = scan(pathlib.Path(args.artifact))
+    try:
+        result = scan(pathlib.Path(args.artifact))
+    except FileNotFoundError as err:
+        sys.stderr.write("Error: " + str(err) + "\n")
+        return 1
     if args.out == "-":
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:

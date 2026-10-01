@@ -56,9 +56,42 @@ token but matches no admission rule is reported as an unadmitted declaration and
 aborts the compile: the author wrote a declaration the compiler did not read, and
 the line that caused it is named rather than dropped.
 
+
+
+### Two stage axes, distinct semantics (F7 口径声明)
+
+Do not conflate these two vocabularies:
+
+- **Frontmatter `stage` (build-scope axis)**: uses the `hero_probe | walking_skeleton | surface_slice | full_product` family. This axis describes *how much product this slice builds* and is consumed directly by `compile_spec_ir.py` and `schemas/prototype-spec.v1.json`.
+- **Resume checkpoint (progress axis, in the `## Resume` block)**: uses the `stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze` family and it describes *where in the 5-Stage delivery pipeline this pass stands*.
+
+No primary enum from the frontmatter table coincides with the Resume checkpoint names: they name different things and are never interchangeable.
+
 ## Change rule
 
 A format change updates the block, the parser, the registry table above and the
 shipped template together. The test suite compiles the template strict, so a
 template that teaches a form the parser does not admit fails the build rather
 than the author's Stage 5.
+
+
+## Slice Frontmatter Registry
+
+The YAML frontmatter of `templates/briefs/_slice.md` and the slice block defines the surface attributes:
+
+| Field | Type | Allowed Values / Description |
+|---|---|---|
+| `spec_schema` | string | `"google-design-md/v2"` |
+| `slice_id` | string | Target slice identifier (must match filename without `.md`) |
+| `authority` | string | `draft` \| `validated` \| `sealed_provisional` \| `frozen_approved` |
+| `stage` (build-scope axis, frontmatter) | string | `hero_probe` \| `walking_skeleton` \| `surface_slice` \| `full_product` — the shipped template initial value is `hero_probe` (a legal Stage-1 starting value); a different axis from the Resume checkpoint vocabulary below. |
+| `viewports` | list of ints | e.g. `[390, 1280]` |
+| `required_states` | list of strings | Verified state IDs for this slice |
+| `applied_methods` | list of strings | e.g. `action-verb-lifecycle`, `context-preservation`, `dense-operational-console`, `progressive-disclosure` |
+| `primary_surface` | string | Primary operational surface id |
+| `declared_surfaces` | list of strings | Declared surfaces within this slice |
+
+> Note: the machine-contract registry field names the build-scope axis; the frontmatter
+> example value `stage: "hero_probe"` is the shipped-legal starting point (the same
+> enum lives in `schemas/prototype-spec.v1.json:109` and is consumed by
+> `compile_spec_ir.py`), not a mistaken primary enum leak.

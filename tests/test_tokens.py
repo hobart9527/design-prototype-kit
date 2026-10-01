@@ -49,6 +49,23 @@ def test_token_authority_requires_token_specific_confirmation():
         "| palette | confirmed | user selected palette |") is True
     assert ct._has_confirmed_token_authority(
         "| rollout policy | confirmed | user selected rollout |") is False
+    # A keyword confined to the reason/quote columns is a neighbouring decision,
+    # not a palette confirmation (H5 column-restricted matching).
+    assert ct._has_confirmed_token_authority(
+        "| nav layout | confirmed | nav reuses the token pipeline |") is False
+    assert ct._has_confirmed_token_authority(
+        "| D1 | nav layout | confirmed | reuses the token pipeline | quote |"
+        " confirmed | surfaces/nav |") is False
+    # On the shipped 7-column table the trailing affected-scope column also
+    # names the decision.
+    assert ct._has_confirmed_token_authority(
+        "| D2 | rollout | confirmed | user selected rollout | quote |"
+        " confirmed | accent token |") is True
+    # A Confirmed Decisions heading alone, with no palette decision in its body,
+    # grants no authority; one that names the palette does.
+    assert ct._has_confirmed_token_authority("## Confirmed Decisions\n\n| nav | confirmed | nav |\n") is False
+    assert ct._has_confirmed_token_authority(
+        "## Confirmed Decisions\n\n配色由用户确认。\n") is True
 
 
 def test_compile_tokens_empty_dials_yield_neutral_scaffold():
@@ -376,3 +393,13 @@ def test_layered_tree_confirmation_in_truth_md_grants_token_authority(tmp_path: 
     ct.compile_tokens(str(world), str(css), str(out_json))
     assert "explicit_human" not in out_json.read_text(encoding="utf-8")
 
+
+
+def test_compile_tokens_refuses_missing_source(tmp_path: Path):
+    """A missing token source must fail, not silently compile a neutral scaffold
+    that the chain then admits as a pass."""
+    ct = _load_compiler()
+    out_css = tmp_path / "shared/tokens.css"
+    with pytest.raises(FileNotFoundError, match="Token source not found"):
+        ct.compile_tokens(str(tmp_path / "prototype" / "missing-world.md"), str(out_css))
+    assert not out_css.exists(), "no artifact may be written for a refused source"

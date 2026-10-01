@@ -66,6 +66,10 @@ The review has a second half that is not a defect hunt: take the Direction Contr
 ([`../01-foundations/design-language.md`](../01-foundations/design-language.md)) and
 ask, of the *actual render*, whether each declared block is observable. This is the
 check that catches a direction that was locked in words and then not built.
+Every capture receipt carries a `direction_contract_checklist` — the six questions
+(THESIS / OWN-WORLD / STORY / FIRST VIEWPORT / FORM / FINISH) — emitted by
+`capture.mjs`; the review starts from these six against the render, and the review
+portal surfaces the same checklist per capture card.
 
 | Contract block | The question the render must answer |
 |---|---|

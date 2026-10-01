@@ -627,7 +627,16 @@ def parse_viewports(text: str) -> List[int]:
 def _viewports_prose(text: str) -> List[int]:
     """The compatibility scan: any `NNNpx` in the text, most fragile route."""
     out: List[int] = []
-    for m in re.finditer(r"(?<!\d)(\d{3,4})\s*px", text):
+    lines = []
+    in_fence = False
+    for line in text.splitlines():
+        if line.strip().startswith("```") or line.strip().startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            lines.append(line)
+    clean_text = "\n".join(lines)
+    for m in re.finditer(r"(?<!\d)(\d{3,4})\s*px", clean_text):
         v = int(m.group(1))
         if 200 <= v <= 4000 and v not in out:
             out.append(v)
@@ -1147,8 +1156,17 @@ def compile_canonical_ir(
             try:
                 frag_data = json.loads(fpath.read_text(encoding="utf-8"))
                 break
-            except Exception:
-                pass
+            except json.JSONDecodeError as error:
+                raise IncompleteStageContractError(
+                    [{
+                        "key": "state_model_fragment",
+                        "label": f"State model fragment ({fpath.relative_to(root).as_posix() if fpath.is_relative_to(root) else fpath.name})",
+                        "section": "State model compilation",
+                        "form": "Valid JSON file",
+                        "example": f"第 {error.lineno} 行第 {error.colno} 列 JSON 语法错误：{error.msg}",
+                    }],
+                    header=f"compile_spec_ir: 状态模型片段 {fpath.name} 语法错误，编译中止。",
+                ) from error
 
     # Extract Product / Identity (Frontmatter title or Markdown header)
     if fm_data.get("title"):

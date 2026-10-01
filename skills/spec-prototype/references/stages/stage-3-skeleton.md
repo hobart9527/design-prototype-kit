@@ -101,11 +101,11 @@ share one atomic vocabulary. Synonym drift is forbidden.
 ## Strict Token Inheritance
 
 Every secondary surface links the global stylesheet using the compiled
-`visual_directives.token_link_tag` verbatim. Never retype the relative depth by
-hand: the anchor sits at `prototype/experiments/<slice>/anchor/index.html`, so
-the path to `prototype/shared/tokens.css` is a property of the tree that the
-compiler resolves (`../../../shared/tokens.css` for the canonical anchor, but
-read it from the IR rather than reconstructing it). Inline hex colors and
+`visual_directives.token_link_tag` verbatim. The anchor sits at
+`prototype/experiments/<slice>/anchor/index.html`, so the path to
+`prototype/shared/tokens.css` is the fixed relative depth
+`../../../shared/tokens.css` and may be written directly without an IR
+pass (Stage 5 compilation re-verifies the link against the IR). Inline hex colors and
 hard-coded pixel margins are eliminated to preserve the design system's one-way
 truth inheritance.
 

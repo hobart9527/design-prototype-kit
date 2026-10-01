@@ -469,9 +469,14 @@ def packet(root: Path, spec: str) -> dict:
             "skill_root": str(Path(__file__).resolve().parents[1])}
 
 
+def candidate_id_of(spec_path: Path) -> str:
+    """Return the canonical candidate id (e.g. r1.spec.md -> r1, r1.md -> r1)."""
+    return spec_path.name.removesuffix(".spec.md").removesuffix(".md")
+
+
 def pillar_packet(root: Path, spec_path: Path) -> dict:
     slice_id = spec_path.parent.name
-    candidate_id = spec_path.name.removesuffix(".spec.md").removesuffix(".md")
+    candidate_id = candidate_id_of(spec_path)
     required = {
         "product": root / "prototype/product.md",
         "surface_map": root / "prototype/contracts/surface-maps/m1.md",
@@ -798,7 +803,7 @@ def freeze(root: Path, spec: str) -> dict:
             for artifact in [
                 pkt["specification"],
                 *pkt["required_reads"][1:],
-                *[retained(root, rel_path) for rel_path in sorted(design_record.parts)],
+                # design_record.parts excluded: design records are always mutable and never freeze subjects
                 *[
                     retained(root, str(path.relative_to(root)))
                     for path in (
@@ -834,14 +839,28 @@ def downstream_admission(root: Path, slice_id: str) -> dict:
         raise HandoffError(
             "Downstream Gate Blocked: frozen manifest carries no approval binding; "
             "re-freeze with an actual recorded approval decision.")
-    for ref in (record, binding.get("source")):
-        if not ref:
-            continue
-        current = retained(root, ref["path"])
-        if current["sha256"] != ref["sha256"]:
+    source_ref = binding.get("source")
+    if source_ref:
+        current_source = retained(root, source_ref["path"])
+        if current_source["sha256"] != source_ref["sha256"]:
             raise HandoffError(
-                f"Downstream Gate Blocked: {ref['path']} changed after freeze "
-                f"({current['sha256'][:8]} != {ref['sha256'][:8]}); re-freeze before admission.")
+                f"Downstream Gate Blocked: {source_ref['path']} changed after freeze "
+                f"({current_source['sha256'][:8]} != {source_ref['sha256'][:8]}); re-freeze before admission.")
+    # Verify approval binding row from mutable design record without locking the whole file
+    if record and record.get("path"):
+        rec_path = root / record["path"]
+        if not rec_path.is_file():
+            raise HandoffError(
+                f"Downstream Gate Blocked: Approval record {record['path']} is missing; re-freeze before admission.")
+        try:
+            current_binding = approval_binding(root, slice_id, manifest.get("approval", {}).get("scope", {}).get("candidate_id", ""))
+            expected_decision = binding.get("decision_id")
+            if current_binding.get("decision_id") != expected_decision:
+                raise HandoffError(
+                    f"Downstream Gate Blocked: Approval decision '{expected_decision}' in {record['path']} changed after freeze; re-freeze before admission.")
+        except HandoffError as err:
+            raise HandoffError(
+                f"Downstream Gate Blocked: Approval record {record['path']} changed after freeze ({err}); re-freeze before admission.") from err
     frozen = json.loads((root / manifest["manifest"]).read_text(encoding="utf-8"))
     spec_ref = frozen.get("specification")
     if spec_ref:
@@ -900,7 +919,7 @@ def check_downstream_gate(root: Path, slice_id: str) -> dict:
     spec_body = spec_path.read_text(encoding="utf-8")
 
     # Check for freeze manifest
-    evidence_dir = root / "prototype/evidence" / slice_id / spec_path.stem
+    evidence_dir = root / "prototype/evidence" / slice_id / candidate_id_of(spec_path)
     manifest_path = evidence_dir / "freeze-manifest.json"
 
     # Extract authority / compilation status, matching the same formats freeze
