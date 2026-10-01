@@ -23,9 +23,19 @@ inspection pass, not as separate screenshot trips.
 - **Numeric stability** `CRAFT-TABULAR-NUMS`: values that update in place or align
   in columns carry `font-variant-numeric: tabular-nums`; prose numbers are out of
   scope.
+- **Action safety & reversible feedback** `CRAFT-ACTION-FEEDBACK`: destructive or high-stakes
+  actions (drain, offline, delete, terminate) must provide a closed loop:
+  1. Consequence clearly visible before commit.
+  2. Perceptible state feedback immediately after action (`处理中`, `已排空`, `draining`, etc.).
+  3. Recovery, rollback, or safe exit reachable on the same surface (`撤销`, `回滚`, `rollback`, `undo`).
+- **Surface optics and top sheen** `CRAFT-SURFACE-SHEEN`: elevated panels and dark surfaces
+  simulate optical chamfers with hairline top highlights (`var(--surface-sheen)`) instead of
+  flat mechanical borders alone.
+- **Kinetic physics** `CRAFT-KINETIC-SPRING`: transition and motion curves use organic spring
+  physics (`var(--spring-snappy)`, `var(--spring-gentle)`) rather than linear or mechanical `ease`.
 - **Browser surfaces** `CRAFT-SELECTION` `CRAFT-CARET` `CRAFT-SCROLLBAR`
   `CRAFT-FOCUS-RING`: the parts you did not draw still carry the design. Text
-  selection, the caret, custom scrollbars, focus rings, underline offset, and
+  selection, the caret (`caret-color`), custom scrollbars, focus rings, underline offset, and
   tabular numerals ship with browser defaults belonging to no design system.
   Theme them from the palette. This is the cheapest signal that a page was built
   rather than assembled, and the one that gets skipped most reliably.

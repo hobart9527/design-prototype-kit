@@ -123,13 +123,20 @@ Make every surface feel intentionally authored for this specific problem space.
 1. **Perceptible `:active` press feedback** on commit controls (`spring` micro-feedback).
 2. **Concentric nested radii geometry** ($R_{in} = \max(0, R_{out} - P)$ with 1px tolerance).
 3. **Tabular numerals** (`font-variant-numeric: tabular-nums`) for changing or column-aligned numbers.
-4. **WCAG 2.2 AA contrast** (4.5:1 minimum) and truthful evidence.
-5. **Mobile touch target minimum** (44x44px tappable footprint) and safe-area insets.
+4. **Action Safety & Reversible Loop**: Destructive or high-consequence actions must show consequences *before* commit, update to explicit status feedback *after* commit (`已完成`/`处理中`/`已排空`), and provide a discoverable exit or undo route (`撤销`/`回滚`) on the same surface.
+5. **Modern Material Sheen & Kinetic Spring**: Use `--surface-sheen` for micro-chamfers and `--spring-snappy` / `--spring-gentle` for spatial motion. Theme browser surfaces (`caret-color`, `::selection`).
+6. **WCAG 2.2 AA contrast** (4.5:1 minimum) and truthful evidence.
+7. **Mobile touch target minimum** (44x44px tappable footprint) and safe-area insets.
 
 On demand extensions:
 - [`mobile-ux.md`](references/02-craft-methods/mobile-ux.md): thumb-zone mechanics, bottom sheet resistance.
 - [`ai-native-ux.md`](references/02-craft-methods/ai-native-ux.md): streaming debouncing, confidence cues, human-in-the-loop triggers.
 - [`reference-set.md`](references/05-benchmarks/reference-set.md): observable benchmark patterns from real top-tier products.
+
+## Lean Delivery & Token Efficiency (轻量化高质交付)
+
+- **Surgical Prototype Scope**: Keep interactive prototypes self-contained, clean, and under 500 lines of HTML/CSS/JS. Avoid gratuitous mockup datasets or monolithic single-turn code generation that risk token bloat or inference timeouts.
+- **Strict Semantic Neutrality**: Never fabricate unprompted business-domain entities (e.g. do not introduce payment gateways, billing, or shift calendars unless the user explicitly requested them). Use neutral system primitives (`core-api`, `node-cluster`, `data-worker`).
 
 ## Single-Brain End-to-End Ownership (单脑贯通 · 极速交付)
 
