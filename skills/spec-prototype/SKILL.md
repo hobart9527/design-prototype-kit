@@ -88,6 +88,12 @@ Turn 1: Frame & Polarized Divergence ──► Turn 2: Direct Make ──► Tur
 | **2 · Make** | A runnable anchor (`experiments/<slice>/anchor/index.html`), its compiled `tokens.css`, and captures at declared viewports. Visual world is authored once from reality. Without a browser runtime, exit is `PARTIAL` + `visual_evidence: unverified` carried to Turn 3. |
 | **3 · Look & Deliver** | Inspect rendered `.png` screenshots directly with `Read` tool. Audit hierarchy, real content texture, and contrast. Execute one focused in-place refinement. Spec extraction and Stage 5 freeze are explicit opt-in handoff steps when engineering delivery is requested. |
 
+**Stage 3: 拓 (Make scope).** Resolve coverage once before expanding the anchor. [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) owns the procedure.
+
+**Coverage Selection:** scope, not approval, and an implementation target only. The full object model and Surface Map stay authoritative; unselected surfaces stay provisional, not deleted; out-of-scope dependencies are disclosed, never silently added. Present concrete recommended combinations (surfaces and flows, what each validates, what is deliberately dropped) plus a full-product option, only while scope is unresolved. Reuse an explicit prior selection; never default to full-product when none exists. Direction probes, spec-only requests and local refinement keep their lightweight routes.
+
+**Structure: Derived** from authentic Surface Topology (Primary · Contextual · Supporting), not a fixed screen count. The freeze/handoff command binds the selected `specifications/<slice_id>/r1.spec.md` when the user requests a frozen handoff.
+
 Budget is turns and wall clock, not paperwork. Apply [refine operators](references/operators.md)
 (target axis, from → to, invariant preserved, falsifier) for surgical in-place iterations.
 
@@ -107,7 +113,7 @@ prototype/
 ```
 
 **Absolute Refusal List**:
-1. NEVER author the retired fragmented contract set or duplicate `prototype/product.md`.
+1. NEVER author the retired fragmented contract set or duplicate `prototype/product.md`; the retirement list is owned by [`artifact-lifecycle.md`](references/04-governance/artifact-lifecycle.md).
 2. NEVER use `assemble_envelope.py` as an authoring or dispatch stage; it is a legacy/benchmark compatibility helper.
 3. NEVER author review portals outside `prototype/review-portal.html`.
 4. NEVER loop on visual guesswork or trial-and-error CSS hacks. Read the structured `diagnostics_summary` from `capture.mjs` directly.
