@@ -46,7 +46,10 @@ ORDINAL_HEADING_RE = re.compile(r"^\s*(?:0[1-9]|1[0-9])\s*$")
 EMOJI_RE = re.compile(
     "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF]")
 GRADIENT_TEXT_RE = re.compile(r"background-clip\s*:\s*text", re.IGNORECASE)
-SIDE_STRIPE_RE = re.compile(r"border-(?:left|right)\s*:\s*([2-9]|\d{2,})px\s+solid", re.IGNORECASE)
+# A side accent stripe is a container treatment. Row-level change markers ride
+# 1–2px (VS Code and diff UFs use exactly that on list items), so the floor for
+# "stripe" is 3px: anything thinner is an item marker, not a container accent.
+SIDE_STRIPE_RE = re.compile(r"border-(?:left|right)\s*:\s*([3-9]|\d{2,})px\s+solid", re.IGNORECASE)
 # The model-default faces: reaching for one of these as the *only* face means the
 # typographic axis was never decided.
 REFLEX_FACES = ("inter", "roboto", "open sans", "lato", "montserrat", "poppins",

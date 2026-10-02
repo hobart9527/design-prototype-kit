@@ -46,6 +46,15 @@ inspection pass, not as separate screenshot trips.
   picture.
 - **Theme origin** `CRAFT-THEME-ORIGIN`: light or dark is chosen from the use
   scene — who, where, under what ambient light — not from the product's category.
+- **Reduced-motion pairing** `CRAFT-REDUCED-MOTION`: any surface that ships
+  spring or animated transitions pairs them with a `prefers-reduced-motion`
+  fallback that preserves the state change without the motion. Motion is the
+  enhancement; the state change is the contract.
+- **Live status regions** `CRAFT-ARIA-LIVE`: a status that updates in place
+  (progress, drain state, toast, live feed) exposes `aria-live="polite"` (or
+  `assertive` for urgent) so assistive technology perceives the change. A
+  progress bar the screen reader cannot hear is a state change that never
+  happened for that user.
 
 ### Rule IDs are the anchor
 

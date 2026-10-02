@@ -76,10 +76,12 @@ formula or a fixed pixel checklist. Required means every axis is *accounted for*
 not that every axis carries a value: each of the five carries either a value with
 its cited product evidence, or an explicit `open` with the reason it stays free.
 An axis left blank is indistinguishable from an axis decided by model default —
-which is why silence is the one outcome this kernel forbids. This closes the hole
-that "optional" left open while keeping the register a decision, not a form to
-fill. Authentic reference products (e.g. Linear, Stripe, Raycast, Vercel) serve
-as empirical anchors for these coordinates, not visual templates to clone blindly.
+which is why silence at direction lock is the one outcome this kernel forbids.
+This closes the hole that "optional" left open while keeping the register a
+decision, not a form to fill. The register binds at direction lock only: a bounded
+direction probe, a spec-only request, or a local refinement does not trigger it.
+Authentic reference products (e.g. Linear, Stripe, Raycast, Vercel) serve as
+empirical anchors for these coordinates, not visual templates to clone blindly.
 
 ## 6. Semantic Preservation and Coverage Selection
 

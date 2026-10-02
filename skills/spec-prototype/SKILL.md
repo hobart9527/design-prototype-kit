@@ -82,15 +82,17 @@ Turn 1: Frame & Polarized Divergence ──► Turn 2: Direct Make ──► Tur
    [2-3 Opposing Hypotheses]                [Runnable Anchor]             [Screenshot Inspection + Handoff]
 ```
 
-| Turn | Milestone & Core Deliverable |
-|---|---|
-| **1 · Frame & Polarized Divergence** | The core product tension plus **at least 2 structurally polarized hypotheses** (differing in chassis, mental model, or operating paradigm—e.g. Dense Matrix vs. Conversational Stream—with explicit trade-offs and recommendation). Unattended runs take the recommendation recorded as `proposed` + `provisional`, never `confirmed`. |
-| **2 · Make** | A runnable anchor (`experiments/<slice>/anchor/index.html`), its compiled `tokens.css`, and captures at declared viewports. Visual world is authored once from reality. Without a browser runtime, exit is `PARTIAL` + `visual_evidence: unverified` carried to Turn 3. |
-| **3 · Look & Deliver** | Inspect rendered `.png` screenshots directly with `Read` tool. Audit hierarchy, real content texture, and contrast. Execute one focused in-place refinement. Spec extraction and Stage 5 freeze are explicit opt-in handoff steps when engineering delivery is requested. |
+| Turn | Milestone & Core Deliverable | Owns |
+|---|---|---|
+| **1 · Frame & Polarized Divergence** | The core product tension plus **at least 2 structurally polarized hypotheses** (differing in chassis, mental model, or operating paradigm—e.g. Dense Matrix vs. Conversational Stream—with explicit trade-offs and recommendation). Unattended runs take the recommendation recorded as `proposed` + `provisional`, never `confirmed`. If Turn 1 was cut short before presenting candidates, no later turn may mark any direction `confirmed`; a restated brief is not a user confirmation. | [`stage-1-frame.md`](references/stages/stage-1-frame.md) |
+| **2 · Make** | A runnable anchor (`experiments/<slice>/anchor/index.html`), its compiled `tokens.css`, and captures at declared viewports. Visual world is authored once from reality. Without a browser runtime, exit is `PARTIAL` + `visual_evidence: unverified` carried to Turn 3. | [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) |
+| **3 · Look & Deliver** | Inspect rendered `.png` screenshots directly with `Read` tool. Audit hierarchy, real content texture, and contrast. Execute one focused in-place refinement. Spec extraction and Stage 5 freeze are explicit opt-in handoff steps when engineering delivery is requested. | [`stage-4-audit.md`](references/stages/stage-4-audit.md) |
+
+Load only the stage file your current turn names, plus [`craft-floor.md`](references/02-craft-methods/craft-floor.md) before the first runnable write. Do not preload other stage files or adjacent references "just in case"; the routing above is exhaustive for a 3-turn run.
 
 **Stage 3: 拓 (Make scope).** Resolve coverage once before expanding the anchor. [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) owns the procedure.
 
-**Coverage Selection:** scope, not approval, and an implementation target only. The full object model and Surface Map stay authoritative; unselected surfaces stay provisional, not deleted; out-of-scope dependencies are disclosed, never silently added. Present concrete recommended combinations (surfaces and flows, what each validates, what is deliberately dropped) plus a full-product option, only while scope is unresolved. Reuse an explicit prior selection; never default to full-product when none exists. Direction probes, spec-only requests and local refinement keep their lightweight routes.
+**Coverage Selection:** scope, not approval, and an implementation target only. The full object model and Surface Map stay authoritative; unselected surfaces stay provisional, not deleted; out-of-scope dependencies are disclosed, never silently added. Present concrete recommended combinations (surfaces and flows, what each validates, what is deliberately dropped) plus a full-product option, only while scope is unresolved. Reuse an explicit prior selection; never default to full-product when none exists. Direction probes, spec-only requests and local refinement keep their lightweight routes. The combination fields and the `reconcile_obligations` reconciler semantics are owned by [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md); this line routes, it does not restate them.
 
 **Structure: Derived** from authentic Surface Topology (Primary · Contextual · Supporting), not a fixed screen count. The freeze/handoff command binds the selected `specifications/<slice_id>/r1.spec.md` when the user requests a frozen handoff.
 
@@ -113,10 +115,10 @@ prototype/
 ```
 
 **Absolute Refusal List**:
-1. NEVER author the retired fragmented contract set or duplicate `prototype/product.md`; the retirement list is owned by [`artifact-lifecycle.md`](references/04-governance/artifact-lifecycle.md).
-2. NEVER use `assemble_envelope.py` as an authoring or dispatch stage; it is a legacy/benchmark compatibility helper.
+1. NEVER author the retired fragmented contract set or duplicate `prototype/product.md` in the primary delivery flow; the retirement list is owned by [`artifact-lifecycle.md`](references/04-governance/artifact-lifecycle.md).
+2. NEVER use `assemble_envelope.py` as an authoring or dispatch stage in the primary delivery flow; it is a legacy/benchmark compatibility helper.
 3. NEVER author review portals outside `prototype/review-portal.html`.
-4. NEVER loop on visual guesswork or trial-and-error CSS hacks. Read the structured `diagnostics_summary` from `capture.mjs` directly.
+4. NEVER loop on visual guesswork or trial-and-error CSS hacks in the primary delivery flow. Read the structured `diagnostics_summary` from `capture.mjs` directly.
 
 The machine-read lists in design records (`contract:states`, `contract:invariants`, `contract:actions`,
 `contract:viewports`, `contract:axes`, `contract:craft`, `contract:tokens`, `contract:meso`) are authoritative

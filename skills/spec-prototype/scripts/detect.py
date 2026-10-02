@@ -91,6 +91,15 @@ def _has_action_feedback(path: pathlib.Path) -> bool:
         r"处理中|已排空|已完成|draining|撤销|回滚|rollback|undo", text, re.IGNORECASE))
 
 
+def _has_reduced_motion(path: pathlib.Path) -> bool:
+    return bool(re.search(r"prefers-reduced-motion", _artifact_text(path), re.IGNORECASE))
+
+
+def _has_aria_live(path: pathlib.Path) -> bool:
+    return bool(re.search(r"aria-live\s*=\s*[\"'](?:polite|assertive)[\"']",
+                          _artifact_text(path), re.IGNORECASE))
+
+
 # -- registry ------------------------------------------------------------------
 # id -> (rule as the craft floor states it, kind, detector or None)
 # A `prose_only` entry names why it cannot be mechanised, so the reason is on the
@@ -148,6 +157,14 @@ RULES: dict[str, dict] = {
     "CRAFT-ACTION-FEEDBACK": {
         "prose": "destructive or high-stakes actions show consequence before commit, explicit status after, and a recovery route",
         "kind": "check", "detector": _has_action_feedback,
+    },
+    "CRAFT-REDUCED-MOTION": {
+        "prose": "spring or animated transitions pair with a prefers-reduced-motion fallback",
+        "kind": "check", "detector": _has_reduced_motion,
+    },
+    "CRAFT-ARIA-LIVE": {
+        "prose": "dynamically updating status regions expose aria-live so assistive tech perceives change",
+        "kind": "check", "detector": _has_aria_live,
     },
     "CRAFT-TOUCH-TARGET": {
         "prose": "interactive controls measure at least 44x44px in touch contexts",
