@@ -67,6 +67,60 @@ def test_slop_detector_is_silent_on_a_clean_artifact(tmp_path):
     assert "SLOP-017" not in result["counts"], "themed browser surfaces must not be flagged"
 
 
+def test_slop_019_ignores_css_comments(tmp_path):
+    # r24 false positive: tokens.css header prose "asymmetric" matched
+    # METRIC_CLASS_RE's "metric" and fired SLOP-019 on a variables-only file.
+    _write(tmp_path, "prototype/shared/tokens.css", """/* Density axis: asymmetric 12px rhythm, stat-free */
+:root {
+  --selection-bg: oklch(0.6 0.12 30);
+  --scrollbar-thumb: oklch(0.4 0.02 250);
+  --focus-ring: oklch(0.7 0.1 30);
+  --space-unit: 12px;
+}""")
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+::selection { background: var(--selection-bg); }
+:focus-visible { outline: 2px solid var(--focus-ring); }
+::-webkit-scrollbar { width: 10px; }
+body { caret-color: var(--focus-ring); }
+</style></head><body><p>steady state</p></body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-019" not in result["counts"], (
+        f"comment prose must not read as a metric class: {result['findings']}")
+
+
+def test_slop_style_extraction_survives_truncation(tmp_path):
+    # r24 false positive class: artifact_texts caps files, and a cap landing
+    # inside <style> drops </style>. Extraction must still see the CSS so
+    # SLOP-017 does not fire on empty input.
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+::selection { background: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); }
+::-webkit-scrollbar { width: 10px; }
+body { caret-color: var(--accent); }
+.metric { font-variant-numeric: tabular-nums; }
+""")  # truncated: no </style>, no </head>
+    result = sd.detect(tmp_path)
+    assert "SLOP-017" not in result["counts"], (
+        f"unclosed <style> must not blind the surface rules: {result['findings']}")
+
+
+def test_slop_002_ignores_transient_toast_accent(tmp_path):
+    # r24 false positive: a status toast's 3px semantic accent bar is a ledger
+    # convention (GitHub/Linear notifications), not the container-stripe cliché.
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+::selection { background: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); }
+::-webkit-scrollbar { width: 10px; }
+body { caret-color: var(--accent); }
+.metric { font-variant-numeric: tabular-nums; }
+.toast { border: 1px solid var(--line); border-left: 3px solid var(--green); }
+.toast.warn { border-left-color: var(--amber); }
+</style></head><body><p>ok</p></body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-002" not in result["counts"], (
+        f"toast accent bars must not read as container stripes: {result['findings']}")
+
+
 def test_slop_detector_flags_unthemed_browser_surfaces_and_missing_press_detent(tmp_path):
     _write(tmp_path, "prototype/experiments/s/anchor/index.html",
            '<html><head><style>.x{color:#111}</style></head><body>'

@@ -155,7 +155,13 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
         expected = must | relevant
         hit_expected = sorted(expected & set(referenced))
         precision = round(len(set(referenced) & expected) / len(referenced), 3) if referenced else None
-        recall = round(len(hit_expected) / len(expected), 3) if expected else None
+        # Recall measures nothing when nothing was referenced: scoring 0.0 there
+        # punishes a legitimate layout that no longer emits the self-labelling
+        # surface the judge regex expects (r24 lost the retired briefs/
+        # frontmatter and read as a recall collapse with zero reasoning change).
+        # Unmeasured is reported as None so the aggregate renders null, not 0.0.
+        recall = (round(len(hit_expected) / len(expected), 3)
+                  if expected and referenced else None)
         negative = round(1 - (len(set(referenced) & banned) / len(referenced)), 3) if referenced and banned else None
         hit_banned = sorted(banned & set(referenced))
         # Negative paradigm: fail ONLY if explicitly selecting banned anti-patterns/methods.

@@ -92,6 +92,29 @@ def test_error_envelope_is_not_mistaken_for_model_output():
     assert payload.get("result") is None
 
 
+def test_iteration_rollup_reads_assistant_tool_calls(tmp_path):
+    # r24's T1 burned 61 iterations and only call-level aggregates survived;
+    # the rollup exists so a max_turns exit answers "reading, writing, or
+    # verifying" from the transcript rather than from guesswork.
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    rows = [
+        {"type": "user", "message": {"content": "brief"}},
+        {"type": "assistant", "message": {"stop_reason": "tool_use",
+            "usage": {"output_tokens": 120},
+            "content": [{"type": "tool_use", "name": "Read"},
+                        {"type": "text", "text": "checking"}]}},
+        {"type": "assistant", "message": {"stop_reason": "tool_use",
+            "usage": {"output_tokens": 800},
+            "content": [{"type": "tool_use", "name": "Write"}]}},
+    ]
+    (proj / "s-1.jsonl").write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+    rollup = bl.iteration_rollup("s-1", config_root=tmp_path)
+    assert [r["tools"] for r in rollup] == [["Read"], ["Write"]]
+    assert rollup[0]["output_tokens"] == 120
+    assert bl.iteration_rollup("missing-session", config_root=tmp_path) == []
+
+
 def test_matrix_runs_candidate_before_stable_control(tmp_path, monkeypatch):
     calls = []
     matrix = tmp_path / "matrix"

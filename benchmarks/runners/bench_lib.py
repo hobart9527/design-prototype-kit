@@ -453,6 +453,10 @@ def run_claude(prompt: str, cwd: pathlib.Path, *, session_id: str | None = None,
         "cost_usd": payload.get("total_cost_usd"),
         "is_error": payload.get("is_error"),
         "usage": payload.get("usage") or {},
+        # Per-iteration rollup from the session transcript: the CLI's final
+        # payload is call-level only, so "61 iterations doing what" was
+        # unanswerable in r24. The transcript survives even a max_turns exit.
+        "iterations": iteration_rollup(payload.get("session_id") or session_id or ""),
         "models": sorted((payload.get("modelUsage") or {}).keys()),
         "stderr": clean_stderr(proc.stderr)[:2000],
         "subtype": payload.get("subtype"),
@@ -539,6 +543,42 @@ def estimate_cost_from_transcript(session_id: str, config_root: pathlib.Path | N
     if not recorded:
         return None
     return round(max(recorded), 4)
+
+
+def iteration_rollup(session_id: str, config_root: pathlib.Path | None = None) -> list:
+    """Per-iteration rollup from the CLI session transcript.
+
+    The CLI's final payload aggregates a whole call into one usage block, so a
+    max_turns exit (61 iterations in r24) is otherwise a black box: the money
+    is known, the behaviour is not. The transcript records every assistant
+    message with its tool calls; summarising it per message turns "was the loop
+    reading, writing, or verifying" into a countable question. Read-only —
+    the transcript is written incrementally by the CLI and survives both
+    max_turns and timeout exits. Returns [] when the transcript is missing or
+    unreadable; a missing rollup must never fail the call that produced it.
+    """
+    root = config_root or (pathlib.Path.home() / ".claude" / "projects")
+    matches = list(root.glob(f"*/{session_id}.jsonl")) if session_id else []
+    if not matches:
+        return []
+    try:
+        rows = [json.loads(line) for line in matches[0].read_text(encoding="utf-8").splitlines() if line.strip()]
+    except (OSError, json.JSONDecodeError):
+        return []
+    rollup = []
+    for row in rows:
+        if row.get("type") != "assistant":
+            continue
+        message = row.get("message") or {}
+        tools = [c.get("name") for c in (message.get("content") or [])
+                 if isinstance(c, dict) and c.get("type") == "tool_use" and c.get("name")]
+        usage = message.get("usage") or {}
+        rollup.append({
+            "tools": tools,
+            "output_tokens": usage.get("output_tokens"),
+            "stop_reason": message.get("stop_reason"),
+        })
+    return rollup
 
 
 def new_session_id() -> str:
@@ -757,8 +797,15 @@ def _digest_map(mapping: dict) -> str | None:
 TEXT_SUFFIXES = (".md", ".html", ".css", ".js", ".mjs", ".json", ".txt", ".yaml")
 
 
-def artifact_texts(directory: pathlib.Path, limit_per_file: int = 20000) -> dict:
-    """Text artifacts produced by a design session, keyed by relative path."""
+def artifact_texts(directory: pathlib.Path, limit_per_file: int = 60000) -> dict:
+    """Text artifacts produced by a design session, keyed by relative path.
+
+    The per-file cap exists to bound judge prompt size, but it must stay above
+    the largest authored artifact: r24's anchor index.html was 43.3k chars with
+    its closing </style> at offset 20,298 — under the old 20k cap the slop
+    detector extracted zero CSS and fired four false SLOP-017s on a fully
+    themed surface. 60k covers that with headroom; flatten_artifact_text still
+    bounds the aggregate judge prompt at its own cap."""
     texts = {}
     if not directory or not pathlib.Path(directory).is_dir():
         return texts

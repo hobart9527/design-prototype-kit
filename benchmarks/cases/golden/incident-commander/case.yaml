@@ -6,7 +6,11 @@ tension_class: low_innovation
 
 run_policy:
   repeats: 3
-  timeout_seconds: 1800
+  # Three keyword-injected events make 4-5 calls the norm, not 3: r24 died at
+  # exactly 1800.00s cumulative with turn 4 (mobile-read-only event) stranded
+  # at its 118s remainder. 2400s prices the event cascade the case itself
+  # defines; per-call budget and max_turns still bound runaway calls.
+  timeout_seconds: 2400
   max_turns: 24
   max_budget_usd_per_turn: 8.0
 

@@ -93,6 +93,12 @@ the first. Templates live under `../../templates/`: `discussion.md` for the
 single-record layout, `truth.md` + `world.md` + `briefs/_slice.md` for the
 layered one.
 
+Wherever the Decisions table lives, each row for a tension-bearing pillar
+cites the applied method registry id inline (e.g. `context-preservation`,
+`action-verb-lifecycle`; the registry is [`../../methods/registry.yaml`](../../methods/registry.yaml)).
+One inline code span per decision row is enough — the citation is a routing
+signal for downstream method audit, not a narrative device.
+
 The brief needs only the applicable parts of:
 
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.

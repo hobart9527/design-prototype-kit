@@ -70,6 +70,7 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             "num_turns": out.get("num_turns"),
             "cost_usd": out.get("cost_usd"),
             "usage": out.get("usage"),
+            "iterations": out.get("iterations") or [],
             "stderr": (out.get("stderr") or "")[:500],
             "errors": out.get("errors"),
         }

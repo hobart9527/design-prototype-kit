@@ -30,7 +30,12 @@ from html.parser import HTMLParser
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "runners"))
 import bench_lib as bl  # noqa: E402
 
-STYLE_RE = re.compile(r"<style[^>]*>(.*?)</style>", re.IGNORECASE | re.DOTALL)
+# STYLE_RE must tolerate a truncated document: artifact_texts caps files, and a
+# cap that lands inside a <style> block drops the closing tag. Requiring </style>
+# then extracts zero CSS and every cross-file surface rule (SLOP-017) fires on
+# emptiness — r24 produced four false findings exactly this way.
+STYLE_RE = re.compile(r"<style[^>]*>(.*?)(?:</style>|\Z)", re.IGNORECASE | re.DOTALL)
+CSS_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 TAG_RE = re.compile(r"<([a-zA-Z][a-zA-Z0-9-]*)((?:[^>\"']|\"[^\"]*\"|'[^']*')*)>")
 CLASS_RE = re.compile(r'class\s*=\s*"([^"]*)"')
 STYLE_ATTR_RE = re.compile(r'style\s*=\s*"([^"]*)"')
@@ -245,10 +250,20 @@ def _scan_markup(name: str, markup: str, out: _Findings) -> None:
 def _scan_css(name: str, css: str, out: _Findings) -> None:
     decls = _declarations(css)
     values = {prop: val for prop, val in decls}
+    # Comments are prose, not design surface: a header note like "asymmetric"
+    # otherwise matches METRIC_CLASS_RE's "metric" and fires SLOP-019 on a
+    # tokens file that legitimately holds only variable definitions (r24).
+    uncommented = CSS_COMMENT_RE.sub(" ", css)
 
     if GRADIENT_TEXT_RE.search(css):
         out.add("SLOP-001", "high", name, "background-clip: text (gradient text as emphasis)")
-    if SIDE_STRIPE_RE.search(css):
+    stripe = SIDE_STRIPE_RE.search(css)
+    if stripe and not re.search(r"\.toast[^{}]*\{[^}]*" + re.escape(stripe.group(0)),
+                                css, re.IGNORECASE | re.DOTALL):
+        # Transient status toasts conventionally carry a 3px semantic accent bar
+        # (GitHub/Linear/VS Code notifications all do); that is a status ledger,
+        # not a container stripe riding the AI-dashboard cliché. Static layout
+        # containers with a thick stripe still flag.
         out.add("SLOP-002", "high", name, "thick side accent stripe on a container")
     if TRANSITION_ALL_RE.search(css):
         out.add("SLOP-006", "medium", name, "transition: all (unscoped animation)")
@@ -285,7 +300,7 @@ def _scan_css(name: str, css: str, out: _Findings) -> None:
         out.add("SLOP-011", "low", name,
                 f"one radius value ({next(iter(radii))}) across {len(radius_groups)} rule groups")
 
-    if METRIC_CLASS_RE.search(css) and not FONT_VAR_NUM_RE.search(css):
+    if METRIC_CLASS_RE.search(uncommented) and not FONT_VAR_NUM_RE.search(uncommented):
         out.add("SLOP-019", "medium", name, "metric classes without tabular-nums")
 
     if re.search(r"transition[^;{}]*ease(?:-in-out|-in|-out)?\b", css, re.IGNORECASE):
