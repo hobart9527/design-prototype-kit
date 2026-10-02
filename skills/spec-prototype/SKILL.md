@@ -88,7 +88,7 @@ Turn 1: Frame & Polarized Divergence ──► Turn 2: Direct Make ──► Tur
 | **2 · Make** | A runnable anchor (`experiments/<slice>/anchor/index.html`), its compiled `tokens.css`, and captures at declared viewports. Visual world is authored once from reality. Without a browser runtime, exit is `PARTIAL` + `visual_evidence: unverified` carried to Turn 3. | [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) |
 | **3 · Look & Deliver** | Inspect rendered `.png` screenshots directly with `Read` tool. Audit hierarchy, real content texture, and contrast. Execute one focused in-place refinement. Spec extraction and Stage 5 freeze are explicit opt-in handoff steps when engineering delivery is requested. | [`stage-4-audit.md`](references/stages/stage-4-audit.md) |
 
-Load only the stage file your current turn names, plus [`craft-floor.md`](references/02-craft-methods/craft-floor.md) before the first runnable write. Do not preload other stage files or adjacent references "just in case"; the routing above is exhaustive for a 3-turn run.
+Load only the stage file your current turn names, plus [`craft-floor.md`](references/02-craft-methods/craft-floor.md) at the start of Turn 2 — it is the Make/Look craft instrument and loading it during Turn 1 invites token-compilation and verification loops against a frame that is not yet buildable (r26: 16 compile_tokens invocations inside the Frame turn). Do not preload other stage files or adjacent references "just in case"; the routing above is exhaustive for a 3-turn run.
 
 **Stage 3: 拓 (Make scope).** Resolve coverage once before expanding the anchor. [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) owns the procedure.
 

@@ -53,6 +53,14 @@ the scenario (`node-cluster`, `core-api`, `data-worker`); never invent an unprom
 business domain (payment, billing, shift calendars) to make sample content concrete —
 the semantic hard gate reads invented domains as fabrication.
 
+**Axes are prose in Stage 1, machine-checked in Stage 2.** The `contract:axes` block
+and the Five-Axes register are recorded here as declared prose (value with cited
+evidence, or `open` with reason) — never verified against `compile_tokens.py` in this
+stage. The machine check happens for free the moment Turn 2 compiles tokens; a frame
+that pauses to probe the compiler is re-deriving a guarantee the pipeline already
+provides (r26 spent 16 compiler invocations and a `_debug_palette.py` doing exactly
+that).
+
 ## Design brief format & Four High-Density Deliverables (单脑四联装)
 
 The entire design prototype lifecycle is consolidated into four high-density assets:
