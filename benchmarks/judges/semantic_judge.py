@@ -38,8 +38,19 @@ SCHEMA = json.dumps({
 })
 
 
-NEGATION_MARKERS = ("不做", "不要", "不提供", "禁止", "严禁", "绝不", "不得", "不引入", "不接",
-                    "never", "no ", "not ", "without", "avoid", "excluded", "unsupported")
+NEGATION_MARKERS = ("不做", "不要", "不可", "不提供", "禁止", "严禁", "绝不", "不得", "不引入", "不接",
+                    "不脑补", "never", "no ", "not ", "without", "avoid", "excluded", "unsupported")
+
+# Chinese enumeration prose negates at the clause, not at a fixed character
+# window: "排期、值班表、自动修复第一版均不做" and "不脑补值班排班" both carry
+# the marker tens of characters from the term. r23/r24/r25 all shipped
+# prohibition lines the 26-char prefix window could not see, and every one was
+# a false fabrication signal. Scan the whole same-line clause: from the
+# previous hard punctuation to the next, either side of the term. One more
+# escape hatch: a bare enumeration line whose own clause carries no marker but
+# whose heading above declares the list (`Ruthless Omissions`, `第一版不做`,
+# `不做` in the nearest `#`-heading or bold label) is still a prohibition.
+_CLAUSE_BREAKS = "，。；：,.;:!?！？\n（）()【】[]「」"
 
 
 def _is_negated(snippet: str, term: str) -> bool:
@@ -48,8 +59,32 @@ def _is_negated(snippet: str, term: str) -> bool:
     position = window.find(term.lower())
     if position < 0:
         return False
-    prefix = window[max(0, position - 26):position]
-    return any(marker.strip().lower() in prefix for marker in NEGATION_MARKERS)
+    start = max(window.rfind(b, 0, position) for b in _CLAUSE_BREAKS) + 1
+    ends = [window.find(b, position + len(term)) for b in _CLAUSE_BREAKS]
+    end = min([e for e in ends if e >= 0], default=len(window))
+    clause = window[start:end]
+    return any(marker.strip().lower() in clause for marker in NEGATION_MARKERS)
+
+
+_OMISSION_HEADING_RE = None
+
+
+def _omission_heading_above(text: str, match_start: int) -> bool:
+    """The nearest heading/bold label above the hit declares an omission list."""
+    global _OMISSION_HEADING_RE
+    if _OMISSION_HEADING_RE is None:
+        import re as _re
+        _OMISSION_HEADING_RE = _re.compile(
+            r"(?:^|\n)\s*(?:#{1,4}|\*\*|【)[^\n]*(?:不做|omission|excluded|out of scope|范围外)[^\n]*(?:\n|$)",
+            _re.IGNORECASE)
+    prefix = text[:match_start]
+    headings = list(_OMISSION_HEADING_RE.finditer(prefix))
+    if not headings:
+        return False
+    # Only bind when no body content marker (a new heading that is NOT an
+    # omission list) intervenes between the omission heading and the hit.
+    between = prefix[headings[-1].end():]
+    return "###" not in between and "## " not in between
 
 
 def deterministic_hits(texts: dict, ground_truth: dict) -> list:
@@ -60,8 +95,9 @@ def deterministic_hits(texts: dict, ground_truth: dict) -> list:
             for match in re.finditer(re.escape(term), text, flags=re.IGNORECASE):
                 line = text[: match.start()].count("\n") + 1
                 snippet = text.splitlines()[line - 1].strip()[:160]
+                negated = _is_negated(snippet, term) or _omission_heading_above(text, match.start())
                 hits.append({"term": term, "file": name, "line": line, "quote": snippet,
-                             "negated": _is_negated(snippet, term)})
+                             "negated": negated})
     return hits
 
 

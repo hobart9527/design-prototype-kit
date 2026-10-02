@@ -42,6 +42,17 @@ open alternatives only when a consequential choice is genuinely unresolved.
 Ask the user only when a decision materially changes the direction or scope. Resolve
 repository facts silently. Preserve settled and delegated choices on continuation.
 
+**Stage 1 tool boundary.** This stage reads and writes the design record only —
+`discussion.md`, or `truth.md`/`world.md`/`briefs/` on the layered tree. It never runs
+`capture.mjs`, `compile_tokens.py`, or `detect.py`, and it never writes `tokens.css`,
+`experiments/**/index.html`, or `evidence/`: those are Stage 2–4 instruments, and
+running them here is the stage inflation that stranded r24/r25 Turn 1 at the 60-turn
+CLI cap with the Make-stage work unfinished. "Evidence" in this stage means product
+facts and cited references, not rendered captures. Neutral system primitives name
+the scenario (`node-cluster`, `core-api`, `data-worker`); never invent an unprompted
+business domain (payment, billing, shift calendars) to make sample content concrete —
+the semantic hard gate reads invented domains as fabrication.
+
 ## Design brief format & Four High-Density Deliverables (单脑四联装)
 
 The entire design prototype lifecycle is consolidated into four high-density assets:

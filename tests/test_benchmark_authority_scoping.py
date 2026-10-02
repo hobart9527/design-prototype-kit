@@ -60,6 +60,43 @@ def test_plan_wording_naming_a_later_stage_is_not_a_claim(tmp_path):
     assert _escape(tmp_path) is False
 
 
+def test_clause_level_negation_covers_chinese_enumerations(tmp_path):
+    """r23/r24/r25 all shipped prohibition lines the 26-char prefix window missed:
+    `多事故/排班/复盘生成器不做`, `排期、值班表、自动修复第一版均不做`, `不脑补值班排班`.
+    The clause scan must read every one as restraint, while a genuinely fabricated
+    `支付回调` scenario still reports as a signal."""
+    _artifact(tmp_path, "prototype/discussion.md", "# Discussion\n" + "x" * 300 + "\n")
+    texts = {"prototype/truth.md":
+             "| D5 | v1 只覆盖雪崩场景主备处置，多事故/排班/复盘生成器不做 | confirmed |\n"
+             "排期、值班表、ChatOps 集成、自动修复第一版均不做（用户只点名一件事）。\n"
+             "对象模型不脑补值班排班、计费、审批流等未要求能力。\n"
+             "consequence: 生产流量迁移，不可自动恢复。\n"
+             "<span>支付回调雪崩</span>\n"}
+    gt = {"unsupported_terms": ["排班", "值班表", "自动修复", "自动恢复", "支付"]}
+    hits = semantic_judge.deterministic_hits(texts, gt)
+    negated = {h["term"]: h["negated"] for h in hits}
+    assert negated["排班"] is True
+    assert negated["值班表"] is True
+    assert negated["自动修复"] is True
+    assert negated["自动恢复"] is True
+    assert negated["支付"] is False  # fabricated domain stays a live signal
+
+
+def test_omission_heading_negates_a_bare_enumeration_line(tmp_path):
+    """r24: `### Ruthless Omissions（第一版不做）` headed a bare list whose own
+    line carried no marker (`多事故并行、…、值班排班表、…`). The heading binds."""
+    _artifact(tmp_path, "prototype/discussion.md", "# Discussion\n" + "x" * 300 + "\n")
+    texts = {"prototype/discussion.md":
+             "### Ruthless Omissions（第一版不做）\n\n"
+             "多事故并行、告警规则配置、值班排班表、聊天集成。\n\n"
+             "### Invariants\n\n"
+             "值班排班表驱动所有调度。\n"}
+    gt = {"unsupported_terms": ["排班"]}
+    hits = semantic_judge.deterministic_hits(texts, gt)
+    assert hits[0]["negated"] is True   # under the omission heading
+    assert hits[1]["negated"] is False  # a later section asserts it as fact
+
+
 def test_specification_asserting_frozen_authority_without_approval_is_an_escape(tmp_path):
     """The same token where it *is* an authority claim must still be refused."""
     _artifact(tmp_path, "prototype/discussion.md", "# Discussion\n" + "x" * 300 + "\n")
