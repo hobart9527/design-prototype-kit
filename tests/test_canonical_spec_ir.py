@@ -763,6 +763,26 @@ primary_surface: "cockpit-main"
     assert ir["layout_directives"]["massing_pattern"] == "canvas-inspector"
 
 
+def test_compiler_never_mints_frozen_approved(tmp_path: Path):
+    """Only handoff.py freezes from a recorded approval; the compiler cannot claim it."""
+    disc = tmp_path / "prototype/discussion.md"
+    disc.parent.mkdir(parents=True)
+    disc.write_text(COMPLETE_DISCUSSION, encoding="utf-8")
+
+    via_api = compile_canonical_ir(root=tmp_path, slice_id="s1", authority_status="frozen_approved")
+    assert via_api["identity"]["authority_status"] == "sealed_provisional"
+
+    disc.write_text("---\nauthority: frozen_approved\n---\n" + COMPLETE_DISCUSSION, encoding="utf-8")
+    via_frontmatter = compile_canonical_ir(root=tmp_path, slice_id="s1")
+    assert via_frontmatter["identity"]["authority_status"] == "sealed_provisional"
+
+    cli = subprocess.run(
+        [sys.executable, str(SCRIPTS / "compile_spec_ir.py"), "--root", str(tmp_path),
+         "--slice", "s1", "--status", "frozen_approved"],
+        capture_output=True, text=True)
+    assert cli.returncode != 0 and "invalid choice" in cli.stderr
+
+
 def test_execution_boundary_admits_workspace_and_relative_helper_scripts(tmp_path: Path):
     """Verify execution_boundary admits helpers invoked via workspace-relative or installed paths."""
     import execution_boundary

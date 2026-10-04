@@ -234,6 +234,103 @@ def read_design_record(root: Path, slice_id: str) -> DesignRecord:
                         shared=None, slice_block=None)
 
 
+_CODE_FENCE_BLOCK_RE = re.compile(r'^\s*(```|~~~).*?^\s*\1\s*$', re.MULTILINE | re.DOTALL)
+_DECISIONS_HEADING_RE = re.compile(
+    r"^#{1,6}\s+Decisions\s+and\s+authority\b.*$", re.MULTILINE | re.IGNORECASE
+)
+_ANY_HEADING_RE = re.compile(r"^#{1,6}\s+\S.*$", re.MULTILINE)
+_TABLE_ROW_RE = re.compile(r"^\s*\|(.*)\|\s*$")
+_CELL_SPLIT_RE = re.compile(r"(?<!\\)\|")
+_SEPARATOR_CELL_RE = re.compile(r"^:?-+:?$")
+
+
+def strip_code_fences(text: str) -> str:
+    """Remove fenced code blocks (``` and ~~~) from markdown text."""
+    return _CODE_FENCE_BLOCK_RE.sub("", text)
+
+
+class DecisionRow(dict):
+    """A row in the Decisions and authority table.
+
+    Inherits from dict so semantic lookups by normalized column header
+    (e.g. row['status'], row.get('evidence')) work as expected.
+    Also supports indexing/slicing on raw cells (row[2], row[3:5]) and
+    iteration over raw cell values (for backward compatibility with list-based row consumers).
+    """
+
+    def __init__(self, raw_cells: List[str], header_map: Dict[str, str]):
+        super().__init__(header_map)
+        self.raw_cells = list(raw_cells)
+
+    def __getitem__(self, key: Any) -> Any:
+        if isinstance(key, (int, slice)):
+            return self.raw_cells[key]
+        return super().__getitem__(key)
+
+    def __len__(self) -> int:
+        return len(self.raw_cells)
+
+    def __iter__(self):
+        return iter(self.raw_cells)
+
+
+def parse_decision_table(text: str) -> List[DecisionRow]:
+    """Parse the Decisions and authority table rows from a design record.
+
+    1. Strips all fenced code blocks (``` and ~~~) so code examples never authorize actions.
+    2. Scopes to the `## Decisions and authority` section if present.
+    3. Handles column header aliases (status, evidence, user source, scope).
+    4. Returns a list of DecisionRow objects compatible with both dict and list consumers.
+    """
+    clean_text = strip_code_fences(text)
+
+    start_m = _DECISIONS_HEADING_RE.search(clean_text)
+    if start_m:
+        rest = clean_text[start_m.end():]
+        nxt_m = _ANY_HEADING_RE.search(rest)
+        section = rest[: nxt_m.start()] if nxt_m else rest
+    else:
+        section = clean_text
+
+    rows: List[DecisionRow] = []
+    header: Optional[List[str]] = None
+    for line in section.splitlines():
+        m = _TABLE_ROW_RE.match(line)
+        if not m:
+            continue
+        cells = [c.strip() for c in _CELL_SPLIT_RE.split(m.group(1))]
+        if all(_SEPARATOR_CELL_RE.match(c) or not c for c in cells):
+            continue
+        if header is None:
+            header = [c.strip().strip("`").lower() for c in cells]
+            continue
+        if len(cells) != len(header):
+            continue
+
+        header_map: Dict[str, str] = {}
+        for col_name, cell_val in zip(header, cells):
+            header_map[col_name] = cell_val
+            if "status" in col_name or "状态" in col_name:
+                header_map["status"] = cell_val
+            if "decision" in col_name or "决策" in col_name:
+                header_map["decision"] = cell_val
+            if "id" in col_name or "编号" in col_name:
+                header_map["id"] = cell_val
+            if any(k in col_name for k in ("evidence", "quote", "locator", "引用", "定位", "证据")):
+                header_map["evidence"] = cell_val
+            if any(k in col_name for k in ("source", "来源")):
+                header_map["user_source"] = cell_val
+            if any(k in col_name for k in ("artifact", "scope", "产物", "范围")):
+                header_map["scope"] = cell_val
+
+        first = cells[0].strip().strip("`").lower()
+        if first in ("id", "编号", "") and not any(cells[1:]):
+            continue
+
+        rows.append(DecisionRow(cells, header_map))
+    return rows
+
+
 # How much authority an authored action carries. `explicit` is a claim that the
 # user stated the mechanism, so it is never the unmarked default.
 AUTHORITY_LEVELS = ("explicit", "derived", "proposed", "hypothesis")

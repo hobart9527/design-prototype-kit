@@ -229,20 +229,32 @@ def shell_read(command, root):
 def boundary_status(record: Path) -> str | None:
     """Return 'active', 'released', or None from discussion.md declarations.
 
-    Prefers the canonical ## Resume block if present; falls back to the tail of
-    the document for minimal/legacy records.
+    Markdown examples are not boundary declarations. Ignore fenced code before
+    locating the Resume block or reading its status field.
     """
+    field_re = (r'(?:^|\n)\s*(?:[-*]\s*)?(?:\*\*|__)?'
+                r'(?:Execution boundary|执行边界)'
+                r'(?:\*\*|__)?\s*[:：]\s*(active|released)\b')
     try:
         text = record.read_text(encoding='utf-8')
     except OSError:
         return None
-    resume_text = text.split("## Resume", 1)[1].split("\n## ", 1)[0] if "## Resume" in text else text
-    values = re.findall(r'^- Execution boundary:\s*(active|released)\s*$', resume_text, re.M)
-    if not values and "## Resume" in text:
-        values = re.findall(r'^- Execution boundary:\s*(active|released)\s*$', text, re.M)
+    has_content = bool(text.strip())
+    text = re.sub(r'^\s*(```|~~~).*?^\s*\1\s*$', '', text,
+                  flags=re.MULTILINE | re.DOTALL)
+    resume = re.search(r'^#{1,6}\s+(?:Resume|恢复)\b[^\n]*$', text, re.MULTILINE | re.IGNORECASE)
+    if resume:
+        rest = text[resume.end():]
+        nxt = re.search(r'^\s*#{1,6}\s+\S.*$', rest, re.MULTILINE)
+        resume_text = rest[: nxt.start()] if nxt else rest
+    else:
+        resume_text = text
+    values = re.findall(field_re, resume_text, re.IGNORECASE)
+    if not values and resume:
+        values = re.findall(field_re, text, re.IGNORECASE)
     if values:
         return values[-1]
-    return 'active' if text.strip() else None
+    return 'active' if has_content else None
 
 
 def _layered_anchor(root: Path) -> Path | None:
@@ -376,26 +388,39 @@ def spec_view_advisory(target: Path) -> str | None:
 _TURN2_SUFFIXES = {'.html', '.css', '.js', '.mjs', '.png'}
 _TURN2_DIRS = {'evidence', 'experiments', 'shared'}
 
+_RESUME_HEADING_RE = re.compile(r'^#{1,4}\s+(?:Resume|恢复)\b[^\n]*$', re.M)
+
+
 def resume_written(root: Path) -> bool:
-    """Whether any design-record file at this root already carries a Resume block."""
+    """Whether any design-record file at this root already carries a Resume block.
+
+    Tolerates heading level (`### Resume`), a trailing suffix (`## Resume /
+    Next Steps`), and the Chinese heading (`## 恢复`): under the hard gate this
+    heading is the only key that opens Turn 2, so a format slip must not wedge
+    the run.
+    """
     proto = root/'prototype'
     for name in _DESIGN_RECORD_NAMES:
         try:
             text = (proto/name).read_text(encoding='utf-8')
         except OSError:
             continue
-        if re.search(r'^## Resume\b', text, re.M):
+        has_content = bool(text.strip())
+        text = re.sub(r'^\s*(```|~~~).*?^\s*\1\s*$', '', text,
+                      flags=re.MULTILINE | re.DOTALL)
+        if has_content and _RESUME_HEADING_RE.search(text):
             return True
     return False
 
 def turn1_window_advisory(target: Path, root: Path) -> str | None:
-    """Advisory, never a block: runnable artifacts before the Resume seam exists.
+    """Hard block: runnable artifacts before the Resume seam exists.
 
     Turn 1 ends the moment the Resume block is written; tokens, HTML and
-    evidence belong to Turn 2. r35/r36 crossed that seam inside Turn 1 (41 and
-    61 iterations), and the path gate cannot see it because the path is legal.
-    The signal is the seam itself: once the Resume block is on disk the
-    artifact is Turn 2 work and this stays silent.
+    evidence belong to Turn 2. r33–r36 crossed that seam inside Turn 1 (57–90
+    iterations each), and a soft advisory did not stop the model from continuing
+    into the anchor, so the seam is enforced as a gate. The signal is the seam
+    itself: once the Resume block is on disk the artifact is Turn 2 work and
+    this stays silent.
     """
     proto = root/'prototype'
     if not target.is_relative_to(proto) or is_design_record(target, root):
@@ -405,9 +430,11 @@ def turn1_window_advisory(target: Path, root: Path) -> str | None:
     rel = target.relative_to(proto)
     if target.suffix not in _TURN2_SUFFIXES and not (set(rel.parts[:-1]) & _TURN2_DIRS):
         return None
-    return (f'{rel.as_posix()} written before the Resume block exists. Turn 1 ends at the '
-            'Resume block; tokens.css, HTML and evidence open in Turn 2. Write the Resume '
-            'block now and stop this turn (advisory, not a gate).')
+    raise ValueError(
+        f'Execution boundary block: {rel.as_posix()} belongs to Turn 2. Turn 1 '
+        'ends at the Resume block; tokens.css, HTML and evidence open in Turn 2. '
+        'Write the design record with its ## Resume block, end the reply with '
+        '`USER-INPUT: <direction question>`, and stop this turn.')
 
 def _edited_text(args, target: Path) -> str:
     """Reconstruct the post-edit text so validation sees the resulting file."""

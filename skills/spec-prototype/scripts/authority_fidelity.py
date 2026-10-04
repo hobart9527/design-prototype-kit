@@ -24,6 +24,8 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Iterable, List, Sequence
 
+from spec_contract_blocks import parse_decision_table
+
 # Authority levels that assert the user stated the mechanism. The rest
 # (`derived`, `proposed`, `hypothesis`) are the designer's own work and need no
 # provenance row.
@@ -36,60 +38,14 @@ AUTHORITATIVE_SOURCES = ("confirmed", "delegated")
 # Status column values that record an actual decision rather than an open one.
 SETTLED_STATUSES = ("confirmed", "delegated")
 
-_DECISIONS_HEADING = re.compile(
-    r"^#{1,6}\s+.*(?:Decisions\s+and\s+authority|决策与授权|Decisions?\b)",
-    re.IGNORECASE | re.MULTILINE,
-)
-_HEADING = re.compile(r"^#{1,6}\s+", re.MULTILINE)
-_TABLE_ROW = re.compile(r"^\s*\|(.+)\|\s*$")
-# A cell boundary is an unescaped pipe: the template's `User source` header
-# spells its enum as `confirmed \| delegated \| synthetic-fixture`, and a naive
-# split on every pipe makes that header one cell longer than every data row,
-# which would silently skip the whole table.
-_CELL_SPLIT = re.compile(r"(?<!\\)\|")
-_SEPARATOR_CELL = re.compile(r"^:?-{2,}:?$")
-
-
-def _decisions_section(text: str) -> str:
-    """The Decisions-and-authority section body, or the whole text when absent.
-
-    Returning the whole text on a missing heading is deliberate: a discussion
-    that keeps no provenance table has no rows, so every asserted authority
-    fails. Slicing to nothing would make an absent table look like an absent
-    claim instead.
-    """
-    start = _DECISIONS_HEADING.search(text)
-    if not start:
-        return text
-    rest = text[start.end():]
-    nxt = _HEADING.search(rest)
-    return rest[: nxt.start()] if nxt else rest
-
 
 def parse_decision_rows(text: str) -> List[Dict[str, str]]:
     """Rows of the Decisions-and-authority table as dicts keyed by column name.
 
     Header cells are matched by keyword rather than position so a reordered or
-    extended table still parses. A row whose cell count does not match the
-    header is skipped: a malformed row is not evidence of anything.
+    extended table still parses.
     """
-    section = _decisions_section(text)
-    rows: List[Dict[str, str]] = []
-    header: List[str] | None = None
-    for line in section.splitlines():
-        m = _TABLE_ROW.match(line)
-        if not m:
-            continue
-        cells = [c.strip() for c in _CELL_SPLIT.split(m.group(1))]
-        if all(_SEPARATOR_CELL.match(c) or not c for c in cells):
-            continue
-        if header is None:
-            header = [c.strip().strip("`").lower() for c in cells]
-            continue
-        if len(cells) != len(header):
-            continue
-        rows.append(dict(zip(header, cells)))
-    return rows
+    return [dict(row) for row in parse_decision_table(text)]
 
 
 def _column(row: Dict[str, str], *keywords: str) -> str:
@@ -186,6 +142,29 @@ def check_action_authority(
     return failures
 
 
+def advisory_label_signals(discussion_text: str) -> List[str]:
+    """Advisory-only signals for decision rows whose label outruns their evidence.
+
+    These never fail a gate: a `confirmed`/`delegated` row with no recorded user
+    quote or locator, or a settled row whose `User source` is not authoritative,
+    is reported so the author can downgrade the label to `proposed` or
+    `hypothesis` before the freeze check refuses it.
+    """
+    signals: List[str] = []
+    for row in parse_decision_rows(discussion_text):
+        status = _normalise(_column(row, "status", "状态"))
+        if status not in SETTLED_STATUSES:
+            continue
+        rid = _column(row, "id") or "(row without id)"
+        quote = _column(row, "quote", "locator", "引用").strip(" `-")
+        source = _normalise(_column(row, "user source", "来源"))
+        if not quote:
+            signals.append(f"{rid}: status={status} but no user quote/locator recorded")
+        if source not in AUTHORITATIVE_SOURCES:
+            signals.append(f"{rid}: status={status} but User source={source or 'unrecorded'}")
+    return signals
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     import argparse
     import json
@@ -203,6 +182,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     failures = check_action_authority(ir.get("actions") or [], text)
     for i, failure in enumerate(failures, 1):
         print(f"  [{i}] {failure}")
+    for signal in advisory_label_signals(text):
+        print(f"  [advisory] {signal}")
     print("AUTHORITY: " + ("pass" if not failures else "fail"))
     return 0 if not failures else 1
 

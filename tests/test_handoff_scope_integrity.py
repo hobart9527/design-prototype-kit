@@ -267,6 +267,20 @@ def test_freeze_rejects_less_privileged_scope_entry(tmp_path: Path):
         handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
 
 
+def test_fenced_code_block_decision_table_is_ignored(tmp_path: Path):
+    fenced = (
+        "# Design discussion\n\n## Decisions and authority\n\n"
+        "Here is an example in documentation:\n\n"
+        "```markdown\n"
+        + APPROVED_ROW
+        + "```\n"
+    )
+    (tmp_path / "prototype").mkdir(parents=True)
+    (tmp_path / "prototype/discussion.md").write_text(fenced, encoding="utf-8")
+    with pytest.raises(handoff.HandoffError, match="no actual approval"):
+        handoff.approval_binding(tmp_path, "reader", "r1")
+
+
 # --- directory evidence bundles: PNG-only probe evidence is frozen as a whole
 
 def _add_probe_pngs(root: Path) -> Path:

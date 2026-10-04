@@ -100,7 +100,8 @@ The record has two valid layouts, both loaded through the same seam
   `prototype/briefs/<slice_id>.md` (one slice per file). `discussion.md`
   narrows to a thin resume seam.
 
-Either layout is admissible; pick one per project. In both layouts the
+Both layouts are admissible; a new project starts layered, and an existing
+single-record project stays single-record. Pick one per project. In both layouts the
 compiler reads each slice's verification scope from its own block alone, so a
 second slice is added by appending a block (or a new brief), never by widening
 the first. Templates live under `../../templates/`: `discussion.md` for the
@@ -164,10 +165,11 @@ Writing code in Stage 2 does not require a prior sealed Spec or pre-compiled Spe
 visual exploration and rapid prototyping precede formal contract compilation.
 `intent.json` 是可选的 Stage 1 机器加速件，缺失时编译器直接从记录散文/契约块恢复。Formal compilation to Spec IR occurs upon engineering handoff (Stage 5).
 
-## Required parser anchors
+## Required parser anchors (Intent Tier)
 
-For a record that predates `intent.json`, the compiler still recovers the intent
-tier from these parser-compatible headings:
+Stage 1 produces the problem framing and initial decisions in the design record,
+corresponding to the `intent_spec` tier. For a record that predates `intent.json`,
+the compiler recovers the intent tier from these parser-compatible headings:
 
 ```markdown
 # Surface Specification: <Product / Slice>
@@ -179,74 +181,13 @@ tier from these parser-compatible headings:
 - **Primary**: `surface/<id>`
 ```
 
-The state model and resilience sections have a machine form too, and a record that
-reaches Stage 5 without it compiles to `intent_spec` and is refused at the
-`execution_spec` boundary. `compile_spec_ir.py` is the sole parsing authority; the
-forms below are its admission rules, not a second specification.
-
-Write the lists the compiler reads as fact in fenced `contract:<kind>` blocks.
-The block is authoritative and fails closed on an authoring error — an unknown
-prefix, a missing field, a duplicate id, an out-of-enum severity. A `domain/` and
-`data/` entry carries a `description`; an `interaction/` entry is an id alone.
-A YAML value containing `: ` or starting with a special character must be quoted.
-
-On a single-record tree, open the `## Slice: <slice_id>` heading **before** the
-slice's contracts: viewports, required states and surfaces are read from inside that
-block, and anything written above the heading belongs to the shared zone. Contract
-sections nest as `###` under it, as in the template; a sibling `##` heading ends the
-block. Writing the heading last is the one placement the compiler cannot read.
-
-```markdown
-## Slice: <slice_id>
-
-### 3. State Model
-```contract:states
-- id: domain/<id>
-  label: 业务状态名称
-  description: 一句话语义描述
-- id: interaction/<id>
-  description: 一句话交互描述
-- id: data/<id>
-  description: 一句话数据场景说明
-```
-
-### 6. Viewport 与强制测试状态
-```contract:viewports
-- 390
-- 1280
-```
-```contract:required_states
-- state-a
-- state-b
-```
-
-### 7. Break Protocol
-```contract:stress
-- id: stress/<id>
-  vector: 破坏向量
-  expected: 期望恢复行为
-```
-
-### Design Invariants
-```contract:invariants
-- id: inv/<id>
-  statement: 断言
-  severity: blocking
-  verification: computed_style
-```
-```
-
-The prose forms (`- `domain/<id>` (label): description`, `- `stress/<id>` | Vector:
-… | Expected: …`, `- `inv/<id>` | 断言 | severity: …`) remain readable for a record
-that predates the blocks. They are the compatibility route, not the recommended
-one: prose admission is inferred, so it is where a mis-parse comes from. A
-`stress/` bullet needs both `Vector:` and `Expected:`; one missing a field is not
-a usable fixture. `severity` defaults to `advisory` and `verification` to `manual`.
-
-A machine-shaped bullet that names a contract token but matches no admission rule
-is reported as an unadmitted declaration and aborts the compile, rather than being
-dropped while the run continues with the field empty. That report is the signal
-that a declaration was written in a form the compiler does not read.
+Do not author Stage 3/4 execution contracts (`contract:states`, `contract:viewports`,
+`contract:stress`, `contract:invariants`) during Stage 1. Those belong to the
+execution tier (`execution_spec`) compiled during engineering handoff (Stage 5),
+and their complete schema is documented in
+[`../04-governance/machine-contract.md`](../04-governance/machine-contract.md).
+Stage 1 focuses solely on problem framing, polarized divergence directions, the
+Decisions and authority table, and Five Axes calibration.
 
 ## Exit
 
@@ -256,3 +197,5 @@ the next turn to explore 2–3 distinct visual and structural directions through
 prototyping, without waiting on pre-spec locks. Write no `tokens.css`, HTML or evidence
 in this turn — the Resume block is recovery context for the next turn, not an approval
 gate, and the Turn 1→2 seam is where a capped or resumed run picks up.
+End the reply with one line, `USER-INPUT: <the direction question for the user>`, and make no
+further tool call; that line is the observable stop signal for the seam.

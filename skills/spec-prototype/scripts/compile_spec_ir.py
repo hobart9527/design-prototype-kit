@@ -1216,6 +1216,11 @@ def compile_canonical_ir(
     # Frontmatter authority / stage overrides
     if authority_status == "sealed_provisional" and fm_data.get("authority"):
         authority_status = str(fm_data["authority"]).strip()
+    # `frozen_approved` is minted only by handoff.py from a recorded user approval.
+    # The compiler never holds that authority, whether the value arrives via the
+    # API, the CLI, or authored frontmatter.
+    if authority_status == "frozen_approved":
+        authority_status = "sealed_provisional"
     if stage == "hero_probe" and fm_data.get("stage"):
         stage = str(fm_data["stage"]).strip()
 
@@ -1781,7 +1786,7 @@ def main():
     parser.add_argument("--slice", required=True, help="Slice identifier (e.g. sample-gate)")
     parser.add_argument("--candidate", default="r1", help="Candidate revision (e.g. r1)")
     parser.add_argument("--contract", default="c1", help="Contract revision (e.g. c1)")
-    parser.add_argument("--status", default="sealed_provisional", choices=["draft", "sealed_provisional", "validated", "frozen_approved"])
+    parser.add_argument("--status", default="sealed_provisional", choices=["draft", "sealed_provisional", "validated"])
     parser.add_argument("--stage", default="hero_probe", choices=["hero_probe", "walking_skeleton", "surface_slice", "full_product"])
     parser.add_argument("--surfaces", nargs="*", help="Override build scope surfaces")
     parser.add_argument("--viewports", nargs="*", type=int, help="Override authored verification viewports (px)")

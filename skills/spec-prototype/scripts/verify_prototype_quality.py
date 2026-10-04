@@ -13,6 +13,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -805,7 +806,7 @@ def _style_engine_command() -> str | None:
 
 
 def _chrome_like_flags(engine: str, profile_dir: Path) -> list[str]:
-    flags = ["--headless", "--disable-gpu", "--no-first-run",
+    flags = ["--headless=new", "--disable-gpu", "--no-first-run",
              f"--user-data-dir={profile_dir}"]
     if engine != "firefox":
         flags.append("--no-sandbox")
@@ -884,10 +885,40 @@ def _engine_probe_timeout() -> float:
         return 60.0
 
 
+def _fast_test_mode() -> bool:
+    """Skip headless-engine probes under `SPEC_PROTOTYPE_FAST_TEST=1`.
+
+    Unit tests assert on static signals; a real Chrome spawn adds no coverage
+    there but does add cold-start wall time and, on a wedged machine, orphaned
+    helper processes. Production runs leave the variable unset.
+    """
+    return os.environ.get("SPEC_PROTOTYPE_FAST_TEST") == "1"
+
+
 def _run_engine_probe(cmd: list[str], label: str) -> tuple[bool, str | None]:
+    """Run a headless engine probe, killing the whole process group on timeout.
+
+    `subprocess.run(timeout=...)` kills only the leader; Chrome's helper
+    processes survive holding stdout/stderr open, so `communicate()` blocks
+    forever in `selectors.select()` (the 430-orphan wedge this fixes). Launch
+    in a new session so the group can be killed and the pipes closed.
+    """
+    if _fast_test_mode():
+        return False, f"environment_not_ready: {label} skipped under SPEC_PROTOTYPE_FAST_TEST=1"
+    proc = None
     try:
-        proc = subprocess.run(cmd, capture_output=True, timeout=_engine_probe_timeout())
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                start_new_session=True)
+        proc.communicate(timeout=_engine_probe_timeout())
     except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+        try:
+            proc.communicate(timeout=5)
+        except Exception:  # noqa: BLE001 — pipes closed after group kill
+            pass
         return False, f"environment_not_ready: {label} timed out"
     except OSError as exc:
         return False, f"environment_not_ready: {label} failed ({exc.__class__.__name__})"
@@ -1001,7 +1032,7 @@ def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44)
     # scripts/ -> spec-prototype/ -> skills/ -> repo root
     probe_mjs = Path(__file__).resolve().parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
     if node and probe_mjs.is_file():
-        cached = _TIER_PROBE_CACHE.get(f"touch:{viewport_width}:{html}")
+        cached = _TIER_PROBE_CACHE.get(_probe_cache_key(f"touch:{viewport_width}", html))
         if cached is not None:
             return cached
         import json as _json
@@ -1028,7 +1059,7 @@ def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44)
                              f"at {viewport_width}px: {'; '.join(str(n) for n in names[:5])}")
         else:
             result = True, None
-        _TIER_PROBE_CACHE[f"touch:{viewport_width}:{html}"] = result
+        _TIER_PROBE_CACHE[_probe_cache_key(f"touch:{viewport_width}", html)] = result
         return result
 
     if importlib.util.find_spec("playwright") is not None:
@@ -1683,16 +1714,17 @@ if __name__ == "__main__":
     parser.add_argument("--tokens", dest="tokens_opt")
     parser.add_argument("--contract", dest="contract")
     parser.add_argument("--strict-divergence", action="store_true")
+    parser.add_argument("--strict", action="store_true", help="Exit with code 2 if environment_not_ready (render probes skipped)")
     args = parser.parse_args()
 
     root = Path(args.root).resolve() if args.root else Path.cwd()
     if args.slice_id:
         slice_id = args.slice_id
         candidates = [
-            root / f"prototype/experiments/{slice_id}/r1/index.html",
-            root / f"prototype/experiments/{slice_id}/index.html",
             root / f"prototype/experiments/{slice_id}/anchor/index.html",
             root / f"prototype/experiments/{slice_id}/hero-anchor/index.html",
+            root / f"prototype/experiments/{slice_id}/r1/index.html",
+            root / f"prototype/experiments/{slice_id}/index.html",
             root / f"prototype/surfaces/{slice_id}/index.html",
         ]
         html_path = next((p for p in candidates if p.is_file()), candidates[0])
@@ -1701,7 +1733,12 @@ if __name__ == "__main__":
         legacy_spec = root / f"prototype/specifications/{slice_id}/r1.md"
         spec_path = canonical_spec if canonical_spec.is_file() else legacy_spec
         contract_path = str(spec_path) if spec_path.is_file() else (args.contract or "")
-        sys.exit(0 if assert_quality(str(html_path), str(token_path), args.strict_divergence, contract_path) else 1)
+        ok = assert_quality(str(html_path), str(token_path), args.strict_divergence, contract_path)
+        if not ok:
+            sys.exit(1)
+        if args.strict and LAST_TIER_EVIDENCE.get("environment_not_ready"):
+            sys.exit(2)
+        sys.exit(0)
 
     if not args.html:
         parser.error("Must provide HTML path or --slice <id>")
@@ -1710,4 +1747,9 @@ if __name__ == "__main__":
     token_arg = args.tokens_opt or args.tokens
     if not token_arg:
         token_arg = next((str(p) for p in (html.parent / "tokens.css", root / "prototype/shared/tokens.css") if p.is_file()), "prototype/shared/tokens.css")
-    sys.exit(0 if assert_quality(str(html), token_arg, args.strict_divergence, args.contract) else 1)
+    ok = assert_quality(str(html), token_arg, args.strict_divergence, args.contract)
+    if not ok:
+        sys.exit(1)
+    if args.strict and LAST_TIER_EVIDENCE.get("environment_not_ready"):
+        sys.exit(2)
+    sys.exit(0)

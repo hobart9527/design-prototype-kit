@@ -488,9 +488,13 @@ export function resolveEvidenceRoot(explicit) {
 
 function recordHandoffEvidence(outputDir, result, metadata, options = {}) {
   try {
+    if (options.noManifest) return { written: false, reason: "manifest_disabled" };
     const repoRoot = resolveEvidenceRoot(options.repoRoot);
     if (!repoRoot) return { written: false, reason: "no_repository_root" };
-    const manifestPath = path.join(repoRoot, "prototype/evidence/handoff-manifest.json");
+    const isProbeDir = outputDir && (outputDir.includes("/probes/") || outputDir.includes("\\probes\\"));
+    const manifestPath = (isProbeDir && !options.isSliceHandoff)
+      ? path.join(outputDir, "capture-manifest.json")
+      : path.join(repoRoot, "prototype/evidence/handoff-manifest.json");
     if (!fs.existsSync(path.dirname(manifestPath))) {
       fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
     }
@@ -509,20 +513,6 @@ function recordHandoffEvidence(outputDir, result, metadata, options = {}) {
   }
 }
 
-function syncReviewPortal(autoOpen = true, repoRootPath = null) {
-  try {
-    const portalScript = path.join(__dirname, "generate_review_portal.py");
-    if (fs.existsSync(portalScript)) {
-      const pArgs = [portalScript];
-      if (repoRootPath) pArgs.push("--root", repoRootPath);
-      if (autoOpen) pArgs.push("--open");
-      execFileSync("python3", pArgs, { stdio: "pipe" });
-    }
-  } catch (err) {
-    process.stderr.write(`[warn] syncReviewPortal failed: ${err.message}\n`);
-  }
-}
-
 async function main() {
   const args = process.argv.slice(2);
   let url = null;
@@ -531,7 +521,8 @@ async function main() {
   let states = ["default"];
   let viewportsExplicit = false;
   let statesExplicit = false;
-  let autoOpen = true;
+  let noManifest = false;
+  let isSliceHandoff = false;
   let targetPath = null;
   let targetPlatform = "web";
   let runtime = "unknown";
@@ -540,11 +531,7 @@ async function main() {
   const dependencies = [];
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--no-open") {
-      autoOpen = false;
-    } else if (args[i] === "--open") {
-      autoOpen = true;
-    } else if (args[i] === "--target-path") {
+    if (args[i] === "--target-path") {
       targetPath = args[++i] || null;
     } else if (args[i] === "--target-platform") {
       targetPlatform = args[++i] || "web";
@@ -587,7 +574,11 @@ async function main() {
         path.join(root, `prototype/experiments/${sliceId}/index.html`),
         path.join(root, `prototype/surfaces/${sliceId}/index.html`),
       ];
-      const matched = candidatePaths.find((p) => fs.existsSync(p)) || candidatePaths[0];
+      const matched = candidatePaths.find((p) => fs.existsSync(p));
+      if (!matched) {
+        process.stderr.write(`target_html_not_found: no prototype HTML found for slice '${sliceId}' under ${path.join(root, "prototype")}\n`);
+        process.exit(2);
+      }
       url = `file://${matched}`;
       outputDir = path.join(root, `prototype/evidence/probes/${sliceId}/`);
       // Slice defaults are a fallback: an explicit --viewports/--states wins
@@ -597,6 +588,7 @@ async function main() {
       // check: 4 viewports × N states produced 28 PNGs per slice in r8b while
       // the case contract only required 390/1280.
       if (!viewportsExplicit) viewports = ["320", "390", "1280"];
+      isSliceHandoff = true;
     } else if (args[i] === "--output" || args[i] === "-o") {
       outputDir = args[++i];
     } else if (args[i] === "--target" || args[i] === "-t") {
@@ -607,6 +599,8 @@ async function main() {
     } else if (args[i] === "--states" || args[i] === "-s") {
       states = (args[++i] || "").split(",").map((s) => s.trim()).filter(Boolean);
       statesExplicit = true;
+    } else if (args[i] === "--no-manifest") {
+      noManifest = true;
     } else if (!url && !args[i].startsWith("-")) {
       url = args[i];
     }
@@ -642,8 +636,11 @@ async function main() {
 
   if (result) {
     const metadata = buildCaptureMetadata(result, metadataOptions);
-    const recording = recordHandoffEvidence(outputDir, result, metadata, { repoRoot });
-    syncReviewPortal(autoOpen, repoRoot);
+    const recording = recordHandoffEvidence(outputDir, result, metadata, {
+      repoRoot,
+      noManifest,
+      isSliceHandoff,
+    });
     const diagnostics_summary = {
       status: result.status,
       runtime_errors: result.runtime_errors || [],

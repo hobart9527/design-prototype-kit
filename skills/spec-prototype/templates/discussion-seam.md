@@ -20,5 +20,6 @@ A checkpoint is a recovery note, not a stop signal: keep working while authorize
 evidence remain, and write this block once per authoring pass. Stop only for an unresolved
 user decision, a real stage boundary awaiting review, or an explicit session limit. The
 Turn 1→2 seam of the 3-turn route is such a boundary: once the design record and this block
-are written, end the turn instead of starting the anchor. Restate decision status verbatim
-(`proposed`/`provisional`); never upgrade it to `confirmed` here.
+are written, end the turn instead of starting the anchor: make the final line of the reply
+`USER-INPUT: <the one direction question the user must answer>` and stop. Restate decision
+status verbatim (`proposed`/`provisional`); never upgrade it to `confirmed` here.

@@ -9,7 +9,7 @@ import re
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from spec_contract_blocks import read_design_record  # noqa: E402
+from spec_contract_blocks import parse_decision_table, read_design_record  # noqa: E402
 
 
 class HandoffError(ValueError):
@@ -580,20 +580,9 @@ SPEC_ONLY_MARKERS = (
 PENDING_IMPLEMENTATION_DIMENSIONS = ("implementation", "platform", "production")
 
 
-def _decision_rows(text: str) -> list[list[str]]:
+def _decision_rows(text: str) -> list[Any]:
     """Parse the discussion record's decision table rows (`| ID | … |`)."""
-    rows: list[list[str]] = []
-    for line in text.splitlines():
-        stripped = line.strip()
-        if not stripped.startswith("|"):
-            continue
-        cells = _split_row(stripped)
-        if len(cells) < 2 or _is_delimiter(cells):
-            continue
-        if _normalized(cells[0]) in ("id", ""):
-            continue
-        rows.append(cells)
-    return rows
+    return list(parse_decision_table(text))
 
 
 def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:

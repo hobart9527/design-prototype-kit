@@ -133,12 +133,16 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     # review-portal.html is an operational wrapper rendered by the harness, not a candidate design prototype
     html_files = {k: v for k, v in texts.items() if k.endswith(".html") and not k.endswith("review-portal.html")}
     css_files = {k: v for k, v in texts.items() if k.endswith(".css")}
-    discussion = next((v for k, v in texts.items() if k.endswith("discussion.md")), "")
+    # The design record is `discussion.md` (single-record) or the layered
+    # truth.md/world.md/briefs tree; judge the record, not one filename.
+    record_files = {k: v for k, v in texts.items()
+                    if k.endswith(("discussion.md", "truth.md", "world.md")) or "/briefs/" in k}
+    discussion = "\n".join(record_files.values())
 
     add("artifact_present", "pass" if html_files else "fail",
         f"{len(html_files)} html artifact(s), {len(texts)} text artifact(s)")
     add("design_record_present", "pass" if len(discussion) > 200 else "fail",
-        f"prototype/discussion.md length={len(discussion)}")
+        f"design record files={len(record_files)} length={len(discussion)}")
 
     registry_ids = _registry_ids(variant)
     expectation = meta.get("method_expectation") or {}

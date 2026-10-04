@@ -27,6 +27,11 @@ The Break Protocol tests architectural resilience under extreme edge data. **Tes
    - Containers must withstand 320px viewport folds without unmanaged horizontal window scroll.
 3. **Actionable Empty State Invariant**:
    - Empty states must provide immediate, forward-looking recovery (e.g. "重置筛选", "载入预设", "新建条目"), never a dead-end blank canvas.
+4. **State-completeness pass** (advisory; apply to the decisive surface, name what is skipped):
+   for each data-bearing region, state which of `empty · loading · partial · stale · error · permission-denied · offline`
+   the product can actually reach, and whether the surface tells the user what happened and what to do next.
+   `stale` means data that rendered earlier and is now older than its freshness window: it must show its age and a
+   refresh path, never read as current. A state the product cannot reach is omitted, not invented.
 
 ## Make consequential boundaries understandable
 

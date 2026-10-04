@@ -115,6 +115,11 @@ report.
 | **Interaction** | Are the decisive exchanges honest and reversible? | actions, states, feedback, `:active` detents |
 | **Resilience** | Does it survive the stress vectors without collapse? | break protocol, empty/long/error states, a11y |
 
+Rate each finding on one 0–4 severity scale (Nielsen): `0` not a problem, `1` cosmetic,
+`2` minor — fix when time allows, `3` major — high priority, `4` catastrophe — must fix before
+the surface is shown. Severity reflects frequency × impact × persistence for the decisive task;
+it is separate from the hard craft floors, which stay defects whatever the rating.
+
 Rules that keep the pillar view honest:
 
 - **Every pillar gets a row, including the ones you did not examine.** Write

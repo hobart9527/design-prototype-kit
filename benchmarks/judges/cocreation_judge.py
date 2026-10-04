@@ -42,7 +42,12 @@ ROUT_RE = re.compile(r"(?:category\s+)?rut\b|套路|默认形态|category defaul
 SEED_RE = re.compile(r"\bseed\b|种子", re.IGNORECASE)
 TWO_AXIS_RE = re.compile(r"two-axis|两轴|双轴|axis\s+verdict", re.IGNORECASE)
 PROVISIONAL_RE = re.compile(r"provisional|暂定|临时锁定", re.IGNORECASE)
-CONFIRMED_RE = re.compile(r"confirmed|已确认|确认锁定", re.IGNORECASE)
+# A confirmed *claim* is a settled status cell (`| confirmed |`) or a `status: confirmed`
+# assertion — not prose that mentions the word ("not confirmed", "awaiting confirmation").
+CONFIRMED_RE = re.compile(
+    r"\|\s*`?(?:confirmed|已确认)`?\s*\||status\s*[:=]\s*`?(?:confirmed|已确认)\b|确认锁定"
+    r"|(?:locked(?:\s+and)?|direction\s+(?:is\s+)?|selection\s+(?:is\s+)?)\s*confirmed\b",
+    re.IGNORECASE)
 
 
 def _turns(transcript_path: pathlib.Path) -> list[dict]:
@@ -112,7 +117,11 @@ def judge(out_dir: pathlib.Path) -> dict:
         "c1_presented": c1_index is not None,
         "choice_taken": choice_index is not None,
         "provisional_recorded": any(PROVISIONAL_RE.search(t["text"]) for t in turns),
-        "confirmed_claimed": any(CONFIRMED_RE.search(t["text"]) for t in turns),
+        # Backed only if the human's choice precedes the claim; otherwise unbacked.
+        "confirmed_claimed": any(
+            t["role"] == "assistant" and CONFIRMED_RE.search(t["text"])
+            and (choice_index is None or i < choice_index)
+            for i, t in enumerate(turns)),
     }
 
     # A session that claims a confirmed lock while having presented no candidate to

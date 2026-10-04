@@ -251,3 +251,38 @@ methods:
       - "Tabular typography and micro-trends preserve immediate operational readability"
       - "Primary triage actions accessible within single viewport scroll bounds"
     file: "references/02-craft-methods/data-information.md"
+
+  - id: multi-role-handoff
+    name: "Multi-role Handoff & Waiting-state Clarity"
+    pillars:
+      - Journey
+      - Object
+    stages:
+      - 1
+      - 2
+      - 4
+    activate_when:
+      - multi_role_workflow
+      - approval_chain
+      - cross_channel_continuation
+    invariants:
+      - "Each role sees only its permitted next step and who the work is waiting on"
+      - "A handoff states what changed since the receiver last looked"
+    file: "references/02-craft-methods/resilience-trust.md"
+
+  - id: state-completeness
+    name: "Data-region State Completeness (empty/loading/partial/stale/error)"
+    pillars:
+      - Resilience
+      - Interaction
+    stages:
+      - 2
+      - 4
+    activate_when:
+      - data_bearing_surface
+      - live_or_cached_data
+      - async_loading
+    invariants:
+      - "Every reachable data state tells the user what happened and what to do next"
+      - "Stale data shows its age and a refresh path and never reads as current"
+    file: "references/02-craft-methods/resilience-trust.md"

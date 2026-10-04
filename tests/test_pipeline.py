@@ -1097,3 +1097,29 @@ def test_reconcile_review_tokens_back_to_contracts(tmp_path: Path):
 
 
 
+
+
+def test_wcag_check_batch_forms(tmp_path: Path):
+    """One command audits many pairs; the legacy 2-arg form is unchanged."""
+    import subprocess
+    script = str(SCRIPTS / "wcag-check.js")
+    on = subprocess.run(["node", script, "--on", "#131a21", "#e4ebf3", "#3a4450"], capture_output=True, text=True)
+    rows = json.loads(on.stdout)
+    assert [r["passAA"] for r in rows] == [True, False] and on.returncode == 1
+    pairs = subprocess.run(["node", script, "#e4ebf3", "#131a21", "#8fa0b3", "#131a21"], capture_output=True, text=True)
+    assert len(json.loads(pairs.stdout)) == 2 and pairs.returncode == 0
+    single = subprocess.run(["node", script, "#ffffff", "#000000"], capture_output=True, text=True)
+    assert json.loads(single.stdout)["ratio"] == 21.0
+
+
+def test_authority_label_signals_are_advisory():
+    af = _load("authority_fidelity", "authority_fidelity.py")
+    table = (
+        "## Decisions and authority\n\n"
+        "| ID | Decision | Status | Reason | Quote | User source | Scope |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| D1 | x | confirmed | r | | synthetic-fixture | s |\n"
+        "| D2 | y | proposed | r | | | s |\n"
+    )
+    signals = af.advisory_label_signals(table)
+    assert len(signals) == 2 and all(s.startswith("D1") for s in signals)

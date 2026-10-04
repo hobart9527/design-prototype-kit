@@ -314,6 +314,26 @@ def test_written_text_since_reads_only_file_writes_after_the_mark(tmp_path):
     assert out == "written A\n\nedited B"
 
 
+def test_tool_metrics_since_counts_calls_and_hook_rejections(tmp_path):
+    import json as _json
+    rows = [
+        {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Bash", "input": {}}]}},
+        {"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "name": "Read", "input": {}},
+            {"type": "tool_use", "name": "Bash", "input": {}}]}},
+        {"type": "user", "message": {"content": [
+            {"type": "tool_result", "is_error": True,
+             "content": "Use one read command or an installed project helper."},
+            {"type": "tool_result", "is_error": True, "content": "ENOENT: no such file"}]}},
+    ]
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    (proj / "sid.jsonl").write_text("\n".join(_json.dumps(r) for r in rows), encoding="utf-8")
+    out = bl.tool_metrics_since("sid", 1, config_root=tmp_path)
+    assert out["tool_calls"] == {"Read": 1, "Bash": 1}
+    assert out["hook_rejections"] == 1
+
+
 def test_task_outcomes_are_evidence_bound():
     task = {"id": "t", "required_outcomes": [
         {"id": "text", "check": "text_present", "pattern": "worker"},

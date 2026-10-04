@@ -68,6 +68,26 @@ def stub_result(**overrides) -> dict:
 # --- capture metadata records the actual environment ------------------------
 
 
+def test_slice_target_missing_fails_before_browser_launch(tmp_path):
+    completed = subprocess.run(
+        ["node", str(CAPTURE), "--slice", "missing", "--repo-root", str(tmp_path)],
+        capture_output=True,
+        text=True,
+        timeout=NODE_TIMEOUT,
+        cwd=str(REPO_ROOT),
+    )
+    assert completed.returncode == 2
+    assert "target_html_not_found" in completed.stderr
+    assert "browser_unavailable" not in completed.stderr
+
+
+def test_capture_does_not_trigger_review_portal_side_effect():
+    source = CAPTURE.read_text(encoding="utf-8")
+    assert "syncReviewPortal" not in source
+    assert "--open" not in source
+
+
+
 def test_screenshot_only_evidence_is_labelled_as_rendered_capture():
     payload = {"result": stub_result(), "options": {"runtime": "node-24/chromium-141", "targetPlatform": "web"}}
     meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", payload)

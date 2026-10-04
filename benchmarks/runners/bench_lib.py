@@ -642,6 +642,49 @@ def assistant_text_since(session_id: str, start: int = 0,
     return "\n\n".join(chunks)
 
 
+def tool_metrics_since(session_id: str, start: int = 0,
+                       config_root: pathlib.Path | None = None) -> dict:
+    """Per-call tool counts and hook rejections from transcript line ``start``.
+
+    The rollup's iterations are cumulative across resumed calls; reading the
+    transcript from the call's mark gives per-turn cost directly. A hook
+    rejection is a tool_result flagged ``is_error`` whose text names the hook or
+    the execution boundary, which is the friction a helper call form can cause.
+    """
+    path = _transcript_path(session_id, config_root)
+    empty = {"tool_calls": {}, "hook_rejections": 0, "hook_rejection_samples": []}
+    if not path:
+        return empty
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()[start:]
+    except OSError:
+        return empty
+    calls: dict[str, int] = {}
+    rejections: list[str] = []
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        content = (row.get("message") or {}).get("content")
+        if not isinstance(content, list):
+            continue
+        for item in content:
+            if not isinstance(item, dict):
+                continue
+            if row.get("type") == "assistant" and item.get("type") == "tool_use":
+                name = item.get("name") or "unknown"
+                calls[name] = calls.get(name, 0) + 1
+            elif row.get("type") == "user" and item.get("type") == "tool_result" and item.get("is_error"):
+                body = item.get("content")
+                if isinstance(body, list):
+                    body = " ".join(c.get("text", "") for c in body if isinstance(c, dict))
+                body = str(body or "")
+                if re.search(r"hook|execution.boundary|admitted|read command|installed project helper", body, re.IGNORECASE):
+                    rejections.append(body[:160])
+    return {"tool_calls": calls, "hook_rejections": len(rejections),
+            "hook_rejection_samples": rejections[:3]}
+
 def written_text_since(session_id: str, start: int = 0,
                        config_root: pathlib.Path | None = None) -> str:
     """Text the session wrote to files after transcript line ``start``.

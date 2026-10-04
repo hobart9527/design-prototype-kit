@@ -8,6 +8,8 @@
  *
  * Usage:
  *   node contrast-preflight.js "#ffffff" "#000000"
+ *   node contrast-preflight.js --on "#131a21" "#e4ebf3" "#8fa0b3" "#ff5d5d"
+ *   node contrast-preflight.js "#e4ebf3" "#19222b" "#8fa0b3" "#131a21"   (fg bg pairs)
  *   node contrast-preflight.js tokens.json [--level AAA]
  */
 const fs = require('fs');
@@ -39,7 +41,7 @@ function getContrast(hex1, hex2) {
 
 const args = process.argv.slice(2);
 if (args.length === 0) {
-  console.error("Usage:\n  node wcag-check.js <color1-hex> <color2-hex>\n  node wcag-check.js <tokens.json> [--level AAA]");
+  console.error("Usage:\n  node wcag-check.js <color1-hex> <color2-hex>\n  node wcag-check.js --on <bg-hex> <fg-hex> [<fg-hex> ...]\n  node wcag-check.js <tokens.json> [--level AAA]");
   process.exit(1);
 }
 
@@ -183,6 +185,45 @@ if (args[0].endsWith('.json') || fs.existsSync(args[0])) {
 
   console.log(JSON.stringify({ targetLevel, threshold, surface, allPass, results }, null, 2));
   process.exit(allPass ? 0 : 1);
+}
+
+// Batch form: `--on <background> <fg> [<fg> ...]` measures every foreground
+// against one backdrop in a single call; the plain multi-argument form takes
+// `<fg> <bg>` pairs. Both print one compact JSON array, so a palette audit is
+// one command instead of one shell round-trip per color pair.
+function measure(fg, bg) {
+  const ratio = getContrast(fg, bg);
+  return {
+    fg, bg,
+    ratio: Number(ratio.toFixed(2)),
+    passAA: ratio >= 4.5,
+    passAALarge: ratio >= 3.0,
+    passAAA: ratio >= 7.0,
+  };
+}
+
+function exitBatch(results) {
+  console.log(JSON.stringify(results, null, 2));
+  process.exit(results.every(r => r.passAA) ? 0 : 1);
+}
+
+if (args[0] === '--on') {
+  const [, bg, ...fgs] = args;
+  if (!isHex(bg) || fgs.length === 0 || !fgs.every(isHex)) {
+    console.error('Usage: node wcag-check.js --on <background-hex> <foreground-hex> [<foreground-hex> ...]');
+    process.exit(1);
+  }
+  exitBatch(fgs.map(fg => measure(fg, bg)));
+}
+
+if (args.length > 2) {
+  if (args.length % 2 !== 0 || !args.every(isHex)) {
+    console.error('Usage: node wcag-check.js <fg-hex> <bg-hex> [<fg-hex> <bg-hex> ...]');
+    process.exit(1);
+  }
+  const pairs = [];
+  for (let i = 0; i < args.length; i += 2) pairs.push(measure(args[i], args[i + 1]));
+  exitBatch(pairs);
 }
 
 const [c1, c2] = args;

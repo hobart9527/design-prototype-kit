@@ -58,6 +58,17 @@ def test_probe_passes_when_controls_meet_minimum(tmp_path: Path, monkeypatch):
     assert reason is None
 
 
+def test_probe_cache_invalidates_after_html_changes(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(vpq, "_TIER_PROBE_CACHE", {})
+    if not shutil.which("node"):
+        assert False, "node required in dev environment for this probe test"
+    html = tmp_path / "index.html"
+    html.write_text(_SMALL_HTML, encoding="utf-8")
+    assert vpq.probe_touch_targets(html)[0] is False
+    html.write_text(_BIG_HTML, encoding="utf-8")
+    assert vpq.probe_touch_targets(html) == (True, None)
+
+
 def test_probe_without_engine_is_not_ready_not_pass(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(vpq, "_TIER_PROBE_CACHE", {})
     monkeypatch.setattr(shutil, "which", lambda name: None)

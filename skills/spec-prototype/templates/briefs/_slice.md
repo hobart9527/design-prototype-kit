@@ -74,6 +74,9 @@ as freeze fails closed and lists missing items if left unauthored.
   expected: "<how the surface responds>"
 ```
 
+A stress vector the user's brief did not state is the designer's own derivation:
+record it in the Decisions table as `hypothesis`, never as `confirmed`.
+
 ## Evidence & reviewer's evaluation guide
 
 Written for the person who will open the artifact. State what to attempt first,
