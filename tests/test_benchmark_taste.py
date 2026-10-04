@@ -447,6 +447,22 @@ def test_cocreation_flags_a_build_that_asked_nothing(tmp_path):
     assert result["signals"]["c0_presented"] is False
 
 
+def test_cocreation_planning_prose_does_not_count_as_first_build(tmp_path):
+    _transcript(tmp_path, [
+        ("user", "build a cluster ops board"),
+        ("assistant", "行业惯常：全都是列表堆叠。\n"
+                      "方向 A 侧重全景态势，方向 B 侧重线索流。种子 12 与 34。\n"
+                      "下一步：将编写 experiments/cluster/anchor/index.html。\n"
+                      "USER-INPUT: 倾向哪个方向？"),
+        ("user", "方向 A"),
+        ("assistant", "已构建可运行原型：<html>experiments/cluster/anchor/index.html</html>"),
+    ])
+    result = ccj.judge(tmp_path)
+    assert result["signals"]["c0_before_build"] is True
+    assert result["signals"]["choice_taken"] is True
+    assert result["verdict"] in ("co_created", "partial")
+
+
 def test_cocreation_flags_a_confirmed_lock_with_nothing_to_confirm(tmp_path):
     """Claiming a confirmed lock without ever offering a candidate is the dishonesty
     the stopping points exist to prevent."""

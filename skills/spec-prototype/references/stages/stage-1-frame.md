@@ -14,9 +14,10 @@ open alternatives only when a consequential choice is genuinely unresolved.
 4. Form the design proposition through **Polarized Divergence**: define what
    relationship changes, why it helps, what remains familiar, and the explicit trade-off.
    - **Mandatory Polarized Hypotheses**: produce **at least 2 structurally opposing
-     hypotheses** before converging on the primary prototype. The directions must differ
-     in underlying chassis, mental model, information topology, or task pacing (e.g.
-     *Dense Matrix vs. Progressive Disclosure*, or *Conversational Prompting vs. Direct Visual Manipulation*).
+     hypotheses**, labelled explicitly as **`方向 A (Direction A)`** and **`方向 B (Direction B)`**,
+     before converging on the primary prototype. Explicitly name the industry inertia or **category rut** (默认形态/套路),
+     assign concrete **seeds** (种子), and ensure directions differ in underlying chassis, mental model, information topology,
+     or task pacing (e.g. *Dense Matrix vs. Progressive Disclosure*, or *Conversational Prompting vs. Direct Visual Manipulation*).
      Two restylings or color variants of one spatial layout is an invalid pseudo-direction.
    - For each direction, articulate:
      1. The organizing principle and primary entity.
@@ -117,6 +118,8 @@ signal for downstream method audit, not a narrative device.
 The brief needs only the applicable parts of:
 
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.
+  - **Negative Boundaries & Omissions (第一版不做)**: Record explicit omissions to prevent semantic fabrication. Never introduce unprompted external business domains (absolutely no payment/billing flows `支付/账单`, shift scheduling `排班/日历/值班表`, paging/SMS, ticket systems `工单`, or chatops bots). Never fabricate automatic remediation (`自动修复/自动恢复/自动扩容`), machine learning predictions, or postmortem report generators (`postmortem_report_generator`).
+  - **Irreversible History Truth**: If the problem statement mentions a past historical accident was unrecoverable or irreversible, respect that truth—never claim or mock that the current console reversed or recovered those past historical nodes; safety gates/rollback strictly apply to active in-flight operations.
 - **Experience direction & Five Axes calibration** — product-specific hierarchy, tone,
   visual mechanism, references and what is deliberately conventional. All five axes
   (Density · Energy · Materiality · Rhythm · Character) are accounted for at direction
@@ -196,6 +199,8 @@ proposals, and open risks. **Turn 1 ends here, at the Resume block**: Stage 2 op
 the next turn to explore 2–3 distinct visual and structural directions through rapid
 prototyping, without waiting on pre-spec locks. Write no `tokens.css`, HTML or evidence
 in this turn — the Resume block is recovery context for the next turn, not an approval
-gate, and the Turn 1→2 seam is where a capped or resumed run picks up.
-End the reply with one line, `USER-INPUT: <the direction question for the user>`, and make no
+gate, and the Turn 1→2 seam is where a capped or resumed run picks up. Avoid mentioning
+unwritten `.html` file paths in Turn 1 prose to keep execution boundaries clean.
+End the reply with one line, `USER-INPUT: <the direction question for the user>` (all uppercase
+ASCII `USER-INPUT:`, never translate to Chinese or alter punctuation), and make no
 further tool call; that line is the observable stop signal for the seam.

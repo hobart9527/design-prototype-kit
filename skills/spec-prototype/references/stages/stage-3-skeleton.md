@@ -108,6 +108,11 @@ trigger button (`Quarantine`), modal confirm header (`Quarantine Worker`),
 decisive commit button (`Quarantine`), and completion toast (`Worker quarantined`)
 share one atomic vocabulary. Synonym drift is forbidden.
 
+### Semantic Boundary & Mock Data Discipline
+- **Neutral Infrastructure Primitives**: In operational and system consoles, mock services and workloads MUST strictly use generic infrastructure terms (`ingress-mesh`, `auth-proxy`, `compute-worker`, `cache-node`, `storage-engine`). Never introduce unrequested business or financial entities (absolutely no `支付`, `账单`, `payment`, `billing`).
+- **Irreversible History Truth**: Never author mock logs or alerts asserting that past irreversible incidents have been reversed by this console. The safety window and emergency rollback affordances apply strictly to active in-flight operations initiated within the session.
+- **Incident Lifecycle Closure**: Concluding or resolving an incident transitions the system state to `resolved` and seals audit entries. Do not invent automated postmortem report generators (`postmortem_report_generator`), report drafting wizards, or out-of-scope external notifications.
+
 ## Strict Token Inheritance
 
 Every secondary surface links the global stylesheet using the compiled

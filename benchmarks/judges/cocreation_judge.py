@@ -36,9 +36,29 @@ import bench_lib as bl  # noqa: E402
 USER_INPUT_RE = re.compile(r"USER-INPUT:", re.IGNORECASE)
 # The agent writing runnable output.
 HTML_WRITE_RE = re.compile(r"\.html\b|prototype/experiments/", re.IGNORECASE)
+HTML_TAG_RE = re.compile(r"<!doctype|<html\b|</html>|```html", re.IGNORECASE)
+PLANNING_PREFIX_RE = re.compile(
+    r"^\s*(?:[-*•]|\d+[.)])?\s*(?:下一步|下一轮|下一步骤|next\s+action|next\s+step|prerequisite|will\s+write|will\s+build|待构建|待写|规划|准备写)",
+    re.IGNORECASE | re.MULTILINE
+)
+
+
+def _is_html_write(text: str) -> bool:
+    """True if the text contains runnable HTML output, not just future planning prose."""
+    if HTML_TAG_RE.search(text):
+        return True
+    if not HTML_WRITE_RE.search(text):
+        return False
+    for line in text.splitlines():
+        if HTML_WRITE_RE.search(line):
+            if not PLANNING_PREFIX_RE.search(line):
+                return True
+    return False
+
+
 # Direction candidates presented as a set: two or more labelled options in one turn.
-CANDIDATE_LABEL_RE = re.compile(r"(?:direction|方向|候选)\s*[-_ ]?\s*([A-C])\b", re.IGNORECASE)
-ROUT_RE = re.compile(r"(?:category\s+)?rut\b|套路|默认形态|category default", re.IGNORECASE)
+CANDIDATE_LABEL_RE = re.compile(r"(?:direction|方向|候选|方案|option)\s*[-_ ]?\s*([A-C])\b", re.IGNORECASE)
+ROUT_RE = re.compile(r"(?:category\s+)?rut\b|套路|默认形态|category default|惯性形态|行业惯常", re.IGNORECASE)
 SEED_RE = re.compile(r"\bseed\b|种子", re.IGNORECASE)
 TWO_AXIS_RE = re.compile(r"two-axis|两轴|双轴|axis\s+verdict", re.IGNORECASE)
 PROVISIONAL_RE = re.compile(r"provisional|暂定|临时锁定", re.IGNORECASE)
@@ -84,7 +104,7 @@ def judge(out_dir: pathlib.Path) -> dict:
     # Index the first turn at which the agent authored runnable output.
     first_build = None
     for index, turn in enumerate(turns):
-        if turn["role"] == "assistant" and HTML_WRITE_RE.search(turn["text"]):
+        if turn["role"] == "assistant" and _is_html_write(turn["text"]):
             first_build = index
             break
 
