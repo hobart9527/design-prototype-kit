@@ -8,9 +8,18 @@ run_policy:
   repeats: 3
   # Three keyword-injected events make 4-5 calls the norm, not 3: r24 died at
   # exactly 1800.00s cumulative with turn 4 (mobile-read-only event) stranded
-  # at its 118s remainder. 2400s prices the event cascade the case itself
-  # defines; per-call budget and max_turns still bound runaway calls.
-  timeout_seconds: 2400
+  # at its 118s remainder. 2400s priced the event cascade but not the visual
+  # iteration depth: r28 finished in 1892s while r30-r32 hit 2400s with the
+  # render loop spread across every call (r32: 12/7/4/2 captures, 18/20/11/3
+  # edits per call) — real design iteration, not spinning. 3000s prices the
+  # loop the case's own hard/taste profile invites; per-call budget and
+  # max_turns still bound runaway calls.
+  timeout_seconds: 3000
+  # r35: call 1 ran 61 iterations (1343s) and wrote the anchor that Turn 2 owns,
+  # so the 60-iteration cap was the only thing that ended it. 40 is a ceiling,
+  # not a target: the skill now ends Turn 1 at the Resume block, and a capped
+  # call resumes through auto-continue with nothing lost.
+  turns_per_call: 40
   max_turns: 24
   max_budget_usd_per_turn: 8.0
 

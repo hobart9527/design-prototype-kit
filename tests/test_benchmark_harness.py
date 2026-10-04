@@ -100,7 +100,7 @@ def test_iteration_rollup_reads_assistant_tool_calls(tmp_path):
     proj.mkdir()
     rows = [
         {"type": "user", "message": {"content": "brief"}},
-        {"type": "assistant", "message": {"stop_reason": "tool_use",
+        {"type": "assistant", "timestamp": "2026-10-04T10:00:00Z", "message": {"stop_reason": "tool_use",
             "usage": {"output_tokens": 120},
             "content": [{"type": "tool_use", "name": "Read"},
                         {"type": "text", "text": "checking"}]}},
@@ -112,6 +112,8 @@ def test_iteration_rollup_reads_assistant_tool_calls(tmp_path):
     rollup = bl.iteration_rollup("s-1", config_root=tmp_path)
     assert [r["tools"] for r in rollup] == [["Read"], ["Write"]]
     assert rollup[0]["output_tokens"] == 120
+    assert rollup[0]["ts"] == "2026-10-04T10:00:00Z"
+    assert rollup[1]["ts"] is None
     assert bl.iteration_rollup("missing-session", config_root=tmp_path) == []
 
 
@@ -180,6 +182,118 @@ def test_genuine_turn_cap_auto_continues(tmp_path, monkeypatch):
     )
     assert len(calls) == 2
     assert calls[1]["resume"] == "session_cap"
+
+
+def test_event_is_injected_after_turn_cap(tmp_path, monkeypatch):
+    """A call that ends on the CLI turn cap must still get event injection."""
+    case = bl.load_case("incident-commander")
+    event = case["events"][0]
+    trigger = event["trigger"][0]
+    prompts = []
+
+    def mock_run(prompt, *args, **kwargs):
+        prompts.append(prompt)
+        if len(prompts) == 1:
+            return {
+                "status": "max_turns", "session_id": "s", "elapsed_s": 5,
+                "cost_usd": 0.5, "num_turns": 25, "is_error": True,
+                "errors": ["Reached maximum number of turns (25)"],
+                "models": ["flash"], "stderr": "",
+                "result": "",
+            }
+        (tmp_path / "prototype" / "experiments" / "anchor").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "prototype" / "experiments" / "anchor" / "index.html").write_text("<html></html>")
+        return {
+            "status": "completed", "session_id": "s", "elapsed_s": 5,
+            "cost_usd": 1.0, "num_turns": 5, "result": "done",
+            "is_error": False, "models": ["flash"], "stderr": "",
+        }
+
+    monkeypatch.setattr(bl, "run_claude", mock_run)
+    # A capped call has no payload result; the trigger is read from what the
+    # call said, which the harness recovers from the transcript segment.
+    monkeypatch.setattr(bl, "transcript_mark", lambda *a, **k: 0)
+    monkeypatch.setattr(bl, "assistant_text_since",
+                        lambda *a, **k: f"已梳理 {trigger} 的分级思路")
+    result = run_claude_session.run_session(
+        case, "candidate_skill", tmp_path, model="flash", max_turns=4,
+        timeout_s=60, budget_usd=2.0, session_budget_usd=10.0,
+    )
+    assert prompts[1].startswith("（用户补充信息）")
+    assert event["name"] in result["events_fired"]
+
+
+def test_event_fires_from_written_record_when_chat_is_silent(tmp_path, monkeypatch):
+    """A lean skill keeps substance in files; chat-only matching under-fires (r31, r33)."""
+    case = bl.load_case("incident-commander")
+    event = case["events"][0]
+    trigger = event["trigger"][0]
+    prompts = []
+
+    def mock_run(prompt, *args, **kwargs):
+        prompts.append(prompt)
+        (tmp_path / "prototype" / "experiments" / "anchor").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "prototype" / "experiments" / "anchor" / "index.html").write_text("<html></html>")
+        return {
+            "status": "completed", "session_id": "s", "elapsed_s": 5, "cost_usd": 1.0,
+            "num_turns": 5, "result": "已写入设计记录。", "is_error": False,
+            "models": ["flash"], "stderr": "",
+        }
+
+    monkeypatch.setattr(bl, "run_claude", mock_run)
+    monkeypatch.setattr(bl, "transcript_mark", lambda *a, **k: 0)
+    monkeypatch.setattr(bl, "written_text_since", lambda *a, **k: f"## 张力\n{trigger} 决定首屏")
+    result = run_claude_session.run_session(
+        case, "candidate_skill", tmp_path, model="flash", max_turns=4,
+        timeout_s=60, budget_usd=2.0, session_budget_usd=10.0,
+    )
+    assert prompts[1].startswith("（用户补充信息）")
+    assert event["name"] in result["events_fired"]
+
+
+def test_every_trigger_seen_in_one_call_is_injected_in_later_calls():
+    """r34: all three triggers appeared in call 1, but only one event ever fired."""
+    case = bl.load_case("incident-commander")
+    events = [dict(e, fired=False) for e in case["events"]]
+    mock = bl.parse_mock_user(case["mock_user"])
+    everything = " ".join(e["trigger"][0] for e in events)
+
+    fired = []
+    for _ in range(4):
+        prompt = run_claude_session._try_inject("已完成。", events, mock, also=everything)
+        if prompt is None:
+            break
+        fired.append(prompt)
+    assert len(fired) == 3
+    assert all(e["fired"] for e in events)
+    assert run_claude_session._try_inject("已完成。", events, mock, also="") is None
+
+
+def test_an_unseen_trigger_never_fires():
+    case = bl.load_case("incident-commander")
+    events = [dict(e, fired=False) for e in case["events"]]
+    mock = bl.parse_mock_user(case["mock_user"])
+    assert run_claude_session._try_inject("没有相关词。", events, mock, also="") is None
+    assert not any(e["fired"] for e in events)
+
+
+def test_written_text_since_reads_only_file_writes_after_the_mark(tmp_path):
+    import json as _json
+    rows = [
+        {"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "input": {"content": "before-mark"}}]}},
+        {"type": "assistant", "message": {"content": [
+            {"type": "text", "text": "chat only"},
+            {"type": "tool_use", "input": {"content": "written A", "file_path": "x"}},
+            {"type": "tool_use", "input": {"new_string": "edited B"}},
+            {"type": "tool_use", "input": {"command": "ls"}}]}},
+        {"type": "user", "message": {"content": [{"type": "tool_result", "content": "noise"}]}},
+    ]
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    (proj / "sid.jsonl").write_text("\n".join(_json.dumps(r) for r in rows), encoding="utf-8")
+    out = bl.written_text_since("sid", 1, config_root=tmp_path)
+    assert out == "written A\n\nedited B"
 
 
 def test_task_outcomes_are_evidence_bound():

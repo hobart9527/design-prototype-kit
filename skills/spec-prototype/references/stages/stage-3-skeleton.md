@@ -74,6 +74,16 @@ Before the first runnable write, load:
    declared chassis. If the product produced a novel chassis with no matching
    section, load the spatial rhythm and typographic density sections as baseline.
 
+### Pre-Write Craft Sanity Check (生成侧防破损准则)
+
+Before authoring prototype HTML and CSS, apply these non-negotiable floor rules directly into generation:
+- **Draw icons, never use emoji glyphs** (`CRAFT-NO-EMOJI-ICON`): inline authored SVG or a clean icon library for all UI affordances. Emoji, pictographs, or Unicode symbol glyphs (e.g. 📊, ⚠️, 🔴) in UI control slots are immediate defects.
+- **Single-boundary elevation (No ghost cards)**: declare depth once per container — use either a crisp 1px border (`border: 1px solid var(--border-subtle)`) or a subtle calibrated elevation shadow, never a 1px border combined with a wide blurry shadow.
+- **Scoped property transitions (No `transition: all`)**: specify exact animated properties (`transition: transform 150ms var(--spring-snappy), opacity 150ms ease`), never unscoped `transition: all`.
+- **Row rails live on the state, not the base** (`CRAFT-ROW-RAIL`): a row-level status rail is declared only on the state variant (`.row[data-st="pending"] { border-left: 3px solid var(--status-warning) }`) or as `box-shadow: inset 3px 0 0 var(--x)`. Do not reserve it on the base class with `border-left: 3px solid transparent`; reserve the width with `padding-left` instead.
+- **No bare ordinal headings**: a section heading is a name, not `01`/`14`; number only a real sequence the user steps through.
+- **Single-pass build discipline**: write the complete anchor once (target under 500 lines; if the surface set will exceed it, split by surface before writing), then run one batched `capture.mjs` across declared viewports, then at most two `detect.py` runs. Fix what the render shows in one edit pass; whatever remains after the second scan is recorded as `PARTIAL` with its scope, not chased. Incremental CSS-edit → re-capture → re-scan loops are the main cost of this stage (r35: 14 scans, 17 compiles, 8 captures, 40 edits).
+
 ## Compression & Release
 
 Refuse the uniform card grid: aggregate high-density operation zones tightly and

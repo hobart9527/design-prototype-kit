@@ -121,6 +121,46 @@ body { caret-color: var(--accent); }
         f"toast accent bars must not read as container stripes: {result['findings']}")
 
 
+def test_slop_019_ignores_metric_substrings_in_status_tokens(tmp_path):
+    """`--status-warn`/`--state` tail-match "stat" without a left word boundary.
+
+    r24 fixed the comment route ("asymmetric"); r29 showed the same substring
+    bug firing on a variables-only tokens file through `status`/`state`.
+    """
+    _write(tmp_path, "prototype/shared/tokens.css",
+           ":root { --status-warn: #c90; --status-ok: #3a3; --state-idle: #888; }\n")
+    result = sd.detect(tmp_path)
+    assert "SLOP-019" not in result["counts"], result["findings"]
+
+
+def test_slop_002_ignores_a_selected_row_rail(tmp_path):
+    """A 3px rail on `.sel` marks the row the user is acting on, not a container."""
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+.node-row { padding: 8px; }
+.node-row.sel { border-left: 3px solid var(--accent); }
+</style></head><body><div class="node-row sel">node</div></body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-002" not in result["counts"], result["findings"]
+
+
+def test_slop_002_ignores_a_transparent_width_reservation(tmp_path):
+    """`border-left: 3px solid transparent` paints nothing; the state variants are the markers."""
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+.seq-row { padding: 8px; border-left: 3px solid transparent; }
+.seq-row[data-st="pending"] { border-left-color: var(--warn); }
+</style></head><body><div class="seq-row" data-st="pending">x</div></body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-002" not in result["counts"], result["findings"]
+
+def test_slop_002_still_flags_a_static_container_stripe(tmp_path):
+    """The state exemption must not swallow the cliché it exists beside."""
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+.panel { border-left: 5px solid #f00; }
+</style></head><body><div class="panel">x</div></body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-002" in result["counts"], result["findings"]
+
+
 def test_slop_detector_flags_unthemed_browser_surfaces_and_missing_press_detent(tmp_path):
     _write(tmp_path, "prototype/experiments/s/anchor/index.html",
            '<html><head><style>.x{color:#111}</style></head><body>'
@@ -163,6 +203,38 @@ def test_slop_detector_flags_a_glyph_holding_an_icons_slot(tmp_path):
     _write(tmp_path, "prototype/experiments/s/anchor/index.html",
            "<html><body><span>⚠ 遥测断流</span><span>🔒 锁定</span>"
            "<p>处置完成 🎉 全流程无人工介入</p></body></html>")
+    result = sd.detect(tmp_path)
+    assert "SLOP-009" in result["counts"], result["findings"]
+
+
+def test_slop_009_exempts_a_glyph_that_marks_a_named_control(tmp_path):
+    """A close button's `✕` is the affordance's own mark, not borrowed pictography.
+
+    r28 flagged `<button aria-label="关闭详情">✕</button>`; the accessible name
+    carries the meaning and the glyph is the standard close symbol.
+    """
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html",
+           '<html><body><button aria-label="关闭详情">✕</button></body></html>')
+    result = sd.detect(tmp_path)
+    assert "SLOP-009" not in result["counts"], result["findings"]
+
+
+def test_slop_009_still_flags_a_glyph_leading_a_control_label(tmp_path):
+    """A glyph in front of a real label is the icon-slot shape, even in a button.
+
+    `📊 查看` puts the glyph exactly where an icon belongs; a name in the button
+    does not launder it.
+    """
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html",
+           "<html><body><button>📊 查看</button></body></html>")
+    result = sd.detect(tmp_path)
+    assert "SLOP-009" in result["counts"], result["findings"]
+
+
+def test_slop_009_still_flags_a_glyph_that_is_the_whole_button(tmp_path):
+    """The exemption needs a word beside the glyph; a bare pictograph button stays."""
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html",
+           "<html><body><button>🔒</button></body></html>")
     result = sd.detect(tmp_path)
     assert "SLOP-009" in result["counts"], result["findings"]
 

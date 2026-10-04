@@ -185,6 +185,7 @@ def extract_section(text: str, heading_pattern: str, next_heading_pattern: Optio
 # ---------------------------------------------------------------------------
 _STATE_SECTION = "Stage 1 §3 (项目级状态模型)"
 _SURFACES_SECTION = "Stage 1 §5 (OOUX 实体拓扑与表面分配)"
+_SURFACES_HEADING = r"###?\s*.*(?:OOUX|实体拓扑|Surfaces?|Spatial\s+Anatomy|Anatomy|表面分配)"
 
 _REQUIRED_SECTIONS: List[Dict[str, Any]] = [
     {
@@ -254,6 +255,37 @@ _INTENT_REQUIRED_SECTIONS: List[Dict[str, Any]] = [
 ]
 
 
+def _misplaced_in_shared(shared_text: Optional[str], slice_id: str,
+                         violations: List[Dict[str, str]]) -> None:
+    """Annotate a missing slice-scoped contract that sits outside its slice block.
+
+    Viewports, required states and declared surfaces are read from the slice block
+    alone. A record that wrote them above the `## Slice:` heading did not omit
+    them; it placed them in the shared zone, and "请补齐" would send the author to
+    re-write what is already there. Report the position, not an absence.
+    """
+    if not shared_text:
+        return
+
+    def _safe(fn):
+        try:
+            return fn(shared_text)
+        except ValueError:
+            return None
+
+    present = {
+        "viewports": lambda: _safe(_viewports_from_contract_block),
+        "required_states": lambda: (_safe(_required_states_from_contract_block)
+                                    or _required_states_labeled(shared_text)),
+        "declared_surfaces": lambda: extract_section(shared_text, _SURFACES_HEADING),
+    }
+    for item in violations:
+        probe = present.get(item["key"])
+        if probe and probe():
+            item["hint"] = (f"已写在 `## Slice: {slice_id}` 区块之外（共享区）；"
+                            f"请把它移到该区块内（区块标题须在这些契约之前）")
+
+
 class IncompleteStageContractError(ValueError):
     """Raised when discussion.md omits fields the canonical IR requires non-empty.
 
@@ -287,9 +319,12 @@ def format_missing_sections(violations: List[Dict[str, str]], header: str = _MIS
     parts = [header] if header else []
     parts.append(f"发现 {len(violations)} 项缺失：")
     for index, item in enumerate(violations, start=1):
+        hint = item.get("hint")
         parts.append(
-            f"  [{index}] {item['key']} ({item['label']}) 未提取到。\n"
-            f"      期望章节: {item['section']}\n"
+            f"  [{index}] {item['key']} ({item['label']}) "
+            f"{'已声明但位置不对。' if hint else '未提取到。'}\n"
+            + (f"      位置:     {hint}\n" if hint else "")
+            + f"      期望章节: {item['section']}\n"
             f"      声明格式: {item['form']}\n"
             f"      样例:     {item['example']}"
         )
@@ -1239,7 +1274,7 @@ def compile_canonical_ir(
     design_intent = parse_design_intent(product_text)
 
     # Extract OOUX / Surfaces
-    surfaces_text = extract_section(slice_text, r"###?\s*.*(?:OOUX|实体拓扑|Surfaces?|Spatial\s+Anatomy|Anatomy|表面分配)")
+    surfaces_text = extract_section(slice_text, _SURFACES_HEADING)
     declared_surfaces = []
     primary_surface = fm_data.get("primary_surface")
     for line in surfaces_text.splitlines():
@@ -1498,6 +1533,7 @@ def compile_canonical_ir(
         for spec in _INTENT_REQUIRED_SECTIONS
         if not intent_extracted.get(spec["key"])
     ]
+    _misplaced_in_shared(shared_text, slice_id, violations + intent_violations)
     if violations and intent_violations:
         # Not even the Stage 1 intent tier is satisfiable: report everything.
         report = format_missing_sections(violations + intent_violations)

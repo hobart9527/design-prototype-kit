@@ -18,4 +18,7 @@ authority rows live in `prototype/truth.md`; tokens live in `prototype/world.md`
 
 A checkpoint is a recovery note, not a stop signal: keep working while authorized scope and
 evidence remain, and write this block once per authoring pass. Stop only for an unresolved
-user decision, a real stage boundary awaiting review, or an explicit session limit.
+user decision, a real stage boundary awaiting review, or an explicit session limit. The
+Turn 1→2 seam of the 3-turn route is such a boundary: once the design record and this block
+are written, end the turn instead of starting the anchor. Restate decision status verbatim
+(`proposed`/`provisional`); never upgrade it to `confirmed` here.

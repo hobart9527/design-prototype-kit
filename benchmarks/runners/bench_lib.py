@@ -577,8 +577,99 @@ def iteration_rollup(session_id: str, config_root: pathlib.Path | None = None) -
             "tools": tools,
             "output_tokens": usage.get("output_tokens"),
             "stop_reason": message.get("stop_reason"),
+            # Wall-clock position, so "which tool burns the clock" is answerable
+            # from the gap between consecutive iterations (r35 had counts only).
+            "ts": row.get("timestamp"),
         })
     return rollup
+
+
+def _transcript_path(session_id: str, config_root: pathlib.Path | None = None) -> pathlib.Path | None:
+    root = config_root or (pathlib.Path.home() / ".claude" / "projects")
+    matches = list(root.glob(f"*/{session_id}.jsonl")) if session_id else []
+    return matches[0] if matches else None
+
+
+def transcript_mark(session_id: str, config_root: pathlib.Path | None = None) -> int:
+    """Line count of the session transcript before a call runs.
+
+    The CLI appends to one transcript across a resumed session, so the mark
+    taken at call start lets :func:`assistant_text_since` return only what this
+    call said — an event's trigger keyword can land in any message of the call,
+    not just its last.
+    """
+    path = _transcript_path(session_id, config_root)
+    if not path:
+        return 0
+    try:
+        return len(path.read_text(encoding="utf-8").splitlines())
+    except OSError:
+        return 0
+
+
+def assistant_text_since(session_id: str, start: int = 0,
+                         config_root: pathlib.Path | None = None) -> str:
+    """Assistant prose the session produced after transcript line ``start``.
+
+    A call that ends on the turn cap returns an error envelope with an empty
+    ``result``, so event triggers, mock-user replies, and the co-creation judge
+    would otherwise see nothing of what the agent said. The transcript holds it.
+    """
+    path = _transcript_path(session_id, config_root)
+    if not path:
+        return ""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()[start:]
+    except OSError:
+        return ""
+    chunks: list[str] = []
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if row.get("type") != "assistant":
+            continue
+        text = "\n".join(c.get("text", "") for c in (row.get("message") or {}).get("content") or []
+                         if isinstance(c, dict) and c.get("type") == "text").strip()
+        if text:
+            chunks.append(text)
+    return "\n\n".join(chunks)
+
+
+def written_text_since(session_id: str, start: int = 0,
+                       config_root: pathlib.Path | None = None) -> str:
+    """Text the session wrote to files after transcript line ``start``.
+
+    A lean skill moves substance into the design record and leaves the chat
+    sparse, so keyword-matched events see none of what the agent decided (r31:
+    0/3 triggers in chat, 3/3 in the record). The mock user reads what the agent
+    produced, so Write/Edit payloads count as output for event matching. Callers
+    keep this out of the transcript the co-creation judge reads.
+    """
+    path = _transcript_path(session_id, config_root)
+    if not path:
+        return ""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()[start:]
+    except OSError:
+        return ""
+    chunks: list[str] = []
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if row.get("type") != "assistant":
+            continue
+        for item in (row.get("message") or {}).get("content") or []:
+            if not isinstance(item, dict) or item.get("type") != "tool_use":
+                continue
+            args = item.get("input") or {}
+            for key in ("content", "new_string"):
+                if isinstance(args.get(key), str):
+                    chunks.append(args[key])
+    return "\n\n".join(chunks)
 
 
 def new_session_id() -> str:

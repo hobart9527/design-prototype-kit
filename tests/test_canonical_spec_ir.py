@@ -975,6 +975,74 @@ def test_a_partitioned_record_without_the_slice_block_aborts(tmp_path: Path):
         compile_canonical_ir(root=root, slice_id="billing", stage="hero_probe")
 
 
+def test_slice_scoped_contracts_above_the_heading_report_position_not_absence(tmp_path: Path):
+    """r33: contracts written above `## Slice:` sit in the shared zone.
+
+    The compiler still aborts (slice isolation is pinned above), but it must say
+    the contracts are misplaced; "未提取到 / 请补齐" sent the author to rewrite
+    what was already written.
+    """
+    text = """# Design Discussion: Avalanche
+
+## 1. 业务与用户极端张力 (Core Tension)
+- Operational through-put vs Catastrophic Bus-Hang Failures.
+
+## 2. 现实双地锚 (Reality Benchmark Anchors)
+- Physical Anchor: desktop workstation
+
+### 3. 项目级状态模型 (State Model)
+- `domain/nominal` (常态): 全部健康。
+- `interaction/inspecting` (检视中): 抽屉展开。
+- `data/cold-metrics` (冷指标): 首次加载。
+
+### 5. OOUX 实体拓扑与表面分配
+- **主工作区 (Primary)**: `console/avalanche-command`
+
+### 6. Viewport 与强制测试状态
+```contract:viewports
+- 390
+- 1280
+```
+```contract:required_states
+- state-draft
+```
+
+### 7. 破坏协议 (Break Protocol)
+- `stress/bus-hang` | Vector: `NVLink 挂起` | Expected: `定位故障节点`。
+
+## Slice: avalanche-command
+
+```yaml
+---
+slice_id: "avalanche-command"
+---
+```
+- anchor only
+"""
+    root = _write_discussion(tmp_path, text)
+
+    with pytest.raises(IncompleteStageContractError) as exc:
+        compile_canonical_ir(root=root, slice_id="avalanche-command", stage="hero_probe")
+
+    report = str(exc.value)
+    assert "已声明但位置不对" in report
+    assert "区块之外" in report
+    assert "未提取到" not in report
+
+
+def test_genuinely_absent_contracts_still_report_absence(tmp_path: Path):
+    root = _write_discussion(tmp_path, PARTITIONED_DISCUSSION.replace(
+        "- `Viewport`: `390px` / `1280px`\n", ""))
+
+    with pytest.raises(IncompleteStageContractError) as exc:
+        compile_canonical_ir(root=root, slice_id="cluster-overview", stage="hero_probe",
+                             required_tier="execution_spec")
+
+    assert "viewports" in str(exc.value)
+    assert "未提取到" in str(exc.value)
+    assert "位置不对" not in str(exc.value)
+
+
 def test_a_slice_block_frontmatter_must_match_its_heading(tmp_path: Path):
     root = _write_discussion(
         tmp_path, PARTITIONED_DISCUSSION.replace('slice_id: "cluster-overview"', 'slice_id: "other"'))

@@ -150,6 +150,7 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
                 timeout_s=timeout_s or policy.get("timeout_seconds", 900),
                 budget_usd=budget_usd if budget_usd is not None else policy.get("max_budget_usd_per_turn"),
                 session_budget_usd=session_budget_usd,
+                turns_per_call=policy.get("turns_per_call", 60),
             )
         except bl.BenchBlocked as exc:
             result["status"] = "BLOCKED"

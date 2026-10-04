@@ -18,6 +18,41 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bench_lib as bl  # noqa: E402
 
 
+def _auto_continue_prompt() -> str:
+    return ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
+            "不要重新规划已完成的部分。")
+
+
+def _try_inject(text: str, events: list[dict], mock: dict, also: str = "") -> str | None:
+    """Match events and mock-user questions against the assistant's output.
+
+    ``text`` is the call's final answer (the only place a question to the user
+    is read). ``also`` is everything else the call produced: its earlier chat
+    messages and the files it wrote. A trigger word can land in any of them — a
+    lean skill keeps chat sparse and the substance in the design record — so
+    events match the whole call, not just its last message.
+
+    A trigger seen once stays seen: one injection goes out per call, so an event
+    the agent already provoked waits for a later call instead of being lost
+    (r34: all three triggers present in call 1, only one event ever fired).
+
+    Returns the next prompt to send, or ``None`` when no injection matched
+    (the caller should fall through to auto_continue or completion).
+    """
+    haystack = f"{text}\n{also}".lower()
+    for e in events:
+        if not e["fired"] and any(k.lower() in haystack for k in e["trigger"]):
+            e["seen"] = True
+    event = next((e for e in events if e.get("seen") and not e["fired"]), None)
+    if event:
+        event["fired"] = True
+        return f"（用户补充信息）{event['inject']}"
+    question = bl.extract_user_input(text)
+    if question:
+        return bl.mock_reply(question, mock["rules"], mock["fallback"])
+    return None
+
+
 def run_session(case: dict, variant: str, workspace: Path, *, model: str | None, max_turns: int,
                 timeout_s: int, budget_usd: float | None, turns_per_call: int = 60,
                 session_budget_usd: float | None = None) -> dict:
@@ -43,6 +78,9 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             status, note = "BLOCKED", f"wall-clock timeout after {len(turns)} turns"
             break
         resume = session_id if turns else None
+        # Mark the transcript before the call so event triggers can read every
+        # message this call produced, not just its last (r30 missed two).
+        mark = bl.transcript_mark(session_id)
         out = bl.run_claude(prompt, workspace, session_id=session_id, resume=resume, model=model,
                             max_turns=turns_per_call, max_budget_usd=budget_usd,
                             timeout_s=int(min(remaining, timeout_s)))
@@ -76,7 +114,12 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
         }
         turns.append(turn)
         transcript.append({"role": "user", "text": prompt})
-        transcript.append({"role": "assistant", "text": out["result"]})
+        # A turn-capped call has an empty result; fall back to what this call said.
+        out_text = out["result"] or bl.assistant_text_since(session_id, mark)
+        # Event matching reads the whole call: every chat message plus file writes.
+        out_also = (bl.assistant_text_since(session_id, mark) + "\n"
+                    + bl.written_text_since(session_id, mark))
+        transcript.append({"role": "assistant", "text": out_text})
         with records_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(turn, ensure_ascii=False) + "\n")
         bl.eprint(
@@ -84,6 +127,10 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             f"status={turn['status']} elapsed={turn['elapsed_s']}s "
             f"cost=${turn['cost_usd'] or 0:.2f} files={bl.workspace_components(workspace)['file_count']}"
         )
+
+        # ── Budget / turn-limit guards (shared by all exit paths) ──────
+        def _budget_blocked() -> bool:
+            return bool(session_budget_usd and total_cost >= session_budget_usd)
 
         if out["status"] == "max_turns":
             errors = out.get("errors") or []
@@ -98,24 +145,22 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             if not is_genuine_turn_cap and (not out.get("result") and out.get("is_error")):
                 status, note = "BLOCKED", f"CLI returned an error envelope: {turn['stderr']}"
                 break
-            # The CLI caps agent turns per call. Resume the same session with a
-            # neutral continuation so a long design session can finish; the
-            # wall-clock, loop-turn and session-budget limits still bound it.
             turn["prompt_kind"] = "auto_continue"
             turns[-1] = turn
-            if session_budget_usd and total_cost >= session_budget_usd:
+            if _budget_blocked():
                 status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
                 blocked_reason = "session_budget"
                 break
-            prompt = ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
-                      "不要重新规划已完成的部分。")
+            # Even on a CLI turn cap, the assistant's output may contain event
+            # triggers or user-input requests — check before falling through to
+            # a neutral auto_continue.
+            injected = _try_inject(out_text, events, mock, out_also)
+            prompt = injected or _auto_continue_prompt()
             continue
         if out["status"] == "budget_exceeded":
-            # The per-call budget is a guard against one runaway call, not the
-            # session cap: continue while the session budget still allows it.
             turn["prompt_kind"] = "auto_continue"
             turns[-1] = turn
-            if session_budget_usd and total_cost >= session_budget_usd:
+            if _budget_blocked():
                 status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
                 blocked_reason = "session_budget"
                 break
@@ -123,8 +168,8 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
                 status, note = "BLOCKED", "per-call budget exhausted and no session budget set"
                 blocked_reason = "per_call_budget"
                 break
-            prompt = ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
-                      "不要重新规划已完成的部分。")
+            injected = _try_inject(out_text, events, mock, out_also)
+            prompt = injected or _auto_continue_prompt()
             continue
         if out["status"] != "completed":
             status, note = "BLOCKED", f"turn {turn['turn']} {out['status']}: {turn['stderr']}"
@@ -134,41 +179,32 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             status, note = "BLOCKED", f"max_turns={max_turns} reached without a terminal answer"
             blocked_reason = "max_turns"
             break
-        if session_budget_usd and total_cost >= session_budget_usd:
+        if _budget_blocked():
             status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)} >= ${session_budget_usd})"
             blocked_reason = "session_budget"
             break
 
-        text = out["result"] or ""
-        event = next((e for e in events if not e["fired"]
-                      and any(k.lower() in text.lower() for k in e["trigger"])), None)
-        if event:
-            event["fired"] = True
-            prompt = f"（用户补充信息）{event['inject']}"
-            continue
-        question = bl.extract_user_input(text)
-        if question:
-            prompt = bl.mock_reply(question, mock["rules"], mock["fallback"])
+        # ── Completed turn: check for event injection / user questions ──
+        injected = _try_inject(out_text, events, mock, out_also)
+        if injected:
+            prompt = injected
             continue
         # A staged design skill ends each turn cleanly at a stage checkpoint
         # ("Stage 1 sealed; next: dispatch builder"). That is a pause, not a
         # finished delivery: if no runnable prototype exists yet, the session
-        # must resume instead of being recorded as complete. Without this the
-        # more disciplined the skill is about stage boundaries, the more
-        # certain the harness is to score it as "no HTML artifacts".
+        # must resume instead of being recorded as complete.
         if not bl.workspace_components(workspace)["has_html"]:
             if len(turns) >= max_turns:
                 status, note = "BLOCKED", f"max_turns={max_turns} reached without any runnable prototype"
                 blocked_reason = "max_turns"
                 break
-            if session_budget_usd and total_cost >= session_budget_usd:
+            if _budget_blocked():
                 status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
                 blocked_reason = "session_budget"
                 break
             turn["prompt_kind"] = "auto_continue"
             turns[-1] = turn
-            prompt = ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
-                      "不要重新规划已完成的部分。")
+            prompt = _auto_continue_prompt()
             continue
         status, note = "COMPLETED", ""
         break
@@ -239,7 +275,8 @@ def main() -> int:
     else:
         result = run_session(case, args.variant, workspace, model=args.model, max_turns=max_turns,
                              timeout_s=timeout_s, budget_usd=budget,
-                             session_budget_usd=args.session_budget_usd)
+                             session_budget_usd=args.session_budget_usd,
+                             turns_per_call=policy.get("turns_per_call", 60))
 
     if args.out == "-":
         print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -1,0 +1,135 @@
+{
+  "run_id": "candidate-cocreate-ic-r31",
+  "suite": "daily",
+  "generated_at": "20261004_002222",
+  "status": "BLOCKED",
+  "status_divergence": null,
+  "hard_gate_arms": [],
+  "cases": [
+    "incident-commander"
+  ],
+  "variants": [
+    "candidate_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "incident-commander",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "BLOCKED",
+      "metrics": {
+        "turns": 4,
+        "elapsed_seconds": 2399.59,
+        "cost_usd": 13.0899
+      },
+      "notes": [
+        "session BLOCKED: turn 4 timeout: timeout after 560s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "9d3b41dd-7196-4458-a2bc-1ac93ebc7185",
+        "workspace": "/tmp/design-bench/incident-commander/candidate_skill/20261003_233441-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 0,
+    "authority_escape": 0,
+    "critical_task_break": 0,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 0,
+      "blocked": 1,
+      "task_success_rate": 1.0,
+      "method_recall": 0.5,
+      "method_precision": 1.0,
+      "semantic_gate_pass": 1,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 1,
+      "artifact_turns": 4.0,
+      "cost_usd": 13.0899,
+      "elapsed_seconds": 2399.6,
+      "inline_hex_failures": 0,
+      "slop_score": 0.0,
+      "slop_high_findings": 0,
+      "taste_judged": 1,
+      "ai_slop_fail": 0,
+      "category_guessable_high": 1,
+      "first_viewport_thesis_present": 1,
+      "divergence_verdicts": [
+        "not_measured"
+      ],
+      "contract_blocks_fulfilled": 3.0,
+      "contract_blocks_absent": 0.0,
+      "cocreation_verdicts": [
+        "false_confirmation"
+      ],
+      "cocreation_before_build": 0,
+      "cocreation_measured": 1
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 1,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "0e42c9f611621b7cf9cb6a92a27cdc619272846194398df473063956d345b237"
+    ],
+    "disclosure": "all 1 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_agreement": null,
+    "pairwise_confidence_counts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "pairwise_cost_usd": 0,
+    "pairwise_cost_recorded": 0,
+    "pairwise_cost_missing": 0,
+    "pairwise_cost_total_complete": true,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "slop_rules": {
+    "candidate_skill": {}
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "INCONCLUSIVE",
+    "pairs_compared": 0,
+    "compared_dimensions": 0,
+    "verified_dimensions": [],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [],
+    "missing_pairs": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      }
+    ]
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "incident-commander/candidate_skill: session blocked"
+  ]
+}

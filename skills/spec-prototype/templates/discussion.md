@@ -52,7 +52,10 @@ refused at the Stage 5 `execution_spec` boundary.
 - Turn budget discipline: a checkpoint is a recovery note, not a stop signal.
   Keep working while authorized scope and evidence remain, and write this block
   once per authoring pass. Stop only for an unresolved user decision, a real
-  stage boundary awaiting review, or an explicit session limit.
+  stage boundary awaiting review, or an explicit session limit. The Turn 1→2 seam of
+  the 3-turn route is such a boundary: once the design record and this block are
+  written, end the turn instead of starting the anchor. Restate decision status
+  verbatim (`proposed`/`provisional`); never upgrade it to `confirmed` here.
 
 “Active track” is retained for checker compatibility and means the current
 uncertainty, not a mandatory sequence. The route contract in
@@ -422,4 +425,4 @@ look at and what would count as a failure, so the review is not a taste contest.
 - Unverified assumptions and bounded implementation freedoms:
 - Feedback received and owning node changed:
 - Decisions explicitly reopened:
-- Unaffected decisions and approvals preserved:
+- Unaffected decisions and approvals preserved (copy each row's recorded status; a restatement never promotes `proposed` to `confirmed`):

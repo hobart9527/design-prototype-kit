@@ -25,6 +25,11 @@ open alternatives only when a consequential choice is genuinely unresolved.
    - Keep each direction low-fidelity and evaluable on the product question it answers.
      In unattended or autonomous runs, the recommended direction is recorded as
      `proposed` / `provisional` in the Decisions table—never hallucinated as `confirmed`.
+     This holds for every restatement too: a brief's "decisions preserved" line, the
+     Resume block, and a brief that quotes the user's own request all carry the status
+     as recorded (`proposed`/`provisional`). A user's brief is source evidence for a
+     decision row, not a user selection of it; `confirmed` needs the user's explicit
+     choice of that decision in-session, or an explicit delegation.
    - The user's choice of direction is the consequential decision this round exists
      to produce. When evidence already predetermines the direction (an explicit extension
      of an existing surface, a settled convention, or an explicit user delegation),
@@ -42,24 +47,10 @@ open alternatives only when a consequential choice is genuinely unresolved.
 Ask the user only when a decision materially changes the direction or scope. Resolve
 repository facts silently. Preserve settled and delegated choices on continuation.
 
-**Stage 1 tool boundary.** This stage reads and writes the design record only —
-`discussion.md`, or `truth.md`/`world.md`/`briefs/` on the layered tree. It never runs
-`capture.mjs`, `compile_tokens.py`, or `detect.py`, and it never writes `tokens.css`,
-`experiments/**/index.html`, or `evidence/`: those are Stage 2–4 instruments, and
-running them here is the stage inflation that stranded r24/r25 Turn 1 at the 60-turn
-CLI cap with the Make-stage work unfinished. "Evidence" in this stage means product
-facts and cited references, not rendered captures. Neutral system primitives name
-the scenario (`node-cluster`, `core-api`, `data-worker`); never invent an unprompted
-business domain (payment, billing, shift calendars) to make sample content concrete —
-the semantic hard gate reads invented domains as fabrication.
-
-**Axes are prose in Stage 1, machine-checked in Stage 2.** The `contract:axes` block
-and the Five-Axes register are recorded here as declared prose (value with cited
-evidence, or `open` with reason) — never verified against `compile_tokens.py` in this
-stage. The machine check happens for free the moment Turn 2 compiles tokens; a frame
-that pauses to probe the compiler is re-deriving a guarantee the pipeline already
-provides (r26 spent 16 compiler invocations and a `_debug_palette.py` doing exactly
-that).
+Frame is a thinking stage: its output is the design record (`discussion.md`, or
+`truth.md`/`world.md`/`briefs/` on the layered tree). Build and verification tools
+belong to the stages that follow. Name the scenario with neutral system primitives
+(`node-cluster`, `core-api`, `data-worker`) rather than an unprompted business domain.
 
 ## Design brief format & Four High-Density Deliverables (单脑四联装)
 
@@ -195,8 +186,16 @@ prefix, a missing field, a duplicate id, an out-of-enum severity. A `domain/` an
 `data/` entry carries a `description`; an `interaction/` entry is an id alone.
 A YAML value containing `: ` or starting with a special character must be quoted.
 
+On a single-record tree, open the `## Slice: <slice_id>` heading **before** the
+slice's contracts: viewports, required states and surfaces are read from inside that
+block, and anything written above the heading belongs to the shared zone. Contract
+sections nest as `###` under it, as in the template; a sibling `##` heading ends the
+block. Writing the heading last is the one placement the compiler cannot read.
+
 ```markdown
-## 3. State Model
+## Slice: <slice_id>
+
+### 3. State Model
 ```contract:states
 - id: domain/<id>
   label: 业务状态名称
@@ -207,7 +206,7 @@ A YAML value containing `: ` or starting with a special character must be quoted
   description: 一句话数据场景说明
 ```
 
-## 6. Viewport 与强制测试状态
+### 6. Viewport 与强制测试状态
 ```contract:viewports
 - 390
 - 1280
@@ -217,14 +216,14 @@ A YAML value containing `: ` or starting with a special character must be quoted
 - state-b
 ```
 
-## 7. Break Protocol
+### 7. Break Protocol
 ```contract:stress
 - id: stress/<id>
   vector: 破坏向量
   expected: 期望恢复行为
 ```
 
-## Design Invariants
+### Design Invariants
 ```contract:invariants
 - id: inv/<id>
   statement: 断言

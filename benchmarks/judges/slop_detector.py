@@ -51,10 +51,23 @@ ORDINAL_HEADING_RE = re.compile(r"^\s*(?:0[1-9]|1[0-9])\s*$")
 EMOJI_RE = re.compile(
     "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF]")
 GRADIENT_TEXT_RE = re.compile(r"background-clip\s*:\s*text", re.IGNORECASE)
-# A side accent stripe is a container treatment. Row-level change markers ride
-# 1–2px (VS Code and diff UFs use exactly that on list items), so the floor for
-# "stripe" is 3px: anything thinner is an item marker, not a container accent.
-SIDE_STRIPE_RE = re.compile(r"border-(?:left|right)\s*:\s*([3-9]|\d{2,})px\s+solid", re.IGNORECASE)
+# A side accent stripe is a container treatment. Row-level change markers and
+# selected-row rails ride 1–2px (VS Code and diff UFs use exactly that on list
+# items), so the floor for "stripe" is 3px: anything thinner is an item marker,
+# not a container accent. A `transparent` (or `inherit`) colour paints nothing: it
+# reserves the rail's width on a base row class so the state variant can colour it
+# without a reflow (r35 `.seq-row`), and the variants are the markers.
+SIDE_STRIPE_RE = re.compile(
+    r"border-(?:left|right)\s*:\s*([3-9]|\d{2,})px\s+solid(?!\s+(?:transparent|inherit|currentcolor)\b)",
+    re.IGNORECASE)
+# A thick side border on a *state marker* (selected/current/toast) marks the item
+# the user is acting on, not a decorative container stripe. r29 flagged
+# `.node-row.sel { border-left: 3px solid … }` — the selected-row rail.
+STATE_SELECTOR_RE = re.compile(
+    r"\.(?:sel|selected|active|current|checked|focus|change-marked|is-[a-z-]+)\b"
+    r"|\[(?:aria-(?:selected|current|checked|expanded)|data-[a-z-]+)\s*[=~|^$*]",
+    re.IGNORECASE)
+TOAST_SELECTOR_RE = re.compile(r"\.toast\b", re.IGNORECASE)
 # The model-default faces: reaching for one of these as the *only* face means the
 # typographic axis was never decided.
 REFLEX_FACES = ("inter", "roboto", "open sans", "lato", "montserrat", "poppins",
@@ -67,7 +80,11 @@ PURE_GRAY_RE = re.compile(r"#(?:808080|888888|7f7f7f|999999|666666|333333|cccccc
 DEEP_INDIGO_RE = re.compile(r"#(?:0[dD]0[bB]1[aA]|1[0-3][0-9a-fA-F]{4}|0[0-9a-fA-F]{5})")
 TRANSITION_ALL_RE = re.compile(r"transition\s*:\s*all\b", re.IGNORECASE)
 CARD_CLASS_RE = re.compile(r"(?:^|[-_])(card|tile|panel|box)(?:$|[-_])", re.IGNORECASE)
-METRIC_CLASS_RE = re.compile(r"(?:stat|metric|kpi|hero-number|big-number)", re.IGNORECASE)
+# A metric-named class (`.metric`, `.metric-cell`) — anchored at its left edge so
+# the token cannot fire on the tail of an unrelated word. Without the lookbehind
+# `asymmetric` (r24) and `--status-warn`/`--state` (r29) both read as "metric"/
+# "stat" and flagged a variables-only file.
+METRIC_CLASS_RE = re.compile(r"(?<![\w-])(?:stat|metric|kpi|hero-number|big-number)", re.IGNORECASE)
 
 
 def _declarations(text: str) -> list[tuple[str, str]]:
@@ -94,6 +111,37 @@ def _elements(markup: str) -> list[tuple[str, str, str]]:
 def _text_nodes(markup: str) -> list[str]:
     stripped = re.sub(r"<[^>]+>", "\n", markup)
     return [line.strip() for line in stripped.splitlines() if line.strip()]
+
+
+_CONTROL_RE = re.compile(r"<(button|a|summary)\b[^>]*>(.*?)</\1>", re.IGNORECASE | re.DOTALL)
+_ACCESSIBLE_NAME_RE = re.compile(r'(?:aria-label|title)\s*=\s*"([^"]*)"', re.IGNORECASE)
+_WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+
+
+def _control_marked_glyphs(markup: str) -> set[str]:
+    """Glyphs that mark a control rather than stand in for an icon.
+
+    Exempt only when the glyph is the control's *whole* visible label and its
+    accessible name (`aria-label`/`title`) carries the meaning — a close
+    button's `✕`. A glyph that leads a longer label (`📊 查看`) is still the
+    icon-slot shape this rule exists for, and a glyph button with no name at all
+    stays flagged: the exemption needs a word elsewhere, not just a glyph here.
+    """
+    exempt: set[str] = set()
+    for match in _CONTROL_RE.finditer(markup):
+        visible = re.sub(r"<[^>]+>", " ", match.group(2))
+        glyphs = EMOJI_RE.findall(visible)
+        if not glyphs:
+            continue
+        residue = visible
+        for glyph in glyphs:
+            residue = residue.replace(glyph, " ")
+        if _WORD_RE.search(residue):
+            continue  # glyph leads a real label; keep it in scope
+        name = " ".join(_ACCESSIBLE_NAME_RE.findall(match.group(0)))
+        if _WORD_RE.search(name):
+            exempt.update(glyphs)
+    return exempt
 
 
 class _Findings:
@@ -213,8 +261,12 @@ def _scan_markup(name: str, markup: str, out: _Findings) -> None:
     texts = _text_nodes(markup)
 
     # A glyph that *leads* a text node is occupying an icon's slot — the shape
-    # this rule is about. One appearing mid-sentence is prose.
-    emoji_hits = [t for t in texts if EMOJI_RE.match(t)]
+    # this rule is about. One appearing mid-sentence is prose, and one naming a
+    # control (a close button's `✕`) is the affordance's own mark, not a
+    # borrowed picture. Flag only when no sibling control text names it.
+    exempt_glyphs = _control_marked_glyphs(markup)
+    emoji_hits = [t for t in texts
+                  if EMOJI_RE.match(t) and not (set(EMOJI_RE.findall(t)) & exempt_glyphs)]
     if emoji_hits:
         out.add("SLOP-009", "high", name, f"emoji/glyph as icon: {emoji_hits[0]}")
 
@@ -247,24 +299,41 @@ def _scan_markup(name: str, markup: str, out: _Findings) -> None:
         out.add("SLOP-025", "low", name, "modal container present; confirm the task needs interruption")
 
 
+def _owning_selector(css: str, index: int) -> str:
+    """Selector text governing the declaration at ``index``.
+
+    Walks back to the block's opening brace, then forward from the previous
+    block's close — enough to see whether the rule is a state marker rather than
+    a layout container.
+    """
+    open_brace = css.rfind("{", 0, index)
+    if open_brace == -1:
+        return ""
+    start = max(css.rfind("}", 0, open_brace), css.rfind("{", 0, open_brace)) + 1
+    return css[start:open_brace].strip()
+
+
 def _scan_css(name: str, css: str, out: _Findings) -> None:
     decls = _declarations(css)
     values = {prop: val for prop, val in decls}
-    # Comments are prose, not design surface: a header note like "asymmetric"
-    # otherwise matches METRIC_CLASS_RE's "metric" and fires SLOP-019 on a
+    # Comments are prose, not design surface: a header note like "metric
+    # density" would otherwise match METRIC_CLASS_RE and fire SLOP-019 on a
     # tokens file that legitimately holds only variable definitions (r24).
     uncommented = CSS_COMMENT_RE.sub(" ", css)
 
     if GRADIENT_TEXT_RE.search(css):
         out.add("SLOP-001", "high", name, "background-clip: text (gradient text as emphasis)")
-    stripe = SIDE_STRIPE_RE.search(css)
-    if stripe and not re.search(r"\.toast[^{}]*\{[^}]*" + re.escape(stripe.group(0)),
-                                css, re.IGNORECASE | re.DOTALL):
-        # Transient status toasts conventionally carry a 3px semantic accent bar
-        # (GitHub/Linear/VS Code notifications all do); that is a status ledger,
-        # not a container stripe riding the AI-dashboard cliché. Static layout
-        # containers with a thick stripe still flag.
+    for stripe in SIDE_STRIPE_RE.finditer(css):
+        selector = _owning_selector(css, stripe.start())
+        # A 3px accent bar is conventional on a transient status toast
+        # (GitHub/Linear notifications) and on the selected/current row — both
+        # mark the item the user is acting on, not a container riding the
+        # AI-dashboard cliché. A static layout container with a thick stripe
+        # still flags (r28 `.audit-item.change-marked`, r29 `.node-row.sel`).
+        if TOAST_SELECTOR_RE.search(selector) or STATE_SELECTOR_RE.search(selector):
+            continue
         out.add("SLOP-002", "high", name, "thick side accent stripe on a container")
+        break
     if TRANSITION_ALL_RE.search(css):
         out.add("SLOP-006", "medium", name, "transition: all (unscoped animation)")
     if BLUR_RE.search(css):
