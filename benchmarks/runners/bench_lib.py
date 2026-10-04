@@ -214,8 +214,9 @@ def parse_events(text: str) -> list:
 
 def extract_user_input(text: str) -> str | None:
     for line in reversed([ln.strip() for ln in (text or "").splitlines()]):
-        if line.upper().startswith("USER-INPUT:"):
-            question = line.split(":", 1)[1].strip()
+        m = re.match(r"^(?:USER[-_ ]INPUT|用户输入|用户提问)\s*[:：]\s*(.*)$", line, re.IGNORECASE)
+        if m:
+            question = m.group(1).strip()
             if question:
                 return question
     return None

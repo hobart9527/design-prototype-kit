@@ -62,30 +62,41 @@ def _contrast(hex_a: str, hex_b: str) -> float:
     return round((hi + 0.05) / (lo + 0.05), 2)
 
 
-def _registry_ids(variant: str) -> list:
+def _registry_methods(variant: str) -> dict[str, list[str]]:
+    """Return map of method_id -> list of regex patterns (id + name variants)."""
     try:
         src = bl.variant_sources(variant)["skill"]
     except bl.BenchBlocked:
-        return []
+        return {}
     if not src:
-        return []
+        return {}
     registry = pathlib.Path(src) / "methods" / "registry.yaml"
     if not registry.is_file():
-        return []
+        return {}
     data = bl.load_yaml(registry)
-    ids = set()
-    def walk(node):
-        if isinstance(node, dict):
-            for key, value in node.items():
-                if key == "id" and isinstance(value, str):
-                    ids.add(value)
-                else:
-                    walk(value)
-        elif isinstance(node, list):
-            for item in node:
-                walk(item)
-    walk(data)
-    return sorted(ids)
+    methods = {}
+    items = data.get("methods") if isinstance(data, dict) else []
+    for item in (items or []):
+        if not isinstance(item, dict) or not item.get("id"):
+            continue
+        mid = item["id"]
+        patterns = [rf"\b{re.escape(mid).replace(r'\-', r'[\-\s_]+')}\b"]
+        name = item.get("name")
+        if name and isinstance(name, str):
+            clean_name = re.sub(r"[^A-Za-z0-9\s]+", " ", name).strip()
+            if clean_name:
+                patterns.append(rf"\b{re.escape(clean_name)}\b")
+            for seg in re.split(r"[&/]", name):
+                seg = seg.strip()
+                if len(seg) > 5:
+                    patterns.append(rf"\b{re.escape(seg)}\b")
+        methods[mid] = patterns
+    return methods
+
+
+def _registry_ids(variant: str) -> list:
+    methods = _registry_methods(variant)
+    return sorted(methods.keys())
 
 
 def _user_turns(case: dict, artifacts_dir: pathlib.Path) -> list:
@@ -152,7 +163,11 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
                           "precision": None, "recall": None, "negative_selection_accuracy": None}
         add("method_router", method_routing["status"], f"registry ids={len(registry_ids)} variant={variant}")
     else:
-        referenced = sorted({mid for mid in registry_ids if re.search(rf"\b{re.escape(mid).replace(r"\-", r"[\-\s_]+")}\b", joined, re.IGNORECASE)})
+        registry_methods = _registry_methods(variant)
+        referenced = sorted({
+            mid for mid in registry_ids
+            if any(re.search(pat, joined, re.IGNORECASE) for pat in registry_methods.get(mid, [rf"\b{re.escape(mid).replace(r'\-', r'[\-\s_]+')}\b"]))
+        })
         must = set(expectation.get("must_consider") or [])
         relevant = set(expectation.get("relevant") or [])
         banned = set(expectation.get("should_not_select") or [])

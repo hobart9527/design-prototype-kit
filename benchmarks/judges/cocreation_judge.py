@@ -56,10 +56,27 @@ def _is_html_write(text: str) -> bool:
     return False
 
 
-# Direction candidates presented as a set: two or more labelled options in one turn.
-CANDIDATE_LABEL_RE = re.compile(r"(?:direction|方向|候选|方案|option)\s*[-_ ]?\s*([A-C])\b", re.IGNORECASE)
-ROUT_RE = re.compile(r"(?:category\s+)?rut\b|套路|默认形态|category default|惯性形态|行业惯常", re.IGNORECASE)
-SEED_RE = re.compile(r"\bseed\b|种子", re.IGNORECASE)
+def _normalize_label(label: str) -> str:
+    raw = (label or "").strip().upper()
+    if raw in ("1", "一"):
+        return "A"
+    if raw in ("2", "二"):
+        return "B"
+    if raw in ("3", "三"):
+        return "C"
+    return raw
+
+
+# Direction candidates presented as a set: labelled options in one turn.
+CANDIDATE_LABEL_RE = re.compile(
+    r"(?:direction|方向|候选|方案|option|hypothesis|假设|path|路径|chassis|底盘|route|路线)\s*[-_ ]?\s*([A-C]|[1-3]|[一二三])\b",
+    re.IGNORECASE)
+ROUT_RE = re.compile(
+    r"(?:category\s+)?rut\b|套路|默认形态|category default|惯性形态|行业惯常|固有模式|传统做法|常规范式|普遍模式|common practice|default pattern|industry baseline",
+    re.IGNORECASE)
+SEED_RE = re.compile(
+    r"\bseed\b|种子|灵感源|anchor analogy|隐喻|metaphor",
+    re.IGNORECASE)
 TWO_AXIS_RE = re.compile(r"two-axis|两轴|双轴|axis\s+verdict", re.IGNORECASE)
 PROVISIONAL_RE = re.compile(r"provisional|暂定|临时锁定", re.IGNORECASE)
 # A confirmed *claim* is a settled status cell (`| confirmed |`) or a `status: confirmed`
@@ -112,7 +129,7 @@ def judge(out_dir: pathlib.Path) -> dict:
     for index, turn in enumerate(turns):
         if turn["role"] != "assistant":
             continue
-        labels = {m.group(1).upper() for m in CANDIDATE_LABEL_RE.finditer(turn["text"])}
+        labels = {_normalize_label(m.group(1)) for m in CANDIDATE_LABEL_RE.finditer(turn["text"])}
         has_rut = bool(ROUT_RE.search(turn["text"]))
         has_seed = bool(SEED_RE.search(turn["text"]))
         # C0 is a *candidate set* offered with the rut named and seeds assigned —
