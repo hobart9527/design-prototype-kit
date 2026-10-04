@@ -56,9 +56,13 @@ GRADIENT_TEXT_RE = re.compile(r"background-clip\s*:\s*text", re.IGNORECASE)
 # items), so the floor for "stripe" is 3px: anything thinner is an item marker,
 # not a container accent. A `transparent` (or `inherit`) colour paints nothing: it
 # reserves the rail's width on a base row class so the state variant can colour it
-# without a reflow (r35 `.seq-row`), and the variants are the markers.
+# without a reflow (r35 `.seq-row`), and the variants are the markers. A neutral
+# border token (`var(--border-subtle)`, `--divider`, `--hairline`) is a divider
+# line, not an accent: the stripe cliché is a *coloured* bar (r36 `.rail-status`).
 SIDE_STRIPE_RE = re.compile(
-    r"border-(?:left|right)\s*:\s*([3-9]|\d{2,})px\s+solid(?!\s+(?:transparent|inherit|currentcolor)\b)",
+    r"border-(?:left|right)\s*:\s*([3-9]|\d{2,})px\s+solid"
+    r"(?!\s+(?:transparent|inherit|currentcolor)\b)"
+    r"(?!\s+var\(\s*--(?:border|divider|hairline|line)[\w-]*\s*\))",
     re.IGNORECASE)
 # A thick side border on a *state marker* (selected/current/toast) marks the item
 # the user is acting on, not a decorative container stripe. r29 flagged

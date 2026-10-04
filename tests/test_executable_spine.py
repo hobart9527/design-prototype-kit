@@ -202,6 +202,18 @@ def test_review_template_carries_a_row_for_every_pillar():
     # A finding names its owning pillar, so the same observation is filed once.
     assert "| Concern and location/state | Pillar |" in template
 
+
+def test_review_independence_disclosure_uses_the_canonical_label():
+    audit = _read(AUDIT)
+    quality_floor = _read(REFS / "03-verification/quality-floor.md")
+    template = _read(REVIEW_TEMPLATE)
+    label = "review_independence: non-independent (unverified)"
+    assert label in audit
+    assert label in quality_floor
+    assert "Critic independence/context limitation" in template
+    assert "never claim independent verification from self-review" in audit
+    assert "never claim independent verification" in quality_floor
+
 # -- P4: operators are single-axis moves --------------------------------------
 
 OPERATORS = REFS / "operators.md"

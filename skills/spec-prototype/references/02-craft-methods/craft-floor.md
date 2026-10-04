@@ -55,6 +55,18 @@ inspection pass, not as separate screenshot trips.
   `assertive` for urgent) so assistive technology perceives the change. A
   progress bar the screen reader cannot hear is a state change that never
   happened for that user.
+- **Fluid type** `CRAFT-FLUID-TYPE`: display and body sizes scale with the
+  viewport through `clamp()` (or `min()`/`max()`), so the 390 and 1280 frames are
+  one type system rather than two hand-set tables. Advisory.
+- **Color scheme** `CRAFT-COLOR-SCHEME`: the chosen theme declares
+  `color-scheme` (light, dark, or both) so native controls, scrollbars and form
+  fields follow it. A dark surface with a white scrollbar reads as unfinished.
+  Advisory; a second theme is optional unless the brief asks for one.
+- **Loading state** `CRAFT-LOADING-STATE`: a region that loads or refreshes shows
+  a skeleton or `aria-busy="true"` rather than blank space. Advisory.
+- **Contextual metric** `CRAFT-CONTEXTUAL-METRIC`: a number on a surface carries a
+  baseline, unit, delta, or sparkline. This is the id for the VPQ `data-craft`
+  signal; it has no text detector.
 
 ### Rule IDs are the anchor
 

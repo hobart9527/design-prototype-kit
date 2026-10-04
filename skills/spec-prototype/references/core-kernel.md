@@ -77,9 +77,9 @@ not that every axis carries a value: each of the five carries either a value wit
 its cited product evidence, or an explicit `open` with the reason it stays free.
 An axis left blank is indistinguishable from an axis decided by model default —
 which is why silence at direction lock is the one outcome this kernel forbids.
-This closes the hole that "optional" left open while keeping the register a
-decision, not a form to fill. The register binds at direction lock only: a bounded
-direction probe, a spec-only request, or a local refinement does not trigger it.
+The register binds at direction lock only: a bounded direction probe, a spec-only
+request, or a local refinement does not trigger it. This is a Stage 1 decision,
+not an approval gate or a reason to extend discovery beyond the active uncertainty.
 Authentic reference products (e.g. Linear, Stripe, Raycast, Vercel) serve as
 empirical anchors for these coordinates, not visual templates to clone blindly.
 

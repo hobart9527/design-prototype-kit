@@ -38,6 +38,24 @@ def test_every_case_matches_its_schema():
         assert case["events"], f"{case_id} has no counterfactual event"
 
 
+def test_method_expectations_reference_unique_registered_ids():
+    registry_path = bl.ROOT / "skills/spec-prototype/methods/registry.yaml"
+    registry = bl.load_yaml(registry_path)
+    known = {method["id"] for method in registry["methods"]}
+
+    for case_id in CASE_IDS:
+        expectation = bl.load_case(case_id)["meta"].get("method_expectation") or {}
+        all_ids = [method_id for field in ("must_consider", "relevant", "should_not_select")
+                   for method_id in (expectation.get(field) or [])]
+        assert len(all_ids) == len(set(all_ids)), f"{case_id} repeats a method expectation"
+        assert not set(all_ids) - known, f"{case_id} references unknown methods: {sorted(set(all_ids) - known)}"
+        must = set(expectation.get("must_consider") or [])
+        relevant = set(expectation.get("relevant") or [])
+        banned = set(expectation.get("should_not_select") or [])
+        assert not (must & banned), f"{case_id} marks methods both required and forbidden"
+        assert not (relevant & banned), f"{case_id} marks methods both relevant and forbidden"
+
+
 def test_run_workspace_never_receives_hidden_inputs(tmp_path):
     case = bl.load_case("editorial-reader")
     original_root = bl.WORKSPACE_ROOT
@@ -611,3 +629,108 @@ def test_estimated_cumulative_cost_replaces_rather_than_adds_to_the_total():
     assert "if out.get(\"cost_estimated\"):" in src
     assert "total_cost = max(total_cost, call_cost) + timeout_bound" in src
     assert "total_cost = max(total_cost, call_cost)" in src
+
+def test_early_calls_get_a_share_of_the_clock_and_the_last_gets_the_rest():
+    # r35: call 1 took 1343s of 3000s and the session died with Turn 4 stranded.
+    assert run_claude_session._call_timeout(0, 3000, 3000) == (1200, True)
+    assert run_claude_session._call_timeout(1, 1800, 3000) == (900, True)
+    assert run_claude_session._call_timeout(2, 900, 3000) == (900, False)
+    # A share larger than what is left is simply the remainder.
+    assert run_claude_session._call_timeout(0, 500, 3000) == (500, False)
+
+
+def test_a_call_that_exhausts_its_share_resumes_instead_of_blocking(tmp_path, monkeypatch):
+    case = bl.load_case("incident-commander")
+    calls = []
+
+    def mock_run(prompt, *args, **kwargs):
+        calls.append(kwargs)
+        if len(calls) == 1:
+            return {"status": "timeout", "session_id": "s", "elapsed_s": kwargs["timeout_s"],
+                    "cost_usd": 0.5, "cost_estimated": True, "result": "", "models": [],
+                    "stderr": "timeout"}
+        (tmp_path / "prototype").mkdir(exist_ok=True)
+        (tmp_path / "prototype" / "index.html").write_text("<html></html>")
+        return {"status": "completed", "session_id": "s", "elapsed_s": 5, "cost_usd": 1.0,
+                "result": "done", "is_error": False, "models": [], "stderr": ""}
+
+    monkeypatch.setattr(bl, "run_claude", mock_run)
+    result = run_claude_session.run_session(
+        case, "candidate_skill", tmp_path, model=None, max_turns=4,
+        timeout_s=1000, budget_usd=2.0, session_budget_usd=10.0)
+    assert result["status"] == "COMPLETED"
+    assert len(calls) == 2
+    assert calls[0]["timeout_s"] <= 400
+    assert calls[1]["resume"] == "s"
+
+
+def test_session_clock_exhaustion_with_a_prototype_is_partial_not_blocked(tmp_path, monkeypatch):
+    case = bl.load_case("incident-commander")
+    (tmp_path / "prototype").mkdir()
+    (tmp_path / "prototype" / "index.html").write_text("<html></html>")
+    monkeypatch.setattr(bl, "run_claude", lambda *a, **k: {
+        "status": "timeout", "session_id": "s", "elapsed_s": 1, "cost_usd": 0.1,
+        "cost_estimated": True, "result": "", "models": [], "stderr": "timeout"})
+    monkeypatch.setattr(run_claude_session, "CALL_WALL_CLOCK_SHARE", ())
+    result = run_claude_session.run_session(
+        case, "candidate_skill", tmp_path, model=None, max_turns=4,
+        timeout_s=60, budget_usd=2.0, session_budget_usd=10.0)
+    assert result["status"] == "PARTIAL"
+    assert result["blocked_reason"] == "wall_clock"
+
+
+def test_a_cli_error_envelope_stays_blocked_even_with_a_prototype(tmp_path, monkeypatch):
+    case = bl.load_case("incident-commander")
+    (tmp_path / "prototype").mkdir()
+    (tmp_path / "prototype" / "index.html").write_text("<html></html>")
+    monkeypatch.setattr(bl, "run_claude", lambda *a, **k: {
+        "status": "error", "session_id": "s", "elapsed_s": 1, "cost_usd": 0.1,
+        "result": "", "models": [], "stderr": "boom"})
+    result = run_claude_session.run_session(
+        case, "candidate_skill", tmp_path, model=None, max_turns=4,
+        timeout_s=60, budget_usd=2.0, session_budget_usd=10.0)
+    assert result["status"] == "BLOCKED"
+
+
+def test_each_turn_records_only_its_own_iterations(tmp_path, monkeypatch):
+    case = bl.load_case("incident-commander")
+    calls = []
+
+    def mock_run(prompt, *args, **kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            return {"status": "max_turns", "session_id": "s", "elapsed_s": 1, "cost_usd": 0.1,
+                    "num_turns": 3, "is_error": True, "result": "", "models": [], "stderr": "",
+                    "errors": ["Reached maximum number of turns (2)"],
+                    "iterations": [{"tools": ["Read"]}, {"tools": ["Write"]}]}
+        (tmp_path / "prototype").mkdir(exist_ok=True)
+        (tmp_path / "prototype" / "index.html").write_text("<html></html>")
+        return {"status": "completed", "session_id": "s", "elapsed_s": 1, "cost_usd": 0.2,
+                "result": "done", "is_error": False, "models": [], "stderr": "",
+                "iterations": [{"tools": ["Read"]}, {"tools": ["Write"]}, {"tools": ["Bash"]}]}
+
+    monkeypatch.setattr(bl, "run_claude", mock_run)
+    result = run_claude_session.run_session(
+        case, "candidate_skill", tmp_path, model=None, max_turns=4,
+        timeout_s=1000, budget_usd=2.0, session_budget_usd=10.0)
+    assert [len(t["iterations"]) for t in result["turns"]] == [2, 1]
+
+
+def test_auto_continue_carries_the_agents_recorded_next_action(tmp_path):
+    (tmp_path / "prototype").mkdir()
+    (tmp_path / "prototype" / "discussion.md").write_text(
+        "## Resume\n\n- Active slice: `x`\n- Next action and its prerequisite: 进入 Make 写 tokens.css\n")
+    prompt = run_claude_session._auto_continue_prompt(tmp_path)
+    assert "进入 Make 写 tokens.css" in prompt
+    assert run_claude_session._auto_continue_prompt(tmp_path / "none").startswith("继续。")
+
+
+def test_iteration_rollup_reports_input_and_cache_usage(tmp_path):
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    row = {"type": "assistant", "message": {"stop_reason": "tool_use", "content": [],
+           "usage": {"output_tokens": 5, "input_tokens": 7, "cache_read_input_tokens": 900,
+                     "cache_creation_input_tokens": 40}}}
+    (proj / "s-2.jsonl").write_text(json.dumps(row), encoding="utf-8")
+    r = bl.iteration_rollup("s-2", config_root=tmp_path)[0]
+    assert (r["input_tokens"], r["cache_read_input_tokens"], r["cache_creation_input_tokens"]) == (7, 900, 40)

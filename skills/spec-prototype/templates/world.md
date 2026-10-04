@@ -7,8 +7,10 @@ authority. Every slice reads from it; no slice restates it.
 - `prototype/world.md` — this file: Direction Contract, Five Axes, tokens.
 - `prototype/briefs/<slice_id>.md` — one per slice; surface strategy and evidence.
 
-`compile_tokens.py` reads this file (pass `--discussion prototype/world.md` when
-this layout is in use) and is the only writer of `prototype/shared/tokens.css`.
+`compile_tokens.py` auto-detects this file (no `--discussion` flag needed) and is
+the only writer of `prototype/shared/tokens.css`. The first `tokens.css` is written
+at Stage 2 (Turn 2) from the `proposed` token decisions here; Stage 5 recompiles it
+and seals it with a sha256.
 
 ## Direction Contract
 

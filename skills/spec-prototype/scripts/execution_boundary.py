@@ -373,6 +373,42 @@ def spec_view_advisory(target: Path) -> str | None:
             f'compile_spec_ir.py --slice {slice_id} at Stage 5 before handoff.')
 
 
+_TURN2_SUFFIXES = {'.html', '.css', '.js', '.mjs', '.png'}
+_TURN2_DIRS = {'evidence', 'experiments', 'shared'}
+
+def resume_written(root: Path) -> bool:
+    """Whether any design-record file at this root already carries a Resume block."""
+    proto = root/'prototype'
+    for name in _DESIGN_RECORD_NAMES:
+        try:
+            text = (proto/name).read_text(encoding='utf-8')
+        except OSError:
+            continue
+        if re.search(r'^## Resume\b', text, re.M):
+            return True
+    return False
+
+def turn1_window_advisory(target: Path, root: Path) -> str | None:
+    """Advisory, never a block: runnable artifacts before the Resume seam exists.
+
+    Turn 1 ends the moment the Resume block is written; tokens, HTML and
+    evidence belong to Turn 2. r35/r36 crossed that seam inside Turn 1 (41 and
+    61 iterations), and the path gate cannot see it because the path is legal.
+    The signal is the seam itself: once the Resume block is on disk the
+    artifact is Turn 2 work and this stays silent.
+    """
+    proto = root/'prototype'
+    if not target.is_relative_to(proto) or is_design_record(target, root):
+        return None
+    if target.name == 'intent.json' or resume_written(root):
+        return None
+    rel = target.relative_to(proto)
+    if target.suffix not in _TURN2_SUFFIXES and not (set(rel.parts[:-1]) & _TURN2_DIRS):
+        return None
+    return (f'{rel.as_posix()} written before the Resume block exists. Turn 1 ends at the '
+            'Resume block; tokens.css, HTML and evidence open in Turn 2. Write the Resume '
+            'block now and stop this turn (advisory, not a gate).')
+
 def _edited_text(args, target: Path) -> str:
     """Reconstruct the post-edit text so validation sees the resulting file."""
     if 'content' in args:
@@ -436,7 +472,7 @@ def check(payload):
                 'Design and prototype artifacts must reside inside prototype/.')
         if target.name == 'intent.json':
             validate_intent(target, _edited_text(args, target))
-        advisory = spec_view_advisory(target)
+        advisory = spec_view_advisory(target) or turn1_window_advisory(target, root)
         if advisory:
             payload.setdefault('hookSpecificOutput', {}).update({
                 'hookEventName': 'PreToolUse',

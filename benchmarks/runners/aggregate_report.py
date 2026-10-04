@@ -95,6 +95,8 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
             "runs": len(subset),
             "completed": sum(1 for r in subset if r.get("status") in ("PASS", "FAIL")),
             "blocked": sum(1 for r in subset if r.get("status") == "BLOCKED"),
+            "partial": sum(1 for r in subset
+                            if (r.get("session") or {}).get("status") == "PARTIAL"),
             "task_success_rate": _mean([(r.get("task") or {}).get("success_rate") for r in subset]),
             "method_recall": _mean([((r.get("runtime") or {}).get("method_routing") or {}).get("recall") for r in subset]),
             "method_precision": _mean([((r.get("runtime") or {}).get("method_routing") or {}).get("precision") for r in subset]),
@@ -296,12 +298,12 @@ def render_markdown(report: dict) -> str:
         lines.append(f"- source identity (sha256 of candidate Skill/agent files): "
                      f"{', '.join(provenance.get('source_identity') or []) or 'unknown'}")
     lines += ["", "## Per variant", "",
-              "| variant | runs | completed | blocked | task success | method recall | semantic pass/fail/unverified | turns | cost USD |",
-              "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+              "| variant | runs | completed | blocked | partial | task success | method recall | semantic pass/fail/unverified | turns | cost USD |",
+              "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for variant, data in report["per_variant"].items():
         lines.append(
             f"| {variant} | {data['runs']} | {data['completed']} | {data['blocked']} | "
-            f"{data['task_success_rate']} | {data['method_recall']} | "
+            f"{data['partial']} | {data['task_success_rate']} | {data['method_recall']} | "
             f"{data['semantic_gate_pass']}/{data['semantic_gate_fail']}/{data['semantic_gate_unverified']} | "
             f"{data['artifact_turns']} | {data['cost_usd']} |")
     lines += ["", "## Taste (measured, not asserted)", "",

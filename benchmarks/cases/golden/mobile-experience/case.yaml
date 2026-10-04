@@ -39,10 +39,9 @@ evaluation:
 method_expectation:
   must_consider:
     - touch-target-geometry
-    - press-feedback
+    - decisive-3-frame
   relevant:
-    - sensory-kinetic
     - progressive-disclosure
   should_not_select:
     - dense-operational-console
-    - editorial-rhythm
+    - visual-rhythm-density

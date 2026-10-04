@@ -135,7 +135,9 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
         # FAIL, so a blocked session is counted as a judged failure and
         # `per_variant.blocked` reports zero for a matrix of blocked runs.
         session_status = (result["session"] or {}).get("status")
-        if session_status and session_status != "COMPLETED":
+        if session_status == "PARTIAL":
+            result["notes"].append("session PARTIAL (from stored session summary)")
+        elif session_status and session_status != "COMPLETED":
             result["status"] = "BLOCKED"
             result["notes"].append(f"session {session_status} (from stored session summary)")
         artifacts_dir = pathlib.Path(manifest["artifacts_dir"]) / "prototype"
@@ -162,7 +164,11 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
                              ("status", "model", "session_id", "metrics", "events_fired", "note", "components")}
         result["metrics"] = session["metrics"]
         result["session_fidelity"] = _capture_session_fidelity(session, workspace)
-        if session["status"] != "COMPLETED":
+        if session["status"] == "PARTIAL":
+            # Stopped by a clock or spend cap with a runnable prototype on disk:
+            # judge the artifacts, but the run cannot earn PASS (see RESULT).
+            result["notes"].append(f"session PARTIAL: {session.get('note')}")
+        elif session["status"] != "COMPLETED":
             result["status"] = "BLOCKED"
             result["notes"].append(f"session {session['status']}: {session.get('note')}")
 
@@ -272,6 +278,11 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             # into a green checkmark.
             result["status"] = "INCONCLUSIVE"
         if (not result["runtime"] or not result["runtime"]["checks"]):
+            result["status"] = "INCONCLUSIVE"
+        if (result["session"] or {}).get("status") == "PARTIAL":
+            # An unfinished session is not a finished delivery, however clean
+            # its artifacts: it stays inconclusive and keeps its evidence.
+            result["notes"].append("session PARTIAL: not promoted to PASS")
             result["status"] = "INCONCLUSIVE"
 
     bl.write_json(out_dir / "run-result.json", result)

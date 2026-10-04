@@ -54,7 +54,10 @@ methods:
       - state_mutation
       - destructive_operations
       - multi_step_commit
+      - unauthorized_capability_exclusion
+      - generated_content_out_of_scope
     invariants:
+      - "Do not invent a state mutation or generated capability excluded by product authority"
       - "Trigger, modal header, commit action, and feedback toast share atomic terminology"
       - "Zero near-synonym semantic drift across lifecycle"
     file: "references/02-craft-methods/interaction-power.md"
@@ -168,6 +171,25 @@ methods:
       - "Errors display proximate to input with clear recovery instructions"
       - "Tab order follows visual reading flow deterministically"
     file: "references/02-craft-methods/form-ergonomics.md"
+
+  - id: touch-target-geometry
+    name: "Touch Target Geometry"
+    pillars:
+      - Interaction
+      - Resilience
+    stages:
+      - 1
+      - 2
+      - 3
+      - 4
+    activate_when:
+      - touch_native_surface
+      - mobile_checkout
+      - handheld_operation
+    invariants:
+      - "Interactive targets meet the 44×44px floor in touch contexts"
+      - "Target size remains usable without relying on visual spacing alone"
+    file: "references/02-craft-methods/mobile-ux.md"
 
   - id: visual-rhythm-density
     name: "Visual Rhythm, Compression & Spatial Undertone"

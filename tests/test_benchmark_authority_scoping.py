@@ -82,6 +82,19 @@ def test_clause_level_negation_covers_chinese_enumerations(tmp_path):
     assert negated["支付"] is False  # fabricated domain stays a live signal
 
 
+def test_renounce_verbs_negate_an_omission_declaration(tmp_path):
+    """r36 `舍弃外部审批流/工单系统对接` is a refusal, not a fabricated capability."""
+    texts = {"prototype/discussion.md":
+             "3. 舍弃外部审批流/工单系统对接——双人会签是唯一权限门\n"
+             "4. 不纳入值班表与排班自动化\n"
+             "<span>支付回调雪崩</span>\n"}
+    gt = {"unsupported_terms": ["工单系统", "值班表", "支付"]}
+    hits = semantic_judge.deterministic_hits(texts, gt)
+    negated = {h["term"]: h["negated"] for h in hits}
+    assert negated["工单系统"] is True
+    assert negated["值班表"] is True
+    assert negated["支付"] is False
+
 def test_omission_heading_negates_a_bare_enumeration_line(tmp_path):
     """r24: `### Ruthless Omissions（第一版不做）` headed a bare list whose own
     line carried no marker (`多事故并行、…、值班排班表、…`). The heading binds."""
@@ -224,6 +237,32 @@ def test_rejudge_keeps_a_completed_session_judged_normally(tmp_path, monkeypatch
     _, result = _rejudge(tmp_path, monkeypatch, "COMPLETED")
 
     assert result["status"] != "BLOCKED"
+
+
+def test_rejudge_keeps_partial_session_inconclusive_and_judges_artifacts(tmp_path, monkeypatch):
+    monkeypatch.setattr(runtime_judge, "judge", lambda *a, **k: {
+        "judge": "runtime", "status": "pass", "checks": [{"id": "ok", "status": "pass"}]})
+    out_dir, result = _rejudge(tmp_path, monkeypatch, "PARTIAL")
+
+    assert result["status"] == "INCONCLUSIVE"
+    assert result["runtime"] is not None
+    assert result["session"]["status"] == "PARTIAL"
+    assert bl.read_json(out_dir / "run-result.json")["status"] == "INCONCLUSIVE"
+
+
+def test_partial_sessions_are_disclosed_in_aggregate_report(tmp_path):
+    out = tmp_path / "c" / "candidate_skill" / "run1"
+    out.mkdir(parents=True)
+    bl.write_json(out / "run-result.json", {
+        "case_id": "c", "variant": "candidate_skill", "repeat": 1,
+        "status": "INCONCLUSIVE", "session": {"status": "PARTIAL"},
+        "metrics": {}, "runtime": {"checks": []}, "semantic": {"hard_gate": "pass"},
+    })
+
+    report = aggregate_report.build(tmp_path, "custom", "partial")
+
+    assert report["per_variant"]["candidate_skill"]["partial"] == 1
+    assert "| candidate_skill | 1 | 0 | 0 | 1 |" in aggregate_report.render_markdown(report)
 
 
 def test_rejudge_preserves_the_original_runs_provenance(tmp_path, monkeypatch):

@@ -14,6 +14,7 @@ sys.path.insert(0, str(REPO / "benchmarks" / "judges"))
 
 import bench_lib as bl  # noqa: E402
 import aggregate_report  # noqa: E402
+import pairwise_judge as pwj  # noqa: E402
 import cocreation_judge as ccj  # noqa: E402
 import contract_fidelity_judge as cfj  # noqa: E402
 import divergence_judge as dj  # noqa: E402
@@ -149,6 +150,14 @@ def test_slop_002_ignores_a_transparent_width_reservation(tmp_path):
 .seq-row { padding: 8px; border-left: 3px solid transparent; }
 .seq-row[data-st="pending"] { border-left-color: var(--warn); }
 </style></head><body><div class="seq-row" data-st="pending">x</div></body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-002" not in result["counts"], result["findings"]
+
+def test_slop_002_ignores_a_neutral_border_token_rail(tmp_path):
+    """r36 `.rail-status`: a 3px rail in a neutral border token is a divider, not an accent bar."""
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+.rail-status { padding: 8px; border-left: 3px solid var(--border-subtle); }
+</style></head><body><div class="rail-status">x</div></body></html>""")
     result = sd.detect(tmp_path)
     assert "SLOP-002" not in result["counts"], result["findings"]
 
@@ -474,6 +483,36 @@ def test_mock_user_direction_choices_are_parsed():
     assert len(parsed["rules"]) == 2
     reply = bl.mock_reply("你倾向哪个方向？", parsed["rules"], parsed["fallback"])
     assert "A" in reply
+
+
+# -- pairwise -----------------------------------------------------------------
+
+
+def test_pairwise_swap_replicates_are_normalized_and_costed(monkeypatch, tmp_path):
+    calls = []
+    responses = [
+        {"ok": True, "data": {"overall_preference": "alpha", "confidence": "high"},
+         "raw": "", "metrics": {"cost_usd": 0.10, "elapsed_s": 1.0, "status": "completed"}},
+        {"ok": True, "data": {"overall_preference": "beta", "confidence": "medium"},
+         "raw": "", "metrics": {"cost_usd": 0.20, "elapsed_s": 2.0, "status": "completed"}},
+    ]
+
+    def fake_ask_json(prompt, cwd, **kwargs):
+        calls.append((prompt, cwd))
+        return responses[len(calls) - 1]
+
+    monkeypatch.setattr(pwj.bl, "ask_json", fake_ask_json)
+    result = pwj.judge({"brief": "brief"}, {"alpha": ["a.png"], "beta": ["b.png"]},
+                       tmp_path / "work", model="test", swap_replicates=1)
+
+    assert len(calls) == 2
+    assert calls[0][0] != calls[1][0]
+    assert result["swap_replicates"][0]["normalized_preference"] == "alpha"
+    assert result["swap_agreement"] == 1.0
+    assert result["metrics"]["cost_usd"] == 0.3
+    assert result["metrics"]["elapsed_s"] == 3.0
+    assert result["metrics"]["calls_total"] == 2
+    assert result["metrics"]["calls_cost_recorded"] == 2
 
 
 # -- report -------------------------------------------------------------------

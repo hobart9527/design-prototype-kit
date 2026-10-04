@@ -39,11 +39,11 @@ evaluation:
 
 method_expectation:
   must_consider:
-    - reading-measure
+    - visual-rhythm-density
     - progressive-disclosure
   relevant:
-    - editorial-rhythm
-    - dense-information
+    - context-preservation
   should_not_select:
+    - data-context-metrics
     - dense-operational-console
     - form-ergonomics

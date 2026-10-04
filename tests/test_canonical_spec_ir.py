@@ -19,6 +19,7 @@ from compile_spec_ir import (
     SCHEMA_PATH,
     IncompleteStageContractError,
 )
+from spec_contract_blocks import read_design_record
 
 # Executable authoring example: every section the compiler requires non-empty.
 # This fixture is the canonical "how an author must write discussion.md" proof.
@@ -62,6 +63,60 @@ COMPLETE_DISCUSSION = """# Design Discussion: Terminal Cluster Workbench
 - `stress/bus-hang` | Vector: `NVLink 链路挂起 6 秒` | Expected: `2 秒内定位故障节点并显示降级徽标`。
 - `stress/cold-boot` | Vector: `冷启动空缓存` | Expected: `骨架屏占位 + 降级徽标`。
 """
+
+
+def test_read_design_record_layered_layout_tracks_each_source_part(tmp_path: Path):
+    proto = tmp_path / "prototype"
+    (proto / "briefs").mkdir(parents=True)
+    truth = proto / "truth.md"
+    world = proto / "world.md"
+    brief = proto / "briefs/reader.md"
+    truth.write_text("# Product truth\nshared", encoding="utf-8")
+    world.write_text("# World\ntokens", encoding="utf-8")
+    brief.write_text("# Reader slice\nlocal", encoding="utf-8")
+
+    record = read_design_record(tmp_path, "reader")
+
+    assert record.path == truth
+    assert record.missing == []
+    assert record.shared == "# Product truth\nshared\n\n# World\ntokens"
+    assert record.slice_block == "# Reader slice\nlocal"
+    assert record.text == f"{record.shared}\n\n{record.slice_block}"
+    assert set(record.parts) == {
+        "prototype/truth.md", "prototype/world.md", "prototype/briefs/reader.md"}
+    assert record.parts["prototype/truth.md"].startswith("sha256:")
+
+
+def test_read_design_record_reports_missing_layered_brief_without_fabricating(tmp_path: Path):
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    (proto / "truth.md").write_text("# Product", encoding="utf-8")
+    (proto / "world.md").write_text("# World", encoding="utf-8")
+
+    record = read_design_record(tmp_path, "reader")
+
+    assert record.missing == ["prototype/briefs/reader.md"]
+    assert record.slice_block is None
+    assert record.text == "# Product\n\n# World"
+    assert "prototype/briefs/reader.md" not in record.parts
+
+
+def test_read_design_record_reports_missing_or_duplicate_single_record_slice(tmp_path: Path):
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    discussion = proto / "discussion.md"
+    discussion.write_text("# Shared\ncommon\n## Slice: writer\nother\n", encoding="utf-8")
+
+    absent = read_design_record(tmp_path, "missing")
+    assert absent.missing == ["prototype/discussion.md#Slice: missing"]
+    assert absent.slice_block is None
+
+    discussion.write_text("# Shared\ncommon\n## Slice: reader\nfirst\n## Slice: reader\nsecond\n",
+                          encoding="utf-8")
+    duplicate = read_design_record(tmp_path, "reader")
+    assert duplicate.missing == ["prototype/discussion.md#Slice: reader"]
+    assert duplicate.slice_block is None
+    assert len(duplicate.parts) == 1
 
 
 def test_schema_validates_canonical_ir(tmp_path: Path):

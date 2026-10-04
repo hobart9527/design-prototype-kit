@@ -168,8 +168,8 @@ requested or when genuinely separate context can change the decision. The main
 designer performs the ordinary review directly. Keep any external request focused:
 original brief, design question, target revision, relevant captures, and the
 requested judgment. Ask for the strongest relationship to preserve and the few highest-impact findings—not a compliance inventory. Without an actual independent
-dispatch, label the review `review_independence: non-independent`; never claim
-independent verification from self-review.
+dispatch, label the review `review_independence: non-independent (unverified)`;
+never claim independent verification from self-review.
 
 Repair in place at the owning layer. Optional detached work may still use a
 bounded `spec-prototype-builder` for a mechanical, scope-locked change, but never

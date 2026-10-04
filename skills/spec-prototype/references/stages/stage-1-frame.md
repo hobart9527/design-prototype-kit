@@ -43,6 +43,10 @@ open alternatives only when a consequential choice is genuinely unresolved.
    - Resilience & gate → [`../dialectic/04-falsification-compile.md`](../dialectic/04-falsification-compile.md)
 5. Define only the surfaces, actions, states, and stress cases needed to guide the
    requested slice. Leave the rest open; never invent capability to fill a section.
+6. For each load-bearing decision, record the relevant method registry id inline in
+   the Decisions table (`context-preservation`, `action-verb-lifecycle`, etc.; ids
+   live in `methods/registry.yaml`). Select and cite only methods actually applied;
+   do not load the registry or its method files wholesale.
 
 Ask the user only when a decision materially changes the direction or scope. Resolve
 repository facts silently. Preserve settled and delegated choices on continuation.
@@ -247,6 +251,8 @@ that a declaration was written in a form the compiler does not read.
 ## Exit
 
 A design brief answers the current question and clearly separates facts, decisions,
-proposals, and open risks. Continue directly to Stage 2 to explore 2–3 distinct visual
-and structural directions through rapid prototyping without waiting on pre-spec locks.
-A checkpoint is recovery context, not an approval gate.
+proposals, and open risks. **Turn 1 ends here, at the Resume block**: Stage 2 opens in
+the next turn to explore 2–3 distinct visual and structural directions through rapid
+prototyping, without waiting on pre-spec locks. Write no `tokens.css`, HTML or evidence
+in this turn — the Resume block is recovery context for the next turn, not an approval
+gate, and the Turn 1→2 seam is where a capped or resumed run picks up.

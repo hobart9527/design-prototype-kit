@@ -411,7 +411,7 @@ def _invariants_from_contract_block(text: str):
             applies_to = entry.get("applies_to")
             out.append({
                 "id": inv_id,
-                "upstream_ref": "discussion.md",
+                "upstream_ref": "design-record",
                 "statement": statement,
                 "severity": severity,
                 "applies_to": _scalar_list(applies_to, "invariants", "applies_to"),
@@ -631,7 +631,7 @@ def _unadmitted_machine_bullets(text: str) -> List[Dict[str, str]]:
         unadmitted.append({
             "key": "unadmitted_machine_bullet",
             "label": "未获采纳的机器声明行 (unadmitted machine bullet)",
-            "section": "discussion.md → 状态模型 / 破坏协议 / 不变量",
+            "section": "设计记录 (discussion.md 或 truth/world/briefs) → 状态模型 / 破坏协议 / 不变量",
             "form": "机器列表请用 ```contract:<kind>``` 块声明；散文形须完整匹配解析器的采纳规则，否则该行不会被采纳",
             "example": bullet,
         })
@@ -655,7 +655,7 @@ def _unknown_contract_kinds(text: str) -> List[Dict[str, str]]:
         out.append({
             "key": "unknown_contract_kind",
             "label": "未注册的契约块类型 (unknown contract kind)",
-            "section": "discussion.md → ```contract:<kind>```",
+            "section": "设计记录 (discussion.md 或 truth/world/briefs) → ```contract:<kind>```",
             "form": "契约块类型必须在注册表内：" + ", ".join(_CONTRACT_KINDS),
             "example": f"```contract:{kind}```",
         })

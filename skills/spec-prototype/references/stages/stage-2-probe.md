@@ -38,7 +38,7 @@ The path is visual-first:
    (`prototype/experiments/<slice_id>/dirs/a/index.html` and `dirs/b/index.html`).
    Keep layout and styling independent without file collision.
 3. **Author tokens**: Directly write or adjust `prototype/shared/tokens.css` (or local directional tokens)
-   to calibrate theme, contrast, and layout rhythm. 探索期直写 tokens.css 属正常路径；Stage 5 编译前须把最终值回写 world.md/discussion.md，否则编译覆盖手写值。
+   to calibrate theme, contrast, and layout rhythm. tokens.css 的首次写入在本 Stage（Turn 2），位于 Make 之前、由设计记录中 `proposed` 的 token 决策驱动，不属 Turn 1。探索期直写属正常路径；Stage 5 编译前须把最终值回写 world.md（或 discussion.md），编译随后重写 tokens.css 并以 sha256 封存，否则编译覆盖手写值。
 4. **Capture & inspect**: Capture rendered views via `node skills/spec-prototype/scripts/capture.mjs`.
    页面状态由 `data-state` 属性导出作为可观测出口，capture 状态确认以它为准。无浏览器运行时环境时，Turn 1/2 出口为 `PARTIAL` + `visual_evidence: unverified`，前向引用 Stage 4 进行静态或后续补验。
    Inspect the structured `diagnostics_summary` returned directly in stdout:

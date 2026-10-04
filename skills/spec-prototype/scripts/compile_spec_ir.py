@@ -932,7 +932,7 @@ def parse_craft_stack(text: str, five_axes: Dict[str, str]) -> Dict[str, str]:
     return {axis: stack[axis] for axis in axes if axis in stack}
 
 
-def parse_authored_invariants(text: str) -> List[Dict[str, Any]]:
+def parse_authored_invariants(text: str, record_name: str = "design-record") -> List[Dict[str, Any]]:
     """Extract authored design invariants from discussion.md, or emit none.
 
     Invariants are admitted ONLY from an authored section (Design Invariants /
@@ -951,6 +951,8 @@ def parse_authored_invariants(text: str) -> List[Dict[str, Any]]:
     """
     block = _invariants_from_contract_block(text)
     if block is not None:
+        for invariant in block:
+            invariant["upstream_ref"] = record_name
         return block
     sec = extract_section(text, r"###?\s*.*(?:Invariants|不变式|Design\s+Invariants|Design\s+Rules|设计规则|Resilience|Acceptance\s+Gates?)")
     out: List[Dict[str, Any]] = []
@@ -980,7 +982,7 @@ def parse_authored_invariants(text: str) -> List[Dict[str, Any]]:
                 applies_to = [t.strip() for t in re.split(r"[,，、]", am.group(1)) if t.strip()]
         out.append({
             "id": inv_id,
-            "upstream_ref": "discussion.md",
+            "upstream_ref": record_name,
             "statement": statement,
             "severity": severity,
             "applies_to": applies_to,
@@ -1345,7 +1347,7 @@ def compile_canonical_ir(
     # former hardcoded telemetry/4096 GPU template entries were injected
     # heuristics with no authored source and are retired: an unauthored
     # discussion emits `[]`, never a template.
-    invariants = parse_authored_invariants(scope_text)
+    invariants = parse_authored_invariants(scope_text, disc_path.name)
 
     # Actions: derived strictly from authored key bindings in discussion.md.
     # The former hardcoded "检视实体"/"确定隔离排空" verbs were never extracted from

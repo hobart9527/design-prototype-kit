@@ -72,6 +72,51 @@ def test_scan_reports_a_hit_and_a_clear(tmp_path):
     assert all(u["why"] for u in result["unchecked"])
 
 
+def test_modern_capability_checks_are_advisory_detectors(tmp_path):
+    artifact = tmp_path / "modern.html"
+    artifact.write_text("""<html><head><meta name="color-scheme" content="light dark"><style>
+    .title { font-size: clamp(1.5rem, 3vw, 3rem); }
+    @media (prefers-reduced-motion: reduce) { * { animation: none; } }
+    </style></head><body>
+    <section aria-busy="true"><div class="skeleton"></div></section>
+    <p aria-live="polite">Loading</p>
+    </body></html>""", encoding="utf-8")
+
+    findings = {f["rule"]: f["status"] for f in detect.scan(artifact)["findings"]}
+
+    assert findings["CRAFT-REDUCED-MOTION"] == "hit"
+    assert findings["CRAFT-ARIA-LIVE"] == "hit"
+    assert findings["CRAFT-FLUID-TYPE"] == "hit"
+    assert findings["CRAFT-COLOR-SCHEME"] == "hit"
+    assert findings["CRAFT-LOADING-STATE"] == "hit"
+
+
+def test_modern_capability_checks_do_not_hit_absent_capabilities(tmp_path):
+    artifact = tmp_path / "plain.html"
+    artifact.write_text("<html><body><p>static content</p></body></html>", encoding="utf-8")
+
+    findings = {f["rule"]: f["status"] for f in detect.scan(artifact)["findings"]}
+
+    for rule in ("CRAFT-REDUCED-MOTION", "CRAFT-ARIA-LIVE", "CRAFT-FLUID-TYPE",
+                 "CRAFT-COLOR-SCHEME", "CRAFT-LOADING-STATE"):
+        assert findings[rule] == "clear"
+
+
+def test_action_feedback_accepts_chinese_settlement_and_recovery(tmp_path):
+    artifact = tmp_path / "action.html"
+    artifact.write_text("""<button data-action="drain">排空</button>
+    <p>处理中</p><p>已完成</p><button>撤销</button>""", encoding="utf-8")
+
+    assert detect.RULES["CRAFT-ACTION-FEEDBACK"]["detector"](artifact)
+
+
+def test_action_feedback_stays_clear_without_a_commit_control(tmp_path):
+    artifact = tmp_path / "action.html"
+    artifact.write_text("<p>排空处理中，已完成，可撤销。</p>", encoding="utf-8")
+
+    assert not detect.RULES["CRAFT-ACTION-FEEDBACK"]["detector"](artifact)
+
+
 def test_scan_surfaces_a_broken_detector_rather_than_reading_it_as_clean(tmp_path):
     artifact = tmp_path / "a.html"
     artifact.write_text("<html></html>", encoding="utf-8")

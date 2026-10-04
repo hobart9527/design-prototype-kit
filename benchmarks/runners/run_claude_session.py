@@ -18,9 +18,53 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bench_lib as bl  # noqa: E402
 
 
-def _auto_continue_prompt() -> str:
-    return ("继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，"
-            "不要重新规划已完成的部分。")
+# Share of the session wall clock each early call may spend. The last calls
+# (Make evidence, Look and Deliver) are reserved the remainder: r35 let call 1
+# take 1343s of 3000s and the session died at 2999s with Turn 4 unfinished.
+CALL_WALL_CLOCK_SHARE = (0.4, 0.3)
+# Below this the remaining budget cannot hold another useful call.
+MIN_CALL_SECONDS = 10
+# Stops that leave judgeable work behind. An error envelope or a CLI failure
+# says nothing about the artifacts and stays BLOCKED.
+PARTIAL_REASONS = {"wall_clock", "session_budget", "per_call_budget", "max_turns"}
+
+
+def _call_timeout(call_index: int, remaining: float, total: float) -> tuple[int, bool]:
+    """Wall-clock for one call and whether the share (not the session) bounds it."""
+    if call_index >= len(CALL_WALL_CLOCK_SHARE):
+        return int(remaining), False
+    share = total * CALL_WALL_CLOCK_SHARE[call_index]
+    if share >= remaining:
+        return int(remaining), False
+    return int(share), True
+
+
+def _resume_next_action(workspace: Path) -> str:
+    """The agent's own recorded Next action, read from its Resume block.
+
+    Layered layouts keep it in discussion-seam.md; the single-record layout in
+    discussion.md. Returns "" when no Resume block exists yet (Turn 1 cut
+    before the seam was written).
+    """
+    proto = workspace / "prototype"
+    for name in ("discussion-seam.md", "discussion.md"):
+        path = proto / name
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for line in text.splitlines():
+            if "next action" in line.lower():
+                return line.lstrip("-* ").strip()[:300]
+    return ""
+
+
+def _auto_continue_prompt(workspace: Path | None = None) -> str:
+    hint = _resume_next_action(workspace) if workspace else ""
+    base = "继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，不要重新规划已完成的部分。"
+    return f"{base}（Resume 记录：{hint}）" if hint else base
 
 
 def _try_inject(text: str, events: list[dict], mock: dict, also: str = "") -> str | None:
@@ -71,19 +115,22 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
     total_cost = 0.0
     model_seen: set[str] = set()
     records_path = workspace / "session-records.jsonl"
+    seen_iterations = 0
 
     while True:
         remaining = deadline - time.monotonic()
-        if remaining <= 10:
+        if remaining <= MIN_CALL_SECONDS:
             status, note = "BLOCKED", f"wall-clock timeout after {len(turns)} turns"
+            blocked_reason = "wall_clock"
             break
+        call_timeout, quota_bound = _call_timeout(len(turns), remaining, timeout_s)
         resume = session_id if turns else None
         # Mark the transcript before the call so event triggers can read every
         # message this call produced, not just its last (r30 missed two).
         mark = bl.transcript_mark(session_id)
         out = bl.run_claude(prompt, workspace, session_id=session_id, resume=resume, model=model,
                             max_turns=turns_per_call, max_budget_usd=budget_usd,
-                            timeout_s=int(min(remaining, timeout_s)))
+                            timeout_s=call_timeout)
         session_id = out.get("session_id") or session_id
         # The CLI's total_cost_usd is cumulative across all resumed turns in
         # this session, not this call's incremental spend. Adding it repeatedly
@@ -98,6 +145,11 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
         else:
             total_cost = max(total_cost, call_cost)
         model_seen.update(out.get("models") or [])
+        # The CLI transcript is cumulative across resumed calls, so the rollup
+        # returns every iteration so far; a turn records only its own.
+        all_iterations = out.get("iterations") or []
+        own_iterations = all_iterations[seen_iterations:]
+        seen_iterations = max(seen_iterations, len(all_iterations))
         turn = {
             "turn": len(turns) + 1,
             "prompt_chars": len(prompt),
@@ -108,7 +160,8 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             "num_turns": out.get("num_turns"),
             "cost_usd": out.get("cost_usd"),
             "usage": out.get("usage"),
-            "iterations": out.get("iterations") or [],
+            "iterations": own_iterations,
+            "call_timeout_s": call_timeout,
             "stderr": (out.get("stderr") or "")[:500],
             "errors": out.get("errors"),
         }
@@ -155,7 +208,7 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
             # triggers or user-input requests — check before falling through to
             # a neutral auto_continue.
             injected = _try_inject(out_text, events, mock, out_also)
-            prompt = injected or _auto_continue_prompt()
+            prompt = injected or _auto_continue_prompt(workspace)
             continue
         if out["status"] == "budget_exceeded":
             turn["prompt_kind"] = "auto_continue"
@@ -169,7 +222,19 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
                 blocked_reason = "per_call_budget"
                 break
             injected = _try_inject(out_text, events, mock, out_also)
-            prompt = injected or _auto_continue_prompt()
+            prompt = injected or _auto_continue_prompt(workspace)
+            continue
+        if out["status"] == "timeout" and quota_bound:
+            # The call hit its share of the clock, not the session's. The
+            # transcript survives a kill, so resume rather than end the session.
+            turn["prompt_kind"] = "auto_continue"
+            turns[-1] = turn
+            if _budget_blocked():
+                status, note = "BLOCKED", f"session budget cap reached (${round(total_cost, 2)})"
+                blocked_reason = "session_budget"
+                break
+            injected = _try_inject(out_text, events, mock, out_also)
+            prompt = injected or _auto_continue_prompt(workspace)
             continue
         if out["status"] != "completed":
             status, note = "BLOCKED", f"turn {turn['turn']} {out['status']}: {turn['stderr']}"
@@ -204,12 +269,18 @@ def run_session(case: dict, variant: str, workspace: Path, *, model: str | None,
                 break
             turn["prompt_kind"] = "auto_continue"
             turns[-1] = turn
-            prompt = _auto_continue_prompt()
+            prompt = _auto_continue_prompt(workspace)
             continue
         status, note = "COMPLETED", ""
         break
 
     components = bl.workspace_components(workspace)
+    # A session stopped by a clock or a spend cap after a runnable prototype
+    # exists is not the same evidence as one that produced nothing: keep the
+    # artifacts judgeable instead of reading the run as a blank BLOCKED.
+    if (status == "BLOCKED" and components["has_html"]
+            and blocked_reason in PARTIAL_REASONS):
+        status = "PARTIAL"
     if status == "COMPLETED" and not components["prototype_dir"]:
         status, note = "INCONCLUSIVE", "session ended without any prototype/ artifacts"
 

@@ -576,6 +576,11 @@ def iteration_rollup(session_id: str, config_root: pathlib.Path | None = None) -
         rollup.append({
             "tools": tools,
             "output_tokens": usage.get("output_tokens"),
+            # Input side: a 1.5M-token Turn 1 (r23) is invisible in output_tokens
+            # alone. cache_read separates a re-read context from fresh retrieval.
+            "input_tokens": usage.get("input_tokens"),
+            "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
+            "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
             "stop_reason": message.get("stop_reason"),
             # Wall-clock position, so "which tool burns the clock" is answerable
             # from the gap between consecutive iterations (r35 had counts only).

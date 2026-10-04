@@ -39,7 +39,8 @@ SCHEMA = json.dumps({
 
 
 NEGATION_MARKERS = ("不做", "不要", "不可", "不提供", "禁止", "严禁", "绝不", "不得", "不引入", "不接",
-                    "不脑补", "never", "no ", "not ", "without", "avoid", "excluded", "unsupported")
+                    "不脑补", "舍弃", "不纳入", "不涉及", "排除", "拒绝", "不支持",
+                    "never", "no ", "not ", "without", "avoid", "excluded", "unsupported")
 
 # Chinese enumeration prose negates at the clause, not at a fixed character
 # window: "排期、值班表、自动修复第一版均不做" and "不脑补值班排班" both carry

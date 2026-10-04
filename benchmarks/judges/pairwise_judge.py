@@ -28,7 +28,7 @@ SCHEMA = json.dumps({
 
 
 def judge(case: dict, screenshots: dict, workdir: pathlib.Path, *, model: str | None = None,
-          timeout_s: int = 600) -> dict:
+          timeout_s: int = 600, swap_replicates: int = 1) -> dict:
     """screenshots: {"alpha": [paths], "beta": [paths]}.
 
     The caller owns blind assignment: it decides which variant occupies the
@@ -59,6 +59,33 @@ def judge(case: dict, screenshots: dict, workdir: pathlib.Path, *, model: str | 
         beta=", ".join(staged[beta]) or "(none)",
     )
     response = bl.ask_json(prompt, workdir, schema=SCHEMA, model=model, timeout_s=timeout_s, allowed_tools="Read")
+    replicas = []
+    swap_calls = []
+    for index in range(max(0, swap_replicates)):
+        # Independent call with the same images reversed. Normalize its labels
+        # back to the original slots before measuring judge order sensitivity.
+        swapped_prompt = bl.render(
+            bl.prompt_template("pairwise-judge.txt"), brief=case["brief"],
+            alpha=", ".join(staged[beta]) or "(none)",
+            beta=", ".join(staged[alpha]) or "(none)")
+        swapped = bl.ask_json(swapped_prompt, workdir / f"swap-{index + 1}", schema=SCHEMA,
+                              model=model, timeout_s=timeout_s, allowed_tools="Read")
+        swap_calls.append(swapped)
+        data = swapped.get("data") or {}
+        pref = {"alpha": "beta", "beta": "alpha", "tie": "tie"}.get(data.get("overall_preference"))
+        replicas.append({"status": "judged" if swapped["ok"] else "unverified",
+                         "normalized_preference": pref, "confidence": data.get("confidence")})
+    call_metrics = [response["metrics"], *(swapped_call["metrics"] for swapped_call in swap_calls)]
+    recorded_costs = [m["cost_usd"] for m in call_metrics if isinstance(m.get("cost_usd"), (int, float))]
+    elapsed_values = [m["elapsed_s"] for m in call_metrics if isinstance(m.get("elapsed_s"), (int, float))]
+    metrics = {
+        **response["metrics"],
+        "cost_usd": round(sum(recorded_costs), 4) if len(recorded_costs) == len(call_metrics) else None,
+        "elapsed_s": round(sum(elapsed_values), 3) if len(elapsed_values) == len(call_metrics) else None,
+        "calls": call_metrics,
+        "calls_total": len(call_metrics),
+        "calls_cost_recorded": len(recorded_costs),
+    }
     result = {
         "judge": "pairwise",
         "status": "judged" if response["ok"] else "unverified",
@@ -66,7 +93,12 @@ def judge(case: dict, screenshots: dict, workdir: pathlib.Path, *, model: str | 
         "beta_files": staged[beta],
         "result": response["data"],
         "raw": response["raw"][:4000] if not response["ok"] else None,
-        "metrics": response["metrics"],
+        "metrics": metrics,
+        "swap_replicates": replicas,
+        "swap_agreement": (sum(1 for r in replicas if r["normalized_preference"] ==
+                                (response.get("data") or {}).get("overall_preference")) / len(replicas)
+                           if response["ok"] and replicas and all(r["status"] == "judged" for r in replicas)
+                           else None),
     }
     return result
 

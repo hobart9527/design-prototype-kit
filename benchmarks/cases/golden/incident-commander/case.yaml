@@ -59,4 +59,4 @@ method_expectation:
     - dense-operational-console
   should_not_select:
     - form-ergonomics
-    - editorial-rhythm
+    - visual-rhythm-density

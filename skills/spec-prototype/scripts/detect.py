@@ -88,7 +88,9 @@ def _has_action_feedback(path: pathlib.Path) -> bool:
     if not has_commit:
         return False
     return bool(re.search(
-        r"处理中|已排空|已完成|draining|撤销|回滚|rollback|undo", text, re.IGNORECASE))
+        r"处理中|进行中|执行中|已排空|已完成|已执行|已提交|已生效|已切换|已迁移|已回滚|撤销|撤回|回滚|恢复|"
+        r"draining|rollback|undo|revert|restore|in progress|completed",
+        text, re.IGNORECASE))
 
 
 def _has_reduced_motion(path: pathlib.Path) -> bool:
@@ -99,6 +101,18 @@ def _has_aria_live(path: pathlib.Path) -> bool:
     return bool(re.search(r"aria-live\s*=\s*[\"'](?:polite|assertive)[\"']",
                           _artifact_text(path), re.IGNORECASE))
 
+
+def _has_fluid_type(path: pathlib.Path) -> bool:
+    return bool(re.search(r"font-size\s*:[^;{}]*\b(?:clamp|min|max)\(|--[\w-]*(?:font|text|type)[\w-]*\s*:\s*clamp\(",
+                          _artifact_text(path), re.IGNORECASE))
+
+def _has_color_scheme(path: pathlib.Path) -> bool:
+    text = _artifact_text(path)
+    return bool(re.search(r"color-scheme\s*:|<meta[^>]+name=[\"']color-scheme[\"']", text, re.IGNORECASE))
+
+def _has_loading_state(path: pathlib.Path) -> bool:
+    return bool(re.search(r"aria-busy\s*=|skeleton|shimmer|role=[\"']progressbar[\"']|<progress\b",
+                          _artifact_text(path), re.IGNORECASE))
 
 # -- registry ------------------------------------------------------------------
 # id -> (rule as the craft floor states it, kind, detector or None)
@@ -165,6 +179,23 @@ RULES: dict[str, dict] = {
     "CRAFT-ARIA-LIVE": {
         "prose": "dynamically updating status regions expose aria-live so assistive tech perceives change",
         "kind": "check", "detector": _has_aria_live,
+    },
+    "CRAFT-FLUID-TYPE": {
+        "prose": "display and body type scale fluidly between viewports (clamp/min/max) instead of jumping at breakpoints",
+        "kind": "check", "detector": _has_fluid_type,
+    },
+    "CRAFT-COLOR-SCHEME": {
+        "prose": "the declared theme sets color-scheme so native controls, scrollbars and form fields follow it",
+        "kind": "check", "detector": _has_color_scheme,
+    },
+    "CRAFT-LOADING-STATE": {
+        "prose": "regions that load or refresh show a skeleton or aria-busy state rather than blank space",
+        "kind": "check", "detector": _has_loading_state,
+    },
+    "CRAFT-CONTEXTUAL-METRIC": {
+        "prose": "a metric carries a baseline, unit, delta or sparkline; a naked number is not information",
+        "kind": "prose_only",
+        "why": "judged by the VPQ data-craft signal against the rendered DOM, not by a text pattern",
     },
     "CRAFT-TOUCH-TARGET": {
         "prose": "interactive controls measure at least 44x44px in touch contexts",

@@ -42,5 +42,5 @@ method_expectation:
   relevant:
     - progressive-disclosure
   should_not_select:
-    - editorial-rhythm
-    - somatic-touch-feedback
+    - visual-rhythm-density
+    - decisive-3-frame

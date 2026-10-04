@@ -41,8 +41,8 @@ method_expectation:
     - context-preservation
     - action-verb-lifecycle
   relevant:
-    - editorial-rhythm
+    - visual-rhythm-density
     - progressive-disclosure
   should_not_select:
     - dense-operational-console
-    - somatic-touch-feedback
+    - decisive-3-frame

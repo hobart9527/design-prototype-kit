@@ -274,6 +274,16 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     else:
         add("content_language_fidelity", "unknown", f"brief={brief_script} artifact={artifact_script}")
 
+    # The document language attribute: assistive tech and hyphenation read it,
+    # and it is the cheapest honest declaration of the copy's language. Advisory
+    # unknown, never a fail: an absent attribute is not mistranslated copy.
+    if html_files:
+        missing_lang = [n for n, t in html_files.items()
+                        if re.search(r"<html\b", t, re.IGNORECASE)
+                        and not re.search(r"<html\b[^>]*\blang\s*=", t, re.IGNORECASE)]
+        add("document_lang", "unknown" if missing_lang else "pass",
+            f"html_without_lang={len(missing_lang)}")
+
     # Navigation integrity: every relative link must resolve inside the delivered artifact
     artifact_root = artifacts_dir
     broken_links = []

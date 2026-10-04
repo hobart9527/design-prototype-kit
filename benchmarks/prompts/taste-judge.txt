@@ -22,8 +22,10 @@ Inspect the images before forming any view. Answer three questions honestly.
    reader can see — or does it present a neutral frame that could belong to any
    product? Name what the first screen actually claims, in its own words.
 
-Score without inventing facts you cannot see. If a question cannot be answered
-from the images, answer "unverifiable" rather than guessing.
+Judge the enum outcomes above as the comparable evidence. The 0–10
+`distinctiveness` and `restraint` values are descriptive notes only: do not use
+them as thresholds, ranks, or pass/fail scores. Do not invent facts you cannot
+see; if a question cannot be answered from the images, answer "unverifiable".
 
 Answer JSON only:
 {"guessed_category":"...","category_confidence":"low|medium|high",
