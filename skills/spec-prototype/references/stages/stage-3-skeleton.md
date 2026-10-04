@@ -108,10 +108,10 @@ trigger button (`Quarantine`), modal confirm header (`Quarantine Worker`),
 decisive commit button (`Quarantine`), and completion toast (`Worker quarantined`)
 share one atomic vocabulary. Synonym drift is forbidden.
 
-### Semantic Boundary & Mock Data Discipline
-- **Neutral Infrastructure Primitives**: In operational and system consoles, mock services and workloads MUST strictly use generic infrastructure terms (`ingress-mesh`, `auth-proxy`, `compute-worker`, `cache-node`, `storage-engine`). Never introduce unrequested business or financial entities (absolutely no `支付`, `账单`, `payment`, `billing`).
-- **Irreversible History Truth**: Never author mock logs or alerts asserting that past irreversible incidents have been reversed by this console. The safety window and emergency rollback affordances apply strictly to active in-flight operations initiated within the session.
-- **Incident Lifecycle Closure**: Concluding or resolving an incident transitions the system state to `resolved` and seals audit entries. Do not invent automated postmortem report generators (`postmortem_report_generator`), report drafting wizards, or out-of-scope external notifications.
+### Semantic Grounding & Domain Discipline
+- **Authentic Domain Primitives**: Mock entities, dataset rows, and telemetry must exclusively mirror the domain's real vocabulary and topological scope. Avoid gratuitously injecting unrequested peripheral domains, external transactional flows, or unrelated administrative overhead.
+- **Fidelity to System Invariants**: Controls, audit logs, and status readouts must strictly conform to declared operational boundaries. If past historical events are declared unrecoverable, mock logs must never pretend this console retroactively repaired them; undo and emergency stops operate solely on currently active, in-flight transitions.
+- **Strict Lifecycle Scoping**: Task completion actions transition directly into their verified terminal state (e.g. `resolved`, `archived`, `settled`). Do not author speculative follow-up generators, external notification dispatchers, or secondary workflow wizards unless explicitly specified in the brief.
 
 ## Strict Token Inheritance
 

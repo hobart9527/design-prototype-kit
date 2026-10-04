@@ -118,8 +118,8 @@ signal for downstream method audit, not a narrative device.
 The brief needs only the applicable parts of:
 
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.
-  - **Negative Boundaries & Omissions (第一版不做)**: Record explicit omissions to prevent semantic fabrication. Never introduce unprompted external business domains (absolutely no payment/billing flows `支付/账单`, shift scheduling `排班/日历/值班表`, paging/SMS, ticket systems `工单`, or chatops bots). Never fabricate automatic remediation (`自动修复/自动恢复/自动扩容`), machine learning predictions, or postmortem report generators (`postmortem_report_generator`).
-  - **Irreversible History Truth**: If the problem statement mentions a past historical accident was unrecoverable or irreversible, respect that truth—never claim or mock that the current console reversed or recovered those past historical nodes; safety gates/rollback strictly apply to active in-flight operations.
+  - **Negative Boundaries & Omissions (第一版不做 · 显式反向边界)**: Record explicit omissions to maintain semantic discipline and prevent scope fabrication. Explicitly exclude unrequested lateral domains, unprompted integrations, speculative automation (e.g. magical auto-remediation, unrequested predictive AI), and auxiliary post-processing workflows not justified by the core tension.
+  - **Fidelity to Stated Constraints & Invariants (约束与历史守恒)**: Honor all physical constraints, preconditions, and irreversible historical facts stated in the brief. Safety mechanisms and rollback controls must be grounded in actual system capabilities and scoped strictly to active operations, never claiming retroactive resolution of past unrecoverable states.
 - **Experience direction & Five Axes calibration** — product-specific hierarchy, tone,
   visual mechanism, references and what is deliberately conventional. All five axes
   (Density · Energy · Materiality · Rhythm · Character) are accounted for at direction
