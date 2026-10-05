@@ -67,6 +67,25 @@ Do not conflate these two vocabularies:
 
 No primary enum from the frontmatter table coincides with the Resume checkpoint names: they name different things and are never interchangeable.
 
+### Two registers named `authority`, distinct semantics
+
+`authority` names two different registers. They never appear in the same slot and
+are never interchangeable:
+
+- **Spec identity authority** (`identity.authority_status` in
+  `schemas/prototype-spec.v1.json`; `authority` in the slice frontmatter):
+  `draft | sealed_provisional | validated | frozen_approved`. It records how far a
+  *slice specification* has advanced toward frozen delivery.
+- **Action evidence authority** (`actions[].authority`): `explicit | derived |
+  proposed | hypothesis`. It records how an *individual declared action* was
+  grounded.
+
+The **evidence ladder** is a third, separate vocabulary —
+`explicit > observed > derived > hypothesis > unknown` (owned by
+`references/core-kernel.md` §4) — and it is the ordering the semantic judge reads.
+The decision row status `proposed | provisional | confirmed` (owned by
+`stage-1-frame.md`) is a fourth. Do not read one register's value as another's.
+
 ## Change rule
 
 A format change updates the block, the parser, the registry table above and the

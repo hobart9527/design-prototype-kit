@@ -51,7 +51,7 @@ treat a `reference_pattern` (editorial-reading, somatic-touchflow, operational-c
 dense-console) as a rigid template to clone verbatim.
 
 > **Verifiability expectation (no new gate, just predictability):** Interactive controls
-> that realize authored actions should carry descriptive attributes (e.g. `data-action="<action-id>"`
+> that realize authored actions carry descriptive attributes (e.g. `data-action="<action-id>"`
 > or clear IDs/classes) and accessible labels so that actions can be verified in automated traces
 > and user walkthroughs. Never let a blanket `title` attribute collapse several rows into one identical accessible name.
 
@@ -139,7 +139,7 @@ when adding motion. A visual preference is not a hard floor.
 
 ## 2. Hard Execution Turn Budget & Single-Pass Write Invariant
 
-Prototype synthesis should be focused, atomic, and bounded:
+Prototype synthesis is focused, atomic, and bounded:
 - **Construction**:
   Synthesize the self-contained HTML directly to `target_html_path`.
   Write clean, complete structure without leaving placeholder comments (`<!-- TODO -->`).

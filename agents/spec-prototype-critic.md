@@ -200,24 +200,24 @@ evidence against what the slice **declared**, not against a universal house reci
 Report misses as craft findings:
 
 - **Micro-typography texture:** when `micro_typography` is declared, display
-  numerals and headline figures should read with the declared tracking and
+  numerals and headline figures read with the declared tracking and
   `tabular-nums` stability. Browser-default proportional tracking on display
   figures the slice declared as polarized is a generic-work signal. A minimal,
   editorial, or native surface that never declared display tracking is not a miss.
 - **Spatial geometry fidelity:** when `spatial_geometry` (with `massing_pattern`)
-  is declared, container surfaces should compose from that declared geometry,
-  padding, and trigger shape, and the spatial center of gravity should follow the
+  is declared, container surfaces compose from that declared geometry,
+  padding, and trigger shape, and the spatial center of gravity follows the
   declared `massing_pattern`. An interchangeable equal-width card grid that ignores
   the declared massing is the generic-shell fingerprint. Compact radii and tight
   padding on a dense console are correct execution, not a craft miss — never demand
   generous padding or pill triggers the slice did not declare.
 - **Data mark textures:** when `data_marks` is declared as textured, status and
-  metric distributions should carry pattern hatching or segmented bars per the
+  metric distributions carry pattern hatching or segmented bars per the
   declared `data_syntax`; flat native bars are a generic-work signal there. When a
   native data language is declared, native marks are the faithful choice — do not
   flag them.
 - **Surface optics coherence:** when `surface_optics` is declared, the declared
-  material treatment should be visible on elevated surfaces. Do not demand
+  material treatment is visible on elevated surfaces. Do not demand
   frosted-glass, tonal washes, or decorative layers on a dense console or any
   surface whose declared optics are flat.
 
@@ -240,7 +240,7 @@ compliant and error-free:
    - **Visual signal-to-noise ratio**: does every visible element earn its pixels
      against the task, or is the screen padded with decorative mass the slice never
      declared (frosted-glass panels, gradient ornaments, non-functional chrome)?
-     Dense consoles should stay dense and quiet, not decorated.
+     Dense consoles stay dense and quiet, not decorated.
    - **State-transition spatio-temporal momentum conservation**: when a state
      changes, does the moving content keep coherent momentum — departing and
      entering elements relate spatially and temporally per the declared `kinematics`

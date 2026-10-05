@@ -150,7 +150,7 @@ On demand extensions:
 - **Strict Authority Boundaries (严格权威封顶与严禁越权晋升)**: User inputs supply intent, but derived implementation parameters (e.g. exact timeout windows or wizard steps) remain `derived` / `provisional` and must never be promoted to user `confirmed`. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward`, NEVER as `approvals preserved`.
 - **Receipt & Visual Honesty (物理收据与渲染真实性)**: If screenshot capture reports runtime failures, `stylesheets_applied: false`, or pending review, state `visual_evidence: unverified` / `PARTIAL` honestly; never assert visual passes or fabricate rendered observations from unrendered artifacts.
 - **Bounded Lifecycle Closure (生命周期终态封闭)**: Interaction workflows and task completions close cleanly at the precise boundary requested by the user. State transitions must not unilaterally anticipate or fabricate speculative post-task stages, derivative systems, or automated document/report generators beyond the explicit scope.
-- **Graceful Degradation & Progressive Disclosure**: Hard gates should block only on semantic fabrication, authority escape, or critical task breaks. Craft and performance optimizations are advisory by default; escalate to blocking only when the user explicitly demands P9+ polish or the artifact is headed for production handoff.
+- **Graceful Degradation & Progressive Disclosure**: Hard gates block only on semantic fabrication, authority escape, or critical task breaks. Craft and performance optimizations are advisory. The escalation rule is owned by [`craft-floor.md`](references/02-craft-methods/craft-floor.md) § Progressive Escalation.
 
 ## Single-Brain End-to-End Ownership (单脑贯通 · 极速交付)
 
