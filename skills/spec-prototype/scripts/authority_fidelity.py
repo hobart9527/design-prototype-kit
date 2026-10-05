@@ -165,6 +165,55 @@ def advisory_label_signals(discussion_text: str) -> List[str]:
     return signals
 
 
+# r40 A2: the literal carry-forward phrase that promoted unchosen decisions to an
+# approval. Any form of it is a hard failure, not a signal.
+_APPROVALS_PRESERVED_RE = re.compile(r"approvals?\s+preserved", re.IGNORECASE)
+
+# r40 A1: a user `confirmed`/`delegated` status requires in-session evidence of the
+# user's own choice. A designer-authored rationale, a benchmark fixture actor, or a
+# restatement of the brief is not a selection.
+_USER_CHOICE_EVIDENCE_RE = re.compile(
+    r"user\s*(?:message|selected|chose|confirmed|approved|locked)|"
+    r"用户(?:确认|选择|批准|锁定)|in[- ]session|turn\s*\d+|choice_taken",
+    re.IGNORECASE,
+)
+
+
+def check_decision_promotions(discussion_text: str) -> List[str]:
+    """Hard failures for decision rows that promote themselves past their evidence.
+
+    Two classes, both from r40:
+    - A1: status `confirmed`/`delegated` with no in-session user-choice evidence in
+      the row (quote, locator, or user-source). The mechanism parameters a designer
+      derives stay `derived`/`provisional`; only the user's stated intent may settle.
+    - A2: the literal `approvals preserved` carry-forward, which asserts unchosen
+      decisions are approved. The honest form is `unaffected provisional decisions
+      carried forward`.
+    Returns a list of failure strings; empty means the table is honest.
+    """
+    failures: List[str] = []
+    if _APPROVALS_PRESERVED_RE.search(discussion_text):
+        failures.append(
+            "authority assertion: `approvals preserved` promotes unchosen decisions to "
+            "approval; record `unaffected provisional decisions carried forward` instead"
+        )
+    for row in parse_decision_rows(discussion_text):
+        status = _normalise(_column(row, "status", "状态"))
+        if status not in SETTLED_STATUSES:
+            continue
+        rid = _column(row, "id") or "(row without id)"
+        quote = _column(row, "quote", "locator", "引用")
+        source = _column(row, "user source", "来源")
+        evidence_blob = f"{quote} {source}"
+        if not _USER_CHOICE_EVIDENCE_RE.search(evidence_blob):
+            failures.append(
+                f"{rid}: status={status} but no in-session user-choice evidence "
+                "(quote/locator/user-source naming a user selection); a designer-derived "
+                "mechanism stays `derived`/`provisional`, never `confirmed`"
+            )
+    return failures
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     import argparse
     import json

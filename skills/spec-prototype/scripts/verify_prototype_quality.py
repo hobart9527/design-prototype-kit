@@ -1511,6 +1511,14 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 ir_actions = []
             failures.extend(authority_fidelity.check_action_authority(ir_actions, record_text))
 
+    # Decision-table promotions: a `confirmed`/`delegated` row with no in-session
+    # user-choice evidence, or the literal `approvals preserved` carry-forward, is
+    # the r40 A1/A2 class. This reads only the design record, so it runs whether or
+    # not an IR exists — the dishonesty lives in the record, not the actions.
+    record_text = _design_record_text(html)
+    if record_text is not None:
+        failures.extend(authority_fidelity.check_decision_promotions(record_text))
+
     # Hard floor: reject raw inline hex colors in style attributes (enforces token inheritance)
     raw_style_hex = [
         el.get("style") for el in dom.with_attr("style")

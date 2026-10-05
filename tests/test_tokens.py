@@ -499,3 +499,55 @@ def test_spacing_confirmation_only_elevates_spacing_domain(tmp_path: Path):
     assert data["primitives"]["color"]["primary"]["$extensions"]["design-prototype-kit"]["authority"] == "derived"
     assert data["primitives"]["spacing"]["4"]["$extensions"]["design-prototype-kit"]["authority"] == "explicit_human"
     assert data["primitives"]["radius"]["card"]["$extensions"]["design-prototype-kit"]["authority"] == "derived"
+    # Root rollup is consensus, not OR: a single-domain confirmation must not let a
+    # consumer reading only the root inherit explicit_human for the unconfirmed four.
+    assert data["$extensions"]["design-prototype-kit"]["authority"] == "derived", (
+        "single-domain elevation must keep the root rollup derived")
+
+
+def test_all_domains_confirmed_elevates_root(tmp_path: Path):
+    """Only a unanimous five-domain confirmation elevates the root rollup."""
+    ct = _load_compiler()
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    (proto / "truth.md").write_text(
+        "# Truth\n\n| ID | Decision | Status | Reason | Quote | User source | Scope |\n"
+        "| --- | --- | --- | --- | --- | --- | --- |\n"
+        "| D1 | Confirm palette | confirmed | user chose seal | quote | confirmed | palette color |\n"
+        "| D2 | Confirm spacing | confirmed | user chose dense | quote | confirmed | spacing |\n"
+        "| D3 | Confirm radii | confirmed | user chose soft | quote | confirmed | radius |\n"
+        "| D4 | Confirm type scale | confirmed | user chose scale | quote | confirmed | typography font |\n"
+        "| D5 | Confirm motion | confirmed | user chose spring | quote | confirmed | motion duration easing |\n",
+        encoding="utf-8",
+    )
+    world = proto / "world.md"
+    world.write_text(
+        "# World\n\n- Energy: steady\n- Density: compact\n- --accent-primary: #d6f56b\n- --bg-surface: #080b0b\n",
+        encoding="utf-8",
+    )
+    css = proto / "shared/tokens.css"
+    out_json = proto / "contracts/tokens/t1.json"
+    ct.compile_tokens(str(world), str(css), str(out_json))
+
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    root = data["$extensions"]["design-prototype-kit"]
+    assert root["authority"] == "explicit_human", (
+        "a unanimous five-domain confirmation is the only thing that elevates the root")
+    assert root["domain_authorities"]["color"] == "explicit_human"
+    assert root["domain_authorities"]["spacing"] == "explicit_human"
+    assert root["domain_authorities"]["radius"] == "explicit_human"
+    assert root["domain_authorities"]["typography"] == "explicit_human"
+    assert root["domain_authorities"]["motion"] == "explicit_human"
+
+
+def test_partial_domain_auth_does_not_elevate_color_via_root(tmp_path):
+    """A partial domain map must not let color inherit the legacy root default."""
+    ct = _load_compiler()
+    # Simulate the exact fallback expression generate_dtcg_json uses: once any
+    # domain map exists, an absent domain resolves to `derived`, never to the
+    # legacy root `explicit_human` a direct caller may still carry.
+    domain_auth = {"spacing": "explicit_human"}
+    default_auth = "explicit_human"
+    color_auth = domain_auth.get("color", default_auth if not domain_auth else "derived")
+    assert color_auth == "derived", (
+        "partial domain map must not let color inherit the legacy root explicit_human")

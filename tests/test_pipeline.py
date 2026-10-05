@@ -1123,3 +1123,47 @@ def test_authority_label_signals_are_advisory():
     )
     signals = af.advisory_label_signals(table)
     assert len(signals) == 2 and all(s.startswith("D1") for s in signals)
+
+
+def test_decision_promotions_refuse_approvals_preserved():
+    # r40 A2: the literal carry-forward phrase is a hard failure anywhere in the record.
+    af = _load("authority_fidelity", "authority_fidelity.py")
+    failures = af.check_decision_promotions(
+        "Unaffected decisions and approvals preserved: D1 (双面形态), D5 (收尾语义)")
+    assert failures and "approvals preserved" in failures[0]
+
+
+def test_decision_promotions_refuse_confirmed_without_user_choice_evidence():
+    # r40 A1: a `confirmed` row backed only by a designer rationale is a promotion.
+    af = _load("authority_fidelity", "authority_fidelity.py")
+    table = (
+        "## Decisions and authority\n\n"
+        "| ID | Decision | Status | Reason | Quote | User source | Scope |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| D6 | 紧急回滚 5 分钟窗口 | confirmed | derived mechanism | — | synthetic-fixture | s |\n"
+    )
+    failures = af.check_decision_promotions(table)
+    assert failures and any("D6" in f for f in failures)
+
+
+def test_decision_promotions_accept_confirmed_with_user_selection():
+    # A `confirmed` row quoting an in-session user selection is legitimate (r40 D7).
+    af = _load("authority_fidelity", "authority_fidelity.py")
+    table = (
+        "## Decisions and authority\n\n"
+        "| ID | Decision | Status | Reason | Quote | User source | Scope |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| D7 | 移动只读 | confirmed | user stated | \"手机上只要能看到当前事故状态\" (user message, Turn 3) | confirmed | s |\n"
+    )
+    assert af.check_decision_promotions(table) == []
+
+
+def test_decision_promotions_ignore_provisional_rows():
+    af = _load("authority_fidelity", "authority_fidelity.py")
+    table = (
+        "## Decisions and authority\n\n"
+        "| ID | Decision | Status | Reason | Quote | User source | Scope |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| D2 | 方向 A | provisional | recommendation | — | synthetic-fixture | s |\n"
+    )
+    assert af.check_decision_promotions(table) == []

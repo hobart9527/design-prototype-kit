@@ -1296,8 +1296,11 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
 
     # Domain-specific authority: a palette confirmation elevates color tokens,
     # but spacing, radius, typography, and motion remain derived unless explicitly
-    # confirmed in their own right.
-    color_auth = domain_auth.get("color", default_auth)
+    # confirmed in their own right. Color uses the same fallback as the other four:
+    # once any domain map exists, an absent domain resolves to `derived`, so a
+    # partial domain_auth passed by a direct caller cannot elevate color through
+    # the legacy root default.
+    color_auth = domain_auth.get("color", default_auth if not domain_auth else "derived")
     spacing_auth = domain_auth.get("spacing", default_auth if not domain_auth else "derived")
     radius_auth = domain_auth.get("radius", default_auth if not domain_auth else "derived")
     typography_auth = domain_auth.get("typography", default_auth if not domain_auth else "derived")
@@ -1509,9 +1512,14 @@ def compile_tokens(
     auth_text = _confirmed_authority_text(disc_text, discussion_path)
     domain_auth = resolve_domain_authorities(auth_text)
     computed["domain_authorities"] = domain_auth
+    # Root authority is a consensus rollup, not an OR: elevating one domain (a
+    # palette confirmation) must not let a consumer reading only the root inherit
+    # `explicit_human` for the four unconfirmed dimensions. Root is `explicit_human`
+    # only when every domain agrees; the per-domain truth lives in
+    # `domain_authorities`.
     computed["authority"] = (
         "explicit_human"
-        if any(v == "explicit_human" for v in domain_auth.values())
+        if domain_auth and all(v == "explicit_human" for v in domain_auth.values())
         else "derived"
     )
 

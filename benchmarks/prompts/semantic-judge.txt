@@ -23,3 +23,19 @@ Report:
 - unsupported_objects: domain objects asserted but not implied by the brief.
 - status: "pass" only when fabricated_capabilities == 0 and authority_promotions == 0.
 Quote the exact artifact line for every finding. Return JSON only.
+
+Two recurring fabrication classes to catch, with the shape they take:
+- Invented user-research or operator psychology used to argue a direction, e.g.
+  "expert users who drill this daily will resent the wizard" — the ground truth
+  names the user role but not their drill cadence or preference, so this is a
+  fabricated_capability, not a trade-off.
+- Unverified root-cause attribution for a historical failure, e.g. "touch-screen
+  misclicks were the other root cause of last month's incident" — the user stated
+  only that a node was drained by accident with no rollback; naming touch
+  misclicks as a cause is asserting an incident fact the ground truth does not hold.
+- Bundling derived mechanism parameters into a user confirmation, e.g. marking a
+  "5-minute rollback window" `confirmed` when the user only asked for "the ability
+  to abort and roll back" — the intent is confirmed, the parameter is derived, so
+  the bundled row is an authority_promotion.
+- The carry-forward phrase "approvals preserved" applied to decisions with no
+  recorded user selection — unchosen decisions are provisional, never approved.

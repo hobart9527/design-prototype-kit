@@ -259,6 +259,26 @@ RULES: dict[str, dict] = {
         "kind": "prose_only",
         "why": "the use scene is in the brief, not the artifact",
     },
+
+    # -- three universal design invariants (Pillar 3) --------------------------
+    # Registered as prose_only so the anchor test can see them and any later
+    # mechanization has a mount point. They are content invariants, not CSS
+    # patterns: a text scan cannot judge whether a capability is fabricated.
+    "INV-ENTITY-GROUNDING": {
+        "prose": "every surface, object and integration is grounded in a domain entity the brief actually names; no fabricated lateral domains, billing, scheduling or notification channels",
+        "kind": "prose_only",
+        "why": "grounding is judged against the brief's entity list, not an artifact pattern",
+    },
+    "INV-HISTORICAL-FIDELITY": {
+        "prose": "declared irreversible history is never retroactively negated; recovery applies only to prospective in-flight operations",
+        "kind": "prose_only",
+        "why": "whether a claim reverses a stated fact needs the brief's history, not a regex",
+    },
+    "INV-LIFECYCLE-CLOSURE": {
+        "prose": "workflows close at the requested boundary; no speculative post-task stages, derivative systems or auto-generated reports beyond explicit scope",
+        "kind": "prose_only",
+        "why": "scope is defined by the request, not detectable in the artifact",
+    },
 }
 
 def scan(artifact: pathlib.Path) -> dict:

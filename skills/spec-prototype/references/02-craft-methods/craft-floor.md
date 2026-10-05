@@ -87,6 +87,24 @@ inspection pass, not as separate screenshot trips.
   baseline, unit, delta, or sparkline. This is the id for the VPQ `data-craft`
   signal; it has no text detector.
 
+### Three universal design invariants
+
+These are content invariants, not CSS patterns. They are judged against the brief
+and the request, so they register as `prose_only` with the reason on record rather
+than as a silent gap.
+
+- **Entity grounding** `INV-ENTITY-GROUNDING`: every surface, object and
+  integration is grounded in a domain entity the brief actually names. No
+  fabricated lateral domains, billing, scheduling, or notification channels
+  invented to fill a section.
+- **Historical fidelity** `INV-HISTORICAL-FIDELITY`: a declared irreversible
+  history (an outage that could not be rolled back, a destructive act with no
+  undo) is never retroactively negated. Recovery applies only to prospective,
+  in-flight operations within the tool's immediate scope.
+- **Lifecycle closure** `INV-LIFECYCLE-CLOSURE`: a workflow closes at the
+  requested boundary. No speculative post-task stages, derivative systems, or
+  auto-generated report generators beyond the explicit scope.
+
 ### Rule IDs are the anchor
 
 The bold ids above are not decoration. They are the join between this prose and
