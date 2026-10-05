@@ -428,3 +428,74 @@ def test_compile_tokens_refuses_missing_source(tmp_path: Path):
     with pytest.raises(FileNotFoundError, match="Token source not found"):
         ct.compile_tokens(str(tmp_path / "prototype" / "missing-world.md"), str(out_css))
     assert not out_css.exists(), "no artifact may be written for a refused source"
+
+
+def test_palette_confirmation_only_elevates_color_domain(tmp_path: Path):
+    """A palette confirmation must elevate color tokens to explicit_human, but
+    mathematically derived spacing, radii, typography and motion scales must
+    remain derived."""
+    ct = _load_compiler()
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    (proto / "truth.md").write_text(
+        "# Truth\n\n| ID | Decision | Status | Reason | Quote | User source | Scope |\n"
+        "| --- | --- | --- | --- | --- | --- | --- |\n"
+        "| D1 | Confirm primary palette | confirmed | user picked colors | quote | confirmed | color tokens |\n",
+        encoding="utf-8",
+    )
+    world = proto / "world.md"
+    world.write_text(
+        "# World\n\n- Energy: steady\n- Density: compact\n- --accent-primary: #d6f56b\n- --bg-surface: #080b0b\n",
+        encoding="utf-8",
+    )
+    css = proto / "shared/tokens.css"
+    out_json = proto / "contracts/tokens/t1.json"
+    ct.compile_tokens(str(world), str(css), str(out_json))
+
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    color_auth = data["primitives"]["color"]["primary"]["$extensions"]["design-prototype-kit"]["authority"]
+    spacing_auth = data["primitives"]["spacing"]["4"]["$extensions"]["design-prototype-kit"]["authority"]
+    radius_auth = data["primitives"]["radius"]["card"]["$extensions"]["design-prototype-kit"]["authority"]
+    motion_auth = data["primitives"]["motion"]["duration-fast"]["$extensions"]["design-prototype-kit"]["authority"]
+    typography_auth = data["primitives"]["typography"]["font-sans"]["$extensions"]["design-prototype-kit"]["authority"]
+
+    assert color_auth == "explicit_human"
+    assert spacing_auth == "derived"
+    assert radius_auth == "derived"
+    assert motion_auth == "derived"
+    assert typography_auth == "derived"
+
+    domain_auths = data["$extensions"]["design-prototype-kit"]["domain_authorities"]
+    assert domain_auths == {
+        "color": "explicit_human",
+        "spacing": "derived",
+        "radius": "derived",
+        "typography": "derived",
+        "motion": "derived",
+    }
+
+
+def test_spacing_confirmation_only_elevates_spacing_domain(tmp_path: Path):
+    """An explicit spacing confirmation elevates spacing tokens without elevating colors."""
+    ct = _load_compiler()
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    (proto / "truth.md").write_text(
+        "# Truth\n\n| ID | Decision | Status | Reason | Quote | User source | Scope |\n"
+        "| --- | --- | --- | --- | --- | --- | --- |\n"
+        "| D1 | Confirm 4px spacing scale | confirmed | user locked dense grid | quote | confirmed | spacing |\n",
+        encoding="utf-8",
+    )
+    world = proto / "world.md"
+    world.write_text(
+        "# World\n\n- Energy: steady\n- Density: compact\n- --accent-primary: #d6f56b\n- --bg-surface: #080b0b\n",
+        encoding="utf-8",
+    )
+    css = proto / "shared/tokens.css"
+    out_json = proto / "contracts/tokens/t1.json"
+    ct.compile_tokens(str(world), str(css), str(out_json))
+
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    assert data["primitives"]["color"]["primary"]["$extensions"]["design-prototype-kit"]["authority"] == "derived"
+    assert data["primitives"]["spacing"]["4"]["$extensions"]["design-prototype-kit"]["authority"] == "explicit_human"
+    assert data["primitives"]["radius"]["card"]["$extensions"]["design-prototype-kit"]["authority"] == "derived"

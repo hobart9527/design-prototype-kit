@@ -395,7 +395,30 @@ def parse_5dials(discussion_text: str) -> Dict[str, str]:
     return parse_five_axes(discussion_text)
 
 
-_TOKEN_AUTHORITY_KEYWORDS = re.compile(r"\bpalette\b|\btoken\b|颜色|配色|色彩", re.IGNORECASE)
+_DOMAIN_CONFIG: Dict[str, Dict[str, re.Pattern]] = {
+    "color": {
+        "keywords": re.compile(r"\bpalette\b|\btoken\b|颜色|配色|色彩", re.IGNORECASE),
+        "pin": re.compile(r"`?--(?:accent|bg|border|text|status|color)[a-z0-9_-]*`?\s*:\s*`?#[0-9a-f]{3,8}`?", re.IGNORECASE),
+    },
+    "spacing": {
+        "keywords": re.compile(r"\bspacing\b|\bspace\b|\bpadding\b|\bgap\b|间距|留白|边距", re.IGNORECASE),
+        "pin": re.compile(r"`?--space-[a-z0-9_-]*`?\s*:\s*`?\d+(?:px|rem)?`?", re.IGNORECASE),
+    },
+    "radius": {
+        "keywords": re.compile(r"\bradius\b|\bradii\b|圆角|同心圆角", re.IGNORECASE),
+        "pin": re.compile(r"`?--radius-[a-z0-9_-]*`?\s*:\s*`?\d+(?:px|rem)?`?", re.IGNORECASE),
+    },
+    "motion": {
+        "keywords": re.compile(r"\bmotion\b|\bspring\b|\bkinematic\b|\bduration\b|\beasing\b|动效|动画|缓动|弹性", re.IGNORECASE),
+        "pin": re.compile(r"`?--(?:duration|ease|spring)[a-z0-9_-]*`?\s*:\s*`?[a-z0-9_().,-]+`?", re.IGNORECASE),
+    },
+    "typography": {
+        "keywords": re.compile(r"\btypography\b|\bfont\b|\btype scale\b|字体|字阶|字重", re.IGNORECASE),
+        "pin": re.compile(r"`?--font-[a-z0-9_-]*`?\s*:\s*`?[^;\n]+`?", re.IGNORECASE),
+    },
+}
+
+_TOKEN_AUTHORITY_KEYWORDS = _DOMAIN_CONFIG["color"]["keywords"]
 # A confirmed record that pins `--accent-primary: #9333ea` names a token
 # decision even when it never spells the word "token".
 _CSS_HEX_PIN = re.compile(r"`?--[a-z][a-z0-9_-]*`?\s*:\s*`?#[0-9a-f]{3,8}`?", re.IGNORECASE)
@@ -406,10 +429,6 @@ _NEGATED_TOKEN_DECISION = re.compile(
     r"\b(?:do not|don't|never|not|without|avoid|reject(?:ed)?|declin(?:e|ed))\b|不要|不改|不选|拒绝|避免|尚未|未确认|未决定",
     re.IGNORECASE,
 )
-
-
-def _is_positive_token_decision(text: str) -> bool:
-    return _names_token_decision(text) and not _NEGATED_TOKEN_DECISION.search(text)
 
 
 def _decision_table_status_index(header: list[str]) -> int | None:
@@ -444,29 +463,46 @@ def _markdown_table_rows(source_text: str):
             yield header, [cell.strip() for cell in row.strip().strip("|").split("|")]
 
 
+def _names_domain_decision(text: str, domain: str = "color") -> bool:
+    cfg = _DOMAIN_CONFIG.get(domain, _DOMAIN_CONFIG["color"])
+    keywords = cfg["keywords"]
+    pin = cfg["pin"]
+    if domain == "color":
+        return bool(keywords.search(text) or _CSS_HEX_PIN.search(text))
+    return bool(keywords.search(text) or pin.search(text))
+
 
 def _names_token_decision(text: str) -> bool:
-    return bool(_TOKEN_AUTHORITY_KEYWORDS.search(text) or _CSS_HEX_PIN.search(text))
+    return _names_domain_decision(text, "color")
 
 
-def _section_pins_token_decision(text: str) -> bool:
-    """Free prose grants authority only when confirmation and token scope coincide.
+def _is_positive_domain_decision(text: str, domain: str = "color") -> bool:
+    return _names_domain_decision(text, domain) and not _NEGATED_TOKEN_DECISION.search(text)
 
-    The Confirmed-Decisions heading already supplies the confirmation context,
-    so an un-negated CSS hex pin is decisive on its own; keyword-only prose
-    still needs a confirmation word in the same sentence.
-    """
-    if _CSS_HEX_PIN.search(text) and not _NEGATED_TOKEN_DECISION.search(text):
+
+def _is_positive_token_decision(text: str) -> bool:
+    return _is_positive_domain_decision(text, "color")
+
+
+def _section_pins_domain_decision(text: str, domain: str = "color") -> bool:
+    """Free prose grants authority only when confirmation and domain scope coincide."""
+    cfg = _DOMAIN_CONFIG.get(domain, _DOMAIN_CONFIG["color"])
+    pin = _CSS_HEX_PIN if domain == "color" else cfg["pin"]
+    if pin.search(text) and not _NEGATED_TOKEN_DECISION.search(text):
         return True
     for sentence in re.split(r"[.!?。！？\n]+", text):
         if (re.search(r"\b(?:confirmed|approved|locked)\b|确认|已批准|已锁定", sentence, re.IGNORECASE)
-                and _is_positive_token_decision(sentence)):
+                and _is_positive_domain_decision(sentence, domain)):
             return True
     return False
 
 
-def _row_grants_token_authority(cells: list[str], header: list[str] | None = None) -> bool:
-    """Grant authority only when the table explicitly confirms a token decision."""
+def _section_pins_token_decision(text: str) -> bool:
+    return _section_pins_domain_decision(text, "color")
+
+
+def _row_grants_domain_authority(cells: list[str], header: list[str] | None = None, domain: str = "color") -> bool:
+    """Grant authority only when the table explicitly confirms a decision in that domain."""
     source_idx = None
     if header is not None:
         status_idx = _decision_table_status_index(header)
@@ -494,7 +530,11 @@ def _row_grants_token_authority(cells: list[str], header: list[str] | None = Non
     if not _STATUS_CELL.fullmatch(cells[status_idx]):
         return False
     subject = cells[subject_idx]
-    return _is_positive_token_decision(subject)
+    return _is_positive_domain_decision(subject, domain)
+
+
+def _row_grants_token_authority(cells: list[str], header: list[str] | None = None) -> bool:
+    return _row_grants_domain_authority(cells, header, "color")
 
 
 def _confirmed_decision_sections(source_text: str) -> list[str]:
@@ -508,16 +548,16 @@ def _confirmed_decision_sections(source_text: str) -> list[str]:
     ]
 
 
-def _has_confirmed_token_authority(source_text: str) -> bool:
-    """True only when a confirmed record explicitly pins token values."""
+def _has_confirmed_domain_authority(source_text: str, domain: str = "color") -> bool:
+    """True only when a confirmed record explicitly pins values for the given domain."""
     for section in _confirmed_decision_sections(source_text):
         for header, cells in _markdown_table_rows(section):
-            if _row_grants_token_authority(cells, header):
+            if _row_grants_domain_authority(cells, header, domain):
                 return True
-        if _section_pins_token_decision(section):
+        if _section_pins_domain_decision(section, domain):
             return True
     for header, cells in _markdown_table_rows(source_text):
-        if _row_grants_token_authority(cells, header):
+        if _row_grants_domain_authority(cells, header, domain):
             return True
     # Legacy compact one-line records have no header: Decision | Status | Note.
     lines = source_text.splitlines()
@@ -531,9 +571,26 @@ def _has_confirmed_token_authority(source_text: str) -> bool:
                 re.fullmatch(r"\s*:?-{1,}:?\s*", cell) for cell in previous
             ):
                 continue
-        if _row_grants_token_authority(cells):
+        if _row_grants_domain_authority(cells, domain=domain):
             return True
     return False
+
+
+def _has_confirmed_token_authority(source_text: str) -> bool:
+    """True only when a confirmed record explicitly pins color/palette token values."""
+    return _has_confirmed_domain_authority(source_text, "color")
+
+
+def resolve_domain_authorities(source_text: str) -> Dict[str, str]:
+    """Resolve authority provenance independently for each physical design dimension."""
+    authorities = {}
+    for domain in _DOMAIN_CONFIG:
+        authorities[domain] = (
+            "explicit_human"
+            if _has_confirmed_domain_authority(source_text, domain)
+            else "derived"
+        )
+    return authorities
 
 
 def _confirmed_authority_text(source_text: str, source_path: str | None) -> str:
@@ -1234,43 +1291,53 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
 
     # Determine authority provenance
     # Explicit Human Decision > Frozen Product Rule > Derived Token > Default
+    domain_auth = tokens.get("domain_authorities") or {}
     default_auth = tokens.get("authority", "derived")
 
+    # Domain-specific authority: a palette confirmation elevates color tokens,
+    # but spacing, radius, typography, and motion remain derived unless explicitly
+    # confirmed in their own right.
+    color_auth = domain_auth.get("color", default_auth)
+    spacing_auth = domain_auth.get("spacing", default_auth if not domain_auth else "derived")
+    radius_auth = domain_auth.get("radius", default_auth if not domain_auth else "derived")
+    typography_auth = domain_auth.get("typography", default_auth if not domain_auth else "derived")
+    motion_auth = domain_auth.get("motion", default_auth if not domain_auth else "derived")
+
     color_tokens: Dict[str, Any] = {
-        "primary": {"$value": c["accent_primary"], "$type": "color", "$description": "Primary action and key interactive state", "authority": default_auth},
-        "primary-hover": {"$value": c["accent_hover"], "$type": "color", "$description": "Hover state of primary", "authority": default_auth},
-        "surface": {"$value": c["bg_surface"], "$type": "color", "$description": "Card, panel, and workbench base surface", "authority": default_auth},
-        "surface-raised": {"$value": c["bg_surface_raised"], "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": default_auth},
-        "surface-overlay": {"$value": c["bg_overlay"], "$type": "color", "$description": "Top-tier fly-by-wire controls and overlay", "authority": default_auth},
-        "border": {"$value": c["border_subtle"], "$type": "color", "$description": "Default component boundary", "authority": default_auth},
-        "border-strong": {"$value": c["border_bright"], "$type": "color", "$description": "Active or emphasized component boundary", "authority": default_auth},
-        "border-dim": {"$value": c["border_dim"], "$type": "color", "$description": "Subtle hairline divider", "authority": default_auth},
-        "text-primary": {"$value": c["text_primary"], "$type": "color", "$description": "Primary high-contrast typography", "authority": default_auth},
-        "text-secondary": {"$value": c["text_secondary"], "$type": "color", "$description": "Supplementary metadata and labels", "authority": default_auth},
-        "text-tertiary": {"$value": c["text_tertiary"], "$type": "color", "$description": "De-emphasized or disabled controls and copy", "authority": default_auth},
-        "status-running": {"$value": c["status_running"], "$type": "color", "$description": "Nominal operational state", "authority": default_auth},
-        "status-warning": {"$value": c["status_warning"], "$type": "color", "$description": "Warning state or capacity threshold", "authority": default_auth},
-        "status-danger": {"$value": c["status_danger"], "$type": "color", "$description": "Critical failure or thermal alert", "authority": default_auth},
-        "bg-void": {"$value": c["bg_void"], "$type": "color", "$description": "Deepest atmospheric background", "authority": default_auth},
-        "bg-base": {"$value": c["bg_base"], "$type": "color", "$description": "App foundation background chassis", "authority": default_auth},
+        "primary": {"$value": c["accent_primary"], "$type": "color", "$description": "Primary action and key interactive state", "authority": color_auth},
+        "primary-hover": {"$value": c["accent_hover"], "$type": "color", "$description": "Hover state of primary", "authority": color_auth},
+        "surface": {"$value": c["bg_surface"], "$type": "color", "$description": "Card, panel, and workbench base surface", "authority": color_auth},
+        "surface-raised": {"$value": c["bg_surface_raised"], "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": color_auth},
+        "surface-overlay": {"$value": c["bg_overlay"], "$type": "color", "$description": "Top-tier fly-by-wire controls and overlay", "authority": color_auth},
+        "border": {"$value": c["border_subtle"], "$type": "color", "$description": "Default component boundary", "authority": color_auth},
+        "border-strong": {"$value": c["border_bright"], "$type": "color", "$description": "Active or emphasized component boundary", "authority": color_auth},
+        "border-dim": {"$value": c["border_dim"], "$type": "color", "$description": "Subtle hairline divider", "authority": color_auth},
+        "text-primary": {"$value": c["text_primary"], "$type": "color", "$description": "Primary high-contrast typography", "authority": color_auth},
+        "text-secondary": {"$value": c["text_secondary"], "$type": "color", "$description": "Supplementary metadata and labels", "authority": color_auth},
+        "text-tertiary": {"$value": c["text_tertiary"], "$type": "color", "$description": "De-emphasized or disabled controls and copy", "authority": color_auth},
+        "status-running": {"$value": c["status_running"], "$type": "color", "$description": "Nominal operational state", "authority": color_auth},
+        "status-warning": {"$value": c["status_warning"], "$type": "color", "$description": "Warning state or capacity threshold", "authority": color_auth},
+        "status-danger": {"$value": c["status_danger"], "$type": "color", "$description": "Critical failure or thermal alert", "authority": color_auth},
+        "bg-void": {"$value": c["bg_void"], "$type": "color", "$description": "Deepest atmospheric background", "authority": color_auth},
+        "bg-base": {"$value": c["bg_base"], "$type": "color", "$description": "App foundation background chassis", "authority": color_auth},
     }
 
     spacing_tokens: Dict[str, Any] = {
-        str(k): {"$value": v, "$type": "dimension", "$description": f"Spacing unit {k}", "authority": default_auth}
+        str(k): {"$value": v, "$type": "dimension", "$description": f"Spacing unit {k}", "authority": spacing_auth}
         for k, v in sorted(s.items())
     }
 
     radius_tokens: Dict[str, Any] = {
-        "outer": {"$value": r["outer"], "$type": "dimension", "$description": "Outer container boundary", "authority": default_auth},
-        "inner": {"$value": r["inner"], "$type": "dimension", "$description": "Concentric inner child boundary", "authority": default_auth},
-        "card": {"$value": r["card"], "$type": "dimension", "$description": "Card entity radius", "authority": default_auth},
-        "btn": {"$value": r["btn"], "$type": "dimension", "$description": "Interactive control radius", "authority": default_auth},
-        "pill": {"$value": r["pill"], "$type": "dimension", "$description": "Status badge pill radius", "authority": default_auth},
+        "outer": {"$value": r["outer"], "$type": "dimension", "$description": "Outer container boundary", "authority": radius_auth},
+        "inner": {"$value": r["inner"], "$type": "dimension", "$description": "Concentric inner child boundary", "authority": radius_auth},
+        "card": {"$value": r["card"], "$type": "dimension", "$description": "Card entity radius", "authority": radius_auth},
+        "btn": {"$value": r["btn"], "$type": "dimension", "$description": "Interactive control radius", "authority": radius_auth},
+        "pill": {"$value": r["pill"], "$type": "dimension", "$description": "Status badge pill radius", "authority": radius_auth},
     }
 
     typography_tokens: Dict[str, Any] = {
-        "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family", "authority": default_auth},
-        "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Telemetry and code font family", "authority": default_auth},
+        "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family", "authority": typography_auth},
+        "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Telemetry and code font family", "authority": typography_auth},
     }
 
     def duration_value(value: str) -> Dict[str, Any]:
@@ -1280,9 +1347,9 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         return {"value": float(match.group(1)) if "." in match.group(1) else int(match.group(1)), "unit": match.group(2)}
 
     motion_tokens: Dict[str, Any] = {
-        "duration-fast": {"$value": duration_value(m.get("duration_fast", "80ms")), "$type": "duration", "$description": "Fast tactile duration", "authority": default_auth},
-        "duration-normal": {"$value": duration_value(m.get("duration_normal", "180ms")), "$type": "duration", "$description": "Normal transition duration", "authority": default_auth},
-        "ease-hud": {"$value": [0.16, 1, 0.3, 1], "$type": "cubicBezier", "$description": "HUD snappy curve", "authority": default_auth},
+        "duration-fast": {"$value": duration_value(m.get("duration_fast", "80ms")), "$type": "duration", "$description": "Fast tactile duration", "authority": motion_auth},
+        "duration-normal": {"$value": duration_value(m.get("duration_normal", "180ms")), "$type": "duration", "$description": "Normal transition duration", "authority": motion_auth},
+        "ease-hud": {"$value": [0.16, 1, 0.3, 1], "$type": "cubicBezier", "$description": "HUD snappy curve", "authority": motion_auth},
         "spring-settle": {
             "$value": {
                 "duration": duration_value(m.get("duration_normal", "180ms")),
@@ -1291,7 +1358,7 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
             },
             "$type": "transition",
             "$description": "Settling transition",
-            "authority": default_auth,
+            "authority": motion_auth,
         },
     }
 
@@ -1306,39 +1373,39 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
 
     semantics = {
         "surface": {
-            "base": {"$value": "{primitives.color.surface}", "$type": "color", "$description": "Base canvas and container surface", "authority": default_auth},
-            "elevated": {"$value": "{primitives.color.surface-raised}", "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": default_auth},
-            "sunken": {"$value": "{primitives.color.bg-base}", "$type": "color", "$description": "Sunken instrument well or canvas backdrop", "authority": default_auth},
+            "base": {"$value": "{primitives.color.surface}", "$type": "color", "$description": "Base canvas and container surface", "authority": color_auth},
+            "elevated": {"$value": "{primitives.color.surface-raised}", "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": color_auth},
+            "sunken": {"$value": "{primitives.color.bg-base}", "$type": "color", "$description": "Sunken instrument well or canvas backdrop", "authority": color_auth},
         },
         "text": {
-            "primary": {"$value": "{primitives.color.text-primary}", "$type": "color", "$description": "Primary high-contrast typography", "authority": default_auth},
-            "secondary": {"$value": "{primitives.color.text-secondary}", "$type": "color", "$description": "Supplementary metadata and labels", "authority": default_auth},
-            "muted": {"$value": "{primitives.color.text-tertiary}", "$type": "color", "$description": "De-emphasized or disabled controls", "authority": default_auth},
+            "primary": {"$value": "{primitives.color.text-primary}", "$type": "color", "$description": "Primary high-contrast typography", "authority": color_auth},
+            "secondary": {"$value": "{primitives.color.text-secondary}", "$type": "color", "$description": "Supplementary metadata and labels", "authority": color_auth},
+            "muted": {"$value": "{primitives.color.text-tertiary}", "$type": "color", "$description": "De-emphasized or disabled controls", "authority": color_auth},
         },
         "action": {
-            "primary": {"$value": "{primitives.color.primary}", "$type": "color", "$description": "Primary action trigger", "authority": default_auth},
-            "primary-hover": {"$value": "{primitives.color.primary-hover}", "$type": "color", "$description": "Primary hover state", "authority": default_auth},
+            "primary": {"$value": "{primitives.color.primary}", "$type": "color", "$description": "Primary action trigger", "authority": color_auth},
+            "primary-hover": {"$value": "{primitives.color.primary-hover}", "$type": "color", "$description": "Primary hover state", "authority": color_auth},
         },
         "status": {
-            "nominal": {"$value": "{primitives.color.status-running}", "$type": "color", "$description": "Nominal operational state", "authority": default_auth},
-            "warning": {"$value": "{primitives.color.status-warning}", "$type": "color", "$description": "Warning state or capacity threshold", "authority": default_auth},
-            "danger": {"$value": "{primitives.color.status-danger}", "$type": "color", "$description": "Critical failure or alert", "authority": default_auth},
+            "nominal": {"$value": "{primitives.color.status-running}", "$type": "color", "$description": "Nominal operational state", "authority": color_auth},
+            "warning": {"$value": "{primitives.color.status-warning}", "$type": "color", "$description": "Warning state or capacity threshold", "authority": color_auth},
+            "danger": {"$value": "{primitives.color.status-danger}", "$type": "color", "$description": "Critical failure or alert", "authority": color_auth},
         }
     }
 
     components = {
         "input": {
-            "bg": {"$value": "{primitives.color.bg-base}", "$type": "color", "$description": "Input field background", "authority": default_auth},
-            "border": {"$value": "{primitives.color.border}", "$type": "color", "$description": "Input field boundary", "authority": default_auth},
-            "focus": {"$value": "{primitives.color.primary}", "$type": "color", "$description": "Input focus ring color", "authority": default_auth},
+            "bg": {"$value": "{primitives.color.bg-base}", "$type": "color", "$description": "Input field background", "authority": color_auth},
+            "border": {"$value": "{primitives.color.border}", "$type": "color", "$description": "Input field boundary", "authority": color_auth},
+            "focus": {"$value": "{primitives.color.primary}", "$type": "color", "$description": "Input focus ring color", "authority": color_auth},
         },
         "card": {
-            "bg": {"$value": "{primitives.color.surface}", "$type": "color", "$description": "Card surface background", "authority": default_auth},
-            "border": {"$value": "{primitives.color.border}", "$type": "color", "$description": "Card boundary", "authority": default_auth},
+            "bg": {"$value": "{primitives.color.surface}", "$type": "color", "$description": "Card surface background", "authority": color_auth},
+            "border": {"$value": "{primitives.color.border}", "$type": "color", "$description": "Card boundary", "authority": color_auth},
         },
         "table": {
-            "row-hover": {"$value": "{primitives.color.surface-raised}", "$type": "color", "$description": "Table row hover highlight", "authority": default_auth},
-            "border": {"$value": "{primitives.color.border-dim}", "$type": "color", "$description": "Table divider hairline", "authority": default_auth},
+            "row-hover": {"$value": "{primitives.color.surface-raised}", "$type": "color", "$description": "Table row hover highlight", "authority": color_auth},
+            "border": {"$value": "{primitives.color.border-dim}", "$type": "color", "$description": "Table divider hairline", "authority": color_auth},
         }
     }
 
@@ -1347,6 +1414,13 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         "$extensions": {
             "design-prototype-kit": {
                 "authority": default_auth,
+                "domain_authorities": {
+                    "color": color_auth,
+                    "spacing": spacing_auth,
+                    "radius": radius_auth,
+                    "typography": typography_auth,
+                    "motion": motion_auth,
+                },
                 "provenance": "spec-prototype v10.1",
                 "format_version": "2025.10"
             }
@@ -1429,8 +1503,15 @@ def compile_tokens(
     # merely appears in the authored discussion is still agent-derived unless a
     # confirmed user decision record (the decision table's confirmed rows or an
     # explicit confirmed-decisions section) actually pins those values.
-    computed["authority"] = "explicit_human" if _has_confirmed_token_authority(
-        _confirmed_authority_text(disc_text, discussion_path)) else "derived"
+    # We resolve provenance independently per physical design dimension.
+    auth_text = _confirmed_authority_text(disc_text, discussion_path)
+    domain_auth = resolve_domain_authorities(auth_text)
+    computed["domain_authorities"] = domain_auth
+    computed["authority"] = (
+        "explicit_human"
+        if any(v == "explicit_human" for v in domain_auth.values())
+        else "derived"
+    )
 
     # One-way provenance seal: the compiled stylesheet records the sha256 of the
     # exact source it was derived from, so any later hand edit is detectable.
