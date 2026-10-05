@@ -16,10 +16,10 @@ An experience fails the Floor only if any of the following objective runtime def
 - Basic WCAG 2.2 AA accessibility failures: text contrast below 4.5:1 against surface, focus completely invisible, or missing basic keyboard navigation.
 - Fabricated approval provenance or false claims of independent review.
 - Silent dead buttons: clickable action buttons that trigger zero DOM or state change.
-- **Craft invariants (hard defects strictly within their applicable scope):**
-  - Commit controls require perceptible `:active` press feedback. Plain links and pure navigation are out of scope.
-  - A rounded child nested inside a rounded parent with padding `P` satisfies $R_{in} = \max(0, R_{out} - P)$ (1px measurement tolerance).
-  - Numeric values that update in place or align in columns use `font-variant-numeric: tabular-nums`; prose numbers are out of scope.
+- **Craft invariants (hard defects strictly within their applicable scope)** — each carries its craft-floor rule id, the same anchor `../02-craft-methods/craft-floor.md` states and [`../../../scripts/detect.py`](../../scripts/detect.py) detects; this file never restates their definitions:
+  - Commit controls require perceptible `:active` press feedback. Plain links and pure navigation are out of scope. `CRAFT-PRESS-DETENT`
+  - A rounded child nested inside a rounded parent with padding `P` satisfies $R_{in} = \max(0, R_{out} - P)$ (1px measurement tolerance). `CRAFT-CONCENTRIC-RADII`
+  - Numeric values that update in place or align in columns use `font-variant-numeric: tabular-nums`; prose numbers are out of scope. `CRAFT-TABULAR-NUMS`
   - A check that cannot run is recorded as `Not verified`, never an automated pass.
 
 ### 2. Quality Criteria (Craft, conviction, and resonance)

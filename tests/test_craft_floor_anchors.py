@@ -150,3 +150,32 @@ def test_the_detector_serialises_for_the_cli(tmp_path):
     payload = detect.scan(artifact)
     out.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     assert json.loads(out.read_text())["detector"] == "craft-floor"
+
+
+def test_quality_floor_craft_invariants_carry_craft_floor_ids():
+    """quality-floor.md's Objective Floor restates craft invariants by id, not
+    by re-definition: the anchor join holds on the verification side too."""
+    from craft_floor_crosswalk import BENCHMARK_ANCHORS  # reuse repo-level import path setup
+    qfloor = (SKILL / "references/03-verification/quality-floor.md").read_text(encoding="utf-8")
+    for rule_id in ("CRAFT-PRESS-DETENT", "CRAFT-CONCENTRIC-RADII", "CRAFT-TABULAR-NUMS"):
+        assert rule_id in qfloor, (
+            f"{rule_id} is enforced as a runtime invariant but quality-floor.md "
+            "does not anchor it by id; add the id, never a re-stated definition"
+        )
+    # The anchor must be detect.py-registered — no orphan ids in the floor.
+    import detect
+    for rule_id in ("CRAFT-PRESS-DETENT", "CRAFT-CONCENTRIC-RADII", "CRAFT-TABULAR-NUMS"):
+        assert rule_id in detect.RULES
+
+
+def test_crosswalk_accounts_for_every_emitted_slop_rule():
+    """Every emitted SLOP id is mapped or explicitly unmapped with a reason —
+    'not mapped' is a recorded status, not an omission (prose_only `why` mirror)."""
+    from craft_floor_crosswalk import BENCHMARK_ANCHORS, BENCHMARK_UNMAPPED, validate_crosswalk
+    assert not validate_crosswalk()
+    import re
+    source = (REPO / "benchmarks/judges/slop_detector.py").read_text(encoding="utf-8")
+    emitted = set(re.findall(r"SLOP-\d{3}", source))
+    assert emitted == set(BENCHMARK_ANCHORS) | set(BENCHMARK_UNMAPPED)
+    for rule_id, reason in BENCHMARK_UNMAPPED.items():
+        assert reason.strip(), f"{rule_id} exempted without a reason"
