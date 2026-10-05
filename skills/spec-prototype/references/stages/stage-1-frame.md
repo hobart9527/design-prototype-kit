@@ -30,7 +30,13 @@ open alternatives only when a consequential choice is genuinely unresolved.
      Resume block, and a brief that quotes the user's own request all carry the status
      as recorded (`proposed`/`provisional`). A user's brief is source evidence for a
      decision row, not a user selection of it; `confirmed` needs the user's explicit
-     choice of that decision in-session, or an explicit delegation.
+     choice of that decision in-session, or an explicit delegation. Unconfirmed decisions
+     carried forward across turns must be documented as `unaffected provisional decisions
+     carried forward`, NEVER as `approvals preserved` or claimed as approved. When user
+     injected input introduces new intents (e.g. "needs emergency abort and rollback"),
+     the user intent is explicit fact, but the concrete derived mechanism parameters
+     (e.g. a specific "5-minute undo window" or wizard steps) remain `derived` / `provisional`
+     and must NEVER be promoted to a user `confirmed` decision.
    - The user's choice of direction is the consequential decision this round exists
      to produce. When evidence already predetermines the direction (an explicit extension
      of an existing surface, a settled convention, or an explicit user delegation),
@@ -121,6 +127,7 @@ The brief needs only the applicable parts of:
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.
   - **Negative Boundaries & Omissions (第一版不做 · 显式反向边界)**: Record explicit omissions to maintain semantic discipline and prevent scope fabrication. Explicitly exclude unrequested lateral domains, unprompted integrations, speculative automation (e.g. magical auto-remediation, unrequested predictive AI), and auxiliary post-processing workflows not justified by the core tension.
   - **Fidelity to Stated Constraints & Invariants (约束与历史守恒)**: Honor all physical constraints, preconditions, and irreversible historical facts stated in the brief. Safety mechanisms and rollback controls must be grounded in actual system capabilities and scoped strictly to active operations, never claiming retroactive resolution of past unrecoverable states.
+  - **Ground Truth Fidelity (真值守恒与零臆测归因)**: Assert as fact only what is explicitly supported by the user brief or session inputs. Never fabricate unprompted user-research findings, psychological profiles (e.g. "expert operators will hate wizards due to frequent drills"), or unverified root-cause attributions for historical failures (e.g. asserting "touch-screen misclicks were a root cause of last month's incident" when the brief only mentioned an accidental one-click drain). Speculative rationale must be explicitly tagged as `[hypothesis]`, never treated or cited as ground truth facts.
 - **Experience direction & Five Axes calibration** — product-specific hierarchy, tone,
   visual mechanism, references and what is deliberately conventional. All five axes
   (Density · Energy · Materiality · Rhythm · Character) are accounted for at direction

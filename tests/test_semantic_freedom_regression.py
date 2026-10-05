@@ -155,3 +155,28 @@ def test_critic_keeps_three_craft_invariants_hard_and_aesthetic_craft_advisory()
     assert "SHALL NOT fail a build" not in text
     assert "hard defects whenever their stated scope applies" in text
     assert "press physics, or typography choices remain advisory" in text
+
+
+# --- seam 5: semantic judge correctly recognizes exclusion markers -----------
+
+
+def test_semantic_judge_recognizes_cross_emoji_and_bullet_omissions():
+    sys.path.insert(0, str(ROOT / "benchmarks/judges"))
+    import semantic_judge
+
+    # 1. Bullet list with cross emoji
+    sample_line = '- ❌ 自动排空 / 自动修复 / 预测性扩容(speculation automation)'
+    assert semantic_judge._is_negated(sample_line, "自动修复")
+    assert semantic_judge._is_negated(sample_line, "自动排空")
+
+    # 2. Heading with list bullet prefix
+    sample_text = (
+        "- **Ruthless Omissions (第一版不做 · 显式反向边界)**:\n"
+        "  - 自动排空 / 自动修复 / 预测性扩容\n"
+        "  - 值班排班、聊天/通知集成、工单系统对接\n"
+        "\n## Success metrics\n"
+        "M1: 步数\n"
+    )
+    m = re.search(r"排班", sample_text)
+    assert m is not None
+    assert semantic_judge._omission_heading_above(sample_text, m.start())

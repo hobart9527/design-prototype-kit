@@ -23,6 +23,11 @@ purpose of this stage.
    list, and what no rule encodes goes unseen — the review degrades into
    reconciling machine output item by item. The order is judgment, then evidence,
    then reconciliation.
+   **Honest Rendering Precondition**: If screenshot capture failed, had runtime errors,
+   or reports `stylesheets_applied: false` / `visual: pending_review` in `handoff-manifest.json`,
+   never fabricate visual observations or assert that visual design floors passed.
+   Record `visual_evidence: unverified` / `status: PARTIAL` honestly in the receipt,
+   and state what could not be inspected.
 3b. **Render defect scan** against the actual captures — overlay positioning,
    elements wider than their container, identifiers broken mid-token, sticky
    layers covering content, and the empty/long states. The list and its failure

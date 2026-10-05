@@ -22,7 +22,8 @@ inspection pass, not as separate screenshot trips.
   parent with padding `P` satisfies `R_inner = max(0, R_outer − P)` within 1px.
 - **Numeric stability** `CRAFT-TABULAR-NUMS`: values that update in place or align
   in columns carry `font-variant-numeric: tabular-nums`; prose numbers are out of
-  scope.
+  scope. In every component stylesheet (e.g. `anchor.css`), ensure metric-bearing
+  classes (`.metric`, `.stat`, `.count`, `.kpi`) declare `font-variant-numeric: tabular-nums`.
 - **Action safety & reversible feedback** `CRAFT-ACTION-FEEDBACK`: destructive or high-stakes
   actions (drain, offline, delete, terminate) must provide a closed loop:
   1. Consequence clearly visible before commit.

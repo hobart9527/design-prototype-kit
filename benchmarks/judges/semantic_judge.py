@@ -39,7 +39,8 @@ SCHEMA = json.dumps({
 
 
 NEGATION_MARKERS = ("不做", "不要", "不可", "不提供", "禁止", "严禁", "绝不", "不得", "不引入", "不接",
-                    "不脑补", "舍弃", "不纳入", "不涉及", "排除", "拒绝", "不支持",
+                    "不脑补", "舍弃", "不纳入", "不涉及", "排除", "拒绝", "不支持", "不作", "未提示",
+                    "不替代", "不含", "不包括", "❌", "✘", "✖", "✕", "🚫",
                     "never", "no ", "not ", "without", "avoid", "excluded", "unsupported")
 
 # Chinese enumeration prose negates at the clause, not at a fixed character
@@ -52,10 +53,13 @@ NEGATION_MARKERS = ("不做", "不要", "不可", "不提供", "禁止", "严禁
 # whose heading above declares the list (`Ruthless Omissions`, `第一版不做`,
 # `不做` in the nearest `#`-heading or bold label) is still a prohibition.
 _CLAUSE_BREAKS = "，。；：,.;:!?！？\n（）()【】[]「」"
+_LINE_NEGATION_PREFIX_RE = re.compile(r"^\s*(?:[-*+]\s+)?[❌✘✖✕🚫]")
 
 
 def _is_negated(snippet: str, term: str) -> bool:
     """A term inside an explicit prohibition is restraint, not fabrication."""
+    if _LINE_NEGATION_PREFIX_RE.search(snippet):
+        return True
     window = snippet.lower()
     position = window.find(term.lower())
     if position < 0:
@@ -76,7 +80,7 @@ def _omission_heading_above(text: str, match_start: int) -> bool:
     if _OMISSION_HEADING_RE is None:
         import re as _re
         _OMISSION_HEADING_RE = _re.compile(
-            r"(?:^|\n)\s*(?:#{1,4}|\*\*|【)[^\n]*(?:不做|omission|excluded|out of scope|范围外)[^\n]*(?:\n|$)",
+            r"(?:^|\n)\s*(?:[-*+]\s+)?(?:#{1,4}|\*\*|【)[^\n]*(?:不做|omission|excluded|out of scope|范围外|non-transfer)[^\n]*(?:\n|$)",
             _re.IGNORECASE)
     prefix = text[:match_start]
     headings = list(_OMISSION_HEADING_RE.finditer(prefix))
