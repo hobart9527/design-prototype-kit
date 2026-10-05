@@ -464,7 +464,7 @@ def _markdown_table_rows(source_text: str):
 
 
 def _names_domain_decision(text: str, domain: str = "color") -> bool:
-    cfg = _DOMAIN_CONFIG.get(domain, _DOMAIN_CONFIG["color"])
+    cfg = _DOMAIN_CONFIG[domain]  # unknown domain fails closed (KeyError), never silently resolves as color
     keywords = cfg["keywords"]
     pin = cfg["pin"]
     if domain == "color":
@@ -486,7 +486,7 @@ def _is_positive_token_decision(text: str) -> bool:
 
 def _section_pins_domain_decision(text: str, domain: str = "color") -> bool:
     """Free prose grants authority only when confirmation and domain scope coincide."""
-    cfg = _DOMAIN_CONFIG.get(domain, _DOMAIN_CONFIG["color"])
+    cfg = _DOMAIN_CONFIG[domain]  # unknown domain fails closed (KeyError), never silently resolves as color
     pin = _CSS_HEX_PIN if domain == "color" else cfg["pin"]
     if pin.search(text) and not _NEGATED_TOKEN_DECISION.search(text):
         return True

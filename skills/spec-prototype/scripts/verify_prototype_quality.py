@@ -623,6 +623,62 @@ def _evidence_state(html: Path) -> dict[str, str]:
     return {}
 
 
+def _verification_root(html: Path) -> dict | None:
+    """The top-level `verification` object from handoff-manifest.json, or None."""
+    for parent in [html.parent, *html.parents]:
+        manifest = parent / "prototype/evidence/handoff-manifest.json"
+        if manifest.is_file():
+            try:
+                verification = json.loads(manifest.read_text(encoding="utf-8")).get("verification")
+            except (json.JSONDecodeError, OSError):
+                return None
+            return verification if isinstance(verification, dict) else None
+    return None
+
+
+def check_capture_reflects_manifest(html: Path) -> list[str]:
+    """A receipt that claims the capture reflects current state while the manifest
+    says capture_failed / stylesheets_applied:false / visual pending_review is an
+    authority promotion of the evidence itself (r40 A3).
+
+    This is the one place the skill can mechanically refuse the class, because the
+    two structures (manifest verification block + design-record receipt line) are
+    both readable here. It scans the design record for the literal claim
+    `capture_reflects_current_state: true` only; it never infers visual quality.
+    """
+    verification = _verification_root(html)
+    if not verification:
+        return []
+    meta = verification.get("metadata") or {}
+    capture_failed = str(meta.get("status", "")).strip().lower() == "capture_failed"
+    visual_pending = str(verification.get("visual", "")).strip().lower() == "pending_review"
+    stylesheets_applied = meta.get("evidence", {}).get("viewport_metrics", {})
+    any_unapplied = False
+    if isinstance(stylesheets_applied, dict):
+        for m in stylesheets_applied.values():
+            if isinstance(m, dict) and m.get("stylesheets_applied") is False:
+                any_unapplied = True
+                break
+    if not (capture_failed or visual_pending or any_unapplied):
+        return []
+
+    record_parts = _design_record_parts(html)
+    if not record_parts:
+        return []
+    claim_re = re.compile(r"capture_reflects_current_state\s*:\s*true", re.IGNORECASE)
+    for part in record_parts:
+        if claim_re.search(part):
+            return [
+                "evidence assertion: receipt claims `capture_reflects_current_state: true` "
+                "but handoff-manifest records "
+                + (f"status=capture_failed; " if capture_failed else "")
+                + (f"visual=pending_review; " if visual_pending else "")
+                + (f"stylesheets_applied=false; " if any_unapplied else "")
+                + "record `visual_evidence: unverified` / `status: PARTIAL` and drop the visual claim"
+            ]
+    return []
+
+
 def _capture_receipt(html: Path) -> dict | None:
     """The structured capture record the renderer wrote, or None when there is none.
 
@@ -1466,6 +1522,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     # A declared viewport with no capture receipt is an unverified claim: the
     # receipt is keyed by viewport and can substantiate only that width.
     failures.extend(check_viewport_receipts(html))
+
+    # A receipt claiming the capture reflects current state against a capture_failed
+    # or stylesheets-unapplied manifest is the r40 A3 promotion class; refuse it.
+    failures.extend(check_capture_reflects_manifest(html))
 
     broken_nav, broken_assets = check_relative_refs(html, dom)
     if broken_nav:

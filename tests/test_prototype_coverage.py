@@ -6,6 +6,7 @@ evidence and not proof that a live reviewer ran.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -248,3 +249,61 @@ def test_context_module_documents_separation_of_facts():
     text = (ROOT / "skills/spec-prototype/scripts/prototype_context.py").read_text(encoding="utf-8")
     assert "def reconcile_obligations" in text
     assert "Scope membership, delivery and evidence stay separate facts" in text
+
+
+# r40 A3: a receipt claiming capture_reflects_current_state:true against a
+# capture_failed / stylesheets-unapplied / visual pending_review manifest is an
+# authority promotion of the evidence itself; VPQ must refuse it mechanically.
+
+def _vpq_tree(tmp_path: Path, manifest_verification: dict, record_text: str) -> Path:
+    proto = tmp_path / "prototype"
+    (proto / "evidence").mkdir(parents=True, exist_ok=True)
+    (proto / "evidence/handoff-manifest.json").write_text(
+        json.dumps({"verification": manifest_verification}), encoding="utf-8")
+    (proto / "briefs").mkdir(parents=True, exist_ok=True)
+    (proto / "briefs/s.md").write_text(record_text, encoding="utf-8")
+    html = proto / "experiments/s/anchor/index.html"
+    html.parent.mkdir(parents=True, exist_ok=True)
+    html.write_text("<!DOCTYPE html><html><body>s</body></html>", encoding="utf-8")
+    return html
+
+
+def test_capture_reflects_true_against_capture_failed_is_refused(tmp_path):
+    manifest = {
+        "status": "captured_pending_review",
+        "visual": "pending_review",
+        "metadata": {
+            "status": "capture_failed",
+            "evidence": {"viewport_metrics": {"default-1280": {"stylesheets_applied": False}}},
+        },
+    }
+    html = _vpq_tree(tmp_path, manifest, "Stage 4 receipt\ncapture_reflects_current_state: true\nvisual: pass")
+    failures = verify_prototype_quality.check_capture_reflects_manifest(html)
+    assert failures, "r40 A3 class must be refused, not passed"
+    assert "capture_reflects_current_state" in failures[0]
+
+
+def test_capture_reflects_true_against_clean_manifest_passes(tmp_path):
+    manifest = {
+        "status": "captured",
+        "visual": "captured",
+        "metadata": {
+            "status": "captured",
+            "evidence": {"viewport_metrics": {"default-1280": {"stylesheets_applied": True}}},
+        },
+    }
+    html = _vpq_tree(tmp_path, manifest, "Stage 4 receipt\ncapture_reflects_current_state: true\nvisual: pass")
+    assert verify_prototype_quality.check_capture_reflects_manifest(html) == []
+
+
+def test_capture_reflects_unverified_wording_is_accepted(tmp_path):
+    manifest = {
+        "status": "captured_pending_review",
+        "visual": "pending_review",
+        "metadata": {
+            "status": "capture_failed",
+            "evidence": {"viewport_metrics": {"default-1280": {"stylesheets_applied": False}}},
+        },
+    }
+    html = _vpq_tree(tmp_path, manifest, "Stage 4 receipt\ncapture_reflects_current_state: false\nvisual_evidence: unverified")
+    assert verify_prototype_quality.check_capture_reflects_manifest(html) == []

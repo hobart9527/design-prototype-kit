@@ -122,6 +122,54 @@ body { caret-color: var(--accent); }
         f"toast accent bars must not read as container stripes: {result['findings']}")
 
 
+def test_slop_019_bundle_level_tabular_utility_exempts_component(tmp_path):
+    # r40: `anchor.css` declares metric classes but no font-variant-numeric of
+    # its own; coverage comes from the shared tokens bundle (`--font-variant-numeric`
+    # + `.tabular-nums` utility) applied in markup. The rendered DOM is correct
+    # (harness has_tabular_nums:true), so the per-file rule must not re-charge a
+    # component that inherits bundle-level coverage. Only a bundle with NO
+    # numeric coverage anywhere is a genuine SLOP-019.
+    _write(tmp_path, "prototype/shared/tokens.css", """:root {
+  --font-variant-numeric: tabular-nums;
+}
+.tabular-nums { font-variant-numeric: tabular-nums; }
+::selection { background: var(--selection-bg); }
+:focus-visible { outline: 2px solid var(--focus-ring); }
+::-webkit-scrollbar { width: 10px; }
+""")
+    _write(tmp_path, "prototype/experiments/s/anchor/anchor.css", """.metric { color: var(--text-secondary); font-size: 12px; }
+.r-stats { display: block; font-size: 12px; }
+.glance-metrics dd { margin: 0; }
+""")
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+::selection { background: var(--selection-bg); }
+:focus-visible { outline: 2px solid var(--focus-ring); }
+::-webkit-scrollbar { width: 10px; }
+body { caret-color: var(--focus-ring); }
+</style></head><body><span class="metric tabular-nums">42</span></body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-019" not in result["counts"], (
+        f"bundle-level tabular-nums coverage must exempt the component: {result['findings']}")
+
+
+def test_slop_019_fires_when_bundle_has_no_numeric_coverage(tmp_path):
+    # Negative control: metric class present but NO font-variant-numeric token
+    # or utility anywhere in the bundle. This is the genuine defect.
+    _write(tmp_path, "prototype/shared/tokens.css", """:root { --accent: oklch(0.6 0.12 30); }
+::selection { background: var(--accent); }
+""")
+    _write(tmp_path, "prototype/experiments/s/anchor/anchor.css", """.metric { color: #888; font-size: 12px; }
+""")
+    _write(tmp_path, "prototype/experiments/s/anchor/index.html", """<html><head><style>
+::selection { background: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); }
+::-webkit-scrollbar { width: 10px; }
+</style></head><body><span class="metric">42</span></body></html>""")
+    result = sd.detect(tmp_path)
+    assert "SLOP-019" in result["counts"], (
+        f"a metric class with zero numeric coverage anywhere must still fire: {result['findings']}")
+
+
 def test_slop_019_ignores_metric_substrings_in_status_tokens(tmp_path):
     """`--status-warn`/`--state` tail-match "stat" without a left word boundary.
 
