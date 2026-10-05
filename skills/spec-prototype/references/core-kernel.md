@@ -46,8 +46,13 @@ validated Spec Contract. Exploration stays agile; engineering handoff stays form
 
 Every decision traces to empirical facts or declared hypotheses. Never invent
 unsupported product capabilities, third-party integrations, or user-research
-claims. Platform facts that are unauthored remain `unknown`; native validation
-that was not performed is recorded as `unverified`.
+claims. When requirements or briefs provide counts or quantities without specific names
+(e.g. downstream service counts, node quantities), use neutral systematic placeholders
+(`service-01 ~ service-N`, `cluster-1 ~ cluster-N`) rather than guessing specific lateral
+domain names (e.g. payment, billing, CRM). Platform facts that are unauthored remain `unknown`;
+native validation that was not performed is recorded as `unverified`.
+Design remedies and interaction mechanisms created by the designer (such as confirmation dialogs,
+undo time windows, two-man rules) are `derived` solutions, never promoted to `explicit` user constraints.
 
 ## 5. Rooted Design Ontology: Nine Pillars Lenses & Five Sensory Axes
 
