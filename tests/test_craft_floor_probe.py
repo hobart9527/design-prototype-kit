@@ -72,3 +72,17 @@ def test_craft_floor_probe_reports_unavailable_browser(tmp_path: Path, monkeypat
     ok, reason = vpq.probe_craft_floors(html)
     assert not ok
     assert reason and "environment_not_ready" in reason
+
+
+def test_craft_floor_failure_returns_nonzero_from_quality_cli(tmp_path: Path, monkeypatch):
+    html = _write(tmp_path, '<button data-action="save">Save</button>')
+    tokens = tmp_path / "tokens.css"
+    tokens.write_text(":root { --accent-primary: #123456; }", encoding="utf-8")
+    monkeypatch.setattr(vpq, "_probe_computed_style", lambda _html: (True, None))
+    monkeypatch.setattr(vpq, "probe_craft_floors", lambda _html, viewport_width=1280: (False, "craft assertion: press feedback missing"))
+    evidence = vpq.tiered_quality_evidence(html, [])
+    assert evidence["outcome"] == "failed"
+    assert evidence["tiers"]["L2"]["status"] == "failed"
+
+    result = vpq.assert_quality(str(html), str(tokens), check_stale=False)
+    assert result is False

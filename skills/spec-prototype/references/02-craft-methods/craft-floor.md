@@ -78,9 +78,8 @@ the machine checks, and they resolve in both directions:
   whose detector is absent is returned as `prose_only` with the reason it cannot
   be mechanised, so "not machine-checkable" is a recorded status rather than a
   silent gap.
-- The benchmark's `slop_detector.py` carries its own ids (`SLOP-001` … `SLOP-025`);
-  `detect.py`'s `BENCHMARK_ANCHORS` maps each one onto the craft-floor id it
-  checks, so the two rule sets cannot drift apart unnoticed.
+- Benchmark judges use separate rule ids and own any crosswalk to craft-floor
+  rules. The delivery detector has no benchmark rule dependency.
 
 A rule added here without an id is invisible to that join. Add the id when you
 add the rule; a detector is optional, an id is not.

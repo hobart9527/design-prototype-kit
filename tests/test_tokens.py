@@ -41,7 +41,7 @@ def test_canonical_dtcg_uses_spec_2025_10_shapes():
     assert data["primitives"]["color"]["surface"]["$extensions"]["design-prototype-kit"]["authority"]
 
 
-def test_token_authority_requires_token_specific_confirmation():
+def test_token_authority_requires_token_specific_confirmation(tmp_path: Path):
     ct = _load_compiler()
     seed = "## Seed Palette\n- --accent-primary: #d6f56b\n"
     assert ct._has_confirmed_token_authority(seed) is False
@@ -56,11 +56,36 @@ def test_token_authority_requires_token_specific_confirmation():
     assert ct._has_confirmed_token_authority(
         "| D1 | nav layout | confirmed | reuses the token pipeline | quote |"
         " confirmed | surfaces/nav |") is False
-    # On the shipped 7-column table the trailing affected-scope column also
-    # names the decision.
+    # The shipped 7-column table identifies Status and Decision by header;
+    # User source and affected-scope cells cannot grant token authority.
+    header = "| ID | Decision | Status | Reason / evidence | Actual user quote | User source | Affected artifacts / minimal owning scope |\n| --- | --- | --- | --- | --- | --- | --- |\n"
     assert ct._has_confirmed_token_authority(
-        "| D2 | rollout | confirmed | user selected rollout | quote |"
-        " confirmed | accent token |") is True
+        header + "| D2 | rollout | proposed | palette token | confirmed | token scope | true.md |") is False
+    assert ct._has_confirmed_token_authority(
+        header + "| D2 | Confirm palette token | confirmed | selected colors | quote | synthetic-fixture | tokens.css |") is False
+    assert ct._has_confirmed_token_authority(
+        header + "| D2 | Confirm palette token | confirmed | no palette decision | quote | confirmed | accent token |") is True
+    assert ct._has_confirmed_token_authority(
+        header + "| D2 | rollout | confirmed | no palette decision | quote | synthetic-fixture | accent token |") is False
+    assert ct._has_confirmed_token_authority(
+        header + "| D2 | Do not change the palette | confirmed | user rejected palette | confirmed | colors |") is False
+    assert ct._has_confirmed_token_authority(
+        header + "| D3 | Confirm the palette | delegated | use palette tokens | delegated | colors |") is True
+    assert ct._has_confirmed_token_authority(
+        header + "| D4 | Confirm responsive layout | confirmed | choose palette later | confirmed | color tokens |") is False
+
+    assert ct._has_confirmed_token_authority(
+        "## Unconfirmed Decisions\n\n- --accent-primary: #ff00ff\n") is False
+
+    # A Confirmed Decisions section in world.md cannot absorb a headingless
+    # truth.md append across the file boundary.
+    world = tmp_path / "prototype" / "world.md"
+    truth = world.parent / "truth.md"
+    world.parent.mkdir(parents=True)
+    world.write_text("## Confirmed Decisions\n- Energy: steady\n", encoding="utf-8")
+    truth.write_text("palette will be decided later, pending sign-off\n", encoding="utf-8")
+    layered = ct._confirmed_authority_text(world.read_text(encoding="utf-8"), str(world))
+    assert ct._has_confirmed_token_authority(layered) is False
     # A Confirmed Decisions heading alone, with no palette decision in its body,
     # grants no authority; one that names the palette does.
     assert ct._has_confirmed_token_authority("## Confirmed Decisions\n\n| nav | confirmed | nav |\n") is False

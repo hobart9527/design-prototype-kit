@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Rule-ID detector: the craft floor's prose and the machine checks, anchored both ways.
 
-`craft-floor.md` states the floor in prose; `verify_prototype_quality.py` and the
-benchmark's `slop_detector.py` check parts of it mechanically. Without an explicit
-anchor the two drift: a rule gets added to one side and not the other, and the prose
-quietly stops describing what is actually enforced.
+`craft-floor.md` states the floor in prose; this detector checks the part a shallow
+artifact scan can reach. Without an explicit anchor, a rule can be added to one side
+and not the other, and the prose quietly stops describing what is enforced.
 
 This module is that anchor. Every craft-floor rule carries a stable id, and each id
 declares how it is detected:
@@ -224,18 +223,6 @@ RULES: dict[str, dict] = {
     },
 }
 
-# The benchmark detector's rules, mapped onto the craft floor they check. Kept here
-# so the two rule sets cannot drift apart silently.
-BENCHMARK_ANCHORS = {
-    "SLOP-001": "CRAFT-NO-GRADIENT-TEXT",
-    "SLOP-009": "CRAFT-NO-EMOJI-ICON",
-    "SLOP-017": "CRAFT-SELECTION",
-    "SLOP-018": "CRAFT-PRESS-DETENT",
-    "SLOP-019": "CRAFT-TABULAR-NUMS",
-    "SLOP-026": "CRAFT-KINETIC-SPRING",
-}
-
-
 def scan(artifact: pathlib.Path) -> dict:
     """Run every mechanical rule against one artifact. Judgement rules are listed."""
     artifact = pathlib.Path(artifact)
@@ -262,7 +249,6 @@ def anchor_report() -> dict:
     """The registry in both directions, for the drift test."""
     return {
         "rules": {rid: {"kind": e["kind"], "prose": e["prose"]} for rid, e in RULES.items()},
-        "benchmark_anchors": dict(BENCHMARK_ANCHORS),
         "counts": {
             "total": len(RULES),
             "check": sum(1 for e in RULES.values() if e["kind"] == "check"),

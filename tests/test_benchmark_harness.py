@@ -351,6 +351,38 @@ def test_task_outcomes_are_evidence_bound():
     assert set(empty["unmet"]) == {"text", "dialog", "scroll", "touch"}
 
 
+def test_runtime_method_recall_requires_an_applied_method_citation(tmp_path, monkeypatch):
+    registry = tmp_path / "methods" / "registry.yaml"
+    registry.parent.mkdir()
+    registry.write_text(
+        "methods:\n  - id: context-preservation\n    name: Context Preservation & Continuity\n"
+        "    pillars: [Journey]\n", encoding="utf-8")
+    skill_root = tmp_path / "skill"
+    (skill_root / "methods").mkdir(parents=True)
+    (skill_root / "methods" / "registry.yaml").write_text(registry.read_text(), encoding="utf-8")
+    monkeypatch.setattr(runtime_judge.bl, "variant_sources", lambda variant: {"skill": skill_root})
+    artifacts = tmp_path / "artifacts"
+    artifacts.mkdir()
+    (artifacts / "discussion.md").write_text(
+        "The context-preservation approach was considered.\n", encoding="utf-8")
+    result = runtime_judge.judge(bl.load_case("incident-commander"), artifacts,
+                                 variant="candidate_skill")
+    assert result["method_routing"]["referenced"] == []
+    assert result["method_routing"]["recall"] is None
+
+    (artifacts / "discussion.md").write_text(
+        "applied_methods: [context-preservation]\n", encoding="utf-8")
+    result = runtime_judge.judge(bl.load_case("incident-commander"), artifacts,
+                                 variant="candidate_skill")
+    assert result["method_routing"]["referenced"] == ["context-preservation"]
+
+
+def test_artifact_texts_reads_beyond_the_legacy_twenty_kib_limit(tmp_path):
+    artifact = tmp_path / "large.html"
+    artifact.write_text("x" * 25000 + "END", encoding="utf-8")
+    assert bl.artifact_texts(tmp_path)["large.html"].endswith("END")
+
+
 def test_runtime_judge_flags_inline_hex_and_missing_record(tmp_path):
     artifacts = tmp_path / "prototype"
     artifacts.mkdir()
@@ -657,6 +689,27 @@ def test_early_calls_get_a_share_of_the_clock_and_the_last_gets_the_rest():
     assert run_claude_session._call_timeout(2, 900, 3000) == (900, False)
     # A share larger than what is left is simply the remainder.
     assert run_claude_session._call_timeout(0, 500, 3000) == (500, False)
+
+
+def test_incident_commander_timeout_is_pinned_to_the_case_budget():
+    case = bl.load_case("incident-commander")
+    assert case["meta"]["run_policy"]["timeout_seconds"] == 3000
+    assert case["meta"]["run_policy"]["turns_per_call"] == 40
+
+
+def test_runtime_method_recall_is_unmeasured_without_applied_method_ids(tmp_path, monkeypatch):
+    registry = tmp_path / "skill/methods/registry.yaml"
+    registry.parent.mkdir(parents=True)
+    registry.write_text("methods:\n  - id: context-preservation\n    name: Context Preservation\n",
+                        encoding="utf-8")
+    monkeypatch.setattr(runtime_judge.bl, "variant_sources", lambda variant: {"skill": registry.parent.parent})
+    artifacts = tmp_path / "artifacts"
+    artifacts.mkdir()
+    (artifacts / "discussion.md").write_text("We used context preservation.", encoding="utf-8")
+    result = runtime_judge.judge(bl.load_case("incident-commander"), artifacts,
+                                 variant="candidate_skill")
+    assert result["method_routing"]["recall"] is None
+    assert result["method_routing"]["status"] == "unknown"
 
 
 def test_a_call_that_exhausts_its_share_resumes_instead_of_blocking(tmp_path, monkeypatch):

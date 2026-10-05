@@ -45,8 +45,9 @@ open alternatives only when a consequential choice is genuinely unresolved.
 5. Define only the surfaces, actions, states, and stress cases needed to guide the
    requested slice. Leave the rest open; never invent capability to fill a section.
 6. For each load-bearing decision, record the relevant method registry id inline in
-   the Decisions table (`context-preservation`, `action-verb-lifecycle`, etc.; ids
-   live in `methods/registry.yaml`). Select and cite only methods actually applied;
+   the Decisions table (`reality-anchors-tension-triad`, `research-evidence-ladder`,
+   `context-preservation`, etc.; ids live in `methods/registry.yaml`). Select and cite
+   only methods actually applied;
    do not load the registry or its method files wholesale.
 
 Ask the user only when a decision materially changes the direction or scope. Resolve

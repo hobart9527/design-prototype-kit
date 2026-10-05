@@ -419,7 +419,7 @@ def test_stage4_keeps_the_slop_judge_on_the_benchmark_side():
     assert "slop_detector.py" not in audit, \
         "slop_detector is a benchmark-side judge, not a delivery command"
     assert "benchmark-side judge" in audit
-    assert "BENCHMARK_ANCHORS" in audit
+    assert "Benchmark rule ids and mappings are not part of the delivery scan" in audit
 
 
 def test_prose_only_rules_are_owed_a_written_judgment():

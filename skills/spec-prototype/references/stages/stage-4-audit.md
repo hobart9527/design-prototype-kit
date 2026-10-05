@@ -38,7 +38,7 @@ purpose of this stage.
    - The slop/rut set (purple-on-dark gradients, glass and blur as decoration, pill radii
      on large containers, ghost cards, emoji icon systems and the rest) is a
      benchmark-side judge, not a delivery gate: read the render for these yourself.
-     `detect.py`'s `BENCHMARK_ANCHORS` maps the machine-readable subset. A detector
+     Benchmark rule ids and mappings are not part of the delivery scan. A detector
      hit is a lead: confirm it against the render before it counts as a finding.
 3c. **Narrowest-viewport read**: at the smallest declared width the surface still
    answers its own question. Recomposed structure, or an honest `PARTIAL` — a

@@ -5,6 +5,38 @@
 version: "1.0"
 
 methods:
+  - id: reality-anchors-tension-triad
+    name: "Reality Anchors & Tension Triad"
+    pillars:
+      - Value
+    stages:
+      - 1
+      - 2
+      - 4
+    activate_when:
+      - consequential_product_decision
+      - competing_user_outcomes
+    invariants:
+      - "Anchor the proposition in source-grounded product reality and name its competing cost"
+      - "Treat unverified causes and outcomes as hypotheses"
+    file: "references/01-foundations/product-understanding.md"
+
+  - id: research-evidence-ladder
+    name: "Research Evidence & Source Ladder"
+    pillars:
+      - Research
+    stages:
+      - 1
+      - 2
+      - 4
+    activate_when:
+      - decision_depends_on_external_evidence
+      - consequential_claim_unverified
+    invariants:
+      - "Distinguish observed evidence, inference, hypothesis, and unknown"
+      - "Research only when evidence could change the active decision"
+    file: "references/01-foundations/research.md"
+
   - id: ooux-mapping
     name: "Object-Oriented UX & Entity Topology"
     pillars:

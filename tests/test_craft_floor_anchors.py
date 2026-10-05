@@ -2,8 +2,8 @@
 
 `craft-floor.md` states the floor; `detect.py` checks the part of it a text scan
 can reach. The ids are the join. These pins hold that join: a rule may be added
-with no detector (that is a recorded status), but never with no id, and a
-benchmark rule may never point at a craft-floor id that does not exist.
+with no detector (that is a recorded status), but never with no id. The benchmark
+crosswalk is validated separately from the delivery detector.
 """
 import json
 import pathlib
@@ -34,10 +34,17 @@ def test_every_registered_rule_is_declared_by_the_craft_floor():
     )
 
 
-def test_every_anchor_resolves_to_a_registered_rule():
-    """A benchmark anchor pointing at nothing silently stops anchoring."""
-    unknown = sorted(set(detect.BENCHMARK_ANCHORS.values()) - set(detect.RULES))
-    assert not unknown, f"BENCHMARK_ANCHORS name unregistered craft rules: {unknown}"
+def test_benchmark_crosswalk_resolves_both_rule_sets():
+    """Crosswalk integrity belongs to benchmark code, not the delivery detector."""
+    sys.path.insert(0, str(REPO / "benchmarks" / "judges"))
+    from craft_floor_crosswalk import validate_crosswalk
+
+    assert not validate_crosswalk()
+
+
+def test_delivery_detector_has_no_benchmark_rule_mapping():
+    assert not hasattr(detect, "BENCHMARK_ANCHORS")
+    assert "benchmark_anchors" not in detect.anchor_report()
 
 
 def test_a_rule_without_a_detector_states_why():
@@ -134,17 +141,6 @@ def test_scan_surfaces_a_broken_detector_rather_than_reading_it_as_clean(tmp_pat
     assert result["checked"] == sum(
         1 for f in result["findings"] if f["status"] in ("hit", "clear")), \
         "an errored detector must not count as checked"
-
-
-def test_the_benchmark_slop_ids_are_a_subset_of_what_the_detector_emits():
-    """The anchor map is only honest if its left-hand ids still exist upstream."""
-    sys.path.insert(0, str(REPO / "benchmarks" / "judges"))
-    import slop_detector as sd
-
-    source = pathlib.Path(sd.__file__).read_text(encoding="utf-8")
-    emitted = set(re.findall(r"SLOP-\d{3}", source))
-    stray = sorted(set(detect.BENCHMARK_ANCHORS) - emitted)
-    assert not stray, f"anchored to slop ids that no longer exist: {stray}"
 
 
 def test_the_detector_serialises_for_the_cli(tmp_path):

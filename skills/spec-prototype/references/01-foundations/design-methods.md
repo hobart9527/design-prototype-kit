@@ -139,3 +139,34 @@ Use this table to navigate in-depth references under the Nine Pillars:
 | **Expression** | Five axes, color, typography, materiality | `01-foundations/design-language.md`, `02-craft-methods/visual-craft.md` |
 | **Interaction** | Action lifecycles, tactile feedback, shortcuts | `02-craft-methods/interaction-power.md` |
 | **Resilience** | Fault tolerance, empty states, Break Protocol, a11y | `02-craft-methods/resilience-trust.md` |
+
+### Five Axes × Nine Pillars ownership
+
+Use the pillars to select the product questions; use the axes to calibrate the
+sensory expression of the selected solution. This matrix routes evidence and method
+selection; it is not a nine-row checklist. Stage 1 resolves the consequential
+questions, Stage 2 probes uncertain decisions, Stage 3 materializes the selected
+axes, and Stage 4 reviews the result. Unselected pillars remain constraints, not
+required deliverables.
+
+| Lens | Owning stage | Method / reference | Evidence in the design record or artifact |
+|---|---|---|---|
+| Value | 1 | `reality-anchors-tension-triad` / `product-understanding.md` | thesis, tension, outcome, omissions |
+| Research | 1–2 | `research-evidence-ladder` / `research.md` | source, observation, confidence, linked decision |
+| Object | 1–2 | `ooux-mapping` / `ia-interaction.md` | entities, relationships, ownership, lifecycle |
+| Journey | 1–2 | `decisive-3-frame` / `ia-interaction.md` | trigger, commit, settlement, return or recovery |
+| Topology | 1–3 | `ooux-mapping` / `ia-interaction.md` | surface map and selected coverage |
+| Attention | 1–4 | `progressive-disclosure` / `interaction-power.md` | reading order, disclosure, noise budget |
+| Expression | 1–3 | `visual-rhythm-density` / `design-language.md`, `visual-craft.md` | five-axis values or `open` reasons, compiled tokens |
+| Interaction | 2–4 | `action-verb-lifecycle` / `interaction-power.md` | action contract and observed feedback |
+| Resilience | 1–4 | `the-break-protocol` / `resilience-trust.md` | relevant stress cases and recovery evidence |
+| Density | 1–3 | `visual-rhythm-density` / `design-language.md` | evidenced value or `open` reason → spacing/type tokens |
+| Energy | 1–3 | `decisive-3-frame` / `design-language.md` | evidenced value or `open` reason → motion tokens |
+| Materiality | 1–3 | `visual-rhythm-density` / `design-language.md` | evidenced value or `open` reason → surface/color tokens |
+| Rhythm | 1–3 | `visual-rhythm-density` / `design-language.md` | evidenced value or `open` reason → spacing/type/motion tokens |
+| Character | 1–3 | `reality-anchors-tension-triad` / `design-language.md` | evidenced value or `open` reason → typography/color tokens |
+
+The registry ids route methods but do not prove their application. Cite a method
+only when its invariant shaped a recorded decision; leave unrelated methods out.
+The evidence blocks and their parser authority remain owned by
+[`../04-governance/machine-contract.md`](../04-governance/machine-contract.md).

@@ -395,70 +395,142 @@ def parse_5dials(discussion_text: str) -> Dict[str, str]:
     return parse_five_axes(discussion_text)
 
 
-_TOKEN_AUTHORITY_KEYWORDS = re.compile(r"色|palette|token|颜色|配色|色彩", re.IGNORECASE)
+_TOKEN_AUTHORITY_KEYWORDS = re.compile(r"\bpalette\b|\btoken\b|颜色|配色|色彩", re.IGNORECASE)
 # A confirmed record that pins `--accent-primary: #9333ea` names a token
 # decision even when it never spells the word "token".
 _CSS_HEX_PIN = re.compile(r"`?--[a-z][a-z0-9_-]*`?\s*:\s*`?#[0-9a-f]{3,8}`?", re.IGNORECASE)
 _STATUS_CELL = re.compile(r"^\s*(?:confirmed|delegated)\s*$", re.IGNORECASE)
-_ID_CELL = re.compile(r"^[A-Za-z]{1,4}[-–—]?\d{1,3}$|^[a-z0-9_.-]{1,12}$")
+_ID_CELL = re.compile(r"^[A-Za-z]{1,4}[-–—]?\d{1,3}$")
+_DECISION_TABLE_HEADER = re.compile(r"^\s*\|\s*ID\s*\|\s*Decision\s*\|\s*Status\s*\|", re.IGNORECASE)
+_NEGATED_TOKEN_DECISION = re.compile(
+    r"\b(?:do not|don't|never|not|without|avoid|reject(?:ed)?|declin(?:e|ed))\b|不要|不改|不选|拒绝|避免|尚未|未确认|未决定",
+    re.IGNORECASE,
+)
+
+
+def _is_positive_token_decision(text: str) -> bool:
+    return _names_token_decision(text) and not _NEGATED_TOKEN_DECISION.search(text)
+
+
+def _decision_table_status_index(header: list[str]) -> int | None:
+    normalized = [re.sub(r"[^a-z]+", "", cell.lower()) for cell in header]
+    return next((i for i, value in enumerate(normalized) if value == "status"), None)
+
+
+def _decision_table_source_index(header: list[str]) -> int | None:
+    normalized = [re.sub(r"[^a-z]+", "", cell.lower()) for cell in header]
+    return next((i for i, value in enumerate(normalized)
+                 if value in {"usersource", "source"}), None)
+
+
+def _decision_table_subject_index(header: list[str]) -> int | None:
+    normalized = [re.sub(r"[^a-z]+", "", cell.lower()) for cell in header]
+    return next((i for i, value in enumerate(normalized) if value == "decision"), None)
+
+
+def _markdown_table_rows(source_text: str):
+    """Yield table header and rows, keeping each table's column roles explicit."""
+    lines = source_text.splitlines()
+    for index, line in enumerate(lines[:-1]):
+        if not line.strip().startswith("|") or not lines[index + 1].strip().startswith("|"):
+            continue
+        header = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        separator = lines[index + 1].strip().strip("|").split("|")
+        if len(header) != len(separator) or not all(re.fullmatch(r"\s*:?-{3,}:?\s*", cell) for cell in separator):
+            continue
+        for row in lines[index + 2:]:
+            if not row.strip().startswith("|"):
+                break
+            yield header, [cell.strip() for cell in row.strip().strip("|").split("|")]
+
 
 
 def _names_token_decision(text: str) -> bool:
     return bool(_TOKEN_AUTHORITY_KEYWORDS.search(text) or _CSS_HEX_PIN.search(text))
 
 
-def _row_grants_token_authority(cells: list[str]) -> bool:
-    """One Decisions-table row, already split into cells, judged for token authority.
+def _section_pins_token_decision(text: str) -> bool:
+    """Free prose grants authority only when confirmation and token scope coincide.
 
-    The schema varies: the shipped truth.md table has 7 columns (ID | Decision |
-    Status | Reason | Quote | User source | Scope), hand-written records use a
-    minimal 3-column form (Decision | Status | Note). Rather than pinning
-    column numbers to one schema, the status cell is found by value and the
-    decision subject is read from the first cell that is neither an ID nor the
-    status; on wide tables the final column (affected scope) also counts. A
-    keyword in the reason/quote columns alone is a neighbouring decision
-    talking about tokens, not a user confirming the palette.
+    The Confirmed-Decisions heading already supplies the confirmation context,
+    so an un-negated CSS hex pin is decisive on its own; keyword-only prose
+    still needs a confirmation word in the same sentence.
     """
-    status_idx = next((i for i, c in enumerate(cells) if _STATUS_CELL.match(c)), None)
-    if status_idx is None:
-        return False
-    subject_idx = next(
-        (i for i, c in enumerate(cells)
-         if i != status_idx and c and not _ID_CELL.match(c)),
-        None,
-    )
-    if subject_idx is None:
-        return False
-    if _names_token_decision(cells[subject_idx]):
+    if _CSS_HEX_PIN.search(text) and not _NEGATED_TOKEN_DECISION.search(text):
         return True
-    # Wide tables only: the trailing affected-scope column. On a minimal
-    # 3-column row the last cell is a note the status already speaks for.
-    if len(cells) >= 5 and _names_token_decision(cells[-1]):
-        return True
+    for sentence in re.split(r"[.!?。！？\n]+", text):
+        if (re.search(r"\b(?:confirmed|approved|locked)\b|确认|已批准|已锁定", sentence, re.IGNORECASE)
+                and _is_positive_token_decision(sentence)):
+            return True
     return False
 
 
-def _has_confirmed_token_authority(source_text: str) -> bool:
-    """True only when a real confirmed-decision record pins the token values.
+def _row_grants_token_authority(cells: list[str], header: list[str] | None = None) -> bool:
+    """Grant authority only when the table explicitly confirms a token decision."""
+    source_idx = None
+    if header is not None:
+        status_idx = _decision_table_status_index(header)
+        subject_idx = _decision_table_subject_index(header)
+        source_idx = _decision_table_source_index(header)
+    elif len(cells) == 3:
+        # Legacy compact table: Decision | Status | Note.
+        subject_idx, status_idx, source_idx = 0, 1, None
+    else:
+        # Headerless records predate the authored seven-column schema. Preserve
+        # conservative compatibility without scanning the trailing scope cell.
+        status_idx = next((i for i, cell in enumerate(cells) if _STATUS_CELL.fullmatch(cell)), None)
+        subject_idx = next(
+            (i for i, cell in enumerate(cells)
+             if i != status_idx and cell and not _ID_CELL.match(cell)),
+            None,
+        )
+    if status_idx is None or subject_idx is None or max(status_idx, subject_idx) >= len(cells):
+        return False
+    if (header is not None and _DECISION_TABLE_HEADER.match("| " + " | ".join(header) + " |")
+            and (source_idx is None or source_idx >= len(cells))):
+        return False
+    if source_idx is not None and source_idx < len(cells) and cells[source_idx].strip().lower() == "synthetic-fixture":
+        return False
+    if not _STATUS_CELL.fullmatch(cells[status_idx]):
+        return False
+    subject = cells[subject_idx]
+    return _is_positive_token_decision(subject)
 
-    A seed palette the design agent authored in Stage 1 is derived work, not
-    human authority, regardless of which token names it happens to spell.
-    Human authority requires an explicit confirmed-decisions section whose body
-    names the token/palette decision, or a decision-table row whose status is
-    `confirmed`/`delegated` AND whose decision/scope cells actually name it.
-    """
-    for m in re.finditer(
-        r"^#{2,4}[^\n]*(?:Confirmed|已确认)[^\n]*(?:Decisions?|决策)[^\n]*\n(.*?)(?=\n#{2,4}\s|\Z)",
-        source_text, re.IGNORECASE | re.DOTALL | re.MULTILINE,
-    ):
-        if _names_token_decision(m.group(1)):
+
+def _confirmed_decision_sections(source_text: str) -> list[str]:
+    return [
+        match.group(1)
+        for match in re.finditer(
+            r"^#{2,4}\s*(?:Confirmed|已确认)\b[^\n]*(?:Decisions?|决策)[^\n]*\n(.*?)(?=\n#{2,4}\s|\Z)",
+            source_text,
+            re.IGNORECASE | re.DOTALL | re.MULTILINE,
+        )
+    ]
+
+
+def _has_confirmed_token_authority(source_text: str) -> bool:
+    """True only when a confirmed record explicitly pins token values."""
+    for section in _confirmed_decision_sections(source_text):
+        for header, cells in _markdown_table_rows(section):
+            if _row_grants_token_authority(cells, header):
+                return True
+        if _section_pins_token_decision(section):
             return True
-    for line in source_text.splitlines():
+    for header, cells in _markdown_table_rows(source_text):
+        if _row_grants_token_authority(cells, header):
+            return True
+    # Legacy compact one-line records have no header: Decision | Status | Note.
+    lines = source_text.splitlines()
+    for index, line in enumerate(lines):
         if not line.strip().startswith("|"):
             continue
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) < 3:
-            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if index > 0 and lines[index - 1].strip().startswith("|"):
+            previous = [cell.strip() for cell in lines[index - 1].strip().strip("|").split("|")]
+            if len(previous) == len(cells) and all(
+                re.fullmatch(r"\s*:?-{1,}:?\s*", cell) for cell in previous
+            ):
+                continue
         if _row_grants_token_authority(cells):
             return True
     return False
@@ -477,7 +549,9 @@ def _confirmed_authority_text(source_text: str, source_path: str | None) -> str:
         p = Path(source_path)
         truth = p.parent / "truth.md"
         if p.name == "world.md" and truth.is_file():
-            return source_text + "\n\n" + truth.read_text(encoding="utf-8")
+            # world.md owns token values, but only truth.md owns user-decision
+            # provenance. Never let an agent-authored heading confer authority.
+            return truth.read_text(encoding="utf-8")
     return source_text
 
 
@@ -551,12 +625,15 @@ def extract_dynamic_palette(
     confirmed_block = _extract_confirmed_section(discussion_text)
     extracted: Dict[str, str] = {}
 
+    # Quoted values are accepted: the machine-contract requires double-quoted
+    # YAML values, so quoted hexes are the canonical authored form.
+    value_pattern = r"\"?([#0-9a-fA-F]{3,8}|rgba?\([^)]+\))\"?"
     for canon_key, aliases in token_keys.items():
         # First priority: check confirmed / selected block
         if confirmed_block:
             found_in_confirmed = False
             for alias in aliases:
-                pattern = rf"(?:--)?(?:color-)?{alias}\s*[:|=]\s*[`*]*([#0-9a-fA-F]{{3,8}}|rgba?\([^)]+\))[`*]*"
+                pattern = rf"(?:--)?(?:color-)?{alias}`?\s*[:|=]\s*[`*]*{value_pattern}[`*]*"
                 matches = list(re.finditer(pattern, confirmed_block, re.IGNORECASE))
                 if matches:
                     extracted[canon_key] = matches[-1].group(1).strip()
@@ -567,7 +644,7 @@ def extract_dynamic_palette(
 
         # Second priority: search full text, taking the LAST authored match (so latest choice overrides earlier drafts)
         for alias in aliases:
-            pattern = rf"(?:--)?(?:color-)?{alias}\s*[:|=]\s*[`*]*([#0-9a-fA-F]{{3,8}}|rgba?\([^)]+\))[`*]*"
+            pattern = rf"(?:--)?(?:color-)?{alias}`?\s*[:|=]\s*[`*]*{value_pattern}[`*]*"
             matches = list(re.finditer(pattern, discussion_text, re.IGNORECASE))
             if matches:
                 extracted[canon_key] = matches[-1].group(1).strip()

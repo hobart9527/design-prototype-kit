@@ -163,11 +163,15 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
                           "precision": None, "recall": None, "negative_selection_accuracy": None}
         add("method_router", method_routing["status"], f"registry ids={len(registry_ids)} variant={variant}")
     else:
-        registry_methods = _registry_methods(variant)
-        referenced = sorted({
-            mid for mid in registry_ids
-            if any(re.search(pat, joined, re.IGNORECASE) for pat in registry_methods.get(mid, [rf"\b{re.escape(mid).replace(r'\-', r'[\-\s_]+')}\b"]))
-        })
+        # A method is applied only when a design-record decision explicitly
+        # cites its registry id; matching a registry name in arbitrary artifact
+        # prose measures vocabulary, not method use.
+        cited_methods = set()
+        for match in re.finditer(
+                r"(?:applied[_\s]+methods?|method\s+id)\s*[:=]\s*([^\n]+)",
+                discussion, re.IGNORECASE):
+            cited_methods.update(re.findall(r"`?([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`?", match.group(1)))
+        referenced = sorted({mid for mid in registry_ids if mid in cited_methods})
         must = set(expectation.get("must_consider") or [])
         relevant = set(expectation.get("relevant") or [])
         banned = set(expectation.get("should_not_select") or [])

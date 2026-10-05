@@ -113,6 +113,15 @@ share one atomic vocabulary. Synonym drift is forbidden.
 - **Fidelity to System Invariants**: Controls, audit logs, and status readouts must strictly conform to declared operational boundaries. If past historical events are declared unrecoverable, mock logs must never pretend this console retroactively repaired them; undo and emergency stops operate solely on currently active, in-flight transitions.
 - **Strict Lifecycle Scoping**: Task completion actions transition directly into their verified terminal state (e.g. `resolved`, `archived`, `settled`). Do not author speculative follow-up generators, external notification dispatchers, or secondary workflow wizards unless explicitly specified in the brief.
 
+## Five Axes → Physical Tokens
+
+Use the five values or evidence-backed `open` reasons recorded in the visual-world
+owner; never infer an axis from the selected chassis. `compile_tokens.py` compiles
+those authored decisions into `tokens.css`. Before extending the anchor, check the
+compiled spacing/type, motion, surface/color, and rhythm tokens against the same
+axis evidence. An `open` axis remains open and compiles to a neutral scaffold; do
+not present that scaffold as a product decision.
+
 ## Strict Token Inheritance
 
 Every secondary surface links the global stylesheet using the compiled
