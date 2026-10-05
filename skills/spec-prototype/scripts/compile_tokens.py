@@ -1338,6 +1338,8 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     typography_tokens: Dict[str, Any] = {
         "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family", "authority": typography_auth},
         "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Telemetry and code font family", "authority": typography_auth},
+        "line-height-body": {"$value": tokens.get("typography", {}).get("line_height_body", "1.5"), "$type": "number", "$description": "Body copy leading (CJK-safe)", "authority": typography_auth},
+        "line-height-heading": {"$value": tokens.get("typography", {}).get("line_height_heading", "1.2"), "$type": "number", "$description": "Display/heading leading", "authority": typography_auth},
     }
 
     def duration_value(value: str) -> Dict[str, Any]:

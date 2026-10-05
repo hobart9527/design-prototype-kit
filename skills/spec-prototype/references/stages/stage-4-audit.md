@@ -171,6 +171,18 @@ evidence for `Validated` authority status. Record explicitly in the design recor
 A source-code inspection of HTML/CSS is NOT a substitute for rendered visual
 evidence; inferring visual quality from markup is a fabrication, not a finding.
 
+**Manifest cross-check (machine-checkable)**: before the receipt asserts any
+visual verdict, reconcile it against `handoff-manifest.json` field by field. If
+`metadata.status` is `capture_failed`, or any `viewport_metrics.*.stylesheets_applied`
+is `false`, or `visual`/`human` is `pending_review`, then the receipt must set
+`visual_evidence: unverified` / `status: PARTIAL` and must NOT write
+`capture_reflects_current_state: true` or color/spacing/typography observations
+tied to rendered output. A receipt that records `capture_reflects_current_state:
+true` while the manifest says `capture_failed` is an authority promotion of the
+evidence itself (the r40 A3 class) and fails the audit. Write the reconcile line
+explicitly: `manifest: <status>, stylesheets_applied: <bool>, receipt reflects:
+<true|false>`.
+
 ## Independent review and repair
 
 Dispatch `spec-prototype-critic` only when an independent review is explicitly

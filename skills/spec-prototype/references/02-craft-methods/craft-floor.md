@@ -50,7 +50,25 @@ inspection pass, not as separate screenshot trips.
 - **Reduced-motion pairing** `CRAFT-REDUCED-MOTION`: any surface that ships
   spring or animated transitions pairs them with a `prefers-reduced-motion`
   fallback that preserves the state change without the motion. Motion is the
-  enhancement; the state change is the contract.
+  enhancement; the state change is the contract. The fallback must actually
+  neutralize motion — `animation-duration`/`transition-duration ≈ 0`,
+  `animation/transition: none`, or `scroll-behavior: auto` inside the media
+  block — a bare `prefers-reduced-motion` block that leaves durations intact is
+  a token gesture. The same gate binds JS-driven motion: `requestAnimationFrame`
+  rings and `setInterval` progress ticks check
+  `matchMedia('(prefers-reduced-motion: reduce)')` and degrade to an instant
+  state change, not just a suppressed CSS transition.
+- **Adaptive theming** `CRAFT-DARK-MODE`: when the brief spans lighting
+  conditions or the user can toggle theme, the surface follows
+  `prefers-color-scheme` or declares `color-scheme: light dark` with a real
+  dual token set. A single-scheme product chosen from the use scene
+  (CRAFT-THEME-ORIGIN) stays single — this is adaptation, not a mandatory
+  second theme.
+- **Locale declaration** `CRAFT-LANG`: the root element declares `lang` (and
+  `dir` for RTL content) so font selection, hyphenation and bidi resolve. Spacing
+  and layout use logical properties (`margin-inline`, `padding-inline`,
+  `inset-inline-start`) over physical left/right so the same surface mirrors for
+  RTL without a rewrite.
 - **Live status regions** `CRAFT-ARIA-LIVE`: a status that updates in place
   (progress, drain state, toast, live feed) exposes `aria-live="polite"` (or
   `assertive` for urgent) so assistive technology perceives the change. A

@@ -42,6 +42,10 @@ STYLE_ATTR_RE = re.compile(r'style\s*=\s*"([^"]*)"')
 HEX_RE = re.compile(r"#[0-9a-fA-F]{3,8}\b")
 RULE_RE = re.compile(r"([a-zA-Z-]+)\s*:\s*([^;{}]+)")
 FONT_VAR_NUM_RE = re.compile(r"font-variant-numeric\s*:\s*[^;}]*(tabular-nums|lining-nums)")
+# A `.tabular-nums` / `.tnum` utility class carried by shared tokens and applied
+# in markup (r40) covers every metric container it is applied to; the per-file
+# SLOP-019 rule must not re-charge a component stylesheet for inheriting it.
+TNUM_UTILITY_CLASS_RE = re.compile(r"(?<![\w-])(tabular-nums|tnum|tabular|lining-nums)(?![\w-])")
 # Heading text that is a bare ordinal or a decorative kicker.
 ORDINAL_HEADING_RE = re.compile(r"^\s*(?:0[1-9]|1[0-9])\s*$")
 # Pictographs borrowed to stand in an icon's place. The arrows block
@@ -184,13 +188,22 @@ def detect(artifacts_dir: pathlib.Path, *, max_per_rule: int = 4) -> dict:
         elif name.endswith(".css"):
             css_by_file[name] = text
 
+    all_css_early = "\n".join(css_by_file.values())
+    # Render-factual numeric coverage: a shared tabular-nums utility class or a
+    # global font-variant-numeric anywhere in the bundle covers component
+    # stylesheets that rely on inheritance (r40 `.metric` inheriting from
+    # `shared/tokens.css`). Only re-charge a file when the bundle offers no
+    # numeric coverage at all.
+    tnum_global = bool(FONT_VAR_NUM_RE.search(all_css_early)
+                       or TNUM_UTILITY_CLASS_RE.search(all_css_early))
+
     for name, markup in markup_by_file.items():
         css = "\n".join(STYLE_RE.findall(markup))
         if css:
             css_by_file[f"{name}::<style>"] = css
         _scan_markup(name, markup, findings)
     for name, css in css_by_file.items():
-        _scan_css(name, css, findings)
+        _scan_css(name, css, findings, tnum_global=tnum_global)
 
     all_css = "\n".join(css_by_file.values())
     _scan_document(markup_by_file, all_css, findings)
@@ -317,7 +330,7 @@ def _owning_selector(css: str, index: int) -> str:
     return css[start:open_brace].strip()
 
 
-def _scan_css(name: str, css: str, out: _Findings) -> None:
+def _scan_css(name: str, css: str, out: _Findings, *, tnum_global: bool = False) -> None:
     decls = _declarations(css)
     values = {prop: val for prop, val in decls}
     # Comments are prose, not design surface: a header note like "metric
@@ -374,7 +387,13 @@ def _scan_css(name: str, css: str, out: _Findings) -> None:
                 f"one radius value ({next(iter(radii))}) across {len(radius_groups)} rule groups")
 
     if METRIC_CLASS_RE.search(uncommented) and not FONT_VAR_NUM_RE.search(uncommented):
-        out.add("SLOP-019", "medium", name, "metric classes without tabular-nums")
+        # Bundle-level numeric coverage (a shared `--font-variant-numeric` token or
+        # `.tabular-nums` utility the component inherits) satisfies the rendered
+        # requirement even when this file declares none of its own (r40). Only a
+        # component with a metric class AND no coverage anywhere in the bundle is
+        # a genuine numeric-stability defect.
+        if not tnum_global:
+            out.add("SLOP-019", "medium", name, "metric classes without tabular-nums")
 
     if re.search(r"transition[^;{}]*ease(?:-in-out|-in|-out)?\b", css, re.IGNORECASE):
         if not re.search(r"spring-(?:snappy|gentle|bounce)", css):

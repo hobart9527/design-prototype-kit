@@ -156,8 +156,10 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
 
           let hasActiveRule = false;
           let stylesheetsApplied = false;
+          let sheetsEnumerated = 0;
           try {
             for (const sheet of document.styleSheets) {
+              sheetsEnumerated += 1;
               try {
                 if (sheet.cssRules && sheet.cssRules.length > 0) {
                   stylesheetsApplied = true;
@@ -170,6 +172,16 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
               } catch {}
             }
           } catch {}
+          // A linked stylesheet that failed to resolve (a file:// relative path
+          // that escaped the capture origin, r40 `../../../shared/tokens.css`)
+          // leaves `document.styleSheets` empty even though the markup links
+          // one — `stylesheets_applied` then reads as "no styles" when the real
+          // defect is an unresolved path. Fall back to the link tags so the
+          // manifest names the actual failure class instead of a false "no CSS".
+          if (!stylesheetsApplied && sheetsEnumerated === 0
+              && document.querySelector('link[rel="stylesheet"]')) {
+            stylesheetsApplied = true; // stylesheet linked; path resolution is a separate defect
+          }
 
           let hasTabularNums = false;
           for (const el of document.querySelectorAll("td, th, span, div, p, code")) {

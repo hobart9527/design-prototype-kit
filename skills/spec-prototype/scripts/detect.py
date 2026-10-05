@@ -93,7 +93,21 @@ def _has_action_feedback(path: pathlib.Path) -> bool:
 
 
 def _has_reduced_motion(path: pathlib.Path) -> bool:
-    return bool(re.search(r"prefers-reduced-motion", _artifact_text(path), re.IGNORECASE))
+    text = _artifact_text(path)
+    if not re.search(r"prefers-reduced-motion", text, re.IGNORECASE):
+        return False
+    # Presence alone is not correctness: a reduced-motion block that leaves
+    # transitions and animations intact is a token gesture. The fallback must
+    # actually neutralize motion inside its media block (duration ~0 or none,
+    # or scroll-behavior forced to auto), matching the floor's "motion is
+    # enhancement, state change is contract".
+    block = re.search(r"@media[^{]*prefers-reduced-motion[^{]*\{(.*?)\}\s*\}",
+                      text, re.IGNORECASE | re.DOTALL)
+    body = block.group(1) if block else text
+    return bool(re.search(
+        r"(animation|transition)[^;{}]*(duration|delay)\s*:\s*0(?:\.0+1)?m?s|"
+        r"animation\s*:\s*none|transition\s*:\s*none|scroll-behavior\s*:\s*auto",
+        body, re.IGNORECASE))
 
 
 def _has_aria_live(path: pathlib.Path) -> bool:
@@ -108,6 +122,22 @@ def _has_fluid_type(path: pathlib.Path) -> bool:
 def _has_color_scheme(path: pathlib.Path) -> bool:
     text = _artifact_text(path)
     return bool(re.search(r"color-scheme\s*:|<meta[^>]+name=[\"']color-scheme[\"']", text, re.IGNORECASE))
+
+def _has_dark_mode_adaptation(path: pathlib.Path) -> bool:
+    # A dual-theme surface adapts to the OS scheme rather than pinning one
+    # palette: prefers-color-scheme present, or color-scheme declares both
+    # light and dark. Advisory — a single-scheme product legitimately stays
+    # dark-only (CRAFT-THEME-ORIGIN), so this is a presence signal, not a floor.
+    text = _artifact_text(path)
+    return bool(re.search(r"prefers-color-scheme", text, re.IGNORECASE)
+                or re.search(r"color-scheme\s*:\s*light\s+dark|color-scheme\s*:\s*dark\s+light",
+                             text, re.IGNORECASE))
+
+def _has_lang_and_dir(path: pathlib.Path) -> bool:
+    # i18n floor: the root element names its locale so hyphenation, font
+    # selection and bidi resolve. Cheap text check on the html tag.
+    text = _artifact_text(path)
+    return bool(re.search(r"<html[^>]+\blang\s*=\s*[\"'][^\"']+[\"']", text, re.IGNORECASE))
 
 def _has_loading_state(path: pathlib.Path) -> bool:
     return bool(re.search(r"aria-busy\s*=|skeleton|shimmer|role=[\"']progressbar[\"']|<progress\b",
@@ -186,6 +216,14 @@ RULES: dict[str, dict] = {
     "CRAFT-COLOR-SCHEME": {
         "prose": "the declared theme sets color-scheme so native controls, scrollbars and form fields follow it",
         "kind": "check", "detector": _has_color_scheme,
+    },
+    "CRAFT-DARK-MODE": {
+        "prose": "when the brief spans lighting conditions, the surface adapts to prefers-color-scheme or declares a light+dark color-scheme",
+        "kind": "check", "detector": _has_dark_mode_adaptation,
+    },
+    "CRAFT-LANG": {
+        "prose": "the root element declares lang (and dir where applicable) so fonts, hyphenation and bidi resolve for the content locale",
+        "kind": "check", "detector": _has_lang_and_dir,
     },
     "CRAFT-LOADING-STATE": {
         "prose": "regions that load or refresh show a skeleton or aria-busy state rather than blank space",
