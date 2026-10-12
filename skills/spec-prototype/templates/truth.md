@@ -58,7 +58,12 @@ Only an actual user decision or an explicit prior delegation can populate
 `confirmed`/`delegated`; AI recommendations, Builder receipts, Critic reports
 and test passes are not approval. A bare "continue" instruction without a
 chosen direction never resolves an open direction choice into a confirmed
-decision.
+decision. Initial interpretations of brief scope, historical constraints, and
+architecture directions MUST remain `proposed(provisional)` or `derived` — NEVER
+mark initial decisions as `confirmed` without an in-session explicit user reply
+confirming that specific choice. Decisions without explicit in-session user
+choice carry forward as `unaffected provisional decisions carried forward`, NEVER
+as `approvals preserved` or `confirmed`.
 
 A decision that binds one slice names its `slice_id` in the scope column;
 `handoff.py` binds a freeze only to rows that name its slice.

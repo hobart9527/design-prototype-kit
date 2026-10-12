@@ -53,6 +53,7 @@ domain names (e.g. payment, billing, CRM). Platform facts that are unauthored re
 native validation that was not performed is recorded as `unverified`.
 Design remedies and interaction mechanisms created by the designer (such as confirmation dialogs,
 undo time windows, two-man rules) are `derived` solutions, never promoted to `explicit` user constraints.
+Never fabricate unverified root-cause attributions for historical failures (e.g. asserting "无复核" or "触控误触" was the root cause of an incident when unstated). Never invent user-research findings, operator psychology, or proficiency tiers (e.g. "新值班员需一次讲解", "适合新值班员", "资深用户讨厌向导"). Never invent unprompted lifecycle pipelines or stage banners (e.g. "止血/收敛/收尾") as surface entities unless explicitly named in the brief. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward`, NEVER as `confirmed` or `approvals preserved`.
 
 ## 5. Rooted Design Ontology: Nine Pillars Lenses & Five Sensory Axes
 

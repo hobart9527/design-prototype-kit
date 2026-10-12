@@ -47,7 +47,7 @@ async function launch(profileDir) {
     "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
     "--remote-debugging-port=0", `--user-data-dir=${profileDir}`,
     "--window-size=1600,1000", "about:blank",
-  ], { stdio: ["ignore", "pipe", "pipe"] });
+  ], { stdio: ["ignore", "pipe", "pipe"], detached: true });
 
   const port = await new Promise((resolve, reject) => {
     let buffer = "";
@@ -169,6 +169,23 @@ const CLICK_JS = (match, matchAction) => `(() => {
   return { clicked: (el.getAttribute("aria-label") || el.innerText || "").trim().slice(0, 90), tag: el.tagName.toLowerCase() };
 })()`;
 
+function killProcessTree(child, profileDir) {
+  try {
+    if (child && child.pid) {
+      process.kill(-child.pid, "SIGKILL");
+    }
+  } catch (e) {
+    try {
+      if (child) child.kill("SIGKILL");
+    } catch (e2) {}
+  }
+  if (profileDir) {
+    try {
+      fs.rmSync(profileDir, { recursive: true, force: true });
+    } catch (e) {}
+  }
+}
+
 async function withPage(viewport, url, fn) {
   const width = Number(String(viewport).split("x")[0]);
   const height = Number(String(viewport).split("x")[1] || 900);
@@ -182,7 +199,7 @@ async function withPage(viewport, url, fn) {
     await sleep(1800);
     return await fn(cdp, { width, height });
   } finally {
-    child.kill("SIGKILL");
+    killProcessTree(child, profile);
   }
 }
 
@@ -221,45 +238,49 @@ async function main() {
 async function sessionMain(url, viewport) {
   const width = Number(String(viewport).split("x")[0]);
   const height = Number(String(viewport).split("x")[1] || 900);
-  const { child, port } = await launch(fs.mkdtempSync("/tmp/bench-chrome-"));
-  const cdp = await CDP.connect(port);
-  await cdp.send("Page.enable");
-  await cdp.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width <= 500 });
-  await cdp.send("Page.navigate", { url });
-  await sleep(1800);
-  const rl = readline.createInterface({ input: process.stdin });
-  for await (const line of rl) {
-    if (!line.trim()) continue;
-    let response;
-    try {
-      const cmd = JSON.parse(line);
-      if (cmd.cmd === "snapshot") {
-        response = { snapshot: await cdp.evaluate(SNAPSHOT_JS) };
-      } else if (cmd.cmd === "click") {
-        const click = await cdp.evaluate(CLICK_JS(cmd.match || "", cmd.match_action || ""));
-        await sleep(900);
-        response = { click, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
-      } else if (cmd.cmd === "scroll") {
-        await cdp.evaluate(`window.scrollBy(0, ${Number(cmd.dy) || 600}); null`);
-        await sleep(500);
-        response = { scroll: true, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
-      } else if (cmd.cmd === "screenshot") {
-        const shot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
-        fs.mkdirSync(path.dirname(cmd.file), { recursive: true });
-        fs.writeFileSync(cmd.file, Buffer.from(shot.result.data, "base64"));
-        response = { file: cmd.file, bytes: fs.statSync(cmd.file).size };
-      } else if (cmd.cmd === "quit") {
-        process.stdout.write(JSON.stringify({ bye: true }) + "\n");
-        break;
-      } else {
-        response = { error: `unknown cmd: ${cmd.cmd}` };
+  const profile = fs.mkdtempSync("/tmp/bench-chrome-");
+  const { child, port } = await launch(profile);
+  try {
+    const cdp = await CDP.connect(port);
+    await cdp.send("Page.enable");
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width <= 500 });
+    await cdp.send("Page.navigate", { url });
+    await sleep(1800);
+    const rl = readline.createInterface({ input: process.stdin });
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+      let response;
+      try {
+        const cmd = JSON.parse(line);
+        if (cmd.cmd === "snapshot") {
+          response = { snapshot: await cdp.evaluate(SNAPSHOT_JS) };
+        } else if (cmd.cmd === "click") {
+          const click = await cdp.evaluate(CLICK_JS(cmd.match || "", cmd.match_action || ""));
+          await sleep(900);
+          response = { click, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
+        } else if (cmd.cmd === "scroll") {
+          await cdp.evaluate(`window.scrollBy(0, ${Number(cmd.dy) || 600}); null`);
+          await sleep(500);
+          response = { scroll: true, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
+        } else if (cmd.cmd === "screenshot") {
+          const shot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
+          fs.mkdirSync(path.dirname(cmd.file), { recursive: true });
+          fs.writeFileSync(cmd.file, Buffer.from(shot.result.data, "base64"));
+          response = { file: cmd.file, bytes: fs.statSync(cmd.file).size };
+        } else if (cmd.cmd === "quit") {
+          process.stdout.write(JSON.stringify({ bye: true }) + "\n");
+          break;
+        } else {
+          response = { error: `unknown cmd: ${cmd.cmd}` };
+        }
+      } catch (error) {
+        response = { error: String(error && error.message || error) };
       }
-    } catch (error) {
-      response = { error: String(error && error.message || error) };
+      process.stdout.write(JSON.stringify(response) + "\n");
     }
-    process.stdout.write(JSON.stringify(response) + "\n");
+  } finally {
+    killProcessTree(child, profile);
   }
-  child.kill("SIGKILL");
 }
 
 main().catch((error) => {
