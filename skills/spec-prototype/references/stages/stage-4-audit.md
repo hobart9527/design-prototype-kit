@@ -174,7 +174,13 @@ evidence; inferring visual quality from markup is a fabrication, not a finding.
 **Test & verification honesty**: Never claim interactive, end-to-end, or automated test passes (e.g. "Playwright 实测", "端到端实测", "脚本在 /tmp 不入库") unless concrete test scripts and execution logs are physically persisted under `prototype/evidence/` with passing receipts recorded in `handoff-manifest.json`. Asserting test verification without durable on-disk receipts is forbidden evidence fabrication.
 
 **Manifest cross-check (machine-checkable)**: before the receipt asserts any
-visual verdict, reconcile it against `handoff-manifest.json` field by field. If
+visual verdict, reconcile it against `handoff-manifest.json` field by field.
+Quote all recorded counts (e.g. `small_touch_target_count`, `horizontal_overflow`,
+`runtime_errors`) faithfully from the manifest without contradiction. If the manifest
+records 3 small touch targets on 1280, never write `small_touch_target_count: 0`; explain
+the context honestly (e.g. 1280 desktop compact button density vs 390 mobile touch compliance)
+instead of altering or denying the recorded number. Never dismiss a recorded manifest
+failure as a "runner bug" or override it with visual impressions. If
 `metadata.status` is `capture_failed`, or any `viewport_metrics.*.stylesheets_applied`
 is `false`, or `visual`/`human` is `pending_review`, then the receipt must set
 `visual_evidence: unverified` / `status: PARTIAL` and must NOT write

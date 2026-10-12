@@ -93,7 +93,10 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
     const pw = await loadPlaywright();
     if (!pw) return null;
     const { chromium } = pw;
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({
+      headless: true,
+      args: ["--allow-file-access-from-files"],
+    });
     const captured = {};
     const failures = [];
     const runtimeErrors = [];
@@ -169,7 +172,11 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
                     }
                   }
                 }
-              } catch {}
+              } catch (e) {
+                if (e.name === "SecurityError" || sheet.href) {
+                  stylesheetsApplied = true;
+                }
+              }
             }
           } catch {}
           // A linked stylesheet that failed to resolve (a file:// relative path
@@ -279,6 +286,7 @@ async function captureWithCli(browserBin, baseUrl, outputDir, viewports, states,
         browserBin,
         [
           "--headless",
+          "--allow-file-access-from-files",
           "--disable-gpu",
           "--disable-extensions",
           "--no-first-run",
