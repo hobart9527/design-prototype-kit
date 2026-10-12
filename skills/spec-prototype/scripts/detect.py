@@ -71,14 +71,6 @@ def _has_emoji_icon(path: pathlib.Path) -> bool:
     return bool(emoji.search(_artifact_text(path)))
 
 
-def _has_surface_sheen(path: pathlib.Path) -> bool:
-    return bool(re.search(r"--surface-sheen\b", _artifact_text(path)))
-
-
-def _has_kinetic_spring(path: pathlib.Path) -> bool:
-    return bool(re.search(r"--spring-(?:snappy|gentle|bounce)\b", _artifact_text(path)))
-
-
 def _has_action_feedback(path: pathlib.Path) -> bool:
     text = _artifact_text(path)
     has_commit = bool(re.search(
@@ -190,12 +182,14 @@ RULES: dict[str, dict] = {
                "checked by verify_prototype_quality's rendered probe",
     },
     "CRAFT-SURFACE-SHEEN": {
-        "prose": "elevated panels and dark surfaces simulate optical chamfers with hairline top highlights",
-        "kind": "check", "detector": _has_surface_sheen,
+        "prose": "hairline highlights are optional when their optical character supports the direction; flat surfaces and border-only containment are equally valid",
+        "kind": "prose_only",
+        "why": "surface optics are chosen from the committed direction; token presence cannot establish whether sheen is appropriate",
     },
     "CRAFT-KINETIC-SPRING": {
-        "prose": "transition and motion curves use organic spring physics rather than linear or mechanical ease",
-        "kind": "check", "detector": _has_kinetic_spring,
+        "prose": "motion follows task precision and direction; spring, easing, linear motion and instant changes are valid, with no required spring token",
+        "kind": "prose_only",
+        "why": "motion physics depend on task precision and the committed direction; a spring token is neither required nor sufficient",
     },
     "CRAFT-ACTION-FEEDBACK": {
         "prose": "destructive or high-stakes actions show consequence before commit, explicit status after, and a recovery route",
@@ -260,7 +254,7 @@ RULES: dict[str, dict] = {
         "why": "the use scene is in the brief, not the artifact",
     },
 
-    # -- three universal design invariants (Pillar 3) --------------------------
+    # -- universal design content invariants (Pillar 3) ------------------------
     # Registered as prose_only so the anchor test can see them and any later
     # mechanization has a mount point. They are content invariants, not CSS
     # patterns: a text scan cannot judge whether a capability is fabricated.

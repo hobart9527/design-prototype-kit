@@ -59,7 +59,7 @@ Explore the mechanism that fits the decision:
 ### Platform & Somatic Ergonomics (平台与物理工效铁律)
 
 1. **Browser Native Reserved Keys Invariant (原生按键主权不可侵犯)**:
-   - **`Space` (Spacebar)** is permanently reserved for natural vertical viewport scrolling and within-input typing. It MUST NEVER be hijacked as a single-key trigger to open drawers, commit actions, or trigger modals.
+   - **`Space` (Spacebar)** inside an editable field keeps typing; on a focused button or other control with native Space activation, preserve that activation. Links retain their native behavior; do not synthesize a Space click. The ban is on **global capture**: never bind a document/window-level `Space` keydown as a single-key trigger to open drawers, commit actions, or trigger modals, and never let a page-level handler swallow `Space` that scrolling or a focused control already owns.
    - **`Tab` / `Shift+Tab`** is permanently reserved for native sequential focus navigation. Focus rings must remain razor-sharp (`:focus-visible`).
    - **Single-key triggers** (like `J`/`K` for list navigation or `/` for search) are permitted ONLY when user focus is NOT inside an active editable text field.
    - **Global action shortcuts** must employ explicit modifier pairings (e.g. `Cmd/Ctrl + K`, `Alt + N`) or clearly disambiguated single keys that have zero collision with browser and platform navigation conventions.
@@ -204,11 +204,15 @@ Use the product's interaction context to choose announcement and focus behavior.
 
 For tools used daily or under time pressure, provide an ergonomic keyboard stream:
 
-- **Command palette (Cmd+K / Ctrl+K):** A universal search and action launcher for
-  deep navigation, batch actions, and settings. Supports fuzzy matching, recents,
-  and explicit keyboard shortcut hints.
+- **Command palette (Cmd+K / Ctrl+K):** A search and action launcher for deep
+  navigation, batch actions, and settings, when the tool's daily workflow justifies
+  one — it is a technique selected by the committed direction, not a default every
+  surface must ship. Supports fuzzy matching, recents, and explicit keyboard
+  shortcut hints. Its trigger carries an explicit modifier (`Cmd/Ctrl + K`); a
+  palette must never claim bare `Space` as its open key.
 - **Non-mouse navigation streams:** Support sequential item traversal (e.g., `J`/`K`
-  or `Up`/`Down` in lists), expansion (`Enter` or `Space`), and dismissal (`Esc`).
+  or `Up`/`Down` in lists), expansion (`Enter`, or native `Space` activation on
+  a focused control), and dismissal (`Esc`).
   Display concise visual keycap badges near actions to teach shortcuts organically.
 - **Focus continuity:** A modal or drawer must return focus to its trigger when it
   closes. The detailed recovery focus-continuity mechanics are owned by

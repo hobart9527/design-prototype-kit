@@ -54,7 +54,7 @@ A high-fidelity prototype cannot be a fragile static mock that only looks good o
 ## Physical World Micro-Interactions & Kinetics (DNA)
 
 When implementing interactive elements:
-- **Kinetic Physics**: Transitions should feel grounded in tangible physical materials: subtle spring damping (`cubic-bezier(0.16, 1, 0.3, 1)` for clean deceleration) rather than linear robotic interpolation.
+- **Kinetic Physics** (direction-selected, advisory): match motion to the task's precision. Deceleration curves (`cubic-bezier(0.16, 1, 0.3, 1)`), spring, linear or instant changes are all valid; precise tools favour short, restrained or no motion. Avoid decorative bounce. See [`interaction-power.md`](interaction-power.md) for the decision.
 - **Touch & Mobile Ergonomics**: For touch-first/mobile viewports, ensure interactive elements meet the `44x44px` minimum touch target size. Implement fluid bottom-sheet drag physics with release detents, elastic overscroll cues, and touch-optimized pull-to-refresh interactions.
 - **Micro-Feedback**: Hover and active press states provide instantaneous visual feedback (e.g. a tactile press detent `:active { transform: scale(var(--press-scale)); }` or subtle depth depression). The scale value is authored per surface and carried by the compiled token.
 - **Transient State Preservation**: Multi-step workflows and filter queries retain local state in memory (`localStorage` or mock session stores) so user navigation does not erase active context during exploration.

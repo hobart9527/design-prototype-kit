@@ -26,7 +26,7 @@ An experience fails the Floor only if any of the following objective runtime def
 Above the Floor, design merit is judged by human aesthetic review and discussion:
 - **Visual Expression & Typography**: Appropriate hierarchy, intentional scale contrast, and fit with the chosen modern design vocabulary ([`../02-craft-methods/modern-style-vocabulary.md`](../02-craft-methods/modern-style-vocabulary.md)).
 - **Information Architecture & Density**: Clean scan paths, intentional grouping, and high signal-to-noise ratio.
-- **Motion & Somatic Feel**: Meaningful state transitions and spring deceleration curves without gratuitous decoration.
+- **Motion & Somatic Feel**: Meaningful state transitions whose character (spring, ease, restrained or instant) fits the task's precision and the committed direction, without gratuitous decoration.
 - **No Mechanical Blockers**: Aesthetic suggestions, card layouts, and color choices are discussion points between designer and human reviewer, never blocking script errors.
 
 ## Contextual Craft Guidelines & Heuristics (optional)

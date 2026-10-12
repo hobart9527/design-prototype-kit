@@ -29,11 +29,15 @@ inspection pass, not as separate screenshot trips.
   1. Consequence clearly visible before commit.
   2. Perceptible state feedback immediately after action (`处理中`, `已排空`, `draining`, etc.).
   3. Recovery, rollback, or safe exit reachable on the same surface (`撤销`, `回滚`, `rollback`, `undo`).
-- **Surface optics and top sheen** `CRAFT-SURFACE-SHEEN`: elevated panels and dark surfaces
-  simulate optical chamfers with hairline top highlights (`var(--surface-sheen)`) instead of
-  flat mechanical borders alone.
-- **Kinetic physics** `CRAFT-KINETIC-SPRING`: transition and motion curves use organic spring
-  physics (`var(--spring-snappy)`, `var(--spring-gentle)`) rather than linear or mechanical `ease`.
+- **Surface optics and top sheen** `CRAFT-SURFACE-SHEEN`: use hairline highlights
+  (`var(--surface-sheen)`) only when that optical character supports the committed
+  direction. Flat surfaces and border-only containment are equally valid.
+  Advisory — a technique the direction selects, not a universal floor.
+- **Kinetic physics** `CRAFT-KINETIC-SPRING`: choose motion from the task's precision
+  and the committed direction. Spring, easing, linear motion and instant changes
+  are legitimate choices; no spring token is required. Advisory — a technique the
+  direction selects, not a universal floor; the motion decision itself is owned by
+  [`interaction-power.md`](interaction-power.md).
 - **Browser surfaces** `CRAFT-SELECTION` `CRAFT-CARET` `CRAFT-SCROLLBAR`
   `CRAFT-FOCUS-RING`: the parts you did not draw still carry the design. Text
   selection, the caret (`caret-color`), custom scrollbars, focus rings, underline offset, and

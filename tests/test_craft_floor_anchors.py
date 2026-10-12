@@ -56,6 +56,16 @@ def test_a_rule_without_a_detector_states_why():
             assert callable(entry.get("detector")), f"{rule_id} has no callable detector"
 
 
+def test_direction_selected_techniques_are_not_token_presence_gates(tmp_path):
+    artifact = tmp_path / "flat.html"
+    artifact.write_text('<html lang="en"><body>Flat, precise surface</body></html>')
+    result = detect.scan(artifact)
+    for rule_id in ("CRAFT-SURFACE-SHEEN", "CRAFT-KINETIC-SPRING"):
+        assert detect.RULES[rule_id]["kind"] == "prose_only"
+        assert detect.RULES[rule_id]["why"]
+        assert not any(item["rule"] == rule_id for item in result["findings"])
+
+
 def test_the_registry_is_not_all_judgement():
     """A floor with no mechanical checks is a floor nothing enforces."""
     report = detect.anchor_report()

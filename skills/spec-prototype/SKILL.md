@@ -62,7 +62,7 @@ Immediately reject generic AI tropes in every authored artifact:
 - **No unearned card grids**: repetitive equal-height cards are banned unless content objects are genuine peer entities of identical complexity.
 - **No gratuitous purple/cyan AI glow**: color must trace directly to domain semantics, physical material metaphors, or functional status.
 - **No placeholder copy or fake avatars**: every text label, figure, and status message must use authentic, task-accurate domain data.
-- **No dead commit surfaces**: buttons and key triggers must convey perceptible mechanical feedback (`:active` detent, micro-spring, tactile state shifts).
+- **No dead commit surfaces**: buttons and key triggers must convey perceptible mechanical feedback (`:active` detent, tactile state shifts; motion character follows the committed direction).
 
 ## The Spine: Nine Pillars & Five Axes (设计本体与标尺)
 
@@ -128,11 +128,11 @@ YAML blocks that fail closed. Registry and field specs live in [`machine-contrac
 
 Make every surface feel intentionally authored for this specific problem space.
 [`craft-floor.md`](references/02-craft-methods/craft-floor.md) owns the hard floors:
-1. **Perceptible `:active` press feedback** on commit controls (`spring` micro-feedback).
+1. **Perceptible `:active` press feedback** on commit controls (the detent is the floor; its easing is direction-selected).
 2. **Concentric nested radii geometry** ($R_{in} = \max(0, R_{out} - P)$ with 1px tolerance).
 3. **Tabular numerals** (`font-variant-numeric: tabular-nums`) for changing or column-aligned numbers.
 4. **Action Safety & Reversible Loop**: Destructive or high-consequence actions must show consequences *before* commit, update to explicit status feedback *after* commit (`已完成`/`处理中`/`已排空`), and provide a discoverable exit or undo route (`撤销`/`回滚`) on the same surface.
-5. **Modern Material Sheen & Kinetic Spring**: Use `--surface-sheen` for micro-chamfers and `--spring-snappy` / `--spring-gentle` for spatial motion. Theme browser surfaces (`caret-color`, `::selection`).
+5. **Modern Material Sheen & Kinetic Spring** (direction-selected techniques, advisory — not floors): choose optical character and motion from the task and committed direction; sheen and spring are optional, and flat surfaces or instant changes are valid. Theme browser surfaces (`caret-color`, `::selection`).
 6. **WCAG 2.2 AA contrast** (4.5:1 minimum) and truthful evidence.
 7. **Mobile touch target minimum** (44x44px tappable footprint) and safe-area insets.
 
