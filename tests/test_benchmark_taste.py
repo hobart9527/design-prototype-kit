@@ -7,6 +7,9 @@ judges whose *plumbing* is checked without ever paying for a model call.
 import json
 import pathlib
 import sys
+import tempfile
+
+import pytest
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "benchmarks" / "runners"))
@@ -52,6 +55,23 @@ def test_slop_detector_reports_each_rule_with_evidence(tmp_path):
     assert all(f["evidence"] for f in result["findings"]), "every finding carries evidence"
     assert result["by_severity"]["high"] >= 2
     assert result["slop_score"] > 0
+
+
+
+def test_ease_curves_are_not_spring_token_gates():
+    """Motion physics are direction-selected (CRAFT-KINETIC-SPRING is prose_only);
+    an ease curve without a spring token must not fire a deterministic rule."""
+    import inspect
+    assert "SLOP-026" not in inspect.getsource(sd), (
+        "SLOP-026 retired: a spring token is neither required nor sufficient")
+
+    root = pathlib.Path(tempfile.mkdtemp())
+    _write(root, "prototype/index.html",
+           "<html><head><style>.menu { transition: opacity .2s ease-in-out; }</style>"
+           "</head><body><p class=\"metric\">42</p></body></html>")
+    result = sd.detect(root)
+    assert result["counts"].get("SLOP-026") is None, result["findings"]
+    assert all(f["rule"] != "SLOP-026" for f in result["findings"])
 
 
 def test_slop_detector_is_silent_on_a_clean_artifact(tmp_path):
@@ -624,3 +644,4 @@ def test_taste_flags_are_in_the_case_schema():
         case = bl.load_case(case_id)
         assert case["meta"]["evaluation"].get("visual_pairwise"), \
             f"{case_id} runs taste judges but captures no screenshots"
+

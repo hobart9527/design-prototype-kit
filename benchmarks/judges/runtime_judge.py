@@ -13,6 +13,8 @@ import pathlib
 import re
 import sys
 
+import yaml
+
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "runners"))
 import bench_lib as bl  # noqa: E402
 
@@ -46,6 +48,61 @@ def _authority_corpus(texts: dict) -> dict:
         if base == "freeze-manifest.json" or "/specifications/" in f"/{normalised}":
             corpus[name] = text
     return corpus
+
+
+def _cited_methods(record: str) -> set[str]:
+    cited = set()
+    for match in re.finditer(
+            r"(?:applied[_\s]+methods?|method\s+id)\s*[:=]\s*([^\n]+)",
+            record, re.IGNORECASE):
+        cited.update(re.findall(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)+", match.group(1)))
+    for match in re.finditer(
+            r"^[ \t]*applied_methods\s*:[^\n]*(?:\n(?:[ \t]+\S[^\n]*|[ \t]*-[ \t]+[^\n]*|[ \t]*\][^\n]*))*",
+            record, re.MULTILINE):
+        try:
+            values = yaml.safe_load(match.group(0)).get("applied_methods")
+        except (yaml.YAMLError, AttributeError):
+            continue
+        if isinstance(values, list):
+            cited.update(value for value in values if isinstance(value, str))
+    # Only the explicitly labelled column is a citation, not other table prose.
+    column = None
+    for line in record.splitlines():
+        if not line.strip().startswith("|"):
+            column = None
+            continue
+        cells = [cell.strip().strip("`").lower() for cell in line.strip().strip("|").split("|")]
+        headers = [i for i, cell in enumerate(cells)
+                   if cell.replace("_", " ") in {"applied methods", "applied method", "method id"}]
+        if headers:
+            column = headers[0]
+        elif column is not None and column < len(cells):
+            cited.update(re.findall(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)+", cells[column]))
+    return cited
+
+
+def _authority_signals(texts: dict, forbidden: list) -> list[dict]:
+    signals = []
+    # ponytail: only explicit project subjects are deterministic verdicts;
+    # ambiguous business vocabulary stays evidence for semantic/human review.
+    subject = re.compile(
+        r"本(?:次)?(?:设计|原型|项目|交付|规约)|(?:this|the)\s+(?:design|prototype|project|specification|handoff)\b|\bthis shipped\b",
+        re.IGNORECASE)
+    negation = re.compile(r"未|尚未|不(?:得|可|是|会|能|应|该|要)|没有|禁止|严禁|勿|never|cannot|n't|\b(?:not|without|no)\b", re.IGNORECASE)
+    for name, text in texts.items():
+        for term in forbidden:
+            if not term:
+                continue
+            for match in re.finditer(re.escape(term), text, re.IGNORECASE):
+                start = max(text.rfind(char, 0, match.start()) for char in '\n;；。"\'') + 1
+                ends = [text.find(char, match.end()) for char in '\n;；。"\'']
+                end = min((pos for pos in ends if pos >= 0), default=len(text))
+                clause = text[start:end].strip()
+                explicit = bool(subject.search(clause)) and not negation.search(clause)
+                signals.append({"file": name, "line": text.count("\n", 0, match.start()) + 1,
+                                "term": term, "quote": clause[:200],
+                                "kind": "project_claim" if explicit else "unresolved_vocabulary"})
+    return signals
 
 
 def _contrast(hex_a: str, hex_b: str) -> float:
@@ -101,7 +158,7 @@ def _registry_ids(variant: str) -> list:
 
 def _user_turns(case: dict, artifacts_dir: pathlib.Path) -> list:
     """User messages recorded for this run, used as approval evidence."""
-    for parent in list(artifacts_dir.parents)[:4]:
+    for parent in [artifacts_dir, *list(artifacts_dir.parents)[:4]]:
         transcript = parent / "session-transcript.md"
         if transcript.is_file():
             turns, in_user = [], False
@@ -147,7 +204,8 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     # The design record is `discussion.md` (single-record) or the layered
     # truth.md/world.md/briefs tree; judge the record, not one filename.
     record_files = {k: v for k, v in texts.items()
-                    if k.endswith(("discussion.md", "truth.md", "world.md")) or "/briefs/" in k}
+                    if k.endswith(("discussion.md", "truth.md", "world.md"))
+                    or "/briefs/" in "/" + k.replace("\\", "/")}
     discussion = "\n".join(record_files.values())
 
     add("artifact_present", "pass" if html_files else "fail",
@@ -166,11 +224,7 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
         # A method is applied only when a design-record decision explicitly
         # cites its registry id; matching a registry name in arbitrary artifact
         # prose measures vocabulary, not method use.
-        cited_methods = set()
-        for match in re.finditer(
-                r"(?:applied[_\s]+methods?|method\s+id)\s*[:=]\s*([^\n]+)",
-                discussion, re.IGNORECASE):
-            cited_methods.update(re.findall(r"`?([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`?", match.group(1)))
+        cited_methods = set().union(*(_cited_methods(record) for record in record_files.values()))
         referenced = sorted({mid for mid in registry_ids if mid in cited_methods})
         must = set(expectation.get("must_consider") or [])
         relevant = set(expectation.get("relevant") or [])
@@ -198,7 +252,9 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
 
     stages_found = [s for s in STAGE_MARKERS if s in joined]
     forbidden = (case["ground_truth"].get("authority_expectation") or {}).get("forbidden_claims") or []
-    claims = [c for c in forbidden if c and c in joined]
+    authority_signals = _authority_signals(texts, forbidden)
+    claims = sorted({signal["term"] for signal in authority_signals
+                     if signal["kind"] == "project_claim"})
     ceiling = (case["ground_truth"].get("authority_expectation") or {}).get("max_stage_without_user_approval")
     user_turns = _user_turns(case, artifacts_dir)
     approved = any(any(marker in turn for marker in APPROVAL_MARKERS)
@@ -225,8 +281,9 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     # frozen-approved while recording no approval is exactly the escape this
     # gate exists for, independent of which artifact worded it.
     unbacked_freeze = bool(manifest_claims or spec_claims)
-    escape = bool(claims) or ((bool(over_ceiling) or unbacked_freeze) and not approved)
-    authority_status = "fail" if escape else ("pass" if stages_found else "unknown")
+    escape = (bool(claims) or bool(over_ceiling) or unbacked_freeze) and not approved
+    unresolved = any(signal["kind"] == "unresolved_vocabulary" for signal in authority_signals)
+    authority_status = "fail" if escape else ("pass" if stages_found and not unresolved else "unknown")
     add("authority_status", authority_status,
         f"stage_markers={stages_found} ceiling={ceiling} approval_evidence={approved} "
         f"over_ceiling={over_ceiling} unsupported_claims={claims} "
@@ -345,6 +402,7 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
         "checks": checks,
         "method_routing": method_routing,
         "authority_escape": escape,
+        "authority_signals": authority_signals,
         "contrast": ratios,
         "status": "fail" if failures else ("pass" if not unknowns else "pass_with_unknowns"),
         "failures": [c["id"] for c in failures],

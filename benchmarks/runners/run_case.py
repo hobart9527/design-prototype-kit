@@ -61,16 +61,24 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             max_turns: int | None, timeout_s: int | None, budget_usd: float | None,
             do_task_trace: bool, max_task_steps: int, do_visual: bool, do_taste: bool = False,
             session_budget_usd: float | None = None, rejudge: bool = False,
-            auto_open: bool = False) -> dict:
+            auto_open: bool = False, deterministic_only: bool = False) -> dict:
+    if deterministic_only and not rejudge:
+        raise ValueError("deterministic_only requires rejudge")
     case = bl.load_case(case_id)
     policy = case["meta"].get("run_policy", {})
     out_dir = matrix_dir / case_id / variant / f"run{repeat}"
     out_dir.mkdir(parents=True, exist_ok=True)
-    previous = sorted(out_dir.glob("run-result*.json"))
+    prior_path = out_dir / "run-result.json"
+    prior = bl.read_json(prior_path) if prior_path.is_file() else {}
+    if deterministic_only and not prior:
+        raise ValueError("deterministic_only requires a stored run-result.json")
     archived = []
-    for index, old in enumerate(previous):
-        archived_path = out_dir / f"run-result-prev{index + 1}.json"
-        old.rename(archived_path)
+    if prior:
+        index = 1
+        while (out_dir / f"run-result-prev{index}.json").exists():
+            index += 1
+        archived_path = out_dir / f"run-result-prev{index}.json"
+        prior_path.rename(archived_path)
         archived.append(archived_path)
     result = {
         "layer": "case",
@@ -116,6 +124,21 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             result["metrics"] = prior.get("metrics") or {}
             result["session_fidelity"] = prior.get("session_fidelity")
         result["notes"].append("rejudged from stored artifacts (no new session)")
+        if deterministic_only:
+            hashes = manifest.get("hashes") or {}
+            stored_root = pathlib.Path(manifest["artifacts_dir"]) / "prototype"
+            evidence_matches = bool(hashes) and all(
+                (stored_root / name).is_file()
+                and bl.sha256_file(stored_root / name) == identity.get("sha256")
+                for name, identity in hashes.items())
+            if not evidence_matches:
+                result["status"] = "BLOCKED"
+                result["notes"].append("deterministic rejudge requires unchanged artifacts with recorded hashes")
+                bl.write_json(out_dir / "run-result.json", result)
+                return result
+            for key in ("semantic", "task", "visual", "taste", "contract_fidelity", "contract"):
+                result[key] = prior.get(key)
+            result["notes"].append("deterministic rejudge only; semantic/task/visual/taste evidence retained, not rerun")
         # Provenance describes the bytes that produced these artifacts, and those
         # bytes are whatever the *original* session ran — not the working tree at
         # re-judge time. Recomputing it here would stamp a revision that postdates
@@ -185,7 +208,7 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
     except Exception as exc:  # judge defects must surface, not be swallowed
         result["notes"].append(f"runtime judge error: {exc}")
     evaluation = case["meta"].get("evaluation") or {}
-    if evaluation.get("semantic", True):
+    if evaluation.get("semantic", True) and not deterministic_only:
         try:
             revealed = semantic_judge.extract_revealed_facts(out_dir / "session-transcript.md")
             result["semantic"] = semantic_judge.judge(case, artifacts_dir, out_dir, model=model,
@@ -194,7 +217,7 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             result["notes"].append(f"semantic judge error: {exc}")
 
     # TASK TRACE
-    if do_task_trace and evaluation.get("task_trace", False):
+    if do_task_trace and evaluation.get("task_trace", False) and not deterministic_only:
         try:
             traces = []
             for task in (case["tasks"].get("tasks") or []):
@@ -206,7 +229,7 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
             result["notes"].append("task trace error: " + traceback.format_exc(limit=2))
 
     # VISUAL EVIDENCE
-    if do_visual or evaluation.get("visual_pairwise", False):
+    if (do_visual or evaluation.get("visual_pairwise", False)) and not deterministic_only:
         try:
             viewports = (case["meta"].get("viewports") or {}).get("required") or [1280]
             result["visual"] = visual_manifest.capture(artifacts_dir, viewports, out_dir)
@@ -234,7 +257,7 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
         bl.write_json(out_dir / "cocreation.json", result["cocreation"])
     except Exception as exc:
         result["notes"].append(f"cocreation judge error: {exc}")
-    if do_taste:
+    if do_taste and not deterministic_only:
         shots = [v["screenshot"] for v in ((result["visual"] or {}).get("viewports") or [])
                  if v.get("screenshot")]
         try:
@@ -254,6 +277,17 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
     # the current tree here would replace it with a post-dated revision.
     if not rejudge:
         result["provenance"] = _run_provenance(variant, out_dir)
+
+    judge_sources = bl.tree_identity(bl.ROOT / "benchmarks" / "judges")
+    judge_sources["runner_sha256"] = bl.sha256_file(pathlib.Path(__file__))
+    result["evaluation_provenance"] = {
+        "evaluated_at": bl.now_stamp(), "judge_sources": judge_sources,
+        "judge_inputs": bl.judge_identity(out_dir),
+        "mode": "deterministic_rejudge" if deterministic_only else ("rejudge" if rejudge else "initial"),
+        "retained_evidence": [key for key in ("semantic", "task", "visual", "taste", "contract_fidelity")
+                              if deterministic_only and result.get(key) is not None],
+        "previous_evaluation": prior.get("evaluation_provenance") if rejudge else None,
+    }
 
     # RESULT
     hard_fail = False
@@ -327,6 +361,8 @@ def main() -> int:
     parser.add_argument("--session-budget-usd", type=float, default=None)
     parser.add_argument("--rejudge", action="store_true",
                         help="re-run judges over already collected artifacts (no new session)")
+    parser.add_argument("--deterministic-only", action="store_true",
+                        help="with --rejudge, retain stored model/task/visual evidence and rerun deterministic checks only")
     parser.add_argument("--open", action="store_true",
                         help="automatically open the review portal / prototype in browser upon completion")
     parser.add_argument("--out", default=None)
@@ -336,7 +372,7 @@ def main() -> int:
                      do_task_trace=args.task_trace, max_task_steps=args.max_task_steps, do_visual=args.visual,
                      do_taste=args.taste,
                      session_budget_usd=args.session_budget_usd, rejudge=args.rejudge,
-                     auto_open=args.open)
+                     auto_open=args.open, deterministic_only=args.deterministic_only)
     if args.out:
         bl.write_json(pathlib.Path(args.out), result)
     return 0 if result["status"] in ("PASS",) else (2 if result["status"] == "BLOCKED" else 1)

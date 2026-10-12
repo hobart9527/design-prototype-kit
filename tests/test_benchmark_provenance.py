@@ -162,6 +162,60 @@ def test_pairwise_summary_discloses_agreement_and_missing_judge_cost(tmp_path):
     assert "total spend is incomplete" in markdown
 
 
+def test_deterministic_rejudge_retains_evidence_and_versions_judges(tmp_path, monkeypatch):
+    case_id = "incident-commander"
+    matrix = tmp_path / "matrix"
+    out = matrix / case_id / "candidate_skill" / "run1"
+    artifacts = out / "artifacts" / "prototype"
+    artifacts.mkdir(parents=True)
+    (artifacts / "index.html").write_text('<html lang="zh"><p>业务已上线</p></html>')
+    bl.write_json(out / "artifacts-manifest.json", {
+        "artifacts_dir": str(out / "artifacts"), "entry": "index.html",
+        "hashes": {"index.html": {"sha256": bl.sha256_file(artifacts / "index.html")}},
+    })
+    prior = {"status": "PASS", "provenance": {"aggregate_sha256": "original"},
+             "session": {"status": "COMPLETED"}, "metrics": {"cost_usd": 1.5},
+             "semantic": {"hard_gate": "pass"}, "task": {"critical_task_break": 0},
+             "visual": {"status": "captured"}, "taste": None}
+    bl.write_json(out / "run-result.json", prior)
+    sentinel = {"status": "FAIL", "notes": ["older result"]}
+    bl.write_json(out / "run-result-prev1.json", sentinel)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("deterministic rejudge must not rerun models, browser or tasks")
+
+    monkeypatch.setattr(run_case.semantic_judge, "judge", forbidden)
+    monkeypatch.setattr(run_case.visual_manifest, "capture", forbidden)
+    monkeypatch.setattr(run_case.run_task_trace, "run_task", forbidden)
+    monkeypatch.setattr(run_case.taste_judge, "judge", forbidden)
+    result = run_case.run_one(case_id, "candidate_skill", 1, matrix, model=None,
+                              max_turns=1, timeout_s=1, budget_usd=0,
+                              do_task_trace=True, max_task_steps=1, do_visual=True,
+                              do_taste=True, rejudge=True, deterministic_only=True)
+    assert bl.read_json(out / "run-result-prev1.json") == sentinel
+    assert bl.read_json(out / "run-result-prev2.json") == prior
+    assert result["provenance"] == prior["provenance"]
+    for key in ("semantic", "task", "visual", "taste"):
+        assert result[key] == prior[key]
+    assert not any("judge error" in note or "trace error" in note for note in result["notes"])
+    evaluation = result["evaluation_provenance"]
+    assert evaluation["mode"] == "deterministic_rejudge"
+    assert evaluation["judge_sources"]["aggregate_sha256"]
+    report = aggregate_report.build(matrix, "daily", "rejudged")
+    assert report["runs"][0]["evaluation_provenance"] == evaluation
+    assert "retained (not rerun)" in aggregate_report.render_markdown(report)
+    assert any("authority_status unknown" in item for item in report["unverified"])
+    assert any("visual taste not measured" in item for item in report["unverified"])
+    (artifacts / "index.html").write_text("changed artifact")
+    blocked = run_case.run_one(case_id, "candidate_skill", 1, matrix, model=None,
+                               max_turns=1, timeout_s=1, budget_usd=0,
+                               do_task_trace=False, max_task_steps=1, do_visual=False,
+                               rejudge=True, deterministic_only=True)
+    assert blocked["status"] == "BLOCKED"
+    assert blocked["task"] is None
+    assert "unchanged artifacts" in blocked["notes"][-1]
+
+
 def test_prior_run_result_is_archived_not_overwritten(tmp_path, monkeypatch):
     """Re-judging keeps the previous evidence as run-result-prev<N>.json instead of erasing it."""
     case_id = sorted(bl.case_paths())[0]

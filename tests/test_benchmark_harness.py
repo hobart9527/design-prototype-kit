@@ -377,6 +377,28 @@ def test_runtime_method_recall_requires_an_applied_method_citation(tmp_path, mon
     assert result["method_routing"]["referenced"] == ["context-preservation"]
 
 
+@pytest.mark.parametrize("path", ["briefs/example.md", "prototype/briefs/example.md", "truth.md"])
+@pytest.mark.parametrize("citation", [
+    'applied_methods: [context-preservation]',
+    'applied_methods: [\n  context-preservation,\n  progressive-disclosure\n]',
+    'applied_methods:\n  - context-preservation\n  - progressive-disclosure',
+    '| Decision | Applied methods |\n| --- | --- |\n| D1 | `context-preservation` |',
+])
+def test_method_citations_in_root_and_nested_records(tmp_path, path, citation):
+    artifact = tmp_path / path
+    artifact.parent.mkdir(parents=True, exist_ok=True)
+    artifact.write_text(citation, encoding="utf-8")
+    result = runtime_judge.judge(bl.load_case("incident-commander"), tmp_path,
+                                 variant="candidate_skill")
+    assert "context-preservation" in result["method_routing"]["referenced"]
+
+
+def test_method_table_ignores_unlabelled_prose():
+    assert runtime_judge._cited_methods(
+        '| Decision | Note |\n| --- | --- |\n| D1 | context-preservation |') == set()
+    assert runtime_judge._cited_methods('context-preservation was mentioned in prose.') == set()
+
+
 def test_artifact_texts_reads_beyond_the_legacy_twenty_kib_limit(tmp_path):
     artifact = tmp_path / "large.html"
     artifact.write_text("x" * 25000 + "END", encoding="utf-8")

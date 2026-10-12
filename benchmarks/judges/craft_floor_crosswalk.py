@@ -18,7 +18,6 @@ BENCHMARK_ANCHORS = {
     "SLOP-017": "CRAFT-SELECTION",
     "SLOP-018": "CRAFT-PRESS-DETENT",
     "SLOP-019": "CRAFT-TABULAR-NUMS",
-    "SLOP-026": "CRAFT-KINETIC-SPRING",
 }
 
 # SLOP ids with no craft-floor counterpart. Every emitted SLOP id must appear in
@@ -39,7 +38,6 @@ BENCHMARK_UNMAPPED = {
     "SLOP-021": "blur-as-decoration is a justification call, not a pattern",
     "SLOP-023": "font-stack taste lives in style vocabulary prose, not the floor",
     "SLOP-024": "inline hex is token-binding hygiene, enforced by verify_prototype_quality",
-    "SLOP-025": "modal necessity is a task-level judgement, prose-only",
 }
 
 

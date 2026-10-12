@@ -312,8 +312,6 @@ def _scan_markup(name: str, markup: str, out: _Findings) -> None:
     if inline_hex:
         out.add("SLOP-024", "medium", name, f"inline hex outside tokens: {inline_hex[0]}")
 
-    if re.search(r"<(?:dialog|div)[^>]*class=\"[^\"]*modal[^\"]*\"", markup, re.IGNORECASE):
-        out.add("SLOP-025", "low", name, "modal container present; confirm the task needs interruption")
 
 
 def _owning_selector(css: str, index: int) -> str:
@@ -395,9 +393,9 @@ def _scan_css(name: str, css: str, out: _Findings, *, tnum_global: bool = False)
         if not tnum_global:
             out.add("SLOP-019", "medium", name, "metric classes without tabular-nums")
 
-    if re.search(r"transition[^;{}]*ease(?:-in-out|-in|-out)?\b", css, re.IGNORECASE):
-        if not re.search(r"spring-(?:snappy|gentle|bounce)", css):
-            out.add("SLOP-026", "medium", name, "mechanical ease curve without spring token reference")
+    # Motion physics are direction-selected (CRAFT-KINETIC-SPRING is prose_only):
+    # a spring token is neither required nor sufficient, so no deterministic
+    # rule fires on ease curves — motion fit is judged by the taste judge.
 
 
 def _scan_document(markup_by_file: dict, all_css: str, out: _Findings) -> None:

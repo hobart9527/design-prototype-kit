@@ -177,6 +177,11 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
             unverified.append(f"{run.get('case_id')}/{run.get('variant')}: task behaviour unverified")
         if (run.get("semantic") or {}).get("hard_gate") == "unverified":
             unverified.append(f"{run.get('case_id')}/{run.get('variant')}: semantic judge unverified")
+        for check in (run.get("runtime") or {}).get("checks") or []:
+            if check.get("status") == "unknown":
+                unverified.append(f"{run.get('case_id')}/{run.get('variant')}: runtime {check['id']} unknown")
+        if (run.get("taste") or {}).get("status") != "judged":
+            unverified.append(f"{run.get('case_id')}/{run.get('variant')}: visual taste not measured")
 
     # Which arm tripped a hard gate, so the top-level status can say what it is
     # about. A gate on the *control* arm is a broken control, not a candidate
@@ -247,7 +252,7 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         "cases": sorted({r.get("case_id") for r in runs}),
         "variants": variants,
         "runs": [{k: r.get(k) for k in ("case_id", "variant", "repeat", "status", "metrics", "notes",
-                                        "session_fidelity")} for r in runs],
+                                        "session_fidelity", "evaluation_provenance")} for r in runs],
         "hard_gates": hard_gates,
         "per_variant": per_variant,
         "provenance": _provenance(runs),
@@ -297,6 +302,18 @@ def render_markdown(report: dict) -> str:
             lines.append(f"- missing: {', '.join(provenance['missing'])}")
         lines.append(f"- source identity (sha256 of candidate Skill/agent files): "
                      f"{', '.join(provenance.get('source_identity') or []) or 'unknown'}")
+    evaluations = [r for r in report.get("runs", []) if r.get("evaluation_provenance")]
+    if evaluations:
+        lines += ["", "## Evaluation provenance", "",
+                  "Generation provenance above is unchanged by rejudging; judge revisions are recorded separately."]
+        for run in evaluations:
+            evaluation = run["evaluation_provenance"]
+            sources = evaluation.get("judge_sources") or {}
+            lines.append(f"- {run['case_id']}/{run['variant']}/run{run['repeat']}: "
+                         f"{evaluation.get('mode')} at {evaluation.get('evaluated_at')}; "
+                         f"judges sha256={sources.get('aggregate_sha256')}; "
+                         f"runner sha256={sources.get('runner_sha256')}; "
+                         f"retained (not rerun)={evaluation.get('retained_evidence') or []}")
     lines += ["", "## Per variant", "",
               "| variant | runs | completed | blocked | partial | task success | method recall | semantic pass/fail/unverified | turns | cost USD |",
               "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
