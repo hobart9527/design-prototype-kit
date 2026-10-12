@@ -19,6 +19,15 @@ open alternatives only when a consequential choice is genuinely unresolved.
      assign concrete **seeds** (种子), and ensure directions differ in underlying chassis, mental model, information topology,
      or task pacing (e.g. *Dense Matrix vs. Progressive Disclosure*, or *Conversational Prompting vs. Direct Visual Manipulation*).
      Two restylings or color variants of one spatial layout is an invalid pseudo-direction.
+   - **The divergence record is a structured `### Divergence` section, not prose scattered through the brief.**
+     In Turn 1, before the Resume block, run the six-step Divergence Generator
+     ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4) and record its four anchors as one checkable block in the design record
+     (the slice's `briefs/<slice>.md` on a layered tree, `prototype/discussion.md` otherwise):
+     1. `rut:` — one sentence naming the category's default surface.
+     2. Three lifeworld candidates, each naming its world and organising principle.
+     3. `### Divergence seeds` — drawn, not chosen: `python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --record <the slice's record> --write` (a Turn 1 default step, not an optional one; when the record cannot take the block it prints, record by hand).
+     4. `verdict: axes=[structure, <second axis>]` — the two-axis gate with Structure mandatory; then a per-candidate `challenger: fused(<technique>)` or `challenger: refused(<reason>)` line.
+     `check_divergence.py --records <files>` verifies these anchors exist; a Turn 1 exit with the section absent is an incomplete divergence record.
    - For each direction, articulate:
      1. The organizing principle and primary entity.
      2. What becomes effortless, and what trade-off or learning curve is accepted.
@@ -209,7 +218,10 @@ Decisions and authority table, and Five Axes calibration.
 ## Exit
 
 A design brief answers the current question and clearly separates facts, decisions,
-proposals, and open risks. **Turn 1 ends here, at the Resume block**: Stage 2 opens in
+proposals, and open risks, and it carries a complete `### Divergence` record (rut,
+three lifeworld candidates, drawn `### Divergence seeds`, two-axis verdict naming
+Structure) — `python3 skills/spec-prototype/scripts/check_divergence.py --records <files>`
+reports a missing anchor, and an absent section is an incomplete Turn 1. **Turn 1 ends here, at the Resume block**: Stage 2 opens in
 the next turn to explore 2–3 distinct visual and structural directions through rapid
 prototyping, without waiting on pre-spec locks. Write no `tokens.css`, HTML or evidence
 in this turn — the Resume block is recovery context for the next turn, not an approval

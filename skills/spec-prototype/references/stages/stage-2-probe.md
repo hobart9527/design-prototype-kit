@@ -36,11 +36,22 @@ The path is visual-first:
    directions share the same region skeleton, the prose verdict was not delivered.
 2. **Author 2 distinct directions in physical slots**
    (`prototype/experiments/<slice_id>/dirs/a/index.html` and `dirs/b/index.html`).
+   Each slot is a minimal skeleton — its region structure, reading order, and one
+   live interaction of its organising principle — not a full page. Two full pages
+   double the Make cost and are not what the comparison needs; two empty prose
+   directions make the two-axis verdict a claim instead of an observation.
    Keep layout and styling independent without file collision.
 3. **Author tokens**: Directly write or adjust `prototype/shared/tokens.css` (or local directional tokens)
-   to calibrate theme, contrast, and layout rhythm. tokens.css 的首次写入在本 Stage（Turn 2），位于 Make 之前、由设计记录中 `proposed` 的 token 决策驱动，不属 Turn 1。探索期直写属正常路径；Stage 5 编译前须把最终值回写 world.md（或 discussion.md），编译随后重写 tokens.css 并以 sha256 封存，否则编译覆盖手写值。
+   to calibrate theme, contrast, and layout rhythm. The authoring format (the three blocks and
+   the confirmed-section discipline) lives in
+   [`../../templates/world.tokens.example.md`](../../templates/world.tokens.example.md) — copy and edit it;
+   never read `compile_tokens.py` source to learn the format. tokens.css 的首次写入在本 Stage（Turn 2），位于 Make 之前、由设计记录中 `proposed` 的 token 决策驱动，不属 Turn 1。探索期直写属正常路径；Stage 5 编译前须把最终值回写 world.md（或 discussion.md），编译随后重写 tokens.css 并以 sha256 封存，否则编译覆盖手写值。
    对比度预检用一条命令批量完成，不要逐对调用、也不要用 `&&`/`;`/管道串联（hook 只放行单条命令）：`node skills/spec-prototype/scripts/wcag-check.js --on <bg-hex> <fg-hex> [<fg-hex> ...]`，或 `<fg> <bg> <fg> <bg> …` 成对形式；输出一个 JSON 数组。
-4. **Capture & inspect**: Capture rendered views via `node skills/spec-prototype/scripts/capture.mjs`.
+4. **Capture & inspect**: One bounded verification trip via
+   `node skills/spec-prototype/scripts/verify.mjs <url> --out prototype/evidence --artifact <file> --turn 2`
+   (capture → detect → budget in one command; see
+   [`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md)).
+   Or capture alone via `node skills/spec-prototype/scripts/capture.mjs`.
    页面状态由 `data-state` 属性导出作为可观测出口，capture 状态确认以它为准。无浏览器运行时环境时，Turn 1/2 出口为 `PARTIAL` + `visual_evidence: unverified`，前向引用 Stage 4 进行静态或后续补验。
    Inspect the structured `diagnostics_summary` returned directly in stdout:
    verify zero horizontal overflow (`horizontal_overflow: false`), styles applied (`stylesheets_applied: true`),
@@ -101,7 +112,7 @@ failing a hard floor is a bug with a nice surface, not a candidate.
 The main designer holds itself to the same bounds a dispatch would have imposed:
 
 - Author one self-contained HTML/CSS/JS page (`experiments/.../anchor/index.html` or `dirs/{a,b,c}/index.html`).
-- **Write iteratively.** Write the structural skeleton first (doctype, token `<link>`, landmark elements, containers), then flesh out content and interaction.
+- **Write whole files.** Author each prototype file (`index.html`, `anchor.css`, `anchor.js`) in one `Write` call. Split the triad by file responsibility (structure / style / behaviour) so each file stays one coherent pass, rather than building one file through repeated fragment `Edit`s. Design records (`truth.md`, `world.md`, `briefs/<slice>.md`) are likewise written whole, not patched paragraph by paragraph.
 - Capture real viewport evidence via `node skills/spec-prototype/scripts/capture.mjs`.
 - Mechanical fixes to a broken render are made directly in place. Unbounded filesystem roaming and CSS ping-pong tuning are avoided.
 
