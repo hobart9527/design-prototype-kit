@@ -97,10 +97,11 @@ These are content invariants, not CSS patterns. They are judged against the brie
 and the request, so they register as `prose_only` with the reason on record rather
 than as a silent gap.
 
-- **Entity grounding** `INV-ENTITY-GROUNDING`: every surface, object and
-  integration is grounded in a domain entity the brief actually names. No
-  fabricated lateral domains, billing, scheduling, or notification channels
-  invented to fill a section.
+- **Entity grounding** `INV-ENTITY-GROUNDING`: every surface, object,
+  integration and promised capability is grounded in what the brief actually names. No
+  fabricated lateral domains, billing, scheduling, notification channels, or unprompted
+  technical capabilities (such as cryptographic immutability, automated root cause analysis,
+  or zero-loss guarantees) invented in prose or design thesis.
 - **Historical fidelity** `INV-HISTORICAL-FIDELITY`: a declared irreversible
   history (an outage that could not be rolled back, a destructive act with no
   undo) is never retroactively negated. Recovery applies only to prospective,

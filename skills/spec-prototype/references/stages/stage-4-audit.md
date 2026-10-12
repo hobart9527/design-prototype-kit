@@ -171,6 +171,8 @@ evidence for `Validated` authority status. Record explicitly in the design recor
 A source-code inspection of HTML/CSS is NOT a substitute for rendered visual
 evidence; inferring visual quality from markup is a fabrication, not a finding.
 
+**Test & verification honesty**: Never claim interactive, end-to-end, or automated test passes (e.g. "Playwright 实测", "端到端实测", "脚本在 /tmp 不入库") unless concrete test scripts and execution logs are physically persisted under `prototype/evidence/` with passing receipts recorded in `handoff-manifest.json`. Asserting test verification without durable on-disk receipts is forbidden evidence fabrication.
+
 **Manifest cross-check (machine-checkable)**: before the receipt asserts any
 visual verdict, reconcile it against `handoff-manifest.json` field by field. If
 `metadata.status` is `capture_failed`, or any `viewport_metrics.*.stylesheets_applied`

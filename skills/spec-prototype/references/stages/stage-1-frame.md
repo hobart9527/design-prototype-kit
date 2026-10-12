@@ -35,8 +35,13 @@ open alternatives only when a consequential choice is genuinely unresolved.
      carried forward`, NEVER as `approvals preserved` or claimed as approved. When user
      injected input introduces new intents (e.g. "needs emergency abort and rollback"),
      the user intent is explicit fact, but the concrete derived mechanism parameters
-     (e.g. a specific "5-minute undo window" or wizard steps) remain `derived` / `provisional`
-     and must NEVER be promoted to a user `confirmed` decision.
+     (e.g. a specific "5-minute undo window", wizard steps, or derived UI rules like "零长列表") remain `derived` / `provisional`
+     and must NEVER be promoted to a user `confirmed` decision. When stating confirmed decisions
+     in prose or briefs (`confirmed` or "用户已确认/用户已显性确认"), bound the statement strictly
+     to what the user explicitly confirmed; NEVER bundle derived parameters into the confirmed clause.
+     In THESIS, OWN-WORLD, and STORY, describe visual metaphor, spatial chassis, and interaction
+     ergonomics — NEVER invent unrequested technical capabilities (e.g. "不可篡改的时间线", "实时全量同步",
+     "自动根因分析") that the brief did not request and the prototype does not implement.
    - The user's choice of direction is the consequential decision this round exists
      to produce. When evidence already predetermines the direction (an explicit extension
      of an existing surface, a settled convention, or an explicit user delegation),

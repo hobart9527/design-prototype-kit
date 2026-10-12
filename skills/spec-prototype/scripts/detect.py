@@ -259,9 +259,9 @@ RULES: dict[str, dict] = {
     # mechanization has a mount point. They are content invariants, not CSS
     # patterns: a text scan cannot judge whether a capability is fabricated.
     "INV-ENTITY-GROUNDING": {
-        "prose": "every surface, object and integration is grounded in a domain entity the brief actually names; no fabricated lateral domains, billing, scheduling or notification channels",
+        "prose": "every surface, object, integration and promised capability is grounded in what the brief actually names; no fabricated lateral domains, billing, scheduling, notification channels or unprompted technical capabilities",
         "kind": "prose_only",
-        "why": "grounding is judged against the brief's entity list, not an artifact pattern",
+        "why": "grounding is judged against the brief's entity list and scope, not an artifact pattern",
     },
     "INV-HISTORICAL-FIDELITY": {
         "prose": "declared irreversible history is never retroactively negated; recovery applies only to prospective in-flight operations",
