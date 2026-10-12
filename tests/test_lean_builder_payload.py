@@ -18,9 +18,6 @@ sys.path.insert(0, str(SCRIPTS))
 import assemble_envelope  # noqa: E402
 from test_platform_envelope import build_canonical_repo, build_repo, write  # noqa: E402
 
-RETIRED = ("legacy six-piece input (product.md device-context / r1.md language and methods): "
-           "the canonical fixture does not author it; see lint-six-piece retirement")
-
 IR_FIELDS = (
     "identity",
     "semantic_contract",
@@ -85,13 +82,6 @@ SLICE = "cluster-overview"  # the slice the canonical fixture compiles
 
 def assemble(root: Path) -> dict:
     return assemble_envelope.assemble(root, SLICE)
-
-
-def with_device(root: Path, device: str) -> None:
-    product = root / "prototype/product.md"
-    text = product.read_text(encoding="utf-8")
-    replacement = f"device-context: {device}\n" if device else ""
-    product.write_text(text.replace("device-context: desktop\n", replacement), encoding="utf-8")
 
 
 def viewport_widths(env: dict) -> list:
@@ -164,32 +154,6 @@ def test_payload_preserves_dispatch_critical_identity(tmp_path):
     assert payload["target_html_path"] == env["target_html_path"]
 
 
-@pytest.mark.skip(reason=RETIRED)
-def test_authored_content_language_reaches_the_payload_root(tmp_path):
-    env = assemble(build_canonical_repo(tmp_path))
-    payload = assemble_envelope.build_builder_payload(env)
-    assert payload["content_language"] == env["content_language"]
-    assert payload["content_language"]["tag"] == "en-US"
-    assert "content_language" not in payload.get("debug_context", {})
-
-
-@pytest.mark.skip(reason=RETIRED)
-def test_content_language_annotation_is_tolerated(tmp_path):
-    root = build_canonical_repo(tmp_path)
-    spec = root / f"prototype/specifications/{SLICE}/r1.md"
-    spec.write_text(
-        spec.read_text(encoding="utf-8").replace(
-            "- Content language: en-US", "- Content language (locked): en-US"),
-        encoding="utf-8")
-    contract = root / f"prototype/contracts/slices/{SLICE}/c1.md"
-    contract.write_text(
-        contract.read_text(encoding="utf-8").replace(
-            "- Content language: en-US", "- Content language (locked): en-US"),
-        encoding="utf-8")
-    env = assemble(root)
-    assert env["content_language"]["tag"] == "en-US"
-
-
 def test_topology_and_interaction_contracts_are_readable(tmp_path):
     env = assemble(build_canonical_repo(tmp_path))
     payload = assemble_envelope.build_builder_payload(env)
@@ -199,24 +163,6 @@ def test_topology_and_interaction_contracts_are_readable(tmp_path):
     debug = assemble_envelope.build_builder_payload(env, include_debug=True)["debug_context"]
     for field in ("topology_context", "interaction_spec"):
         assert field not in debug
-
-
-@pytest.mark.skip(reason=RETIRED)
-def test_slim_methods_ride_along_without_verbose_guidance(tmp_path):
-    root = build_canonical_repo(tmp_path)
-    spec = root / f"prototype/specifications/{SLICE}/r1.md"
-    spec.write_text(
-        spec.read_text(encoding="utf-8")
-        + "- Methods applied: form-ergonomics, context-preservation\n",
-        encoding="utf-8")
-    env = assemble(root)
-    payload = assemble_envelope.build_builder_payload(env)
-    # Only the Spec-declared methods reach the Builder, carrying slim metadata.
-    assert {m["id"] for m in payload["active_methods"]} == {"form-ergonomics", "context-preservation"}
-    assert len(payload["active_methods"]) == len(env["active_methods"])
-    for method in payload["active_methods"]:
-        assert set(method) == set(SLIM_METHOD_FIELDS)
-        assert "actionable_guidance" not in method
 
 
 def test_undeclared_spec_activates_no_method(tmp_path):
@@ -241,40 +187,6 @@ def test_output_file_carries_the_lean_payload(tmp_path, monkeypatch, capsys):
     assert "open_design_space" in data
     assert "creative_envelope" not in data
     assert "constraint_envelope" not in data
-
-
-# CPC: mandatory viewports derive from the authored device fact, not a fixed pair.
-
-@pytest.mark.skip(reason=RETIRED)
-def test_desktop_device_inspects_the_desktop_canvas_only(tmp_path):
-    root = build_canonical_repo(tmp_path)
-    with_device(root, "desktop")
-    env = assemble(root)
-    assert viewport_widths(env) == [1280]
-
-
-@pytest.mark.skip(reason=RETIRED)
-def test_mobile_device_inspects_the_somatic_viewport_only(tmp_path):
-    root = build_canonical_repo(tmp_path)
-    with_device(root, "mobile")
-    env = assemble(root)
-    assert viewport_widths(env) == [390]
-
-
-@pytest.mark.skip(reason=RETIRED)
-def test_tablet_device_inspects_the_tablet_viewport(tmp_path):
-    root = build_canonical_repo(tmp_path)
-    with_device(root, "tablet")
-    env = assemble(root)
-    assert viewport_widths(env) == [768]
-
-
-@pytest.mark.skip(reason=RETIRED)
-def test_undeclared_device_keeps_both_extremes(tmp_path):
-    root = build_canonical_repo(tmp_path)
-    with_device(root, "")
-    env = assemble(root)
-    assert viewport_widths(env) == [1280, 390]
 
 
 # T-02: authored verification viewports own the inspection set; the device

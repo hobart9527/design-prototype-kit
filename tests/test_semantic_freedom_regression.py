@@ -35,7 +35,6 @@ SLICE = "console"
 # --- seam 1: token compilation stays neutral ---------------------------------
 
 
-RETIRED_SIX_PIECE = "legacy six-piece envelope input: lint_spec_contracts() is retired; canonical IR is the only contract"
 
 def test_token_compilation_stays_neutral_without_authored_dials():
     tokens = compile_tokens.compute_tokens({})
@@ -63,72 +62,6 @@ def test_token_compilation_stays_neutral_without_authored_dials():
 def _write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
-
-
-def _formal_repo(tmp_path: Path, *, baseline: str) -> Path:
-    """A complete Stage 1 contract set; no field is invented by the compiler."""
-    write = _write
-    write(tmp_path / "prototype/product.md",
-          "# Product Thesis: Console\n\n"
-          "- Reality Anchors: Linear, Stripe Dashboard\n"
-          "- Core Tension: Operational Density vs Reading Calm\n"
-          f"- Dominant Baseline: {baseline}\n- Status: candidate\n\n"
-          "```prototype-context\nrecord: product\ntarget-context: unknown\n"
-          "device-context: desktop\ninput-context: pointer-and-keyboard\n```\n")
-    write(tmp_path / "prototype/contracts/surface-maps/m1.md",
-          "# Product Surface Map\n\n- Surface Map revision: r7 (draft)\n\n"
-          "```prototype-context\nrecord: surface-map\nrevision: r7\ncoverage: selected\n"
-          "selection-source: prototype/discussion/scope-r7.md\n"
-          "surfaces: S1-feed, S2-detail, S3-compose\n"
-          "selected-surfaces: S1-feed, S2-detail, S3-compose\n```\n")
-    write(tmp_path / "prototype/contracts/foundation/f1.md",
-          "# Experience Foundation\n\n```prototype-context\nrecord: experience-foundation\n"
-          "invariants: object-identity, permission-scope, selected-context, required-return\n```\n")
-    write(tmp_path / "prototype/contracts/tokens/t1.md",
-          "# Token Revision: t1\n\n- Token source: authored\n")
-    write(tmp_path / "prototype/shared/tokens.css",
-          ":root {\n  --surface-bg: #101418;\n  --text-primary: #e6edf3;\n}\n")
-    write(tmp_path / f"prototype/contracts/slices/{SLICE}/c1.md",
-          f"# Prototype Slice Contract: {SLICE}\n\n- Slice ID: {SLICE}\n"
-          "- Content language: en-US\n\n## Action Verb Lifecycle Table\n\n"
-          "| Action ID | Trigger Button Label | Modal / Drawer Header | Commit Action Button |"
-          " Completion Feedback Toast | Impact |\n"
-          "|---|---|---|---|---|---|\n"
-          "| act-1 | Retry | Retry sync | Retry | Sync retried | Requeues work |\n")
-    write(tmp_path / f"prototype/specifications/{SLICE}/r1.md",
-          f"# Prototype Specification: {SLICE} / r1\n\n"
-          f"- Prototype write scope: prototype/experiments/{SLICE}/anchor/\n"
-          f"- Evidence write scope: prototype/evidence/probes/{SLICE}/\n"
-          "- Content language: en-US\n\n## Verifiable Design Assertions\n\n"
-          "| Assertion | Expected | Status |\n|---|---|---|\n"
-          "| Header renders | visible | unverified |\n\n"
-          "## The Break Protocol Stress Checkpoints\n\n"
-          "| Checkpoint | Vector | N/A rationale |\n|---|---|---|\n"
-          "| Refresh | reload | not applicable to anchor |\n\n"
-          "```prototype-context\nrecord: prototype-specification\n"
-          "prototype-medium: HTML\nverification-environment: headless-chromium-120\n```\n")
-    return tmp_path
-
-
-@pytest.mark.skip(reason=RETIRED_SIX_PIECE)
-def test_envelope_offers_advisory_candidates_without_locking_a_profile(tmp_path):
-    root = _formal_repo(tmp_path, baseline="Baseline 2: SaaS Commerce")
-    env = assemble_envelope.assemble(root, SLICE)
-    assert env["selected_pattern"] is None  # category alone is not a confirmation
-    assert env["candidate_patterns"]  # advisory, ordered
-    assert "operational-canvas" in env["candidate_patterns"]
-    assert env["platform"]["target_context"] == "unknown"  # unknown survives the envelope
-
-
-@pytest.mark.skip(reason=RETIRED_SIX_PIECE)
-def test_an_authored_pattern_is_the_only_selection_route(tmp_path):
-    root = _formal_repo(tmp_path, baseline="Baseline 2: SaaS Commerce")
-    spec = root / f"prototype/specifications/{SLICE}/r1.md"
-    spec.write_text(spec.read_text(encoding="utf-8") + "\n- Layout Profile: editorial-reading\n",
-                    encoding="utf-8")
-    env = assemble_envelope.assemble(root, SLICE)
-    assert env["selected_pattern"] == "editorial-reading"
-    assert "operational-canvas" in env["candidate_patterns"]  # alternatives stay visible
 
 
 # --- seam 3: builder contract bounded by five integrity categories -----------

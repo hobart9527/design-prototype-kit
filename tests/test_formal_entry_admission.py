@@ -118,18 +118,6 @@ def refusal(root: Path, rule: str) -> str:
 
 # CPC-SCN-018: full-product authorizes every applicable surface, not a widened selection.
 
-@pytest.mark.skip(reason="legacy six-piece envelope path retired with lint_spec_contracts() (plan G1)")
-def test_full_product_with_empty_selection_targets_every_surface(tmp_path):
-    root = build_repo(tmp_path, coverage="full-product", selection="")
-    env = assemble_envelope.assemble(root, SLICE)
-    assert env["coverage"]["authorizes_full_product"] is True
-    assert env["coverage"]["coverage"] == "full-product"
-    assert env["coverage"]["target_surfaces"] == SURFACES
-    assert env["coverage"]["unselected_surfaces"] == []
-    # The authorization names no individual surface, so none is reported as widened.
-    assert not [f for f in env["contract_lint"] if f["code"] == "E011_SELECTION_WIDENED"]
-
-
 def test_full_product_identity_mismatch_is_refused_too(tmp_path):
     root = build_repo(tmp_path, coverage="full-product", selection="",
                       retained_identity="- Surface Map revision: r6\n")
@@ -149,22 +137,7 @@ def test_selected_map_naming_a_surface_outside_the_map_still_fails(tmp_path):
     refusal(root, "E014_SELECTION_INVALID")
 
 
-@pytest.mark.skip(reason="legacy six-piece envelope path retired with lint_spec_contracts() (plan G1)")
-def test_selected_targets_stay_bounded_by_the_selection(tmp_path):
-    root = build_repo(tmp_path)
-    env = assemble_envelope.assemble(root, SLICE)
-    assert env["coverage"]["target_surfaces"] == ["S1-feed", "S2-detail", "S3-compose"]
-    assert len(env["coverage"]["unselected_surfaces"]) == 7  # context retained, not targeted
-
-
 # CPC-SCN-019: the retained selection's map identity gates the dispatch.
-
-@pytest.mark.skip(reason="legacy six-piece envelope path retired with lint_spec_contracts() (plan G1)")
-def test_matching_retained_map_revision_passes(tmp_path):
-    root = build_repo(tmp_path, retained_identity="- Surface Map revision: r7\n")
-    env = assemble_envelope.assemble(root, SLICE)
-    assert env["coverage"]["target_surfaces"] == ["S1-feed", "S2-detail", "S3-compose"]
-
 
 def test_changed_map_revision_fails_with_the_specific_mismatch(tmp_path):
     root = build_repo(tmp_path, retained_identity="- Surface Map revision: r6\n")
@@ -182,14 +155,6 @@ def test_changed_map_digest_fails_with_the_specific_mismatch(tmp_path):
     assert "digest" in message and actual in message and retained not in message
 
 
-@pytest.mark.skip(reason="legacy six-piece envelope path retired with lint_spec_contracts() (plan G1)")
-def test_matching_retained_map_digest_passes(tmp_path):
-    root = build_repo(tmp_path, retained_identity=(
-        "- Surface Map revision: r7\n- Surface Map digest: sha256:{digest}\n"))
-    env = assemble_envelope.assemble(root, SLICE)
-    assert env["coverage"]["authorizes_full_product"] is False
-
-
 def test_lint_reports_identity_without_rewriting_the_map(tmp_path):
     root = build_repo(tmp_path, retained_identity="- Surface Map revision: r6\n")
     before = snapshot(root)
@@ -197,11 +162,3 @@ def test_lint_reports_identity_without_rewriting_the_map(tmp_path):
     stale = [f for f in failures if f.rule == "E010_STALE_CONTRACT"]
     assert stale and stale[0].file_path == "m1.md"
     assert_unchanged(root, before)
-
-
-@pytest.mark.skip(reason="legacy six-piece envelope path retired with lint_spec_contracts() (plan G1)")
-def test_a_selection_record_silent_about_identity_adds_no_refusal(tmp_path):
-    """A legacy selection source that names no revision is read, never invented."""
-    root = build_repo(tmp_path, retained_identity="- Requested scope: review subset\n")
-    env = assemble_envelope.assemble(root, SLICE)
-    assert env["coverage"]["target_surfaces"] == ["S1-feed", "S2-detail", "S3-compose"]
