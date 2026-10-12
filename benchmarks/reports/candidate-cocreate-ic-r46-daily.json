@@ -1,0 +1,182 @@
+{
+  "run_id": "candidate-cocreate-ic-r46",
+  "suite": "daily",
+  "generated_at": "20261012_154637",
+  "status": "REGRESSION",
+  "status_divergence": "hard gate tripped on candidate_skill while the paired verdict is INCONCLUSIVE: the gate is absolute and fires on the artifacts themselves, while the paired verdict only compares the candidate against the control, so both stand.",
+  "hard_gate_arms": [
+    "candidate_skill"
+  ],
+  "cases": [
+    "incident-commander"
+  ],
+  "variants": [
+    "candidate_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "incident-commander",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 10,
+        "elapsed_seconds": 2999.34,
+        "cost_usd": 30.7933
+      },
+      "notes": [
+        "session PARTIAL: turn 10 timeout: timeout after 367s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "b7b94bd8-bcd6-44f3-afdf-d32b7f9e7ecb",
+        "workspace": "/tmp/design-bench/incident-commander/candidate_skill/20261012_145116-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261012_154637",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "5448432352efcbccb1cf2c16eb898ee6c26d556772c704210616d9c770286d2f",
+          "files": {
+            "cocreation_judge.py": "312c926bfae45923b64cf99461e7ba8a26aa1fa5324cbe078a232cd3e25d30a4",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "2274dfb87fc2824305c3c87729bd40f1c31b189a3b14f6ac7d548e5fd82cdaf5",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "828bf3c4dd6d4042302504243b6f9fbbf61933970274cd34ab5b918a94322db1",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "375fbb9c9bf48d941d3eb625f432bc8483d9035d9ddd889c7f5129375d7c74cc",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8f63d9c92c4509dddeb1c90686cf0889448233b92fb998d497af1d8d0204aeb8",
+            "taste_judge.py": "03d3faa20fbba65f1cf6e311685d8cd0a5c3fd688ec0527f495f290f2c7c96a8",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "1f167dc22ec4ec183ccd29292efb5585f52ec6c93fdfabdbf020d3f5fbfb18e2"
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "0b7ff8e4d13fdb9c40da9d746a70d59668573b8c16bdee592466e0404c22abd2",
+            "session-summary.json": "51e66df1f7ac907d2c346e87e55cd45ac4ff3184da32ae1f615ed05284d85c64",
+            "task-traces.json": "555e08a58d5ca5caa4a63639cf9df9e56531b4eb1d8ea2d265774f6aec0cfc91",
+            "visual-manifest.json": "ed4e1e2f20c9a5dd74022f5441495ae9f5de7b0ef6b4df31347f3621f45103a2",
+            "session-transcript.md": "ea483de7bc2c721f8733775f2ba4d6fd667b44915955ad4cd548d15fe908a381"
+          },
+          "aggregate_sha256": "fa0a76bd06b763ce64ac095ddb7f3792986ff3761be5d30e9338f53c4bfffd79",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 1,
+    "authority_escape": 0,
+    "critical_task_break": 0,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 1,
+      "blocked": 0,
+      "partial": 1,
+      "task_success_rate": 1.0,
+      "method_recall": 0.5,
+      "method_precision": 0.667,
+      "semantic_gate_pass": 0,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 10.0,
+      "cost_usd": 30.7933,
+      "elapsed_seconds": 2999.3,
+      "inline_hex_failures": 0,
+      "slop_score": 1.0,
+      "slop_high_findings": 0,
+      "taste_judged": 0,
+      "ai_slop_fail": 0,
+      "category_guessable_high": 0,
+      "first_viewport_thesis_present": 0,
+      "divergence_verdicts": [
+        "not_measured"
+      ],
+      "contract_blocks_fulfilled": null,
+      "contract_blocks_absent": null,
+      "cocreation_verdicts": [
+        "reveal_only"
+      ],
+      "cocreation_before_build": 0,
+      "cocreation_measured": 1
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 1,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "d1f98fd9c6357b0227652e7515890998c4db4da7c948e527ae8ae2bfcad0ed34"
+    ],
+    "disclosure": "all 1 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_agreement": null,
+    "pairwise_confidence_counts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "pairwise_cost_usd": 0,
+    "pairwise_cost_recorded": 0,
+    "pairwise_cost_missing": 0,
+    "pairwise_cost_total_complete": true,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "slop_rules": {
+    "candidate_skill": {
+      "SLOP-014": {
+        "count": 1,
+        "severity": "low"
+      }
+    }
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "INCONCLUSIVE",
+    "pairs_compared": 0,
+    "compared_dimensions": 0,
+    "verified_dimensions": [],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [],
+    "missing_pairs": [
+      {
+        "case_id": "incident-commander",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      }
+    ]
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "incident-commander/candidate_skill: runtime authority_status unknown",
+    "incident-commander/candidate_skill: visual taste not measured"
+  ]
+}
