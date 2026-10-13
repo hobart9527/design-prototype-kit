@@ -49,7 +49,8 @@ purpose of this stage.
    answers its own question. Recomposed structure, or an honest `PARTIAL` — a
    compressed desktop is a defect, not a pass.
 3d. **Signature-mechanism delivery**: every mechanism the proposition depends on
-   is observable in the render. Two-person control, reversibility, and audit
+   is observable in the render — the **Signature Moment** named in Stage 1 and built
+   in Stage 3, checked here under the same name. Two-person control, reversibility, and audit
    claims are checked against what the artifact actually does; an unimplemented
    promise is recorded as such rather than described as delivered.
 4. Preserve the strongest design relationship. Report only consequential findings,

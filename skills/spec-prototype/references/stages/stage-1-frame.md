@@ -170,6 +170,12 @@ The brief needs only the applicable parts of:
   rather than averaging them into one number. Never spend the signature budget on a
   surface the user visits once and never on one they visit a thousand times.
 - **Spatial anatomy** — primary surface and only context surfaces needed by this slice.
+  The OOUX cardinality you record in the entity model sets the primary surface's
+  container (`1:1` canvas, `1:N` master-detail, `N:M` board); the mapping and its
+  containers are owned by
+  [`Method 2`](../01-foundations/design-methods.md#method-2-ooux-cardinality-to-layout-mapping-pillars-object--topology)
+  and [`ia-interaction.md`](../02-craft-methods/ia-interaction.md). One line in the
+  record; do not restate the ladder here.
 - **Actions & states** — consequential task, visible result, recovery, and states needed
   to express or test it.
 - **Resilience & invariants** — only risks that could invalidate this design; distinguish
