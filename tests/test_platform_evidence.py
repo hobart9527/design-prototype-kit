@@ -258,6 +258,94 @@ def test_evidence_root_requires_the_skill_repository(tmp_path):
     assert resolved_owned == str(owned)
 
 
+def test_record_handoff_evidence_honors_explicit_manifest_option(tmp_path):
+    custom = tmp_path / "custom-handoff.json"
+    res = stub_result()
+    meta = eval_seam(
+        "cap.buildCaptureMetadata(input.result, input.options)",
+        {"result": res, "options": {"runtime": "node"}},
+    )
+    payload = {
+        "outputDir": str(tmp_path),
+        "result": res,
+        "metadata": meta,
+        "options": {"manifestPath": str(custom)},
+    }
+    recorded = eval_seam(
+        "cap.recordHandoffEvidence(input.outputDir, input.result, input.metadata, input.options)",
+        payload,
+    )
+    assert recorded["written"] is True
+    assert recorded["path"] == str(custom)
+    assert custom.exists()
+
+
+def test_capture_cli_honors_manifest_flag_and_detects_broken_css(tmp_path):
+    # HTML with 404 stylesheet
+    html_404 = tmp_path / "test-404.html"
+    html_404.write_text(
+        '<!DOCTYPE html><html><head><link rel="stylesheet" href="./missing.css"></head><body><h1>Broken</h1></body></html>',
+        encoding="utf-8",
+    )
+    out_dir = tmp_path / "out-404"
+    manifest_404 = tmp_path / "manifest-404.json"
+    res_404 = subprocess.run(
+        [
+            "node",
+            str(CAPTURE),
+            "--target",
+            html_404.as_uri(),
+            "--out",
+            str(out_dir),
+            "--viewports",
+            "390",
+            "--manifest",
+            str(manifest_404),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=NODE_TIMEOUT,
+        cwd=str(REPO_ROOT),
+    )
+    assert res_404.returncode == 0
+    parsed_404 = json.loads(res_404.stdout)
+    assert parsed_404["diagnostics_summary"]["stylesheets_applied"] is False
+    assert manifest_404.exists()
+
+    # HTML with valid stylesheet
+    css_valid = tmp_path / "valid.css"
+    css_valid.write_text("body { color: red; }", encoding="utf-8")
+    html_200 = tmp_path / "test-200.html"
+    html_200.write_text(
+        '<!DOCTYPE html><html><head><link rel="stylesheet" href="./valid.css"></head><body><h1>Styled</h1></body></html>',
+        encoding="utf-8",
+    )
+    out_200 = tmp_path / "out-200"
+    manifest_200 = tmp_path / "manifest-200.json"
+    res_200 = subprocess.run(
+        [
+            "node",
+            str(CAPTURE),
+            "--target",
+            html_200.as_uri(),
+            "--out",
+            str(out_200),
+            "--viewports",
+            "390",
+            "--manifest",
+            str(manifest_200),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=NODE_TIMEOUT,
+        cwd=str(REPO_ROOT),
+    )
+    assert res_200.returncode == 0
+    parsed_200 = json.loads(res_200.stdout)
+    assert parsed_200["diagnostics_summary"]["stylesheets_applied"] is True
+    assert manifest_200.exists()
+
+
 # --- role instruction wiring (not proof a live Critic or Builder ran) -------
 
 

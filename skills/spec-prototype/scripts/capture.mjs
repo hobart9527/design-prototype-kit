@@ -118,6 +118,11 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
       try {
         const page = await browser.newPage({ viewport: dim });
         page.on("pageerror", (err) => runtimeErrors.push(`[${prefix}] ${err.message}`));
+        const failedUrls = [];
+        page.on("requestfailed", (req) => failedUrls.push(req.url()));
+        page.on("response", (res) => {
+          if (res.status() >= 400) failedUrls.push(res.url());
+        });
         await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
         const stateConfirmation = await page.evaluate((expectedState) => {
           const declared = document.body?.dataset.state || document.documentElement.dataset.state || "";
@@ -136,7 +141,7 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
         // Viewport containment evidence: record horizontal overflow at capture
         // time so a scrollWidth > clientWidth break surfaces in the same pass
         // as the screenshot instead of only at downstream task judging.
-        const metrics = await page.evaluate(() => {
+        const metrics = await page.evaluate((failed) => {
           const de = document.documentElement;
           const smallTargets = [];
           // Record every interactive control below the task judge's default
@@ -157,12 +162,15 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
             }
           }
 
+          const failedSet = new Set(failed || []);
           let hasActiveRule = false;
           let stylesheetsApplied = false;
           let sheetsEnumerated = 0;
           try {
             for (const sheet of document.styleSheets) {
               sheetsEnumerated += 1;
+              const isFailed = sheet.href && failedSet.has(sheet.href);
+              if (isFailed) continue;
               try {
                 if (sheet.cssRules && sheet.cssRules.length > 0) {
                   stylesheetsApplied = true;
@@ -173,22 +181,14 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
                   }
                 }
               } catch (e) {
-                if (e.name === "SecurityError" || sheet.href) {
+                // If sheet.cssRules throws SecurityError due to cross-origin CORS,
+                // but the network response succeeded (not in failedSet), treat as applied.
+                if (e.name === "SecurityError" && !sheet.href?.startsWith("file:") && !isFailed) {
                   stylesheetsApplied = true;
                 }
               }
             }
           } catch {}
-          // A linked stylesheet that failed to resolve (a file:// relative path
-          // that escaped the capture origin, r40 `../../../shared/tokens.css`)
-          // leaves `document.styleSheets` empty even though the markup links
-          // one — `stylesheets_applied` then reads as "no styles" when the real
-          // defect is an unresolved path. Fall back to the link tags so the
-          // manifest names the actual failure class instead of a false "no CSS".
-          if (!stylesheetsApplied && sheetsEnumerated === 0
-              && document.querySelector('link[rel="stylesheet"]')) {
-            stylesheetsApplied = true; // stylesheet linked; path resolution is a separate defect
-          }
 
           let hasTabularNums = false;
           for (const el of document.querySelectorAll("td, th, span, div, p, code")) {
@@ -222,7 +222,7 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
             dialog_present: Boolean(document.querySelector("dialog")),
             dialog_showmodal_bound: /showModal/.test(document.documentElement.outerHTML),
           };
-        });
+        }, failedUrls);
         viewportMetrics[prefix] = metrics;
         await page.screenshot({ path: targetFile, fullPage: false });
         await page.close();
@@ -506,23 +506,27 @@ export function resolveEvidenceRoot(explicit) {
   return null;
 }
 
-function recordHandoffEvidence(outputDir, result, metadata, options = {}) {
+export function recordHandoffEvidence(outputDir, result, metadata, options = {}) {
   try {
     if (options.noManifest) return { written: false, reason: "manifest_disabled" };
-    const isProbeDir = outputDir && (outputDir.includes("/probes/") || outputDir.includes("\\probes\\"));
-    // Ad-hoc captures keep their manifest beside their screenshots, so a capture
-    // run from a sandbox never overwrites the repo's handoff manifest. Only slice
-    // handoff needs a repo root.
-    // ponytail: slice handoff still targets the repo manifest; add a --manifest flag when a non-slice handoff needs it.
     let manifestPath;
-    if (isProbeDir && !options.isSliceHandoff) {
-      manifestPath = path.join(outputDir, "capture-manifest.json");
-    } else if (options.isSliceHandoff) {
-      const repoRoot = resolveEvidenceRoot(options.repoRoot);
-      if (!repoRoot) return { written: false, reason: "no_repository_root" };
-      manifestPath = path.join(repoRoot, "prototype/evidence/handoff-manifest.json");
+    if (options.manifestPath) {
+      manifestPath = path.resolve(options.manifestPath);
     } else {
-      manifestPath = path.join(outputDir, "handoff-manifest.json");
+      const isProbeDir = outputDir && (outputDir.includes("/probes/") || outputDir.includes("\\probes\\"));
+      // Ad-hoc captures keep their manifest beside their screenshots, so a capture
+      // run from a sandbox never overwrites the repo's handoff manifest. Only slice
+      // handoff needs a repo root.
+      // ponytail: slice handoff still targets the repo manifest unless --manifest is given.
+      if (isProbeDir && !options.isSliceHandoff) {
+        manifestPath = path.join(outputDir, "capture-manifest.json");
+      } else if (options.isSliceHandoff) {
+        const repoRoot = resolveEvidenceRoot(options.repoRoot);
+        if (!repoRoot) return { written: false, reason: "no_repository_root" };
+        manifestPath = path.join(repoRoot, "prototype/evidence/handoff-manifest.json");
+      } else {
+        manifestPath = path.join(outputDir, "handoff-manifest.json");
+      }
     }
     if (!fs.existsSync(path.dirname(manifestPath))) {
       fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
@@ -550,6 +554,7 @@ async function main() {
   let states = ["default"];
   let viewportsExplicit = false;
   let statesExplicit = false;
+  let customManifest = null;
   let noManifest = false;
   let isSliceHandoff = false;
   let targetPath = null;
@@ -628,6 +633,8 @@ async function main() {
     } else if (args[i] === "--states" || args[i] === "-s") {
       states = (args[++i] || "").split(",").map((s) => s.trim()).filter(Boolean);
       statesExplicit = true;
+    } else if (args[i] === "--manifest" || args[i] === "-m") {
+      customManifest = args[++i] || null;
     } else if (args[i] === "--no-manifest") {
       noManifest = true;
     } else if (!url && !args[i].startsWith("-")) {
@@ -674,6 +681,7 @@ async function main() {
       repoRoot,
       noManifest,
       isSliceHandoff,
+      manifestPath: customManifest,
     });
     const diagnostics_summary = {
       status: result.status,
