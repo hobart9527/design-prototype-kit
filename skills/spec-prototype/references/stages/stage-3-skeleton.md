@@ -83,7 +83,7 @@ Before authoring prototype HTML and CSS, apply these non-negotiable floor rules 
 - **Row rails live on the state, not the base** (`CRAFT-ROW-RAIL`): a row-level status rail is declared only on the state variant (`.row[data-st="pending"] { border-left: 3px solid var(--status-warning) }`) or as `box-shadow: inset 3px 0 0 var(--x)`. Do not reserve it on the base class with `border-left: 3px solid transparent`; reserve the width with `padding-left` instead.
 - **No bare ordinal headings**: a section heading is a name, not `01`/`14`; number only a real sequence the user steps through.
 - **Build discipline**: write each file completely, and use targeted `Edit` for local repairs; split by file responsibility (`index.html` structure + `anchor.css` + `anchor.js`), ensuring `index.html` contains authentic initial domain entities directly in markup. Run `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <the declared viewports>` once to verify rendering and inspect `diagnostics_summary` in stdout. Zero in-console/in-page runtime errors is required — fix any syntax or reference errors immediately.
-- **Verification reuse first.** Verify with capture.mjs, detect.py and the browser tools before writing any check. A throwaway script for a specific question is allowed in `/tmp`; it is not an artifact and not evidence unless its output is persisted under `prototype/evidence/` and recorded in the manifest. Fix verified issues in place rather than cycling CSS trial-and-error.
+- **Verification reuse first** — see [`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md) "Anti-patterns".
 
 ## Compression & Release
 

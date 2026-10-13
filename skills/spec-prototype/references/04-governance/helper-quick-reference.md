@@ -20,3 +20,4 @@ One line per helper. The hook admits only installed helpers in `skills/spec-prot
 - Trial-and-error CSS micro-edits and iterative re-captures → inspect `diagnostics_summary` in `capture.mjs` output once, fix in place.
 - Ignoring JS errors in `runtime_errors` → a JS runtime error breaks DOM rendering and task traces; fix before claiming completion.
 - Fragment edits into design records or prototypes → author whole files with `Write`.
+- Writing a new check instead of reusing an installed one → verify with `capture.mjs`, `detect.py` and the browser tools first. A throwaway script in `/tmp` for one specific question is allowed, but it is not an artifact and not evidence unless its output is persisted under `prototype/evidence/` and recorded in the manifest.

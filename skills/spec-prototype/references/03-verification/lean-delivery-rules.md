@@ -46,7 +46,12 @@ User inputs supply intent, but derived implementation parameters (e.g. exact tim
 
 ## Receipt & Verification Honesty (物理收据与度量真值对齐)
 
-Reconcile verification claims against `handoff-manifest.json` field by field. Quote exact recorded counts (touch target counts, overflow, stylesheet status) faithfully — NEVER deny, misrepresent, or claim runner defects to contradict recorded manifest metrics (e.g. never claim touch target count is 0 when manifest records 3; explain desktop pointer density vs touch target floor honestly instead). If `diagnostics_summary.runtime_errors` contains any JavaScript runtime error (ReferenceError, TypeError, SyntaxError), the prototype is broken: do NOT report `runtime_errors: []` or claim visual/interactive passes while errors are present; fix the code immediately. If screenshot capture reports runtime failures, `stylesheets_applied: false`, or pending review, state `visual_evidence: unverified` / `PARTIAL` honestly; never assert visual passes or fabricate rendered observations from unrendered artifacts. Never claim automated, interactive, or Playwright test passes (e.g. "Playwright 实测", "端到端实测", "脚本在 /tmp 不入库") unless test scripts and execution logs are physically persisted in `prototype/evidence/` with passing receipts recorded in `handoff-manifest.json`. Asserting test verification without durable on-disk receipts is forbidden evidence fabrication.
+The reconcile rules are owned by
+[`../stages/stage-4-audit.md`](../stages/stage-4-audit.md) "Manifest cross-check" —
+read it there and apply it here. In one line: quote recorded manifest counts as
+recorded, downgrade to `visual_evidence: unverified` / `PARTIAL` when capture failed
+or `stylesheets_applied: false`, and never claim an automated or interactive test pass
+without scripts and logs physically persisted under `prototype/evidence/`.
 
 ## Bounded Lifecycle Closure (生命周期终态封闭)
 

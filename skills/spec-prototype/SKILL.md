@@ -132,14 +132,15 @@ YAML blocks that fail closed. Registry and field specs live in [`machine-contrac
 ## Craft Standards & Non-Negotiable Floors
 
 Make every surface feel intentionally authored for this specific problem space.
-[`craft-floor.md`](references/02-craft-methods/craft-floor.md) owns the hard floors:
-1. **Perceptible `:active` press feedback** on commit controls (the detent is the floor; its easing is direction-selected).
-2. **Concentric nested radii geometry** ($R_{in} = \max(0, R_{out} - P)$ with 1px tolerance).
-3. **Tabular numerals** (`font-variant-numeric: tabular-nums`) for changing or column-aligned numbers.
-4. **Action Safety & Reversible Loop**: Destructive or high-consequence actions must show consequences *before* commit, update to explicit status feedback *after* commit (`已完成`/`处理中`/`已排空`), and provide a discoverable exit or undo route (`撤销`/`回滚`) on the same surface.
-5. **Modern Material Sheen & Kinetic Spring** (direction-selected techniques, advisory — not floors): choose optical character and motion from the task and committed direction; sheen and spring are optional, and flat surfaces or instant changes are valid. Theme browser surfaces (`caret-color`, `::selection`).
-6. **WCAG 2.2 AA contrast** (4.5:1 minimum) and truthful evidence.
-7. **Mobile touch target minimum** (44x44px tappable footprint) and safe-area insets.
+[`craft-floor.md`](references/02-craft-methods/craft-floor.md) owns the hard floors —
+name them here, read the rule there:
+1. Perceptible `:active` press feedback on commit controls.
+2. Concentric nested radii geometry.
+3. Tabular numerals for changing or column-aligned numbers.
+4. Action safety & reversible loop — owned by [`lean-delivery-rules.md`](references/03-verification/lean-delivery-rules.md).
+5. Direction-selected material and motion (advisory, not a floor) — owned by [`visual-craft.md`](references/02-craft-methods/visual-craft.md).
+6. WCAG 2.2 AA contrast and truthful evidence.
+7. Mobile touch target minimum and safe-area insets.
 
 On demand extensions:
 - [`mobile-ux.md`](references/02-craft-methods/mobile-ux.md): thumb-zone mechanics, bottom sheet resistance.

@@ -183,10 +183,7 @@ evidence itself (the r40 A3 class) and fails the audit. Write the reconcile line
 explicitly: `manifest: <status>, stylesheets_applied: <bool>, receipt reflects:
 <true|false>`.
 
-**Verification reuse first.** Verify with capture.mjs, detect.py and the browser
-tools before writing any check. A throwaway script in `/tmp` for a specific question
-is allowed; it is not an artifact and not evidence unless its output is persisted
-under `prototype/evidence/` and recorded in the manifest.
+**Verification reuse first** — see [`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md) "Anti-patterns".
 
 ## Independent review and repair
 
