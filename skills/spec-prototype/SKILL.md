@@ -43,11 +43,13 @@ production bug fixes, or approved code delivery under Loom (`loom delivery step`
 
 ## Design Mindset & Core Principles (主任设计师心智模型)
 
-### 1. The 70/30 Innovation Boundary & Signature Moment
-Preserve 70% familiar mental models for navigation, spatial expectations, and system metaphors
-so the user never has to re-learn basic affordances. Concentrate craft and novelty into the
-remaining 30% that resolves the slice's **Signature Moment** (the defining, memorable interaction
-that proves the product's unique value proposition).
+### 1. Familiar Conventions & Signature Moment
+Keep the user's existing mental models for navigation, spatial expectations, and
+system metaphors so no basic affordance has to be re-learned. Concentrate novelty
+on the relationships that resolve the slice's **Signature Moment** (the defining,
+memorable interaction that proves the product's unique value proposition). This is
+a heuristic, not a quota: a restrained, static, ordinary form can be the optimal
+answer when the task calls for it.
 
 ### 2. Tension Spectrum over Static Modes (连续张力谱系)
 Do NOT treat product archetypes as static template checkboxes (e.g. "dark dashboard" or "clean blog").
@@ -86,7 +88,7 @@ Turn 1: Frame & Polarized Divergence ──► Turn 2: Direct Make ──► Tur
 | Turn | Milestone & Core Deliverable | Owns |
 |---|---|---|
 | **1 · Frame & Polarized Divergence** | The core product tension plus **at least 2 structurally polarized hypotheses** labelled explicitly as **`方向 A` / `方向 B`** (differing in chassis, mental model, or operating paradigm). Present in chat dialogue: ① category rut (行业固有套路); ② candidate directions with seeds; ③ **两轴裁决** (two-axis verdict explicitly naming Structure as primary axis); ④ recommended direction with rationale; ⑤ end turn with a verbatim `USER-INPUT: <question>` line. The divergence is recorded as a structured `### Divergence` block in the design record. Unattended runs carry the recommendation as `proposed` + `provisional`, never `confirmed`. Decision status stays `proposed`/`provisional` until explicit user selection. Turn 1 output is the design record only. | [`stage-1-frame.md`](references/stages/stage-1-frame.md) |
-| **2 · Make** | A runnable anchor (`index.html` + `anchor.css` + `anchor.js`) and compiled `tokens.css`. Progressive enhancement: `index.html` must contain authentic domain entities (machines, topology, services) directly in static markup so the primary view renders reliably. Author each file in one whole `Write` (under 500 lines total). Token authoring format comes from [`world.tokens.example.md`](templates/world.tokens.example.md). Capture real viewport evidence: `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports 390,1280`. Inspect `diagnostics_summary` in stdout: zero runtime errors (`runtime_errors: []`) is a strict prerequisite — fix any JavaScript errors immediately. | [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) |
+| **2 · Make** | A runnable anchor (`index.html` + `anchor.css` + `anchor.js`) and compiled `tokens.css`. Progressive enhancement: `index.html` must contain authentic domain entities (machines, topology, services) directly in static markup so the primary view renders reliably. Author each file in one whole `Write`. No self-authored verification scripts (no `flow-check.cjs`): verification uses capture.mjs, detect.py, and browser tools. Token authoring format comes from [`world.tokens.example.md`](templates/world.tokens.example.md). Capture real viewport evidence: `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <declared>`. Inspect `diagnostics_summary` in stdout: zero runtime errors (`runtime_errors: []`) is a strict prerequisite — fix any JavaScript errors immediately. | [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) |
 | **3 · Look & Deliver** | Start by reading [`lean-delivery-rules.md`](references/03-verification/lean-delivery-rules.md) once. Inspect rendered `.png` screenshots directly with `Read` tool. Audit hierarchy, real content texture, and contrast. Run `detect.py` as a detector for craft floor leads. Sync portal via `python3 skills/spec-prototype/scripts/generate_review_portal.py --root .`. Execute at most one focused in-place refinement if needed. Zero runtime errors and honest manifest reconciliation are binding before writing receipts. | [`stage-4-audit.md`](references/stages/stage-4-audit.md) |
 
 Load only the stage file your current turn names, plus [`craft-floor.md`](references/02-craft-methods/craft-floor.md) at the start of Turn 2 (before the first runnable write). Do not preload other stage files or adjacent references "just in case"; the routing above is exhaustive for a 3-turn run.

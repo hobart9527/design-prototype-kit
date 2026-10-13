@@ -90,17 +90,7 @@ the build — not the contract. Do not amend the contract to match what got buil
 that inverts the authority the contract exists to hold. Pillars that the contract
 does not name are not audited here: this is a fidelity check, not a second review.
 
-### Two batched inspection rounds, then stop
-
-Inspection is batched, not iterative. Round one takes every capture the review needs
-in one trip — all declared viewports, the states that can change the judgment, and
-the render-defect scan — and the contract read above. Round two re-inspects only
-what round one's repair actually touched. After round two the review ends: record
-what remains open as a `PARTIAL` finding with its unverified scope rather than
-opening a third round. A review that keeps finding new causes is usually re-reading
-the same cause at a new location; name the cause and stop.
-
-### The review is organised by Pillar
+## The review is organised by Pillar
 
 A review that lists observations in the order they were noticed hides its own
 gaps. Organise it by the Nine Pillars instead
@@ -135,9 +125,9 @@ Rules that keep the pillar view honest:
   other rather than filing it twice.
 - **`not reviewed` is not a pass.** Do not sum rows into a verdict. A review with
   unreviewed pillars is `PARTIAL` regardless of how clean the reviewed ones are.
-- **A `prose_only` rule is a finding you must write, not one you may skip.** When
+- **A `prose_only` rule is a judgment you owe for the applicable rules, not a row-by-row enumeration.** When
   `detect.py` returns a rule as `prose_only`, the machine has declared it cannot
-  read the artifact — the judgment is yours and it is owed. Every `prose_only` rule
+  read the artifact — the judgment is yours and it is owed. For each applicable `prose_only` rule
   that applies to the surface gets an explicit pass-or-finding line in the report.
   Leaving it unwritten is not a quiet pass: it is the same `not reviewed` state, and
   it carries the same `PARTIAL` consequence as an unexamined pillar.
@@ -147,7 +137,7 @@ Rules that keep the pillar view honest:
 ## Capture and evidence
 
 Capture real viewport evidence directly:
-`node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports 390,1280`
+`node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <the declared viewports>`
 Read the `diagnostics_summary` in stdout. If `runtime_errors` contains any error (e.g. JS ReferenceError/TypeError), the prototype is broken: resolve the error before writing receipts.
 For craft-floor leads, run `python3 skills/spec-prototype/scripts/detect.py --artifact <file>`. Detector hits are leads to verify against the screenshot, not administrative checklists.
 Sync the review portal with:
@@ -192,6 +182,11 @@ true` while the manifest says `capture_failed` is an authority promotion of the
 evidence itself (the r40 A3 class) and fails the audit. Write the reconcile line
 explicitly: `manifest: <status>, stylesheets_applied: <bool>, receipt reflects:
 <true|false>`.
+
+**No self-authored verification scripts.** The prototype does not grow its own
+test harness (no `flow-check.cjs`, no ad-hoc node probes). Verification uses
+capture.mjs, detect.py, and the browser tools; a check that needs new code belongs
+to the benchmark judges, not the generated artifact.
 
 ## Independent review and repair
 

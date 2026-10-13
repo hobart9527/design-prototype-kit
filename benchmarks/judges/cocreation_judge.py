@@ -71,13 +71,20 @@ def _normalize_label(label: str) -> str:
 CANDIDATE_LABEL_RE = re.compile(
     r"(?:direction|方向|候选|方案|option|hypothesis|假设|path|路径|chassis|底盘|route|路线)\s*[-_ ]?\s*([A-C]|[1-3]|[一二三])\b",
     re.IGNORECASE)
+# A bare two-axis mention is narration, not a presentation: the phrase appears in
+# verdict-recording prose as easily as in an actual side-by-side offer. C1 needs
+# the label alongside evidence that two builds were compared — paired captures or
+# slot paths, not the phrase alone.
+TWO_AXIS_RE = re.compile(r"two-axis|两轴|双轴|axis\s+verdict", re.IGNORECASE)
+C1_EVIDENCE_RE = re.compile(
+    r"dirs/[a-z0-9_-]+|comparison\.png|shot-\d+-\d+\.png|截图对比|并排|side[- ]by[- ]side",
+    re.IGNORECASE)
 ROUT_RE = re.compile(
     r"(?:category\s+)?rut\b|套路|默认形态|category default|惯性形态|行业惯常|固有模式|传统做法|常规范式|普遍模式|common practice|default pattern|industry baseline",
     re.IGNORECASE)
 SEED_RE = re.compile(
     r"\bseed\b|种子|灵感源|anchor analogy|隐喻|metaphor",
     re.IGNORECASE)
-TWO_AXIS_RE = re.compile(r"two-axis|两轴|双轴|axis\s+verdict", re.IGNORECASE)
 PROVISIONAL_RE = re.compile(r"provisional|暂定|临时锁定", re.IGNORECASE)
 # A confirmed *claim* is a settled status cell (`| confirmed |`) or a `status: confirmed`
 # assertion — not prose that mentions the word ("not confirmed", "awaiting confirmation").

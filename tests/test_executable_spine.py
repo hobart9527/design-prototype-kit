@@ -173,12 +173,12 @@ def test_the_review_reads_the_render_against_the_contract():
     assert "not amend the contract to match what got built" in audit
 
 
-def test_inspection_is_capped_at_two_batched_rounds():
+def test_inspection_names_an_honest_partial_exit():
     audit = _read(AUDIT)
-    assert "Two batched inspection rounds" in audit
-    assert "Round one" in audit and "Round two" in audit
-    assert "record what remains open as a PARTIAL finding" in audit, \
-        "an uncapped review never ends; the cap must name its exit"
+    assert "PARTIAL" in audit, \
+        "an uncapped review never ends; the exit must name honest partial delivery"
+    assert "Two batched inspection rounds" not in audit, \
+        "the mechanical two-round cap was retired; batching advice stays, no hard round count"
 
 
 def test_the_review_is_organised_by_pillar_with_unreviewed_named():

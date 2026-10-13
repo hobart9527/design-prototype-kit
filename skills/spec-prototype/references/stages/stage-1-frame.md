@@ -234,3 +234,16 @@ unwritten `.html` file paths in Turn 1 prose to keep execution boundaries clean.
 End the reply with one line, `USER-INPUT: <the direction question for the user>` (all uppercase
 ASCII `USER-INPUT:`, never translate to Chinese or alter punctuation), and make no
 further tool call; that line is the observable stop signal for the seam.
+
+## Routing Out of Frame
+
+The comparison returns one of three states; the route follows the state, not a
+fixed sequence:
+
+- **Direction authorized** (an in-session user choice or explicit delegation) or
+  **local repair** (an endorsed direction, a scoped fix) → route directly to
+  [Stage 3](stage-3-skeleton.md) or [Stage 4](stage-4-audit.md). The Stage 2
+  dual-slot build does not apply; manufacturing a second direction here is waste.
+- **Direction materially undecided** → [Stage 2](stage-2-probe.md) builds the
+  physical `dirs/a|b` comparison before the anchor. An unattended run proceeds on
+  a `proposed` / `provisional` basis, never `confirmed`.

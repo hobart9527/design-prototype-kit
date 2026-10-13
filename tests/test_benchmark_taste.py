@@ -515,6 +515,32 @@ def test_cocreation_flags_a_build_that_asked_nothing(tmp_path):
     assert result["signals"]["c0_presented"] is False
 
 
+def test_cocreation_rejects_two_axis_keyword_narration_as_c1(tmp_path):
+    """Mentioning 两轴/双轴 without evidence of two built directions is narration,
+    not a C1 presentation: the phrase appears in status prose too."""
+    _transcript(tmp_path, [
+        ("user", "build a reader"),
+        ("assistant", "Category rut: card feeds. 方向 A vs 方向 B, seed 1 and 2. USER-INPUT: which?"),
+        ("user", "方向 A"),
+        ("assistant", "按两轴裁决记录方向选择，已完成双轴对比与 axis verdict。"
+                      "<html>experiments/reader/anchor/index.html</html>"),
+    ])
+    result = ccj.judge(tmp_path)
+    assert result["signals"]["c1_presented"] is False
+
+
+def test_cocreation_accepts_c1_with_slot_evidence(tmp_path):
+    _transcript(tmp_path, [
+        ("user", "build a reader"),
+        ("assistant", "Category rut: card feeds. 方向 A vs 方向 B, seed 1 and 2. USER-INPUT: which?"),
+        ("user", "方向 A"),
+        ("assistant", "两轴裁决：方向 A 见 experiments/reader/dirs/a，"
+                      "方向 B 见 experiments/reader/dirs/b，已截取对比。"),
+    ])
+    result = ccj.judge(tmp_path)
+    assert result["signals"]["c1_presented"] is True
+
+
 def test_cocreation_planning_prose_does_not_count_as_first_build(tmp_path):
     _transcript(tmp_path, [
         ("user", "build a cluster ops board"),
