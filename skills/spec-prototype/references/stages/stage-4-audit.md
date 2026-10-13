@@ -183,10 +183,10 @@ evidence itself (the r40 A3 class) and fails the audit. Write the reconcile line
 explicitly: `manifest: <status>, stylesheets_applied: <bool>, receipt reflects:
 <true|false>`.
 
-**No self-authored verification scripts.** The prototype does not grow its own
-test harness (no `flow-check.cjs`, no ad-hoc node probes). Verification uses
-capture.mjs, detect.py, and the browser tools; a check that needs new code belongs
-to the benchmark judges, not the generated artifact.
+**Verification reuse first.** Verify with capture.mjs, detect.py and the browser
+tools before writing any check. A throwaway script in `/tmp` for a specific question
+is allowed; it is not an artifact and not evidence unless its output is persisted
+under `prototype/evidence/` and recorded in the manifest.
 
 ## Independent review and repair
 

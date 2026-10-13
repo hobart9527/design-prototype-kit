@@ -509,12 +509,21 @@ export function resolveEvidenceRoot(explicit) {
 function recordHandoffEvidence(outputDir, result, metadata, options = {}) {
   try {
     if (options.noManifest) return { written: false, reason: "manifest_disabled" };
-    const repoRoot = resolveEvidenceRoot(options.repoRoot);
-    if (!repoRoot) return { written: false, reason: "no_repository_root" };
     const isProbeDir = outputDir && (outputDir.includes("/probes/") || outputDir.includes("\\probes\\"));
-    const manifestPath = (isProbeDir && !options.isSliceHandoff)
-      ? path.join(outputDir, "capture-manifest.json")
-      : path.join(repoRoot, "prototype/evidence/handoff-manifest.json");
+    // Ad-hoc captures keep their manifest beside their screenshots, so a capture
+    // run from a sandbox never overwrites the repo's handoff manifest. Only slice
+    // handoff needs a repo root.
+    // ponytail: slice handoff still targets the repo manifest; add a --manifest flag when a non-slice handoff needs it.
+    let manifestPath;
+    if (isProbeDir && !options.isSliceHandoff) {
+      manifestPath = path.join(outputDir, "capture-manifest.json");
+    } else if (options.isSliceHandoff) {
+      const repoRoot = resolveEvidenceRoot(options.repoRoot);
+      if (!repoRoot) return { written: false, reason: "no_repository_root" };
+      manifestPath = path.join(repoRoot, "prototype/evidence/handoff-manifest.json");
+    } else {
+      manifestPath = path.join(outputDir, "handoff-manifest.json");
+    }
     if (!fs.existsSync(path.dirname(manifestPath))) {
       fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
     }
@@ -623,6 +632,11 @@ async function main() {
       noManifest = true;
     } else if (!url && !args[i].startsWith("-")) {
       url = args[i];
+    } else if (!args[i].startsWith("-")) {
+      // A stray value (e.g. `--viewports 1440 390`) would otherwise be dropped
+      // silently and the batch would under-cover the declared viewports.
+      process.stderr.write(`Unexpected argument: ${args[i]} (use comma-separated lists, e.g. --viewports 1440,390)\n`);
+      process.exit(2);
     }
   }
 

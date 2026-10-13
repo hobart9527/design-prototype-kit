@@ -8,7 +8,7 @@ rules that only bite at receipt time.
 
 ## Surgical Prototype Scope & Physical Triad
 
-Keep interactive prototypes focused and lightweight (<500 lines total). For complex multi-surface or operational consoles, use the physical triad (`index.html` structure + `anchor.css` + `anchor.js`), and ALWAYS generate `prototype/shared/tokens.css` with DTCG root tokens and link it in `index.html` (`<link rel="stylesheet" href="../../../shared/tokens.css">`) so token inheritance passes.
+Keep interactive prototypes focused and lightweight; size follows the declared scope, not a line quota. For complex multi-surface or operational consoles, use the physical triad (`index.html` structure + `anchor.css` + `anchor.js`), and ALWAYS generate `prototype/shared/tokens.css` with DTCG root tokens and link it in `index.html` (`<link rel="stylesheet" href="../../../shared/tokens.css">`) so token inheritance passes.
 Crucially, `index.html` must follow progressive enhancement: the primary view and initial fold must author authentic domain entities (e.g. target machines/nodes, regions, affected services) directly in static markup. Never render an empty body that depends on client-side JavaScript hydration to populate the initial screen.
 
 ## Anti-Slop Discipline: No Thick Container Accent Stripes (SLOP-002)
