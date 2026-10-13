@@ -143,7 +143,10 @@ def judge(out_dir: pathlib.Path) -> dict:
         # the generator's own steps 1–3, presented rather than performed silently.
         if c0_index is None and len(labels) >= 2 and (has_rut or has_seed):
             c0_index = index
-        if c1_index is None and len(labels) >= 2 and bool(TWO_AXIS_RE.search(turn["text"])):
+        # C1 needs a built, reachable comparison: two-axis wording alone is
+        # narration, and so is a path that was only mentioned.
+        if (c1_index is None and len(labels) >= 2 and bool(TWO_AXIS_RE.search(turn["text"]))
+                and bool(C1_EVIDENCE_RE.search(turn["text"]))):
             c1_index = index
 
     # A human decision: the harness answers with a mock user's direction choice.

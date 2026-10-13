@@ -829,3 +829,29 @@ def test_iteration_rollup_reports_input_and_cache_usage(tmp_path):
     (proj / "s-2.jsonl").write_text(json.dumps(row), encoding="utf-8")
     r = bl.iteration_rollup("s-2", config_root=tmp_path)[0]
     assert (r["input_tokens"], r["cache_read_input_tokens"], r["cache_creation_input_tokens"]) == (7, 900, 40)
+
+
+def test_total_budget_reads_cost_from_metrics(tmp_path, monkeypatch):
+    """Spend lives at run-result `metrics.cost_usd`; a top-level read yields 0 and never stops the matrix."""
+    matrix = tmp_path / "matrix"
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+        repeat = cmd[cmd.index("--repeat") + 1]
+        run_dir = matrix / "case" / "candidate_skill" / f"run{repeat}"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "run-result.json").write_text(json.dumps({"metrics": {"cost_usd": 6.0}}), encoding="utf-8")
+        return type("Completed", (), {"stderr": "", "returncode": 0})()
+
+    monkeypatch.setattr(run_matrix.subprocess, "run", fake_run)
+    run_matrix._run_sessions(
+        ["case"], ["candidate_skill"], 3, matrix,
+        type("Args", (), {
+            "model": None, "max_turns": None, "timeout": None, "budget_usd": None,
+            "task_trace": False, "max_task_steps": 8, "visual": False, "taste": False,
+            "session_budget_usd": 5.0, "rejudge": False, "open": False,
+            "total_budget_usd": 10.0,
+        })(),
+    )
+    assert len(calls) == 2  # 6 + 6 >= 10 stops the third session

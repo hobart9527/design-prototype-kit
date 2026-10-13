@@ -162,3 +162,11 @@ def test_partial_evidence_yields_pass_with_unknowns_not_a_clean_pass():
         {"case_id": "c", "variant": "candidate_skill", "repeat": 1}])
     assert empty_dimensions["verdict"] == "INCONCLUSIVE"
     assert empty_dimensions["compared_dimensions"] == 0
+
+
+def test_step_limit_trace_fails_even_when_keywords_were_seen():
+    task = {"id": "drain", "required_outcomes": [{"id": "seen", "check": "text_present", "pattern": "drain"}]}
+    done = task_judge.judge_task(task, {"status": "completed", "snapshots": [{"text": "drain"}]})
+    capped = task_judge.judge_task(task, {"status": "step_limit", "snapshots": [{"text": "drain"}]})
+    assert done["status"] == "pass"
+    assert capped["status"] != "pass"

@@ -178,7 +178,9 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
                 break
             trace["steps"].append(step)
         else:
-            trace["status"] = "completed"
+            # Step budget exhausted is not goal completion; the judge must not
+            # read it as a finished task.
+            trace["status"] = "step_limit"
             trace["note"] = f"max_steps={max_steps} reached"
 
         session.send(cmd="screenshot", file=str(shot_dir / f"{task['id']}-after.png"))

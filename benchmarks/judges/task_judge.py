@@ -39,6 +39,10 @@ def evaluate_outcome(outcome: dict, trace: dict) -> dict:
     text = _merged_text(trace)
     pattern = outcome.get("pattern") or ""
     verdict, detail = "unverified", ""
+    # Step-limit traces did not reach the goal; keyword hits from exploration
+    # must not be read as task completion.
+    if trace.get("status") == "step_limit":
+        return {"id": outcome.get("id"), "check": check, "status": "fail", "detail": "step limit reached before completion"}
     if check == "text_present":
         hit = re.search(pattern, text)
         verdict, detail = ("pass" if hit else "fail"), (hit.group(0)[:80] if hit else f"pattern not found: {pattern}")

@@ -41,7 +41,7 @@ def _run_sessions(cases, variants, repeats, matrix_dir, args) -> list:
                 # recorded spend across finished runs and skip the rest once the
                 # matrix cap is reached.
                 if getattr(args, "total_budget_usd", None) is not None:
-                    spent = sum(float(r.get("cost_usd") or 0) for r in results)
+                    spent = sum(float((r.get("metrics") or {}).get("cost_usd") or 0) for r in results)
                     if spent >= args.total_budget_usd:
                         bl.eprint(
                             f"[matrix] total budget ${args.total_budget_usd} reached "
