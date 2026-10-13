@@ -14,15 +14,17 @@ and seals it with a sha256.
 
 ## Direction Contract
 
-Author the six blocks once the direction is locked
-(`references/01-foundations/design-language.md`); leave them empty before then.
+Author all six blocks once the recommended direction is formed
+(`references/01-foundations/design-language.md`). All six blocks are mandatory
+before authoring prototype HTML/CSS. Never leave them empty or write
+"Left empty until direction locked".
 
-- **THESIS**:
-- **OWN-WORLD**:
-- **STORY**:
-- **FIRST VIEWPORT**:
-- **FORM**:
-- **FINISH**:
+- **THESIS**: <one sentence: the visual & ergonomic claim observable at first glance>
+- **OWN-WORLD**: <metaphor world: physical/analog reference, e.g. cockpit, breaker panel, drafting board>
+- **STORY**: <the core task narrative unfolding across the layout>
+- **FIRST VIEWPORT**: <exact content composition of the opening 1440/1280 screen>
+- **FORM**: <spatial massing, grid rhythm, density, and responsive recomposition>
+- **FINISH**: <surface optics, hairline border vs elevation, palette discipline, detents>
 
 ## Experience Foundation & Five Axes
 

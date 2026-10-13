@@ -77,6 +77,10 @@ Before the first runnable write, load:
 ### Pre-Write Craft Sanity Check (生成侧防破损准则)
 
 Before authoring prototype HTML and CSS, apply these non-negotiable floor rules directly into generation:
+- **Direction Contract Precondition**: all six blocks (THESIS, OWN-WORLD, STORY, FIRST VIEWPORT, FORM, FINISH) are populated in `prototype/world.md` (or `discussion.md`) before any runnable HTML/CSS; never leave them empty.
+- **Truth floor**: `CRAFT-DATA-DISCIPLINE` (with the symmetric `L12`), `CRAFT-NO-FABRICATED-MAPPING`, `CRAFT-NO-INVENTED-CAPABILITY` — rules owned by [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) § Domain Entity Grounding.
+- **Destructive-action gate**: `CRAFT-CONFIRM-DRIVABLE`, `CRAFT-ACTION-FEEDBACK` — rules owned by [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) § Interactive Ergonomics.
+- **Browser Surface Theming (`SLOP-017`)**: prefer generating `tokens.css` via `python3 skills/spec-prototype/scripts/compile_tokens.py`. If writing stylesheets directly, style all four native browser surfaces: `::selection`, `caret-color`, scrollbar (`scrollbar-color` or `::-webkit-scrollbar`), and `:focus-visible`.
 - **Draw icons, never use emoji glyphs** (`CRAFT-NO-EMOJI-ICON`): inline authored SVG or a clean icon library for all UI affordances. Emoji, pictographs, or Unicode symbol glyphs (e.g. 📊, ⚠️, 🔴) in UI control slots are immediate defects.
 - **Single-boundary elevation (No ghost cards)**: declare depth once per container — use either a crisp 1px border (`border: 1px solid var(--border-subtle)`) or a subtle calibrated elevation shadow, never a 1px border combined with a wide blurry shadow.
 - **Scoped property transitions (No `transition: all`)**: specify exact animated properties (`transition: transform 150ms var(--ease-out), opacity 150ms var(--ease-out)`; any curve the direction selects, spring included), never unscoped `transition: all`.

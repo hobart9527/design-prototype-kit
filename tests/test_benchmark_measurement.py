@@ -62,12 +62,30 @@ def test_dialog_open_accepts_consequence_disclosure_fallback():
     # Native dialog present
     assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
         {"dialogs": 1, "text": "simple"}]})["status"] == "pass"
-    # No dialog, but explicit consequence disclosure in snapshot text
+    # Consequence disclosure plus confirm control, exercised (state changes later)
     assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
-        {"dialogs": 0, "text": "下线前核对：确认该节点流量已摘除，后果不可逆"}]})["status"] == "pass"
+        {"dialogs": 0, "text": "下线前核对：确认该节点流量已摘除，后果不可逆",
+         "controls": [{"name": "确认", "role": "button"}]},
+        {"dialogs": 0, "text": "节点已安全排空，状态改为 draining",
+         "controls": []}]})["status"] == "pass"
     # Neither dialog nor consequence disclosure
     assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
         {"dialogs": 0, "text": "some unrelated content"}]})["status"] == "fail"
+
+def test_dialog_open_tiered_confirmation_contract():
+    task = {"id": "drain", "required_outcomes": [{"id": "dialog", "check": "dialog_open"}]}
+    # A bare destructive word in body copy never satisfies the gate.
+    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
+        {"dialogs": 0, "text": "回滚"}]})["status"] == "fail"
+    # Consequence plus control present but never exercised is a failure, not a pass.
+    result = task_judge.judge_task(task, {"status": "completed", "snapshots": [
+        {"dialogs": 0, "text": "确认回滚节点？", "controls": [{"name": "确认", "role": "button"}]}]})
+    assert result["status"] == "fail"
+    assert "never exercised" in result["required_outcomes"][0]["detail"]
+    # The old consequence regex fired on batch-status prose like "批次 3 回滚完成"
+    # only through 批次; without a consequence word + control pair it stays a fail.
+    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
+        {"dialogs": 0, "text": "批次 3 已完成"}]})["status"] == "fail"
 
 
 def test_verified_dimension_survives_an_unverifiable_sibling():

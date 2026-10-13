@@ -419,5 +419,42 @@ def test_capture_script_has_no_viewport_to_platform_inference():
         assert f'"{width}": "ios"' not in source
 
 
+# --- state_confirmations counterexamples ------------------------------------
+# The browser-side decision (capture.mjs page.evaluate) is: default confirms
+# with an implicit or explicit "default"; a non-default expected state must be
+# matched by an equal observed dataset.state. These cases exercise the
+# metadata seam for each arm — the in-page expression is not imported, so the
+# expected/observed pairings mirror its truth table.
+
+def test_declared_nondefault_state_with_empty_observation_is_unconfirmed():
+    # Expected "empty" but the page never declared data-state: observed "" is
+    # a mismatch for a non-default expectation, and the capture is evidence-
+    # only, not rendered proof.
+    result = stub_result(state_confirmations={
+        "empty-390": {"expected": "empty", "observed": "", "confirmed": False}
+    })
+    meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {"result": result, "options": {}})
+    assert meta["evidence"]["kind"] == "screenshot-only"
+    assert meta["validation"]["claim"] == "capture_failed"
+    assert meta["evidence"]["unconfirmed_states"] == ["empty-390: expected empty, observed none"]
+
+def test_expected_nondefault_with_matching_observation_is_rendered():
+    result = stub_result(state_confirmations={
+        "empty-390": {"expected": "empty", "observed": "empty", "confirmed": True}
+    })
+    meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {"result": result, "options": {}})
+    assert meta["evidence"]["kind"] == "rendered"
+    assert meta["evidence"]["unconfirmed_states"] == []
+
+def test_default_state_confirms_with_implicit_declaration():
+    # observed "default" (explicit or implicit fallback) confirms the default
+    # arm; no unconfirmed_states must reach the manifest.
+    result = stub_result(state_confirmations={
+        "default-390": {"expected": "default", "observed": "default", "confirmed": True}
+    })
+    meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {"result": result, "options": {}})
+    assert meta["evidence"]["kind"] == "rendered"
+    assert meta["evidence"]["unconfirmed_states"] == []
+
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-q"]))

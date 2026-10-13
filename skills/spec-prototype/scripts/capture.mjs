@@ -125,12 +125,13 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
         });
         await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
         const stateConfirmation = await page.evaluate((expectedState) => {
-          const declared = document.body?.dataset.state || document.documentElement.dataset.state || "";
+          const raw = document.body?.dataset.state || document.documentElement.dataset.state || "";
+          const declared = raw || (expectedState === "default" ? "default" : "");
           return {
             expected: expectedState,
             observed: declared,
             confirmed: expectedState === "default"
-              ? !declared || declared === "default"
+              ? declared === "default"
               : declared === expectedState,
           };
         }, state);

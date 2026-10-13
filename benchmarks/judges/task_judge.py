@@ -52,22 +52,65 @@ def evaluate_outcome(outcome: dict, trace: dict) -> dict:
     elif check == "dialog_open":
         opened = [s for s in snapshots if (s.get("dialogs") or 0) > 0]
         # Floor/consequence fallback: a dialog check guards against silent destructive
-        # commits. If no native/ARIA dialog was detected, check whether an explicit
-        # confirmation or consequence disclosure was rendered in any snapshot.
+        # commits. If no native/ARIA dialog was detected, the same snapshot must show
+        # BOTH a consequence disclosure AND an operable confirm/cancel control; a bare
+        # keyword ("回滚" alone in body copy) never satisfies the gate. Confirmation
+        # controls must also be reachable: driving one changes state, so a later
+        # snapshot with different text or a different visible-control count counts as
+        # an exercised confirmation surface. A surface that is statically present but
+        # never operable (L23 risk-tier contract) is a task failure, not a pass.
         consequence_re = re.compile(
-            r"确认|核对|后果|会签|复核|下线前|不可逆|回滚|安全排空|批次|confirm|consequence|signoff",
+            r"确认|核对|后果|会签|复核|下线前|不可逆|回滚|安全排空|confirm|consequence|signoff",
             re.IGNORECASE,
         )
-        has_consequence = any(consequence_re.search(s.get("text") or "") for s in snapshots)
+        confirm_control_re = re.compile(
+            r"确认|取消|复核|同意|撤销|回滚|终止|confirm|cancel|abort|rollback|undo",
+            re.IGNORECASE,
+        )
+
+        def _has_consequence(snap: dict) -> bool:
+            return bool(consequence_re.search(snap.get("text") or ""))
+
+        def _has_confirm_control(snap: dict) -> bool:
+            for control in snap.get("controls") or []:
+                if not isinstance(control, dict):
+                    continue
+                label = " ".join(str(control.get(key) or "") for key in ("name", "role", "action"))
+                if confirm_control_re.search(label):
+                    return True
+            return bool(confirm_control_re.search(snap.get("text") or ""))
+
+        consequence_controls = [
+            index for index, snap in enumerate(snapshots)
+            if _has_consequence(snap) and _has_confirm_control(snap)
+        ]
+
+        def _later_state_changed(index: int) -> bool:
+            current = snapshots[index]
+            current_text = (current.get("text") or "")[:400]
+            current_controls = len(current.get("controls") or [])
+            for later in snapshots[index + 1:]:
+                if (later.get("text") or "")[:400] != current_text:
+                    return True
+                if len(later.get("controls") or []) != current_controls:
+                    return True
+            return False
+
+        driven = any(_later_state_changed(index) for index in consequence_controls)
         if opened:
             verdict = "pass"
             detail = f"dialogs observed in {len(opened)}/{len(snapshots)} snapshots"
-        elif has_consequence:
+        elif driven:
             verdict = "pass"
-            detail = "consequence disclosure observed in snapshot text (non-dialog confirmation surface)"
+            detail = "tiered confirmation exercised: consequence plus confirm control, with observable state change"
+        elif consequence_controls:
+            verdict = "fail"
+            detail = ("confirmation surface present but never exercised: no snapshot shows the confirm "
+                      "control changing state")
         else:
             verdict = "fail"
-            detail = f"dialogs observed in 0/{len(snapshots)} snapshots and no consequence disclosure detected"
+            detail = (f"dialogs observed in 0/{len(snapshots)} snapshots and no snapshot pairs a "
+                      "consequence disclosure with a confirm/cancel control")
     elif check == "no_horizontal_scroll":
         scroll_width = _measurement(last.get("scrollWidth"))
         client_width = _measurement(last.get("clientWidth"))

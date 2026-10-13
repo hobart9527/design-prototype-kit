@@ -25,11 +25,10 @@ inspection pass, not as separate screenshot trips.
   in columns carry `font-variant-numeric: tabular-nums`; prose numbers are out of
   scope. In every component stylesheet (e.g. `anchor.css`), ensure metric-bearing
   classes (`.metric`, `.stat`, `.count`, `.kpi`) declare `font-variant-numeric: tabular-nums`.
-- **Action safety & reversible feedback** `CRAFT-ACTION-FEEDBACK`: destructive or high-stakes
-  actions (drain, offline, delete, terminate) must provide a closed loop:
-  1. Consequence clearly visible before commit.
-  2. Perceptible state feedback immediately after action (`处理中`, `已排空`, `draining`, etc.).
-  3. Recovery, rollback, or safe exit reachable on the same surface (`撤销`, `回滚`, `rollback`, `undo`).
+- **Action safety & reversible feedback** `CRAFT-ACTION-FEEDBACK` — rule text owned by
+  [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md)
+  § Interactive Ergonomics; apply it here. The floor reads: consequence visible before
+  commit, immediate state feedback after commit, and a reachable recovery or safe exit.
 - **Surface optics and top sheen** `CRAFT-SURFACE-SHEEN`: use hairline highlights
   (`var(--surface-sheen)`) only when that optical character supports the committed
   direction. Flat surfaces and border-only containment are equally valid.

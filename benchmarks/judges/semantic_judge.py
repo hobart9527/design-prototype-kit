@@ -40,8 +40,23 @@ SCHEMA = json.dumps({
 
 NEGATION_MARKERS = ("不做", "不要", "不可", "不提供", "禁止", "严禁", "绝不", "不得", "不引入", "不接",
                     "不脑补", "舍弃", "不纳入", "不涉及", "排除", "拒绝", "不支持", "不作", "未提示",
-                    "不替代", "不含", "不包括", "❌", "✘", "✖", "✕", "🚫",
-                    "never", "no ", "not ", "without", "avoid", "excluded", "unsupported")
+                    "不替代", "不含", "不包括", "❌", "✘", "✖", "✕", "🚫")
+
+# English negations match as word-boundary phrases, not bare substrings: "no "
+# would negate "no-01" and "not " would negate "note"/"notice", silently
+# excusing real fabrication hits. Keep the phrase forms an omission clause
+# actually uses.
+_ENGLISH_NEGATION_RE = re.compile(
+    r"\b(?:no|not|never)\s+(?:[\w-]+\s+){0,2}?"
+    r"(?:support(?:ing|ed)?|provid(?:e|ing|ed)|includ(?:e|ing|ed)|"
+    r"invent(?:ing|ed)?|fabricat(?:e|ing|ed)|assum(?:e|ing|ed)|"
+    r"promis(?:e|ing|ed)|claim(?:ing|ed)?|use|used|do|does|did|is|are|was|were|"
+    r"required|allowed|permitted|available|present|given|stated)\b"
+    r"|\bnever\b|\bwithout\b|\bavoid(?:s|ed|ing)?\b|\bexcluded\b|\bunsupported\b"
+    r"|\bnot\s+in\b|\bno\s+longer\b|\bdoes\s+not\b|\bdo\s+not\b|\bdid\s+not\b"
+    r"|\bis\s+not\b|\bare\s+not\b|\bwas\s+not\b|\bwere\s+not\b|\bcannot\b|\bcan't\b|\bwon't\b",
+    re.IGNORECASE,
+)
 
 # Chinese enumeration prose negates at the clause, not at a fixed character
 # window: "排期、值班表、自动修复第一版均不做" and "不脑补值班排班" both carry
@@ -68,10 +83,24 @@ def _is_negated(snippet: str, term: str) -> bool:
     ends = [window.find(b, position + len(term)) for b in _CLAUSE_BREAKS]
     end = min([e for e in ends if e >= 0], default=len(window))
     clause = window[start:end]
-    return any(marker.strip().lower() in clause for marker in NEGATION_MARKERS)
+    if any(marker.strip().lower() in clause for marker in NEGATION_MARKERS):
+        return True
+    # English negations only count as word-boundary phrases; bare "no"/"not"
+    # substrings ("no-01", "note") never excuse a hit.
+    return bool(_ENGLISH_NEGATION_RE.search(clause))
 
 
 _OMISSION_HEADING_RE = None
+
+
+_COMMENT_RE = re.compile(r"/\*.*?\*/|<!--.*?-->", re.DOTALL)
+
+
+def _strip_comments(text: str) -> str:
+    """A term inside a CSS/HTML comment is documentation, not a render claim.
+    Blank comment bodies with equal-length whitespace so offsets and line
+    numbers stay identical to the source text."""
+    return _COMMENT_RE.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
 
 
 def _omission_heading_above(text: str, match_start: int) -> bool:
@@ -96,11 +125,13 @@ def deterministic_hits(texts: dict, ground_truth: dict) -> list:
     terms = [t for t in (ground_truth.get("unsupported_terms") or []) if t]
     hits = []
     for name, text in texts.items():
+        scanned = _strip_comments(text)
         for term in terms:
-            for match in re.finditer(re.escape(term), text, flags=re.IGNORECASE):
-                line = text[: match.start()].count("\n") + 1
+            for match in re.finditer(re.escape(term), scanned, flags=re.IGNORECASE):
+                line = scanned[: match.start()].count("\n") + 1
                 snippet = text.splitlines()[line - 1].strip()[:160]
-                negated = _is_negated(snippet, term) or _omission_heading_above(text, match.start())
+                negated = (_is_negated(snippet, term)
+                           or _omission_heading_above(scanned, match.start()))
                 hits.append({"term": term, "file": name, "line": line, "quote": snippet,
                              "negated": negated})
     return hits
@@ -132,6 +163,32 @@ def extract_revealed_facts(transcript_path: pathlib.Path) -> list:
     return facts[1:] if facts else []
 
 
+def _manifest_viewports(artifacts_dir: pathlib.Path) -> list:
+    """Viewports actually recorded in handoff-manifest.json, or [].
+
+    r57 fired a fabricated_capability/authority_promotion because the record
+    text claimed 1440+390 evidence while capture.mjs's manifest only carried
+    the 390 run (mergeVerification unions on identity, a rerun from another
+    out dir replaced it). The manifest — not the prose — is the authoritative
+    coverage claim; reading it here converts that class from a fabrication
+    finding into a documented evidence-coverage gap. A slice run records one
+    manifest per direction/anchor subdirectory, so collect every manifest
+    under the tree, not just the top-level one."""
+    viewports = []
+    for candidate in sorted(artifacts_dir.rglob("handoff-manifest.json")):
+        try:
+            manifest = json.loads(candidate.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        evidence = (((manifest.get("verification") or {}).get("metadata") or {}).get("evidence") or {})
+        metrics = evidence.get("viewport_metrics")
+        if isinstance(metrics, dict) and metrics:
+            viewports.extend(metrics)
+        else:
+            viewports.extend(p for p in (evidence.get("paths") or []) if isinstance(p, str))
+    return sorted(set(viewports))
+
+
 def judge(case: dict, artifacts_dir: pathlib.Path, workdir: pathlib.Path, *, model: str | None = None,
           timeout_s: int = 600, use_model: bool = True, revealed_facts: list | None = None) -> dict:
     ground_truth = case["ground_truth"]
@@ -139,12 +196,15 @@ def judge(case: dict, artifacts_dir: pathlib.Path, workdir: pathlib.Path, *, mod
     all_hits = deterministic_hits(texts, ground_truth)
     hits = [h for h in all_hits if not h["negated"]]
     digest = bl.flatten_artifact_text(texts)
+    truncated_files = [name for name, text in texts.items() if len(text) >= 60000]
+    recorded_viewports = _manifest_viewports(artifacts_dir)
     result = {
         "judge": "semantic",
         "artifact_files": sorted(texts),
         "deterministic_hits": hits,
         "negated_signals": [h for h in all_hits if h["negated"]],
         "revealed_facts": revealed_facts or [],
+        "recorded_viewports": recorded_viewports,
         "model": None,
         "status": "unknown",
         "fabricated_capabilities": None,
@@ -153,8 +213,16 @@ def judge(case: dict, artifacts_dir: pathlib.Path, workdir: pathlib.Path, *, mod
         "findings": [],
         "note": "",
     }
+    notes = []
+    if truncated_files:
+        notes.append("artifact text truncated at 60k chars for: " + ", ".join(truncated_files)
+                     + " — the digest may not show every file to the model")
+    if recorded_viewports:
+        notes.append("handoff-manifest.json records viewport evidence for: "
+                     + ", ".join(recorded_viewports)
+                     + "; viewport claims beyond this list are evidence-coverage gaps, not fabrication")
     if not texts:
-        result["note"] = "no artifacts to judge"
+        result["note"] = " ".join(["no artifacts to judge"] + notes)
         return result
     if use_model and digest.strip():
         prompt = bl.render(
@@ -192,6 +260,8 @@ def judge(case: dict, artifacts_dir: pathlib.Path, workdir: pathlib.Path, *, mod
     # signals stay in the report for human review.
     if hits:
         result["note"] = (result["note"] + f" {len(hits)} deterministic signal(s) for human review").strip()
+    if notes:
+        result["note"] = (result["note"] + " " + " ".join(notes)).strip()
     result["hard_gate"] = "fail" if result["status"] == "fail" else ("unverified" if result["status"] == "unknown" else "pass")
     return result
 
