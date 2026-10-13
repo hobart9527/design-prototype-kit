@@ -243,6 +243,41 @@ def test_source_revision_change_invalidates_inherited_status():
     assert merged["human"] == "pending_review"
 
 
+def test_recapture_of_a_second_viewport_keeps_the_first_viewport_evidence():
+    # Regression guard: a later capture at a different viewport must union, not
+    # replace, the evidence already recorded under the same identity. Replacing
+    # it drove the r57 authority_promotion false positive.
+    deps = [{"ref": "skills/shared/nav.css", "digest": "aaa"}]
+    options = {"runtime": "node", "targetPlatform": "web", "sourceRevision": "rev-1",
+               "targetPath": "prototype/app/index.html", "dependencies": deps}
+    first = eval_seam(
+        "cap.buildCaptureMetadata(input.result, input.options)",
+        {"result": stub_result(captures={"1440": "prototype/evidence/1440.png"},
+                               viewport_metrics={"1440": {"scrollWidth": 1440, "clientWidth": 1440}}),
+         "options": options},
+    )
+    previous = {"identity": first["identity"], "human": "approved", "visual": "approved", "metadata": first}
+    second = eval_seam(
+        "cap.buildCaptureMetadata(input.result, input.options)",
+        {"result": stub_result(captures={"390": "prototype/evidence/390.png"},
+                               viewport_metrics={"390": {"scrollWidth": 412, "clientWidth": 390,
+                                                         "small_touch_target_count": 1}}),
+         "options": options},
+    )
+    assert first["identity"] == second["identity"]
+    merged = eval_seam("cap.mergeVerification(input.previous, input.meta)", {"previous": previous, "meta": second})
+    assert merged["human"] == "approved"
+    assert merged["identity_changed"] is False
+    metrics = merged["metadata"]["evidence"]["viewport_metrics"]
+    assert set(metrics) == {"1440", "390"}
+    assert set(merged["metadata"]["evidence"]["paths"]) == {
+        "prototype/evidence/1440.png", "prototype/evidence/390.png",
+    }
+    assert merged["metadata"]["evidence"]["screenshots"] == 2
+    assert merged["metadata"]["evidence"]["horizontal_overflow"] == ["390: scrollWidth=412 clientWidth=390"]
+    assert merged["metadata"]["evidence"]["small_touch_targets"] == ["390: 1 control(s) under 44px min target"]
+
+
 # --- evidence is never written into an unrelated repository -----------------
 
 

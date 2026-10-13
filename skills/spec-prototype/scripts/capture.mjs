@@ -468,7 +468,12 @@ export function mergeVerification(previous, metadata) {
   // unchanged; any target, source or dependency change resets it to pending.
   const sameIdentity = typeof prev.identity === "string" && prev.identity === metadata.identity;
   const carried = (field) => (sameIdentity ? prev[field] || "pending_review" : "pending_review");
-  const vpKeys = Object.keys(metadata.environment ? metadata.environment.viewports || {} : {});
+  // A multi-viewport run merges per-viewport evidence: an added viewport must
+  // not drop the viewports already captured under the same identity. The
+  // re-merged metadata keeps every prior path/metric/state and lets the new run
+  // override the same keys.
+  const merged = sameIdentity ? mergeEvidence(prev.metadata, metadata) : metadata;
+  const vpKeys = Object.keys(merged.evidence ? merged.evidence.viewport_metrics || {} : {});
   return {
     status: "captured_pending_review",
     renderer: "captured",
@@ -482,7 +487,61 @@ export function mergeVerification(previous, metadata) {
     }) on ${metadata.environment.browser_execution}/${metadata.environment.runtime}; pending visual & experience critique`,
     timestamp: new Date().toISOString(),
     runner: metadata.environment.runner || "browser-capture",
-    metadata,
+    metadata: merged,
+  };
+}
+
+// Union per-viewport evidence for a re-capture under an unchanged identity.
+// Captures, failures and runtime errors accumulate by key; viewport metrics and
+// state confirmations merge with the new run winning on shared keys; the derived
+// overflow/touch findings and screenshot count are recomputed from the union so
+// a second viewport never reports the first as missing.
+function mergeEvidence(prevMeta, nextMeta) {
+  const prev = prevMeta && typeof prevMeta === "object" ? prevMeta : {};
+  const prevEv = prev.evidence && typeof prev.evidence === "object" ? prev.evidence : {};
+  const nextEv = nextMeta.evidence && typeof nextMeta.evidence === "object" ? nextMeta.evidence : {};
+  const unionObj = (a, b) => ({ ...(a && typeof a === "object" ? a : {}), ...(b && typeof b === "object" ? b : {}) });
+  const unionList = (a, b) => [...new Set([...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])])];
+  const paths = [...new Set([...(prevEv.paths || []), ...(nextEv.paths || [])])];
+  const viewportMetrics = unionObj(prevEv.viewport_metrics, nextEv.viewport_metrics);
+  const stateConfirmations = unionObj(prevEv.state_confirmations, nextEv.state_confirmations);
+  const horizontalOverflow = Object.entries(viewportMetrics)
+    .filter(([, m]) => m && typeof m.scrollWidth === "number" && typeof m.clientWidth === "number"
+      && m.scrollWidth > m.clientWidth + 1)
+    .map(([prefix, m]) => `${prefix}: scrollWidth=${m.scrollWidth} clientWidth=${m.clientWidth}`);
+  const smallTouchTargets = Object.entries(viewportMetrics)
+    .filter(([, m]) => m && typeof m.small_touch_target_count === "number" && m.small_touch_target_count > 0)
+    .map(([prefix, m]) => `${prefix}: ${m.small_touch_target_count} control(s) under 44px min target`);
+  const unconfirmedStates = [
+    ...Object.entries(stateConfirmations)
+      .filter(([, confirmation]) => !confirmation || confirmation.confirmed !== true)
+      .map(([prefix, confirmation]) => `${prefix}: expected ${confirmation?.expected || "unknown"}, observed ${confirmation?.observed || "none"}`),
+    ...unionList(prevEv.unconfirmed_states, nextEv.unconfirmed_states),
+  ];
+  const runtimeErrors = [
+    ...unionList(prevEv.runtime_errors, nextEv.runtime_errors),
+    ...unconfirmedStates.map((message) => `state_confirmation: ${message}`),
+  ];
+  return {
+    ...prev,
+    ...nextMeta,
+    evidence: {
+      ...prevEv,
+      ...nextEv,
+      paths,
+      screenshots: paths.length,
+      captures: unionObj(prevEv.captures, nextEv.captures),
+      failures: unionObj(prevEv.failures, nextEv.failures),
+      runtime_errors: runtimeErrors,
+      unconfirmed_states: unconfirmedStates,
+      viewport_metrics: viewportMetrics,
+      state_confirmations: stateConfirmations,
+      horizontal_overflow: horizontalOverflow,
+      small_touch_targets: smallTouchTargets,
+      dom_metrics_coverage: Object.values(viewportMetrics).some((m) => m && m.dom_metrics === "unmeasured_cli_runner")
+        ? "partial: CLI runner cannot evaluate DOM; containment/touch findings above are Playwright-only"
+        : "full",
+    },
   };
 }
 
