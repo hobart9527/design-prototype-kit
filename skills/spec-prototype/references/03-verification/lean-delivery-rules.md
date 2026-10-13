@@ -9,6 +9,11 @@ rules that only bite at receipt time.
 ## Surgical Prototype Scope & Physical Triad
 
 Keep interactive prototypes focused and lightweight (<500 lines total). For complex multi-surface or operational consoles, use the physical triad (`index.html` structure + `anchor.css` + `anchor.js`), and ALWAYS generate `prototype/shared/tokens.css` with DTCG root tokens and link it in `index.html` (`<link rel="stylesheet" href="../../../shared/tokens.css">`) so token inheritance passes.
+Crucially, `index.html` must follow progressive enhancement: the primary view and initial fold must author authentic domain entities (e.g. target machines/nodes, regions, affected services) directly in static markup. Never render an empty body that depends on client-side JavaScript hydration to populate the initial screen.
+
+## Anti-Slop Discipline: No Thick Container Accent Stripes (SLOP-002)
+
+Containers, cards, and panel wrappers must never use thick side accent stripes (e.g. `border-left: 3px solid var(--accent)` or heavy left indicator lines on static layout cards). High-severity AI slop flags this pattern. Differentiate containers using grid rhythm, subtle surface brightness contrast, or refined 1px perimeter borders. An accent border is legitimate only on transient status toasts or on the single currently selected/active row.
 
 ## Interactive Ergonomics & Task Trace Feedback (交互人体工学与状态反馈闭环)
 
@@ -35,7 +40,7 @@ User inputs supply intent, but derived implementation parameters (e.g. exact tim
 
 ## Receipt & Verification Honesty (物理收据与度量真值对齐)
 
-Reconcile verification claims against `handoff-manifest.json` field by field. Quote exact recorded counts (touch target counts, overflow, stylesheet status) faithfully — NEVER deny, misrepresent, or claim runner defects to contradict recorded manifest metrics (e.g. never claim touch target count is 0 when manifest records 3; explain desktop pointer density vs touch target floor honestly instead). If screenshot capture reports runtime failures, `stylesheets_applied: false`, or pending review, state `visual_evidence: unverified` / `PARTIAL` honestly; never assert visual passes or fabricate rendered observations from unrendered artifacts. Never claim automated, interactive, or Playwright test passes (e.g. "Playwright 实测", "端到端实测", "脚本在 /tmp 不入库") unless test scripts and execution logs are physically persisted in `prototype/evidence/` with passing receipts recorded in `handoff-manifest.json`. Asserting test verification without durable on-disk receipts is forbidden evidence fabrication.
+Reconcile verification claims against `handoff-manifest.json` field by field. Quote exact recorded counts (touch target counts, overflow, stylesheet status) faithfully — NEVER deny, misrepresent, or claim runner defects to contradict recorded manifest metrics (e.g. never claim touch target count is 0 when manifest records 3; explain desktop pointer density vs touch target floor honestly instead). If `diagnostics_summary.runtime_errors` contains any JavaScript runtime error (ReferenceError, TypeError, SyntaxError), the prototype is broken: do NOT report `runtime_errors: []` or claim visual/interactive passes while errors are present; fix the code immediately. If screenshot capture reports runtime failures, `stylesheets_applied: false`, or pending review, state `visual_evidence: unverified` / `PARTIAL` honestly; never assert visual passes or fabricate rendered observations from unrendered artifacts. Never claim automated, interactive, or Playwright test passes (e.g. "Playwright 实测", "端到端实测", "脚本在 /tmp 不入库") unless test scripts and execution logs are physically persisted in `prototype/evidence/` with passing receipts recorded in `handoff-manifest.json`. Asserting test verification without durable on-disk receipts is forbidden evidence fabrication.
 
 ## Bounded Lifecycle Closure (生命周期终态封闭)
 

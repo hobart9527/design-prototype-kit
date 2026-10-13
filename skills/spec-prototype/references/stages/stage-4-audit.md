@@ -146,16 +146,13 @@ Rules that keep the pillar view honest:
 
 ## Capture and evidence
 
-One bounded verification trip per inspection round:
-`node skills/spec-prototype/scripts/verify.mjs <url> --out prototype/evidence --artifact <file> --records truth.md,world.md,briefs/<slice>.md --portal --turn 3`
-(capture → detect → divergence presence → portal sync → the two-round circuit breaker; see
-[`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md)).
-`detect.py`'s `prose_only_owed` list in its output is the exact set of rules the
-review owes explicit pass-or-finding lines for.
-Use `capture.mjs` directly only when the full loop is genuinely more than needed.
-The canonical portal is `prototype/review-portal.html`, synced by `verify.mjs --portal`
-(or `python3 skills/spec-prototype/scripts/generate_review_portal.py --root .`); never
-create or copy ad-hoc review portals under nested paths.
+Capture real viewport evidence directly:
+`node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports 390,1280`
+Read the `diagnostics_summary` in stdout. If `runtime_errors` contains any error (e.g. JS ReferenceError/TypeError), the prototype is broken: resolve the error before writing receipts.
+For craft-floor leads, run `python3 skills/spec-prototype/scripts/detect.py --artifact <file>`. Detector hits are leads to verify against the screenshot, not administrative checklists.
+Sync the review portal with:
+`python3 skills/spec-prototype/scripts/generate_review_portal.py --root .`
+The canonical portal is `prototype/review-portal.html`; never create or copy ad-hoc review portals under nested paths.
 A state is captured only if its trigger was applied and
 the page confirmed it; filenames alone are not proof. If browser startup, state
 confirmation, or interaction tracing fails, record the scope as `unverified`, not

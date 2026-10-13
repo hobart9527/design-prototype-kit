@@ -2,7 +2,7 @@
 // Headless multi-viewport and multi-state screenshot capture for spec-prototype evidence.
 // Uses local Playwright/Puppeteer or system Chrome/Edge. Zero extra dependencies.
 //
-// Usage: node capture.mjs <url> --output <dir> [--viewports 320,390,768,1280] [--states ideal,error,skeleton]
+// Usage: node capture.mjs <url> --out <dir> [--viewports 320,390,768,1280] [--states ideal,error,skeleton]
 
 import fs from "node:fs";
 import path from "node:path";
@@ -609,7 +609,7 @@ async function main() {
       // the case contract only required 390/1280.
       if (!viewportsExplicit) viewports = ["320", "390", "1280"];
       isSliceHandoff = true;
-    } else if (args[i] === "--output" || args[i] === "-o") {
+    } else if (args[i] === "--output" || args[i] === "--out" || args[i] === "-o") {
       outputDir = args[++i];
     } else if (args[i] === "--target" || args[i] === "-t") {
       url = args[++i];
