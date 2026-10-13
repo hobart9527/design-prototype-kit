@@ -428,6 +428,7 @@ def run_claude(prompt: str, cwd: pathlib.Path, *, session_id: str | None = None,
     # Pin the variable to the session's own workspace so every variant loads
     # the boundary shipped beside it.
     env["LOOM_CLAUDE_HOME"] = str(cwd / ".claude")
+    cwd.mkdir(parents=True, exist_ok=True)
     try:
         proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=timeout_s, env=env)
     except subprocess.TimeoutExpired:
