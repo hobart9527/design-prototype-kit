@@ -11,7 +11,8 @@ purpose of this stage.
    realism, color, spacing, material, motion, and product-specific expression.
 2. Attempt the central task from visible cues. Confirm the meaningful result and one
    applicable interruption, recovery, or boundary case. Screenshots prove appearance,
-   not interaction.
+   not interaction. Record the actual result of that attempt, and the parts not
+   walked, in the design record's existing receipt lines.
 3. Check only applicable non-negotiable floors: source fidelity; working declared
    actions and recovery; WCAG/accessibility; visible `:active` feedback on commit
    controls; concentric nested radii (`R_inner = max(0, R_outer - P)`);

@@ -77,6 +77,10 @@ open alternatives only when a consequential choice is genuinely unresolved.
 
 Ask the user only when a decision materially changes the direction or scope. Resolve
 repository facts silently. Preserve settled and delegated choices on continuation.
+A reversible preference proceeds as a marked `proposed` / `provisional` recommendation
+and is not re-asked; actor, core task, permissions, main journey and direction stay with
+the user ([`../04-governance/discussion.md`](../04-governance/discussion.md) Human authority
+and unattended fallback).
 
 Frame is a thinking stage: its output is the design record (`discussion.md`, or
 `truth.md`/`world.md`/`briefs/` on the layered tree). Build and verification tools
@@ -240,6 +244,12 @@ unwritten `.html` file paths in Turn 1 prose to keep execution boundaries clean.
 End the reply with one line, `USER-INPUT: <the direction question for the user>` (all uppercase
 ASCII `USER-INPUT:`, never translate to Chinese or alter punctuation), and make no
 further tool call; that line is the observable stop signal for the seam.
+
+When resuming or receiving the user's reply: if the user provides a neutral, non-committal answer
+(e.g. "没有偏好", "按常规做", generic tool defaults), or the question was already presented without preference,
+do NOT re-ask the same question. Immediately apply the unattended fallback from
+[`../04-governance/discussion.md`](../04-governance/discussion.md): adopt the two-axis verdict's
+recommended direction on a `proposed` / `provisional` basis, and proceed directly to Turn 2 make.
 
 ## Routing Out of Frame
 

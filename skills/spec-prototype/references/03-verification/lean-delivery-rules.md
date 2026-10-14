@@ -21,10 +21,13 @@ Containers, cards, and panel wrappers must never use thick side accent stripes (
 
 For destructive operations (delete, offline, drain, overwrite) and safety confirmation gates, friction scales with irreversibility. Reversible actions need no gate; irreversible ones may carry stronger friction (consequence preview, explicit review checkbox, two-step confirm). Whatever the tier, the mechanism must be drivable by discrete clicks, and the commit must close into honest feedback:
 
-- `CRAFT-CONFIRM-DRIVABLE`: the gate is a native `<dialog id="...">` opened via `dialog.showModal()` (never a `<div>` toggled with `hidden`/CSS) with a stable confirm control and a cancel control that stay enabled. Typing a phrase, long-press/hold, or slide-to-unlock may only appear as an additional tier for a genuinely irreversible operation the brief names; they never replace the discrete-click path, because automation and assistive tech drive discrete clicks and gestures freeze task execution.
+- `CRAFT-CONFIRM-DRIVABLE`: the gate offers a reachable confirm control and a cancel control that stay enabled and keyboard-operable. A native `<dialog>` opened via `showModal()` is the recommended mechanism; an inline confirmation panel is acceptable when its text and controls are visible in the snapshot (see `L22`). Typing a phrase, long-press/hold, or slide-to-unlock may only appear as an additional tier for a genuinely irreversible operation the brief names; they never replace the discrete-click path, because automation and assistive tech drive discrete clicks and gestures freeze task execution.
+- `CRAFT-NATIVE-CONTROL`: actionable controls, selectable queue rows, list items, and tabs must be authored using native clickable elements (`<button>`, `<a>`, `<input>`) or carry an explicit `data-action="..."` attribute and proper ARIA semantics (`role="button"`, `role="tab"`). Never render selectable items as plain `<li role="option">` without actionable container wrappers or event handlers; automation and screen readers require drivable control surfaces. Correct event delegation is acceptable, and ARIA state follows each control's own semantics (`aria-selected`, `aria-pressed`, `aria-current` as fits).
 - `CRAFT-ACTION-FEEDBACK`:
   - *(state clause)* committing must immediately move the task into a visible in-progress or terminal state in plain words.
+  - *(terminal-freeze clause)* once a business action commits on an item, that same action cannot be submitted again on it: disable that control or replace it with a terminal status in plain words (e.g. `已通过`). This does not freeze legitimate viewing, undo, or follow-up actions.
   - *(destructive-exit clause)* the render must expose a clickable recovery/abort control (撤销/回滚/终止 or the brief's own term) that stays operable and halts or reverts that state. Never render it dead or permanently `disabled`.
+  - *(live-control clause)* every exposed tab, filter chip, and navigation button must be wired to active DOM state updates (no dead controls/dead tabs that do nothing on click).
 - `L22` — verification framing stays honest about mechanism: a confirmation surface without a native `<dialog>` is verified through the snapshot-text fallback in the task judge, not recorded as a dialog failure. Never describe that fallback path as a missing-dialog break.
 - `L23` — the risk tier is judged against the operation's reversibility: banning typing/long-press outright is as wrong as making them the only path. The contract itself is owned by `CRAFT-CONFIRM-DRIVABLE` above.
 
@@ -34,9 +37,10 @@ Mock data, topologies, and UI copy stay inside what the brief and session events
 
 - `CRAFT-DATA-DISCIPLINE`:
   - Entities stay in the brief's domain. When the brief gives a quantity without names, use neutral systematic identifiers (`<kind>-01 ~ <kind>-NN`); never invent lateral business domains.
+  - Status labels, audit states, and verification indicators must use the verbatim vocabulary provided in the brief and requirements (e.g. `已核对|未核实|缺失`; do not invent lateral synonyms like `未完成`).
   - Never invent telemetry, capacities, metrics, live counts, or percentages the brief does not state. Use neutral placeholders (`--`, `<kind>-NN`).
   - Never invent lifecycle phases, status models, or process pipelines; the UI reflects only the task actions requested.
-  - Fixture data used only to illustrate layout is labelled as placeholder in the render, never presented as live truth.
+  - Fixture data used only to illustrate layout is labelled as placeholder in the render, never presented as live truth. Likewise, mocked interactions and demo data are marked as demonstration in the render and never worded as backend guarantees; the record keeps the existing `[explicit]` / `[derived, provisional]` / `[hypothesis]` labels.
   - `L12` — symmetric to the bans above: render the entities the brief already supplied. Withholding provided domain facts (names, counts, severities, timestamps) behind generic placeholders is a presentation failure, not caution.
 - `CRAFT-NO-FABRICATED-MAPPING`:
   - Never invent hierarchy, bipartite, or dependency mappings between independent sets the brief gives; render them as parallel lists or global tallies.
@@ -66,6 +70,7 @@ User inputs supply intent; derived implementation parameters (timeouts, step cou
 - Bound any `confirmed` / "用户已确认" assertion strictly to what the user explicitly stated; never bundle derived parameters into the same clause or decision row.
 - Initial interpretations of brief scope, historical constraints, and architecture direction stay `proposed(provisional)` or `derived` until an in-session explicit user reply confirms that specific choice. Decisions without one carry forward as `unaffected provisional decisions carried forward`, never as `approvals preserved` or `confirmed`.
 - Brief inputs and supplements are not confirmed decisions. Without an explicit in-session user selection, the honest authority statement is "Zero confirmed decisions (all decisions stay proposed/provisional awaiting explicit user choice)".
+- In design records and artifacts, never use "Confirmed" in Markdown section headings (e.g. `## Confirmed — visual tokens`) unless the enclosed facts were explicitly approved by the user in-session; use `Proposed Tokens` or `Provisional Tokens` instead.
 
 ## Receipt & Verification Honesty (物理收据与度量真值对齐)
 

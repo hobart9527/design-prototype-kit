@@ -26,6 +26,12 @@ contexts:
   states, and consequential rationale stay authoritative under a subset.
   Unselected surfaces stay provisional — not deleted, not invented into the
   selection. A dependency outside the selection is disclosed, never silently added.
+  The user's task chain from Stage 1 is part of that meaning: where the task starts,
+  the key decisions, what completion looks like, and the main interruption or
+  recovery. Build the minimal complete path from a real entry to that result before
+  any secondary surface. A step split or screen change must serve a task dependency
+  or reduce cognitive load; fewer steps is not the goal in itself, and a wizard is
+  neither required nor banned.
 - **Lightweight routes stay valid**: a bounded direction probe, a spec-only request,
   or a local refinement keeps its route and is not forced through full-product
   enumeration. Downstream engineering handoff compiles and binds the formal Spec upon freeze.
@@ -86,7 +92,8 @@ Before authoring prototype HTML and CSS, apply these non-negotiable floor rules 
 - **Scoped property transitions (No `transition: all`)**: specify exact animated properties (`transition: transform 150ms var(--ease-out), opacity 150ms var(--ease-out)`; any curve the direction selects, spring included), never unscoped `transition: all`.
 - **Row rails live on the state, not the base** (`CRAFT-ROW-RAIL`): a row-level status rail is declared only on the state variant (`.row[data-st="pending"] { border-left: 3px solid var(--status-warning) }`) or as `box-shadow: inset 3px 0 0 var(--x)`. Do not reserve it on the base class with `border-left: 3px solid transparent`; reserve the width with `padding-left` instead.
 - **No bare ordinal headings**: a section heading is a name, not `01`/`14`; number only a real sequence the user steps through.
-- **Build discipline**: write each file completely, and use targeted `Edit` for local repairs; split by file responsibility (`index.html` structure + `anchor.css` + `anchor.js`), ensuring `index.html` contains authentic initial domain entities directly in markup. Run `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <the declared viewports>` once to verify rendering and inspect `diagnostics_summary` in stdout. Zero in-console/in-page runtime errors is required — fix any syntax or reference errors immediately.
+- **Build discipline**: write each file completely, and use targeted `Edit` for local repairs; split by file responsibility (`index.html` structure + `anchor.css` + `anchor.js`), ensuring `index.html` contains authentic initial domain entities directly in markup. Run `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <the declared viewports>` to verify rendering and inspect `diagnostics_summary` in stdout. Fix runtime errors immediately in one focused repair pass (the budget owned by [Stage 4](stage-4-audit.md)); if errors persist, record the state honestly in `handoff-manifest.json` as `PARTIAL` and proceed to Stage 4 without burning session budget. Multi-surface internal links must resolve correctly against relative directories with unescaped query strings (never use HTML-escaped `&amp;` inside URL query parameters).
+- **Mobile option rows are one hit target** (`CRAFT-NATIVE-CONTROL`): on narrow viewports (≈390px), a multi-line option row (title + subtitle + tags) is one hit target: a tap on its text, icon, or whitespace triggers the same intended action. Delegated listeners are fine; the outcome is what counts.
 - **Verification reuse first** — see [`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md) "Anti-patterns".
 
 ## Compression & Release
@@ -153,5 +160,7 @@ not already know the model — the condition is
 
 ## Exit
 
-Legal exit is a coherent walking skeleton plus a review portal. Proceed to
+Legal exit is a coherent walking skeleton plus a review portal. Before leaving,
+walk the central task once from its entry using only visible cues, and refine only
+after it completes; note any step that could not be walked. Proceed to
 [Stage 4](stage-4-audit.md) for the four-dimensional audit.
