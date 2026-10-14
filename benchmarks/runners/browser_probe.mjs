@@ -101,7 +101,7 @@ const SNAPSHOT_JS = `(() => {
   const nameOf = (el) => (el.getAttribute("aria-label") || el.getAttribute("title") || el.innerText || el.value || "").trim().replace(/\\s+/g, " ").slice(0, 90);
   const roleOf = (el) => el.getAttribute("role") || ({BUTTON:"button", A:"link", INPUT:"textbox", SELECT:"combobox", TEXTAREA:"textbox", DETAILS:"group", SUMMARY:"button"}[el.tagName] || el.tagName.toLowerCase());
   const controls = [];
-  for (const el of document.querySelectorAll("button, a, input, select, textarea, [role=button], [role=tab], [role=menuitem], [data-action]")) {
+  for (const el of document.querySelectorAll("button, a, input, select, textarea, [role=button], [role=tab], [role=menuitem], [role=option], [data-action], [tabindex]:not([tabindex='-1'])")) {
     if (!visible(el)) continue;
     controls.push({ index: controls.length, role: roleOf(el), name: nameOf(el), tag: el.tagName.toLowerCase(), actions: el.getAttribute("data-action") || "" });
     el.setAttribute("data-bench-index", String(controls.length - 1));
@@ -128,8 +128,27 @@ const SNAPSHOT_JS = `(() => {
   };
 })()`;
 
-const CLICK_JS = (match, matchAction) => `(() => {
+const CLICK_JS = (match, matchAction, matchIndex) => `(() => {
   const needle = ${JSON.stringify(match)};
+  const idx = ${JSON.stringify(matchIndex)};
+  // Index identity first: the agent picked a listed control, so click that exact
+  // node. Name scoring cannot disambiguate empty-named inputs (textarea) and
+  // would otherwise mis-click an unrelated control.
+  if (idx !== null && idx !== undefined && idx !== "") {
+    const byIdx = document.querySelector('[data-bench-index="' + idx + '"]');
+    if (byIdx) {
+      byIdx.scrollIntoView({ block: "center" });
+      if (byIdx.tagName.toLowerCase() === "select" && byIdx.options && byIdx.options.length > 1) {
+        byIdx.selectedIndex = (byIdx.selectedIndex + 1) % byIdx.options.length;
+        byIdx.dispatchEvent(new Event("input", { bubbles: true }));
+        byIdx.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      byIdx.click();
+      if (typeof byIdx.focus === "function") byIdx.focus();
+      return { clicked: (byIdx.getAttribute("aria-label") || byIdx.innerText || byIdx.name || byIdx.tagName).toString().trim().slice(0, 90),
+               tag: byIdx.tagName.toLowerCase(), by: "index" };
+    }
+  }
   const actionId = ${JSON.stringify(matchAction)};
   // Deterministic path first: a data-action identity is the authored action
   // contract, exact by construction — never a fuzzy name score. Name matching
@@ -212,7 +231,7 @@ async function main() {
   const out = await withPage(viewport, url, async (cdp) => {
     if (args._command === "click") {
       const before = await cdp.evaluate(SNAPSHOT_JS);
-      const click = await cdp.evaluate(CLICK_JS(args.match || "", args.match_action || ""));
+      const click = await cdp.evaluate(CLICK_JS(args.match || "", args.match_action || "", args.match_index ?? null));
       await sleep(900);
       const after = await cdp.evaluate(SNAPSHOT_JS);
       return { action: "click", match: args.match, click, before, after };
@@ -255,7 +274,7 @@ async function sessionMain(url, viewport) {
         if (cmd.cmd === "snapshot") {
           response = { snapshot: await cdp.evaluate(SNAPSHOT_JS) };
         } else if (cmd.cmd === "click") {
-          const click = await cdp.evaluate(CLICK_JS(cmd.match || "", cmd.match_action || ""));
+          const click = await cdp.evaluate(CLICK_JS(cmd.match || "", cmd.match_action || "", cmd.match_index ?? null));
           await sleep(900);
           response = { click, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
         } else if (cmd.cmd === "scroll") {

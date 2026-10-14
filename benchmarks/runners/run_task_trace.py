@@ -84,7 +84,13 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
         return trace
 
     base_url, shutdown = bl.serve_dir(prototype_dir)
-    url = f"{base_url}/{entry}"
+    start_state = str((task.get("start") or {}).get("state") or "").strip()
+    sep = "&" if "?" in entry else "?"
+    if start_state:
+        state_key = "conflict" if start_state == "timeslot_conflict" else start_state
+        url = f"{base_url}/{entry}{sep}state={state_key}&start_state={start_state}"
+    else:
+        url = f"{base_url}/{entry}"
     session = BrowserSession(url, viewport)
     try:
         first = session.send(cmd="snapshot")
@@ -139,21 +145,20 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
                 # Deterministic identity first: data-action is the authored action
                 # contract. Fall back to name matching only when the control
                 # carries no action id (legacy or non-spec-prototype artifacts).
-                action_id = (matched.get("action") or "").strip() or action.get("target_action")
-                if action_id:
-                    response = session.send(cmd="click", match_action=action_id)
-                    if "error" in response:
-                        step["error"] = response["error"]
-                        trace["steps"].append(step)
-                        trace["status"] = "dead_end"
-                        break
-                    step["clicked"] = (response.get("click") or {}).get("clicked")
-                    if (response.get("click") or {}).get("reason"):
-                        # data-action miss (stale id or ambiguity) — fall back to name
-                        step["fallback"] = (response.get("click") or {}).get("reason")
+                # Snapshot index is the exact node the agent chose; it is tried first
+                # so empty-named controls (textarea) are not fuzzy-matched elsewhere.
+                response = session.send(cmd="click", match_index=index)
+                click = response.get("click") or {}
+                if "error" not in response and click.get("clicked") is None:
+                    step["fallback"] = click.get("reason")
+                    action_id = (matched.get("action") or "").strip() or action.get("target_action")
+                    if action_id:
+                        response = session.send(cmd="click", match_action=action_id)
+                        if "error" not in response and (response.get("click") or {}).get("reason"):
+                            step["fallback"] = response["click"]["reason"]
+                            response = session.send(cmd="click", match=matched["name"])
+                    else:
                         response = session.send(cmd="click", match=matched["name"])
-                else:
-                    response = session.send(cmd="click", match=matched["name"])
                 if "error" in response:
                     step["error"] = response["error"]
                     trace["steps"].append(step)

@@ -15,4 +15,8 @@ Choose exactly one next action and answer JSON only:
 {{"action":"click|scroll|wait|done","target_index":<int|null>,
   "reason":"<short>","expect":"<what you expect to observe after>"}}
 Use "done" when the goal is reached or the task is a dead end.
+Stop early: once the goal action has been performed in earlier steps and the page
+now shows its result (confirmation, changed status, new item, toast), answer "done"
+immediately. Never repeat the action on other items and never click extra controls
+to double-check.
 Pick target_index from the listed controls only.
