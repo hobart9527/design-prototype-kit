@@ -1,12 +1,38 @@
 # Lean Delivery Rules (轻量化高质交付)
 
-Negative rules accumulated from benchmark regressions. They are always in force;
-they are loaded here once at the start of Turn 3 (Look & Deliver), which is when
-verification claims, authority tags, and lifecycle boundaries get written into
-the record and the receipt. Loading them earlier spends Turn 1/2 context on
-rules that only bite at receipt time.
+These are **boundary** rules: truth, authority, scope and receipt honesty. They are
+always in force; they are loaded here once at the start of Turn 3 (Look & Deliver),
+which is when verification claims, authority tags, and lifecycle boundaries get
+written into the record and the receipt. Loading them earlier spends Turn 1/2 context
+on rules that only bite at receipt time.
 
 This file is the sole owner of every rule ID below. Other files link to the ID; they do not restate the rule.
+
+## This is a boundary list, not a design checklist
+
+A rule belongs here only when it guards **truth, authority, scope or receipt
+integrity** — the classes where a violation is a factual defect (a fabricated
+capability, a promoted authority, a dishonest receipt), not a weaker aesthetic.
+Composition, typography, motion, color and density quality are owned by
+[`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md) and the
+craft references, and are improved through the
+[`refine operators`](../operators.md), not through new prohibitions here.
+
+When one benchmark exposes a gap, the default fix is **not** a new hard rule here:
+
+- A defect that is one product's vocabulary (a specific verb, a specific surface) is
+  fixed by faithful generation against the brief, or by one already-owned rule — not
+  by a new global rule.
+- A quality gap (hierarchy, rhythm, colour, motion, density) is raised by the positive
+  scaffold in [Stage 2](../stages/stage-2-probe.md) and [Stage 3](../stages/stage-3-skeleton.md),
+  then improved via an operator pass with a named target and falsifier.
+- Add a rule here only when the failure is a truth/authority/scope defect that no
+  owned rule already covers, and state which of those classes it guards.
+
+Growing this list per benchmark error produces defensive over-restriction: the model
+satisfies the literal letter of each rule while delivering less design. Keep the list
+small and general, and push the ceiling up instead of the floor higher.
+
 
 ## Surgical Prototype Scope & Physical Triad
 

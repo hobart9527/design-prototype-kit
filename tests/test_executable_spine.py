@@ -362,6 +362,7 @@ STAGE5 = REFS / "stages/stage-5-freeze.md"
 JUDGE = REPO / "benchmarks/judges/divergence_judge.py"
 SLOP = REPO / "benchmarks/judges/slop_detector.py"
 DIALECTIC = REFS / "dialectic/01-metaphor-benchmark.md"
+FLOOR = REFS / "02-craft-methods/craft-floor.md"
 
 
 def test_stage3_cites_the_real_owner_of_the_data_floor():
@@ -376,6 +377,30 @@ def test_stage3_cites_the_real_owner_of_the_data_floor():
         "the data floor is not owned by quality-floor.md"
     assert "design-methods.md" in stage3
     assert "Method 4" in stage3
+
+
+def test_positive_scaffold_connects_reference_mechanism_to_rendered_probe():
+    stage2 = _read(STAGE2)
+    assert "observable mechanism" in stage2
+    assert "same representative content and viewport" in stage2
+    assert "visible signature relationship" in stage2
+    assert "Evidence that would change the choice" in stage2
+
+
+def test_stage3_authors_in_positive_order_and_closes_token_gap():
+    stage3 = _read(STAGE3)
+    assert "Authoring Order: build the direction into the artifact" in stage3
+    assert "link prototype/shared/tokens.css from index.html" in stage3
+    assert "make anchor.css consume those semantic variables" in stage3
+    assert "small state model sized to the task" in stage3
+    assert "Positive delivery receipt" in stage3
+
+
+def test_lean_rules_are_a_boundary_list_not_a_per_benchmark_checklist():
+    rules = _read(REFS / "03-verification/lean-delivery-rules.md")
+    assert "This is a boundary list, not a design checklist" in rules
+    assert "default fix is not a new hard rule here" in rules
+    assert "truth/authority/scope defect" in rules
 
 
 def test_the_direction_divergence_threshold_has_one_owner():
@@ -467,6 +492,70 @@ def test_the_benchmark_section_delegates_to_the_reference_set():
 def test_the_reference_set_is_routed_from_the_skill():
     skill = _read(SKILL / "SKILL.md")
     assert "05-benchmarks/reference-set.md" in skill
+
+
+def test_the_reference_set_carries_a_checked_mechanism_beyond_the_original_six():
+    """The scaffold's ammunition: each entry names a mechanism, not a brand."""
+    raw = BENCHMARKS.read_text(encoding="utf-8")
+    rows = [ln for ln in raw.splitlines() if re.match(r"\|\s*\[?\*\*", ln)]
+    # Growth is the point — a thin set makes the positive scaffold unusable.
+    assert len(rows) >= 11, f"the reference set lost mechanisms: {len(rows)} rows"
+    # A new arrival must state what it refuses as well as what it adopts.
+    entries = "\n".join(rows)
+    assert "Gov.uk check answers" in entries
+    assert "Apple HIG undo/redo" in entries
+    for ref, url in (("Gov.uk check answers", "https://design-system.service.gov.uk/patterns/check-answers/"),
+                     ("Gov.uk error summary", "https://design-system.service.gov.uk/components/error-summary/"),
+                     ("Atlassian inline message", "https://atlassian.design/components/inline-message/examples"),
+                     ("GitHub PR suggested changes", "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/incorporating-feedback-in-your-pull-request"),
+                     ("Apple HIG undo/redo", "https://developer.apple.com/design/human-interface-guidelines/undo-and-redo")):
+        row = next(row for row in rows if ref in row)
+        assert url in row, f"{ref} lost its primary source"
+    for row in rows:
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        assert len(cells) == 5, f"an entry dropped a column: {row[:60]}"
+        assert cells[1] and cells[2] and cells[3] and cells[4], \
+            f"an entry left adopt/refuse/calibrates blank: {row[:60]}"
+    # Provenance discipline: the set declares its entries were source-checked.
+    assert "checked against the product's own documentation" in _read(BENCHMARKS)
+
+
+def test_five_axes_pair_a_value_with_an_observable_anchor():
+    """A sensory word with no anchor is a taste claim the render cannot honour."""
+    kernel = _read(KERNEL)
+    assert "observable calibration anchor" in kernel
+    # The anchor is authored, never a house number or a forced value.
+    assert "not defaults or bounds" in kernel
+    assert "do not manufacture precision" in kernel
+    stage1 = _read(STAGE1)
+    assert "observable calibration anchor" in stage1
+    assert "never converted into a fabricated numeric value" in stage1
+
+
+def test_the_decisive_exchange_has_a_runnable_recipe():
+    """Checks catch slop; the recipe is what makes a consequential action good."""
+    text = _read(REFS / "02-craft-methods/interaction-power.md")
+    assert "Compact decisive-exchange recipe" in text
+    # The four frames the recipe traces, by name.
+    assert "Interrupt / return (when reachable)" in text
+    # It binds its states to the evidence mechanism rather than to a screenshot.
+    assert "CRAFT-STATE-ENTRY" in text
+    assert "not evidence" in text
+
+
+def test_the_row_marker_is_not_a_container_stripe():
+    """A selected-row rail is an interaction cue; a container stripe is the cliché."""
+    floor = _read(FLOOR)
+    assert "selected-row rail is a separate interaction cue" in floor
+
+
+def test_the_direction_contract_gate_is_back_at_the_build_owner():
+    """A contract block that was authored empty is a brief the render cannot meet."""
+    stage3 = _read(STAGE3)
+    assert "Before the first runnable write, all six Direction Contract blocks" in stage3
+    assert "rather than a blank or placeholder" in stage3
+    # The repair is evidence-bounded: draft the missing statement, never confirm it.
+    assert "draft only that statement from the evidence already in the record" in stage3
 
 
 def test_the_token_export_template_uses_the_canonical_path():

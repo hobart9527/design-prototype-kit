@@ -160,9 +160,12 @@ The brief needs only the applicable parts of:
   visual mechanism, references and what is deliberately conventional. All five axes
   (Density · Energy · Materiality · Rhythm · Character) are accounted for at direction
   lock: each carries a value with the product evidence that earned it, or an explicit
-  `open` with its reason. An axis left silent is a defect — it reads as a model default,
-  not a decision. This register is not a form to fill and not a CSS formula; `open` is a
-  legitimate, recorded outcome.
+  `open` with its reason. A decided axis additionally names one observable calibration
+  anchor from the authored tokens or visible relationship — the core kernel owns that
+  form, and it stays an anchor rather than a house number. An axis left silent is a
+  defect — it reads as a model default, not a decision. This register is not a form to
+  fill and not a CSS formula; `open` is a legitimate, recorded outcome and is never
+  converted into a fabricated numeric value.
 - **Innovation budget, modulated by mode** — name the product's **mode** first, then
   let it set the split. The default is 70% familiar / 30% Signature Moment; the mode
   moves it, and the chosen split is recorded with its reason:

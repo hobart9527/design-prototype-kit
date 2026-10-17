@@ -23,7 +23,10 @@ purpose of this stage.
    before running a scan: a reviewer who reads the hit list first reviews the hit
    list, and what no rule encodes goes unseen — the review degrades into
    reconciling machine output item by item. The order is judgment, then evidence,
-   then reconciliation.
+   then reconciliation. Name the strongest authored relationship that reached the
+   render, the task behavior actually exercised, and the highest-impact opportunity
+   to improve; the review preserves and strengthens the direction rather than only
+   demonstrating absence of defects.
    **Honest Rendering Precondition**: If screenshot capture failed, had runtime errors,
    or reports `stylesheets_applied: false` / `visual: pending_review` in `handoff-manifest.json`,
    never fabricate visual observations or assert that visual design floors passed.
@@ -226,6 +229,10 @@ case rendered. Do not simulate new product capability merely to make a test pass
 For a consequential action, inspect intent (the person understands the action),
 commit (the action has perceptible feedback), and settled result (the changed state
 and available recovery are clear). Apply only where this sequence fits the action.
+The authoring-side form — the compact decisive-exchange recipe with its interrupt /
+return frame — is owned by
+[`../02-craft-methods/interaction-power.md`](../02-craft-methods/interaction-power.md);
+review the render against the same frames rather than a second list.
 
 ## Completion Receipt Discipline
 

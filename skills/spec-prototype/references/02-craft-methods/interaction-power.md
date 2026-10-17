@@ -93,6 +93,28 @@ expert can inspect likely friction but cannot claim novice validation without us
 Preserve context across return and inspect the pending retry, not just endpoint
 screens. Retain the strongest mechanism and its observed cost in the review.
 
+#### Compact decisive-exchange recipe
+
+For the consequential action in scope, use this compact row in the existing
+transition record; it is a trace of one real action, not a new state machine or
+mandatory artifact. Omit phases the product does not have and give the reason.
+
+| Frame | User can tell | State / feedback to show | Evidence to capture |
+|---|---|---|---|
+| Intent | What will change, on which object, and any consequential scope | Current value and consequence before commit; correction remains possible | Entry state and visible action |
+| Commit | Which action was accepted and whether it is pending | Immediate acknowledgement; progress only while work is pending; keep the subject recognizable if context changes | Trigger and applied action |
+| Settled | What actually changed and what can happen next | Confirmed result, next permitted action, and reachable correction or safe exit | Result state and any recovery action |
+| Interrupt / return (when reachable) | What work survived and which object it belongs to | Preserve the promised draft/context; distinguish pending from committed work; do not imply abort reversed a commit | Interrupt event, return entry, retained context, next action |
+
+Record `action → subject → precondition → commit → settlement → recovery/return`.
+For each named frame or exceptional state, expose a deterministic state entry via
+`CRAFT-STATE-ENTRY` and require `capture.mjs` to confirm the applied `data-state`
+or declared URL state. A screenshot of a state name without the applied trigger
+and confirmation is not evidence. Exercise the central task by interaction as
+well: capture establishes the visual frame, not that the action works. Mark
+unexercised phases or failed state entries `unverified`; never fill a missing
+frame with an inferred state.
+
 ### Generative and agentic exchanges
 
 When the product generates content, proposes a suggestion or performs multi-step

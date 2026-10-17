@@ -18,7 +18,7 @@ inspection pass, not as separate screenshot trips.
   as a house number; the defect is a missing detent, not a particular scale.
 - **Touch targets** `CRAFT-TOUCH-TARGET`: interactive controls measure at least
   44×44px in touch contexts.
-- **No container side accent stripes (SLOP-002)**: containers, cards, and section wrappers must not use thick left accent bars (`border-left: 3px/4px solid accent`). Use grid rhythm, subtle surface brightness contrast, or clean 1px perimeter borders. Accent borders are reserved for transient status toasts or the single currently selected row.
+- **No container side accent stripes (SLOP-002)**: containers, cards, and section wrappers must not use thick left accent bars (`border-left: 3px/4px solid accent`). Use grid rhythm, subtle surface brightness contrast, or clean 1px perimeter borders. A narrow row-level change marker or selected-row rail is a separate interaction cue, not a container stripe; use it only when it identifies the changed or selected item. Accent borders are reserved for transient status toasts or the single currently selected row.
 - **Concentric radii** `CRAFT-CONCENTRIC-RADII`: a rounded child inside a rounded
   parent with padding `P` satisfies `R_inner = max(0, R_outer − P)` within 1px.
 - **Numeric stability** `CRAFT-TABULAR-NUMS`: values that update in place or align

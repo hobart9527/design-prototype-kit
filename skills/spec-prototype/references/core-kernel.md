@@ -83,11 +83,20 @@ inform DTCG token compilation:
 - **Character**: modulates chromatic intensity and emotional presence (5% surgical accent on tool surfaces vs immersive atmospheric branding).
 
 The Five Axes register is **required at direction lock**, and never a forced CSS
-formula or a fixed pixel checklist. Required means every axis is *accounted for*,
+formula or a universal pixel checklist. Required means every axis is *accounted for*,
 not that every axis carries a value: each of the five carries either a value with
 its cited product evidence, or an explicit `open` with the reason it stays free.
-An axis left blank is indistinguishable from an axis decided by model default —
-which is why silence at direction lock is the one outcome this kernel forbids.
+For a decided value, pair the qualitative choice with at least one observable
+calibration anchor (for example, Density: 4px base rhythm / 12px section rhythm;
+Energy: instant state change / 180ms transition; Materiality: border-only / one
+elevation layer; Rhythm: repeated 8px cadence / editorial variable measure;
+Character: restrained status accent / expressive display type). These are examples,
+not defaults or bounds: choose anchors from the actual tokens, content and viewport,
+and keep the qualitative value when no defensible number applies. Cite the authored
+token or visible relationship and its evidence; do not manufacture precision or
+force an `open` axis into a numeric value. An axis left blank is indistinguishable
+from one decided by model default — which is why silence at direction lock is the
+one outcome this kernel forbids.
 The register binds at direction lock only: a bounded direction probe, a spec-only
 request, or a local refinement does not trigger it. This is a Stage 1 decision,
 not an approval gate or a reason to extend discovery beyond the active uncertainty.

@@ -82,23 +82,63 @@ Before the first runnable write, load:
    declared chassis. If the product produced a novel chassis with no matching
    section, load the spatial rhythm and typographic density sections as baseline.
 
-### Pre-Write Craft Sanity Check (生成侧防破损准则)
+### Authoring Order: build the direction into the artifact (生成顺序)
 
-Before authoring prototype HTML and CSS, apply these non-negotiable floor rules directly into generation:
-- **Direction Contract Precondition**: all six blocks (THESIS, OWN-WORLD, STORY, FIRST VIEWPORT, FORM, FINISH) are populated in `prototype/world.md` (or `discussion.md`) before any runnable HTML/CSS; never leave them empty.
-- **Truth floor**: `CRAFT-DATA-DISCIPLINE` (with the symmetric `L12`), `CRAFT-NO-FABRICATED-MAPPING`, `CRAFT-NO-INVENTED-CAPABILITY`, `CRAFT-DYNAMIC-BEHAVIOR-TRUTH`, `CRAFT-SCREENSHOT-STATUS-HONESTY` — rules owned by [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) § Domain Entity Grounding.
-- **Drivable surfaces**: `CRAFT-NATIVE-CONTROL` (rows and records included), `CRAFT-MINIMAL-PATH`, `CRAFT-AFFORDANCE-DISCOVERABLE` (core verbs have visible reachable controls with immediate affirmative feedback), `CRAFT-STATE-ENTRY` (deterministic review entry for each exceptional state the brief names), and `CRAFT-TASK-COPY` (task-critical copy uses the brief's own verbs verbatim) — rules owned by the same file.
-- **Destructive-action gate**: `CRAFT-CONFIRM-DRIVABLE`, `CRAFT-ACTION-FEEDBACK` — rules owned by [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) § Interactive Ergonomics.
-- **Browser Surface Theming (`SLOP-017`)**: style all four native browser surfaces in `anchor.css` or via `compile_tokens.py`: `::selection`, `caret-color` (e.g. `caret-color: var(--accent)` on body or input), scrollbar (`scrollbar-color` or `::-webkit-scrollbar`), and `:focus-visible`.
-- **Authentic Craft Styling Consumption**: `anchor.css` consumes the compiled `tokens.css` palette and scale, applying the craft floors ([`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md) owns the recipes): a declared numeric rhythm (e.g. `font-variant-numeric: tabular-nums` on data numerics), intentional measure and hierarchy, and — where the direction selects tactile motion — a press detent via the compiled `var(--press-scale)`. Apply the single-boundary elevation rule below when choosing borders versus shadows.
-- **Draw icons, never use emoji glyphs** (`CRAFT-NO-EMOJI-ICON`): inline authored SVG or a clean icon library for all UI affordances. Emoji, pictographs, or Unicode symbol glyphs (e.g. 📊, ⚠️, 🔴) in UI control slots are immediate defects.
-- **Single-boundary elevation (No ghost cards)**: declare depth once per container — use either a crisp 1px border (`border: 1px solid var(--border-subtle)`) or a subtle calibrated elevation shadow, never a 1px border combined with a wide blurry shadow.
-- **Scoped property transitions (No `transition: all`)**: specify exact animated properties (`transition: transform 150ms var(--ease-out), opacity 150ms var(--ease-out)`; any curve the direction selects, spring included), never unscoped `transition: all`.
-- **Row rails live on the state, not the base** (`CRAFT-ROW-RAIL`): a row-level status rail is declared only on the state variant (`.row[data-st="pending"] { border-left: 3px solid var(--status-warning) }`) or as `box-shadow: inset 3px 0 0 var(--x)`. Do not reserve it on the base class with `border-left: 3px solid transparent`; reserve the width with `padding-left` instead.
-- **No bare ordinal headings**: a section heading is a name, not `01`/`14`; number only a real sequence the user steps through.
-- **Build discipline**: write each file completely, and use targeted `Edit` for local repairs; split by file responsibility (`index.html` structure + `anchor.css` + `anchor.js`), ensuring `index.html` contains authentic initial domain entities directly in markup. Run `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <the declared viewports>` to verify rendering and inspect `diagnostics_summary` in stdout. Fix runtime errors immediately in one focused repair pass (the budget owned by [Stage 4](stage-4-audit.md)); if errors persist, record the state honestly in `handoff-manifest.json` as `PARTIAL` and proceed to Stage 4 without burning session budget. Multi-surface internal links must resolve correctly against relative directories with unescaped query strings (never use HTML-escaped `&amp;` inside URL query parameters).
-- **Mobile option rows are one hit target** (`CRAFT-NATIVE-CONTROL`): on narrow viewports (≈390px), a multi-line option row (title + subtitle + tags) is one hit target: a tap on its text, icon, or whitespace triggers the same intended action. Delegated listeners are fine; the outcome is what counts.
-- **Verification reuse first** — see [`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md) "Anti-patterns".
+Build the smallest complete task path with the direction visible in the artifact,
+not only in the record. Compose in this order; each step lands before the next.
+
+1. **Compose from real content.** Put the brief's actual entities, its longest
+   meaningful label, the primary decision and its result into the first frame.
+   Establish scan/read order and the spatial relationship before adding containers
+   or decoration. Before the first runnable write, all six Direction Contract blocks
+   (THESIS, OWN-WORLD, STORY, FIRST VIEWPORT, FORM, FINISH) are present in
+   `prototype/world.md` (or `discussion.md`), each carrying a concrete
+   proposed/provisional statement rather than a blank or placeholder. If one is
+   missing, draft only that statement from the evidence already in the record; then
+   code. The six blocks are the composition brief; Stage 4 checks whether the render
+   carries them.
+2. **Carry the visual language into code.** Compile the selected token source with
+   `compile_tokens.py`, link `prototype/shared/tokens.css` from `index.html`, and
+   make `anchor.css` consume those semantic variables for canvas, text, surfaces,
+   actions and state cues. A direction with committed values must reach the pixels;
+   leaving the compiled tokens unreferenced is the "documented strategy, unused
+   tokens" defect, not caution.
+3. **Make the central path work.** Implement the real entry, action, immediate
+   feedback and terminal result in a small state model sized to the task. Keep each
+   brief-named action discoverable from the default view, give each named
+   exceptional state a reproducible entry, and preserve keyboard/touch operation
+   and recovery where the action is consequential. Do not add a store, audit stream
+   or branch the task does not need.
+4. **Finish the physical details.** Apply the applicable craft floors and
+   accessibility behavior from [`craft-floor.md`](../02-craft-methods/craft-floor.md)
+   ([`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md) owns
+   the recipes). Select motion, depth, type and imagery because they strengthen the
+   committed direction: theme the browser surfaces (`::selection`, `caret-color`,
+   scrollbar, `:focus-visible`), give changing or aligned numerics `tabular-nums`,
+   keep one elevation mechanism per container, scope transitions to named
+   properties, and use authored SVG rather than emoji for control glyphs. A flat
+   surface, instant transition or single typeface is a legitimate authored choice
+   when the direction earns it.
+5. **Render and inspect.** Run
+   `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <the declared viewports>`,
+   read the screenshots and `diagnostics_summary`, and confirm the token language
+   and signature relationship are visible, the task completes, and runtime errors
+   are absent. Fix the owning layer in one focused pass; if capture or interaction
+   evidence is unavailable, record `PARTIAL` rather than infer success.
+
+Write each file completely and use targeted `Edit` for local repairs, split by
+responsibility (`index.html` structure + `anchor.css` + `anchor.js`) with the
+initial domain entities authored directly in markup. Resolve internal links against
+their actual directory depth, keep `&` literal in HTML query strings, and on touch
+surfaces make the whole multi-line option row one hit target. The truth and authority
+boundaries stay owned by [`lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md);
+reuse verification helpers before creating checks, per
+[`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md).
+
+**Positive delivery receipt.** In the existing review record (not a new artifact),
+name one visible design relationship that survived into the render, one task
+behavior confirmed by interaction, and one limitation or unverified claim. This
+complements the evidence manifest; it never replaces it.
 
 ## Compression & Release
 
