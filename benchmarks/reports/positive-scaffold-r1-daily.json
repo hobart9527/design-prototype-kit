@@ -1,0 +1,524 @@
+{
+  "run_id": "positive-scaffold-r1",
+  "suite": "daily",
+  "generated_at": "20261017_143341",
+  "status": "REGRESSION",
+  "status_divergence": "hard gate tripped on candidate_skill while the paired verdict is INCONCLUSIVE: the gate is absolute and fires on the artifacts themselves, while the paired verdict only compares the candidate against the control, so both stand.",
+  "hard_gate_arms": [
+    "candidate_skill"
+  ],
+  "cases": [
+    "approval-workflow",
+    "content-studio",
+    "editorial-reader",
+    "mobile-booking"
+  ],
+  "variants": [
+    "candidate_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "approval-workflow",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 3,
+        "elapsed_seconds": 912.88,
+        "cost_usd": 7.8099
+      },
+      "notes": [],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "fae05200-40e2-4afe-9509-5f3e334c2bf7",
+        "workspace": "/tmp/design-bench/approval-workflow/candidate_skill/20261017_131940-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261017_133633",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "9b1d74984549891ad66f42ebeb219ca974d43d26e525633d979b263f2277d492",
+          "files": {
+            "cocreation_judge.py": "5f07c4524a49c35f82b575981035db2db43714e216a7279dc4c457ab090c6bd3",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "2274dfb87fc2824305c3c87729bd40f1c31b189a3b14f6ac7d548e5fd82cdaf5",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "828bf3c4dd6d4042302504243b6f9fbbf61933970274cd34ab5b918a94322db1",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "03d3faa20fbba65f1cf6e311685d8cd0a5c3fd688ec0527f495f290f2c7c96a8",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "1ab267d090526f13f151a117b5682b336fadaf11ad12ff87633fe0172fde1091",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "0ec19d8558ed3e73ee928b35742b9bb576b7f6beae877560d5a558161077a966",
+            "files": {
+              "aggregate_report.py": "2d073d88d42288be4111448b6e11823345a923603ad6cb71b6d2bfebf1e8330a",
+              "bench_lib.py": "4589a66b891d8fedd31ec408fd11c971428d61f93dd6a4959580d0fe0e15a72f",
+              "browser_probe.mjs": "0487d83b2aa2ee31c917d0724d57bea73537ca42aa2f16e2f7a4ea40aa06c104",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "cd2670f37144d57cc3426df496fddb18c28ab14a53227f550133afcd6baf767e",
+              "run_case.py": "1ab267d090526f13f151a117b5682b336fadaf11ad12ff87633fe0172fde1091",
+              "run_claude_session.py": "e4e45184d09373b2bfa02342e15b016199e6ab0bc412a0900ee667d2b4f86a49",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "07e7ddb2787b48337633c482de0605bf6493088906c90b23e6cb11139074cf53",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "e8b24c468634b1f4d0692ad64cf07067fc44c4726c31ca7f8bc7cff51be7a0ae",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "875b4beb1c515e46b1396f6951c0348a98d95608a4881fa895e4458238ba160b"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "17dd56368d0d71059f039d7bf6abcb99a2325ddb2bd7c77d0bb1c14deef61bee",
+            "session-summary.json": "6ac8a812410199949c8ca7772abb1e115d44945ddae16698a476a00e1009d341",
+            "task-traces.json": "fff0be974d138c58ede4877ad7362c1038e6833befca5f4d0fbcc1885884e321",
+            "visual-manifest.json": "2a0d648eaa68c06e63d3552d59c40b75c56a92672131812190f0b50e2b68662e",
+            "session-transcript.md": "f45d5f79c2162716d8eaa541f4ab00f43f76cb8b1ea760e095432a746a4aec39"
+          },
+          "aggregate_sha256": "014beb71403959c44ff9cf82db45b26258c451c1b54b215e4a9b5ae3f3df9aea",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "content-studio",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 5,
+        "elapsed_seconds": 1499.79,
+        "cost_usd": 26.3402
+      },
+      "notes": [
+        "session PARTIAL: turn 5 timeout: timeout after 175s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "8e316457-f915-40f9-b376-510e6bec6257",
+        "workspace": "/tmp/design-bench/content-studio/candidate_skill/20261017_133633-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261017_140554",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "9b1d74984549891ad66f42ebeb219ca974d43d26e525633d979b263f2277d492",
+          "files": {
+            "cocreation_judge.py": "5f07c4524a49c35f82b575981035db2db43714e216a7279dc4c457ab090c6bd3",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "2274dfb87fc2824305c3c87729bd40f1c31b189a3b14f6ac7d548e5fd82cdaf5",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "828bf3c4dd6d4042302504243b6f9fbbf61933970274cd34ab5b918a94322db1",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "03d3faa20fbba65f1cf6e311685d8cd0a5c3fd688ec0527f495f290f2c7c96a8",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "1ab267d090526f13f151a117b5682b336fadaf11ad12ff87633fe0172fde1091",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "0ec19d8558ed3e73ee928b35742b9bb576b7f6beae877560d5a558161077a966",
+            "files": {
+              "aggregate_report.py": "2d073d88d42288be4111448b6e11823345a923603ad6cb71b6d2bfebf1e8330a",
+              "bench_lib.py": "4589a66b891d8fedd31ec408fd11c971428d61f93dd6a4959580d0fe0e15a72f",
+              "browser_probe.mjs": "0487d83b2aa2ee31c917d0724d57bea73537ca42aa2f16e2f7a4ea40aa06c104",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "cd2670f37144d57cc3426df496fddb18c28ab14a53227f550133afcd6baf767e",
+              "run_case.py": "1ab267d090526f13f151a117b5682b336fadaf11ad12ff87633fe0172fde1091",
+              "run_claude_session.py": "e4e45184d09373b2bfa02342e15b016199e6ab0bc412a0900ee667d2b4f86a49",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "07e7ddb2787b48337633c482de0605bf6493088906c90b23e6cb11139074cf53",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "e8b24c468634b1f4d0692ad64cf07067fc44c4726c31ca7f8bc7cff51be7a0ae",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "875b4beb1c515e46b1396f6951c0348a98d95608a4881fa895e4458238ba160b"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "3316c42c09f58eacc9efd70f54ad411b095a489c9095cb2b4134157be04403d5",
+            "session-summary.json": "b41df57278931818e0b44c24134d3fba5947e9ac89f1de79bcd47aee2ce174e0",
+            "task-traces.json": "761b4547ef37e116b004cf4ec016b0c6014fe4931977ade80f69093a0f62c0c8",
+            "visual-manifest.json": "245affc24185977be70b7b74e91aa610eaf4070fed5f7f250ac5613ee9de8048",
+            "session-transcript.md": "4335cdec5d8b1ab8e4c97af12e7d07783f2ca2f8d491e1b37d5c8c8b19b60038"
+          },
+          "aggregate_sha256": "253b92929ade6470b66390c396509765a12ee3477b1251bbb4fba307c4dee729",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "editorial-reader",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 3,
+        "elapsed_seconds": 1499.33,
+        "cost_usd": 18.0288
+      },
+      "notes": [
+        "session PARTIAL: turn 3 timeout: timeout after 662s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "afc01882-b8c3-41d1-a2d7-7ccf6451a39d",
+        "workspace": "/tmp/design-bench/editorial-reader/candidate_skill/20261017_140554-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261017_143341",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "9b1d74984549891ad66f42ebeb219ca974d43d26e525633d979b263f2277d492",
+          "files": {
+            "cocreation_judge.py": "5f07c4524a49c35f82b575981035db2db43714e216a7279dc4c457ab090c6bd3",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "2274dfb87fc2824305c3c87729bd40f1c31b189a3b14f6ac7d548e5fd82cdaf5",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "828bf3c4dd6d4042302504243b6f9fbbf61933970274cd34ab5b918a94322db1",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "03d3faa20fbba65f1cf6e311685d8cd0a5c3fd688ec0527f495f290f2c7c96a8",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "1ab267d090526f13f151a117b5682b336fadaf11ad12ff87633fe0172fde1091",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "0ec19d8558ed3e73ee928b35742b9bb576b7f6beae877560d5a558161077a966",
+            "files": {
+              "aggregate_report.py": "2d073d88d42288be4111448b6e11823345a923603ad6cb71b6d2bfebf1e8330a",
+              "bench_lib.py": "4589a66b891d8fedd31ec408fd11c971428d61f93dd6a4959580d0fe0e15a72f",
+              "browser_probe.mjs": "0487d83b2aa2ee31c917d0724d57bea73537ca42aa2f16e2f7a4ea40aa06c104",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "cd2670f37144d57cc3426df496fddb18c28ab14a53227f550133afcd6baf767e",
+              "run_case.py": "1ab267d090526f13f151a117b5682b336fadaf11ad12ff87633fe0172fde1091",
+              "run_claude_session.py": "e4e45184d09373b2bfa02342e15b016199e6ab0bc412a0900ee667d2b4f86a49",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "07e7ddb2787b48337633c482de0605bf6493088906c90b23e6cb11139074cf53",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "e8b24c468634b1f4d0692ad64cf07067fc44c4726c31ca7f8bc7cff51be7a0ae",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "875b4beb1c515e46b1396f6951c0348a98d95608a4881fa895e4458238ba160b"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "978dd9a50b43e2c09ac912862b41e5d6de5ae284616af01d01429ae201732d53",
+            "session-summary.json": "c8eed404932a660f2d483b51ccffd8449d7f6bf38e8756c968089097b6cd8f4c",
+            "task-traces.json": "d9ee992b89cd9bc251147c6c44768e41dd1ed4dd1323923cb9de86564443659e",
+            "visual-manifest.json": "9813d76e05429b2e1bfd6dcb93038f9a1bbca47737d003584d6c6931653097d0",
+            "session-transcript.md": "b709306167a791a144dd062cd9b65a71ac4e78f84a9dd4bbb3dd93713d6ba435"
+          },
+          "aggregate_sha256": "f6a3a5227d4ad5893ec5234eaa419877cb54a6ec7ac086a9e881983605b6fbd8",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "mobile-booking",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 4,
+        "elapsed_seconds": 1499.44,
+        "cost_usd": 14.8785
+      },
+      "notes": [
+        "session PARTIAL: turn 4 timeout: timeout after 429s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "46f2a1ae-cf5e-431e-879e-57bc3895cf49",
+        "workspace": "/tmp/design-bench/mobile-booking/candidate_skill/20261017_125321-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261017_131940",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "9b1d74984549891ad66f42ebeb219ca974d43d26e525633d979b263f2277d492",
+          "files": {
+            "cocreation_judge.py": "5f07c4524a49c35f82b575981035db2db43714e216a7279dc4c457ab090c6bd3",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "2274dfb87fc2824305c3c87729bd40f1c31b189a3b14f6ac7d548e5fd82cdaf5",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "828bf3c4dd6d4042302504243b6f9fbbf61933970274cd34ab5b918a94322db1",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "03d3faa20fbba65f1cf6e311685d8cd0a5c3fd688ec0527f495f290f2c7c96a8",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "1ab267d090526f13f151a117b5682b336fadaf11ad12ff87633fe0172fde1091",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "0ec19d8558ed3e73ee928b35742b9bb576b7f6beae877560d5a558161077a966",
+            "files": {
+              "aggregate_report.py": "2d073d88d42288be4111448b6e11823345a923603ad6cb71b6d2bfebf1e8330a",
+              "bench_lib.py": "4589a66b891d8fedd31ec408fd11c971428d61f93dd6a4959580d0fe0e15a72f",
+              "browser_probe.mjs": "0487d83b2aa2ee31c917d0724d57bea73537ca42aa2f16e2f7a4ea40aa06c104",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "cd2670f37144d57cc3426df496fddb18c28ab14a53227f550133afcd6baf767e",
+              "run_case.py": "1ab267d090526f13f151a117b5682b336fadaf11ad12ff87633fe0172fde1091",
+              "run_claude_session.py": "e4e45184d09373b2bfa02342e15b016199e6ab0bc412a0900ee667d2b4f86a49",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "07e7ddb2787b48337633c482de0605bf6493088906c90b23e6cb11139074cf53",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "e8b24c468634b1f4d0692ad64cf07067fc44c4726c31ca7f8bc7cff51be7a0ae",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "875b4beb1c515e46b1396f6951c0348a98d95608a4881fa895e4458238ba160b"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "1b3130ed87ffc4447a8fa75928a5a194be471aeade592e2bacfd5df422eb9410",
+            "session-summary.json": "f8a7e950d9b6f4ca84146a1a57d2e83c36c91d1afde3a72ec8e0e5a157de4c06",
+            "task-traces.json": "5b229e47eb13694850804e0f6676ab74a07fe812375dd656ecb7fc1b2b6dc913",
+            "visual-manifest.json": "4a8edcf6c0caabfb3b21f78d37c360f3236ab5682c9e594d30f79bc88ab022dd",
+            "session-transcript.md": "094226186b695a399d3e40bdbff1e3588821d613a1c3840a5d825cf7601b4c7d"
+          },
+          "aggregate_sha256": "75877239b9c61a9cef9b5b18b90fdafeefdae8dbb8ecc8f7fd28c38c83705783",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 2,
+    "authority_escape": 0,
+    "critical_task_break": 2,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 4,
+      "completed": 4,
+      "blocked": 0,
+      "partial": 3,
+      "task_success_rate": 0.5,
+      "method_recall": 0.417,
+      "method_precision": 0.611,
+      "semantic_gate_pass": 2,
+      "semantic_gate_fail": 2,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 3.75,
+      "cost_usd": 67.0574,
+      "elapsed_seconds": 5411.4,
+      "inline_hex_failures": 0,
+      "slop_score": 0.75,
+      "slop_high_findings": 0,
+      "taste_judged": 0,
+      "ai_slop_fail": 0,
+      "category_guessable_high": 0,
+      "first_viewport_thesis_present": 0,
+      "divergence_verdicts": [
+        "not_measured"
+      ],
+      "contract_blocks_fulfilled": null,
+      "contract_blocks_absent": null,
+      "cocreation_verdicts": [
+        "partial",
+        "reveal_only"
+      ],
+      "cocreation_before_build": 3,
+      "cocreation_measured": 4
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 4,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": true,
+    "source_identity": [
+      "4800e99ab4a2376869076d3cbe9c7caefdf2460e16be366e1e7b3888772156e1"
+    ],
+    "disclosure": "all 4 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_agreement": null,
+    "pairwise_confidence_counts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "pairwise_cost_usd": 0,
+    "pairwise_cost_recorded": 0,
+    "pairwise_cost_missing": 0,
+    "pairwise_cost_total_complete": true,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "slop_rules": {
+    "candidate_skill": {
+      "SLOP-014": {
+        "count": 1,
+        "severity": "low"
+      },
+      "SLOP-023": {
+        "count": 2,
+        "severity": "low"
+      }
+    }
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "INCONCLUSIVE",
+    "pairs_compared": 0,
+    "compared_dimensions": 0,
+    "verified_dimensions": [],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [],
+    "missing_pairs": [
+      {
+        "case_id": "approval-workflow",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      },
+      {
+        "case_id": "content-studio",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      },
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      },
+      {
+        "case_id": "mobile-booking",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      }
+    ]
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "approval-workflow/candidate_skill: runtime authority_status unknown",
+    "approval-workflow/candidate_skill: runtime method_router unknown",
+    "approval-workflow/candidate_skill: visual taste not measured",
+    "content-studio/candidate_skill: visual taste not measured",
+    "editorial-reader/candidate_skill: runtime authority_status unknown",
+    "editorial-reader/candidate_skill: visual taste not measured",
+    "mobile-booking/candidate_skill: runtime authority_status unknown",
+    "mobile-booking/candidate_skill: visual taste not measured"
+  ]
+}
