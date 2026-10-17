@@ -14,7 +14,8 @@ accent_policy: "rest state; destructive commit"   # free text: where the accent 
 
 ## Block 2 — palette values (what the compiler actually compiles into tokens.css)
 
-Author inside a `## Confirmed` (or `## 决策` / `## Selected`) section. `compile_tokens.py`
+Author inside a `## Confirmed` section (aliases `## Decision` / `## 决策` / `## Selected`
+are equivalent). `compile_tokens.py`
 extracts the LAST authored `key: #hex` match per key, so the latest decision wins; earlier
 drafts are history, not inputs. Recognised keys (aliases in parentheses):
 
@@ -29,7 +30,8 @@ drafts are history, not inputs. Recognised keys (aliases in parentheses):
 - `status-running`, `status-warning`, `status-danger`
 - `accent-seal`
 
-Authored form (the `## Confirmed` heading is what makes these beat ambient prose):
+Authored form (a confirmed-section heading — `## Confirmed` / `## Decision` / `## 决策` /
+`## Selected` — is what makes these beat ambient prose):
 
 ```markdown
 ## Confirmed — visual tokens
@@ -65,7 +67,8 @@ python3 skills/spec-prototype/scripts/compile_tokens.py
 
 Defaults: reads `prototype/world.md` (else `prototype/discussion.md`), writes
 `prototype/shared/tokens.css` + `prototype/contracts/tokens/t1.json`.
-Hand edits to tokens.css are overwritten at the next compile — Stage 2 探索期直写属正常路径，编译前把最终值回写进 world.md。
+Hand edits to tokens.css are overwritten at the next compile — the compiler is the sole
+writer of tokens.css; Stage 2 探索值先回写进 world.md 的 Confirmed 决策区，再编译生效。
 `--check-sync` verifies freshness without compiling (exit 1 on drift).
 
 ## Contrast precheck — one command, all pairs at once

@@ -31,7 +31,9 @@ contexts:
   recovery. Build the minimal complete path from a real entry to that result before
   any secondary surface. A step split or screen change must serve a task dependency
   or reduce cognitive load; fewer steps is not the goal in itself, and a wizard is
-  neither required nor banned.
+  neither required nor banned. `CRAFT-MINIMAL-PATH` (owned by
+  [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md))
+  governs when a split is earned; it does not prefer one surface by default.
 - **Lightweight routes stay valid**: a bounded direction probe, a spec-only request,
   or a local refinement keeps its route and is not forced through full-product
   enumeration. Downstream engineering handoff compiles and binds the formal Spec upon freeze.
@@ -84,9 +86,11 @@ Before the first runnable write, load:
 
 Before authoring prototype HTML and CSS, apply these non-negotiable floor rules directly into generation:
 - **Direction Contract Precondition**: all six blocks (THESIS, OWN-WORLD, STORY, FIRST VIEWPORT, FORM, FINISH) are populated in `prototype/world.md` (or `discussion.md`) before any runnable HTML/CSS; never leave them empty.
-- **Truth floor**: `CRAFT-DATA-DISCIPLINE` (with the symmetric `L12`), `CRAFT-NO-FABRICATED-MAPPING`, `CRAFT-NO-INVENTED-CAPABILITY` — rules owned by [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) § Domain Entity Grounding.
+- **Truth floor**: `CRAFT-DATA-DISCIPLINE` (with the symmetric `L12`), `CRAFT-NO-FABRICATED-MAPPING`, `CRAFT-NO-INVENTED-CAPABILITY`, `CRAFT-DYNAMIC-BEHAVIOR-TRUTH`, `CRAFT-SCREENSHOT-STATUS-HONESTY` — rules owned by [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) § Domain Entity Grounding.
+- **Drivable surfaces**: `CRAFT-NATIVE-CONTROL` (rows and records included), `CRAFT-MINIMAL-PATH`, `CRAFT-AFFORDANCE-DISCOVERABLE` (core verbs have visible reachable controls with immediate affirmative feedback), `CRAFT-STATE-ENTRY` (deterministic review entry for each exceptional state the brief names), and `CRAFT-TASK-COPY` (task-critical copy uses the brief's own verbs verbatim) — rules owned by the same file.
 - **Destructive-action gate**: `CRAFT-CONFIRM-DRIVABLE`, `CRAFT-ACTION-FEEDBACK` — rules owned by [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) § Interactive Ergonomics.
-- **Browser Surface Theming (`SLOP-017`)**: prefer generating `tokens.css` via `python3 skills/spec-prototype/scripts/compile_tokens.py`. If writing stylesheets directly, style all four native browser surfaces: `::selection`, `caret-color`, scrollbar (`scrollbar-color` or `::-webkit-scrollbar`), and `:focus-visible`.
+- **Browser Surface Theming (`SLOP-017`)**: style all four native browser surfaces in `anchor.css` or via `compile_tokens.py`: `::selection`, `caret-color` (e.g. `caret-color: var(--accent)` on body or input), scrollbar (`scrollbar-color` or `::-webkit-scrollbar`), and `:focus-visible`.
+- **Authentic Craft Styling Consumption**: `anchor.css` consumes the compiled `tokens.css` palette and scale, applying the craft floors ([`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md) owns the recipes): a declared numeric rhythm (e.g. `font-variant-numeric: tabular-nums` on data numerics), intentional measure and hierarchy, and — where the direction selects tactile motion — a press detent via the compiled `var(--press-scale)`. Apply the single-boundary elevation rule below when choosing borders versus shadows.
 - **Draw icons, never use emoji glyphs** (`CRAFT-NO-EMOJI-ICON`): inline authored SVG or a clean icon library for all UI affordances. Emoji, pictographs, or Unicode symbol glyphs (e.g. 📊, ⚠️, 🔴) in UI control slots are immediate defects.
 - **Single-boundary elevation (No ghost cards)**: declare depth once per container — use either a crisp 1px border (`border: 1px solid var(--border-subtle)`) or a subtle calibrated elevation shadow, never a 1px border combined with a wide blurry shadow.
 - **Scoped property transitions (No `transition: all`)**: specify exact animated properties (`transition: transform 150ms var(--ease-out), opacity 150ms var(--ease-out)`; any curve the direction selects, spring included), never unscoped `transition: all`.

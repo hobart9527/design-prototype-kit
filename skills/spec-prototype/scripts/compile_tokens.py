@@ -194,8 +194,7 @@ CANONICAL_ATMOSPHERES = {
         "border_danger": "rgba(220, 38, 38, 0.3)",
         "border_warning": "rgba(217, 119, 6, 0.3)",
     },
-    # ── Dark & Industrial Hardware Palettes (Telemetry / SRE / Workbench) ──
-    # Modern Industrial Craft Palettes (P9+ Reality Anchors)
+    # ── Authored Dark Palettes ──
     "warm-graphite-lime": {  # Teenage Engineering / Industrial Hardware Anchor
         "bg_void": "#080b0b",
         "bg_base": "#101414",
@@ -857,12 +856,17 @@ def compute_tokens(
         colors = DARK_ATMOSPHERES[resolved_palette]
 
     # Density calibration (Density Axis)
+    # ponytail: unknown axis values fall back to the neutral branch and are reported
+    # once at the end of compute_tokens; upgrade path is a hard error in strict mode.
+    _axis_fallbacks: list[str] = []
     density = dials.get("density", "balanced").lower()
+    if "density" in dials and density not in ("dense", "compact", "high", "balanced", "medium", "sparse", "spacious", "comfortable", "generous", "relaxed", "low", "airy"):
+        _axis_fallbacks.append(f"density={dials['density']!r} (using neutral balanced spacing)")
     if density in ("dense", "compact", "high"):
         space = {1: "4px", 2: "8px", 3: "12px", 4: "16px", 5: "20px", 6: "24px", 8: "32px"}
         r_outer_val = 8
         padding_val = 4
-    elif density in ("sparse", "relaxed", "low", "airy"):
+    elif density in ("sparse", "spacious", "comfortable", "generous", "relaxed", "low", "airy"):
         space = {1: "8px", 2: "16px", 3: "24px", 4: "32px", 5: "40px", 6: "48px", 8: "64px"}
         r_outer_val = 16
         padding_val = 8
@@ -889,6 +893,12 @@ def compute_tokens(
 
     # Materiality / Finish Axis calibration. Undeclared materiality stays neutral: no machined finish.
     materiality = dials.get("materiality", dials.get("finish", "")).lower()
+    if materiality and not any(
+        k in materiality
+        for k in ("editorial", "paper", "reading", "somatic", "touch", "mobile", "glass", "organic",
+                  "flat", "instrument", "console", "tool")
+    ):
+        _axis_fallbacks.append(f"materiality={dials.get('materiality', dials.get('finish'))!r} (using neutral type stack)")
     if any(k in materiality for k in ("editorial", "paper", "reading")):
         fonts = {
             "sans": 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
@@ -922,6 +932,10 @@ def compute_tokens(
     # Energy is opt-in: undeclared energy compiles to neutral steady motion, never an implicit kinetic detent.
     rhythm = dials.get("rhythm", "steady").lower()
     energy = dials.get("energy", "steady").lower()
+    if "rhythm" in dials and not any(k in rhythm for k in ("measured", "stately", "deliberate", "relaxed", "rapid", "brisk", "instant", "snappy", "steady", "tabular", "uniform")):
+        _axis_fallbacks.append(f"rhythm={dials['rhythm']!r} (using neutral steady pacing)")
+    if "energy" in dials and not any(k in energy for k in ("kinetic", "snappy", "aggressive", "driven", "hud", "calm", "serene", "quiet", "low", "steady")):
+        _axis_fallbacks.append(f"energy={dials['energy']!r} (using neutral steady motion)")
 
     if any(k in energy for k in ("kinetic", "snappy", "aggressive", "driven", "hud")):
         base_fast, base_norm, base_slow = 80, 180, 320
@@ -963,6 +977,8 @@ def compute_tokens(
 
     # Character Axis calibration (affects typography tone, density feel, and feedback prominence)
     character = dials.get("character", dials.get("seriousness", "utilitarian")).lower()
+    if "character" in dials and not any(k in character for k in ("scholarly", "editorial", "academic", "playful", "expressive", "friendly", "operational", "utilitarian", "neutral")):
+        _axis_fallbacks.append(f"character={dials['character']!r} (using neutral typography tone)")
     if any(k in character for k in ("scholarly", "editorial", "academic")):
         line_height_body = "1.6"
         line_height_heading = "1.25"
@@ -1021,6 +1037,9 @@ def compute_tokens(
     }
 
     craft = craft_stack if craft_stack is not None else parse_craft_stack("", dials)
+
+    for _fb in _axis_fallbacks:
+        print(f"warning: unrecognized axis value: {_fb}", file=sys.stderr)
 
     return {
         "dials": dials,
@@ -1095,7 +1114,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --bg-surface-raised: {c['bg_surface_raised']};",
         f"  --bg-overlay: {c['bg_overlay']};",
         "",
-        "  /* Machined Layered Borders */",
+        "  /* Layered Borders */",
         f"  --border-dim: {c['border_dim']};",
         f"  --border-subtle: {c['border_subtle']};",
         f"  --border-bright: {c['border_bright']};",
@@ -1110,7 +1129,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --text-secondary: {c['text_secondary']};",
         f"  --text-tertiary: {c['text_tertiary']};",
         "",
-        "  /* Accent & Telemetry */",
+        "  /* Accent & Status */",
         f"  --accent-primary: {c['accent_primary']};",
         f"  --accent-subtle: {c['accent_subtle']};",
         f"  --accent-hover: {c['accent_hover']};",
@@ -1155,7 +1174,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --radius-sm: {r['sm']};",
         f"  --radius-pill: {r['pill']};",
         "",
-        "  /* Motion & Kinematic Physics (P9+ Spring Curves) */",
+        "  /* Motion & Interaction Physics */",
         f"  --duration-fast: {m['duration_fast']};",
         f"  --duration-normal: {m['duration_normal']};",
         f"  --duration-slow: {m['duration_slow']};",
@@ -1272,6 +1291,11 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         "    scroll-behavior: auto !important;",
         "  }",
         "}",
+        "",
+        "/* Ensure HTML5 hidden attribute always wins over author display rules */",
+        "[hidden] {",
+        "  display: none !important;",
+        "}",
     ])
     return "\n".join(lines) + "\n"
 
@@ -1311,7 +1335,7 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         "primary-hover": {"$value": c["accent_hover"], "$type": "color", "$description": "Hover state of primary", "authority": color_auth},
         "surface": {"$value": c["bg_surface"], "$type": "color", "$description": "Card, panel, and workbench base surface", "authority": color_auth},
         "surface-raised": {"$value": c["bg_surface_raised"], "$type": "color", "$description": "Elevated modal, sheet, or popover", "authority": color_auth},
-        "surface-overlay": {"$value": c["bg_overlay"], "$type": "color", "$description": "Top-tier fly-by-wire controls and overlay", "authority": color_auth},
+        "surface-overlay": {"$value": c["bg_overlay"], "$type": "color", "$description": "Modal dialog, sheet, or overlay controls", "authority": color_auth},
         "border": {"$value": c["border_subtle"], "$type": "color", "$description": "Default component boundary", "authority": color_auth},
         "border-strong": {"$value": c["border_bright"], "$type": "color", "$description": "Active or emphasized component boundary", "authority": color_auth},
         "border-dim": {"$value": c["border_dim"], "$type": "color", "$description": "Subtle hairline divider", "authority": color_auth},
@@ -1320,7 +1344,7 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         "text-tertiary": {"$value": c["text_tertiary"], "$type": "color", "$description": "De-emphasized or disabled controls and copy", "authority": color_auth},
         "status-running": {"$value": c["status_running"], "$type": "color", "$description": "Nominal operational state", "authority": color_auth},
         "status-warning": {"$value": c["status_warning"], "$type": "color", "$description": "Warning state or capacity threshold", "authority": color_auth},
-        "status-danger": {"$value": c["status_danger"], "$type": "color", "$description": "Critical failure or thermal alert", "authority": color_auth},
+        "status-danger": {"$value": c["status_danger"], "$type": "color", "$description": "Critical failure or blocking alert", "authority": color_auth},
         "bg-void": {"$value": c["bg_void"], "$type": "color", "$description": "Deepest atmospheric background", "authority": color_auth},
         "bg-base": {"$value": c["bg_base"], "$type": "color", "$description": "App foundation background chassis", "authority": color_auth},
     }
@@ -1340,7 +1364,7 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
 
     typography_tokens: Dict[str, Any] = {
         "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family", "authority": typography_auth},
-        "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Telemetry and code font family", "authority": typography_auth},
+        "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Code and tabular font family", "authority": typography_auth},
         "line-height-body": {"$value": tokens.get("typography", {}).get("line_height_body", "1.5"), "$type": "number", "$description": "Body copy leading (CJK-safe)", "authority": typography_auth},
         "line-height-heading": {"$value": tokens.get("typography", {}).get("line_height_heading", "1.2"), "$type": "number", "$description": "Display/heading leading", "authority": typography_auth},
     }
@@ -1354,7 +1378,7 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     motion_tokens: Dict[str, Any] = {
         "duration-fast": {"$value": duration_value(m.get("duration_fast", "80ms")), "$type": "duration", "$description": "Fast tactile duration", "authority": motion_auth},
         "duration-normal": {"$value": duration_value(m.get("duration_normal", "180ms")), "$type": "duration", "$description": "Normal transition duration", "authority": motion_auth},
-        "ease-hud": {"$value": [0.16, 1, 0.3, 1], "$type": "cubicBezier", "$description": "HUD snappy curve", "authority": motion_auth},
+        "ease-hud": {"$value": [0.16, 1, 0.3, 1], "$type": "cubicBezier", "$description": "Authored easing curve", "authority": motion_auth},
         "spring-settle": {
             "$value": {
                 "duration": duration_value(m.get("duration_normal", "180ms")),

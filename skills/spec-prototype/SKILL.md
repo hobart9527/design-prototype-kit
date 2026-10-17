@@ -63,7 +63,7 @@ Calibrate where the product sits on these continuous tension axes:
 Immediately reject generic AI tropes in every authored artifact:
 - **No unearned card grids**: repetitive equal-height cards are banned unless content objects are genuine peer entities of identical complexity.
 - **No gratuitous purple/cyan AI glow**: color must trace directly to domain semantics, physical material metaphors, or functional status.
-- **No placeholder copy or fake avatars**: every text label, figure, and status message must use authentic, task-accurate domain data.
+- **No placeholder copy or fake avatars**: every text label, figure, and status message must use authentic, task-accurate domain data. Display samples used only to test layout must be marked as demonstration; they never assert capabilities, business rules, or user facts.
 - **No dead commit surfaces**: buttons and key triggers must convey perceptible mechanical feedback (`:active` detent, tactile state shifts; motion character follows the committed direction).
 - **No thick container accent stripes (SLOP-002)**: containers, cards, and panel wrappers must never use heavy side accent bars (`border-left: 3px/4px solid accent`). Use grid rhythm, subtle brightness contrast, or refined perimeter borders.
 
@@ -113,7 +113,8 @@ prototype/
 │   ├── truth.md                            # Layered: product facts, tension, Decisions & authority table
 │   ├── world.md                            # Layered: visual world, taste ledger, sole token authority
 │   └── briefs/<slice>.md                   # Layered: one slice per file (surface strategy & evidence)
-├── specifications/<slice>/r1.spec.md       # Sole RFC specification: IA topology, states, Break Protocol
+├── specifications/<slice>/r1.spec.md       # Sole RFC specification: compiled via `compile_spec_ir.py`
+├── contracts/compiled/<slice>/r1.spec.json # Canonical Spec IR: compiled via `compile_spec_ir.py`
 ├── shared/tokens.css                       # Compiled W3C DTCG physical stylesheet
 ├── contracts/tokens/t1.json               # Optional DTCG machine export (`compile_tokens.py`)
 └── experiments/<slice>/anchor/index.html   # Primary high-fidelity interactive runnable prototype
@@ -124,6 +125,8 @@ prototype/
 2. NEVER use `assemble_envelope.py` as an authoring or dispatch stage in the primary delivery flow; it is a legacy/benchmark compatibility helper.
 3. NEVER author review portals outside `prototype/review-portal.html`.
 4. NEVER loop on visual guesswork or trial-and-error CSS hacks in the primary delivery flow. Read the structured `diagnostics_summary` from `capture.mjs` directly.
+5. When authoring the RFC specification, ALWAYS compile via `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>` so `contracts/compiled/<slice>/r1.spec.json` and `specifications/<slice>/r1.spec.md` arrive together; NEVER author `r1.spec.md` alone by hand.
+6. NEVER cite or describe any state, state entry, or runtime behavior whose capture failed, whose screenshot count is 0, or that lacks confirmed passing evidence under `## Verified this turn`. Capture-failed or unconfirmed states belong exclusively under `## 未验证（不得读作已验证）` or `Limitations`, tagged as `[hypothesis]` / `[unverified]`. Placing an unconfirmed state under `## Verified this turn` is a hard-gate authority promotion defect.
 
 The machine-read lists in design records (`contract:states`, `contract:invariants`, `contract:actions`,
 `contract:viewports`, `contract:axes`, `contract:craft`, `contract:tokens`, `contract:meso`) are authoritative

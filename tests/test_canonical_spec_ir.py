@@ -1168,7 +1168,12 @@ def test_the_template_compiles_to_the_execution_tier(tmp_path: Path):
         .read_text(encoding="utf-8").replace("<slice_id>", "cockpit"),
     )
 
-    ir = compile_canonical_ir(root=root, slice_id="cockpit", stage="hero_probe")
+    # Without user approval (default sealed_provisional), the template compiles to intent_spec (no authority promotion)
+    ir_provisional = compile_canonical_ir(root=root, slice_id="cockpit", stage="hero_probe")
+    assert ir_provisional["spec_tier"] == "intent_spec"
+
+    # With validated status, the template compiles to the execution_spec tier:
+    ir = compile_canonical_ir(root=root, slice_id="cockpit", stage="hero_probe", authority_status="validated")
 
     assert ir["spec_tier"] == "execution_spec"
     assert [s["id"] for s in ir["state_model"]["domain_states"]] == [
@@ -1380,6 +1385,24 @@ def test_a_contract_states_block_missing_a_class_is_reported(tmp_path: Path):
 
     assert "incomplete_state_block" in str(excinfo.value)
     assert "data_scenarios" in str(excinfo.value)
+
+
+def test_provisional_authority_status_never_earns_execution_spec(tmp_path: Path):
+    """Provisional / draft authority never promotes to execution_spec without recorded validation."""
+    root = _write_discussion(
+        tmp_path,
+        (REPO / "skills/spec-prototype/templates/discussion.md")
+        .read_text(encoding="utf-8").replace("<slice_id>", "cockpit"),
+    )
+
+    for prov_status in ("sealed_provisional", "draft"):
+        ir = compile_canonical_ir(root=root, slice_id="cockpit", stage="hero_probe", authority_status=prov_status)
+        assert ir["spec_tier"] == "intent_spec", f"{prov_status} must stay intent_spec"
+
+    ir_validated = compile_canonical_ir(root=root, slice_id="cockpit", stage="hero_probe", authority_status="validated")
+    assert ir_validated["spec_tier"] == "execution_spec"
+
+
 
 
 def test_a_state_named_in_prose_is_not_a_declaration():

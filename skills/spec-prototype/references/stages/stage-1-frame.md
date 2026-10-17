@@ -23,7 +23,7 @@ open alternatives only when a consequential choice is genuinely unresolved.
      In Turn 1, run the six-step Divergence Generator
      ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4) and record its anchors in the design record
      (the slice's `briefs/<slice>.md` on a layered tree, `prototype/discussion.md` otherwise):
-     1. `rut:` — one sentence naming the category's default surface.
+     1. `rut:` — one sentence naming the category's default surface (use neutral architectural terms; do NOT mention unrequested features like 评论/社交/推荐 unless preceded by an explicit negation marker like "不做/排除").
      2. Three lifeworld candidates, each naming its world and organising principle.
      3. `### Divergence seeds` — drawn or chosen seeds (`python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --record <the slice's record> --write` is an optional entropy source).
      4. `verdict: axes=[structure, <second axis>]` — two-axis verdict with Structure mandatory; then a per-candidate `challenger: fused(<technique>)` or `challenger: refused(<reason>)` line.
@@ -55,7 +55,10 @@ open alternatives only when a consequential choice is genuinely unresolved.
      to what the user explicitly confirmed; NEVER bundle derived parameters into the confirmed clause.
      In THESIS, OWN-WORLD, and STORY, describe visual metaphor, spatial chassis, and interaction
      ergonomics — NEVER invent unrequested technical capabilities (e.g. "不可篡改的时间线", "实时全量同步",
-     "自动根因分析") that the brief did not request and the prototype does not implement.
+     "自动根因分析", "标记已读", "阅读进度云同步") that the brief did not request and the prototype does not implement.
+     NEVER assert unverified empirical industry or market research claims as flat facts (e.g. "No product in this category...",
+     "业界均未提供此类机制", "竞品普遍缺失..."). In `rut:` and lifeworld sections, describe spatial patterns and layout expectations
+     without inventing unverified market landscape surveys. All external or competitive assertions without evidence will be penalized as fabricated capabilities.
    - The user's choice of direction is the consequential decision this round exists
      to produce. When evidence already predetermines the direction (an explicit extension
      of an existing surface, a settled convention, or an explicit user delegation),
@@ -96,7 +99,8 @@ prototype/
 │   ├── truth.md                            #   分层布局：产品事实 + Decisions and authority 表
 │   ├── world.md                            #   分层布局：视觉世界与令牌权威
 │   └── briefs/<slice>.md                   #   分层布局：每个 slice 的表面策略与证据
-├── specifications/<slice>/r1.spec.md       # 【唯一规范源】单文件完整 RFC：IA 拓扑、状态机、Break 协议
+├── specifications/<slice>/r1.spec.md       # 【唯一规范源】单文件完整 RFC：由 compile_spec_ir.py 编译生成
+├── contracts/compiled/<slice>/r1.spec.json # 机器契约 IR：由 compile_spec_ir.py 与 r1.spec.md 一并编译，守住构建边界
 ├── shared/
 │   └── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
 ├── contracts/tokens/t1.json               # （可选机器导出层：`compile_tokens.py --output-json` 的默认落点）
@@ -151,7 +155,7 @@ The brief needs only the applicable parts of:
   - **Negative Boundaries & Omissions (第一版不做 · 显式反向边界)**: Record explicit omissions to maintain semantic discipline and prevent scope fabrication. Explicitly exclude unrequested lateral domains, unprompted integrations, speculative automation (e.g. magical auto-remediation, unrequested predictive AI), auxiliary post-processing workflows not justified by the core tension, and unprompted lifecycle pipelines (e.g. inventing a three-phase model "止血/收敛/收尾" as surface banners when unstated in brief).
   - **Fidelity to Stated Constraints & Invariants (约束与历史守恒)**: Honor all physical constraints, preconditions, and irreversible historical facts stated in the brief. Safety mechanisms and rollback controls must be grounded in actual system capabilities and scoped strictly to active operations, never claiming retroactive resolution of past unrecoverable states.
   - **Ground Truth Fidelity (真值守恒与零臆测归因)**: Assert as fact only what is explicitly supported by the user brief or session inputs. Never fabricate unprompted user-research findings, psychological profiles, operator experience tiers, or drill cadence splits (e.g. "expert operators will hate wizards due to frequent drills", "每步上下文窄适合新值班员", "新值班员需一次讲解"). Never fabricate unverified root-cause attributions for historical failures (e.g. asserting "无复核" or "touch-screen misclicks" was a root cause, or re-labeling incidents as "误下线/未经预览" in metrics tables when the brief only mentioned an accidental one-click drain without rollback). Never invent unprompted telemetry data sources, system capacities, or monitoring metrics (e.g. "剩余容量", "CPU水位"). Never invent unrequested operational objects (e.g. "批次"). Speculative rationale must be explicitly tagged as `[hypothesis]`, never treated or cited as ground truth facts.
-  - **Decision Authority Discipline & Atomic Tagging (决策权威纪律与原子化标签)**: The `[explicit]` tag applies SOLELY to pure user statements; never bundle synthetic IDs (`region-1 ~ region-3`, `service-01 ~ service-07`), operational groupings, or derived boundaries under `[explicit]`. In journeys/flows, unconfirmed design mechanisms (e.g. "双人确认", "必经影响预览") must be explicitly qualified as `[derived, provisional]`, never presented as settled facts. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward` with status `proposed(provisional)` or `derived`, NEVER as `confirmed` or `approvals preserved`. Initial interpretations of brief scope and historical constraints are NOT confirmed decisions until explicitly selected by the user.
+  - **Decision Authority Discipline & Atomic Tagging (决策权威纪律与原子化标签)**: The `[explicit]` tag applies SOLELY to pure user statements; never bundle synthetic IDs, operational groupings, or derived boundaries under `[explicit]`. In journeys/flows, unconfirmed design mechanisms (e.g. "双人确认", "必经影响预览") must be explicitly qualified as `[derived, provisional]`, never presented as settled facts. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward` with status `proposed(provisional)` or `derived`, NEVER as `confirmed` or `approvals preserved`. Initial interpretations of brief scope and historical constraints are NOT confirmed decisions until explicitly selected by the user.
 - **Experience direction & Five Axes calibration** — product-specific hierarchy, tone,
   visual mechanism, references and what is deliberately conventional. All five axes
   (Density · Energy · Materiality · Rhythm · Character) are accounted for at direction

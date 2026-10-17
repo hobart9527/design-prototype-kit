@@ -1390,13 +1390,16 @@ def compile_canonical_ir(
 
     # Progressive tier stamping: the IR emits the tier it can legitimately
     # derive. A full state machine AND action contracts present (authored here
-    # or merged from a Stage 3/4 fragment) earn `execution_spec`; otherwise the
-    # Stage 1 `intent_spec` tier is stamped.
+    # or merged from a Stage 3/4 fragment) earn `execution_spec` ONLY when the
+    # design has recorded verification / approval (authority_status not in
+    # provisional states). Without explicit approval / validation, it remains
+    # intent_spec (or review_spec/draft) to prevent authority promotion.
     has_state_machine = bool(
         domain_states and interaction_states and data_scenarios and stress_fixtures
     )
     has_action_contracts = bool(actions)
-    spec_tier = "execution_spec" if (has_state_machine and has_action_contracts) else "intent_spec"
+    is_provisional = authority_status in {"draft", "sealed_provisional", "provisional"}
+    spec_tier = "execution_spec" if (has_state_machine and has_action_contracts and not is_provisional) else "intent_spec"
 
     # Verification scope resolution order, most authoritative first:
     #   1. an explicit `--viewports` override (the caller's decision)
@@ -1592,14 +1595,26 @@ def compile_canonical_ir(
         )
 
     if required_tier == "execution_spec" and spec_tier != "execution_spec":
-        missing = format_missing_sections(violations) if violations else \
-            "state_model (domain_states / interaction_states / data_scenarios / stress_fixtures) 或 actions 缺失"
+        missing_reasons = []
+        if is_provisional:
+            missing_reasons.append({
+                "key": "authority_status",
+                "label": "权威状态 (authority_status)",
+                "section": "Authority & Status",
+                "form": "authority_status 必须超越 provisional (e.g. validated)",
+                "example": "provisional 状态不得晋升为 execution_spec",
+            })
+        if not (has_state_machine and has_action_contracts):
+            missing_reasons.extend(
+                violations
+                or [{"key": "state_model", "label": "执行层级状态机 (state_model)",
+                     "section": "Stage 3/4 (状态机与动作契约)",
+                     "form": "完整的 domain/interaction/data/stress 状态模型与 action 契约",
+                     "example": "- `domain/<state-id>` (业务状态名称): 一句话语义描述"}]
+            )
+        missing = format_missing_sections(missing_reasons)
         raise IncompleteStageContractError(
-            violations
-            or [{"key": "state_model", "label": "执行层级状态机 (state_model)",
-                 "section": "Stage 3/4 (状态机与动作契约)",
-                 "form": "完整的 domain/interaction/data/stress 状态模型与 action 契约",
-                 "example": "- `domain/<state-id>` (业务状态名称): 一句话语义描述"}],
+            missing_reasons,
             header=f"execution_spec 层级不可达成：当前 discussion.md 仅满足 intent_spec。\n{missing}",
         )
 

@@ -9,7 +9,8 @@
 //   node browser_probe.mjs screenshot --url <url> --viewport 390 --outshots <dir>
 //   node browser_probe.mjs session   --url <url> --viewport 1280
 //     session mode keeps one page alive and reads JSON commands on stdin, one
-//     per line: {"cmd":"snapshot"} {"cmd":"click","match":"..."}
+//     per line: {"cmd":"snapshot"} {"cmd":"click","match_index":3}
+//     {"cmd":"fill","match_index":3,"value":"..."} {"cmd":"wait","ms":1000}
 //     {"cmd":"scroll","dy":600} {"cmd":"screenshot","file":"..."} {"cmd":"quit"}
 // Prints one JSON object on stdout.
 
@@ -41,7 +42,61 @@ function parseArgs(argv) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const activeCleanups = new Set();
+
+function registerCleanup(fn) {
+  activeCleanups.add(fn);
+  return () => {
+    activeCleanups.delete(fn);
+  };
+}
+
+function runCleanups() {
+  for (const fn of activeCleanups) {
+    try { fn(); } catch {}
+  }
+  activeCleanups.clear();
+}
+
+let hooksInstalled = false;
+function installExitHooks() {
+  if (hooksInstalled) return;
+  hooksInstalled = true;
+  for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+    process.on(sig, () => {
+      runCleanups();
+      process.exit(128 + (sig === "SIGINT" ? 2 : sig === "SIGTERM" ? 15 : 1));
+    });
+  }
+  process.on("exit", () => {
+    runCleanups();
+  });
+  process.on("uncaughtException", (err) => {
+    runCleanups();
+    process.stderr.write(String(err && err.stack || err) + "\n");
+    process.exit(1);
+  });
+}
+
+function spawnWatchdog(parentPid, childPid, profileDir) {
+  // If the node process is forcefully killed (SIGKILL), the watchdog detects parent exit and cleans up
+  const script = `
+    while kill -0 ${parentPid} 2>/dev/null; do
+      sleep 1
+    done
+    kill -9 -${childPid} 2>/dev/null || kill -9 ${childPid} 2>/dev/null
+    rm -rf "${profileDir}" 2>/dev/null
+  `;
+  const watcher = spawn("sh", ["-c", script], {
+    stdio: "ignore",
+    detached: true,
+  });
+  watcher.unref();
+  return watcher;
+}
+
 async function launch(profileDir) {
+  installExitHooks();
   fs.mkdirSync(profileDir, { recursive: true });
   const child = spawn(chromePath(), [
     "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
@@ -49,17 +104,26 @@ async function launch(profileDir) {
     "--window-size=1600,1000", "about:blank",
   ], { stdio: ["ignore", "pipe", "pipe"], detached: true });
 
-  const port = await new Promise((resolve, reject) => {
-    let buffer = "";
-    const timer = setTimeout(() => reject(new Error("chrome devtools port timeout")), 30000);
-    child.stderr.on("data", (chunk) => {
-      buffer += chunk.toString();
-      const match = buffer.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)/);
-      if (match) { clearTimeout(timer); resolve(match[1]); }
+  const watcher = spawnWatchdog(process.pid, child.pid, profileDir);
+  const handle = { child, profileDir, watcher };
+  handle.unregister = registerCleanup(() => killProcessTree(handle));
+
+  try {
+    const port = await new Promise((resolve, reject) => {
+      let buffer = "";
+      const timer = setTimeout(() => reject(new Error("chrome devtools port timeout")), 30000);
+      child.stderr.on("data", (chunk) => {
+        buffer += chunk.toString();
+        const match = buffer.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)/);
+        if (match) { clearTimeout(timer); resolve(match[1]); }
+      });
+      child.on("exit", (code) => { clearTimeout(timer); reject(new Error(`chrome exited early: ${code}`)); });
     });
-    child.on("exit", (code) => { clearTimeout(timer); reject(new Error(`chrome exited early: ${code}`)); });
-  });
-  return { child, port };
+    return { handle, port };
+  } catch (err) {
+    killProcessTree(handle);
+    throw err;
+  }
 }
 
 class CDP {
@@ -98,9 +162,17 @@ const SNAPSHOT_JS = `(() => {
     const style = getComputedStyle(el);
     return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && style.opacity !== "0";
   };
-  const nameOf = (el) => (el.getAttribute("aria-label") || el.getAttribute("title") || el.innerText || el.value || "").trim().replace(/\\s+/g, " ").slice(0, 90);
+  const stateOf = (el) => {
+    if (el.getAttribute("aria-pressed") === "true" || el.getAttribute("aria-checked") === "true" || el.getAttribute("aria-selected") === "true" || el.checked) return " [已选]";
+    if (el.disabled || el.getAttribute("aria-disabled") === "true") return " [不可用]";
+    return "";
+  };
+  const nameOf = (el) => ((el.getAttribute("aria-label") || el.getAttribute("title") || el.innerText || el.value || el.getAttribute("placeholder") || "").trim().replace(/\\s+/g, " ") + stateOf(el)).slice(0, 90);
   const roleOf = (el) => el.getAttribute("role") || ({BUTTON:"button", A:"link", INPUT:"textbox", SELECT:"combobox", TEXTAREA:"textbox", DETAILS:"group", SUMMARY:"button"}[el.tagName] || el.tagName.toLowerCase());
   const controls = [];
+  for (const old of document.querySelectorAll('[data-bench-index]')) {
+    old.removeAttribute('data-bench-index');
+  }
   for (const el of document.querySelectorAll("button, a, input, select, textarea, [role=button], [role=tab], [role=menuitem], [role=option], [data-action], [tabindex]:not([tabindex='-1'])")) {
     if (!visible(el)) continue;
     controls.push({ index: controls.length, role: roleOf(el), name: nameOf(el), tag: el.tagName.toLowerCase(), actions: el.getAttribute("data-action") || "" });
@@ -131,22 +203,34 @@ const SNAPSHOT_JS = `(() => {
 const CLICK_JS = (match, matchAction, matchIndex) => `(() => {
   const needle = ${JSON.stringify(match)};
   const idx = ${JSON.stringify(matchIndex)};
+  const visible = (el) => {
+    const rect = el.getBoundingClientRect();
+    const style = getComputedStyle(el);
+    return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && style.opacity !== "0";
+  };
+  // A click only presses. Typing and option choice go through the explicit
+  // fill command so every value the page receives is recorded in the trace.
+  const doClick = (el, by) => {
+    el.scrollIntoView({ block: "center" });
+    el.click();
+    if (typeof el.focus === "function") el.focus();
+    return { clicked: (el.getAttribute("aria-label") || el.innerText || el.name || el.tagName).toString().trim().slice(0, 90),
+             tag: el.tagName.toLowerCase(), by };
+  };
   // Index identity first: the agent picked a listed control, so click that exact
   // node. Name scoring cannot disambiguate empty-named inputs (textarea) and
   // would otherwise mis-click an unrelated control.
+  // Guard: the index attribute is a snapshot artifact — when the page mutates
+  // (wizard step swap, hidden toggling, list re-render) the attribute can sit
+  // on a stale node. Verify visibility and name before committing; on mismatch
+  // fall through to data-action / name scoring instead of clicking blind.
   if (idx !== null && idx !== undefined && idx !== "") {
     const byIdx = document.querySelector('[data-bench-index="' + idx + '"]');
     if (byIdx) {
-      byIdx.scrollIntoView({ block: "center" });
-      if (byIdx.tagName.toLowerCase() === "select" && byIdx.options && byIdx.options.length > 1) {
-        byIdx.selectedIndex = (byIdx.selectedIndex + 1) % byIdx.options.length;
-        byIdx.dispatchEvent(new Event("input", { bubbles: true }));
-        byIdx.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-      byIdx.click();
-      if (typeof byIdx.focus === "function") byIdx.focus();
-      return { clicked: (byIdx.getAttribute("aria-label") || byIdx.innerText || byIdx.name || byIdx.tagName).toString().trim().slice(0, 90),
-               tag: byIdx.tagName.toLowerCase(), by: "index" };
+      const elName = (byIdx.getAttribute("aria-label") || byIdx.innerText || byIdx.value || "").trim().replace(/\s+/g, " ");
+      const nameOk = !needle || elName === needle || elName.includes(needle) || needle.includes(elName.slice(0, 6));
+      if (visible(byIdx) && nameOk) return doClick(byIdx, "index");
+      // Fall through to data-action / name matching if index is stale or mismatched
     }
   }
   const actionId = ${JSON.stringify(matchAction)};
@@ -179,24 +263,72 @@ const CLICK_JS = (match, matchAction, matchIndex) => `(() => {
   scored.sort((a, b) => b.score - a.score);
   const el = scored[0].el;
   el.scrollIntoView({ block: "center" });
-  if (el.tagName.toLowerCase() === "select" && el.options && el.options.length > 1) {
-    el.selectedIndex = (el.selectedIndex + 1) % el.options.length;
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-  }
   el.click();
   return { clicked: (el.getAttribute("aria-label") || el.innerText || "").trim().slice(0, 90), tag: el.tagName.toLowerCase() };
 })()`;
 
-function killProcessTree(child, profileDir) {
-  try {
-    if (child && child.pid) {
-      process.kill(-child.pid, "SIGKILL");
-    }
-  } catch (e) {
+// Explicit fill: types `value` into the text field (or picks the matching
+// option of a select) at the snapshot index. Uses the native value setter so
+// framework-controlled inputs see the change, then fires input + change.
+const FILL_JS = (matchIndex, value) => `(() => {
+  const idx = ${JSON.stringify(matchIndex)};
+  const value = ${JSON.stringify(value)};
+  const el = document.querySelector('[data-bench-index="' + idx + '"]');
+  if (!el) return { filled: null, reason: "no control at index " + idx };
+  const tag = el.tagName.toLowerCase();
+  const type = (el.type || "").toLowerCase();
+  const fire = () => {
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  el.scrollIntoView({ block: "center" });
+  if (tag === "select") {
+    const option = [...el.options].find((o) => o.label.trim() === value || o.value === value);
+    if (!option) return { filled: null, reason: "select has no option " + JSON.stringify(value) };
+    el.value = option.value;
+    fire();
+    return { filled: option.label.trim(), tag, value: option.value };
+  }
+  const textual = tag === "textarea" || el.isContentEditable
+    || (tag === "input" && !["button", "submit", "reset", "checkbox", "radio", "file", "image", "range", "color"].includes(type));
+  if (!textual) return { filled: null, reason: tag + (type ? "[" + type + "]" : "") + " is not a fillable field" };
+  if (el.disabled || el.readOnly) return { filled: null, reason: "field is disabled or read-only" };
+  if (typeof el.focus === "function") el.focus();
+  if (el.isContentEditable) {
+    el.textContent = value;
+  } else {
+    const proto = tag === "textarea" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, "value").set.call(el, value);
+  }
+  fire();
+  return { filled: (el.getAttribute("aria-label") || el.name || el.placeholder || tag).toString().trim().slice(0, 90), tag, value };
+})()`;
+
+function killProcessTree(handle, profileDirFallback) {
+  if (!handle && !profileDirFallback) return;
+  const child = handle && handle.child ? handle.child : (handle && handle.pid ? handle : null);
+  const profileDir = (handle && handle.profileDir) || profileDirFallback;
+  const watcher = handle && handle.watcher;
+  const unregister = handle && handle.unregister;
+
+  if (unregister) {
+    try { unregister(); } catch {}
+  }
+  if (watcher && watcher.pid) {
     try {
-      if (child) child.kill("SIGKILL");
-    } catch (e2) {}
+      process.kill(-watcher.pid, "SIGKILL");
+    } catch {
+      try { watcher.kill("SIGKILL"); } catch {}
+    }
+  }
+  if (child && child.pid) {
+    try {
+      process.kill(-child.pid, "SIGKILL");
+    } catch (e) {
+      try {
+        child.kill("SIGKILL");
+      } catch (e2) {}
+    }
   }
   if (profileDir) {
     try {
@@ -209,16 +341,22 @@ async function withPage(viewport, url, fn) {
   const width = Number(String(viewport).split("x")[0]);
   const height = Number(String(viewport).split("x")[1] || 900);
   const profile = fs.mkdtempSync("/tmp/bench-chrome-");
-  const { child, port } = await launch(profile);
+  let handle;
   try {
-    const cdp = await CDP.connect(port);
+    const launched = await launch(profile);
+    handle = launched.handle;
+    const cdp = await CDP.connect(launched.port);
     await cdp.send("Page.enable");
     await cdp.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width <= 500 });
     await cdp.send("Page.navigate", { url });
     await sleep(1800);
     return await fn(cdp, { width, height });
   } finally {
-    killProcessTree(child, profile);
+    if (handle) {
+      killProcessTree(handle);
+    } else {
+      killProcessTree(null, profile);
+    }
   }
 }
 
@@ -258,9 +396,11 @@ async function sessionMain(url, viewport) {
   const width = Number(String(viewport).split("x")[0]);
   const height = Number(String(viewport).split("x")[1] || 900);
   const profile = fs.mkdtempSync("/tmp/bench-chrome-");
-  const { child, port } = await launch(profile);
+  let handle;
   try {
-    const cdp = await CDP.connect(port);
+    const launched = await launch(profile);
+    handle = launched.handle;
+    const cdp = await CDP.connect(launched.port);
     await cdp.send("Page.enable");
     await cdp.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width <= 500 });
     await cdp.send("Page.navigate", { url });
@@ -277,6 +417,13 @@ async function sessionMain(url, viewport) {
           const click = await cdp.evaluate(CLICK_JS(cmd.match || "", cmd.match_action || "", cmd.match_index ?? null));
           await sleep(900);
           response = { click, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
+        } else if (cmd.cmd === "fill") {
+          const fill = await cdp.evaluate(FILL_JS(cmd.match_index ?? null, String(cmd.value ?? "")));
+          await sleep(500);
+          response = { fill, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
+        } else if (cmd.cmd === "wait") {
+          await sleep(Math.min(Math.max(Number(cmd.ms) || 1000, 0), 5000));
+          response = { wait: true, snapshot: await cdp.evaluate(SNAPSHOT_JS) };
         } else if (cmd.cmd === "scroll") {
           await cdp.evaluate(`window.scrollBy(0, ${Number(cmd.dy) || 600}); null`);
           await sleep(500);
@@ -298,7 +445,11 @@ async function sessionMain(url, viewport) {
       process.stdout.write(JSON.stringify(response) + "\n");
     }
   } finally {
-    killProcessTree(child, profile);
+    if (handle) {
+      killProcessTree(handle);
+    } else {
+      killProcessTree(null, profile);
+    }
   }
 }
 

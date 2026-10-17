@@ -63,6 +63,11 @@ purpose of this stage.
    finding needs a failed trigger: a floor, a declared contract block, a task that
    cannot be completed, or a stress case that breaks. The converse holds too: a
    direction that wins on looks while breaking a floor is a defect, not a candidate.
+   **Design improvements are not hard defects.** If a screen is functional but visually
+   flat, unclear in hierarchy, or weak in expressing the chosen direction, propose and
+   try a bounded improvement; do not dress a preference as a gate. Record the scene,
+   the observed issue, the change, and the recheck result in the design record's
+   existing receipt lines.
 5. Refine at the owning layer, then inspect the affected view or task again. One
    focused pass is normally sufficient. Continue only when the user changes scope or
    new evidence exposes a new cause.
@@ -145,11 +150,9 @@ For craft-floor leads, run `python3 skills/spec-prototype/scripts/detect.py --ar
 Sync the review portal with:
 `python3 skills/spec-prototype/scripts/generate_review_portal.py --root .`
 The canonical portal is `prototype/review-portal.html`; never create or copy ad-hoc review portals under nested paths.
-A state is captured only if its trigger was applied and
-the page confirmed it; filenames alone are not proof. If browser startup, state
-confirmation, or interaction tracing fails, record the scope as `unverified`, not
-passed. Inspect the actual screenshots before making visual claims. A static check
-supports a review; it does not establish visual quality.
+A state is captured only if its trigger was applied and the page confirmed it. The confirmation signal is the same `data-state` or URL state mechanism declared in `CRAFT-STATE-ENTRY`; filenames alone are not proof. If browser startup, state confirmation, or interaction tracing fails, record the scope as `unverified`, not passed. Inspect the actual screenshots before making visual claims. A static check supports a review; it does not establish visual quality.
+
+First-viewport review: does the first viewport answer the primary question and expose the primary action without scroll? If not, treat it as a design improvement opportunity, not a hard failure unless it blocks the task chain.
 
 **Visual assertion hard rule — evidence provenance**: record in
 the design record (the brief on a layered tree, or `prototype/discussion.md`) the `visual_evidence` reference, whether
@@ -179,7 +182,7 @@ failure as a "runner bug" or override it with visual impressions. If
 is `false`, or `visual`/`human` is `pending_review`, then the receipt must set
 `visual_evidence: unverified` / `status: PARTIAL` and must NOT write
 `capture_reflects_current_state: true` or color/spacing/typography observations
-tied to rendered output. A receipt that records `capture_reflects_current_state:
+tied to rendered output. Capture-failed states (manifest records `metadata.status == "capture_failed"`, `screenshots == 0`, `confirmed == false`, or non-empty `unconfirmed_states`) must never be placed under `## Verified this turn` as verified facts, state entries, or observed behaviors. It is strictly forbidden to describe the URL state entry (e.g. `?state=conflict`), data feedback, or UI response of any capture-failed or unconfirmed state under `## Verified this turn`, even as an informative note or implementation recap. Any state that did not produce confirmed, passing screenshots belongs exclusively under `## 未验证（不得读作已验证）` or `Limitations`, marked `[hypothesis]` / `[unverified]`. A receipt that records `capture_reflects_current_state:
 true` while the manifest says `capture_failed` is an authority promotion of the
 evidence itself (the r40 A3 class) and fails the audit. Write the reconcile line
 explicitly: `manifest: <status>, stylesheets_applied: <bool>, receipt reflects:
@@ -233,3 +236,8 @@ valid end state. A timeout or a false verification claim is not.
 
 Stage 5 freeze, manifests, and export are optional handoff mechanics, not a design
 review gate. Run them only when the user requested a frozen or downstream handoff.
+When authoring a formal RFC specification view (`r1.spec.md`), always run
+`python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>` (add
+`--candidate <rev>` when not `r1`) to ensure canonical `.spec.json` IR accompanies
+`.spec.md` and preserves the builder boundary. Compile from the recorded slice
+identity; never hand-write the `.spec.json`.

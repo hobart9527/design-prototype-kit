@@ -12,11 +12,22 @@ Visible text excerpt:
 Steps taken so far: {steps}
 
 Choose exactly one next action and answer JSON only:
-{{"action":"click|scroll|wait|done","target_index":<int|null>,
+{{"action":"click|fill|scroll|wait|done|stuck","target_index":<int|null>,
+  "value":"<fill only>","evidence":"<done only>",
   "reason":"<short>","expect":"<what you expect to observe after>"}}
-Use "done" when the goal is reached or the task is a dead end.
-Stop early: once the goal action has been performed in earlier steps and the page
-now shows its result (confirmation, changed status, new item, toast), answer "done"
-immediately. Never repeat the action on other items and never click extra controls
-to double-check.
+Actions:
+- click: press the control at target_index. Clicking never types text.
+- fill: type "value" into the text field at target_index, or pick the option
+  whose label is "value" in a select. Write what a real user would write for
+  this goal; value must not be empty.
+- scroll: scroll the page down to reveal more content.
+- wait: let the page settle for about one second, then look again.
+- done: the goal is reached and the page shows the finished result. "evidence"
+  must copy, character for character, a short phrase from the visible text
+  excerpt above that shows that result.
+- stuck: no visible control can move the goal forward. Never answer "done" for
+  a dead end.
+Once the goal action has been performed and the page shows its result, answer
+"done" immediately: do not repeat the action on other items and do not click
+extra controls to double-check.
 Pick target_index from the listed controls only.

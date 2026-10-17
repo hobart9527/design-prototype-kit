@@ -57,43 +57,47 @@ def test_touch_target_evidence_must_be_recorded():
     assert invalid["status"] == "unverified"
 
 
+def _done(snapshots):
+    """A completed trace whose `done` quotes the final page, as the runner records it."""
+    return {"status": "completed", "evidence": (snapshots[-1].get("text") or "")[:12], "snapshots": snapshots}
+
+
 def test_dialog_open_accepts_consequence_disclosure_fallback():
     task = {"id": "drain", "required_outcomes": [{"id": "dialog", "check": "dialog_open"}]}
     # Native dialog present
-    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
-        {"dialogs": 1, "text": "simple"}]})["status"] == "pass"
+    assert task_judge.judge_task(task, _done([
+        {"dialogs": 1, "text": "simple"}]))["status"] == "pass"
     # Consequence disclosure plus confirm control, exercised (state changes later)
-    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
+    assert task_judge.judge_task(task, _done([
         {"dialogs": 0, "text": "下线前核对：确认该节点流量已摘除，后果不可逆",
          "controls": [{"name": "确认", "role": "button"}]},
         {"dialogs": 0, "text": "节点已安全排空，状态改为 draining",
-         "controls": []}]})["status"] == "pass"
+         "controls": []}]))["status"] == "pass"
     # Neither dialog nor consequence disclosure
-    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
-        {"dialogs": 0, "text": "some unrelated content"}]})["status"] == "fail"
+    assert task_judge.judge_task(task, _done([
+        {"dialogs": 0, "text": "some unrelated content"}]))["status"] == "fail"
 
 def test_dialog_open_tiered_confirmation_contract():
     task = {"id": "drain", "required_outcomes": [{"id": "dialog", "check": "dialog_open"}]}
     # A bare destructive word in body copy never satisfies the gate.
-    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
-        {"dialogs": 0, "text": "回滚"}]})["status"] == "fail"
+    assert task_judge.judge_task(task, _done([
+        {"dialogs": 0, "text": "回滚"}]))["status"] == "fail"
     # Consequence plus control present but never exercised is a failure, not a pass.
-    result = task_judge.judge_task(task, {"status": "completed", "snapshots": [
-        {"dialogs": 0, "text": "确认回滚节点？", "controls": [{"name": "确认", "role": "button"}]}]})
+    result = task_judge.judge_task(task, _done([
+        {"dialogs": 0, "text": "确认回滚节点？", "controls": [{"name": "确认", "role": "button"}]}]))
     assert result["status"] == "fail"
     assert "never exercised" in result["required_outcomes"][0]["detail"]
     # The old consequence regex fired on batch-status prose like "批次 3 回滚完成"
     # only through 批次; without a consequence word + control pair it stays a fail.
-    assert task_judge.judge_task(task, {"status": "completed", "snapshots": [
-        {"dialogs": 0, "text": "批次 3 已完成"}]})["status"] == "fail"
+    assert task_judge.judge_task(task, _done([
+        {"dialogs": 0, "text": "批次 3 已完成"}]))["status"] == "fail"
 
 
 def test_verified_dimension_survives_an_unverifiable_sibling():
     task = SCROLL_TASK | {"required_outcomes": SCROLL_TASK["required_outcomes"] + [
         {"id": "touch", "check": "min_touch_target", "px": 44},
         {"id": "text", "check": "text_present", "pattern": "worker"}]}
-    trace = {"status": "completed", "steps": [], "snapshots": [
-        {"scrollWidth": 390, "clientWidth": 390, "text": "worker-07"}]}
+    trace = _done([{"scrollWidth": 390, "clientWidth": 390, "text": "worker-07"}])
     result = task_judge.judge_task(task, trace)
     assert result["status"] == "unverified"
     by_id = {r["id"]: r["status"] for r in result["required_outcomes"]}
@@ -184,7 +188,7 @@ def test_partial_evidence_yields_pass_with_unknowns_not_a_clean_pass():
 
 def test_step_limit_trace_fails_even_when_keywords_were_seen():
     task = {"id": "drain", "required_outcomes": [{"id": "seen", "check": "text_present", "pattern": "drain"}]}
-    done = task_judge.judge_task(task, {"status": "completed", "snapshots": [{"text": "drain"}]})
+    done = task_judge.judge_task(task, _done([{"text": "drain"}]))
     capped = task_judge.judge_task(task, {"status": "step_limit", "snapshots": [{"text": "drain"}]})
     assert done["status"] == "pass"
     assert capped["status"] != "pass"

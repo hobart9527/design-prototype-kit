@@ -45,15 +45,20 @@ def _capture_session_fidelity(session: dict, workspace: pathlib.Path) -> dict:
     }
 
 
-def _run_provenance(variant: str, out_dir: pathlib.Path) -> dict:
+def _run_provenance(variant: str, out_dir: pathlib.Path, candidate: dict | None = None) -> dict:
     """What actually ran: candidate source bytes and the judge inputs stored for this run.
 
     A published Git revision says nothing about an uncommitted candidate, so the source
     files themselves are hashed. Legacy runs without stored provenance stay disclosed as
     absent instead of being back-filled with a revision they never used.
     """
-    provenance = {"candidate": bl.source_identity(variant), "judge_inputs": bl.judge_identity(out_dir)}
-    provenance["aggregate_sha256"] = provenance["candidate"].get("aggregate_sha256")
+    provenance = {"candidate": candidate if candidate is not None else bl.source_identity(variant),
+                  "judge_inputs": bl.judge_identity(out_dir)}
+    provenance["aggregate_sha256"] = bl._digest_map({
+        name: identity["aggregate_sha256"]
+        for name in ("skill", "agents")
+        if (identity := provenance["candidate"].get(name)) and identity.get("aggregate_sha256")
+    }) or provenance["candidate"].get("aggregate_sha256")
     return provenance
 
 
@@ -169,6 +174,12 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
         run_id = f"{bl.now_stamp()}-r{repeat}"
         try:
             workspace = bl.prepare_workspace(case, variant, run_id)
+            candidate = bl.source_identity(variant)
+            if (workspace / ".claude/skills/spec-prototype").is_dir():
+                candidate["skill"] = bl.tree_identity(workspace / ".claude/skills/spec-prototype")
+                candidate["agents"] = bl.tree_identity(workspace / ".claude/agents")
+            result["provenance"] = _run_provenance(variant, out_dir, candidate)
+            bl.write_json(out_dir / "generation-provenance.json", result["provenance"])
             session = run_claude_session.run_session(
                 case, variant, workspace, model=model,
                 max_turns=max_turns or policy.get("max_turns", 20),
@@ -275,11 +286,13 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
     # PROVENANCE (what actually ran, archived result files excluded so re-judging is stable)
     # A re-judge already preserved the original session's identity above; hashing
     # the current tree here would replace it with a post-dated revision.
-    if not rejudge:
-        result["provenance"] = _run_provenance(variant, out_dir)
+    if not rejudge and result["provenance"]:
+        result["provenance"]["judge_inputs"] = bl.judge_identity(out_dir)
 
     judge_sources = bl.tree_identity(bl.ROOT / "benchmarks" / "judges")
     judge_sources["runner_sha256"] = bl.sha256_file(pathlib.Path(__file__))
+    judge_sources["runners"] = bl.tree_identity(bl.ROOT / "benchmarks" / "runners")
+    judge_sources["prompts"] = bl.tree_identity(bl.ROOT / "benchmarks" / "prompts")
     result["evaluation_provenance"] = {
         "evaluated_at": bl.now_stamp(), "judge_sources": judge_sources,
         "judge_inputs": bl.judge_identity(out_dir),

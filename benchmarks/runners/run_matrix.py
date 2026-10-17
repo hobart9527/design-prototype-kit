@@ -29,12 +29,28 @@ def _run_sessions(cases, variants, repeats, matrix_dir, args) -> list:
     total = len(cases) * len(variants) * repeats
     index = 0
     ordered_variants = list(variants)
+    source_digests = {}
+    for variant in variants:
+        sources = bl.variant_sources(variant)
+        source_digests[variant] = {name: bl.tree_identity(sources[name])["aggregate_sha256"]
+                                   if sources.get(name) else None for name in ("skill", "agents")}
+    harness_digest = bl._digest_map({name: bl.tree_identity(bl.BENCH / name)["aggregate_sha256"]
+                                    for name in ("runners", "judges", "prompts")})
     if "candidate_skill" in ordered_variants and "stable_skill" in ordered_variants:
         ordered_variants.remove("candidate_skill")
         ordered_variants.insert(ordered_variants.index("stable_skill"), "candidate_skill")
     for case_id in cases:
         for variant in ordered_variants:
             for repeat in range(1, repeats + 1):
+                identity_sources = bl.variant_sources(variant)
+                current_sources = {name: bl.tree_identity(identity_sources[name])["aggregate_sha256"]
+                                   if identity_sources.get(name) else None
+                                   for name in ("skill", "agents")}
+                current_harness = bl._digest_map({
+                    name: bl.tree_identity(bl.BENCH / name)["aggregate_sha256"]
+                    for name in ("runners", "judges", "prompts")})
+                if current_sources != source_digests[variant] or current_harness != harness_digest:
+                    raise bl.BenchBlocked("benchmark sources changed during the matrix; start a new run")
                 index += 1
                 # Total-budget governance: session caps are per-session, so a
                 # matrix of N sessions can spend N × session cap. Track actual
@@ -82,7 +98,7 @@ def _run_sessions(cases, variants, repeats, matrix_dir, args) -> list:
                         per_call = args.budget_usd
                     else:
                         per_call = bl.case_budget_usd(case_id) or 6.0
-                    cmd += ["--session-budget-usd", str(round(per_call * 3, 2))]
+                    cmd += ["--session-budget-usd", str(round(per_call * 8, 2))]
                 if args.rejudge:
                     cmd += ["--rejudge"]
                 if args.open:

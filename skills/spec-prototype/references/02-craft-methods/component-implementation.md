@@ -34,22 +34,46 @@ context for composing a coherent product.
 
 For multi-page prototypes, share fixture entities by stable identity and use one state owner for each simulated operation. Preserve the contracted selection, filters, drafts and return position. Keep distinct domain objects distinct. Separate view state from simulated domain data; implement only the specified persistence lifetime and reset behavior. Verify a mutation on one surface is visible on the next. Across separate immutable experiments, reuse a pinned source snapshot or explicit read-only dependency; never patch a previous experiment as a shared mutable library.
 
-Fixture content must read like real observation, not filler: irregular metric
-values (`$1,247.83`, not `$1,234` unless it is an explicit goal target), mixed-
-resolution timestamps, names with a plausible length distribution including long
-names (the layout failure mode you must show is handled), CTAs that name the
-action, and no `Lorem`/`John Doe`/`Acme`-style placeholders anywhere in a
-delivered screen.
+Fixture content must read like real content, not filler, and must not be presented as fact: irregular metric values (`$1,247.83`, not `$1,234` unless it is an explicit goal target), mixed-resolution timestamps, names with a plausible length distribution including long names (the layout failure mode you must show is handled), CTAs that name the action, and no `Lorem`/`John Doe`/`Acme`-style placeholders anywhere in a delivered screen. All fixture content is marked as demonstration in the render; it does not assert capabilities, business rules, or user facts.
 
 ## Five Essential Experience States Engine
 
-A high-fidelity prototype cannot be a fragile static mock that only looks good on a single pristine dataset. Every interactive surface or data view implemented by Builder must support or account for five core UX states:
+A prototype cannot be a fragile static mock that only looks good on a single pristine dataset. For each interactive surface or data view, account for the states the task actually requires. The five-state list below is a reference, not a quota: apply the ones the brief and task chain name, and record why others are out of scope.
 
 1. **Loading State**: Render intentional skeleton loaders matching actual component geometry or refined micro-spinners. Never leave naked unstyled blank canvases or jarring layout shifts (CLS).
 2. **Empty State**: Provide domain-contextual empty states with clear onboarding hints, primary action triggers, or illustrative baseline instructions, avoiding barren "No data" dead-ends.
 3. **Partial / Stale State**: Gracefully represent degraded network/service conditions, background sync indicators, or partial telemetry ingestion.
 4. **Error & Recovery State**: Provide inline, actionable error boundaries with retry triggers and contextual diagnostic messages rather than raw stack traces.
 5. **Overflow & Extreme Data State**: Handle 100+ row pagination/virtualization, extreme string overflows (`text-overflow: ellipsis` with tooltips), zero values, and peak-scale chart spikes.
+
+## State Reachability & URL Parameter Routing
+
+Prototypes with multi-step workflows, modals, or exceptional states must natively support deterministic URL query parameter routing so automated probes, reviewers, and reviewers' deep links can enter directly without stepping through previous screens:
+- **Parse `URLSearchParams` on Init**: inspect `location.search` for `?state=<state_name>` on load; accepting the legacy `#state=<name>` hash as an alias keeps older captures working. The query param is canonical — `capture.mjs` and the task runner both enter through `?state=`.
+- **Echo the applied state**: after applying a named state, set `document.body.dataset.state = <state_name>` so capture can verify the state actually landed (not just that the URL carried it).
+- **Pre-seed Mid-flow States**: When a named state corresponds to a step partway through a flow (e.g. `service_selected`, `slot_chosen`, `timeslot_conflict`, `detail`, `review_mode`):
+  - Pre-populate required prior selections/inputs using realistic mock fixtures.
+  - Advance the internal step/tab/active index immediately to the step where that state is experienced.
+  - If the state represents an error, alert, or conflict, display that alert surface immediately on initial render without requiring initial clicks, using the brief's own conflict vocabulary (see `CRAFT-TASK-COPY` in [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md)).
+- **Bi-directional State Sync**: As user or automation drives the interface, optionally update `history.replaceState` or URL params so the current state remains linkable and observable.
+
+Minimal router example (one owner, no framework):
+
+```javascript
+function applyState(name) {
+  // seed fixtures + advance step for the named state; then:
+  document.body.dataset.state = name;
+  render(); // single refresh entry — every mutation funnels through here
+}
+const requested = new URLSearchParams(location.search).get("state")
+  || location.hash.match(/state=([a-z0-9_-]+)/i)?.[1];
+if (requested) applyState(requested);
+```
+
+Mutation discipline: every state mutation (select, fill, commit, undo) ends in the
+same `render()` refresh; preserved inputs live in the state store, never re-read
+from half-updated DOM. Ensure UI reflects state reliably: declare `[hidden] { display: none !important; }` in CSS resets so flex/grid containers do not accidentally defeat element hiding; update button visibility and disabled states upon reaching terminal status (e.g. approved, rejected) to prevent duplicate action attempts. Prefer native controls; mocked behavior is marked as
+demonstration in the render.
 
 ## Physical World Micro-Interactions & Kinetics (DNA)
 

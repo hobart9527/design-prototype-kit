@@ -127,28 +127,27 @@ High-fidelity verisimilitude requires authentic craft without heavy framework bl
    ```css
    .btn-action:active {
      transform: scale(var(--press-scale));
-     transition: transform var(--duration-fast) var(--ease-tactile);
+     transition: transform var(--duration-fast) var(--ease-out);
    }
    ```
 
 5. **Stateful Micro-App Architecture (数据驱动的原型微架构，彻底告别单点木偶假交互)**:
    - Prototypes are NOT static brochure mockups; they MUST be authored as functional, self-contained interactive micro-applications.
-   - **Central App State Store**: The client-side JavaScript MUST maintain a reactive or centralized state store:
+   - **Central App State Store**: the client-side JavaScript maintains a reactive or centralized state store, sized to what the task actually exercises (an entity list when the task inspects entities; filters when the task filters; an event/audit stream only when the brief names 留痕/审计):
      ```javascript
      const AppState = {
-       entities: [...],        // Multi-node data model (minimum 3 operable entities)
-       selectedEntityId: '...',// Current inspection focus
-       filters: { ... },       // Query/status filtering
-       runtimeMetrics: { ... },// Live/simulated telemetry
-       history: []             // Audit/event stream
+       entities: [...],        // domain entities the brief supplies (count follows the brief)
+       selectedEntityId: '...',// current inspection focus
+       filters: { ... },       // present only when the task filters
+       history: []             // present only when the brief names an audit trail
      };
      ```
    - **Universal Entity Inspectability (全实体聚焦可查)**:
-     - Clicking ANY node or row in the primary viewport MUST dynamically load its full operational state, historical traces, and diagnostics into the contextual drawer/inspector.
+     - Clicking ANY node or row in the primary viewport MUST dynamically load its state into the contextual drawer/inspector — detail depth follows what the brief supplies about that entity (do not invent diagnostics or traces the brief never mentions).
      - Never hardcode interactions to a single arbitrary node while leaving sibling nodes dead.
    - **Multi-Branch Action Lifecycle (多动作状态分支)**:
-     - Interactive workflows must support multi-stage branching: Selection -> Parameter Tuning / Confirmation -> Execution -> Diverted Stream / State Mutation -> Reversion / Reset.
-     - Provide immediate, visible cause-and-effect across the entire layout (e.g. isolating Node 02A updates its status badge, re-routes downstream SVG connection wires, clears backpressure gauges, and posts an audit event).
+     - Interactive workflows must support multi-stage branching: Selection -> Parameter Tuning / Confirmation -> Execution -> State Mutation -> Reversion / Reset.
+     - Provide immediate, visible cause-and-effect across the surfaces that share the mutated state (a status badge updates, dependent views refresh, and — when the brief names 留痕 — an audit event is posted).
 
 ### Form an aesthetic point of view
 
@@ -243,6 +242,38 @@ representative content, then choose the smallest optical system that expresses i
 When a treatment is unsettled, compare controlled alternatives on the same
 content and task. Retain the selected relationship, exact values, product reason,
 scope and transfer evidence in the existing design artifacts.
+
+### Landing patterns that show intent
+
+The same direction can land very differently across product types. Use these
+patterns to check whether the chosen grammar actually reached the page;
+they are examples, not recipes to copy.
+
+- **Dense operational tool** (approval queue, monitoring console, incident
+  commander): fixed scan axis, aligned numerics, restrained color for status
+  only, actions inline with the row or in a contextual drawer. Generous padding
+  between records, tight padding inside them. Avoid large cards, decorative
+  separators, and animations that delay scanning. The signature relationship is
+  usually "content density versus breathing room at the decision point."
+- **Long-form reading** (editorial reader, knowledge base, documentation):
+  measure and line-height tuned for the script, auxiliary chrome steps back,
+  the reading position is stable across interactions. Color is quiet; emphasis
+  comes from type weight and spacing. Avoid toolbars that compete with the text
+  column. The signature relationship is usually "text versus annotation" or
+  "immersion versus control."
+- **Mobile decision flow** (booking, checkout, quick approval): current choice
+  is always visible, the next action is unambiguous, touch feedback is immediate
+  (`:active` scale or color), and recovery from interruption preserves input.
+  Avoid multi-step wizards when a single surface can hold the choice. The
+  signature relationship is usually "selection versus commitment."
+- **Collaborative revision studio** (content studio, document review, change tracking):
+  visible passage-level diffs (insertions, deletions, side-by-side or inline marked paragraphs),
+  comment threads anchored to specific revisions and paragraph keys, and persistent status toggles.
+  Avoid hiding diffs behind blank screens or isolated revision pills; the reviewer must immediately
+  see what changed between versions. The signature relationship is usually "current draft versus historical revision."
+
+For each pattern, state: the product problem, the chosen relationship, where it
+is visible in the rendered page, and when it does not apply.
 
 ### Double Diamond, specialised to this domain
 

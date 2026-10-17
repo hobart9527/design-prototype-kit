@@ -341,7 +341,7 @@ def test_task_outcomes_are_evidence_bound():
         {"id": "scroll", "check": "no_horizontal_scroll"},
         {"id": "touch", "check": "min_touch_target", "px": 44},
     ]}
-    trace = {"status": "completed", "steps": [{"action": "click"}], "snapshots": [
+    trace = {"status": "completed", "evidence": "worker-07", "steps": [{"action": "click"}], "snapshots": [
         {"text": "worker-07", "dialogs": 1, "scrollWidth": 400, "clientWidth": 400, "small_target_count": 0}]}
     result = task_judge.judge_task(task, trace)
     assert result["status"] == "pass"

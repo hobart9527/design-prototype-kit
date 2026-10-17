@@ -60,9 +60,28 @@ class BrowserSession:
         except Exception:
             pass
         try:
-            self.proc.kill()
+            if self.proc.poll() is None:
+                self.proc.terminate()
+                try:
+                    self.proc.wait(timeout=1.0)
+                except subprocess.TimeoutExpired:
+                    self.proc.kill()
         except Exception:
             pass
+
+
+MIN_EVIDENCE_CHARS = 4
+
+
+def squash(text: str) -> str:
+    """Whitespace-insensitive form used to match a quoted phrase against page text."""
+    return "".join(str(text or "").split())
+
+
+def evidence_on_page(evidence: str, page_text: str) -> bool:
+    """A `done` is a completion only when it quotes the terminal page verbatim."""
+    quoted = squash(evidence)
+    return len(quoted) >= MIN_EVIDENCE_CHARS and quoted in squash(page_text)
 
 
 def _trim(snapshot: dict) -> dict:
@@ -78,7 +97,7 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
     entry = bl.find_entry(prototype_dir)
     viewport = int((task.get("start") or {}).get("viewport") or 1280)
     trace = {"task_id": task.get("id"), "goal": task.get("goal"), "viewport": viewport,
-             "status": "blocked", "steps": [], "snapshots": [], "note": ""}
+             "status": "blocked", "steps": [], "snapshots": [], "note": "", "evidence": ""}
     if not entry:
         trace["note"] = "no html entry point in artifacts"
         return trace
@@ -114,7 +133,8 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
                 goal=task.get("goal", ""),
                 controls=json.dumps(controls, ensure_ascii=False),
                 text=(snapshot.get("text") or "")[:4000],
-                steps=json.dumps([s.get("action") for s in trace["steps"]], ensure_ascii=False),
+                steps=json.dumps([{k: s[k] for k in ("action", "target", "value", "error") if s.get(k)}
+                                  for s in trace["steps"]], ensure_ascii=False),
             )
             decision = bl.ask_json(prompt, out_dir, model=model, timeout_s=timeout_s, max_turns=10)
             if not decision["ok"]:
@@ -125,15 +145,65 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
                 trace["note"] = f"task agent unavailable: {decision['error']}"
                 return trace
             action = decision["data"] or {}
-            kind = action.get("action")
+            kind = action.get("action") if isinstance(action, dict) else None
+            action = action if isinstance(action, dict) else {}
             step = {"n": step_index + 1, "action": kind, "reason": action.get("reason"),
                     "expect": action.get("expect"), "target_index": action.get("target_index"),
                     "cost_usd": (decision["metrics"] or {}).get("cost_usd")}
-            if kind == "done" or kind is None:
+            # `done` claims success and must quote the terminal page; a dead end
+            # is `stuck`. A missing or unknown action is an agent protocol
+            # failure: it says nothing about the prototype, so it is blocked
+            # (unverified), never completed.
+            if kind == "done":
+                evidence = str(action.get("evidence") or "").strip()
+                step["evidence"] = evidence
                 trace["steps"].append(step)
-                trace["status"] = "completed"
+                if evidence_on_page(evidence, snapshot.get("text") or ""):
+                    trace["status"] = "completed"
+                    trace["evidence"] = evidence
+                    break
+                # Rejected claim: the agent sees the error and keeps going
+                # within the same step budget.
+                step["error"] = "done rejected: evidence is not a verbatim quote of the current page"
+                continue
+            if kind == "stuck":
+                trace["steps"].append(step)
+                trace["status"] = "dead_end"
+                trace["note"] = f"agent reported dead end: {action.get('reason') or ''}"[:300]
                 break
-            if kind == "click":
+            if kind not in ("click", "fill", "scroll", "wait"):
+                step["error"] = f"unsupported action: {kind!r}"
+                trace["steps"].append(step)
+                trace["status"] = "blocked"
+                trace["note"] = f"task agent protocol error: unsupported action {kind!r}"
+                break
+            if kind == "fill":
+                index = action.get("target_index")
+                value = action.get("value")
+                matched = next((c for c in controls if c["index"] == index), None)
+                if not matched:
+                    step["error"] = f"target_index {index} not among visible controls"
+                    trace["steps"].append(step)
+                    trace["status"] = "dead_end"
+                    break
+                step["target"] = matched["name"]
+                if not isinstance(value, str) or not value.strip():
+                    step["error"] = "fill needs a non-empty value"
+                    trace["steps"].append(step)
+                    continue
+                step["value"] = value
+                response = session.send(cmd="fill", match_index=index, value=value)
+                if "error" in response:
+                    step["error"] = response["error"]
+                    trace["steps"].append(step)
+                    trace["status"] = "dead_end"
+                    break
+                fill = response.get("fill") or {}
+                if fill.get("filled") is None:
+                    step["error"] = f"fill rejected: {fill.get('reason')}"
+                snapshot = response.get("snapshot") or {}
+                trace["snapshots"].append(_trim(snapshot))
+            elif kind == "click":
                 index = action.get("target_index")
                 matched = next((c for c in controls if c["index"] == index), None)
                 if not matched:
@@ -167,8 +237,9 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
                 step["clicked"] = (response.get("click") or {}).get("clicked") or step.get("clicked")
                 snapshot = response.get("snapshot") or {}
                 trace["snapshots"].append(_trim(snapshot))
-            elif kind == "scroll":
-                response = session.send(cmd="scroll", dy=700)
+            else:
+                response = (session.send(cmd="scroll", dy=700) if kind == "scroll"
+                            else session.send(cmd="wait", ms=1000))
                 if "error" in response:
                     step["error"] = response["error"]
                     trace["steps"].append(step)
@@ -176,11 +247,6 @@ def run_task(case: dict, task: dict, prototype_dir: pathlib.Path, out_dir: pathl
                     break
                 snapshot = response.get("snapshot") or {}
                 trace["snapshots"].append(_trim(snapshot))
-            else:
-                step["error"] = f"unsupported action: {kind}"
-                trace["steps"].append(step)
-                trace["status"] = "dead_end"
-                break
             trace["steps"].append(step)
         else:
             # Step budget exhausted is not goal completion; the judge must not

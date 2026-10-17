@@ -54,7 +54,7 @@ The path is visual-first:
    verify zero runtime errors (`runtime_errors: []` — any JS runtime error breaks task interaction and must be fixed immediately),
    zero horizontal overflow (`horizontal_overflow: false`), styles applied (`stylesheets_applied: true`),
    and craft floors (`has_active_feedback: true`, `has_tabular_nums: true`) in one quick step.
-   页面状态由 `data-state` 属性导出作为可观测出口，capture 状态确认以它为准。无浏览器运行时环境时，Turn 1/2 出口为 `PARTIAL` + `visual_evidence: unverified`，前向引用 Stage 4 进行静态或后续补验。
+   页面状态的可观测出口与评审复现方式由 [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) 的 `CRAFT-STATE-ENTRY` 规定；capture 状态确认以该规则为准。无浏览器运行时环境时，Turn 1/2 出口为 `PARTIAL` + `visual_evidence: unverified`，前向引用 Stage 4 进行静态或后续补验。
 5. **Converge**: Select or synthesize the winning direction into the anchor prototype
    (`prototype/experiments/<slice_id>/anchor/index.html`) for deeper state and coverage expansion in Stage 3.
    The losing direction donates its best mechanism to the winner, or the donation is

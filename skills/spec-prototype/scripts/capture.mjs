@@ -62,11 +62,13 @@ function findSystemBrowser() {
 
 function buildStateUrl(baseUrl, state) {
   if (!state || state === "default") return baseUrl;
+  // Canonical entry is the `?state=` query param; the legacy `#state=` hash is
+  // still accepted (state confirmation below verifies either echo) so older
+  // prototypes keep working while docs converge on the query form.
   const hashIdx = baseUrl.indexOf("#");
-  if (hashIdx !== -1) {
-    return baseUrl.slice(0, hashIdx) + `#state=${state}`;
-  }
-  return baseUrl + `#state=${state}`;
+  const clean = hashIdx !== -1 ? baseUrl.slice(0, hashIdx) : baseUrl;
+  const sep = clean.includes("?") ? "&" : "?";
+  return `${clean}${sep}state=${encodeURIComponent(state)}`;
 }
 
 async function loadPlaywright() {
@@ -125,14 +127,22 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
         });
         await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
         const stateConfirmation = await page.evaluate((expectedState) => {
+          // Echo precedence: body[data-state] → html[data-state] → ?state= URL
+          // param. The URL echo is a weaker signal (a router may ignore the
+          // param), so the DOM must additionally contain the state name
+          // verbatim outside the URL for it to count.
           const raw = document.body?.dataset.state || document.documentElement.dataset.state || "";
-          const declared = raw || (expectedState === "default" ? "default" : "");
+          const urlEcho = new URLSearchParams(location.search).get("state") ||
+            (location.hash.match(/state=([a-z0-9_-]+)/i)?.[1] ?? "");
+          const domText = document.body?.innerText || "";
+          const domEcho = expectedState !== "default" && domText.includes(expectedState);
+          const declared = raw || urlEcho;
           return {
             expected: expectedState,
             observed: declared,
             confirmed: expectedState === "default"
-              ? declared === "default"
-              : declared === expectedState,
+              ? declared === "default" || declared === ""
+              : raw === expectedState || (urlEcho === expectedState && domEcho),
           };
         }, state);
         stateConfirmations[prefix] = stateConfirmation;

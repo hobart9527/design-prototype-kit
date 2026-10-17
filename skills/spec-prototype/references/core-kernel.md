@@ -48,16 +48,17 @@ Every decision traces to empirical facts or declared hypotheses. Never invent
 unsupported product capabilities, third-party integrations, or user-research
 claims. When requirements or briefs provide counts or quantities without specific names
 (e.g. downstream service counts, node quantities), use neutral systematic placeholders
-(`service-01 ~ service-N`, `cluster-1 ~ cluster-N`) rather than guessing specific lateral
+(`<kind>-01 ~ <kind>-NN`) rather than guessing specific lateral
 domain names (e.g. payment, billing, CRM). Platform facts that are unauthored remain `unknown`;
 native validation that was not performed is recorded as `unverified`.
 Design remedies and interaction mechanisms created by the designer (such as confirmation dialogs,
 undo time windows, two-man rules) are `derived` solutions, never promoted to `explicit` user constraints.
-The `[explicit]` tag applies SOLELY to pure user statements; never bundle synthetic IDs (`region-1 ~ region-3`, `service-01 ~ service-07`), operational groupings (e.g. `批次`), or derived boundaries under `[explicit]`.
-Never fabricate unverified root-cause attributions for historical failures (e.g. asserting "无复核" or "触控误触" was the root cause, or re-labeling an incident as "误下线/未经预览" when unstated).
-Never invent unrequested telemetry metrics or capacity data sources (e.g. "剩余容量", "CPU水位").
-Never invent user-research findings, operator psychology, or proficiency tiers (e.g. "新值班员需一次讲解", "适合新值班员", "资深用户讨厌向导").
-Never invent unprompted lifecycle pipelines or stage banners (e.g. "止血/收敛/收尾") as surface entities unless explicitly named in the brief. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward`, NEVER as `confirmed` or `approvals preserved`.
+The `[explicit]` tag applies SOLELY to pure user statements; never bundle synthetic IDs, operational groupings, or derived boundaries under `[explicit]`.
+Never fabricate unverified root-cause attributions for historical failures (re-labeling a past
+event with a cause the user did not state).
+Never invent unrequested telemetry metrics or capacity data sources, user-research findings,
+operator psychology, or proficiency tiers. Never invent unprompted lifecycle pipelines or stage
+banners as surface entities unless explicitly named in the brief. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward`, NEVER as `confirmed` or `approvals preserved`.
 
 ## 5. Rooted Design Ontology: Nine Pillars Lenses & Five Sensory Axes
 

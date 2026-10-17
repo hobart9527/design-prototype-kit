@@ -29,6 +29,19 @@ def _write_run(matrix_dir: pathlib.Path, run: dict) -> None:
     bl.write_json(run_dir / "run-result.json", run)
 
 
+def test_generation_provenance_uses_captured_candidate(tmp_path, monkeypatch):
+    candidate = {"skill": {"aggregate_sha256": "copied-skill"},
+                 "agents": {"aggregate_sha256": "copied-agents"}}
+
+    def changed_source(*args):
+        raise AssertionError("generation identity must not reread the mutable source tree")
+
+    monkeypatch.setattr(bl, "source_identity", changed_source)
+    provenance = run_case._run_provenance("candidate_skill", tmp_path, candidate)
+    assert provenance["candidate"] == candidate
+    assert provenance["aggregate_sha256"]
+
+
 def test_critical_accessibility_violation_blocks_aggregate_acceptance(tmp_path):
     """Contrast is a declared critical gate: alone, with nothing else failing, it must block."""
     _write_run(tmp_path, _run(runtime={

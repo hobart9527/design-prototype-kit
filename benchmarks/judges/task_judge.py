@@ -15,8 +15,27 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "runners"))
 import bench_lib as bl  # noqa: E402
+from run_task_trace import evidence_on_page  # noqa: E402
 
 SCROLL_TOLERANCE_PX = 2
+# Layout measurements read the rendered page, not the journey: a trace that
+# ran out of steps still recorded valid dimensions.
+LAYOUT_CHECKS = {"no_horizontal_scroll", "min_touch_target"}
+
+
+def goal_state(trace: dict) -> tuple[str, str]:
+    """reached | unproven | not_reached, from the terminal evidence, never from keyword hits."""
+    status = trace.get("status")
+    if status != "completed":
+        return "not_reached", f"trace ended {status!r}: goal not reached"
+    evidence = str(trace.get("evidence") or "").strip()
+    snapshots = trace.get("snapshots") or []
+    final_text = (snapshots[-1].get("text") or "") if snapshots else ""
+    if not evidence:
+        return "unproven", "completion claimed without terminal evidence"
+    if not evidence_on_page(evidence, final_text):
+        return "not_reached", f"completion evidence not on the final page: {evidence[:80]!r}"
+    return "reached", ""
 
 
 def _merged_text(trace: dict) -> str:
@@ -39,10 +58,14 @@ def evaluate_outcome(outcome: dict, trace: dict) -> dict:
     text = _merged_text(trace)
     pattern = outcome.get("pattern") or ""
     verdict, detail = "unverified", ""
-    # Step-limit traces did not reach the goal; keyword hits from exploration
-    # must not be read as task completion.
-    if trace.get("status") == "step_limit":
-        return {"id": outcome.get("id"), "check": check, "status": "fail", "detail": "step limit reached before completion"}
+    # Keyword hits from exploration never stand in for completion: unless the
+    # trace proved its terminal result, goal outcomes fail (or stay unverified
+    # for a legacy trace without evidence). Layout measurements are exempt.
+    if check not in LAYOUT_CHECKS:
+        state, why = goal_state(trace)
+        if state != "reached":
+            return {"id": outcome.get("id"), "check": check,
+                    "status": "fail" if state == "not_reached" else "unverified", "detail": why}
     if check == "text_present":
         hit = re.search(pattern, text)
         verdict, detail = ("pass" if hit else "fail"), (hit.group(0)[:80] if hit else f"pattern not found: {pattern}")
