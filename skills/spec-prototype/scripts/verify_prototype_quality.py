@@ -1782,7 +1782,7 @@ if __name__ == "__main__":
     parser.add_argument("--tokens", dest="tokens_opt")
     parser.add_argument("--contract", dest="contract")
     parser.add_argument("--strict-divergence", action="store_true")
-    parser.add_argument("--strict", action="store_true", help="Exit with code 2 if environment_not_ready (render probes skipped)")
+    parser.add_argument("--strict", action="store_true", help="Deprecated; degraded runs exit 2 by default")
     args = parser.parse_args()
 
     root = Path(args.root).resolve() if args.root else Path.cwd()
@@ -1804,7 +1804,7 @@ if __name__ == "__main__":
         ok = assert_quality(str(html_path), str(token_path), args.strict_divergence, contract_path)
         if not ok:
             sys.exit(1)
-        if args.strict and LAST_TIER_EVIDENCE.get("environment_not_ready"):
+        if LAST_TIER_EVIDENCE.get("environment_not_ready"):
             sys.exit(2)
         sys.exit(0)
 
@@ -1818,6 +1818,9 @@ if __name__ == "__main__":
     ok = assert_quality(str(html), token_arg, args.strict_divergence, args.contract)
     if not ok:
         sys.exit(1)
-    if args.strict and LAST_TIER_EVIDENCE.get("environment_not_ready"):
+    if LAST_TIER_EVIDENCE.get("environment_not_ready"):
+        # Degraded is its own outcome. A run whose render probes never ran did
+        # not pass, and returning 0 made "unverified" indistinguishable from
+        # "pass" to every caller that only reads the exit code.
         sys.exit(2)
     sys.exit(0)

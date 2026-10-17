@@ -9,6 +9,8 @@ Contract under test:
   failure. The evidence record names each tier and the reason for skipped tiers.
 """
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -91,6 +93,19 @@ def test_browser_missing_reports_success_at_l1_l2_with_environment_label(tmp_pat
     assert l3["status"] == "skipped"
     assert "environment_not_ready" in str(l3["reason"]), \
         "skipped screenshot tier must name its reason"
+
+
+def test_cli_exits_two_when_render_tiers_degrade(tmp_path):
+    tokens = _write_tokens(tmp_path)
+    html = _good_html(tmp_path)
+    env = os.environ.copy()
+    env["SPEC_PROTOTYPE_FAST_TEST"] = "1"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPTS / "verify_prototype_quality.py"), str(html), str(tokens)],
+        capture_output=True, text=True, env=env, check=False,
+    )
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "STATIC: unverified" in result.stdout
 
 
 def test_screenshot_tier_skipped_with_reason_when_style_engine_missing(tmp_path, monkeypatch):
