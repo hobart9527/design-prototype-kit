@@ -23,12 +23,20 @@ purpose of this stage.
    before running a scan: a reviewer who reads the hit list first reviews the hit
    list, and what no rule encodes goes unseen — the review degrades into
    reconciling machine output item by item. The order is judgment, then evidence,
-   then reconciliation.
-   **Honest Rendering Precondition**: If screenshot capture failed, had runtime errors,
-   or reports `stylesheets_applied: false` / `visual: pending_review` in `handoff-manifest.json`,
-   never fabricate visual observations or assert that visual design floors passed.
-   Record `visual_evidence: unverified` / `status: PARTIAL` honestly in the receipt,
-   and state what could not be inspected.
+   then reconciliation. Name the strongest authored relationship that reached the
+   render, the task behavior actually exercised, and the highest-impact opportunity
+   to improve; the review preserves and strengthens the direction rather than only
+   demonstrating absence of defects. Run the four probes in that first look and
+   record their outcome as one `taste_probe:` line in the design record:
+   **Swap** (replace the palette with the category default — does the structure
+   still read as this product?); **Squint** (does the first-glance hierarchy
+   survive blur?); **Signature** (is the Stage 1 Signature Moment the thing you
+   see first?); **Token** (does any competitor's stylesheet drop in unchanged?).
+   A probe that fails is a judgment, not yet a finding — it becomes one only when
+   it names the floor, contract block, or task it breaks (step 4).
+   **Honest Rendering Precondition**: if capture failed, had runtime errors, or the
+   manifest shows `stylesheets_applied: false` / `visual: pending_review`, make no visual
+   claim and record `visual_evidence: unverified` / `PARTIAL`; see "Manifest cross-check".
 3b. **Render defect scan** against the actual captures — overlay positioning,
    elements wider than their container, identifiers broken mid-token, sticky
    layers covering content, and the empty/long states. The list and its failure
@@ -72,6 +80,18 @@ purpose of this stage.
    focused pass is normally sufficient. Continue only when the user changes scope or
    new evidence exposes a new cause.
 
+### Taste Statement (品味陈述)
+
+A finding needs a failed trigger; a judgment does not. Beside the findings, write a
+short **Taste Statement** from the screenshots, before reading any rule-hit list:
+what the design is committing to, what it gives up, where it is weakest, and whether
+the [Style Language Card](../01-foundations/style-language.md) Positions and
+Counter-examples are visible in the render (cover test: could a viewer of the first
+viewport guess the category?). It is recorded as judgment, tagged `[taste]`, and never
+filed as a finding or a gate — "Taste is not evidence" still holds. Its job is to make
+the designer's position reviewable and to feed one bounded refinement when the render
+falls short of its own language.
+
 ### Read the render against the Direction Contract, pillar by pillar
 
 The review has a second half that is not a defect hunt: take the Direction Contract
@@ -83,14 +103,10 @@ Every capture receipt carries a `direction_contract_checklist` — the six quest
 `capture.mjs`; the review starts from these six against the render, and the review
 portal surfaces the same checklist per capture card.
 
-| Contract block | The question the render must answer |
-|---|---|
-| THESIS | Is the first viewport's claim visible without reading the copy? |
-| OWN-WORLD | Does the surface belong to the named world, or to dashboard chrome? |
-| STORY | Is the task's shape readable from the layout alone? |
-| FIRST VIEWPORT | Does the opening frame carry the product's own subject, not a template header? |
-| FORM | Do the Five Axes the contract names read as those axes? |
-| FINISH | Is the craft floor met on the rendered pixels (`detect.py` plus the capture read)? |
+Apply the six-block contract defined in [`design-language.md`](../01-foundations/design-language.md)
+to the rendered capture. The `direction_contract_checklist` emitted by `capture.mjs`
+and shown on each portal card carries the block-specific review prompts; do not keep
+a second prompt table here.
 
 A block that is declared and not observable is a finding, and its owning layer is
 the build — not the contract. Do not amend the contract to match what got built;
@@ -124,9 +140,10 @@ it is separate from the hard craft floors, which stay defects whatever the ratin
 
 Rules that keep the pillar view honest:
 
-- **Every pillar gets a row, including the ones you did not examine.** Write
-  `not reviewed` for those, with the reason. A pillar silently omitted from the
-  report reads as covered; the row is what prevents that.
+- **No pillar is silently omitted.** Expand the 2–3 pillars that carry this slice's
+  tension (the ones Stage 1 named) as full rows. The rest may be collapsed into one
+  row, `not reviewed: <pillar list> — <reason>`. A pillar silently omitted from the
+  report reads as covered; the explicit row is what prevents that.
 - **A finding names its pillar.** The same observation can belong to two; pick the
   owning one — the layer that would change to fix it — and cross-reference the
   other rather than filing it twice.
@@ -150,7 +167,7 @@ For craft-floor leads, run `python3 skills/spec-prototype/scripts/detect.py --ar
 Sync the review portal with:
 `python3 skills/spec-prototype/scripts/generate_review_portal.py --root .`
 The canonical portal is `prototype/review-portal.html`; never create or copy ad-hoc review portals under nested paths.
-A state is captured only if its trigger was applied and the page confirmed it. The confirmation signal is the same `data-state` or URL state mechanism declared in `CRAFT-STATE-ENTRY`; filenames alone are not proof. If browser startup, state confirmation, or interaction tracing fails, record the scope as `unverified`, not passed. Inspect the actual screenshots before making visual claims. A static check supports a review; it does not establish visual quality.
+State × viewport coverage is complete only when every required state has a confirmed capture at every declared viewport; do not infer coverage from a different state or viewport. A `null` or `unmeasured` metric belongs under `Unverified` / `Limitations`, never read as zero, clean, or a pass. A state is captured only if its trigger was applied and the page confirmed the resulting state in the rendered page. A `?state=` URL or other entry mechanism that only sets up a trigger is not result evidence by itself; capture the resulting state and confirm it. The confirmation signal is the same `data-state` or URL state mechanism declared in `CRAFT-STATE-ENTRY`; filenames alone are not proof. If browser startup, state confirmation, or interaction tracing fails, record the scope as `unverified`, not passed. Inspect the actual screenshots before making visual claims. A static check supports a review; it does not establish visual quality.
 
 First-viewport review: does the first viewport answer the primary question and expose the primary action without scroll? If not, treat it as a design improvement opportunity, not a hard failure unless it blocks the task chain.
 
@@ -177,12 +194,17 @@ Quote all recorded counts (e.g. `small_touch_target_count`, `horizontal_overflow
 records 3 small touch targets on 1280, never write `small_touch_target_count: 0`; explain
 the context honestly (e.g. 1280 desktop compact button density vs 390 mobile touch compliance)
 instead of altering or denying the recorded number. Never dismiss a recorded manifest
-failure as a "runner bug" or override it with visual impressions. If
+failure as a "runner bug" or override it with visual impressions. A manifest field
+that reads `null` — or a name listed in `unmeasured` — means the runner could not
+measure it (`measurement_tier: cli` cannot read DOM signals); that is `unverified`,
+never `0`, `false`, or `clean`. Report it under `## 未验证（不得读作已验证）` with the
+tier that failed to measure it, and re-capture on the Playwright path when the
+signal decides a verdict. If
 `metadata.status` is `capture_failed`, or any `viewport_metrics.*.stylesheets_applied`
 is `false`, or `visual`/`human` is `pending_review`, then the receipt must set
 `visual_evidence: unverified` / `status: PARTIAL` and must NOT write
 `capture_reflects_current_state: true` or color/spacing/typography observations
-tied to rendered output. Capture-failed states (manifest records `metadata.status == "capture_failed"`, `screenshots == 0`, `confirmed == false`, or non-empty `unconfirmed_states`) must never be placed under `## Verified this turn` as verified facts, state entries, or observed behaviors. It is strictly forbidden to describe the URL state entry (e.g. `?state=conflict`), data feedback, or UI response of any capture-failed or unconfirmed state under `## Verified this turn`, even as an informative note or implementation recap. Any state that did not produce confirmed, passing screenshots belongs exclusively under `## 未验证（不得读作已验证）` or `Limitations`, marked `[hypothesis]` / `[unverified]`. A receipt that records `capture_reflects_current_state:
+tied to rendered output. Any state without confirmed, passing screenshots (`capture_failed`, `screenshots == 0`, `confirmed == false`, or non-empty `unconfirmed_states`) is never placed under `## Verified this turn` — not even as a URL-entry (`?state=conflict`) or feedback-copy note; it belongs under `## 未验证（不得读作已验证）` or `Limitations`, tagged `[hypothesis]` / `[unverified]`. A receipt that records `capture_reflects_current_state:
 true` while the manifest says `capture_failed` is an authority promotion of the
 evidence itself (the r40 A3 class) and fails the audit. Write the reconcile line
 explicitly: `manifest: <status>, stylesheets_applied: <bool>, receipt reflects:
@@ -226,6 +248,10 @@ case rendered. Do not simulate new product capability merely to make a test pass
 For a consequential action, inspect intent (the person understands the action),
 commit (the action has perceptible feedback), and settled result (the changed state
 and available recovery are clear). Apply only where this sequence fits the action.
+The authoring-side form — the compact decisive-exchange recipe with its interrupt /
+return frame — is owned by
+[`../02-craft-methods/interaction-power.md`](../02-craft-methods/interaction-power.md);
+review the render against the same frames rather than a second list.
 
 ## Completion Receipt Discipline
 
@@ -235,7 +261,8 @@ and whether the design question is answered. `PARTIAL` with honest limitations i
 valid end state. A timeout or a false verification claim is not.
 
 Stage 5 freeze, manifests, and export are optional handoff mechanics, not a design
-review gate. Run them only when the user requested a frozen or downstream handoff.
+review gate. Run them only when the user requested a frozen or downstream handoff;
+once downstream delivery is requested, freeze is the only admission path.
 When authoring a formal RFC specification view (`r1.spec.md`), always run
 `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>` (add
 `--candidate <rev>` when not `r1`) to ensure canonical `.spec.json` IR accompanies

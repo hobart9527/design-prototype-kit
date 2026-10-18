@@ -12,6 +12,7 @@ from pathlib import Path
 import sys
 from typing import Dict, List
 import json
+import hashlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prototype_context  # noqa: E402
@@ -166,8 +167,32 @@ def discover_directions(root: Path) -> List[Dict[str, str]]:
             "id": f"{slice_name}-{slot_id}",
             "name": f"Direction {slot_id.upper()} [{slice_name}]",
             "url": slot.relative_to(root / "prototype").as_posix(),
+            # A URL is mutable: a comment pinned to the same path after an in-place
+            # edit would silently describe different pixels. The content digest
+            # names the exact revision under review, so a comment stays bound to
+            # what the reviewer actually saw.
+            "revision": _artifact_revision(slot),
         })
     return directions
+
+
+def _artifact_revision(html_path: Path) -> str:
+    """Short content digest of every file in the direction slot, path-qualified.
+
+    The digest is over bytes on disk, not a label, so an in-place edit to the HTML
+    or its stylesheets changes it and an unchanged slot keeps it. Unreadable slots
+    degrade to `unhashed` rather than fabricating a revision that looks authoritative.
+    """
+    parts: list[bytes] = []
+    try:
+        for path in sorted(p for p in html_path.parent.glob("**/*") if p.is_file()):
+            parts.extend((path.relative_to(html_path.parent).as_posix().encode(), path.read_bytes()))
+    except OSError:
+        return "unhashed"
+    if not parts:
+        return "unhashed"
+    digest = hashlib.sha256(b"\0".join(parts)).hexdigest()
+    return f"sha256:{digest[:12]}"
 
 
 def build_decision_html(directions: List[Dict[str, str]]) -> str:
@@ -204,6 +229,184 @@ def build_decision_html(directions: List[Dict[str, str]]) -> str:
         'placeholder="what this direction must change, or why both miss">'
         '<p class="decision-out" data-decision-out>No decision recorded yet.</p>'
         '</div></details></section>')
+
+
+def build_comment_overlay_html(directions: List[Dict[str, str]]) -> str:
+    """Point-click review: click a spot on a direction, leave an attributed comment.
+
+    A reviewer's objection is about a *place on a specific candidate*, so the
+    comment carries the variant it was made on. Without that attribution the
+    feedback is prose about "the prototype" and cannot steer one direction.
+    Rendered only when there is a candidate set to comment on.
+    """
+    if not directions:
+        return ""
+    return (
+        '<section id="comment-overlay" class="portal-collapsible">'
+        '<details>'
+        '<summary>💬 Point-click comments (attributed to the picked direction)</summary>'
+        '<div class="collapsible-content">'
+        '<div class="comment-tools">'
+        '<button class="pick-btn" id="comment-mode" data-comment-mode="off" '
+        'onclick="toggleCommentMode(this)">COMMENT: OFF</button>'
+        '<button class="pick-btn" onclick="copyComments()">COPY AS JSON</button>'
+        '<button class="pick-btn" data-comment-download onclick="downloadComments()">DOWNLOAD JSON</button>'
+        '<span class="comment-hint">Pick a direction, turn comment mode on, then click the preview. '
+        'Comments are a draft you export and record as evidence — they never approve a direction on their own.</span>'
+        '</div>'
+        '<ol class="comment-list" data-comment-list></ol>'
+        '<pre class="comment-out" data-comment-out>No comments recorded yet.</pre>'
+        '</div></details></section>')
+
+
+def _comment_style() -> str:
+    return """
+    .comment-catcher {
+      position: absolute; inset: 0; display: none; cursor: crosshair;
+      background: rgba(0, 240, 255, 0.04);
+    }
+    .comment-catcher.on { display: block; }
+    .comment-catcher:focus-visible { outline: 3px solid var(--accent-primary, #00f0ff); outline-offset: -3px; }
+    .comment-catcher[aria-pressed="true"] { background: rgba(0, 240, 255, 0.1); }
+    .comment-pin {
+      position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+      border-radius: 50%; background: var(--accent-primary, #00f0ff);
+      color: #000; font: 9px/14px var(--font-mono, monospace); text-align: center;
+    }
+    .comment-tools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .comment-hint { color: var(--text-secondary, #94a3b8); }
+    .comment-list { margin: 0 0 8px 16px; }
+    .comment-list li { margin-bottom: 4px; }
+    .comment-list .comment-variant { color: var(--accent-primary, #00f0ff); }
+    .comment-out { color: var(--text-secondary, #94a3b8); white-space: pre-wrap; }
+"""
+
+
+def _comment_script() -> str:
+    return """
+    var comments = [];
+    var commentMode = false;
+
+    function setCommentMode(on, btn) {
+      commentMode = on;
+      var button = btn || document.getElementById('comment-mode');
+      if (button) {
+        button.textContent = 'COMMENT: ' + (commentMode ? 'ON' : 'OFF');
+        button.classList.toggle('active', commentMode);
+        button.setAttribute('aria-pressed', String(commentMode));
+      }
+      var catcher = document.querySelector('.comment-catcher');
+      if (catcher) {
+        catcher.classList.toggle('on', commentMode);
+        // Off keeps the preview interactive: the catcher is display:none, so the
+        // iframe underneath receives the pointer and its own keyboard focus.
+        catcher.tabIndex = commentMode ? 0 : -1;
+        catcher.setAttribute('aria-pressed', String(commentMode));
+      }
+    }
+
+    function toggleCommentMode(btn) { setCommentMode(!commentMode, btn); }
+
+    function renderComments() {
+      var list = document.querySelector('[data-comment-list]');
+      var out = document.querySelector('[data-comment-out]');
+      if (list) {
+        list.innerHTML = '';
+        comments.forEach(function (c) {
+          var li = document.createElement('li');
+          var who = document.createElement('span');
+          who.className = 'comment-variant';
+          who.textContent = c.variant;
+          li.appendChild(who);
+          // The visible list carries the same attribution as the export, so a
+          // reviewer reading the pins does not have to open the JSON to know
+          // which page and frame width the note belongs to.
+          var where = [c.viewport, c.page].filter(Boolean).join(' · ');
+          li.appendChild(document.createTextNode(
+            (where ? ' [' + where + ']' : '') + ' @' + c.x + '%/' + c.y + '% — ' + c.text));
+          list.appendChild(li);
+        });
+      }
+      if (out) { out.textContent = comments.length ? JSON.stringify(comments, null, 2) : 'No comments recorded yet.'; }
+    }
+
+    // The click lands on the catcher rather than the frame, so the iframe keeps its
+    // own interactivity when comment mode is off and the coordinates stay relative
+    // to the preview the reviewer is looking at.
+    function addComment(event) {
+      if (!commentMode) return;
+      if (!currentVariant) { alert('Pick a direction first — a comment must attach to one.'); return; }
+      var rect = event.currentTarget.getBoundingClientRect();
+      var clientX = event.type === 'keydown' ? rect.left + rect.width / 2 : event.clientX;
+      var clientY = event.type === 'keydown' ? rect.top + rect.height / 2 : event.clientY;
+      var x = Math.round(((clientX - rect.left) / rect.width) * 100);
+      var y = Math.round(((clientY - rect.top) / rect.height) * 100);
+      var text = window.prompt('Comment on ' + currentVariant + ' at ' + x + '%/' + y + '%:');
+      if (!text || !text.trim()) return;
+      // Keep direction, page, viewport and the exact reviewed revision together:
+      // coordinates alone are ambiguous when the reviewer switches candidates,
+      // frame widths, or the artifact is edited in place under the same URL.
+      var vpFrame = document.querySelector('.viewport-frame');
+      var viewport = vpFrame ? (vpFrame.getAttribute('data-viewport-frame') || null) : null;
+      var dir = DIRECTIONS.filter(function (d) { return d.id === currentVariant; })[0];
+      comments.push({
+        variant: currentVariant,
+        version: dir ? (dir.revision || null) : null,
+        url: document.getElementById('preview-frame').src,
+        page: currentView,
+        viewport: viewport,
+        x: x,
+        y: y,
+        text: text.trim()
+      });
+
+      var pin = document.createElement('span');
+      pin.className = 'comment-pin';
+      pin.style.left = x + '%';
+      pin.style.top = y + '%';
+      pin.textContent = String(comments.length);
+      event.currentTarget.appendChild(pin);
+      renderComments();
+    }
+
+    function copyComments() {
+      var text = JSON.stringify(comments, null, 2);
+      if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+    }
+
+    // Comments live only in this page's memory until exported; a reviewer who
+    // closes the tab loses them. The download writes the same attributed JSON to
+    // a file the session records as evidence — no feedback database, and the
+    // export never asserts a decision the user did not make.
+    function downloadComments() {
+      var blob = new Blob([JSON.stringify(comments, null, 2)], { type: 'application/json' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'review-comments.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var catcher = document.querySelector('.comment-catcher');
+      if (catcher) {
+        catcher.addEventListener('click', addComment);
+        // Keyboard parity: a reviewer who cannot point can still place a comment
+        // at the preview's centre. Without this the overlay is pointer-only and
+        // the attributed feedback it exists to collect is unreachable.
+        catcher.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            addComment(event);
+          }
+        });
+        setCommentMode(false, document.getElementById('comment-mode'));
+      }
+      renderComments();
+    });
+"""
 
 
 def _decision_style() -> str:
@@ -317,6 +520,7 @@ def _decision_script() -> str:
       var reason = (document.getElementById('decision-reason') || {}).value || '';
       var needsReason = currentVerdict === 'steer' || currentVerdict === 're-roll';
       if (!currentVariant) { out.textContent = 'Pick a direction first.'; return; }
+      if (!currentVerdict) { out.textContent = 'Picked ' + currentVariant + '. Choose a verdict to record a decision.'; return; }
       if (needsReason && !reason.trim()) {
         out.textContent = currentVerdict.toUpperCase() + ' needs a reason before it can be recorded.';
         return;
@@ -378,6 +582,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     directions = directions or []
     directions_json = json.dumps(directions)
     decision_html = build_decision_html(directions)
+    comment_html = build_comment_overlay_html(directions)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -479,6 +684,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       box-sizing: border-box;
     }}
     .viewport-frame {{
+      position: relative;
       width: 100%;
       max-width: 100%;
       height: 100%;
@@ -524,6 +730,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       box-shadow: 0 0 6px var(--status-running, #10b981);
     }}
 {_decision_style()}
+{_comment_style()}
   </style></head>
 <body>
   <div class="portal-nav">
@@ -547,10 +754,13 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
   </div>
 
   {decision_html}
+  {comment_html}
 
   <div class="portal-frame-box">
     <div class="viewport-frame" data-viewport-frame="100%">
       <iframe id="preview-frame" src="{default_url}"></iframe>
+      <div class="comment-catcher" role="button" aria-pressed="false" tabindex="-1"
+           aria-label="Add a point-click comment at the preview centre"></div>
     </div>
   </div>
 
@@ -620,6 +830,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       setViewport(w, document.querySelector('[data-viewport="' + w + '"]'));
     }}
 {_decision_script()}
+{_comment_script()}
   </script>
 </body>
 </html>

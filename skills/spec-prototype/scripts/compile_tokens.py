@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import sys
@@ -672,10 +673,12 @@ def extract_dynamic_palette(
         "text_primary": ["text-primary", "text_primary", "primary-text"],
         "text_secondary": ["text-secondary", "text_secondary"],
         "text_tertiary": ["text-tertiary", "text_tertiary"],
-        "status_running": ["status-running", "status_running"],
-        "status_warning": ["status-warning", "status_warning"],
-        "status_danger": ["status-danger", "status_danger"],
+        "status_running": ["status-running", "status_running", "state-nominal", "state_nominal", "state"],
+        "status_warning": ["status-warning", "status_warning", "state-warning", "state_warning"],
+        "status_danger": ["status-danger", "status_danger", "state-danger", "state_danger"],
         "accent_seal": ["accent-seal", "accent_seal", "seal-color", "seal_color"],
+        "status_success": ["status-success", "status_success", "state-success", "state_success"],
+        "status_info": ["status-info", "status_info", "state-info", "state_info"],
     }
 
     confirmed_block = _extract_confirmed_section(discussion_text)
@@ -1072,14 +1075,210 @@ def _surface_tint(colors: Dict[str, str], is_light: bool) -> str:
     return f"rgba({min(255, r + 24)}, {min(255, g + 24)}, {min(255, b + 24)}, 0.05)"
 
 
-def generate_css(tokens: Dict[str, Any]) -> str:
-    """Render semantic CSS variables with explicit or neutral craft values."""
-    c = tokens["colors"]
+def _hex_to_oklch_css(value: str) -> str:
+    """Format an opaque six-digit hex color as a CSS OKLCH color.
+
+    Only opaque hex is accepted: rgba()/named colors carry alpha that OKLCH
+    would silently drop, so a caller must not lose that channel here.
+    """
+    if not re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+        raise ValueError(f"OKLCH output requires an opaque six-digit hex color, got {value!r}")
+    L, a, b = _hex_to_oklab(value)
+    chroma = math.hypot(a, b)
+    hue = math.degrees(math.atan2(b, a)) % 360
+    return f"oklch({L:.4f} {chroma:.4f} {hue:.2f})"
+
+
+COLOR_FORMATS = ("hex", "oklch")
+COLOR_SCHEMES = ("single", "light-dark")
+TYPE_SCALES = ("static", "clamp")
+
+# The colour variables a paired scheme must carry on both sides. `accent_seal`
+# and the domain extension colours are appended only when the palette authors
+# them, so they are paired too when present — a scheme that carries a token on
+# one side only is not a scheme, it is a silent drop.
+_PAIRED_COLOR_TOKENS = (
+    ("--bg-void", "bg_void", None),
+    ("--bg-base", "bg_base", None),
+    ("--bg-surface", "bg_surface", None),
+    ("--bg-surface-raised", "bg_surface_raised", None),
+    ("--bg-overlay", "bg_overlay", None),
+    ("--border-dim", "border_dim", None),
+    ("--border-subtle", "border_subtle", None),
+    ("--border-bright", "border_bright", None),
+    ("--border-danger", "border_danger", None),
+    ("--border-warning", "border_warning", None),
+    ("--text-primary", "text_primary", None),
+    ("--text-secondary", "text_secondary", None),
+    ("--text-tertiary", "text_tertiary", None),
+    ("--accent-primary", "accent_primary", None),
+    ("--accent-subtle", "accent_subtle", None),
+    ("--accent-hover", "accent_hover", None),
+    ("--status-running", "status_running", None),
+    ("--status-warning", "status_warning", None),
+    ("--status-danger", "status_danger", None),
+    ("--status-success", "status_success", None),
+    ("--status-info", "status_info", None),
+    ("--accent-seal", "accent_seal", None),
+    ("--status-p0", "status_p0", "status_danger"),
+    ("--status-p1", "status_p1", "status_warning"),
+    ("--status-ok", "status_ok", "status_running"),
+    ("--paper-bg", "paper_bg", "bg_surface"),
+    ("--ink-primary", "ink_primary", "text_primary"),
+    ("--ink-secondary", "ink_secondary", "text_secondary"),
+)
+
+_OPTIONAL_PAIRED_TOKENS = {"--accent-seal", "--status-p0", "--status-p1", "--status-ok",
+                           "--status-success", "--status-info",
+                           "--paper-bg", "--ink-primary", "--ink-secondary"}
+
+
+def _color_value(value: str, color_format: str) -> str:
+    """Render one colour value in the requested output format.
+
+    Only opaque hex is representable as OKLCH here; an rgba()/named value passes
+    through unchanged rather than losing its alpha channel to a lossy conversion.
+    """
+    if color_format == "oklch" and isinstance(value, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+        return _hex_to_oklch_css(value)
+    return value
+
+
+def _oklch_upgrade_lines(colors: Dict[str, str]) -> list:
+    """Append OKLCH overrides while retaining the base hex fallback."""
+    lines = [
+        "",
+        "/* OKLCH color output (opt-in), with the base hex values as fallback. */",
+        "@supports (color: oklch(0 0 0)) {",
+        ":root {",
+    ]
+    for var, key, fallback in _PAIRED_COLOR_TOKENS:
+        value = colors.get(key) or (colors.get(fallback) if fallback else None)
+        if value is None:
+            if var in _OPTIONAL_PAIRED_TOKENS:
+                continue
+            raise ValueError(f"OKLCH output is missing required color token {key!r}")
+        if not isinstance(value, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+            continue
+        lines.append(f"  {var}: {_color_value(value, 'oklch')};")
+    lines.extend(["}", "}"])
+    return lines
+
+
+def _paired_scheme_lines(
+    light_colors: Dict[str, str],
+    dark_colors: Dict[str, str] | None,
+    color_format: str,
+) -> list:
+    """Render the opt-in `light-dark()` pair block.
+
+    Both sets must resolve every paired token. A palette that authors a token on
+    one side only cannot be paired, and emitting a single-sided value under a
+    `color-scheme: light dark` declaration would present one scheme as two.
+    """
+    if not dark_colors:
+        raise ValueError("color-schemes=light-dark requires a dark token set (--dark-source)")
+    lines = [
+        "",
+        "/* ==========================================================================",
+        "   Dual Color Scheme (opt-in): light-dark() pairs resolved by the user agent.",
+        "   The base :root above still carries the light values for engines without",
+        "   light-dark(); these declarations win the cascade where it is supported.",
+        "   ========================================================================== */",
+        ":root {",
+        "  color-scheme: light dark;",
+    ]
+    for var, key, fallback in _PAIRED_COLOR_TOKENS:
+        light_value = light_colors.get(key) or (light_colors.get(fallback) if fallback else None)
+        dark_value = dark_colors.get(key) or (dark_colors.get(fallback) if fallback else None)
+        if light_value is None and dark_value is None:
+            if var in _OPTIONAL_PAIRED_TOKENS:
+                continue
+            raise ValueError(f"light-dark() pairing is missing {key!r} on both schemes")
+        if light_value is None or dark_value is None:
+            raise ValueError(
+                f"light-dark() pairing is missing {key!r} on the "
+                f"{'light' if light_value is None else 'dark'} scheme; "
+                "author the token on both sides or omit it from both")
+        lines.append(
+            f"  {var}: light-dark({_color_value(light_value, color_format)}, "
+            f"{_color_value(dark_value, color_format)});")
+    lines.append("}")
+    return lines
+
+
+# Fluid type: a modular step scale interpolated between the narrowest and widest
+# supported frames. The clamp bounds are the step at each end, so the middle term
+# only has to move linearly — the readable form of the standard fluid formula.
+_FLUID_STEPS = (-1, 0, 1, 2, 3, 4, 5)
+_FLUID_BASE_PX = 16.0
+_FLUID_RATIO = 1.25
+_FLUID_GROWTH = 0.22
+_FLUID_MIN_VW = 390.0
+_FLUID_MAX_VW = 1280.0
+_ROOT_FONT_PX = 16.0
+
+
+def _fluid_type_lines() -> list:
+    """Render the opt-in `--step-*` clamp() scale.
+
+    The plan asks for a fluid type scale, not a second hand-set table: every step
+    is the same modular ratio interpolated across the frame range, so the 390 and
+    1280 frames stay one type system.
+    """
+    lines = [
+        "",
+        "/* ==========================================================================",
+        "   Fluid Type Scale (opt-in): named --step-* clamp() steps. One modular ratio",
+        "   interpolated between the narrowest and widest frame, not two fixed tables.",
+        "   ========================================================================== */",
+        ":root {",
+    ]
+    for step in _FLUID_STEPS:
+        min_px = _FLUID_BASE_PX * (_FLUID_RATIO ** step)
+        max_px = min_px * (1.0 + _FLUID_GROWTH)
+        slope_px_per_vw = (max_px - min_px) / (_FLUID_MAX_VW - _FLUID_MIN_VW)
+        intercept_px = min_px - slope_px_per_vw * _FLUID_MIN_VW
+        min_rem = min_px / _ROOT_FONT_PX
+        max_rem = max_px / _ROOT_FONT_PX
+        intercept_rem = intercept_px / _ROOT_FONT_PX
+        slope_vw = slope_px_per_vw * 100.0
+        lines.append(
+            f"  --step-{step}: clamp({min_rem:.4f}rem, "
+            f"{intercept_rem:.4f}rem + {slope_vw:.4f}vw, {max_rem:.4f}rem);")
+    lines.append("}")
+    return lines
+
+
+def generate_css(
+    tokens: Dict[str, Any],
+    dark_colors: Dict[str, str] | None = None,
+    color_format: str = "hex",
+    color_schemes: str = "single",
+    type_scale: str = "static",
+) -> str:
+    """Render semantic CSS variables with explicit or neutral craft values.
+
+    The default arguments reproduce the historical output byte for byte; every
+    opt-in appends a block rather than rewriting the base sheet, so the freshness
+    fuse and the shipped stylesheet stay comparable across modes.
+    """
+    if color_format not in COLOR_FORMATS:
+        raise ValueError(f"unknown color-format: {color_format!r}; expected one of {COLOR_FORMATS}")
+    if color_schemes not in COLOR_SCHEMES:
+        raise ValueError(f"unknown color-schemes: {color_schemes!r}; expected one of {COLOR_SCHEMES}")
+    if type_scale not in TYPE_SCALES:
+        raise ValueError(f"unknown type-scale: {type_scale!r}; expected one of {TYPE_SCALES}")
+    raw_c = tokens["colors"]
+    # The base sheet always carries the authored hex values: they are the
+    # fallback every opt-in block upgrades from, so a browser without the
+    # feature still renders the same design rather than an unvalued variable.
+    c = raw_c
     s = tokens["space"]
     r = tokens["radii"]
     f = tokens["fonts"]
     m = tokens["motion"]
-    is_light = _is_light_color(c.get("bg_void", "#080b0b"))
+    is_light = _is_light_color(raw_c.get("bg_void", "#080b0b"))
 
     d = tokens.get("dials", {})
     energy_desc = d.get("energy", "balanced")
@@ -1104,6 +1303,9 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         if provenance.get("dials"):
             dial_pairs = ", ".join(f"{k}: {v}" for k, v in provenance["dials"].items())
             lines.append(f"   Authored dials: {dial_pairs}")
+        if provenance.get("output"):
+            output_pairs = ", ".join(f"{key}={value}" for key, value in sorted(provenance["output"].items()))
+            lines.append(f"   Output options: {output_pairs}")
     lines.extend([
         "   ========================================================================== */",
         ":root {",
@@ -1137,6 +1339,14 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --status-warning: {c['status_warning']};",
         f"  --status-danger: {c['status_danger']};",
     ])
+
+    # Authored state extensions are emitted only when the palette declares them:
+    # a default stylesheet must stay byte-identical to every seal compiled before
+    # these tokens existed, or the freshness fuse reads an untouched file as drift.
+    for state_var, state_key in (("--status-success", "status_success"),
+                                 ("--status-info", "status_info")):
+        if state_key in c:
+            lines.append(f"  {state_var}: {c[state_key]};")
 
     if "accent_seal" in c:
         lines.append(f"  --accent-seal: {c['accent_seal']};")
@@ -1186,7 +1396,7 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         f"  --press-scale: {m['active_scale']};",
         "",
         "  /* Orthogonal Craft Stack & Surface Optics (Micro-Texture & Top Sheen) */",
-        f"  --surface-tint: {_surface_tint(c, is_light)};",
+        f"  --surface-tint: {_surface_tint(raw_c, is_light)};",
         f"  --surface-sheen: {('inset 0 1px 0 0 rgba(255, 255, 255, 0.08)' if not is_light else 'inset 0 1px 0 0 rgba(255, 255, 255, 0.6)')};",
         f"  --surface-specular: {_craft_specular(craft['surface_optics'])};",
         f"  --pattern-hatch-45: {HATCH_PATTERN if craft['data_marks'] == 'hatching_dither' else 'none'};",
@@ -1297,6 +1507,12 @@ def generate_css(tokens: Dict[str, Any]) -> str:
         "  display: none !important;",
         "}",
     ])
+    if color_format == "oklch":
+        lines.extend(_oklch_upgrade_lines(raw_c))
+    if color_schemes == "light-dark":
+        lines.extend(_paired_scheme_lines(raw_c, dark_colors, color_format))
+    if type_scale == "clamp":
+        lines.extend(_fluid_type_lines())
     return "\n".join(lines) + "\n"
 
 
@@ -1345,6 +1561,8 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         "status-running": {"$value": c["status_running"], "$type": "color", "$description": "Nominal operational state", "authority": color_auth},
         "status-warning": {"$value": c["status_warning"], "$type": "color", "$description": "Warning state or capacity threshold", "authority": color_auth},
         "status-danger": {"$value": c["status_danger"], "$type": "color", "$description": "Critical failure or blocking alert", "authority": color_auth},
+        **({"status-success": {"$value": c["status_success"], "$type": "color", "$description": "Successful completion state", "authority": color_auth}} if "status_success" in c else {}),
+        **({"status-info": {"$value": c["status_info"], "$type": "color", "$description": "Informational state", "authority": color_auth}} if "status_info" in c else {}),
         "bg-void": {"$value": c["bg_void"], "$type": "color", "$description": "Deepest atmospheric background", "authority": color_auth},
         "bg-base": {"$value": c["bg_base"], "$type": "color", "$description": "App foundation background chassis", "authority": color_auth},
     }
@@ -1483,8 +1701,66 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _token_source_digest(source_text: str, mode: str, source_path: str | None = None) -> str:
-    """Digest only authored inputs that can change generated token values."""
+def _output_options(
+    color_format: str,
+    color_schemes: str,
+    type_scale: str,
+    dark_source_path: str | None,
+) -> Dict[str, str]:
+    options = {}
+    if color_format != "hex":
+        options["color_format"] = color_format
+    if color_schemes != "single":
+        options["color_schemes"] = color_schemes
+    if type_scale != "static":
+        options["type_scale"] = type_scale
+    if dark_source_path:
+        options["dark_source"] = dark_source_path
+    return options
+
+
+def _token_source_digest(
+    source_text: str,
+    mode: str,
+    source_path: str | None = None,
+    *,
+    color_format: str = "hex",
+    color_schemes: str = "single",
+    type_scale: str = "static",
+    dark_source_path: str | None = None,
+    dark_source_text: str | None = None,
+) -> str:
+    """Digest authored values and every output-affecting compiler option."""
+    if color_format not in COLOR_FORMATS or color_schemes not in COLOR_SCHEMES or type_scale not in TYPE_SCALES:
+        raise ValueError("invalid token output option")
+    if color_schemes == "light-dark" and (not dark_source_path or dark_source_text is None):
+        raise ValueError("light-dark digest requires a readable dark source")
+    if color_schemes == "single" and (dark_source_path or dark_source_text is not None):
+        raise ValueError("dark source is only valid with light-dark color schemes")
+    dark_digest = None
+    if dark_source_text is not None:
+        dark_digest = _token_input_digest(dark_source_text, mode, dark_source_path)
+    # A default compile's digest must stay stable: only non-default options join
+    # the hash, so every stylesheet sealed before this flag set existed still
+    # verifies, and an opt-in compile can never collide with a default one.
+    options: Dict[str, Any] = {}
+    if color_format != "hex":
+        options["color_format"] = color_format
+    if color_schemes != "single":
+        options["color_schemes"] = color_schemes
+    if type_scale != "static":
+        options["type_scale"] = type_scale
+    if dark_digest is not None:
+        options["dark_source"] = dark_digest
+    return _token_input_digest(source_text, mode, source_path, options or None)
+
+def _token_input_digest(
+    source_text: str,
+    mode: str,
+    source_path: str | None = None,
+    options: Dict[str, Any] | None = None,
+) -> str:
+    """Hash all authored values and rendering options that affect output."""
     dials = parse_5dials(source_text)
     dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
     inputs = {
@@ -1494,6 +1770,8 @@ def _token_source_digest(source_text: str, mode: str, source_path: str | None = 
         "authority": "explicit_human" if _has_confirmed_token_authority(
             _confirmed_authority_text(source_text, source_path)) else "derived",
     }
+    if options:
+        inputs["output_options"] = options
     payload = json.dumps(inputs, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -1520,8 +1798,23 @@ def compile_tokens(
     output_css_path: str,
     output_json_path: str | None = None,
     mode: str = "formal",
+    *,
+    dark_source_path: str | None = None,
+    color_format: str = "hex",
+    color_schemes: str = "single",
+    type_scale: str = "static",
 ) -> None:
+    if color_format not in COLOR_FORMATS or color_schemes not in COLOR_SCHEMES or type_scale not in TYPE_SCALES:
+        raise ValueError("invalid token output option")
+    if color_schemes == "light-dark" and not dark_source_path:
+        raise ValueError("--color-schemes light-dark requires --dark-source")
+    if color_schemes == "single" and dark_source_path:
+        raise ValueError("--dark-source is only valid with --color-schemes light-dark")
     disc_text = _resolve_token_source(discussion_path, mode=mode)
+    dark_text = _resolve_token_source(dark_source_path, mode=mode) if dark_source_path else None
+    dark_tokens = None
+    if dark_text is not None:
+        dark_tokens = compute_tokens(parse_5dials(dark_text), extract_dynamic_palette(dark_text, mode=mode), mode=mode)
     dials = parse_5dials(disc_text)
 
     # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or neutral scaffold
@@ -1554,8 +1847,12 @@ def compile_tokens(
     computed["provenance"] = {
         "source": str(discussion_path),
         "mode": mode,
-        "digest": _token_source_digest(disc_text, mode, discussion_path),
+        "digest": _token_source_digest(
+            disc_text, mode, discussion_path,
+            color_format=color_format, color_schemes=color_schemes, type_scale=type_scale,
+            dark_source_path=dark_source_path, dark_source_text=dark_text),
         "dials": dict(sorted(dials.items())),
+        "output": _output_options(color_format, color_schemes, type_scale, dark_source_path),
     }
 
     # Perform WCAG AAA/AA relative luminance pre-flight diagnostics
@@ -1567,7 +1864,13 @@ def compile_tokens(
     if c_ratio_void < 7.0:
         print(f"[TOKEN COMPILER WARNING] text_primary/bg_void contrast ratio {c_ratio_void:.2f}:1 is below WCAG AAA (7.0:1)")
 
-    css_content = generate_css(computed)
+    css_content = generate_css(
+        computed,
+        dark_tokens["colors"] if dark_tokens else None,
+        color_format=color_format,
+        color_schemes=color_schemes,
+        type_scale=type_scale,
+    )
 
     out_css = Path(output_css_path)
     out_css.parent.mkdir(parents=True, exist_ok=True)
@@ -1586,9 +1889,10 @@ def compile_tokens(
 def read_tokens_provenance(css_path: str) -> Dict[str, Any]:
     """Read the provenance block a compile stamped into a tokens.css.
 
-    Returns the source path, mode, sha256 source digest, and authored dial
-    annotations. A stylesheet with no provenance block yields an empty dict —
-    it predates the fuse and carries no freshness claim.
+    Returns the source path, mode, sha256 source digest, authored dial
+    annotations, and the output options the sheet was rendered with. A stylesheet
+    with no provenance block yields an empty dict — it predates the fuse and
+    carries no freshness claim.
     """
     css_p = Path(css_path)
     if not css_p.is_file():
@@ -1597,7 +1901,8 @@ def read_tokens_provenance(css_path: str) -> Dict[str, Any]:
     m = re.search(
         r"Source:\s*(?P<src>[^\n]+?)\s+\(mode=(?P<mode>\w+)\)\n"
         r"\s*Source digest:\s*(?P<digest>sha256:[0-9a-f]{64})\n"
-        r"(?:\s*Authored dials:\s*(?P<dials>[^\n]*))?",
+        r"(?:\s*Authored dials:\s*(?P<dials>[^\n]*)\n)?"
+        r"(?:\s*Output options:\s*(?P<output>[^\n]*))?",
         text,
     )
     if not m:
@@ -1608,16 +1913,36 @@ def read_tokens_provenance(css_path: str) -> Dict[str, Any]:
             if ":" in pair:
                 k, v = pair.split(":", 1)
                 dials[k.strip()] = v.strip()
+    output: Dict[str, str] = {}
+    if m.group("output"):
+        for pair in m.group("output").split(","):
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+                output[k.strip()] = v.strip()
     return {
         "source": m.group("src").strip(),
         "mode": m.group("mode"),
         "digest": m.group("digest"),
         "dials": dials,
+        "output": output,
     }
 
 
-def _render_sealed_css(source_text: str, source_path: str, mode: str) -> str:
+def _render_sealed_css(
+    source_text: str,
+    source_path: str,
+    mode: str,
+    *,
+    dark_source_path: str | None = None,
+    color_format: str = "hex",
+    color_schemes: str = "single",
+    type_scale: str = "static",
+) -> str:
     """Compile a token source to the exact sealed stylesheet bytes the fuse expects."""
+    dark_text = _resolve_token_source(dark_source_path, mode=mode) if dark_source_path else None
+    dark_tokens = None
+    if dark_text is not None:
+        dark_tokens = compute_tokens(parse_5dials(dark_text), extract_dynamic_palette(dark_text, mode=mode), mode=mode)
     dials = parse_5dials(source_text)
     dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
     computed = compute_tokens(dials, dynamic_colors, mode=mode)
@@ -1627,13 +1952,32 @@ def _render_sealed_css(source_text: str, source_path: str, mode: str) -> str:
     computed["provenance"] = {
         "source": source_path,
         "mode": mode,
-        "digest": _token_source_digest(source_text, mode, source_path),
+        "digest": _token_source_digest(
+            source_text, mode, source_path,
+            color_format=color_format, color_schemes=color_schemes, type_scale=type_scale,
+            dark_source_path=dark_source_path, dark_source_text=dark_text),
         "dials": dict(sorted(dials.items())),
+        "output": _output_options(color_format, color_schemes, type_scale, dark_source_path),
     }
-    return generate_css(computed)
+    return generate_css(
+        computed,
+        dark_tokens["colors"] if dark_tokens else None,
+        color_format=color_format,
+        color_schemes=color_schemes,
+        type_scale=type_scale,
+    )
 
 
-def check_tokens_sync(css_path: str, discussion_path: str, mode: str = "formal") -> Dict[str, Any]:
+def check_tokens_sync(
+    css_path: str,
+    discussion_path: str,
+    mode: str = "formal",
+    *,
+    dark_source_path: str | None = None,
+    color_format: str = "hex",
+    color_schemes: str = "single",
+    type_scale: str = "static",
+) -> Dict[str, Any]:
     """Freshness fuse: verify tokens.css still derives from its declared source.
 
     Three ordered checks:
@@ -1659,7 +2003,19 @@ def check_tokens_sync(css_path: str, discussion_path: str, mode: str = "formal")
             "css_path": str(css_p),
             "drift": "no provenance block: tokens.css was never compiled by compile_tokens.py or the seal was removed",
         }
-
+    stored_options = provenance.get("output", {})
+    stored_color_format = stored_options.get("color_format", "hex")
+    stored_color_schemes = stored_options.get("color_schemes", "single")
+    stored_type_scale = stored_options.get("type_scale", "static")
+    stored_dark_source = stored_options.get("dark_source")
+    if (color_format, color_schemes, type_scale, dark_source_path) != (
+        stored_color_format, stored_color_schemes, stored_type_scale, stored_dark_source
+    ):
+        return {
+            "state": "out_of_sync",
+            "css_path": str(css_p),
+            "drift": "requested token output options do not match the options sealed into tokens.css",
+        }
     disc_p = Path(discussion_path)
     seal_mode = provenance.get("mode", mode)
     source_text = _resolve_token_source(str(disc_p), mode=seal_mode)
@@ -1669,7 +2025,23 @@ def check_tokens_sync(css_path: str, discussion_path: str, mode: str = "formal")
             "css_path": str(css_p),
             "drift": f"token source not found: {disc_p}",
         }
-    current_digest = _token_source_digest(source_text, seal_mode, str(disc_p))
+    seal_dark_text = None
+    if stored_dark_source:
+        # A paired sheet whose dark source is gone can no longer be recompiled, so
+        # the fuse reports drift instead of raising an unhandled read error.
+        try:
+            seal_dark_text = _resolve_token_source(stored_dark_source, mode=seal_mode)
+        except FileNotFoundError as exc:
+            return {
+                "state": "out_of_sync",
+                "css_path": str(css_p),
+                "drift": f"sealed dark token source is unreadable: {exc}",
+            }
+    current_digest = _token_source_digest(
+        source_text, seal_mode, str(disc_p),
+        color_format=stored_color_format, color_schemes=stored_color_schemes,
+        type_scale=stored_type_scale, dark_source_path=stored_dark_source,
+        dark_source_text=seal_dark_text)
 
     if provenance["digest"] != current_digest:
         return {
@@ -1698,7 +2070,20 @@ def check_tokens_sync(css_path: str, discussion_path: str, mode: str = "formal")
     # Byte-level body freshness: recompile the sealed source and compare. This
     # is what catches a palette-only hand edit — the digest and dial annotations
     # still look correct while the CSS body no longer is what the compiler emits.
-    expected_css = _render_sealed_css(source_text, provenance["source"], seal_mode)
+    try:
+        expected_css = _render_sealed_css(
+            source_text, provenance["source"], seal_mode,
+            dark_source_path=stored_dark_source,
+            color_format=stored_color_format,
+            color_schemes=stored_color_schemes,
+            type_scale=stored_type_scale,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        return {
+            "state": "out_of_sync",
+            "css_path": str(css_p),
+            "drift": f"sealed token output cannot be reproduced: {exc}",
+        }
     if css_text != expected_css:
         return {
             "state": "out_of_sync",
@@ -1735,6 +2120,10 @@ def main():
     parser.add_argument("--output-css", default="prototype/shared/tokens.css", help="Target CSS file")
     parser.add_argument("--output-json", default="prototype/contracts/tokens/t1.json", help="Target DTCG JSON file")
     parser.add_argument("--mode", choices=("formal", "probe"), default="formal", help="formal: no inferred aesthetics (neutral scaffold); probe: permit heuristic palette inference")
+    parser.add_argument("--color-format", choices=COLOR_FORMATS, default="hex", help="opt in to hex or CSS OKLCH color values")
+    parser.add_argument("--color-schemes", choices=COLOR_SCHEMES, default="single", help="opt in to light-dark() token pairs")
+    parser.add_argument("--dark-source", default=None, help="dark scheme discussion/world source; required with --color-schemes light-dark")
+    parser.add_argument("--type-scale", choices=TYPE_SCALES, default="static", help="opt in to a modular clamp() --step-* scale")
     parser.add_argument("--check-sync", action="store_true", help="Verify tokens.css freshness against its source instead of compiling; exit 1 on out_of_sync")
     args = parser.parse_args()
 
@@ -1746,14 +2135,26 @@ def main():
             discussion_path = "prototype/discussion.md"
 
     if args.check_sync:
-        result = check_tokens_sync(args.output_css, discussion_path, mode=args.mode)
+        result = check_tokens_sync(
+            args.output_css, discussion_path, mode=args.mode,
+            dark_source_path=args.dark_source,
+            color_format=args.color_format,
+            color_schemes=args.color_schemes,
+            type_scale=args.type_scale,
+        )
         if result["state"] != "in_sync":
             print(f"[TOKEN FUSE] out_of_sync: {result.get('drift', '')}")
             sys.exit(1)
         print(f"[TOKEN FUSE] tokens.css is in sync with {result.get('digest')}")
         return
 
-    compile_tokens(discussion_path, args.output_css, args.output_json, mode=args.mode)
+    compile_tokens(
+        discussion_path, args.output_css, args.output_json, mode=args.mode,
+        dark_source_path=args.dark_source,
+        color_format=args.color_format,
+        color_schemes=args.color_schemes,
+        type_scale=args.type_scale,
+    )
 
 
 if __name__ == "__main__":

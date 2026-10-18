@@ -117,6 +117,155 @@ def test_capture_metrics_surface_overflow_touch_and_cli_gaps():
     })
     cli_meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {"result": cli, "options": {}})
     assert "partial" in cli_meta["evidence"]["dom_metrics_coverage"]
+    assert cli_meta["environment"]["measurement_tier"] == "cli"
+    assert cli_meta["evidence"]["fonts_loaded"] is None
+    assert "fonts_loaded" in cli_meta["evidence"]["unmeasured"]
+
+
+def test_capture_tri_state_aggregates_booleans_and_languages_without_false_clean():
+    metrics = {
+        "390": {"lang": "zh-CN", "fonts_loaded": True, "heading_text_wrap": False},
+        "1280": {"lang": "zh-CN", "fonts_loaded": False, "heading_text_wrap": True},
+    }
+    result = eval_seam("cap.aggregateTriState(input.metrics, 'playwright')", {"metrics": metrics})
+    assert result == {
+        "measurement_tier": "playwright",
+        "lang": "zh-CN",
+        "fonts_loaded": False,
+        "heading_text_wrap": False,
+        "unmeasured": [],
+    }
+    missing = eval_seam("cap.aggregateTriState({}, 'cli')", {})
+    assert missing["lang"] is None
+    assert missing["fonts_loaded"] is None
+    assert missing["heading_text_wrap"] is None
+    assert set(missing["unmeasured"]) == {"dom_metrics", "lang", "fonts_loaded", "heading_text_wrap"}
+
+
+def test_one_unmeasured_viewport_keeps_aggregate_unmeasured():
+    metrics = {
+        "390": {"lang": "zh-CN", "fonts_loaded": True, "heading_text_wrap": True},
+        "1280": {"lang": None, "fonts_loaded": None, "heading_text_wrap": None},
+    }
+    result = eval_seam("cap.aggregateTriState(input.metrics, 'playwright')", {"metrics": metrics})
+    assert result["fonts_loaded"] is None
+    assert result["heading_text_wrap"] is None
+    assert set(result["unmeasured"]) == {"fonts_loaded", "heading_text_wrap", "lang"}
+
+
+def test_variant_url_carries_state_theme_and_density_without_losing_existing_query():
+    result = eval_seam(
+        "cap.buildVariantUrl(input.url, input.state, input.scheme, input.density)",
+        {"url": "https://example.test/app?locale=zh#old", "state": "empty", "scheme": "dark", "density": "compact"},
+    )
+    from urllib.parse import parse_qs, urlsplit
+    parsed = urlsplit(result)
+    assert parsed.fragment == ""
+    assert parsed.query.startswith("locale=zh&")
+    assert parse_qs(parsed.query) == {
+        "locale": ["zh"], "state": ["empty"], "theme": ["dark"], "density": ["compact"]
+    }
+
+
+def test_requested_preferences_require_actual_page_or_engine_confirmation():
+    requested = {"scheme": "dark", "density": "compact", "contrast": "more", "forcedColors": "active"}
+    ignored = eval_seam(
+        "cap.resolveAppliedPreferences(input.requested, input.observed)",
+        {"requested": requested, "observed": {
+            "theme": None, "density": None, "prefers_contrast": "no-preference", "forced_colors": "none"
+        }},
+    )
+    assert ignored == {
+        "prefers_contrast": None, "forced_colors": None,
+        "theme_applied": None, "density_applied": None,
+    }
+
+    applied = eval_seam(
+        "cap.resolveAppliedPreferences(input.requested, input.observed)",
+        {"requested": requested, "observed": {
+            "theme": "dark", "density": "compact", "prefers_contrast": "more", "forced_colors": "active"
+        }},
+    )
+    assert applied == {
+        "prefers_contrast": "more", "forced_colors": "active",
+        "theme_applied": "dark", "density_applied": "compact",
+    }
+
+
+def test_capture_metadata_separates_requested_from_actually_applied_preferences():
+    unanswered = stub_result(viewport_metrics={
+        "390": {"dom_metrics": "measured", "prefers_contrast": "no-preference",
+                "forced_colors": "none", "theme_applied": None, "density_applied": None}
+    })
+    meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", {
+        "result": unanswered,
+        "options": {"requested": {"schemes": ["dark"], "density": "compact",
+                                  "forcedColors": "active", "contrast": "more"}},
+    })
+    assert meta["evidence"]["requested_preferences"]["schemes"] == ["dark"]
+    applied = meta["evidence"]["applied_preferences"]["390"]
+    assert applied == {"prefers_contrast": None, "forced_colors": None, "theme": None, "density": None}
+
+    answered = stub_result(viewport_metrics={
+        "390": {"dom_metrics": "measured", "prefers_contrast": "more", "forced_colors": "active",
+                "theme_applied": "dark", "density_applied": "compact"}
+    })
+    meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)",
+                     {"result": answered, "options": {}})
+    assert meta["evidence"]["applied_preferences"]["390"] == {
+        "prefers_contrast": "more", "forced_colors": "active", "theme": "dark", "density": "compact"
+    }
+
+
+def test_cli_diagnostic_summary_does_not_claim_unmeasured_checks_clean():
+    result = stub_result(runner="system-browser-cli-concurrent", viewport_metrics={
+        "390": {"dom_metrics": "unmeasured_cli_runner"}
+    })
+    summary = eval_seam("cap.buildDiagnosticsSummary(input.result)", {"result": result})
+    assert summary["horizontal_overflow"] is None
+    assert summary["stylesheets_applied"] is None
+    assert summary["small_touch_targets_count"] is None
+    assert summary["craft_checks"]["has_active_feedback"] is None
+    assert {"horizontal_overflow", "stylesheets_applied", "small_touch_targets_count"} <= set(summary["unmeasured"])
+
+
+def test_playwright_diagnostic_summary_reports_measured_false_distinctly():
+    result = stub_result(runner="playwright-concurrent", viewport_metrics={
+        "390": {"dom_metrics": "measured", "horizontal_overflow": False, "lang": "zh-CN",
+                "fonts_loaded": True, "heading_text_wrap": True,
+                "stylesheets_applied": False, "small_touch_target_count": 0,
+                "has_active_feedback": False, "has_tabular_nums": False}
+    })
+    summary = eval_seam("cap.buildDiagnosticsSummary(input.result)", {"result": result})
+    assert summary["horizontal_overflow"] is False
+    assert summary["stylesheets_applied"] is False
+    assert summary["small_touch_targets_count"] == 0
+    assert summary["craft_checks"]["has_active_feedback"] is False
+    assert summary["unmeasured"] == []
+    assert summary["unmeasured_viewports"] == []
+
+
+def test_diagnostic_summary_surfaces_partial_viewport_coverage():
+    result = stub_result(runner="playwright-concurrent", viewport_metrics={
+        "390": {"dom_metrics": "measured", "horizontal_overflow": False,
+                "stylesheets_applied": True, "small_touch_target_count": 0,
+                "has_active_feedback": False},
+        "1280": {"dom_metrics": "measured"}
+    })
+    summary = eval_seam("cap.buildDiagnosticsSummary(input.result)", {"result": result})
+    assert summary["horizontal_overflow"] is None
+    assert summary["stylesheets_applied"] is None
+    assert summary["small_touch_targets_count"] is None
+    assert summary["unmeasured_viewports"] == ["1280"]
+    assert summary["unmeasured"]
+
+
+def test_stage_four_audit_requires_state_viewport_result_and_honest_unknowns():
+    text = (REPO_ROOT / "skills/spec-prototype/references/stages/stage-4-audit.md").read_text(encoding="utf-8")
+    assert "State × viewport coverage is complete only" in text
+    assert "`?state=` URL" in text
+    assert "not result evidence by itself" in text
+    assert "`null` or `unmeasured`" in text
 
 
 def test_partial_capture_is_screenshot_only_not_rendered():
@@ -136,6 +285,85 @@ def test_unconfirmed_state_is_not_rendered_capture_evidence():
         "empty-390: expected empty, observed default"
     ]
     assert meta["validation"]["claim"] == "capture_failed"
+
+
+def confirm_state(expected, dom):
+    return eval_seam(
+        "cap.confirmStateEntry(input.expected, input.dom)",
+        {"expected": expected, "dom": dom},
+    )
+
+
+def test_state_confirmed_via_applied_root_data_state():
+    # mobile-booking regression: data-state lives on the app shell (#app), not
+    # body/html; the CJK page text never contains the English state name, so
+    # the URL echo alone must not confirm — but the applied root must.
+    verdict = confirm_state("service", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "service",
+        "urlEcho": "service",
+        "domText": "选择服务项目 上门预约 技师",
+    })
+    assert verdict == {"expected": "service", "observed": "service", "confirmed": True}
+
+
+def test_state_body_data_state_still_wins():
+    verdict = confirm_state("review", {
+        "bodyState": "review",
+        "htmlState": "",
+        "appliedRootState": "service",
+        "urlEcho": "",
+        "domText": "确认订单",
+    })
+    assert verdict["confirmed"] is True
+    assert verdict["observed"] == "review"
+
+
+def test_url_echo_without_dom_echo_does_not_confirm():
+    verdict = confirm_state("conflict", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "",
+        "urlEcho": "conflict",
+        "domText": "时段冲突 请重新选择",
+    })
+    assert verdict["confirmed"] is False
+    assert verdict["observed"] == "conflict"
+
+
+def test_url_echo_with_english_dom_echo_confirms():
+    verdict = confirm_state("conflict", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "",
+        "urlEcho": "conflict",
+        "domText": "Selected slot is in conflict with another booking",
+    })
+    assert verdict["confirmed"] is True
+
+
+def test_mismatched_applied_root_does_not_confirm():
+    verdict = confirm_state("review", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "service",
+        "urlEcho": "",
+        "domText": "确认订单",
+    })
+    assert verdict["confirmed"] is False
+    assert verdict["observed"] == "service"
+
+
+def test_default_state_confirms_when_nothing_declared():
+    verdict = confirm_state("default", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "",
+        "urlEcho": "",
+        "domText": "首页",
+    })
+    assert verdict["confirmed"] is True
 
 
 def test_cli_multi_state_capture_is_unconfirmed():
@@ -344,7 +572,8 @@ def test_capture_cli_honors_manifest_flag_and_detects_broken_css(tmp_path):
     )
     assert res_404.returncode == 0
     parsed_404 = json.loads(res_404.stdout)
-    assert parsed_404["diagnostics_summary"]["stylesheets_applied"] is False
+    assert parsed_404["diagnostics_summary"]["stylesheets_applied"] is None
+    assert "stylesheets_applied" in parsed_404["diagnostics_summary"]["unmeasured"]
     assert manifest_404.exists()
 
     # HTML with valid stylesheet
@@ -377,7 +606,8 @@ def test_capture_cli_honors_manifest_flag_and_detects_broken_css(tmp_path):
     )
     assert res_200.returncode == 0
     parsed_200 = json.loads(res_200.stdout)
-    assert parsed_200["diagnostics_summary"]["stylesheets_applied"] is True
+    assert parsed_200["diagnostics_summary"]["stylesheets_applied"] is None
+    assert "stylesheets_applied" in parsed_200["diagnostics_summary"]["unmeasured"]
     assert manifest_200.exists()
 
 

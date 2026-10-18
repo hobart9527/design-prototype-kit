@@ -57,6 +57,35 @@ def test_a_view_with_its_ir_present_carries_no_advisory(tmp_path):
     assert "hookSpecificOutput" not in payload
 
 
+def test_post_tool_advisory_summarizes_artifact_without_blocking(tmp_path):
+    root = _active_root(tmp_path)
+    artifact = root / "prototype/experiments/demo/index.html"
+    _write(artifact, '<!doctype html><html><body><button>Go</button></body></html>')
+    payload = {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Write",
+        "tool_input": {"file_path": "prototype/experiments/demo/index.html"},
+        "cwd": str(root),
+    }
+    result = eb.route_hook_payload(payload)
+    assert result["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
+    summary = result["hookSpecificOutput"]["additionalContext"]
+    assert "craft-floor scan of index.html" in summary
+    assert "unmeasured" in summary
+    assert "permissionDecision" not in result["hookSpecificOutput"]
+
+
+def test_post_tool_advisory_ignores_non_prototype_write(tmp_path):
+    root = _active_root(tmp_path)
+    payload = {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Write",
+        "tool_input": {"file_path": "README.md"},
+        "cwd": str(root),
+    }
+    assert eb.route_hook_payload(payload) == {}
+
+
 def test_a_non_spec_write_carries_no_advisory(tmp_path):
     root = _active_root(tmp_path)
     payload = _write_payload(root, "prototype/discussion.md", "# Discussion\n")

@@ -679,6 +679,76 @@ def check_capture_reflects_manifest(html: Path) -> list[str]:
     return []
 
 
+# Self-authored verification scripts are forbidden by SKILL.md ("no flow-check.cjs");
+# the installed helpers (capture.mjs, detect.py) live under skills/, never inside
+# prototype/evidence/. Any runnable script beside the manifest is a fabricated runner.
+_SELF_AUTHORED_EVIDENCE_SCRIPT = re.compile(r".+\.(?:mjs|cjs|js|py|sh)$", re.IGNORECASE)
+
+
+def _evidence_dir(html: Path) -> Path | None:
+    """The prototype/evidence directory governing this document, or None."""
+    for parent in [html.parent, *html.parents]:
+        evidence = parent / "prototype/evidence"
+        if (evidence / "handoff-manifest.json").is_file():
+            return evidence
+    return None
+
+
+def check_evidence_provenance(html: Path) -> list[str]:
+    """Evidence the installed runner never wrote cannot lift a failed manifest.
+
+    Two provenance violations, both from the positive-scaffold mobile-booking run:
+    (1) a self-authored capture/verification script persisted inside
+    prototype/evidence/ (the runner writes only manifests and screenshots there);
+    (2) an independent receipt file claiming confirmed captures or screenshots
+    while handoff-manifest.json records capture_failed / zero screenshots. The
+    manifest is the structured evidence of record; a conflicting side receipt is
+    a contradiction to surface, never a success to silently prefer.
+    """
+    evidence = _evidence_dir(html)
+    if evidence is None:
+        return []
+    failures: list[str] = []
+
+    scripts = sorted(p.name for p in evidence.iterdir()
+                     if p.is_file() and _SELF_AUTHORED_EVIDENCE_SCRIPT.match(p.name))
+    if scripts:
+        failures.append(
+            "evidence provenance: self-authored verification script(s) inside prototype/evidence/ ("
+            + ", ".join(scripts[:4])
+            + "); verification uses the installed capture.mjs / detect.py only — remove the script and re-capture"
+        )
+
+    receipt_file = evidence / "capture-receipt.json"
+    if receipt_file.is_file():
+        manifest = _verification_root(html) or {}
+        meta = manifest.get("metadata") or {}
+        evidence_meta = meta.get("evidence") or {}
+        manifest_failed = (
+            str(meta.get("status", "")).strip().lower() == "capture_failed"
+            or evidence_meta.get("screenshots") == 0
+            or bool(evidence_meta.get("unconfirmed_states"))
+        )
+        if manifest_failed:
+            try:
+                side = json.loads(receipt_file.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                side = None
+            claimed = 0
+            if isinstance(side, dict):
+                captures = side.get("captures")
+                if isinstance(captures, list):
+                    claimed = sum(1 for c in captures if isinstance(c, dict) and c.get("confirmed") is True)
+            if claimed:
+                failures.append(
+                    f"evidence provenance: capture-receipt.json claims {claimed} confirmed capture(s) "
+                    "but handoff-manifest.json records capture_failed / 0 screenshots; the manifest is "
+                    "the evidence of record — re-capture via the installed capture.mjs, do not reconcile "
+                    "by citing the side receipt"
+                )
+    return failures
+
+
 def _capture_receipt(html: Path) -> dict | None:
     """The structured capture record the renderer wrote, or None when there is none.
 
@@ -1156,6 +1226,78 @@ def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44)
                    "or playwright; neither is available")
 
 
+def probe_focus_occlusion(html: Path, viewport_width: int = 1280) -> tuple[bool, str | None]:
+    """Detect interactive controls whose hit area is covered by another element.
+
+    A control can satisfy every size, contrast and ARIA check and still be
+    unusable because a sticky bar, overlay or dialog stacks over it: the user
+    aims at the control and the click lands elsewhere. `elementFromPoint` at the
+    control's centre is the direct measurement of that, so a real overlap names
+    the covering element rather than reporting the control as absent.
+    """
+    node = shutil.which("node")
+    probe_mjs = Path(__file__).resolve().parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
+    if not node or not probe_mjs.is_file():
+        return False, "environment_not_ready: focus-occlusion probe needs node and browser_probe.mjs"
+
+    script = r'''(() => {
+      const visible = (el) => {
+        const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+        return r.width > 0 && r.height > 0 && s.display !== "none"
+          && s.visibility !== "hidden" && s.opacity !== "0";
+      };
+      const label = (el) => (el.getAttribute("aria-label") || el.innerText || el.value
+        || el.getAttribute("placeholder") || el.tagName).toString().trim().replace(/\s+/g, " ").slice(0, 80);
+      const controlled = [...document.querySelectorAll(
+        "button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab], [role=menuitem], [data-action]")]
+        .filter(visible);
+      const occluded = [];
+      let measured = 0;
+      for (const el of controlled) {
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        // Off-screen controls cannot be probed by hit test; the scroll path is a
+        // separate concern and reporting them here would be a false positive.
+        if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
+        const top = document.elementFromPoint(cx, cy);
+        if (!top) continue;
+        measured += 1;
+        if (top === el || el.contains(top) || top.contains(el)) continue;
+        // A pointer-events:none layer does not intercept the click, so it is not
+        // an occlusion even though it is the topmost element at that point.
+        if (getComputedStyle(top).pointerEvents === "none") continue;
+        occluded.push({ control: label(el), covered_by: `${top.tagName.toLowerCase()}${top.id ? "#" + top.id : (top.className ? "." + (top.className || "").toString().trim().split(/\s+/)[0] : "")}` });
+      }
+      return { occluded, measured, total: controlled.length };
+    })()'''
+    import base64
+    import json as _json
+    try:
+        proc = subprocess.run(
+            [node, str(probe_mjs), "craft", "--url", html.resolve().as_uri(),
+             "--viewport", f"{viewport_width}x900", "--script", base64.b64encode(script.encode()).decode()],
+            capture_output=True, text=True, timeout=60, cwd=str(probe_mjs.parents[1]))
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        return False, f"environment_not_ready: focus-occlusion probe failed ({exc.__class__.__name__})"
+    if proc.returncode != 0:
+        return False, f"environment_not_ready: focus-occlusion probe exited {proc.returncode}"
+    try:
+        result = _json.loads(proc.stdout.strip().splitlines()[-1]).get("result")
+        occluded = result["occluded"]
+        measured = int(result["measured"])
+        total = int(result["total"])
+    except (KeyError, ValueError, IndexError, TypeError):
+        return False, "environment_not_ready: focus-occlusion probe returned unparseable output"
+    if total and not measured:
+        # Every control sat outside the viewport: nothing was actually hit-tested,
+        # so "no occluded controls" would be an unmeasured claim, not a pass.
+        return False, "environment_not_ready: focus-occlusion probe hit-tested no control"
+    if occluded:
+        named = "; ".join(f"{item['control']} covered by {item['covered_by']}" for item in occluded[:5])
+        return False, f"focus_occlusion assertion: {len(occluded)} control(s) covered: {named}"
+    return True, None
+
+
 def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, object]:
     """Build the tiered evidence record for one verification run.
 
@@ -1210,6 +1352,18 @@ def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, obj
             evidence["tier_reached"] = "L2"
             evidence["outcome"] = "failed"
             tiers["L3"] = {"status": "skipped", "reason": "upstream_blocked: L2 touch-target check failed"}
+            return evidence
+
+        focus_ok, focus_reason = probe_focus_occlusion(html)
+        if focus_reason and "environment_not_ready" in focus_reason:
+            tiers["L2"] = {"status": "degraded", "reason": focus_reason}
+            evidence["focus_occlusion_not_verified"] = focus_reason
+            evidence["environment_not_ready"] = True
+        elif not focus_ok and focus_reason:
+            tiers["L2"] = {"status": "failed", "reason": focus_reason}
+            evidence["tier_reached"] = "L2"
+            evidence["outcome"] = "failed"
+            tiers["L3"] = {"status": "skipped", "reason": "upstream_blocked: focus-occlusion assertion failed"}
             return evidence
 
     if l2_ok:
@@ -1535,6 +1689,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     # or stylesheets-unapplied manifest is the r40 A3 promotion class; refuse it.
     failures.extend(check_capture_reflects_manifest(html))
 
+    # A self-authored capture script or a side receipt contradicting the manifest
+    # is fabricated provenance: the manifest is the evidence of record.
+    failures.extend(check_evidence_provenance(html))
+
     broken_nav, broken_assets = check_relative_refs(html, dom)
     if broken_nav:
         failures.append(
@@ -1782,7 +1940,7 @@ if __name__ == "__main__":
     parser.add_argument("--tokens", dest="tokens_opt")
     parser.add_argument("--contract", dest="contract")
     parser.add_argument("--strict-divergence", action="store_true")
-    parser.add_argument("--strict", action="store_true", help="Exit with code 2 if environment_not_ready (render probes skipped)")
+    parser.add_argument("--strict", action="store_true", help="Deprecated; degraded runs exit 2 by default")
     args = parser.parse_args()
 
     root = Path(args.root).resolve() if args.root else Path.cwd()
@@ -1804,7 +1962,7 @@ if __name__ == "__main__":
         ok = assert_quality(str(html_path), str(token_path), args.strict_divergence, contract_path)
         if not ok:
             sys.exit(1)
-        if args.strict and LAST_TIER_EVIDENCE.get("environment_not_ready"):
+        if LAST_TIER_EVIDENCE.get("environment_not_ready"):
             sys.exit(2)
         sys.exit(0)
 
@@ -1818,6 +1976,9 @@ if __name__ == "__main__":
     ok = assert_quality(str(html), token_arg, args.strict_divergence, args.contract)
     if not ok:
         sys.exit(1)
-    if args.strict and LAST_TIER_EVIDENCE.get("environment_not_ready"):
+    if LAST_TIER_EVIDENCE.get("environment_not_ready"):
+        # Degraded is its own outcome. A run whose render probes never ran did
+        # not pass, and returning 0 made "unverified" indistinguishable from
+        # "pass" to every caller that only reads the exit code.
         sys.exit(2)
     sys.exit(0)

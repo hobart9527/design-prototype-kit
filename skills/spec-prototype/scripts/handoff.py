@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -659,6 +660,49 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
     return binding
 
 
+def freeze_preflight(root: Path, slice_id: str) -> dict:
+    """Run the executable gates a freeze depends on and record each outcome.
+
+    A failing gate blocks the freeze; a degraded one (exit 2: render probes never
+    ran) is recorded as `degraded`, never as `passed`. A missing gate input is
+    `not_applicable`, so the manifest states what was and was not exercised.
+    """
+    here = Path(__file__).resolve().parent
+    results: dict = {}
+
+    def run(cmd: list[str]) -> tuple[int, str]:
+        try:
+            done = subprocess.run(cmd, cwd=root, capture_output=True, text=True, timeout=240)
+        except FileNotFoundError:
+            return -1, "tool unavailable"
+        except subprocess.TimeoutExpired:
+            return 2, "timed out"
+        return done.returncode, (done.stdout + done.stderr).strip()[-600:]
+
+    anchor = root / f"prototype/experiments/{slice_id}/anchor/index.html"
+    if anchor.is_file():
+        code, tail = run([sys.executable, str(here / "verify_prototype_quality.py"),
+                          "--slice", slice_id, "--root", str(root)])
+        results["verify_prototype_quality"] = {0: "passed", 2: "degraded"}.get(code, "failed")
+        if code not in (0, 2):
+            raise HandoffError(f"Freeze preflight failed: verify_prototype_quality exit {code}\n{tail}")
+    else:
+        results["verify_prototype_quality"] = "not_applicable"
+
+    tokens = root / "prototype/contracts/tokens/t1.json"
+    if tokens.is_file():
+        code, tail = run(["node", str(here / "wcag-check.js"), str(tokens)])
+        if code == -1:
+            results["wcag_check"] = "degraded"
+        elif code == 0:
+            results["wcag_check"] = "passed"
+        else:
+            raise HandoffError(f"Freeze preflight failed: wcag-check exit {code}\n{tail}")
+    else:
+        results["wcag_check"] = "not_applicable"
+    return results
+
+
 def freeze(root: Path, spec: str) -> dict:
     """Freeze a specification and its transitively retained contracts into immutable state.
 
@@ -684,6 +728,7 @@ def freeze(root: Path, spec: str) -> dict:
     # override never reaches this point because approval_binding refuses it.
     if not binding["spec_only"]:
         require_prototype_entry(root, pkt["prototype_write_scope"])
+    preflight = {} if binding["spec_only"] else freeze_preflight(root, pkt["slice_id"])
 
     spec_body = spec_path.read_text(encoding="utf-8")
     # Match both legacy bullet format (- Authority status: `x`) and canonical
@@ -786,6 +831,7 @@ def freeze(root: Path, spec: str) -> dict:
         "platform_projection": platform_proj,
         # Freezing a design scope never exercises implementation. These remain
         # explicitly pending whether or not the approval is spec-only.
+        "preflight": preflight,
         "implementation_validation": {name: "pending" for name in PENDING_IMPLEMENTATION_DIMENSIONS},
         "frozen_artifacts": list({
             artifact["path"]: artifact
@@ -799,6 +845,10 @@ def freeze(root: Path, spec: str) -> dict:
                         root / f"prototype/contracts/compiled/{pkt['slice_id']}/{pkt['candidate_id']}.spec.json",
                         root / "prototype/contracts/tokens/t1.json",
                         root / f"prototype/experiments/{pkt['slice_id']}/anchor/index.html",
+                        # The anchor is index.html + anchor.css + anchor.js; freezing
+                        # only the entry leaves the styling and behavior bytes mutable.
+                        root / f"prototype/experiments/{pkt['slice_id']}/anchor/anchor.css",
+                        root / f"prototype/experiments/{pkt['slice_id']}/anchor/anchor.js",
                     )
                     if path.is_file()
                 ],

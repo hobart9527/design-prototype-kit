@@ -1,21 +1,45 @@
 # Lean Delivery Rules (轻量化高质交付)
 
-Negative rules accumulated from benchmark regressions. They are always in force;
-they are loaded here once at the start of Turn 3 (Look & Deliver), which is when
-verification claims, authority tags, and lifecycle boundaries get written into
-the record and the receipt. Loading them earlier spends Turn 1/2 context on
-rules that only bite at receipt time.
+These are **boundary** rules: truth, authority, scope and receipt honesty. They are
+always in force, but load only the sections needed at each stage: the author-side
+sections **Interactive Ergonomics**, **Domain Entity Grounding**, and **Precondition**
+before the first runnable write in Turn 2; receipt and authority sections at the
+start of Turn 3, when verification claims and lifecycle boundaries enter the record.
 
-This file is the sole owner of every rule ID below. Other files link to the ID; they do not restate the rule.
+This file owns its boundary rules. Other files link to those rules; they do not restate
+them. Generating-side craft floors, including `SLOP-002`, are owned by
+[`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md).
+
+## This is a boundary list, not a design checklist
+
+A rule belongs here only when it guards **truth, authority, scope or receipt
+integrity** — the classes where a violation is a factual defect (a fabricated
+capability, a promoted authority, a dishonest receipt), not a weaker aesthetic.
+Composition, typography, motion, color and density quality are owned by
+[`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md) and the
+craft references, and are improved through the
+[`refine operators`](../operators.md), not through new prohibitions here.
+
+When one benchmark exposes a gap, the default fix is **not** a new hard rule here:
+
+- A defect that is one product's vocabulary (a specific verb, a specific surface) is
+  fixed by faithful generation against the brief, or by one already-owned rule — not
+  by a new global rule.
+- A quality gap (hierarchy, rhythm, colour, motion, density) is raised by the positive
+  scaffold in [Stage 2](../stages/stage-2-probe.md) and [Stage 3](../stages/stage-3-skeleton.md),
+  then improved via an operator pass with a named target and falsifier.
+- Add a rule here only when the failure is a truth/authority/scope defect that no
+  owned rule already covers, and state which of those classes it guards.
+
+Growing this list per benchmark error produces defensive over-restriction: the model
+satisfies the literal letter of each rule while delivering less design. Keep the list
+small and general, and push the ceiling up instead of the floor higher.
+
 
 ## Surgical Prototype Scope & Physical Triad
 
 Keep interactive prototypes focused and lightweight; size follows the declared scope, not a line quota. For complex multi-surface or operational consoles, use the physical triad (`index.html` structure + `anchor.css` + `anchor.js`), and ALWAYS generate `prototype/shared/tokens.css` with DTCG root tokens and link it in `index.html` (`<link rel="stylesheet" href="../../../shared/tokens.css">`) so token inheritance passes.
 Crucially, `index.html` must follow progressive enhancement: the primary view and initial fold must author the entities the brief gives directly in static markup. Never render an empty body that depends on client-side JavaScript hydration to populate the initial screen.
-
-## Anti-Slop Discipline: No Thick Container Accent Stripes (SLOP-002)
-
-Containers, cards, and panel wrappers must never use thick side accent stripes (e.g. `border-left: 3px solid var(--accent)` or heavy left indicator lines on static layout cards). High-severity AI slop flags this pattern. Differentiate containers using grid rhythm, subtle surface brightness contrast, or refined 1px perimeter borders. An accent border is legitimate only on transient status toasts or on the single currently selected/active row.
 
 ## Interactive Ergonomics & Risk-Tiered Confirmation Contract (交互人体工学与风险分级确认契约)
 
@@ -66,7 +90,7 @@ Content falls into three classes, and the treatment differs:
 - `CRAFT-TRIGGER-FIDELITY`: when the brief names a verb ("高亮", "批注", "打回") without naming the trigger or commit mechanic, the trigger stays `[derived]` in the spec — never compile `trigger: "选中文字后点击色块"` as `explicit` when only the verb is user-stated. The verb is explicit; the interaction mechanics (trigger, commit, undo, focus order) are derived unless the brief spells them out.
 - `CRAFT-AFFORDANCE-DISCOVERABLE`: every task-critical affordance the brief names as a verb (高亮, 划线, 批注, 收藏, 存入书库, 打回, 撤回, 提交) must be reachable from the default view without requiring selection state, hover, or hidden panel expansion. A "select text first" reveal pattern leaves the affordance invisible to automation probes that snapshot before any selection. Either render the control permanently (toolbar, sidebar, or header actions with explicit verb labels matching the brief: e.g. "划线/高亮", "收藏/存入书库") or expose a persistent entry point that opens the affordance surface in one click. Every storage/bookmark/action verb must provide immediate affirmative visual feedback ("已收藏", "已保存", "已高亮") upon trigger.
 - `CRAFT-DYNAMIC-BEHAVIOR-TRUTH`: code comments, documentation prose, and design records must only assert dynamic behaviors that are physically implemented in the accompanying JavaScript or CSS. Never write comments claiming dynamic node relocation (e.g. "JS moves it under the row") unless the script physically executes `insertBefore`/`appendChild`/`replaceChild`. If an element is statically placed in HTML and revealed via `hidden = false` or class toggle, the comment and design record must state that physical reality accurately.
-- `CRAFT-SCREENSHOT-STATUS-HONESTY`: any state or screen whose manifest status is `capture_failed`, whose screenshot count is 0, whose `confirmed` is `false`, that lists `unconfirmed_states`, or whose visual/human review is `pending_review` MUST NEVER be placed under `## Verified this turn` as a verified observation, state entry, or runtime behavior. It is strictly forbidden to describe the dynamic behavior, URL parameter entry (e.g. `?state=conflict`), feedback copy, or visual layout of an unconfirmed or failed state under `## Verified this turn` (even if accompanied by caveats or implementation descriptions). Uncaptured, unreviewed, or capture-failed states belong strictly under `## 未验证（不得读作已验证）` / `Limitations`, explicitly tagged `[hypothesis]` or `[unverified]`. Stating that an unconfirmed or failed state functions as verified runtime truth under `## Verified this turn` is a hard-gate authority promotion and evidence fabrication defect.
+- `CRAFT-SCREENSHOT-STATUS-HONESTY`: a state or screen that is `capture_failed`, has 0 screenshots, is unconfirmed, or is `pending_review` is never reported under `## Verified this turn`; it goes under `## 未验证（不得读作已验证）` / `Limitations` tagged `[hypothesis]` / `[unverified]`. Promoting it is an authority-promotion defect. Full rule and reconcile line: [`../stages/stage-4-audit.md`](../stages/stage-4-audit.md) "Manifest cross-check".
 - `CRAFT-EVIDENCE-SCOPE-HONESTY`: never claim a viewport, screen size, or render state is "verified" / "已验证" unless `handoff-manifest.json` records a snapshot for that exact viewport. If the manifest only covers `390` and `1280`, the record must say `1440: hypothesis` or `1440: unverified`, not `1440: verified`. Viewport claims beyond the manifest are evidence-coverage gaps, not verified facts.
 - `CRAFT-REVISION-COMPARE`: when the brief names revision / version / 修订 / 版本 / 变更 and asks the reviewer to "identify changed passages" or "对比修订", the prototype must render a compare/diff surface that makes passage-level changes visible — side-by-side paragraphs, inline strikethrough/highlight of changed spans, or a change-list panel keyed by paragraph. A revision history list that only labels versions (`v2 已被 v3 取代`) without showing what changed between them does not satisfy the compare task. The rendered text must contain at least one of `修订|版本|变更|revision|diff|对比` AND show passage anchors (e.g. `¶2`, `第 3 段`, `段落`) so the reviewer can navigate to the change.
 

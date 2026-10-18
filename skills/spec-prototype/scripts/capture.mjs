@@ -60,15 +60,58 @@ function findSystemBrowser() {
   return null;
 }
 
-function buildStateUrl(baseUrl, state) {
-  if (!state || state === "default") return baseUrl;
-  // Canonical entry is the `?state=` query param; the legacy `#state=` hash is
-  // still accepted (state confirmation below verifies either echo) so older
-  // prototypes keep working while docs converge on the query form.
+export function buildVariantUrl(baseUrl, state, scheme, density) {
   const hashIdx = baseUrl.indexOf("#");
   const clean = hashIdx !== -1 ? baseUrl.slice(0, hashIdx) : baseUrl;
   const sep = clean.includes("?") ? "&" : "?";
-  return `${clean}${sep}state=${encodeURIComponent(state)}`;
+  const params = new URLSearchParams();
+  if (state && state !== "default") params.set("state", state);
+  params.set("theme", scheme);
+  if (density) params.set("density", density);
+  return `${clean}${sep}${params.toString()}`;
+}
+
+// State-entry confirmation (CRAFT-STATE-ENTRY). Precedence for the applied
+// signal: body[data-state] → html[data-state] → outermost applied [data-state]
+// root (prototypes commonly keep live state on the app shell, e.g.
+// #app[data-state]; the contract counts that as the applied signal), then the
+// ?state= URL echo. The echo alone is a weaker signal (a router may ignore the
+// param), so it confirms only when the visible DOM text independently contains
+// the state name. Pure so the truth table is testable without a browser.
+export function confirmStateEntry(expectedState, dom) {
+  const raw = dom.bodyState || dom.htmlState || dom.appliedRootState || "";
+  const urlEcho = dom.urlEcho || "";
+  const domEcho = expectedState !== "default" && (dom.domText || "").includes(expectedState);
+  const declared = raw || urlEcho;
+  return {
+    expected: expectedState,
+    observed: declared,
+    confirmed: expectedState === "default"
+      ? declared === "default" || declared === ""
+      : raw === expectedState || (urlEcho === expectedState && domEcho),
+  };
+}
+
+// Requested-vs-actual reconciliation. The page reports only what it observed;
+// the request is only a request. A preference the engine did not apply — or a
+// rendition the page never acknowledged — is `null` (unmeasured), never the
+// request echoed back as though it had been verified. Pure so the rule is
+// testable without a browser.
+export function resolveAppliedPreferences(requested = {}, observed = {}) {
+  const scheme = requested.scheme || null;
+  const density = requested.density || null;
+  const contrast = requested.contrast && requested.contrast !== "no-preference"
+    ? requested.contrast : null;
+  const forcedColors = requested.forcedColors === "active" ? "active" : null;
+
+  return {
+    prefers_contrast: contrast && observed.prefers_contrast !== contrast
+      ? null : (observed.prefers_contrast ?? null),
+    forced_colors: forcedColors && observed.forced_colors !== forcedColors
+      ? null : (observed.forced_colors ?? null),
+    theme_applied: observed.theme && (!scheme || observed.theme === scheme) ? observed.theme : null,
+    density_applied: observed.density && (!density || observed.density === density) ? observed.density : null,
+  };
 }
 
 async function loadPlaywright() {
@@ -90,7 +133,8 @@ async function loadPlaywright() {
   return null;
 }
 
-async function captureWithPlaywright(baseUrl, outputDir, viewports, states, concurrency = 4) {
+async function captureWithPlaywright(baseUrl, outputDir, viewports, states, schemes = ["light"], density = null,
+                                     forcedColors = "none", contrast = "no-preference", concurrency = 4) {
   try {
     const pw = await loadPlaywright();
     if (!pw) return null;
@@ -106,19 +150,32 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
     const stateConfirmations = {};
 
     const tasks = [];
-    for (const state of states) {
-      const stateUrl = buildStateUrl(baseUrl, state);
-      for (const vp of viewports) {
-        const prefix = states.length > 1 ? `${state}-${vp}` : `${vp}`;
-        const targetFile = path.join(outputDir, `${prefix}.png`);
-        const dim = VIEWPORT_PRESETS[vp] || { width: parseInt(vp, 10) || 1280, height: 800 };
-        tasks.push({ state, vp, prefix, targetFile, dim, stateUrl });
+    const multiState = states.length > 1;
+    const multiScheme = schemes.length > 1;
+    // Scheme is the outer loop so the first capture of each viewport is the light
+    // one: `default` screenshots and downstream first-impression judges read the
+    // light rendition, and dark is an additional measured rendition, not a swap.
+    for (const scheme of schemes) {
+      for (const state of states) {
+        const stateUrl = buildVariantUrl(baseUrl, state, scheme, density);
+        for (const vp of viewports) {
+          // `state-vp` (legacy), `scheme-vp`, or `state-scheme-vp` when both vary.
+          const prefix = [multiState ? state : null, multiScheme ? scheme : null, vp]
+            .filter(Boolean).join("-");
+          const targetFile = path.join(outputDir, `${prefix}.png`);
+          const dim = VIEWPORT_PRESETS[vp] || { width: parseInt(vp, 10) || 1280, height: 800 };
+          tasks.push({ state, scheme, vp, prefix, targetFile, dim, stateUrl });
+        }
       }
     }
 
-    await mapConcurrent(tasks, concurrency, async ({ state, vp, prefix, targetFile, dim, stateUrl }) => {
+    await mapConcurrent(tasks, concurrency, async ({ state, scheme, vp, prefix, targetFile, dim, stateUrl }) => {
       try {
-        const page = await browser.newPage({ viewport: dim });
+        const page = await browser.newPage({ viewport: dim, colorScheme: scheme });
+        // Emulated preferences are declared to the page, not merely rendered: a
+        // `prefers-contrast` or `forced-colors` stylesheet is only exercised when
+        // the engine actually reports the media feature as matching.
+        await page.emulateMedia({ colorScheme: scheme, forcedColors, contrast });
         page.on("pageerror", (err) => runtimeErrors.push(`[${prefix}] ${err.message}`));
         const failedUrls = [];
         page.on("requestfailed", (req) => failedUrls.push(req.url()));
@@ -126,25 +183,22 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
           if (res.status() >= 400) failedUrls.push(res.url());
         });
         await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
-        const stateConfirmation = await page.evaluate((expectedState) => {
-          // Echo precedence: body[data-state] → html[data-state] → ?state= URL
-          // param. The URL echo is a weaker signal (a router may ignore the
-          // param), so the DOM must additionally contain the state name
-          // verbatim outside the URL for it to count.
-          const raw = document.body?.dataset.state || document.documentElement.dataset.state || "";
-          const urlEcho = new URLSearchParams(location.search).get("state") ||
-            (location.hash.match(/state=([a-z0-9_-]+)/i)?.[1] ?? "");
-          const domText = document.body?.innerText || "";
-          const domEcho = expectedState !== "default" && domText.includes(expectedState);
-          const declared = raw || urlEcho;
-          return {
-            expected: expectedState,
-            observed: declared,
-            confirmed: expectedState === "default"
-              ? declared === "default" || declared === ""
-              : raw === expectedState || (urlEcho === expectedState && domEcho),
-          };
-        }, state);
+        // Collect DOM facts in-page, decide in Node: page.evaluate cannot see
+        // module-scope exports, and keeping the decision in confirmStateEntry
+        // makes its truth table testable without a browser. body/html
+        // data-state win when present; an applied [data-state] on an app
+        // shell (e.g. #app) counts too — the contract allows any mount point.
+        // The URL echo stays a weaker signal: it confirms only when the state
+        // name also appears verbatim in visible DOM text.
+        const domFacts = await page.evaluate(() => ({
+          bodyState: document.body?.dataset.state || "",
+          htmlState: document.documentElement.dataset.state || "",
+          appliedRootState: document.querySelector("[data-state]")?.dataset.state || "",
+          urlEcho: new URLSearchParams(location.search).get("state") ||
+            (location.hash.match(/state=([a-z0-9_-]+)/i)?.[1] ?? ""),
+          domText: document.body?.innerText || "",
+        }));
+        const stateConfirmation = confirmStateEntry(state, domFacts);
         stateConfirmations[prefix] = stateConfirmation;
         if (!stateConfirmation.confirmed) {
           throw new Error(`state_unconfirmed: expected ${state}, observed ${stateConfirmation.observed || "none"}`);
@@ -219,6 +273,28 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
 
           const hasOverflow = de.scrollWidth > de.clientWidth + 1;
 
+          // Document-level signals that no single element carries. `null` here
+          // means unmeasured, which the collector reports distinctly from false.
+          const heading = document.querySelector("h1, h2, h3");
+          const titleWrap = heading
+            ? /balance|pretty/.test(window.getComputedStyle(heading).textWrap || "")
+            : null;
+          const fontsStatus = (document.fonts && document.fonts.status)
+            ? (document.fonts.status === "loaded")
+            : null;
+
+          // Raw observations only. Whether a requested preference was actually
+          // applied is decided outside the page by `resolveAppliedPreferences`,
+          // which compares these against the request — the query string is the
+          // request and proves nothing about what rendered.
+          const observedTheme = document.documentElement.getAttribute("data-theme") ||
+            document.body?.dataset.theme || null;
+          const observedDensity = document.documentElement.getAttribute("data-density") ||
+            document.body?.dataset.density || null;
+          const observedContrast = ["more", "less", "custom"]
+            .find((q) => window.matchMedia(`(prefers-contrast: ${q})`).matches) || "no-preference";
+          const observedForced = window.matchMedia("(forced-colors: active)").matches ? "active" : "none";
+
           return {
             scrollWidth: de.scrollWidth,
             clientWidth: de.clientWidth,
@@ -232,8 +308,24 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
             small_touch_target_count: smallTargets.length,
             dialog_present: Boolean(document.querySelector("dialog")),
             dialog_showmodal_bound: /showModal/.test(document.documentElement.outerHTML),
+            lang: document.documentElement.getAttribute("lang") || null,
+            heading_text_wrap: titleWrap,
+            fonts_loaded: fontsStatus,
+            prefers_contrast: observedContrast,
+            forced_colors: observedForced,
+            theme_observed: observedTheme,
+            density_observed: observedDensity,
           };
         }, failedUrls);
+        Object.assign(metrics, resolveAppliedPreferences(
+          { scheme, density, contrast, forcedColors },
+          {
+            theme: metrics.theme_observed,
+            density: metrics.density_observed,
+            prefers_contrast: metrics.prefers_contrast,
+            forced_colors: metrics.forced_colors,
+          },
+        ));
         viewportMetrics[prefix] = metrics;
         await page.screenshot({ path: targetFile, fullPage: false });
         await page.close();
@@ -277,17 +369,23 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, conc
   }
 }
 
-async function captureWithCli(browserBin, baseUrl, outputDir, viewports, states, concurrency = 4) {
+async function captureWithCli(browserBin, baseUrl, outputDir, viewports, states, schemes = ["light"], density = null,
+                              concurrency = 4) {
   const captured = {};
   const tasks = [];
 
-  for (const state of states) {
-    const stateUrl = buildStateUrl(baseUrl, state);
-    for (const vp of viewports) {
-      const dim = VIEWPORT_PRESETS[vp] || { width: parseInt(vp, 10) || 1280, height: 800 };
-      const prefix = states.length > 1 ? `${state}-${vp}` : `${vp}`;
-      const targetFile = path.join(outputDir, `${prefix}.png`);
-      tasks.push({ state, vp, dim, prefix, targetFile, stateUrl });
+  const multiState = states.length > 1;
+  const multiScheme = schemes.length > 1;
+  for (const scheme of schemes) {
+    for (const state of states) {
+      const stateUrl = buildVariantUrl(baseUrl, state, scheme, density);
+      for (const vp of viewports) {
+        const dim = VIEWPORT_PRESETS[vp] || { width: parseInt(vp, 10) || 1280, height: 800 };
+        const prefix = [multiState ? state : null, multiScheme ? scheme : null, vp]
+          .filter(Boolean).join("-");
+        const targetFile = path.join(outputDir, `${prefix}.png`);
+        tasks.push({ state, scheme, vp, dim, prefix, targetFile, stateUrl });
+      }
     }
   }
 
@@ -405,6 +503,8 @@ export function buildCaptureMetadata(result, options = {}) {
     ...(capture.unconfirmed_states || []),
   ];
   const screenshotCount = Object.keys(captures).length;
+  const measurementTier = capture.runner === "system-browser-cli-concurrent" ? "cli" : "playwright";
+  const triState = aggregateTriState(viewportMetrics, measurementTier);
   const browserExecution = BROWSER_EXECUTION_BY_RUNNER[capture.runner] || "unavailable";
   const status = typeof capture.status === "string" ? capture.status : "browser_unavailable";
   const captured = status === "captured" && screenshotCount > 0 && unconfirmedStates.length === 0;
@@ -435,6 +535,7 @@ export function buildCaptureMetadata(result, options = {}) {
       runtime,
       browser_execution: browserExecution,
       runner: capture.runner || null,
+      ...triState,
     },
     target: { platform: targetPlatform, path: targetPath, uri: targetUri },
     source: { revision: sourceRevision },
@@ -455,11 +556,32 @@ export function buildCaptureMetadata(result, options = {}) {
       unconfirmed_states: unconfirmedStates,
       state_confirmations: stateConfirmations,
       viewport_metrics: viewportMetrics,
+      requested_preferences: options.requested || {},
+      // Re-asked through the same rule the capture used, so a reader never sees
+      // the request listed as though the page had confirmed it. `theme_observed`
+      // falls back to the resolved value for metrics recorded before this seam.
+      applied_preferences: Object.fromEntries(
+        Object.entries(viewportMetrics).map(([key, metrics]) => {
+          const request = options.requested || {};
+          const resolved = resolveAppliedPreferences(
+            { scheme: (request.schemes || [])[0] || null, density: request.density,
+              contrast: request.contrast, forcedColors: request.forcedColors },
+            { theme: metrics?.theme_observed ?? metrics?.theme_applied ?? null,
+              density: metrics?.density_observed ?? metrics?.density_applied ?? null,
+              prefers_contrast: metrics?.prefers_contrast ?? null,
+              forced_colors: metrics?.forced_colors ?? null },
+          );
+          return [key, { prefers_contrast: resolved.prefers_contrast,
+                         forced_colors: resolved.forced_colors,
+                         theme: resolved.theme_applied, density: resolved.density_applied }];
+        }),
+      ),
       horizontal_overflow: overflowFindings,
       small_touch_targets: touchFindings,
       dom_metrics_coverage: Object.values(viewportMetrics).some((m) => m && m.dom_metrics === "unmeasured_cli_runner")
         ? "partial: CLI runner cannot evaluate DOM; containment/touch findings above are Playwright-only"
         : "full",
+      ...triState,
     },
     validation: {
       kind: "renderer_capture",
@@ -552,7 +674,43 @@ function mergeEvidence(prevMeta, nextMeta) {
       dom_metrics_coverage: Object.values(viewportMetrics).some((m) => m && m.dom_metrics === "unmeasured_cli_runner")
         ? "partial: CLI runner cannot evaluate DOM; containment/touch findings above are Playwright-only"
         : "full",
+      ...aggregateTriState(viewportMetrics, nextEv.measurement_tier || prevEv.measurement_tier || "cli"),
     },
+  };
+}
+
+// Document-level tri-state aggregation over per-viewport metrics. Booleans
+// collapse to `every(measured)`, strings to the single shared value or the list
+// of observed values, and a field no viewport measured comes back `null` and is
+// named in `unmeasured` — unmeasured is never reported as false or clean.
+export function aggregateTriState(viewportMetrics, tier = "playwright") {
+  const valuesFor = (key) => Object.values(viewportMetrics || {}).map((m) => m && m[key]);
+  const domMeasured = Object.values(viewportMetrics || {}).some((m) => m && m.dom_metrics !== "unmeasured_cli_runner");
+  const metricEntries = Object.entries(viewportMetrics || {});
+  const missing = (key) => tier !== "playwright" || !domMeasured || metricEntries.length === 0
+    || metricEntries.some(([, m]) => !m || m[key] === null || m[key] === undefined);
+  const bools = (key) => valuesFor(key).filter((v) => typeof v === "boolean");
+  const langs = [...new Set(valuesFor("lang").filter((v) => typeof v === "string"))];
+  const fontsValues = bools("fonts_loaded");
+  const wrapValues = bools("heading_text_wrap");
+  const unmeasured = [];
+  // DOM signals are unmeasured whenever no captured viewport actually evaluated
+  // the page — the runner label is a hint, the per-viewport record is the fact.
+  if (!domMeasured) unmeasured.push("dom_metrics");
+  // A stale earlier capture in the union must not resurrect a value the current
+  // runner cannot measure: the tier gate decides null, not the leftover record.
+  const langValue = missing("lang") || langs.length === 0 ? null : langs.length === 1 ? langs[0] : langs;
+  const fontsValue = missing("fonts_loaded") || fontsValues.length === 0 ? null : fontsValues.every(Boolean);
+  const wrapValue = missing("heading_text_wrap") || wrapValues.length === 0 ? null : wrapValues.every(Boolean);
+  if (langValue === null) unmeasured.push("lang");
+  if (fontsValue === null) unmeasured.push("fonts_loaded");
+  if (wrapValue === null) unmeasured.push("heading_text_wrap");
+  return {
+    measurement_tier: tier,
+    lang: langValue,
+    fonts_loaded: fontsValue,
+    heading_text_wrap: wrapValue,
+    unmeasured,
   };
 }
 
@@ -616,14 +774,69 @@ export function recordHandoffEvidence(outputDir, result, metadata, options = {})
   }
 }
 
+// Diagnostics summary as a tri-state, so the CLI runner's blind spots read as
+// `null` (unmeasured) instead of `false`/`0`/`true`. `every()` over an empty set
+// returning `true` was the specific false-clean: a CLI capture measured no
+// stylesheets and reported success.
+export function buildDiagnosticsSummary(result) {
+  const tier = result.runner === "system-browser-cli-concurrent" ? "cli" : "playwright";
+  const entries = Object.entries(result.viewport_metrics || {});
+  const domMeasured = tier === "playwright"
+    && entries.some(([, m]) => m && m.dom_metrics !== "unmeasured_cli_runner");
+  const measured = (m) => domMeasured && m && m.dom_metrics !== "unmeasured_cli_runner";
+  const known = (key) => entries.filter(([, m]) => measured(m) && m[key] !== null && m[key] !== undefined);
+  const unmeasuredViewports = entries
+    .filter(([, m]) => !measured(m) || m.horizontal_overflow === undefined || m.stylesheets_applied === undefined)
+    .map(([prefix]) => prefix);
+  const unmeasured = [];
+  const reduceBool = (key, combine) => {
+    const measuredEntries = known(key);
+    if (measuredEntries.length === 0 || measuredEntries.length !== entries.length) {
+      unmeasured.push(key);
+      return null;
+    }
+    return combine(measuredEntries.map(([, m]) => m[key]));
+  };
+  const part = (key) => entries.filter(([, m]) => measured(m) && typeof m[key] === "boolean").map(([, m]) => m[key]);
+  const horizontalOverflow = reduceBool("horizontal_overflow", (values) => values.some(Boolean));
+  const stylesheetsApplied = reduceBool("stylesheets_applied", (values) => values.every(Boolean));
+  const touchKnown = entries.filter(([, m]) => measured(m) && typeof m.small_touch_target_count === "number");
+  let touchCount = null;
+  if (touchKnown.length === 0 || touchKnown.length !== entries.length) {
+    unmeasured.push("small_touch_targets_count");
+  } else {
+    touchCount = touchKnown.reduce((acc, [, m]) => acc + m.small_touch_target_count, 0);
+  }
+  const craftCheck = (key) => (part(key).length === 0 || part(key).length !== entries.length ? null : part(key).some(Boolean));
+  return {
+    status: result.status,
+    ...aggregateTriState(result.viewport_metrics, tier),
+    runtime_errors: result.runtime_errors || [],
+    horizontal_overflow: horizontalOverflow,
+    stylesheets_applied: stylesheetsApplied,
+    craft_checks: {
+      has_active_feedback: craftCheck("has_active_feedback"),
+      has_tabular_nums: craftCheck("has_tabular_nums"),
+    },
+    small_touch_targets_count: touchCount,
+    unmeasured_viewports: unmeasuredViewports,
+    unmeasured: [...new Set([...aggregateTriState(result.viewport_metrics, tier).unmeasured, ...unmeasured])],
+  };
+}
+
 async function main() {
   const args = process.argv.slice(2);
   let url = null;
   let outputDir = null;
   let viewports = ["320", "390", "1280"];
   let states = ["default"];
+  let schemes = ["light"];
   let viewportsExplicit = false;
   let statesExplicit = false;
+  let schemesExplicit = false;
+  let density = null;
+  let forcedColors = "none";
+  let contrast = "no-preference";
   let customManifest = null;
   let noManifest = false;
   let isSliceHandoff = false;
@@ -703,6 +916,28 @@ async function main() {
     } else if (args[i] === "--states" || args[i] === "-s") {
       states = (args[++i] || "").split(",").map((s) => s.trim()).filter(Boolean);
       statesExplicit = true;
+    } else if (args[i] === "--schemes") {
+      schemes = (args[++i] || "").split(",").map((s) => s.trim()).filter(Boolean);
+      const unknown = schemes.filter((s) => !["light", "dark"].includes(s));
+      if (unknown.length) {
+        process.stderr.write(`--schemes accepts light and/or dark (got: ${unknown.join(",")})\n`);
+        process.exit(2);
+      }
+      schemesExplicit = true;
+    } else if (args[i] === "--density") {
+      density = args[++i] || null;
+    } else if (args[i] === "--forced-colors") {
+      forcedColors = args[++i] || "active";
+      if (!["none", "active"].includes(forcedColors)) {
+        process.stderr.write("--forced-colors accepts none or active\n");
+        process.exit(2);
+      }
+    } else if (args[i] === "--contrast") {
+      contrast = args[++i] || "more";
+      if (!["no-preference", "more", "less", "custom"].includes(contrast)) {
+        process.stderr.write("--contrast accepts no-preference, more, less, or custom\n");
+        process.exit(2);
+      }
     } else if (args[i] === "--manifest" || args[i] === "-m") {
       customManifest = args[++i] || null;
     } else if (args[i] === "--no-manifest") {
@@ -725,13 +960,14 @@ async function main() {
   fs.mkdirSync(outputDir, { recursive: true });
 
   // 1. Try Playwright
-  let result = await captureWithPlaywright(url, outputDir, viewports, states);
+  let result = await captureWithPlaywright(url, outputDir, viewports, states, schemes, density,
+                                           forcedColors, contrast);
 
   // 2. Try System Browser CLI if Playwright unavailable
   if (!result) {
     const browserBin = findSystemBrowser();
     if (browserBin) {
-      result = await captureWithCli(browserBin, url, outputDir, viewports, states);
+      result = await captureWithCli(browserBin, url, outputDir, viewports, states, schemes, density);
     }
   }
 
@@ -743,6 +979,9 @@ async function main() {
     sourceRevision,
     dependencies,
     repoRoot,
+    // The requested preferences ride along so a reader can tell "captured with
+    // forced colors requested" from "the page was never asked".
+    requested: { schemes, density, forcedColors, contrast },
   };
 
   if (result) {
@@ -753,17 +992,7 @@ async function main() {
       isSliceHandoff,
       manifestPath: customManifest,
     });
-    const diagnostics_summary = {
-      status: result.status,
-      runtime_errors: result.runtime_errors || [],
-      horizontal_overflow: Object.entries(result.viewport_metrics || {}).some(([, m]) => m && m.horizontal_overflow),
-      stylesheets_applied: Object.entries(result.viewport_metrics || {}).every(([, m]) => m && m.stylesheets_applied),
-      craft_checks: {
-        has_active_feedback: Object.entries(result.viewport_metrics || {}).some(([, m]) => m && m.has_active_feedback),
-        has_tabular_nums: Object.entries(result.viewport_metrics || {}).some(([, m]) => m && m.has_tabular_nums),
-      },
-      small_touch_targets_count: Object.values(result.viewport_metrics || {}).reduce((acc, m) => acc + (m?.small_touch_target_count || 0), 0),
-    };
+    const diagnostics_summary = buildDiagnosticsSummary(result);
     process.stdout.write(JSON.stringify({ ...result, diagnostics_summary, metadata, evidence_record: recording }, null, 2) + "\n");
     process.exit(0);
   } else {

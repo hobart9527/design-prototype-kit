@@ -14,6 +14,36 @@ Divergence Generator to fuse a technique, never at step 2 to pick an identity. T
 directions themselves come from the domain's lifeworld. Selecting two styles from its
 table is the failure mode the generator exists to prevent.
 
+### Positive Scaffold: compose a proven mechanism, then author its expression
+
+Before writing a direction, choose one observable mechanism from the existing
+[`reference set`](../05-benchmarks/reference-set.md) or a verified product surface.
+Record the mechanism, the task relationship it supports, what transfers, and what
+does not. The reference is a starting structure, not a visual skin. If no listed
+mechanism fits, state the task relationship and compose directly; do not invent a
+reference citation or force a metaphor.
+
+For each physical direction, render the same representative content and viewport
+with a distinct organizing principle. Compose in this order: primary task and
+content → spatial relationship and hierarchy → typography/material/color roles →
+interaction and state feedback. Use the direction's actual tokens and at least one
+visible signature relationship in the rendered probe. The probe is incomplete when
+the record describes a direction but the pixels do not show it.
+
+Use this compact scaffold in the existing design record (not a new artifact):
+
+```text
+Mechanism borrowed / source:
+Task relationship it serves:
+Transferred / refused:
+Visible in the render at:
+Evidence that would change the choice:
+```
+
+A reference-derived mechanism is optional when the brief already supplies a strong
+visual language or the task is a local repair. Do not multiply directions merely to
+show technique; compare only when the choice can change the design.
+
 Physical anchors (e.g. cockpit, workbench, paper codex) serve as optional structural
 analogies where helpful, but are never forced upon digital-native products.
 
@@ -101,17 +131,45 @@ never share one rule:
   and let the secondary choices follow from it. Varying everything at once
   produces three unattributable results: the comparison teaches nothing, and the
   next decision starts from zero.
+- **Attribute every variant in the artifact.** Each direction or variant carries
+  `data-variant="<id>"` on its root element (and a matching `data-variant` on the
+  comparison container), so a screenshot, a comment, or a capture record names the
+  variant it came from without a human reconstructing it from the directory the
+  file happened to sit in. Variants of one decision share one fixture dataset —
+  different data makes the comparison a data comparison, not a design one.
 
 The craft floor is identical across every direction and every variant. It is not
 an axis and never trades against one. A candidate that wins on looks while
 failing a hard floor is a bug with a nice surface, not a candidate.
+
+## Expression Study & Blind Critique (表达实验与盲评)
+
+Structure decides which direction; expression decides whether it is any good. Run both
+after a direction leads, and before Stage 3 rollout. Both are bounded and optional when
+the direction inherits an existing language or the request is a local repair.
+
+**Expression study.** On the leading direction's decisive surface, build one file with
+`data-variant` variants that move *one* expression family at a time — type roles,
+colour meaning, form (radius/line/edge), or motion — on the same fixture data. Capture
+each at the authored viewports and write the outcome into the
+[Style Language Card](../01-foundations/style-language.md): the Positions the study
+supported, the Vocabulary it fixed, and a Counter-example it exposed. Vary one family
+per comparison, as in *Converge* above; the study is a way to learn what the language
+is, not a polish pass.
+
+**Blind critique.** Before naming a winner, look at the captured directions with labels
+and rationale hidden and write, for each: what it is claiming, what it gives up, and
+which feels more authored. Then reveal the labels and record any disagreement with the
+earlier recommendation. Attended runs show the user the unlabeled captures and ask for
+the call. Unattended runs may take an independent view from `spec-prototype-critic`
+(optional, never a gate); the result stays `proposed`/`provisional` either way.
 
 ## Bounded Materialization
 
 The main designer holds itself to the same bounds a dispatch would have imposed:
 
 - Author one self-contained HTML/CSS/JS page (`experiments/.../anchor/index.html` or `dirs/{a,b,c}/index.html`).
-- **Write whole files with authentic initial DOM content.** Author each prototype file (`index.html`, `anchor.css`, `anchor.js`) in one `Write` call. Split the triad by file responsibility (structure / style / behaviour) so each file stays one coherent pass. Crucially, `index.html` must contain the authentic initial entities, lists, status badges, and topology directly in markup (progressive enhancement) — never render an empty body that depends entirely on client-side JS hydration to populate initial domain objects. Design records (`truth.md`, `world.md`, `briefs/<slice>.md`) are likewise written whole, not patched paragraph by paragraph.
+- **Write whole files with authentic initial DOM content.** Author each *new* prototype file (`index.html`, `anchor.css`, `anchor.js`) in one `Write` call; once a file exists, a bounded repair or a single-family expression-study change uses `Edit` rather than rewriting it. Split the triad by file responsibility (structure / style / behaviour) so each file stays one coherent pass. Crucially, `index.html` must contain the authentic initial entities, lists, status badges, and topology directly in markup (progressive enhancement) — never render an empty body that depends entirely on client-side JS hydration to populate initial domain objects. Design records (`truth.md`, `world.md`, `briefs/<slice>.md`) are likewise written whole, not patched paragraph by paragraph.
 - Capture real viewport evidence via `node skills/spec-prototype/scripts/capture.mjs`.
 - Mechanical fixes to a broken render are made directly in place. Unbounded filesystem roaming and CSS ping-pong tuning are avoided.
 

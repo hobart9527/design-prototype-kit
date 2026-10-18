@@ -48,13 +48,18 @@ character: <neutral | technical | editorial | …>
 
 ## Seed Palette & Tokens
 
-Optional signal colour: declare `accent_seal` only when the product has an
-irreversible or high-stakes moment that earns one reserved colour. Omit the block
-otherwise; the palette below stands on its own.
+Declare `accent_seal` only when the product has an irreversible or high-stakes
+moment that earns one reserved colour. Optional `state_nominal`, `state_warning`,
+`state_danger`, `state_success`, and `state_info` keys provide authored status hues.
 
 ```contract:tokens
 accent_seal: "#rrggbb"
-accent_policy: <one line on when the seal colour may fire>
+accent_policy: "<one line on when the seal colour may fire>"
+state_nominal: "#rrggbb"
+state_warning: "#rrggbb"
+state_danger: "#rrggbb"
+state_success: "#rrggbb"
+state_info: "#rrggbb"
 ```
 
 - `--bg-void`:
@@ -62,6 +67,25 @@ accent_policy: <one line on when the seal colour may fire>
 - `--text-primary`:
 - `--accent-primary`:
 - `--accent-seal`: (only if declared above)
+
+## Style Language
+
+Method: `references/01-foundations/style-language.md`. Draft with the recommended
+direction; status follows the Decisions table. Do not restate token values here.
+
+- **Positions** (3–5, `We choose X over Y, because …`):
+- **Vocabulary** — Type roles / Colour meaning / Form / Motion / Voice:
+- **Counter-examples** (≥2, correct by the floor yet wrong for this language):
+- **Signature** (one sentence, visible behaviour):
+
+## Reference Deconstruction
+
+Method: `references/01-foundations/reference-deconstruction.md`. Keep only the rows
+that changed a decision; source limits live in `prototype/research.md`.
+
+| Reference (name + link) | Level | Observation | Relationship extracted | Transfers | Refused |
+|---|---|---|---|---|---|
+| | | | | | |
 
 ## Project Taste & Visual Language Ledger
 

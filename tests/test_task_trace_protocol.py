@@ -119,13 +119,36 @@ def test_step_limit_keeps_layout_measurements_but_fails_the_goal():
 
 
 def test_completion_needs_terminal_evidence_not_any_snapshot_keyword():
-    snaps = [dict(LAYOUT_OK, text="PO-0002 已通过"), dict(LAYOUT_OK, text="待审批 列表")]
-    unproven = task_judge.judge_task(TASK, {"status": "completed", "snapshots": snaps})
-    assert unproven["status"] == "unverified"
-    stale = task_judge.judge_task(TASK, {"status": "completed", "evidence": "PO-0002 已通过", "snapshots": snaps})
+    """Two gates: the terminal claim must be on the final page, the required text anywhere in the journey.
+
+    A quote that is visible but unrelated to the goal proves protocol completion, not
+    task success. Layout checks are measurements and stay independent of the journey.
+    """
+    goal_page = dict(LAYOUT_OK, text="PO-0002 已通过 · 审批完成")
+    list_page = dict(LAYOUT_OK, text="待审批 列表 · 暂无申请")
+    unrelated = task_judge.judge_task(TASK, {
+        "status": "completed", "evidence": "待审批 列表", "snapshots": [list_page],
+    })
+    assert unrelated["status"] == "fail"
+    assert unrelated["required_outcomes"][0]["status"] == "fail"
+    assert unrelated["required_outcomes"][1]["status"] == "pass"
+    # The pattern is in the journey, but the done quote is not on the final page.
+    stale = task_judge.judge_task(TASK, {
+        "status": "completed", "evidence": "PO-0002 已通过", "snapshots": [goal_page, list_page],
+    })
     assert stale["status"] == "fail"
-    proven = task_judge.judge_task(TASK, {"status": "completed", "evidence": "PO-0002 已通过",
-                                          "snapshots": list(reversed(snaps))})
+    assert stale["required_outcomes"][0]["status"] == "fail"
+    # An outcome the agent discovered earlier still counts once the terminal claim lands.
+    later_page = dict(LAYOUT_OK, text="本次审批完成，记录已保存")
+    discovered = task_judge.judge_task(TASK, {
+        "status": "completed", "evidence": "本次审批完成", "snapshots": [goal_page, later_page],
+    })
+    assert discovered["status"] == "pass"
+    proven = task_judge.judge_task(TASK, {
+        "status": "completed", "evidence": "PO-0002 已通过", "snapshots": [list_page, goal_page],
+    })
     assert proven["status"] == "pass"
-    for dead in ("dead_end", "blocked"):
-        assert task_judge.judge_task(TASK, {"status": dead, "snapshots": snaps})["status"] != "pass"
+    unproven = task_judge.judge_task(TASK, {"status": "completed", "snapshots": [goal_page]})
+    assert unproven["status"] == "unverified"
+    for dead in ("dead_end", "blocked", "step_limit"):
+        assert task_judge.judge_task(TASK, {"status": dead, "snapshots": [goal_page]})["status"] != "pass"

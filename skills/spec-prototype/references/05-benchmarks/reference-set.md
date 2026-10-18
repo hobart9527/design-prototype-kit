@@ -22,7 +22,9 @@ surface without the mechanism is the costume failure this set exists to prevent.
 ## The set
 
 Deliberately small and stable. Each entry: the mechanism to inspect, what to adopt,
-what to refuse, and the Pillar / Axis it calibrates.
+what to refuse, and the Pillar / Axis it calibrates. Each mechanism was checked
+against the product's own documentation when it was added; re-check the source
+before you lean on one, and drop or correct an entry that no longer holds.
 
 | Reference | The observable mechanism | Adopt | Refuse | Calibrates |
 |---|---|---|---|---|
@@ -31,6 +33,11 @@ what to refuse, and the Pillar / Axis it calibrates.
 | **Stripe** | Progressive disclosure in forms: the next field appears only when the previous one makes it relevant | Trustworthy typographic hierarchy; disclosure paced to need | Generic bloated card padding used to fake spaciousness | Object pillar · Rhythm axis |
 | **GitHub PR** | Diff collation: change, discussion and approval lineage on one surface, in one reading order | Explicit approval lineage; diff as the primary object | Raw engineering jargon leaking into user-facing copy | Journey pillar · Materiality axis |
 | **Gov.uk** | One question per page; the answer's consequence stated before the control | Task-pattern clarity; prerequisites before backtracking | Treating a wizard as the universal answer to a long task | Value pillar · Character axis |
+| [**Gov.uk check answers**](https://design-system.service.gov.uk/patterns/check-answers/) | Every answer on one summary surface, each row carrying its own *Change* link with a hidden qualifier, and a return that keeps the prior entry and lands back on the summary | One reviewable surface before commit; per-row correction that returns | Using the summary as a second form, or dropping the person back at the flow's start | Journey pillar · Rhythm axis |
+| [**Gov.uk error summary**](https://design-system.service.gov.uk/components/error-summary/) | On a failed submission: a summary above the content listing each problem as a link to its control, the same wording repeated inline, and keyboard focus placed on the summary at load | One discoverable index of what failed; identical wording in both places; focus where the fix begins | Listing problems with no route to the control, or restating them in different words | Resilience pillar · Character axis |
+| [**Atlassian inline message**](https://atlassian.design/components/inline-message/examples) | The variant is chosen by *when* it appears relative to the action — warning before the action is asked for, error after a failed attempt, confirmation after completion, info for context — anchored below the trigger by default | Feedback at the control it concerns, timed to the moment | A page-level flag or modal carrying what belongs beside the control | Interaction pillar · Energy axis |
+| [**GitHub PR suggested changes**](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/incorporating-feedback-in-your-pull-request) | A reviewer's edit arrives as a committable proposal inside the object under review; accepting it creates one commit and credits the suggester as co-author | A proposed change stays distinct from accepted fact; acceptance is one explicit act | Auto-applying a suggestion, or collapsing proposal and acceptance into one ambiguous "apply" | Object pillar · Materiality axis |
+| [**Apple HIG undo/redo**](https://developer.apple.com/design/human-interface-guidelines/undo-and-redo) | Undo offered for every content-changing action, with a redo whenever undo exists and an action-specific label (*Undo Quarantine*), bound to `Cmd+Z` / `Shift+Cmd+Z` | Reversible correction as the safety mechanism, so people can act with confidence | Undo offered as a substitute for confirming an action that cannot be reversed | Interaction pillar · Energy axis |
 | **Vercel / Geist** | Dark-surface restraint: elevation carried by one mechanism (border or shadow), never both | Single-mechanism elevation; monochrome discipline | Purple-on-dark gradients and glass as decoration | Expression pillar · Materiality axis |
 
 ## When a benchmark is load-bearing, bind it to evidence

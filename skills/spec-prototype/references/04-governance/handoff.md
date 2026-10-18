@@ -6,9 +6,12 @@ This reference is for formal specifications and their implementation.
 ## Reference set
 
 Before formal generation, read the actual current source facts and exact referenced
-bytes. The packet names Foundation revision/digest, retained token path/digest,
-Slice Contract revision/digest, immutable candidate Specification, and the retained
-surface-map path/digest cited by the Contract. Product/Discussion records retain
+bytes. The canonical sources are the design record (`discussion.md`, or the layered
+`truth.md` / `world.md` / `briefs/<slice>.md`) and the compiled artifacts it names
+(`r1.spec.json` / `r1.spec.md`, `tokens.css` + `t1.json`). The legacy fragmented
+six-piece packet (Foundation / Contract / surface-map digests) is readable on trees
+that predate the IR and is never generated; see
+[`artifact-lifecycle.md`](artifact-lifecycle.md). Product/Discussion records retain
 the product thesis, object/content/journey basis, Design Proposition, decisions
 and approval provenance; downstream artifacts reference that rationale rather
 than copy it. The retained Foundation includes the human-readable Qualitative

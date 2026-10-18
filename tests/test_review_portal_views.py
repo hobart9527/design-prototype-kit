@@ -102,6 +102,14 @@ def test_steer_and_reroll_require_a_reason():
     assert "needs a reason" in html
 
 
+def test_picking_a_direction_before_a_verdict_does_not_dereference_null():
+    # pickVariant calls renderDecision while currentVerdict is still null; an
+    # unguarded `.toUpperCase()` there throws and aborts the pick handler.
+    html = decision_portal()
+    guard = html.index("if (!currentVerdict)")
+    assert guard < html.index("currentVerdict.toUpperCase()")
+
+
 def test_decision_bar_is_absent_with_a_single_direction():
     """A control that cannot change the outcome is worse than no control."""
     html = generate_review_portal.build_portal_html(
@@ -122,3 +130,19 @@ def test_discover_directions_excludes_the_converged_anchor(tmp_path):
     ids = {d["id"] for d in found}
     assert ids == {"feed-a", "feed-b"}, f"the anchor is not a candidate: {ids}"
     assert all("anchor" not in d["url"] for d in found)
+    assert all(d["revision"].startswith("sha256:") for d in found)
+
+    first_revision = found[0]["revision"]
+    (tmp_path / "prototype/experiments/feed/dirs/a/index.html").write_text(
+        "<html><body>edited</body></html>", encoding="utf-8")
+    refreshed = generate_review_portal.discover_directions(tmp_path)
+    assert next(d["revision"] for d in refreshed if d["id"] == "feed-a") != first_revision
+
+
+def test_comment_overlay_exports_attributed_draft_without_asserting_a_decision():
+    """Comments persist as an exportable draft that stays attributable; they never
+    promote a direction to confirmed on their own."""
+    html = decision_portal()
+    assert "downloadComments" in html, "a comment lost on tab close cannot be recorded as evidence"
+    assert "data-comment-download" in html
+    assert "never approve a direction on their own" in html

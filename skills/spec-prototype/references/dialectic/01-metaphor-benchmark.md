@@ -92,7 +92,10 @@ the only gate, and it is checked on the two directions side by side.
 1. **Name the rut.** State in one sentence what this category's default surface
    looks like — the thing every product in this space already is. This is the
    attractor the directions must move away from. Naming it is what makes the move
-   deliberate; an unnamed rut is the one you fall back into.
+   deliberate; an unnamed rut is the one you fall back into. Immediately record
+   `rut_rejected:` with at least three named defaults and why each is refused;
+   Stage 4 uses these as falsifiers against the rendered artifact, not as another
+   list of forbidden styles.
 2. **Generate from the lifeworld.** Author 3 candidates, each sourced from a
    *cultural world the domain actually lives in* — the room, the publication, the
    instrument, the ritual, the record — not from an aesthetic adjective. Each
@@ -130,6 +133,21 @@ the only gate, and it is checked on the two directions side by side.
    the observable mechanism you are borrowing and the one you are refusing. A
    candidate justified by "like Linear" without naming Linear's mechanism has no
    evidence behind it and does not pass this step.
+   **Creative levers (declare at least one per candidate).** A lifeworld source says
+   *where* a direction comes from; a lever says *how hard it is pushed*. Name the lever
+   used and the point at which it was pulled back:
+   - **Push to the extreme, then retreat** — take the idea to its limit (all type, no
+     imagery; one gesture does everything), then back off only as far as the task needs.
+   - **Hard constraint** — one typeface, one hue plus neutrals, one gesture, one grid.
+     A constraint that costs something is a position.
+   - **Material truth** — let the surface behave like the physical thing it cites
+     (paper that folds, a dial that detents) instead of decorating with it.
+   - **Invert the rut** — take a `rut_rejected` default and do its opposite on purpose;
+     keep it only if the task survives.
+   - **Borrow across domains** — bring a mechanism from a distant field via
+     [reference deconstruction](../01-foundations/reference-deconstruction.md).
+   A candidate with no declared lever is a competent default, not a direction.
+
 5. **Two-axis verdict — the gate.** Before building, compare each pair of
    candidates and name the **two or more axes** on which they differ. **Structure
    must be one of them**: the two candidates must not share an organising principle,
@@ -137,7 +155,9 @@ the only gate, and it is checked on the two directions side by side.
    one direction counted twice, however it is dressed. The remaining axes are
    density, energy, materiality, rhythm, character and reading order. A pair
    differing on fewer than two axes, or on two axes without Structure, is a failed
-   gate — merge it and generate a replacement. Palette alone is never an axis. This
+   gate — merge it and generate a replacement. Palette alone is never an axis. Structure stays mandatory; additionally, at least one of the differing axes should be
+   an expression axis (materiality, energy, character or rhythm), so the pair also differs in how it
+   looks and moves, not only in how it is organised. This
    is the check the benchmark's divergence judge re-runs on the built slots (a
    benchmark-side judge, not a delivery command), whose verdict is `divergent` only
    when the tag sequence differs; a verdict that holds in prose but not on the artifact
@@ -147,7 +167,7 @@ the only gate, and it is checked on the two directions side by side.
    donation is explicitly recorded as refused with its reason. Directions are not
    discarded; the non-selected work is where the compound interest sits.
 
-## 4. Settlement
+## 5. Settlement
 Upon user selection, lock the primary metaphor (or its declared absence — a
 physical metaphor is an optional anchor with an explicit transfer / non-transfer
 boundary), core tension, and Character profile. This topic's settlement does not

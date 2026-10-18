@@ -630,9 +630,17 @@ def _tokens_from_contract_block(text: str):
                 if not value:
                     raise ValueError("contract:tokens accent_policy is empty")
                 discipline["accent_policy"] = value
+            elif name in {"state", "state_nominal", "state_warning", "state_danger", "state_success", "state_info"}:
+                if not re.fullmatch(r"#[0-9a-fA-F]{3,8}", value):
+                    raise ValueError(f"contract:tokens {name} must be a hex colour, got {value!r}")
+                state_name = "state_nominal" if name == "state" else name
+                if state_name in discipline:
+                    raise ValueError(f"contract:tokens contains duplicate state token: {state_name}")
+                discipline[state_name] = value
             else:
+                expected = "accent_seal, accent_policy, state (alias for state_nominal), state_warning, state_danger, state_success, state_info"
                 raise ValueError(
-                    f"contract:tokens has an unknown key {key!r}; expected accent_seal, accent_policy")
+                    f"contract:tokens has an unknown key {key!r}; expected {expected}")
     return discipline
 
 _MESO_KEYS = ("massing_pattern", "kinematics", "data_syntax")

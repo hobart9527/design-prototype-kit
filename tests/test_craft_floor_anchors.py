@@ -54,6 +54,7 @@ def test_a_rule_without_a_detector_states_why():
             assert entry.get("why"), f"{rule_id} is prose_only but gives no reason"
         else:
             assert callable(entry.get("detector")), f"{rule_id} has no callable detector"
+            assert entry.get("polarity") in {"presence", "violation"}, f"{rule_id} lacks an explicit polarity"
 
 
 def test_direction_selected_techniques_are_not_token_presence_gates(tmp_path):
@@ -153,6 +154,139 @@ def test_scan_surfaces_a_broken_detector_rather_than_reading_it_as_clean(tmp_pat
         "an errored detector must not count as checked"
 
 
+def test_html_scan_includes_linked_styles_and_marks_unresolved_coverage(tmp_path):
+    html_dir = tmp_path / "artifact"
+    css_dir = html_dir / "styles"
+    css_dir.mkdir(parents=True)
+    html = html_dir / "index.html"
+    html.write_text(
+        '<html><head><link rel="stylesheet" href="styles/app.css">'
+        '<link rel="stylesheet" href="missing.css"></head><body></body></html>',
+        encoding="utf-8",
+    )
+    (css_dir / "app.css").write_text("button:active { transform: scale(.98); }", encoding="utf-8")
+    result = detect.scan(html)
+    assert str(css_dir / "app.css") in result["sources"]
+    assert result["unresolved_links"] == ["missing.css"]
+    assert result["source_coverage"] == "partial"
+    assert {f["rule"]: f["status"] for f in result["findings"]}["CRAFT-PRESS-DETENT"] == "hit"
+    coverage = next(f for f in result["findings"] if f["rule"] == "SOURCE-COVERAGE")
+    assert coverage["status"] == "unmeasured"
+    assert result["unmeasured"] >= 1
+
+
+def test_html_scan_reads_shared_token_css_outside_the_anchor_directory(tmp_path):
+    # The real anchor layout links ../../../shared/tokens.css. Confining the read
+    # to the HTML's own folder reported that live file as unresolved and left the
+    # token layer unscanned — a false coverage gap on every layered prototype.
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    anchor = repo / "prototype/experiments/slice/anchor"
+    shared = repo / "prototype/shared"
+    anchor.mkdir(parents=True)
+    shared.mkdir(parents=True)
+    (shared / "tokens.css").write_text(":root { --x: 1 }\n.num { font-variant-numeric: tabular-nums; }\n", encoding="utf-8")
+    html = anchor / "index.html"
+    html.write_text(
+        '<html><head><link rel="stylesheet" href="../../../shared/tokens.css">'
+        '<link rel="stylesheet" href="anchor.css"></head><body></body></html>',
+        encoding="utf-8",
+    )
+    (anchor / "anchor.css").write_text("button:active { transform: scale(.98); }", encoding="utf-8")
+    result = detect.scan(html)
+    assert str(shared / "tokens.css") in result["sources"]
+    assert result["unresolved_links"] == []
+    assert result["source_coverage"] == "complete"
+    assert {f["rule"]: f["status"] for f in result["findings"]}["CRAFT-TABULAR-NUMS"] == "hit"
+
+
+def test_html_scan_still_refuses_a_link_escaping_the_scan_root(tmp_path):
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    anchor = repo / "prototype/experiments/slice/anchor"
+    anchor.mkdir(parents=True)
+    (tmp_path / "outside.css").write_text(".num { font-variant-numeric: tabular-nums; }", encoding="utf-8")
+    html = anchor / "index.html"
+    html.write_text(
+        '<html><head><link rel="stylesheet" href="../../../../../outside.css"></head><body></body></html>',
+        encoding="utf-8",
+    )
+    result = detect.scan(html)
+    assert str(tmp_path / "outside.css") not in result["sources"]
+    assert result["unresolved_links"] == ["../../../../../outside.css"]
+    assert result["source_coverage"] == "partial"
+
+
+def test_new_modern_detectors_have_positive_and_negative_examples(tmp_path):
+    """Advisory rules report signals only when the corresponding technique exists."""
+    artifact = tmp_path / "modern-signals.html"
+    artifact.write_text("""<html lang=\"zh-Hans\"><head><style>
+    h1 { text-wrap: balance; }
+    main { min-height: 100dvh; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none; } }
+    </style></head><body>
+    <h1>设计评审</h1><main><button>评审</button></main>
+    <script>document.startViewTransition(() => {});</script>
+    </body></html>""", encoding="utf-8")
+    positives = {rule: detect.RULES[rule]["detector"](artifact) for rule in (
+        "CRAFT-TEXT-WRAP", "CRAFT-VIEWPORT-UNITS", "CRAFT-VIEW-TRANSITION")}
+    assert positives == {
+        "CRAFT-TEXT-WRAP": True,
+        "CRAFT-VIEWPORT-UNITS": True,
+        "CRAFT-VIEW-TRANSITION": True,
+    }
+
+    plain = tmp_path / "plain.html"
+    plain.write_text("<html lang=\"en\"><body><p>Plain</p></body></html>", encoding="utf-8")
+    negatives = {rule: detect.RULES[rule]["detector"](plain) for rule in (
+        "CRAFT-TEXT-WRAP", "CRAFT-VIEWPORT-UNITS", "CRAFT-VIEW-TRANSITION")}
+    assert negatives == {rule: False for rule in negatives}
+
+
+def test_new_modern_detectors_classify_applicability_and_violations(tmp_path):
+    cjk = tmp_path / "cjk.html"
+    cjk.write_text('<html lang="zh-CN"><body>中文</body></html>', encoding="utf-8")
+    en = tmp_path / "en.html"
+    en.write_text('<html lang="en"><body>English</body></html>', encoding="utf-8")
+    assert detect.RULES["CRAFT-CJK-TYPESET"]["detector"](cjk) is False
+    assert detect.RULES["CRAFT-CJK-TYPESET"]["detector"](en) is detect.NOT_APPLICABLE
+    assert detect.RULES["CRAFT-FONT-LOADING"]["detector"](en) is detect.NOT_APPLICABLE
+
+    raw_color = tmp_path / "raw-color.html"
+    raw_color.write_text("<style>.button { color: #123456; }</style>", encoding="utf-8")
+    token_color = tmp_path / "token-color.html"
+    token_color.write_text("<style>:root { --accent: #123456; } .button { color: var(--accent); }</style>", encoding="utf-8")
+    assert detect.RULES["CRAFT-TOKEN-ONLY"]["detector"](raw_color) is True
+    assert detect.RULES["CRAFT-TOKEN-ONLY"]["detector"](token_color) is False
+
+    haptic = tmp_path / "haptic.html"
+    haptic.write_text("<script>navigator.vibrate(20)</script>", encoding="utf-8")
+    paired = tmp_path / "paired-haptic.html"
+    paired.write_text('<script>navigator.vibrate(20)</script><p role="status">Saved</p>', encoding="utf-8")
+    assert detect.RULES["CRAFT-HAPTIC-PAIRING"]["detector"](haptic) is False
+    assert detect.RULES["CRAFT-HAPTIC-PAIRING"]["detector"](paired) is True
+
+
+def test_css_imports_are_scanned_recursively_with_cycle_and_root_guards(tmp_path):
+    root = tmp_path / "repo"
+    (root / ".git").mkdir(parents=True)
+    styles = root / "prototype/experiments/slice/anchor/styles"
+    styles.mkdir(parents=True)
+    html = root / "prototype/experiments/slice/anchor/index.html"
+    html.write_text('<link rel="stylesheet" href="styles/base.css">', encoding="utf-8")
+    (styles / "base.css").write_text('@import "nested.css";\nbody { color: black; }', encoding="utf-8")
+    (styles / "nested.css").write_text('@import "base.css";\nbutton:active { transform: scale(.98); }', encoding="utf-8")
+    result = detect.scan(html)
+    assert str(styles / "base.css") in result["sources"]
+    assert str(styles / "nested.css") in result["sources"]
+    assert result["unresolved_links"] == []
+    assert {f["rule"]: f["status"] for f in result["findings"]}["CRAFT-PRESS-DETENT"] == "hit"
+
+    (styles / "nested.css").write_text('@import "../../../../../../outside.css";', encoding="utf-8")
+    escaped = detect.scan(html)
+    assert escaped["unresolved_links"] == ["../../../../../../outside.css"]
+
+
 def test_the_detector_serialises_for_the_cli(tmp_path):
     artifact = tmp_path / "a.html"
     artifact.write_text("<html><body><button>x</button></body></html>", encoding="utf-8")
@@ -179,8 +313,6 @@ def test_quality_floor_craft_invariants_carry_craft_floor_ids():
 
 
 def test_crosswalk_accounts_for_every_emitted_slop_rule():
-    """Every emitted SLOP id is mapped or explicitly unmapped with a reason —
-    'not mapped' is a recorded status, not an omission (prose_only `why` mirror)."""
     from craft_floor_crosswalk import BENCHMARK_ANCHORS, BENCHMARK_UNMAPPED, validate_crosswalk
     assert not validate_crosswalk()
     import re

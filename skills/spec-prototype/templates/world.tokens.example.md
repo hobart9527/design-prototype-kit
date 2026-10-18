@@ -5,11 +5,16 @@ Three layers, three blocks. Values are double-quoted YAML (the machine contract 
 
 ## Block 1 — `contract:tokens` (palette discipline, machine SSOT, priority 0)
 
-Only two keys are legal. Anything else fails closed.
+`accent_seal` and `accent_policy` are optional; status colour keys are also allowed when authored. Anything else fails closed.
 
 ```contract:tokens
 accent_seal: "#F5A524"        # hex, 3-8 digits; the one signature accent this product earns
 accent_policy: "rest state; destructive commit"   # free text: where the accent is allowed to appear
+state_nominal: "#2E7D32"
+state_warning: "#F59E0B"
+state_danger: "#DC2626"
+state_success: "#16A34A"
+state_info: "#2563EB"
 ```
 
 ## Block 2 — palette values (what the compiler actually compiles into tokens.css)
@@ -27,7 +32,7 @@ drafts are history, not inputs. Recognised keys (aliases in parentheses):
 - `border-dim`, `border-subtle` (border), `border-bright` (border-focus)
 - `text-primary`, `text-secondary`, `text-tertiary`
 - `accent-primary` (accent, primary-accent), `accent-hover`
-- `status-running`, `status-warning`, `status-danger`
+- `status-running` / `state_nominal` / `state`, `status-warning` / `state_warning`, `status-danger` / `state_danger`, `state_success`, `state_info`
 - `accent-seal`
 
 Authored form (a confirmed-section heading — `## Confirmed` / `## Decision` / `## 决策` /

@@ -52,6 +52,9 @@ numerals in an operational readout.
 If a core proposition adjective cannot be expanded into this triple, remove it from the
 rationale. (Routine descriptive grammar and ordinary prose do not require triple expansion;
 this discipline governs the claims that anchor visual and interaction contracts.)
+Run it in both directions: after expanding each adjective, check that the parameters
+together still read as one position (see [`style-language.md`](style-language.md)) rather
+than a list of values that could belong to any product.
 This protocol is generative-side discipline; the audit-side detector
 lives in the quality bar, not here.
 
@@ -119,6 +122,10 @@ must name what transfers and what does not. Never translate a metaphor into an
 unsupported object, diagnosis, permission or product capability.
 
 ### The Direction Contract is this chain, compressed
+
+This section is the **sole owner of the six Direction Contract blocks** — their names,
+what each compresses, and the two chain steps that deliberately have no block. Other
+references name a block or link here; none restate the block list as a second definition.
 
 When a direction is locked, publish it as a **Direction Contract** — the chain above
 compressed to what a reader can *see* on a screen. Author it under a

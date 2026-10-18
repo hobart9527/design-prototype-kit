@@ -3,6 +3,7 @@ category: enterprise-internal-tooling
 difficulty: medium
 suite: [golden, daily, calibration]
 tension_class: low_innovation
+expected_route: co_creation
 
 run_policy:
   repeats: 3

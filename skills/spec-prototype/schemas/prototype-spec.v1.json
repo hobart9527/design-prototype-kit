@@ -153,7 +153,12 @@
           "type": "object",
           "properties": {
             "accent_seal": { "type": "string" },
-            "accent_policy": { "type": "string" }
+            "accent_policy": { "type": "string" },
+            "state_nominal": { "type": "string", "pattern": "^#[0-9a-fA-F]{3,8}$" },
+            "state_warning": { "type": "string", "pattern": "^#[0-9a-fA-F]{3,8}$" },
+            "state_danger": { "type": "string", "pattern": "^#[0-9a-fA-F]{3,8}$" },
+            "state_success": { "type": "string", "pattern": "^#[0-9a-fA-F]{3,8}$" },
+            "state_info": { "type": "string", "pattern": "^#[0-9a-fA-F]{3,8}$" }
           }
         },
         "craft_stack": {
