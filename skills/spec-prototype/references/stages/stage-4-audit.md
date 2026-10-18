@@ -253,7 +253,8 @@ and whether the design question is answered. `PARTIAL` with honest limitations i
 valid end state. A timeout or a false verification claim is not.
 
 Stage 5 freeze, manifests, and export are optional handoff mechanics, not a design
-review gate. Run them only when the user requested a frozen or downstream handoff.
+review gate. Run them only when the user requested a frozen or downstream handoff;
+once downstream delivery is requested, freeze is the only admission path.
 When authoring a formal RFC specification view (`r1.spec.md`), always run
 `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>` (add
 `--candidate <rev>` when not `r1`) to ensure canonical `.spec.json` IR accompanies

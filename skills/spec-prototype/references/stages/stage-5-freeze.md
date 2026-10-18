@@ -9,12 +9,13 @@ handoff.
 
 在执行 Stage 5 freeze 之前，必须满足以下前置条件（任一失败将导致 freeze 拒绝并阻断下游）：
 1. **状态模型完整**：`contract:states`, `contract:required_states`, `contract:actions`, `contract:invariants` 已完整声明（修复：补齐 slice brief 或 discussion 对应块）。
-2. **样式 Token 就绪**：`prototype/shared/tokens.css` 存在且包含必要变量（修复：执行 `compile_tokens.py` 或手工就绪）。
-3. **决策授权有效**：Decisions 表包含当前 slice 的 `confirmed | delegated` 行并具备 approval 证据与 locator（修复：在 `truth.md` 或 `discussion.md` 补齐记录）。
-4. **Token 衍生件已编译**：`prototype/contracts/tokens/t1.json` 已生成（修复：`python3 skills/spec-prototype/scripts/compile_tokens.py`）。
-5. **对比度检查通过**：`node skills/spec-prototype/scripts/wcag-check.js prototype/contracts/tokens/t1.json --level AA` 无阻断失败。
+2. **决策授权有效**：Decisions 表包含当前 slice 的 `confirmed | delegated` 行并具备 approval 证据与 locator（修复：在 `truth.md` 或 `discussion.md` 补齐记录）。
+3. **Token 已编译**：执行下文 Pipeline 第 2 步后，`prototype/shared/tokens.css` 与 `prototype/contracts/tokens/t1.json` 同时存在（`compile_tokens.py` 是二者唯一写入者；手改 `tokens.css` 会触发 `out_of_sync`）。
+4. **对比度与质量门由 freeze 自带执行**：非 spec-only 的 freeze 会先运行 `wcag-check.js` 与 `verify_prototype_quality.py`。任一失败（退出码非 0 且非降级）即拒绝 freeze；verify 退出码 2（渲染探针未运行）记为 `degraded` 写入 freeze-manifest 的 `preflight`，不等同通过。提前自跑同样命令可更早发现问题。
 
-注意：freeze 命令的 `--root` 参数必须为绝对路径或 `$PWD`，避免相对路径 `.` 在不同子进程解析时产生不一致。
+Stage 5 本身可选：仅在用户要求冻结或下游交付时执行；一旦要求下游交付，则它是唯一准入路径。
+
+注意：命令必须在仓库根目录执行，`--root .` 即该根（边界 hook 不放行含 `$` 的命令，故不写 `$PWD`）；freeze 预检子进程以 `--root` 解析后的绝对路径运行，不受 cwd 影响。
 
 ## Headless Pipeline Execution
 
