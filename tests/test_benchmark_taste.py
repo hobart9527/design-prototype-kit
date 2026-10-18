@@ -391,6 +391,19 @@ def test_divergence_recognises_a_structurally_different_direction(tmp_path):
     assert result["distinct_pairs"] == 1
 
 
+def test_divergence_detects_same_tags_with_grid_vs_reversed_flex_layout(tmp_path):
+    tags = "<html><head><style>{}</style></head><body><main><section><h2>A</h2><p>B</p></section></main></body></html>"
+    _write(tmp_path, "prototype/experiments/s/dirs/a/index.html",
+           tags.format("main{display:grid;grid-template-columns:1fr 2fr}"))
+    _write(tmp_path, "prototype/experiments/s/dirs/b/index.html",
+           tags.format("main{display:flex;flex-direction:row-reverse}"))
+    result = dj.judge(tmp_path)
+    assert result["pairs"][0]["structural_similarity"] == 1.0
+    assert result["pairs"][0]["layout_overlap"] == 0.0
+    assert result["pairs"][0]["verdict"] == "divergent"
+    assert result["verdict"] == "divergent"
+
+
 def test_divergence_with_one_slot_is_not_measured(tmp_path):
     _write(tmp_path, "prototype/experiments/s/dirs/a/index.html", SAME_SHAPE_A)
     result = dj.judge(tmp_path)
@@ -471,7 +484,21 @@ def test_taste_regression_ranks_the_blind_verdicts():
         "category_guessability": "high"}})
     verdict = regression_judge.judge([stable, cand])
     signals = {r["signal"] for r in verdict["regressions"] if r["dimension"] == "taste"}
-    assert signals == {"ai_slop_verdict", "first_viewport_thesis", "category_guessability"}
+    assert signals == {"ai_slop_verdict", "first_viewport_thesis"}
+
+
+def test_category_guessability_is_descriptive_and_never_regresses():
+    """A recognisable category is not a rut (SKILL.md: a familiar mental model may
+    be the best choice). Guessability is read but must not drive the regression."""
+    stable = _run("c", "stable_skill", taste={"status": "judged", "result": {
+        "ai_slop_verdict": "pass", "first_viewport_thesis": "present",
+        "category_guessability": "low"}})
+    cand = _run("c", "candidate_skill", taste={"status": "judged", "result": {
+        "ai_slop_verdict": "pass", "first_viewport_thesis": "present",
+        "category_guessability": "high"}})
+    verdict = regression_judge.judge([stable, cand])
+    assert not any(r["dimension"] == "taste" for r in verdict["regressions"])
+    assert "category_guessability" not in regression_judge._TASTE_RANKS
 
 
 def test_divergence_regression_ranks_pseudo_divergence_above_divergent():

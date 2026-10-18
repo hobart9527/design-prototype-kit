@@ -37,11 +37,20 @@ _NOISE_TAGS = frozenset({"html", "head", "meta", "title", "style", "script", "li
 STRUCTURAL_SAME = 0.85   # at or above this, the trees are the same shape
 PALETTE_SAME = 0.70      # at or above this, the palettes are the same palette
 TYPE_SAME = 0.80
+# Either DOM-order or declared layout overlap can establish a shared structure;
+# this catches grid-vs-flex and ordering changes that leave the tag list unchanged.
+LAYOUT_SAME = 0.80
+LAYOUT_DECL_RE = re.compile(
+    r"\b(display|grid-template-[\w-]+|grid-auto-[\w-]+|grid-[\w-]+|"
+    r"flex-direction|flex-wrap|flex-flow)\s*:\s*([^;{}]+)", re.IGNORECASE
+)
 
 
 def _fingerprint(markup: str) -> dict:
     tags = [t.lower() for t in TAG_RE.findall(markup) if t.lower() not in _NOISE_TAGS]
     css = "\n".join(STYLE_RE.findall(markup))
+    layout = {name.lower() + ":" + re.sub(r"\s+", " ", value.strip().lower())
+              for name, value in LAYOUT_DECL_RE.findall(css)}
     colours = {c.lower() for c in HEX_RE.findall(css + markup)}
     # Normalise 3-digit hex to 6 so #abc and #aabbcc are one colour.
     colours = {c if len(c) == 7 else "#" + "".join(ch * 2 for ch in c[1:]) for c in colours}
@@ -54,7 +63,7 @@ def _fingerprint(markup: str) -> dict:
     classes = set()
     for group in CLASS_RE.findall(markup):
         classes.update(t for t in re.split(r"\s+", group.strip()) if t)
-    return {"tags": tags, "colours": colours, "faces": faces, "classes": classes}
+    return {"tags": tags, "layout": layout, "colours": colours, "faces": faces, "classes": classes}
 
 
 def _jaccard(a: set, b: set):
@@ -96,9 +105,17 @@ def judge(artifacts_dir: pathlib.Path) -> dict:
     for left, right in _pairs(sorted(prints)):
         a, b = prints[left], prints[right]
         structure = _structural_similarity(a["tags"], b["tags"])
+        layout = _jaccard(a["layout"], b["layout"])
         palette = _jaccard(a["colours"], b["colours"])
         typography = _jaccard(a["faces"], b["faces"])
-        same_shape = structure >= STRUCTURAL_SAME
+        # A shared shape needs agreement on both axes: the same tag order AND the
+        # same declared layout. Tag order alone is blind to a document that keeps
+        # its tree and swaps `grid` for a reversed `flex`, which is exactly the
+        # layout difference a text review must not call one direction. When
+        # neither side declares any layout the axis is unmeasured (None) and the
+        # tag order decides alone.
+        same_layout = layout is None or layout >= LAYOUT_SAME
+        same_shape = structure >= STRUCTURAL_SAME and same_layout
         same_palette = palette is not None and palette >= PALETTE_SAME
         same_type = typography is not None and typography >= TYPE_SAME
         # Structure is the primary axis: a direction that keeps the tree and moves
@@ -114,6 +131,7 @@ def judge(artifacts_dir: pathlib.Path) -> dict:
         results.append({
             "pair": f"{left}-{right}",
             "structural_similarity": structure,
+            "layout_overlap": layout,
             "palette_overlap": palette,
             "typography_overlap": typography,
             "verdict": verdict,
@@ -136,9 +154,9 @@ def judge(artifacts_dir: pathlib.Path) -> dict:
         "verdict": overall,
         "distinct_pairs": distinct,
         "total_pairs": total,
-        "thresholds": {"structural_same": STRUCTURAL_SAME, "palette_same": PALETTE_SAME,
-                       "type_same": TYPE_SAME},
-        "note": "structure is tag order in document order; palette and typography are declared sets",
+        "thresholds": {"structural_same": STRUCTURAL_SAME, "layout_same": LAYOUT_SAME,
+                       "palette_same": PALETTE_SAME, "type_same": TYPE_SAME},
+        "note": "structure is tag order AND declared layout sets; palette and typography are declared sets",
     }
 
 

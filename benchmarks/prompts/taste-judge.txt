@@ -8,10 +8,14 @@ Screenshots: {shots}
 
 Inspect the images before forming any view. Answer three questions honestly.
 
-1. CATEGORY GUESSABILITY. From the screenshots alone, name the product category
-   you would guess, then say how obvious that guess was. A surface whose category
-   is instantly guessable from its look has taken the category default. That is
-   the rut this judge exists to detect — not a fatal flaw, but a measurable one.
+1. CATEGORY, HOMOGENEITY, AND DISTINCTIVENESS. From the screenshots alone, name
+   the product category you would guess and rate how obvious that category is
+   (category_guessability: low|medium|high). This is a neutral description, not a
+   quality judgment. Separately rate how closely the design follows common visual
+   forms for that category (homogeneity: low|medium|high), and whether it makes a
+   design relationship feel intentional and opinionated (distinctiveness: 0–10).
+   Familiar, category-appropriate forms can be the best choice; judge convergence
+   with convention separately from category recognition.
 2. AI-SLOP VERDICT. Would a competent reviewer, shown this with no attribution,
    suspect a model assembled it? Look for: a decorative kicker/eyebrow above a
    heading; gradient text; a row of identical icon-heading-text cards; a hero
@@ -29,7 +33,7 @@ see; if a question cannot be answered from the images, answer "unverifiable".
 
 Answer JSON only:
 {"guessed_category":"...","category_confidence":"low|medium|high",
- "category_guessability":"low|medium|high",
+ "category_guessability":"low|medium|high","homogeneity":"low|medium|high",
  "ai_slop_verdict":"pass|borderline|fail",
  "ai_slop_signals":["..."],
  "first_viewport_claim":"...","first_viewport_thesis":"present|weak|absent|unverifiable",

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Blind taste judge: rut guessability, AI-slop verdict, first-viewport thesis.
+"""Blind taste judge: category/homogeneity/distinctiveness, AI-slop, first viewport.
+
+Category recognition is measured as a neutral description (category_guessability);
+how far the design converges on its category's common forms is measured separately
+(homogeneity). Neither is a quality rank — a familiar, category-appropriate form
+can be the best choice.
 
 Reads screenshots only. Identity stays in the caller's manifest; this module
 never learns which variant produced what. A judgement that cannot be made from
@@ -17,12 +22,13 @@ import bench_lib as bl  # noqa: E402
 
 SCHEMA = json.dumps({
     "type": "object",
-    "required": ["guessed_category", "category_guessability", "ai_slop_verdict",
-                 "first_viewport_thesis", "distinctiveness", "restraint"],
+    "required": ["guessed_category", "category_guessability", "homogeneity",
+                 "ai_slop_verdict", "first_viewport_thesis", "distinctiveness", "restraint"],
     "properties": {
         "guessed_category": {"type": "string"},
         "category_confidence": {"enum": ["low", "medium", "high"]},
         "category_guessability": {"enum": ["low", "medium", "high"]},
+        "homogeneity": {"enum": ["low", "medium", "high"]},
         "ai_slop_verdict": {"enum": ["pass", "borderline", "fail"]},
         "ai_slop_signals": {"type": "array", "items": {"type": "string"}},
         "first_viewport_claim": {"type": "string"},

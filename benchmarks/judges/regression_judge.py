@@ -76,7 +76,6 @@ def _taste_status(run: dict):
 # Ranked so a move up the list is a regression. Anything unranked is unverifiable.
 _SLOP_RANK = {"pass": 0, "borderline": 1, "fail": 2}
 _THESIS_RANK = {"present": 0, "weak": 1, "absent": 2}
-_GUESS_RANK = {"low": 0, "medium": 1, "high": 2}
 _DIVERGENCE_RANK = {"divergent": 0, "shared_skeleton": 1, "pseudo_divergence": 2,
                     "duplicate": 3, "recolouring": 3, "not_measured": 0, "insufficient": 0}
 # A session that revealed a decision instead of sharing one is worse than one that
@@ -84,7 +83,7 @@ _DIVERGENCE_RANK = {"divergent": 0, "shared_skeleton": 1, "pseudo_divergence": 2
 _COCREATION_RANK = {"co_created": 0, "not_measured": 0, "partial": 1, "reveal_only": 2,
                     "false_confirmation": 3}
 _TASTE_RANKS = {"ai_slop_verdict": _SLOP_RANK, "first_viewport_thesis": _THESIS_RANK,
-                "category_guessability": _GUESS_RANK, "divergence_verdict": _DIVERGENCE_RANK,
+                "divergence_verdict": _DIVERGENCE_RANK,
                 "cocreation_verdict": _COCREATION_RANK}
 
 
