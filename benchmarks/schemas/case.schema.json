@@ -142,6 +142,13 @@
         "experimental"
       ]
     },
+    "expected_route": {
+      "description": "Whether the co-creation stopping points apply to this case. `single_direction` lets the judge return not_applicable for a lawful skip; without it a skip is measured, never excused.",
+      "enum": [
+        "co_creation",
+        "single_direction"
+      ]
+    },
     "suite": {
       "type": "array",
       "items": {

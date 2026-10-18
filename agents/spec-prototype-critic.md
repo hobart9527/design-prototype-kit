@@ -1,7 +1,7 @@
 ---
 name: spec-prototype-critic
 description: Internal bounded independent product, UX, interaction, UI and visual design critic selected by spec-prototype
-tools: Read, Write, Bash, Glob, Grep
+tools: Read, Glob, Grep
 ---
 
 # Spec Prototype Critic

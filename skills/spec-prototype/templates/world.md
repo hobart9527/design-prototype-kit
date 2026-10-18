@@ -48,13 +48,18 @@ character: <neutral | technical | editorial | …>
 
 ## Seed Palette & Tokens
 
-Optional signal colour: declare `accent_seal` only when the product has an
-irreversible or high-stakes moment that earns one reserved colour. Omit the block
-otherwise; the palette below stands on its own.
+Declare `accent_seal` only when the product has an irreversible or high-stakes
+moment that earns one reserved colour. Optional `state_nominal`, `state_warning`,
+`state_danger`, `state_success`, and `state_info` keys provide authored status hues.
 
 ```contract:tokens
 accent_seal: "#rrggbb"
-accent_policy: <one line on when the seal colour may fire>
+accent_policy: "<one line on when the seal colour may fire>"
+state_nominal: "#rrggbb"
+state_warning: "#rrggbb"
+state_danger: "#rrggbb"
+state_success: "#rrggbb"
+state_info: "#rrggbb"
 ```
 
 - `--bg-void`:

@@ -81,6 +81,32 @@ inspection pass, not as separate screenshot trips.
 - **Fluid type** `CRAFT-FLUID-TYPE`: display and body sizes scale with the
   viewport through `clamp()` (or `min()`/`max()`), so the 390 and 1280 frames are
   one type system rather than two hand-set tables. Advisory.
+- **Font loading** `CRAFT-FONT-LOADING`: a self-hosted `@font-face` carries a
+  `font-display` strategy so a delayed or failed face never hides content. Not
+  applicable when the design intentionally uses system fonts.
+- **Wrapping** `CRAFT-TEXT-WRAP`: headings carry `text-wrap: balance` and running
+  text `text-wrap: pretty`, so a heading does not strand a single word on its last
+  line. Advisory — a modern typographic floor, not a mandate to wrap differently.
+- **Dynamic viewport units** `CRAFT-VIEWPORT-UNITS`: a full-height layout measures
+  in `dvh`/`svh`/`lvh`, not `100vh`, so mobile browser chrome does not clip the
+  bottom of the surface. Advisory.
+- **View transitions** `CRAFT-VIEW-TRANSITION`: a `startViewTransition` pairs with
+  a `prefers-reduced-motion` fallback that neutralizes the motion, exactly like any
+  other transition. The state change is the contract; the cross-fade is the
+  enhancement — see [`modern-platform.md`](modern-platform.md) for the recipe.
+- **CJK typesetting** `CRAFT-CJK-TYPESET`: when `lang` is `zh`/`ja`/`ko`, the
+  surface sets `text-spacing-trim`/`text-autospace`, a `line-break` policy, and a
+  `:lang()`-scoped font stack so punctuation, kinsoku and glyph forms resolve
+  rather than arriving as Latin defaults. Measured only on CJK artifacts; a
+  non-CJK surface reads `not_applicable`.
+- **Haptic pairing** `CRAFT-HAPTIC-PAIRING`: a `navigator.vibrate` call pairs with
+  a visual or ARIA channel carrying the same signal, so the feedback survives on a
+  device that cannot vibrate. Not applicable when the surface does not vibrate.
+- **Token-only color** `CRAFT-TOKEN-ONLY`: component declarations reference design
+  tokens; a raw hex outside the token layer (`--*` custom-property declarations)
+  breaks the one-way inheritance from [`world.md`](../01-foundations/design-language.md).
+  Advisory, and the detector reads text only — a hex in a comment is noise, not a
+  violation to chase.
 - **Color scheme** `CRAFT-COLOR-SCHEME`: the chosen theme declares
   `color-scheme` (light, dark, or both) so native controls, scrollbars and form
   fields follow it. A dark surface with a white scrollbar reads as unfinished.
@@ -157,6 +183,12 @@ made. When you catch one, rewrite the element rather than softening it.
   are a decision; pills belong to small controls.
 - **Stripes and grid overlays as background texture** with no canvas, map,
   blueprint, or measuring tool underneath them.
+- **Default-stack styling** — a generic default font stack or a category-default
+  accent color reached for because the direction was not decided. This is the
+  weakest default in the list and the easiest to earn back: a system font or a
+  neutral accent is often correct when the brief's own character supports it.
+  Name the choice and its reason either way; see
+  [`modern-platform.md`](modern-platform.md).
 
 ## Render defect scan
 

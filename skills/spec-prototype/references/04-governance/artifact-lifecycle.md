@@ -4,6 +4,11 @@ Read before creating, revising, freezing, or migrating product-experience artifa
 For formal contract semantics and source-to-UI evidence, use
 [interpretation rules](interpretation-rules.md).
 
+This file is the sole owner of the ban/retire list: which artifacts are canonical,
+which legacy paths are readable-but-never-generated, and which are deprecated. Canonical
+paths and layouts are owned by the [deliverable tree](design-record.md#deliverable-tree);
+other references name the object or link back here rather than restating a retired set.
+
 The four canonical high-density assets are the delivery set. Everything a formal
 run produces lives in one of them:
 

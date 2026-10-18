@@ -91,7 +91,7 @@ not only in the record. Compose in this order; each step lands before the next.
    meaningful label, the primary decision and its result into the first frame.
    Establish scan/read order and the spatial relationship before adding containers
    or decoration. Before the first runnable write, all six Direction Contract blocks
-   (THESIS, OWN-WORLD, STORY, FIRST VIEWPORT, FORM, FINISH) are present in
+   (defined once in [`design-language.md`](../01-foundations/design-language.md)) are present in
    `prototype/world.md` (or `discussion.md`), each carrying a concrete
    proposed/provisional statement rather than a blank or placeholder. If one is
    missing, draft only that statement from the evidence already in the record; then

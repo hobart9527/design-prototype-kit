@@ -92,7 +92,10 @@ the only gate, and it is checked on the two directions side by side.
 1. **Name the rut.** State in one sentence what this category's default surface
    looks like — the thing every product in this space already is. This is the
    attractor the directions must move away from. Naming it is what makes the move
-   deliberate; an unnamed rut is the one you fall back into.
+   deliberate; an unnamed rut is the one you fall back into. Immediately record
+   `rut_rejected:` with at least three named defaults and why each is refused;
+   Stage 4 uses these as falsifiers against the rendered artifact, not as another
+   list of forbidden styles.
 2. **Generate from the lifeworld.** Author 3 candidates, each sourced from a
    *cultural world the domain actually lives in* — the room, the publication, the
    instrument, the ritual, the record — not from an aesthetic adjective. Each

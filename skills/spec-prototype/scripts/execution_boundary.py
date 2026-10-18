@@ -509,16 +509,59 @@ def check(payload):
         raise ValueError('Notebook execution is out of scope for design prototype authoring.')
 
 
+def post_tool_advisory(payload: dict) -> str | None:
+    """Run the craft detector after prototype writes; never participate in admission."""
+    if not isinstance(payload, dict) or payload.get('tool_name') not in {'Write', 'Edit', 'MultiEdit'}:
+        return None
+    args = payload.get('tool_input', {})
+    cwd_value = payload.get('cwd')
+    if not isinstance(args, dict) or not cwd_value or not args.get('file_path'):
+        return None
+    cwd = Path(cwd_value).resolve()
+    target = (cwd / args['file_path']).resolve()
+    prototype = cwd / 'prototype'
+    if not target.is_relative_to(prototype) or not target.is_file() or target.suffix.lower() not in {'.html', '.css', '.js'}:
+        return None
+    detector = SKILL / 'scripts' / 'detect.py'
+    if not detector.is_file():
+        return None
+    import subprocess
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(detector), '--artifact', str(target), '--summary'],
+            cwd=cwd, capture_output=True, text=True, timeout=20, check=False)
+    except (OSError, subprocess.SubprocessError) as error:
+        return f'Craft advisory unavailable ({error}); no quality verdict was produced.'
+    if proc.returncode != 0:
+        return f'Craft advisory unavailable (detector exited {proc.returncode}); no quality verdict was produced.'
+    return proc.stdout.strip() or None
+
+
+def route_hook_payload(payload: dict) -> dict:
+    """Route one hook payload. Only the pre-write boundary may deny.
+
+    A post-write advisory reports; it never blocks the edit that already landed,
+    and its own failure stays an advisory string rather than a verdict.
+    """
+    if payload.get('hook_event_name') == 'PostToolUse':
+        try:
+            advisory = post_tool_advisory(payload)
+        except (ValueError, KeyError, TypeError, OSError) as error:
+            advisory = f'Craft advisory unavailable ({error}); no quality verdict was produced.'
+        return ({'hookSpecificOutput': {'hookEventName': 'PostToolUse',
+                 'additionalContext': advisory}} if advisory else {})
+    check(payload)
+    advisory = payload.get('hookSpecificOutput', {}).get('additionalContext')
+    if advisory:
+        return {'hookSpecificOutput': {'hookEventName': 'PreToolUse',
+                'additionalContext': advisory}}
+    return {}
+
+
 def main():
-    payload = {}
     try:
         payload = json.load(sys.stdin)
-        check(payload)
-        result = {}
-        advisory = payload.get('hookSpecificOutput', {}).get('additionalContext')
-        if advisory:
-            result = {'hookSpecificOutput': {'hookEventName': 'PreToolUse',
-                      'additionalContext': advisory}}
+        result = route_hook_payload(payload)
     except (ValueError, KeyError, TypeError, OSError) as error:
         result = {'hookSpecificOutput': {'hookEventName': 'PreToolUse',
                   'permissionDecision': 'deny',

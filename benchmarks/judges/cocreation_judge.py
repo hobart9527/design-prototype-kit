@@ -117,13 +117,24 @@ def _turns(transcript_path: pathlib.Path) -> list[dict]:
     return turns
 
 
-def judge(out_dir: pathlib.Path) -> dict:
+def judge(out_dir: pathlib.Path, case: dict | None = None) -> dict:
+    """Measure whether the choice was offered, or lawfully not offered.
+
+    A case may declare `expected_route`: `co_creation` (the protocol applies) or
+    `single_direction` (the case itself fixes the route, so offering a choice
+    would be theatre). Without that declaration a skip is a measurement, not an
+    excuse — the judge stays at `reveal_only` rather than granting itself
+    `not_applicable` on the session's own say-so.
+    """
     out_dir = pathlib.Path(out_dir)
+    meta = (case or {}).get("meta") if isinstance((case or {}).get("meta"), dict) else (case or {})
+    expected_route = (meta or {}).get("expected_route")
     turns = _turns(out_dir / "session-transcript.md")
     if not turns:
         return {"judge": "cocreation", "status": "unverified",
                 "note": "no session transcript; co-creation cannot be measured from artifacts alone",
-                "signals": {}, "verdict": "not_measured"}
+                "signals": {}, "verdict": "not_measured",
+                "expected_route": expected_route, "missing_signal_reasons": []}
 
     # Index the first turn at which the agent authored runnable output.
     first_build = None
@@ -174,8 +185,28 @@ def judge(out_dir: pathlib.Path) -> dict:
     # A session that claims a confirmed lock while having presented no candidate to
     # confirm is the specific dishonesty this protocol exists to prevent.
     false_confirmation = signals["confirmed_claimed"] and not signals["c0_presented"]
+    skip_claimed = bool(re.search(r"跳过|skip(?:ped|ping)?|single[- ]direction|单一路线",
+                                  "\n".join(t["text"] for t in turns), re.IGNORECASE))
+    missing_signal_reasons = []
+    for name, present in signals.items():
+        if not present:
+            missing_signal_reasons.append({"signal": name, "reason": {
+                "c0_presented": "no two-or-more candidate directions were offered",
+                "c0_before_build": "the first runnable artifact preceded the choice",
+                "c1_presented": "no built, attributable side-by-side comparison was evidenced",
+                "choice_taken": "no human direction choice was recorded",
+                "provisional_recorded": "no provisional decision basis was recorded",
+                "confirmed_claimed": "no confirmed claim was recorded",
+            }[name]})
+    if expected_route not in (None, "co_creation", "single_direction"):
+        missing_signal_reasons.append({"signal": "expected_route", "reason": f"unsupported route: {expected_route}"})
+    elif skip_claimed and expected_route != "single_direction":
+        missing_signal_reasons.append({"signal": "expected_route", "reason":
+                                       "session claimed a skip but the case did not declare single_direction"})
 
-    if false_confirmation:
+    if expected_route == "single_direction" and skip_claimed and not false_confirmation:
+        verdict = "not_applicable"
+    elif false_confirmation:
         verdict = "false_confirmation"
     elif asked_before_build and signals["c1_presented"]:
         verdict = "co_created"
@@ -188,7 +219,7 @@ def judge(out_dir: pathlib.Path) -> dict:
 
     return {
         "judge": "cocreation",
-        "status": "measured",
+        "status": "not_applicable" if verdict == "not_applicable" else "measured",
         "turns": len(turns),
         "signals": signals,
         "first_build_turn": first_build,
@@ -196,6 +227,8 @@ def judge(out_dir: pathlib.Path) -> dict:
         "c1_turn": c1_index,
         "choice_turn": choice_index,
         "verdict": verdict,
+        "expected_route": expected_route,
+        "missing_signal_reasons": missing_signal_reasons,
         "note": "read from the session transcript; C0 must precede the first runnable write",
     }
 

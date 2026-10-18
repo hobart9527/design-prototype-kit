@@ -206,6 +206,147 @@ def build_decision_html(directions: List[Dict[str, str]]) -> str:
         '</div></details></section>')
 
 
+def build_comment_overlay_html(directions: List[Dict[str, str]]) -> str:
+    """Point-click review: click a spot on a direction, leave an attributed comment.
+
+    A reviewer's objection is about a *place on a specific candidate*, so the
+    comment carries the variant it was made on. Without that attribution the
+    feedback is prose about "the prototype" and cannot steer one direction.
+    Rendered only when there is a candidate set to comment on.
+    """
+    if not directions:
+        return ""
+    return (
+        '<section id="comment-overlay" class="portal-collapsible">'
+        '<details>'
+        '<summary>💬 Point-click comments (attributed to the picked direction)</summary>'
+        '<div class="collapsible-content">'
+        '<div class="comment-tools">'
+        '<button class="pick-btn" id="comment-mode" data-comment-mode="off" '
+        'onclick="toggleCommentMode(this)">COMMENT: OFF</button>'
+        '<button class="pick-btn" onclick="copyComments()">COPY AS JSON</button>'
+        '<span class="comment-hint">Pick a direction, turn comment mode on, then click the preview.</span>'
+        '</div>'
+        '<ol class="comment-list" data-comment-list></ol>'
+        '<pre class="comment-out" data-comment-out>No comments recorded yet.</pre>'
+        '</div></details></section>')
+
+
+def _comment_style() -> str:
+    return """
+    .comment-catcher {
+      position: absolute; inset: 0; display: none; cursor: crosshair;
+      background: rgba(0, 240, 255, 0.04);
+    }
+    .comment-catcher.on { display: block; }
+    .comment-catcher:focus-visible { outline: 3px solid var(--accent-primary, #00f0ff); outline-offset: -3px; }
+    .comment-catcher[aria-pressed="true"] { background: rgba(0, 240, 255, 0.1); }
+    .comment-pin {
+      position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+      border-radius: 50%; background: var(--accent-primary, #00f0ff);
+      color: #000; font: 9px/14px var(--font-mono, monospace); text-align: center;
+    }
+    .comment-tools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .comment-hint { color: var(--text-secondary, #94a3b8); }
+    .comment-list { margin: 0 0 8px 16px; }
+    .comment-list li { margin-bottom: 4px; }
+    .comment-list .comment-variant { color: var(--accent-primary, #00f0ff); }
+    .comment-out { color: var(--text-secondary, #94a3b8); white-space: pre-wrap; }
+"""
+
+
+def _comment_script() -> str:
+    return """
+    var comments = [];
+    var commentMode = false;
+
+    function setCommentMode(on, btn) {
+      commentMode = on;
+      var button = btn || document.getElementById('comment-mode');
+      if (button) {
+        button.textContent = 'COMMENT: ' + (commentMode ? 'ON' : 'OFF');
+        button.classList.toggle('active', commentMode);
+        button.setAttribute('aria-pressed', String(commentMode));
+      }
+      var catcher = document.querySelector('.comment-catcher');
+      if (catcher) {
+        catcher.classList.toggle('on', commentMode);
+        // Off keeps the preview interactive: the catcher is display:none, so the
+        // iframe underneath receives the pointer and its own keyboard focus.
+        catcher.tabIndex = commentMode ? 0 : -1;
+        catcher.setAttribute('aria-pressed', String(commentMode));
+      }
+    }
+
+    function toggleCommentMode(btn) { setCommentMode(!commentMode, btn); }
+
+    function renderComments() {
+      var list = document.querySelector('[data-comment-list]');
+      var out = document.querySelector('[data-comment-out]');
+      if (list) {
+        list.innerHTML = '';
+        comments.forEach(function (c) {
+          var li = document.createElement('li');
+          var who = document.createElement('span');
+          who.className = 'comment-variant';
+          who.textContent = c.variant;
+          li.appendChild(who);
+          li.appendChild(document.createTextNode(
+            ' @' + c.x + '%/' + c.y + '% — ' + c.text));
+          list.appendChild(li);
+        });
+      }
+      if (out) { out.textContent = comments.length ? JSON.stringify(comments, null, 2) : 'No comments recorded yet.'; }
+    }
+
+    // The click lands on the catcher rather than the frame, so the iframe keeps its
+    // own interactivity when comment mode is off and the coordinates stay relative
+    // to the preview the reviewer is looking at.
+    function addComment(event) {
+      if (!commentMode) return;
+      if (!currentVariant) { alert('Pick a direction first — a comment must attach to one.'); return; }
+      var rect = event.currentTarget.getBoundingClientRect();
+      var clientX = event.type === 'keydown' ? rect.left + rect.width / 2 : event.clientX;
+      var clientY = event.type === 'keydown' ? rect.top + rect.height / 2 : event.clientY;
+      var x = Math.round(((clientX - rect.left) / rect.width) * 100);
+      var y = Math.round(((clientY - rect.top) / rect.height) * 100);
+      var text = window.prompt('Comment on ' + currentVariant + ' at ' + x + '%/' + y + '%:');
+      if (!text || !text.trim()) return;
+      comments.push({ variant: currentVariant, x: x, y: y, text: text.trim() });
+      var pin = document.createElement('span');
+      pin.className = 'comment-pin';
+      pin.style.left = x + '%';
+      pin.style.top = y + '%';
+      pin.textContent = String(comments.length);
+      event.currentTarget.appendChild(pin);
+      renderComments();
+    }
+
+    function copyComments() {
+      var text = JSON.stringify(comments, null, 2);
+      if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var catcher = document.querySelector('.comment-catcher');
+      if (catcher) {
+        catcher.addEventListener('click', addComment);
+        // Keyboard parity: a reviewer who cannot point can still place a comment
+        // at the preview's centre. Without this the overlay is pointer-only and
+        // the attributed feedback it exists to collect is unreachable.
+        catcher.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            addComment(event);
+          }
+        });
+        setCommentMode(false, document.getElementById('comment-mode'));
+      }
+      renderComments();
+    });
+"""
+
+
 def _decision_style() -> str:
     return """
     .portal-collapsible {
@@ -378,6 +519,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     directions = directions or []
     directions_json = json.dumps(directions)
     decision_html = build_decision_html(directions)
+    comment_html = build_comment_overlay_html(directions)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -479,6 +621,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       box-sizing: border-box;
     }}
     .viewport-frame {{
+      position: relative;
       width: 100%;
       max-width: 100%;
       height: 100%;
@@ -524,6 +667,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       box-shadow: 0 0 6px var(--status-running, #10b981);
     }}
 {_decision_style()}
+{_comment_style()}
   </style></head>
 <body>
   <div class="portal-nav">
@@ -547,10 +691,13 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
   </div>
 
   {decision_html}
+  {comment_html}
 
   <div class="portal-frame-box">
     <div class="viewport-frame" data-viewport-frame="100%">
       <iframe id="preview-frame" src="{default_url}"></iframe>
+      <div class="comment-catcher" role="button" aria-pressed="false" tabindex="-1"
+           aria-label="Add a point-click comment at the preview centre"></div>
     </div>
   </div>
 
@@ -620,6 +767,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       setViewport(w, document.querySelector('[data-viewport="' + w + '"]'));
     }}
 {_decision_script()}
+{_comment_script()}
   </script>
 </body>
 </html>

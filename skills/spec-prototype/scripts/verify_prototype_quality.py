@@ -1156,6 +1156,78 @@ def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44)
                    "or playwright; neither is available")
 
 
+def probe_focus_occlusion(html: Path, viewport_width: int = 1280) -> tuple[bool, str | None]:
+    """Detect interactive controls whose hit area is covered by another element.
+
+    A control can satisfy every size, contrast and ARIA check and still be
+    unusable because a sticky bar, overlay or dialog stacks over it: the user
+    aims at the control and the click lands elsewhere. `elementFromPoint` at the
+    control's centre is the direct measurement of that, so a real overlap names
+    the covering element rather than reporting the control as absent.
+    """
+    node = shutil.which("node")
+    probe_mjs = Path(__file__).resolve().parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
+    if not node or not probe_mjs.is_file():
+        return False, "environment_not_ready: focus-occlusion probe needs node and browser_probe.mjs"
+
+    script = r'''(() => {
+      const visible = (el) => {
+        const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+        return r.width > 0 && r.height > 0 && s.display !== "none"
+          && s.visibility !== "hidden" && s.opacity !== "0";
+      };
+      const label = (el) => (el.getAttribute("aria-label") || el.innerText || el.value
+        || el.getAttribute("placeholder") || el.tagName).toString().trim().replace(/\s+/g, " ").slice(0, 80);
+      const controlled = [...document.querySelectorAll(
+        "button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab], [role=menuitem], [data-action]")]
+        .filter(visible);
+      const occluded = [];
+      let measured = 0;
+      for (const el of controlled) {
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        // Off-screen controls cannot be probed by hit test; the scroll path is a
+        // separate concern and reporting them here would be a false positive.
+        if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
+        const top = document.elementFromPoint(cx, cy);
+        if (!top) continue;
+        measured += 1;
+        if (top === el || el.contains(top) || top.contains(el)) continue;
+        // A pointer-events:none layer does not intercept the click, so it is not
+        // an occlusion even though it is the topmost element at that point.
+        if (getComputedStyle(top).pointerEvents === "none") continue;
+        occluded.push({ control: label(el), covered_by: `${top.tagName.toLowerCase()}${top.id ? "#" + top.id : (top.className ? "." + (top.className || "").toString().trim().split(/\s+/)[0] : "")}` });
+      }
+      return { occluded, measured, total: controlled.length };
+    })()'''
+    import base64
+    import json as _json
+    try:
+        proc = subprocess.run(
+            [node, str(probe_mjs), "craft", "--url", html.resolve().as_uri(),
+             "--viewport", f"{viewport_width}x900", "--script", base64.b64encode(script.encode()).decode()],
+            capture_output=True, text=True, timeout=60, cwd=str(probe_mjs.parents[1]))
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        return False, f"environment_not_ready: focus-occlusion probe failed ({exc.__class__.__name__})"
+    if proc.returncode != 0:
+        return False, f"environment_not_ready: focus-occlusion probe exited {proc.returncode}"
+    try:
+        result = _json.loads(proc.stdout.strip().splitlines()[-1]).get("result")
+        occluded = result["occluded"]
+        measured = int(result["measured"])
+        total = int(result["total"])
+    except (KeyError, ValueError, IndexError, TypeError):
+        return False, "environment_not_ready: focus-occlusion probe returned unparseable output"
+    if total and not measured:
+        # Every control sat outside the viewport: nothing was actually hit-tested,
+        # so "no occluded controls" would be an unmeasured claim, not a pass.
+        return False, "environment_not_ready: focus-occlusion probe hit-tested no control"
+    if occluded:
+        named = "; ".join(f"{item['control']} covered by {item['covered_by']}" for item in occluded[:5])
+        return False, f"focus_occlusion assertion: {len(occluded)} control(s) covered: {named}"
+    return True, None
+
+
 def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, object]:
     """Build the tiered evidence record for one verification run.
 
@@ -1210,6 +1282,18 @@ def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, obj
             evidence["tier_reached"] = "L2"
             evidence["outcome"] = "failed"
             tiers["L3"] = {"status": "skipped", "reason": "upstream_blocked: L2 touch-target check failed"}
+            return evidence
+
+        focus_ok, focus_reason = probe_focus_occlusion(html)
+        if focus_reason and "environment_not_ready" in focus_reason:
+            tiers["L2"] = {"status": "degraded", "reason": focus_reason}
+            evidence["focus_occlusion_not_verified"] = focus_reason
+            evidence["environment_not_ready"] = True
+        elif not focus_ok and focus_reason:
+            tiers["L2"] = {"status": "failed", "reason": focus_reason}
+            evidence["tier_reached"] = "L2"
+            evidence["outcome"] = "failed"
+            tiers["L3"] = {"status": "skipped", "reason": "upstream_blocked: focus-occlusion assertion failed"}
             return evidence
 
     if l2_ok:

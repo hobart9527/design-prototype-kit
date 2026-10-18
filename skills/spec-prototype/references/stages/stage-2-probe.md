@@ -131,6 +131,12 @@ never share one rule:
   and let the secondary choices follow from it. Varying everything at once
   produces three unattributable results: the comparison teaches nothing, and the
   next decision starts from zero.
+- **Attribute every variant in the artifact.** Each direction or variant carries
+  `data-variant="<id>"` on its root element (and a matching `data-variant` on the
+  comparison container), so a screenshot, a comment, or a capture record names the
+  variant it came from without a human reconstructing it from the directory the
+  file happened to sit in. Variants of one decision share one fixture dataset —
+  different data makes the comparison a data comparison, not a design one.
 
 The craft floor is identical across every direction and every variant. It is not
 an axis and never trades against one. A candidate that wins on looks while

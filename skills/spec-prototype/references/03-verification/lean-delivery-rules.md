@@ -1,12 +1,14 @@
 # Lean Delivery Rules (轻量化高质交付)
 
 These are **boundary** rules: truth, authority, scope and receipt honesty. They are
-always in force; they are loaded here once at the start of Turn 3 (Look & Deliver),
-which is when verification claims, authority tags, and lifecycle boundaries get
-written into the record and the receipt. Loading them earlier spends Turn 1/2 context
-on rules that only bite at receipt time.
+always in force, but load only the sections needed at each stage: the author-side
+sections **Interactive Ergonomics**, **Domain Entity Grounding**, and **Precondition**
+before the first runnable write in Turn 2; receipt and authority sections at the
+start of Turn 3, when verification claims and lifecycle boundaries enter the record.
 
-This file is the sole owner of every rule ID below. Other files link to the ID; they do not restate the rule.
+This file owns its boundary rules. Other files link to those rules; they do not restate
+them. Generating-side craft floors, including `SLOP-002`, are owned by
+[`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md).
 
 ## This is a boundary list, not a design checklist
 
@@ -38,10 +40,6 @@ small and general, and push the ceiling up instead of the floor higher.
 
 Keep interactive prototypes focused and lightweight; size follows the declared scope, not a line quota. For complex multi-surface or operational consoles, use the physical triad (`index.html` structure + `anchor.css` + `anchor.js`), and ALWAYS generate `prototype/shared/tokens.css` with DTCG root tokens and link it in `index.html` (`<link rel="stylesheet" href="../../../shared/tokens.css">`) so token inheritance passes.
 Crucially, `index.html` must follow progressive enhancement: the primary view and initial fold must author the entities the brief gives directly in static markup. Never render an empty body that depends on client-side JavaScript hydration to populate the initial screen.
-
-## Anti-Slop Discipline: No Thick Container Accent Stripes (SLOP-002)
-
-Containers, cards, and panel wrappers must never use thick side accent stripes (e.g. `border-left: 3px solid var(--accent)` or heavy left indicator lines on static layout cards). High-severity AI slop flags this pattern. Differentiate containers using grid rhythm, subtle surface brightness contrast, or refined 1px perimeter borders. An accent border is legitimate only on transient status toasts or on the single currently selected/active row.
 
 ## Interactive Ergonomics & Risk-Tiered Confirmation Contract (交互人体工学与风险分级确认契约)
 

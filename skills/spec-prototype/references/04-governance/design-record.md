@@ -18,7 +18,7 @@ prototype/
 └── experiments/<slice>/anchor/index.html   # the runnable prototype
 ```
 
-`compile_tokens.py` 是 `t1.json`（派生包装）的唯一写者；`tokens.css` 在探索期可由设计师直写，一旦进入 Stage 5 编译则以编译产物为准，探索期手写值需先回写至设计记录（`world.md` 或 `discussion.md`）。
+The tree above is the sole owner of canonical deliverable paths; other references name only the relevant path or link here. `compile_tokens.py` 是 `t1.json`（派生包装）的唯一写者；`tokens.css` 在探索期可由设计师直写，一旦进入 Stage 5 编译则以编译产物为准，探索期手写值需先回写至设计记录（`world.md` 或 `discussion.md`）。
 
 ## Two layouts, one loading seam
 

@@ -183,6 +183,20 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         if (run.get("taste") or {}).get("status") != "judged":
             unverified.append(f"{run.get('case_id')}/{run.get('variant')}: visual taste not measured")
 
+    # Advisory metrics are instruments, not gates: one that reads `null` was never
+    # measured, which is neither a pass nor a failure. Naming them here keeps them
+    # out of `hard_gates` while leaving the reader unable to mistake silence for
+    # cleanliness. Only `null` and an absent taste verdict qualify — a measured
+    # `false` is a result, not a gap.
+    unmeasured_dimensions = []
+    for run in runs:
+        where = f"{run.get('case_id')}/{run.get('variant')}"
+        if (run.get("taste") or {}).get("status") != "judged":
+            unmeasured_dimensions.append(f"{where}: taste not measured")
+        for name, value in sorted((run.get("advisory") or {}).items()):
+            if value is None:
+                unmeasured_dimensions.append(f"{where}: {name} not measured")
+
     # Which arm tripped a hard gate, so the top-level status can say what it is
     # about. A gate on the *control* arm is a broken control, not a candidate
     # regression: it makes the run unusable as evidence, which is a different
@@ -279,6 +293,7 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         "pairwise": pairwise,
         "frontend": frontend,
         "unverified": sorted(set(unverified)),
+        "unmeasured_dimensions": sorted(set(unmeasured_dimensions)),
     }
 
 
@@ -384,6 +399,8 @@ def render_markdown(report: dict) -> str:
             lines.append(f"  (rate is an estimate: {contract.get('reinterpretation_rate_note')})")
     else:
         lines.append("- not run for this matrix")
+    lines += ["## Unmeasured dimensions", ""]
+    lines += [f"- {item}" for item in report.get("unmeasured_dimensions") or []] or ["- (none)"]
     lines += ["## Regression vs stable", "", f"verdict: **{report['regression']['verdict']}**", ""]
     for item in report["regression"]["regressions"]:
         lines.append(f"- regression: {item['case_id']} r{item['repeat']} {item['dimension']} "

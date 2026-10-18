@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import importlib.util
+import re
 
 import pytest
 
@@ -551,3 +552,178 @@ def test_partial_domain_auth_does_not_elevate_color_via_root(tmp_path):
     color_auth = domain_auth.get("color", default_auth if not domain_auth else "derived")
     assert color_auth == "derived", (
         "partial domain map must not let color inherit the legacy root explicit_human")
+
+
+def _write_token_sources(tmp_path: Path, *, light: str, dark: str | None = None):
+    proto = tmp_path / "prototype"
+    proto.mkdir(parents=True, exist_ok=True)
+    light_path = proto / "world.md"
+    light_path.write_text(light, encoding="utf-8")
+    dark_path = None
+    if dark is not None:
+        dark_path = proto / "world-dark.md"
+        dark_path.write_text(dark, encoding="utf-8")
+    return proto, light_path, dark_path
+
+
+def test_authored_state_tokens_are_emitted_and_absent_by_default():
+    """Status hues are authored per product. A default palette must not gain a
+    token it never declared, or the sealed bytes of every existing stylesheet
+    would no longer reproduce."""
+    ct = _load_compiler()
+    default_css = ct.generate_css(ct.compute_tokens({}))
+    for var in ("--status-success:", "--status-info:"):
+        assert var not in default_css, f"default output invented {var}"
+
+    source = ('# World\n\n```contract:tokens\n'
+              'state_nominal: "#2E7D32"\nstate_warning: "#F59E0B"\n'
+              'state_danger: "#DC2626"\nstate_success: "#16A34A"\n'
+              'state_info: "#2563EB"\n```\n')
+    authored = ct.extract_dynamic_palette(source, mode="formal")
+    assert authored["status_running"] == "#2E7D32"
+    assert authored["status_warning"] == "#F59E0B"
+    assert authored["status_danger"] == "#DC2626"
+    assert authored["status_success"] == "#16A34A"
+    assert authored["status_info"] == "#2563EB"
+
+    css = ct.generate_css(ct.compute_tokens({}, authored))
+    assert "  --status-success: #16A34A;" in css
+    assert "  --status-info: #2563EB;" in css
+    # The DTCG projection carries the same authored values, not a scaffold default.
+    dtcg = ct.generate_dtcg_json(ct.compute_tokens({}, authored))
+    assert dtcg["color"]["status-success"]["$value"] == "#16A34A"
+    assert dtcg["color"]["status-info"]["$value"] == "#2563EB"
+    assert "status-success" not in ct.generate_dtcg_json(ct.compute_tokens({}))["color"]
+
+
+def test_default_token_output_stays_byte_stable_with_opt_in_flags_absent():
+    """The default compile must stay byte-for-byte what it always was: the sha256
+    fuse and every sealed stylesheet in the wild depend on it."""
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({})
+
+    baseline = ct.generate_css(tokens)
+    for keyword in ("oklch(", "light-dark(", "--step-", "Output options"):
+        assert keyword not in baseline, f"default output leaked opt-in content: {keyword}"
+
+    # Every explicit default must render exactly the baseline bytes.
+    explicit = ct.generate_css(tokens, None, color_format="hex", color_schemes="single",
+                               type_scale="static")
+    assert explicit == baseline
+
+
+def test_default_digest_ignores_the_default_option_set():
+    """A default compile's digest must be identical to the pre-flag digest, or
+    every sealed stylesheet would read as drift after this change."""
+    ct = _load_compiler()
+    source = "# Discussion\n\n- Energy: kinetic\n"
+    legacy = ct._token_input_digest(source, "formal")
+    defaulted = ct._token_source_digest(source, "formal")
+    assert defaulted == legacy
+
+    # A non-default option must move the digest, so an opt-in sheet can never be
+    # mistaken for a default one by the fuse.
+    oklch = ct._token_source_digest(source, "formal", color_format="oklch")
+    assert oklch != legacy
+    clamped = ct._token_source_digest(source, "formal", type_scale="clamp")
+    assert clamped not in (legacy, oklch)
+
+
+def test_oklch_opt_in_upgrades_colors_but_keeps_hex_fallback():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({})
+    css = ct.generate_css(tokens, color_format="oklch")
+
+    # The base declaration stays hex, so a browser without OKLCH paints the same
+    # design instead of resolving an unsupported colour function to nothing.
+    assert f"  --accent-primary: {tokens['colors']['accent_primary']};" in css
+    assert "@supports (color: oklch(0 0 0))" in css
+    assert "  --accent-primary: oklch(" in css
+    # rgba() accents carry alpha that OKLCH cannot express here: they must not be
+    # dropped or silently flattened into an opaque value.
+    assert "--accent-subtle: rgba(" in css or "--accent-subtle: oklch(" not in css
+
+
+def test_light_dark_opt_in_pairs_both_schemes_and_requires_both():
+    ct = _load_compiler()
+    light = ct.compute_tokens({})
+    dark = ct.compute_tokens({}, ct.DARK_ATMOSPHERES["titanium-amber"])
+
+    css = ct.generate_css(light, dark["colors"], color_schemes="light-dark")
+    assert "color-scheme: light dark;" in css
+    assert (f"  --accent-primary: light-dark({light['colors']['accent_primary']}, "
+            f"{dark['colors']['accent_primary']});") in css
+
+    # A single-sided token is not a scheme: it would present one value as two.
+    partial = dict(dark["colors"])
+    partial.pop("border_bright")
+    with pytest.raises(ValueError, match="border_bright"):
+        ct.generate_css(light, partial, color_schemes="light-dark")
+    with pytest.raises(ValueError, match="requires a dark token set"):
+        ct.generate_css(light, None, color_schemes="light-dark")
+
+
+def test_fluid_type_opt_in_emits_a_monotonic_clamp_scale():
+    ct = _load_compiler()
+    css = ct.generate_css(ct.compute_tokens({}), type_scale="clamp")
+
+    steps = dict(re.findall(r"  --step-(-?\d+): clamp\(([^)]*)\);", css))
+    assert set(steps) == {"-1", "0", "1", "2", "3", "4", "5"}
+
+    def bounds(value: str) -> tuple[float, float]:
+        low, _mid, high = (part.strip() for part in value.split(","))
+        to_rem = lambda v: float(v.removesuffix("rem"))  # noqa: E731
+        return to_rem(low), to_rem(high)
+
+    previous_high = 0.0
+    for step in ("-1", "0", "1", "2", "3", "4", "5"):
+        low, high = bounds(steps[step])
+        assert low < high, f"step {step} has an inverted clamp: {steps[step]}"
+        assert low > previous_high - 1e-9, f"step {step} does not continue the scale"
+        previous_high = high
+
+
+def test_light_dark_compile_round_trips_through_the_freshness_fuse(tmp_path: Path):
+    """The sealed sheet must reproduce: an opt-in compile the fuse cannot rebuild
+    would be an unverifiable artifact masquerading as sealed."""
+    ct = _load_compiler()
+    _, light_path, dark_path = _write_token_sources(
+        tmp_path,
+        light="# World\n\n- Energy: steady\n- --accent-primary: #d6f56b\n",
+        dark="# World\n\n- Energy: steady\n- --accent-primary: #38bdf8\n",
+    )
+    css = tmp_path / "prototype/shared/tokens.css"
+    ct.compile_tokens(str(light_path), str(css), dark_source_path=str(dark_path),
+                      color_schemes="light-dark", color_format="oklch")
+
+    sync = ct.check_tokens_sync(str(css), str(light_path), dark_source_path=str(dark_path),
+                                color_schemes="light-dark", color_format="oklch")
+    assert sync["state"] == "in_sync", sync
+
+    # Reading the same sheet back under the default options is drift, not a pass:
+    # the generated bytes are a different artifact.
+    mismatched = ct.check_tokens_sync(str(css), str(light_path))
+    assert mismatched["state"] == "out_of_sync"
+    assert "output options" in mismatched["drift"]
+
+    # Hand-editing only the paired half fails the body freshness check.
+    forged = css.read_text(encoding="utf-8").replace("#d6f56b", "#ff00ff")
+    css.write_text(forged, encoding="utf-8")
+    assert ct.check_tokens_sync(str(css), str(light_path), dark_source_path=str(dark_path),
+                                color_schemes="light-dark", color_format="oklch")["state"] == "out_of_sync"
+
+
+def test_dark_source_without_light_dark_scheme_is_refused(tmp_path: Path):
+    """A dark source under a single-scheme compile is an unused input: refuse it
+    rather than sealing a sheet that silently ignored half its source."""
+    ct = _load_compiler()
+    _, light_path, dark_path = _write_token_sources(
+        tmp_path, light="# World\n\n- Energy: steady\n", dark="# World\n\n- Energy: steady\n")
+    with pytest.raises(ValueError, match="only valid with"):
+        ct.compile_tokens(str(light_path), str(tmp_path / "out.css"), dark_source_path=str(dark_path))
+
+    # The same refusal applies at the digest boundary, so a caller cannot build a
+    # seal the compiler itself would never emit.
+    with pytest.raises(ValueError, match="only valid with"):
+        ct._token_source_digest("# World\n", "formal", dark_source_path="prototype/dark.md",
+                                dark_source_text="# World\n")

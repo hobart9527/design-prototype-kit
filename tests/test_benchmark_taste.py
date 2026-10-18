@@ -14,6 +14,7 @@ import pytest
 REPO = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "benchmarks" / "runners"))
 sys.path.insert(0, str(REPO / "benchmarks" / "judges"))
+sys.path.insert(0, str(REPO / "skills" / "spec-prototype" / "scripts"))
 
 import bench_lib as bl  # noqa: E402
 import aggregate_report  # noqa: E402
@@ -23,6 +24,7 @@ import contract_fidelity_judge as cfj  # noqa: E402
 import divergence_judge as dj  # noqa: E402
 import regression_judge  # noqa: E402
 import slop_detector as sd  # noqa: E402
+import subprocess  # noqa: E402
 
 
 def _write(root: pathlib.Path, name: str, text: str) -> pathlib.Path:
@@ -670,4 +672,140 @@ def test_taste_flags_are_in_the_case_schema():
         case = bl.load_case(case_id)
         assert case["meta"]["evaluation"].get("visual_pairwise"), \
             f"{case_id} runs taste judges but captures no screenshots"
+
+
+def test_aggregate_report_exposes_unmeasured_dimensions_outside_hard_gates(tmp_path):
+    run_dir = tmp_path / "c" / "candidate_skill" / "run1"
+    bl.write_json(run_dir / "run-result.json", {
+        "case_id": "c", "variant": "candidate_skill", "repeat": 1, "status": "PASS",
+        "metrics": {}, "runtime": {"status": "pass", "checks": []},
+        "semantic": {"hard_gate": "pass"}, "task": {"status": "pass"},
+        "taste": {"status": "unverified"},
+        "advisory": {"responsive_type": None, "motion_support": True},
+    })
+    # This report fixture exercises the P1 extension without changing the stable
+    # run-result schema, whose top-level evidence contract remains closed.
+    report = aggregate_report.build(tmp_path, "custom", "run")
+    assert report["unmeasured_dimensions"] == [
+        "c/candidate_skill: responsive_type not measured",
+        "c/candidate_skill: taste not measured",
+    ]
+    # A measured `true` is a result, not a gap, and no advisory key may become a gate.
+    assert not any("motion_support" in item for item in report["unmeasured_dimensions"])
+    assert "responsive_type" not in report["hard_gates"]
+    assert "motion_support" not in report["hard_gates"]
+    assert report["regression"]["verdict"] == "INCONCLUSIVE"
+
+
+def test_aggregate_report_lists_null_advisory_metrics_as_unmeasured(tmp_path):
+    run_dir = tmp_path / "c" / "candidate_skill" / "run1"
+    bl.write_json(run_dir / "run-result.json", {
+        "case_id": "c", "variant": "candidate_skill", "repeat": 1,
+        "status": "PASS", "metrics": {},
+        "advisory": {"responsive_type": None, "contrast_mode": None},
+    })
+    report = aggregate_report.build(tmp_path, "custom", "run")
+    assert any("responsive_type" in item for item in report["unmeasured_dimensions"])
+    assert any("contrast_mode" in item for item in report["unmeasured_dimensions"])
+
+
+def test_cocreation_judge_returns_missing_signal_reasons_and_lawful_skip(tmp_path):
+    _transcript(tmp_path, [
+        ("user", "build a reader"),
+        ("assistant", "已按 case 规定跳过方向选择，直接实现单一路线。"),
+    ])
+    result = ccj.judge(tmp_path, case={"expected_route": "single_direction"})
+    assert result["status"] == "not_applicable"
+    assert result["verdict"] == "not_applicable"
+    assert any(item["signal"] == "c0_presented" for item in result["missing_signal_reasons"])
+
+
+def test_cocreation_judge_does_not_allow_skip_when_route_requires_co_creation(tmp_path):
+    _transcript(tmp_path, [
+        ("user", "build a reader"),
+        ("assistant", "本轮跳过方向选择。<html>anchor/index.html</html>"),
+    ])
+    result = ccj.judge(tmp_path, case={"expected_route": "co_creation"})
+    assert result["verdict"] == "reveal_only"
+    assert any(item["signal"] == "expected_route" for item in result["missing_signal_reasons"])
+
+
+def test_case_expected_route_schema_and_golden_declaration():
+    schema = json.loads((bl.SCHEMAS_DIR / "case.schema.json").read_text())
+    assert "expected_route" in schema["properties"]
+    assert set(schema["properties"]["expected_route"]["enum"]) == {"co_creation", "single_direction"}
+    assert bl.load_case("approval-workflow")["meta"]["expected_route"] == "co_creation"
+
+
+def test_report_renders_unmeasured_dimensions():
+    rendered = aggregate_report.render_markdown({
+        "suite": "s", "run_id": "r", "status": "PASS", "hard_gate_arms": [],
+        "status_divergence": None, "hard_gates": {}, "provenance": {}, "runs": [],
+        "per_variant": {}, "slop_rules": {}, "metrics": {
+            "pairwise_preference": {}, "pairwise_pairs": 0, "pairwise_unverified": 0,
+            "pairwise_agreement": None, "pairwise_confidence_counts": {},
+            "pairwise_cost_usd": 0.0, "pairwise_cost_recorded": 0, "pairwise_cost_missing": 0,
+        }, "regression": {"verdict": "INCONCLUSIVE", "regressions": []},
+        "pairwise": [], "frontend": [], "unverified": [],
+        "unmeasured_dimensions": ["c/candidate_skill: responsive_type not measured"],
+    })
+    assert "## Unmeasured dimensions" in rendered
+    assert "c/candidate_skill: responsive_type not measured" in rendered
+
+
+def test_review_portal_renders_a_comment_overlay_attribute_to_a_variant():
+    import generate_review_portal as grp
+    html = grp.build_portal_html(
+        [{"id": "A", "name": "Direction A", "url": "prototype/a.html"}],
+        directions=[{"id": "A", "name": "Direction A", "url": "prototype/a.html"}],
+    )
+    assert "comment-overlay" in html
+    assert "data-variant" in html
+    assert "currentVariant" in html and "variant: currentVariant" in html
+    assert "data-comment-list" in html
+
+
+def test_capture_exposes_scheme_and_accessibility_preference_hooks():
+    source = (REPO / "skills/spec-prototype/scripts/capture.mjs").read_text()
+    assert "--schemes" in source
+    assert "forcedColors" in source
+    assert "prefers-contrast" in source
+
+
+def _token_set(path: pathlib.Path, surface: str, text: str) -> pathlib.Path:
+    path.write_text(json.dumps({"color": {
+        "surface": {"$type": "color", "$value": surface},
+        "text-primary": {"$type": "color", "$value": text},
+    }}), encoding="utf-8")
+    return path
+
+
+def _run_wcag(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["node", str(REPO / "skills/spec-prototype/scripts/wcag-check.js"), *args],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+
+
+def test_wcag_checker_measures_each_scheme_and_refuses_a_missing_one(tmp_path):
+    """A dark rendition that fails, and one that was never supplied, both stay visible."""
+    light = _token_set(tmp_path / "light.json", "#ffffff", "#111111")
+    dark_fails = _token_set(tmp_path / "dark-fail.json", "#000000", "#333333")
+
+    passing = _run_wcag("--schemes", str(light), str(light))
+    payload = json.loads(passing.stdout)
+    assert passing.returncode == 0 and payload["allPass"] is True
+    assert payload["schemes"]["light"]["allPass"] and payload["schemes"]["dark"]["allPass"]
+
+    failing = _run_wcag("--schemes", str(light), str(dark_fails))
+    payload = json.loads(failing.stdout)
+    assert failing.returncode == 1 and payload["allPass"] is False
+    assert payload["schemes"]["light"]["allPass"] is True
+    assert payload["schemes"]["dark"]["allPass"] is False, "dark failure must not be masked by a passing light"
+
+    missing = _run_wcag("--schemes", str(light), str(tmp_path / "nope.json"))
+    payload = json.loads(missing.stdout)
+    assert missing.returncode == 1
+    assert payload["schemes"]["dark"]["unmeasured"] is True
+    assert payload["allPass"] is False, "an unmeasured scheme is not a pass"
 

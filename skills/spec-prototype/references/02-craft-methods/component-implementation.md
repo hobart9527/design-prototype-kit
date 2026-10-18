@@ -46,6 +46,20 @@ A prototype cannot be a fragile static mock that only looks good on a single pri
 4. **Error & Recovery State**: Provide inline, actionable error boundaries with retry triggers and contextual diagnostic messages rather than raw stack traces.
 5. **Overflow & Extreme Data State**: Handle 100+ row pagination/virtualization, extreme string overflows (`text-overflow: ellipsis` with tooltips), zero values, and peak-scale chart spikes.
 
+### Unified state recipe
+
+Select only the states required by the task; keep the surface, announcement, copy and recovery behavior in one row so the visual treatment cannot imply a recovery path the interaction does not provide. Every `?state=` alias below is an entry point, not a second state owner; apply it through the single `render()` path above.
+
+| State | Visual treatment | ARIA / semantics | Copy | Recovery action | `?state=` entry alias |
+| --- | --- | --- | --- | --- | --- |
+| Loading | Geometry-matched skeleton or restrained progress indicator; reserve final space to avoid layout shift. | `aria-busy="true"` on the updating region; announce meaningful long waits with a polite live status, not each skeleton. | Name the work in progress; avoid false completion language. | Keep safe adjacent actions available; expose cancel only when cancellation is real. | `?state=loading` |
+| Empty | Explain the absence in the domain's visual language; show a useful first action, not a blank panel. | Use a labelled region/list with a real empty status; do not expose decorative placeholders as data. | Say why it is empty when known, then name the next action. | Link or button enters the first valid create/import/filter action. | `?state=empty` |
+| Error | Preserve surrounding context; distinguish local failure from page failure and retain submitted values. | Inline error is associated with the affected control/region; announce newly arrived errors politely and focus only when the task is blocked. | State what failed without raw stack traces; distinguish retryable from terminal. | Retry, edit-and-resubmit, or leave safely; each action must match the actual operation. | `?state=error` |
+| Stale / partial | Keep last-known data visible with a persistent stale marker and a clear freshness boundary. | Mark stale content and its timestamp in text; `aria-live="off"` for background refresh churn, polite announcement for a user-requested refresh result. | Identify what is delayed and when the data was last current. | Refresh/retry while preserving selection, filters and drafts; do not clear last-known data on failure. | `?state=stale` |
+| Offline | Retain readable cached content; visually separate queued local work from server-confirmed work. | Expose connection status and queued/syncing state as text; do not announce every reconnect tick. | Say what remains available, what is queued, and what has not reached the service. | Retry sync when connected; preserve the queue and provide a safe discard path only if specified. | `?state=offline` |
+
+For each alias, echo the applied name in `document.body.dataset.state` after the state is actually rendered. The query alone is not proof that the fixture or interaction reached the state.
+
 ## State Reachability & URL Parameter Routing
 
 Prototypes with multi-step workflows, modals, or exceptional states must natively support deterministic URL query parameter routing so automated probes, reviewers, and reviewers' deep links can enter directly without stepping through previous screens:

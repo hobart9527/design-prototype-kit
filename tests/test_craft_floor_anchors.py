@@ -54,6 +54,7 @@ def test_a_rule_without_a_detector_states_why():
             assert entry.get("why"), f"{rule_id} is prose_only but gives no reason"
         else:
             assert callable(entry.get("detector")), f"{rule_id} has no callable detector"
+            assert entry.get("polarity") in {"presence", "violation"}, f"{rule_id} lacks an explicit polarity"
 
 
 def test_direction_selected_techniques_are_not_token_presence_gates(tmp_path):
@@ -153,6 +154,69 @@ def test_scan_surfaces_a_broken_detector_rather_than_reading_it_as_clean(tmp_pat
         "an errored detector must not count as checked"
 
 
+def test_html_scan_includes_linked_styles_and_marks_unresolved_coverage(tmp_path):
+    html_dir = tmp_path / "artifact"
+    css_dir = html_dir / "styles"
+    css_dir.mkdir(parents=True)
+    html = html_dir / "index.html"
+    html.write_text(
+        '<html><head><link rel="stylesheet" href="styles/app.css">'
+        '<link rel="stylesheet" href="missing.css"></head><body></body></html>',
+        encoding="utf-8",
+    )
+    (css_dir / "app.css").write_text("button:active { transform: scale(.98); }", encoding="utf-8")
+    result = detect.scan(html)
+    assert str(css_dir / "app.css") in result["sources"]
+    assert result["unresolved_links"] == ["missing.css"]
+    assert result["source_coverage"] == "partial"
+    assert {f["rule"]: f["status"] for f in result["findings"]}["CRAFT-PRESS-DETENT"] == "hit"
+    coverage = next(f for f in result["findings"] if f["rule"] == "SOURCE-COVERAGE")
+    assert coverage["status"] == "unmeasured"
+    assert result["unmeasured"] >= 1
+
+
+def test_html_scan_reads_shared_token_css_outside_the_anchor_directory(tmp_path):
+    # The real anchor layout links ../../../shared/tokens.css. Confining the read
+    # to the HTML's own folder reported that live file as unresolved and left the
+    # token layer unscanned — a false coverage gap on every layered prototype.
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    anchor = repo / "prototype/experiments/slice/anchor"
+    shared = repo / "prototype/shared"
+    anchor.mkdir(parents=True)
+    shared.mkdir(parents=True)
+    (shared / "tokens.css").write_text(":root { --x: 1 }\n.num { font-variant-numeric: tabular-nums; }\n", encoding="utf-8")
+    html = anchor / "index.html"
+    html.write_text(
+        '<html><head><link rel="stylesheet" href="../../../shared/tokens.css">'
+        '<link rel="stylesheet" href="anchor.css"></head><body></body></html>',
+        encoding="utf-8",
+    )
+    (anchor / "anchor.css").write_text("button:active { transform: scale(.98); }", encoding="utf-8")
+    result = detect.scan(html)
+    assert str(shared / "tokens.css") in result["sources"]
+    assert result["unresolved_links"] == []
+    assert result["source_coverage"] == "complete"
+    assert {f["rule"]: f["status"] for f in result["findings"]}["CRAFT-TABULAR-NUMS"] == "hit"
+
+
+def test_html_scan_still_refuses_a_link_escaping_the_scan_root(tmp_path):
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    anchor = repo / "prototype/experiments/slice/anchor"
+    anchor.mkdir(parents=True)
+    (tmp_path / "outside.css").write_text(".num { font-variant-numeric: tabular-nums; }", encoding="utf-8")
+    html = anchor / "index.html"
+    html.write_text(
+        '<html><head><link rel="stylesheet" href="../../../../../outside.css"></head><body></body></html>',
+        encoding="utf-8",
+    )
+    result = detect.scan(html)
+    assert str(tmp_path / "outside.css") not in result["sources"]
+    assert result["unresolved_links"] == ["../../../../../outside.css"]
+    assert result["source_coverage"] == "partial"
+
+
 def test_the_detector_serialises_for_the_cli(tmp_path):
     artifact = tmp_path / "a.html"
     artifact.write_text("<html><body><button>x</button></body></html>", encoding="utf-8")
@@ -179,8 +243,6 @@ def test_quality_floor_craft_invariants_carry_craft_floor_ids():
 
 
 def test_crosswalk_accounts_for_every_emitted_slop_rule():
-    """Every emitted SLOP id is mapped or explicitly unmapped with a reason —
-    'not mapped' is a recorded status, not an omission (prose_only `why` mirror)."""
     from craft_floor_crosswalk import BENCHMARK_ANCHORS, BENCHMARK_UNMAPPED, validate_crosswalk
     assert not validate_crosswalk()
     import re

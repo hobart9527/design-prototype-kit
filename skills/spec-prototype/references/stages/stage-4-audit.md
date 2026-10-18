@@ -26,7 +26,14 @@ purpose of this stage.
    then reconciliation. Name the strongest authored relationship that reached the
    render, the task behavior actually exercised, and the highest-impact opportunity
    to improve; the review preserves and strengthens the direction rather than only
-   demonstrating absence of defects.
+   demonstrating absence of defects. Run the four probes in that first look and
+   record their outcome as one `taste_probe:` line in the design record:
+   **Swap** (replace the palette with the category default — does the structure
+   still read as this product?); **Squint** (does the first-glance hierarchy
+   survive blur?); **Signature** (is the Stage 1 Signature Moment the thing you
+   see first?); **Token** (does any competitor's stylesheet drop in unchanged?).
+   A probe that fails is a judgment, not yet a finding — it becomes one only when
+   it names the floor, contract block, or task it breaks (step 4).
    **Honest Rendering Precondition**: If screenshot capture failed, had runtime errors,
    or reports `stylesheets_applied: false` / `visual: pending_review` in `handoff-manifest.json`,
    never fabricate visual observations or assert that visual design floors passed.
@@ -86,14 +93,13 @@ Every capture receipt carries a `direction_contract_checklist` — the six quest
 `capture.mjs`; the review starts from these six against the render, and the review
 portal surfaces the same checklist per capture card.
 
-| Contract block | The question the render must answer |
-|---|---|
-| THESIS | Is the first viewport's claim visible without reading the copy? |
-| OWN-WORLD | Does the surface belong to the named world, or to dashboard chrome? |
-| STORY | Is the task's shape readable from the layout alone? |
-| FIRST VIEWPORT | Does the opening frame carry the product's own subject, not a template header? |
-| FORM | Do the Five Axes the contract names read as those axes? |
-| FINISH | Is the craft floor met on the rendered pixels (`detect.py` plus the capture read)? |
+Apply the six-block contract defined in [`design-language.md`](../01-foundations/design-language.md)
+to the rendered capture. The `direction_contract_checklist` emitted by `capture.mjs`
+and shown on each portal card carries the block-specific review prompts; do not keep
+a second prompt table here. Record a finding against the declared block and return it
+to its owning layer — normally the build — rather than amending the contract to match
+what got built. Pillars that the contract does not name are not audited here: this is a
+fidelity check, not a second review.
 
 A block that is declared and not observable is a finding, and its owning layer is
 the build — not the contract. Do not amend the contract to match what got built;
@@ -180,7 +186,12 @@ Quote all recorded counts (e.g. `small_touch_target_count`, `horizontal_overflow
 records 3 small touch targets on 1280, never write `small_touch_target_count: 0`; explain
 the context honestly (e.g. 1280 desktop compact button density vs 390 mobile touch compliance)
 instead of altering or denying the recorded number. Never dismiss a recorded manifest
-failure as a "runner bug" or override it with visual impressions. If
+failure as a "runner bug" or override it with visual impressions. A manifest field
+that reads `null` — or a name listed in `unmeasured` — means the runner could not
+measure it (`measurement_tier: cli` cannot read DOM signals); that is `unverified`,
+never `0`, `false`, or `clean`. Report it under `## 未验证（不得读作已验证）` with the
+tier that failed to measure it, and re-capture on the Playwright path when the
+signal decides a verdict. If
 `metadata.status` is `capture_failed`, or any `viewport_metrics.*.stylesheets_applied`
 is `false`, or `visual`/`human` is `pending_review`, then the receipt must set
 `visual_evidence: unverified` / `status: PARTIAL` and must NOT write

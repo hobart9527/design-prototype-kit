@@ -34,7 +34,7 @@ optional. Unknown keys, unknown enum values and duplicate ids fail closed.
 | `contract:actions` | list of mappings | `id`, `verb`, `trigger`, `commit`; `proximity_level` optional (default 1), `authority` ∈ `explicit\|derived\|proposed\|hypothesis` (default `derived`), `feedback`/`consequence` optional |
 | `contract:axes` | mapping | any of `density`, `energy`, `materiality`, `rhythm`, `character`; legacy aliases `weight`/`finish` → `materiality`, `seriousness` → `character` |
 | `contract:craft` | mapping | any of `surface_optics`, `spatial_geometry`, `micro_typography`, `data_marks` |
-| `contract:tokens` | mapping | `accent_seal` (hex), `accent_policy` (text) |
+| `contract:tokens` | mapping | `accent_seal` (hex), `accent_policy` (text), optional `state_nominal`, `state_warning`, `state_danger`, `state_success`, `state_info` (hex; `state` aliases `state_nominal`) |
 | `contract:meso` | mapping | any of `massing_pattern`, `kinematics`, `data_syntax` |
 
 A YAML value containing `: ` or beginning with a special character must be
@@ -83,8 +83,9 @@ are never interchangeable:
 The **evidence ladder** is a third, separate vocabulary —
 `explicit > observed > derived > hypothesis > unknown` (owned by
 `references/core-kernel.md` §4) — and it is the ordering the semantic judge reads.
-The decision row status `proposed | provisional | confirmed` (owned by
-`stage-1-frame.md`) is a fourth. Do not read one register's value as another's.
+The decision row status `proposed | provisional | confirmed` is a fourth
+(owned by `references/core-kernel.md` §4, same as the evidence ladder). Do not
+read one register's value as another's.
 
 ## Change rule
 

@@ -1,0 +1,211 @@
+{
+  "run_id": "20261018_014413",
+  "suite": "daily",
+  "generated_at": "20261018_020429",
+  "status": "REGRESSION",
+  "status_divergence": "hard gate tripped on candidate_skill while the paired verdict is INCONCLUSIVE: the gate is absolute and fires on the artifacts themselves, while the paired verdict only compares the candidate against the control, so both stand.",
+  "hard_gate_arms": [
+    "candidate_skill"
+  ],
+  "cases": [
+    "approval-workflow"
+  ],
+  "variants": [
+    "candidate_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "approval-workflow",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 5,
+        "elapsed_seconds": 1126.38,
+        "cost_usd": 27.4675
+      },
+      "notes": [],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "8c670145-93bd-4b65-884f-e40c41bda0e4",
+        "workspace": "/tmp/design-bench/approval-workflow/candidate_skill/20261018_014413-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261018_020429",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "02cd14d318e32ec582c168af7ee8f6932c50a4e023edcfffdfaca6dca85cf4d5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "2274dfb87fc2824305c3c87729bd40f1c31b189a3b14f6ac7d548e5fd82cdaf5",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "828bf3c4dd6d4042302504243b6f9fbbf61933970274cd34ab5b918a94322db1",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "03d3faa20fbba65f1cf6e311685d8cd0a5c3fd688ec0527f495f290f2c7c96a8",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "37203ed2848fba3b7150066a831b50867975189d87523f8ffa81434b72dd96fc",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "2ca9e7df0028c410addb0f896bb2bb45be5757046bbc349c9dffa11f485abb54",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "4589a66b891d8fedd31ec408fd11c971428d61f93dd6a4959580d0fe0e15a72f",
+              "browser_probe.mjs": "0487d83b2aa2ee31c917d0724d57bea73537ca42aa2f16e2f7a4ea40aa06c104",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "cd2670f37144d57cc3426df496fddb18c28ab14a53227f550133afcd6baf767e",
+              "run_case.py": "37203ed2848fba3b7150066a831b50867975189d87523f8ffa81434b72dd96fc",
+              "run_claude_session.py": "e4e45184d09373b2bfa02342e15b016199e6ab0bc412a0900ee667d2b4f86a49",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "07e7ddb2787b48337633c482de0605bf6493088906c90b23e6cb11139074cf53",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "e8b24c468634b1f4d0692ad64cf07067fc44c4726c31ca7f8bc7cff51be7a0ae",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "875b4beb1c515e46b1396f6951c0348a98d95608a4881fa895e4458238ba160b"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "cd4121923aa774c57630bd92d02ec7cedcff7993ab5878aebdd68d58deee22ec",
+            "session-summary.json": "6dbec92bbe291a9caed4b58b8e175513cfa6d2bfe85e9305146b6be2a750e0a6",
+            "task-traces.json": "755251aead587416d33adfabc402e3307710cf8ad231f270f8f9418f1a03ada8",
+            "visual-manifest.json": "b6dba8065e5b7231ce92ea052c1523b5db3430a48b2a9d553b008bd9022ca306",
+            "session-transcript.md": "0f9d45a9eb8b2f8143df46dcad23c8011de798e5beb0defd764e851ed6727073"
+          },
+          "aggregate_sha256": "2c705ca043f0803dd72bdb2df58b1a6f09365574ee62d8944ac5c4989f496252",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 0,
+    "authority_escape": 0,
+    "critical_task_break": 1,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 1,
+      "completed": 1,
+      "blocked": 0,
+      "partial": 0,
+      "task_success_rate": 0.5,
+      "method_recall": 0.667,
+      "method_precision": 0.4,
+      "semantic_gate_pass": 1,
+      "semantic_gate_fail": 0,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 5.0,
+      "cost_usd": 27.4675,
+      "elapsed_seconds": 1126.4,
+      "inline_hex_failures": 0,
+      "slop_score": 0.0,
+      "slop_high_findings": 0,
+      "taste_judged": 0,
+      "ai_slop_fail": 0,
+      "category_guessable_high": 0,
+      "first_viewport_thesis_present": 0,
+      "divergence_verdicts": [
+        "not_measured"
+      ],
+      "contract_blocks_fulfilled": null,
+      "contract_blocks_absent": null,
+      "cocreation_verdicts": [
+        "partial"
+      ],
+      "cocreation_before_build": 1,
+      "cocreation_measured": 1
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 1,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": true,
+    "source_identity": [
+      "c257a2dd667d551db3f83692ccbe38bca12874e43bff27c44de72a6b967d1926"
+    ],
+    "disclosure": "all 1 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_agreement": null,
+    "pairwise_confidence_counts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "pairwise_cost_usd": 0,
+    "pairwise_cost_recorded": 0,
+    "pairwise_cost_missing": 0,
+    "pairwise_cost_total_complete": true,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "slop_rules": {
+    "candidate_skill": {}
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "INCONCLUSIVE",
+    "pairs_compared": 0,
+    "compared_dimensions": 0,
+    "verified_dimensions": [],
+    "unverifiable_dimensions": [],
+    "regressions": [],
+    "improvements": [],
+    "missing_pairs": [
+      {
+        "case_id": "approval-workflow",
+        "repeat": 1,
+        "why": "no stable_skill pair"
+      }
+    ]
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "approval-workflow/candidate_skill: runtime authority_status unknown",
+    "approval-workflow/candidate_skill: visual taste not measured"
+  ],
+  "unmeasured_dimensions": [
+    "approval-workflow/candidate_skill: taste not measured"
+  ]
+}

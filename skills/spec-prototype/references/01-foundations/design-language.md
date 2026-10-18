@@ -120,6 +120,10 @@ unsupported object, diagnosis, permission or product capability.
 
 ### The Direction Contract is this chain, compressed
 
+This section is the **sole owner of the six Direction Contract blocks** — their names,
+what each compresses, and the two chain steps that deliberately have no block. Other
+references name a block or link here; none restate the block list as a second definition.
+
 When a direction is locked, publish it as a **Direction Contract** — the chain above
 compressed to what a reader can *see* on a screen. Author it under a
 `## Direction Contract` heading in `prototype/discussion.md`, in six labelled blocks.

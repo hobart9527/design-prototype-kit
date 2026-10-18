@@ -23,7 +23,7 @@ open alternatives only when a consequential choice is genuinely unresolved.
      In Turn 1, run the six-step Divergence Generator
      ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4) and record its anchors in the design record
      (the slice's `briefs/<slice>.md` on a layered tree, `prototype/discussion.md` otherwise):
-     1. `rut:` — one sentence naming the category's default surface (use neutral architectural terms; do NOT mention unrequested features like 评论/社交/推荐 unless preceded by an explicit negation marker like "不做/排除").
+     1. `rut:` — one sentence naming the category's default surface (use neutral architectural terms; do NOT mention unrequested features like 评论/社交/推荐 unless preceded by an explicit negation marker like "不做/排除"), followed by `rut_rejected:` — at least three named defaults of that category the divergence deliberately refuses, each with the reason it was refused. The list is Stage 4's falsifier: if the built design has drifted back into one of them, the divergence did not hold.
      2. Three lifeworld candidates, each naming its world and organising principle.
      3. `### Divergence seeds` — drawn or chosen seeds (`python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --record <the slice's record> --write` is an optional entropy source).
      4. `verdict: axes=[structure, <second axis>]` — two-axis verdict with Structure mandatory; then a per-candidate `challenger: fused(<technique>)` or `challenger: refused(<reason>)` line.
@@ -240,9 +240,9 @@ Decisions and authority table, and Five Axes calibration.
 ## Exit
 
 A design brief answers the current question and clearly separates facts, decisions,
-proposals, and open risks, and it carries a complete `### Divergence` record (rut,
-three lifeworld candidates, `### Divergence seeds`, two-axis verdict naming
-Structure). **Turn 1 ends here, at the Resume block**: Stage 2 opens in
+proposals, and open risks, and it carries a complete `### Divergence` record (`rut:`,
+`rut_rejected:` with at least three refused defaults and reasons, three lifeworld
+candidates, `### Divergence seeds`, two-axis verdict naming Structure). **Turn 1 ends here, at the Resume block**: Stage 2 opens in
 the next turn to explore 2–3 distinct visual and structural directions through rapid
 prototyping, without waiting on pre-spec locks. Write no `tokens.css`, HTML or evidence
 in this turn — the Resume block is recovery context for the next turn, not an approval

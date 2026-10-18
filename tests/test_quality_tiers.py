@@ -201,6 +201,32 @@ def test_tier_evidence_record_names_all_tiers(tmp_path, monkeypatch):
             assert tier.get("reason"), f"{tier_id} skipped without a reason"
 
 
+def test_focus_occlusion_browser_probe_detects_covering_element(tmp_path, monkeypatch):
+    """The browser probe's centre hit-test must fail an obscured, visible control."""
+    if not vpq.shutil.which("node"):
+        import pytest
+        pytest.skip("node unavailable")
+    if not vpq._style_engine_command():
+        import pytest
+        pytest.skip("style engine unavailable")
+    if not vpq.Path(__file__).resolve().parents[1].joinpath("benchmarks/runners/browser_probe.mjs").is_file():
+        import pytest
+        pytest.skip("browser_probe.mjs unavailable")
+
+    page = tmp_path / "covered.html"
+    page.write_text("""<!doctype html><html><head><style>
+      body { margin: 0; }
+      button { position: absolute; left: 20px; top: 20px; width: 120px; height: 60px; }
+      #cover { position: absolute; left: 20px; top: 20px; width: 120px; height: 60px;
+        z-index: 2; background: rgba(0,0,0,.5); }
+    </style></head><body><main><button>Continue</button><div id="cover"></div></main></body></html>""",
+        encoding="utf-8")
+
+    ok, reason = vpq.probe_focus_occlusion(page)
+    assert ok is False
+    assert reason and "focus_occlusion assertion" in reason and "covered by div#cover" in reason
+
+
 def _write_canonical_contract(tmp_path: Path) -> Path:
     """Canonical layout: specifications/<slice>/r1.spec.md + compiled IR JSON."""
     contract = tmp_path / "prototype/specifications/slice-a/r1.spec.md"

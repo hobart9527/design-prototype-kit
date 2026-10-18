@@ -44,6 +44,15 @@ validated Spec Contract. Exploration stays agile; engineering handoff stays form
 
 `explicit > observed > derived > hypothesis > unknown`
 
+**Decision-row status is a separate register.** A row in the Decisions and authority
+table carries `proposed | provisional | confirmed`, and this section owns what those
+mean: `proposed` is a candidate the designer put forward, `provisional` is a
+proposal carried forward while the direction is still open, and `confirmed` requires
+the user's own in-session selection. Nothing else — not a brief's wording, not a
+resume block, not an approval-shaped process note — promotes a row to `confirmed`.
+Every other document that names this status cites this section rather than
+redefining it.
+
 Every decision traces to empirical facts or declared hypotheses. Never invent
 unsupported product capabilities, third-party integrations, or user-research
 claims. When requirements or briefs provide counts or quantities without specific names

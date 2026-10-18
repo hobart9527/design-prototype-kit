@@ -345,6 +345,29 @@ def test_undeclared_axes_and_accent_stay_open():
                         "accent_policy": "only on the final commit"}
 
 
+def test_contract_tokens_admits_authored_state_colours_and_alias():
+    from compile_spec_ir import parse_palette_discipline
+
+    authored = parse_palette_discipline('''```contract:tokens
+state: "#111111"
+state_warning: "#F5A524"
+state_danger: "#DC2626"
+state_success: "#16A34A"
+state_info: "#2563EB"
+```''')
+    assert authored == {
+        "state_nominal": "#111111",
+        "state_warning": "#F5A524",
+        "state_danger": "#DC2626",
+        "state_success": "#16A34A",
+        "state_info": "#2563EB",
+    }
+    with pytest.raises(ValueError, match="must be a hex colour"):
+        parse_palette_discipline('```contract:tokens\nstate_warning: red\n```')
+    with pytest.raises(ValueError, match="duplicate state token"):
+        parse_palette_discipline('```contract:tokens\nstate: "#111111"\nstate_nominal: "#222222"\n```')
+
+
 STAGE1_DISCUSSION = """# Design Discussion: Reading Sanctuary
 
 ## 1. 业务与用户极端张力 (Core Tension)

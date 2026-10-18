@@ -41,8 +41,60 @@ function getContrast(hex1, hex2) {
 
 const args = process.argv.slice(2);
 if (args.length === 0) {
-  console.error("Usage:\n  node wcag-check.js <color1-hex> <color2-hex>\n  node wcag-check.js --on <bg-hex> <fg-hex> [<fg-hex> ...]\n  node wcag-check.js <tokens.json> [--level AAA]");
+  console.error("Usage:\n  node wcag-check.js <color1-hex> <color2-hex>\n  node wcag-check.js --on <bg-hex> <fg-hex> [<fg-hex> ...]\n  node wcag-check.js <tokens.json> [--level AAA]\n  node wcag-check.js --schemes <light.tokens.json> <dark.tokens.json> [--level AAA]");
   process.exit(1);
+}
+
+/**
+ * Measure one token set. Returns `{ok, payload}`; `ok` is false when the set
+ * cannot be measured (unreadable file, no surface, skipped tokens), so a scheme
+ * that was never supplied reads as unmeasured rather than as a pass.
+ */
+function measureTokenSet(file, targetLevel) {
+  const threshold = targetLevel === 'AAA' ? 7.0 : 4.5;
+  let content;
+  try {
+    content = JSON.parse(fs.readFileSync(file, 'utf-8'));
+  } catch (error) {
+    return { ok: false, payload: { file, allPass: false, unmeasured: true,
+      error: `token set unreadable: ${error.message}` } };
+  }
+  const colors = collectColors(content);
+  const surface = resolveSurface(colors);
+  const results = [];
+  const skipped = [];
+  let allPass = true;
+
+  const SURFACE_NAMES = new Set(['surface', 'background', 'bg-base', 'bg-void', 'bg', 'canvas']);
+  for (const [name, def] of Object.entries(colors)) {
+    if (SURFACE_NAMES.has(name)) continue;
+    const val = tokenHex(def, colors);
+    if (!val) {
+      skipped.push({ token: name, value: def?.$value ?? null });
+      continue;
+    }
+    if (!surface) continue;
+    const ratio = getContrast(val, surface);
+    const pass = ratio >= threshold;
+    if (!pass) allPass = false;
+    results.push({ token: name, value: val, surface, ratio: Number(ratio.toFixed(2)), pass });
+  }
+
+  // "No colors to check" is not "passed accessibility". A token set this tool
+  // cannot measure is refused (non-zero exit) so an empty or unfamiliar schema
+  // can never masquerade as a WCAG AA/AAA pass — and neither can a partially
+  // readable one whose skipped tokens were silently dropped from the audit.
+  if (!surface || results.length === 0 || skipped.length > 0) {
+    return { ok: false, payload: {
+      file, targetLevel, threshold, surface, allPass: false, results, skipped,
+      error: !surface
+        ? 'No surface/background color token was found; contrast cannot be measured.'
+        : skipped.length > 0
+          ? `${skipped.length} color token(s) had no resolvable hex $value; contrast for them cannot be measured.`
+          : 'No color tokens with a hex `$value` were found to contrast against the surface.',
+    } };
+  }
+  return { ok: allPass, payload: { file, targetLevel, threshold, surface, allPass, results } };
 }
 
 /**
@@ -136,55 +188,35 @@ function resolveSurface(colors) {
   return null;
 }
 
-if (args[0].endsWith('.json') || fs.existsSync(args[0])) {
-  const content = JSON.parse(fs.readFileSync(args[0], 'utf-8'));
-  const colors = collectColors(content);
-  const surface = resolveSurface(colors);
+// A dark rendition is not the light one recoloured: it is a different backdrop,
+// and a token that passes on light can fail on dark independently. Checking only
+// one set lets "we measured contrast" mean "we measured half of it", so this form
+// requires both and reports a missing set as `unmeasured` (non-zero exit) rather
+// than skipping it.
+if (args[0] === '--schemes') {
   const targetLevel = args.includes('--level') ? args[args.indexOf('--level') + 1] : 'AA';
-  const threshold = targetLevel === 'AAA' ? 7.0 : 4.5;
-  const results = [];
-  const skipped = [];
-  let allPass = true;
-
-  const SURFACE_NAMES = new Set(['surface', 'background', 'bg-base', 'bg-void', 'bg', 'canvas']);
-  for (const [name, def] of Object.entries(colors)) {
-    if (SURFACE_NAMES.has(name)) continue;
-    const val = tokenHex(def, colors);
-    if (!val) {
-      skipped.push({ token: name, value: def?.$value ?? null });
-      continue;
+  const schemes = {};
+  const names = ['light', 'dark'];
+  names.forEach((name, index) => {
+    const file = args[1 + index];
+    if (!file || !fs.existsSync(file)) {
+      schemes[name] = { allPass: false, unmeasured: true,
+        error: `no token set supplied for ${name}; contrast for it is unmeasured` };
+      return;
     }
-    if (!surface) continue;
-    const ratio = getContrast(val, surface);
-    const pass = ratio >= threshold;
-    if (!pass) allPass = false;
-    results.push({ token: name, value: val, surface, ratio: Number(ratio.toFixed(2)), pass });
-  }
-
-  // "No colors to check" is not "passed accessibility". A token file this tool
-  // cannot measure is refused (non-zero exit) so an empty or unfamiliar schema
-  // can never masquerade as a WCAG AA/AAA pass — and neither can a partially
-  // readable one whose skipped tokens were silently dropped from the audit.
-  if (!surface || results.length === 0 || skipped.length > 0) {
-    allPass = false;
-    console.log(JSON.stringify({
-      targetLevel,
-      threshold,
-      surface,
-      allPass,
-      results,
-      skipped,
-      error: !surface
-        ? 'No surface/background color token was found; contrast cannot be measured.'
-        : skipped.length > 0
-          ? `${skipped.length} color token(s) had no resolvable hex $value; contrast for them cannot be measured.`
-          : 'No color tokens with a hex `$value` were found to contrast against the surface.',
-    }, null, 2));
-    process.exit(1);
-  }
-
-  console.log(JSON.stringify({ targetLevel, threshold, surface, allPass, results }, null, 2));
+    schemes[name] = measureTokenSet(file, targetLevel).payload;
+  });
+  const measured = Object.values(schemes).filter(s => !s.unmeasured);
+  const allPass = measured.length === names.length && measured.every(s => s.allPass);
+  console.log(JSON.stringify({ targetLevel, schemes, allPass }, null, 2));
   process.exit(allPass ? 0 : 1);
+}
+
+if (args[0].endsWith('.json') || fs.existsSync(args[0])) {
+  const targetLevel = args.includes('--level') ? args[args.indexOf('--level') + 1] : 'AA';
+  const { ok, payload } = measureTokenSet(args[0], targetLevel);
+  console.log(JSON.stringify(payload, null, 2));
+  process.exit(ok ? 0 : 1);
 }
 
 // Batch form: `--on <background> <fg> [<fg> ...]` measures every foreground

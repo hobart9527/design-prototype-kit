@@ -264,7 +264,7 @@ def run_one(case_id: str, variant: str, repeat: int, matrix_dir: pathlib.Path, *
     # Co-creation is read from the session transcript, not the artifact: a beautiful
     # prototype built without ever offering a choice is the case it exists to catch.
     try:
-        result["cocreation"] = cocreation_judge.judge(out_dir)
+        result["cocreation"] = cocreation_judge.judge(out_dir, case=case)
         bl.write_json(out_dir / "cocreation.json", result["cocreation"])
     except Exception as exc:
         result["notes"].append(f"cocreation judge error: {exc}")
