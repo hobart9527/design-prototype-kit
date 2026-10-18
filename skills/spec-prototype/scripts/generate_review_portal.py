@@ -291,8 +291,12 @@ def _comment_script() -> str:
           who.className = 'comment-variant';
           who.textContent = c.variant;
           li.appendChild(who);
+          // The visible list carries the same attribution as the export, so a
+          // reviewer reading the pins does not have to open the JSON to know
+          // which page and frame width the note belongs to.
+          var where = [c.viewport, c.page].filter(Boolean).join(' · ');
           li.appendChild(document.createTextNode(
-            ' @' + c.x + '%/' + c.y + '% — ' + c.text));
+            (where ? ' [' + where + ']' : '') + ' @' + c.x + '%/' + c.y + '% — ' + c.text));
           list.appendChild(li);
         });
       }
@@ -312,7 +316,20 @@ def _comment_script() -> str:
       var y = Math.round(((clientY - rect.top) / rect.height) * 100);
       var text = window.prompt('Comment on ' + currentVariant + ' at ' + x + '%/' + y + '%:');
       if (!text || !text.trim()) return;
-      comments.push({ variant: currentVariant, x: x, y: y, text: text.trim() });
+      // Keep direction, page, and viewport together: coordinates alone are
+      // ambiguous when the reviewer switches candidates or frame widths.
+      var vpFrame = document.querySelector('.viewport-frame');
+      var viewport = vpFrame ? (vpFrame.getAttribute('data-viewport-frame') || null) : null;
+      comments.push({
+        variant: currentVariant,
+        version: document.getElementById('preview-frame').src,
+        page: currentView,
+        viewport: viewport,
+        x: x,
+        y: y,
+        text: text.trim()
+      });
+
       var pin = document.createElement('span');
       pin.className = 'comment-pin';
       pin.style.left = x + '%';

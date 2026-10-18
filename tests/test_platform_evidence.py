@@ -279,6 +279,85 @@ def test_unconfirmed_state_is_not_rendered_capture_evidence():
     assert meta["validation"]["claim"] == "capture_failed"
 
 
+def confirm_state(expected, dom):
+    return eval_seam(
+        "cap.confirmStateEntry(input.expected, input.dom)",
+        {"expected": expected, "dom": dom},
+    )
+
+
+def test_state_confirmed_via_applied_root_data_state():
+    # mobile-booking regression: data-state lives on the app shell (#app), not
+    # body/html; the CJK page text never contains the English state name, so
+    # the URL echo alone must not confirm — but the applied root must.
+    verdict = confirm_state("service", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "service",
+        "urlEcho": "service",
+        "domText": "选择服务项目 上门预约 技师",
+    })
+    assert verdict == {"expected": "service", "observed": "service", "confirmed": True}
+
+
+def test_state_body_data_state_still_wins():
+    verdict = confirm_state("review", {
+        "bodyState": "review",
+        "htmlState": "",
+        "appliedRootState": "service",
+        "urlEcho": "",
+        "domText": "确认订单",
+    })
+    assert verdict["confirmed"] is True
+    assert verdict["observed"] == "review"
+
+
+def test_url_echo_without_dom_echo_does_not_confirm():
+    verdict = confirm_state("conflict", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "",
+        "urlEcho": "conflict",
+        "domText": "时段冲突 请重新选择",
+    })
+    assert verdict["confirmed"] is False
+    assert verdict["observed"] == "conflict"
+
+
+def test_url_echo_with_english_dom_echo_confirms():
+    verdict = confirm_state("conflict", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "",
+        "urlEcho": "conflict",
+        "domText": "Selected slot is in conflict with another booking",
+    })
+    assert verdict["confirmed"] is True
+
+
+def test_mismatched_applied_root_does_not_confirm():
+    verdict = confirm_state("review", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "service",
+        "urlEcho": "",
+        "domText": "确认订单",
+    })
+    assert verdict["confirmed"] is False
+    assert verdict["observed"] == "service"
+
+
+def test_default_state_confirms_when_nothing_declared():
+    verdict = confirm_state("default", {
+        "bodyState": "",
+        "htmlState": "",
+        "appliedRootState": "",
+        "urlEcho": "",
+        "domText": "首页",
+    })
+    assert verdict["confirmed"] is True
+
+
 def test_cli_multi_state_capture_is_unconfirmed():
     result = stub_result(
         runner="system-browser-cli-concurrent",

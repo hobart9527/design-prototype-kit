@@ -71,6 +71,27 @@ export function buildVariantUrl(baseUrl, state, scheme, density) {
   return `${clean}${sep}${params.toString()}`;
 }
 
+// State-entry confirmation (CRAFT-STATE-ENTRY). Precedence for the applied
+// signal: body[data-state] → html[data-state] → outermost applied [data-state]
+// root (prototypes commonly keep live state on the app shell, e.g.
+// #app[data-state]; the contract counts that as the applied signal), then the
+// ?state= URL echo. The echo alone is a weaker signal (a router may ignore the
+// param), so it confirms only when the visible DOM text independently contains
+// the state name. Pure so the truth table is testable without a browser.
+export function confirmStateEntry(expectedState, dom) {
+  const raw = dom.bodyState || dom.htmlState || dom.appliedRootState || "";
+  const urlEcho = dom.urlEcho || "";
+  const domEcho = expectedState !== "default" && (dom.domText || "").includes(expectedState);
+  const declared = raw || urlEcho;
+  return {
+    expected: expectedState,
+    observed: declared,
+    confirmed: expectedState === "default"
+      ? declared === "default" || declared === ""
+      : raw === expectedState || (urlEcho === expectedState && domEcho),
+  };
+}
+
 // Requested-vs-actual reconciliation. The page reports only what it observed;
 // the request is only a request. A preference the engine did not apply — or a
 // rendition the page never acknowledged — is `null` (unmeasured), never the
@@ -162,25 +183,22 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, sche
           if (res.status() >= 400) failedUrls.push(res.url());
         });
         await page.goto(stateUrl, { waitUntil: "networkidle", timeout: 15000 });
-        const stateConfirmation = await page.evaluate((expectedState) => {
-          // Echo precedence: body[data-state] → html[data-state] → ?state= URL
-          // param. The URL echo is a weaker signal (a router may ignore the
-          // param), so the DOM must additionally contain the state name
-          // verbatim outside the URL for it to count.
-          const raw = document.body?.dataset.state || document.documentElement.dataset.state || "";
-          const urlEcho = new URLSearchParams(location.search).get("state") ||
-            (location.hash.match(/state=([a-z0-9_-]+)/i)?.[1] ?? "");
-          const domText = document.body?.innerText || "";
-          const domEcho = expectedState !== "default" && domText.includes(expectedState);
-          const declared = raw || urlEcho;
-          return {
-            expected: expectedState,
-            observed: declared,
-            confirmed: expectedState === "default"
-              ? declared === "default" || declared === ""
-              : raw === expectedState || (urlEcho === expectedState && domEcho),
-          };
-        }, state);
+        // Collect DOM facts in-page, decide in Node: page.evaluate cannot see
+        // module-scope exports, and keeping the decision in confirmStateEntry
+        // makes its truth table testable without a browser. body/html
+        // data-state win when present; an applied [data-state] on an app
+        // shell (e.g. #app) counts too — the contract allows any mount point.
+        // The URL echo stays a weaker signal: it confirms only when the state
+        // name also appears verbatim in visible DOM text.
+        const domFacts = await page.evaluate(() => ({
+          bodyState: document.body?.dataset.state || "",
+          htmlState: document.documentElement.dataset.state || "",
+          appliedRootState: document.querySelector("[data-state]")?.dataset.state || "",
+          urlEcho: new URLSearchParams(location.search).get("state") ||
+            (location.hash.match(/state=([a-z0-9_-]+)/i)?.[1] ?? ""),
+          domText: document.body?.innerText || "",
+        }));
+        const stateConfirmation = confirmStateEntry(state, domFacts);
         stateConfirmations[prefix] = stateConfirmation;
         if (!stateConfirmation.confirmed) {
           throw new Error(`state_unconfirmed: expected ${state}, observed ${stateConfirmation.observed || "none"}`);

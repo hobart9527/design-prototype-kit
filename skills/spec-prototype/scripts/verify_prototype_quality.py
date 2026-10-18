@@ -679,6 +679,76 @@ def check_capture_reflects_manifest(html: Path) -> list[str]:
     return []
 
 
+# Self-authored verification scripts are forbidden by SKILL.md ("no flow-check.cjs");
+# the installed helpers (capture.mjs, detect.py) live under skills/, never inside
+# prototype/evidence/. Any runnable script beside the manifest is a fabricated runner.
+_SELF_AUTHORED_EVIDENCE_SCRIPT = re.compile(r".+\.(?:mjs|cjs|js|py|sh)$", re.IGNORECASE)
+
+
+def _evidence_dir(html: Path) -> Path | None:
+    """The prototype/evidence directory governing this document, or None."""
+    for parent in [html.parent, *html.parents]:
+        evidence = parent / "prototype/evidence"
+        if (evidence / "handoff-manifest.json").is_file():
+            return evidence
+    return None
+
+
+def check_evidence_provenance(html: Path) -> list[str]:
+    """Evidence the installed runner never wrote cannot lift a failed manifest.
+
+    Two provenance violations, both from the positive-scaffold mobile-booking run:
+    (1) a self-authored capture/verification script persisted inside
+    prototype/evidence/ (the runner writes only manifests and screenshots there);
+    (2) an independent receipt file claiming confirmed captures or screenshots
+    while handoff-manifest.json records capture_failed / zero screenshots. The
+    manifest is the structured evidence of record; a conflicting side receipt is
+    a contradiction to surface, never a success to silently prefer.
+    """
+    evidence = _evidence_dir(html)
+    if evidence is None:
+        return []
+    failures: list[str] = []
+
+    scripts = sorted(p.name for p in evidence.iterdir()
+                     if p.is_file() and _SELF_AUTHORED_EVIDENCE_SCRIPT.match(p.name))
+    if scripts:
+        failures.append(
+            "evidence provenance: self-authored verification script(s) inside prototype/evidence/ ("
+            + ", ".join(scripts[:4])
+            + "); verification uses the installed capture.mjs / detect.py only — remove the script and re-capture"
+        )
+
+    receipt_file = evidence / "capture-receipt.json"
+    if receipt_file.is_file():
+        manifest = _verification_root(html) or {}
+        meta = manifest.get("metadata") or {}
+        evidence_meta = meta.get("evidence") or {}
+        manifest_failed = (
+            str(meta.get("status", "")).strip().lower() == "capture_failed"
+            or evidence_meta.get("screenshots") == 0
+            or bool(evidence_meta.get("unconfirmed_states"))
+        )
+        if manifest_failed:
+            try:
+                side = json.loads(receipt_file.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                side = None
+            claimed = 0
+            if isinstance(side, dict):
+                captures = side.get("captures")
+                if isinstance(captures, list):
+                    claimed = sum(1 for c in captures if isinstance(c, dict) and c.get("confirmed") is True)
+            if claimed:
+                failures.append(
+                    f"evidence provenance: capture-receipt.json claims {claimed} confirmed capture(s) "
+                    "but handoff-manifest.json records capture_failed / 0 screenshots; the manifest is "
+                    "the evidence of record — re-capture via the installed capture.mjs, do not reconcile "
+                    "by citing the side receipt"
+                )
+    return failures
+
+
 def _capture_receipt(html: Path) -> dict | None:
     """The structured capture record the renderer wrote, or None when there is none.
 
@@ -1618,6 +1688,10 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     # A receipt claiming the capture reflects current state against a capture_failed
     # or stylesheets-unapplied manifest is the r40 A3 promotion class; refuse it.
     failures.extend(check_capture_reflects_manifest(html))
+
+    # A self-authored capture script or a side receipt contradicting the manifest
+    # is fabricated provenance: the manifest is the evidence of record.
+    failures.extend(check_evidence_provenance(html))
 
     broken_nav, broken_assets = check_relative_refs(html, dom)
     if broken_nav:

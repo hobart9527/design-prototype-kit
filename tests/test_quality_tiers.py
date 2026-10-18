@@ -576,3 +576,81 @@ def test_multistate_viewport_receipt_keys_are_parsed(tmp_path):
         "evidence": {"viewport_metrics": {"default-390": {"scrollWidth": 390}, "default-1280": {"scrollWidth": 1280}}}}}}),
         encoding="utf-8")
     assert vpq.check_viewport_receipts(html) == []
+
+
+# -- evidence provenance ------------------------------------------------------
+# The positive-scaffold mobile-booking shape: the installed capture.mjs wrote a
+# capture_failed manifest (0 screenshots, 24 unconfirmed states), then a
+# self-authored capture-states.mjs persisted itself plus a capture-receipt.json
+# claiming 12 confirmed captures. Neither piece of side evidence may silently
+# coexist with the failed manifest of record.
+
+def _failed_manifest_workspace(tmp_path: Path) -> Path:
+    """A capture_failed manifest of record, as capture.mjs writes it on failure."""
+    html = _receipt_workspace(tmp_path, "[390, 1280]", [])
+    manifest = tmp_path / "prototype/evidence/handoff-manifest.json"
+    manifest.write_text(json.dumps({"verification": {"status": "captured_pending_review", "metadata": {
+        "status": "capture_failed",
+        "evidence": {"kind": "none", "screenshots": 0, "paths": [],
+                     "unconfirmed_states": ["service-390: expected service, observed service"]}}}}),
+        encoding="utf-8")
+    return html
+
+
+def test_self_authored_capture_script_in_evidence_dir_is_flagged(tmp_path):
+    """A runnable script persisted inside prototype/evidence/ is a fabricated runner."""
+    html = _failed_manifest_workspace(tmp_path)
+    (tmp_path / "prototype/evidence/capture-states.mjs").write_text(
+        "// self-authored runner\n", encoding="utf-8")
+    failures = vpq.check_evidence_provenance(html)
+    assert len(failures) == 1
+    assert "capture-states.mjs" in failures[0]
+    assert "self-authored" in failures[0]
+
+
+def test_side_receipt_claiming_confirmations_against_failed_manifest_is_flagged(tmp_path):
+    """The manifest is the evidence of record; a conflicting receipt is surfaced, not preferred."""
+    html = _failed_manifest_workspace(tmp_path)
+    (tmp_path / "prototype/evidence/capture-receipt.json").write_text(json.dumps({
+        "target": "file:///tmp/anchor/index.html",
+        "captures": [
+            {"state": "service", "viewport": 390, "confirmed": True, "screenshot": "state-service-390.png"},
+            {"state": "service", "viewport": 1280, "confirmed": True, "screenshot": "state-service-1280.png"},
+        ]}), encoding="utf-8")
+    failures = vpq.check_evidence_provenance(html)
+    assert len(failures) == 1
+    assert "2 confirmed capture(s)" in failures[0]
+    assert "capture_failed" in failures[0]
+
+
+def test_both_side_script_and_receipt_report_both_findings(tmp_path):
+    """The mobile-booking shape: script + receipt together yield two distinct findings."""
+    html = _failed_manifest_workspace(tmp_path)
+    evidence = tmp_path / "prototype/evidence"
+    (evidence / "capture-states.mjs").write_text("// self-authored runner\n", encoding="utf-8")
+    (evidence / "capture-receipt.json").write_text(json.dumps({
+        "captures": [{"state": "service", "viewport": 390, "confirmed": True}]}), encoding="utf-8")
+    failures = vpq.check_evidence_provenance(html)
+    assert len(failures) == 2
+
+
+def test_clean_evidence_dir_has_no_provenance_findings(tmp_path):
+    """Manifest of record + screenshots only: no scripts, no side receipts."""
+    html = _failed_manifest_workspace(tmp_path)
+    assert vpq.check_evidence_provenance(html) == []
+
+
+def test_side_receipt_without_confirmed_claims_is_not_flagged(tmp_path):
+    """A receipt recording only unconfirmed captures contradicts nothing."""
+    html = _failed_manifest_workspace(tmp_path)
+    (tmp_path / "prototype/evidence/capture-receipt.json").write_text(json.dumps({
+        "captures": [{"state": "service", "viewport": 390, "confirmed": False}]}), encoding="utf-8")
+    assert vpq.check_evidence_provenance(html) == []
+
+
+def test_receipt_claiming_confirmations_against_passing_manifest_is_clean(tmp_path):
+    """No contradiction when the manifest itself records successful screenshots."""
+    html = _receipt_workspace(tmp_path, "[390, 1280]", [390, 1280])
+    (tmp_path / "prototype/evidence/capture-receipt.json").write_text(json.dumps({
+        "captures": [{"state": "service", "viewport": 390, "confirmed": True}]}), encoding="utf-8")
+    assert vpq.check_evidence_provenance(html) == []
