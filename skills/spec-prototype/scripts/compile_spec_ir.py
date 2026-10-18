@@ -1221,8 +1221,12 @@ def compile_canonical_ir(
     # API, the CLI, or authored frontmatter.
     if authority_status == "frozen_approved":
         authority_status = "sealed_provisional"
-    if stage == "hero_probe" and fm_data.get("stage"):
-        stage = str(fm_data["stage"]).strip()
+    # Build-scope axis. `build_scope` is the unambiguous key; the historical
+    # `stage` key is still read for records authored before the rename, and the
+    # two name the same axis. Neither is the Resume checkpoint vocabulary.
+    build_scope_value = fm_data.get("build_scope") or fm_data.get("stage")
+    if stage == "hero_probe" and build_scope_value:
+        stage = str(build_scope_value).strip()
 
     # Extract Core Tension. The Stage 1 machine contract wins when present;
     # prose recovery stays as the fallback for records that predate intent.json.

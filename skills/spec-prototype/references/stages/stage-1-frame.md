@@ -50,13 +50,13 @@ open alternatives only when a consequential choice is genuinely unresolved.
      carried forward`, NEVER as `approvals preserved` or claimed as approved. When user
      injected input introduces new intents (e.g. "needs emergency abort and rollback"),
      the user intent is explicit fact, but the concrete derived mechanism parameters
-     (e.g. a specific "5-minute undo window", wizard steps, or derived UI rules like "零长列表") remain `derived` / `provisional`
-     and must NEVER be promoted to a user `confirmed` decision. When stating confirmed decisions
+     remain `derived` / `provisional`
+     and must NEVER be promoted to a user `confirmed` decision. Scenario-specific examples
+     live in [legacy rules](../../../../benchmarks/legacy-rules.md), active only at benchmark runtime. When stating confirmed decisions
      in prose or briefs (`confirmed` or "用户已确认/用户已显性确认"), bound the statement strictly
      to what the user explicitly confirmed; NEVER bundle derived parameters into the confirmed clause.
      In THESIS, OWN-WORLD, and STORY, describe visual metaphor, spatial chassis, and interaction
-     ergonomics — NEVER invent unrequested technical capabilities (e.g. "不可篡改的时间线", "实时全量同步",
-     "自动根因分析", "标记已读", "阅读进度云同步") that the brief did not request and the prototype does not implement.
+     ergonomics — NEVER invent unrequested technical capabilities that the brief did not request and the prototype does not implement.
      NEVER assert unverified empirical industry or market research claims as flat facts (e.g. "No product in this category...",
      "业界均未提供此类机制", "竞品普遍缺失..."). In `rut:` and lifeworld sections, describe spatial patterns and layout expectations
      without inventing unverified market landscape surveys. All external or competitive assertions without evidence will be penalized as fabricated capabilities.
@@ -155,9 +155,9 @@ signal for downstream method audit, not a narrative device.
 The brief needs only the applicable parts of:
 
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.
-  - **Negative Boundaries & Omissions (第一版不做 · 显式反向边界)**: Record explicit omissions to maintain semantic discipline and prevent scope fabrication. Explicitly exclude unrequested lateral domains, unprompted integrations, speculative automation (e.g. magical auto-remediation, unrequested predictive AI), auxiliary post-processing workflows not justified by the core tension, and unprompted lifecycle pipelines (e.g. inventing a three-phase model "止血/收敛/收尾" as surface banners when unstated in brief).
+  - **Negative Boundaries & Omissions (第一版不做 · 显式反向边界)**: Record explicit omissions to maintain semantic discipline and prevent scope fabrication. Exclude unrequested lateral domains, integrations, speculative automation and auxiliary workflows not justified by the core tension. Benchmark-only examples live in [legacy rules](../../../../benchmarks/legacy-rules.md).
   - **Fidelity to Stated Constraints & Invariants (约束与历史守恒)**: Honor all physical constraints, preconditions, and irreversible historical facts stated in the brief. Safety mechanisms and rollback controls must be grounded in actual system capabilities and scoped strictly to active operations, never claiming retroactive resolution of past unrecoverable states.
-  - **Ground Truth Fidelity (真值守恒与零臆测归因)**: Assert as fact only what is explicitly supported by the user brief or session inputs. Never fabricate unprompted user-research findings, psychological profiles, operator experience tiers, or drill cadence splits (e.g. "expert operators will hate wizards due to frequent drills", "每步上下文窄适合新值班员", "新值班员需一次讲解"). Never fabricate unverified root-cause attributions for historical failures (e.g. asserting "无复核" or "touch-screen misclicks" was a root cause, or re-labeling incidents as "误下线/未经预览" in metrics tables when the brief only mentioned an accidental one-click drain without rollback). Never invent unprompted telemetry data sources, system capacities, or monitoring metrics (e.g. "剩余容量", "CPU水位"). Never invent unrequested operational objects (e.g. "批次"). Speculative rationale must be explicitly tagged as `[hypothesis]`, never treated or cited as ground truth facts.
+  - **Ground Truth Fidelity (真值守恒与零臆测归因)**: Assert as fact only what is explicitly supported by the user brief or session inputs. Never fabricate unprompted research findings, psychological profiles, experience tiers, usage cadence, root causes, telemetry, capacities, metrics, or operational objects. Speculative rationale must be explicitly tagged as `[hypothesis]`, never treated or cited as ground truth facts. Concrete benchmark examples live in [legacy rules](../../../../benchmarks/legacy-rules.md), active only at benchmark runtime.
   - **Decision Authority Discipline & Atomic Tagging (决策权威纪律与原子化标签)**: The `[explicit]` tag applies SOLELY to pure user statements; never bundle synthetic IDs, operational groupings, or derived boundaries under `[explicit]`. In journeys/flows, unconfirmed design mechanisms (e.g. "双人确认", "必经影响预览") must be explicitly qualified as `[derived, provisional]`, never presented as settled facts. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward` with status `proposed(provisional)` or `derived`, NEVER as `confirmed` or `approvals preserved`. Initial interpretations of brief scope and historical constraints are NOT confirmed decisions until explicitly selected by the user.
 - **Experience direction & Five Axes calibration** — product-specific hierarchy, tone,
   visual mechanism, references and what is deliberately conventional. All five axes
@@ -204,16 +204,13 @@ human brief about decisions; machine IR and CSS tokens are compiled outputs.
 
 ## Physical Anchor Declaration (Optional Guidance)
 
-Declare the anticipated physical chassis or usage context in the design record
-(the shared `prototype/truth.md` on a layered tree, or `prototype/discussion.md`)
-if known (for example, `desktop workstation`, `mobile device`, or `physical_anchor: none`).
+Declare the anticipated physical chassis or usage context in the design record if known (for example, `desktop workstation`, `mobile device`, or `physical_anchor: none`).
 This provides structural guidance for layout choices without acting as a blocking gate
 against beginning prototype exploration.
 
 ## Progressive Prototyping Without Pre-Spec Lock
 
-Stage 1 produces the problem framing and design brief in the design record
-(`prototype/truth.md` on a layered tree, or `prototype/discussion.md`).
+Stage 1 produces the problem framing and design brief in the design record.
 Writing code in Stage 2 does not require a prior sealed Spec or pre-compiled Spec IR:
 visual exploration and rapid prototyping precede formal contract compilation.
 `intent.json` 是可选的 Stage 1 机器加速件，缺失时编译器直接从记录散文/契约块恢复。Formal compilation to Spec IR occurs upon engineering handoff (Stage 5).

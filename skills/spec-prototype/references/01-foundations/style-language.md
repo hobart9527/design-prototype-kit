@@ -31,7 +31,11 @@ selects the direction.
    - **Voice**: how labels, empty states and errors speak.
 3. **Counter-examples (≥2)** — things that would be *correct* by the craft floor and
    still wrong for this language, each with a one-line reason. These are the language's
-   own falsifiers; Stage 4 checks the render against them.
+   own falsifiers; Stage 4 checks the render against them. They are distinct from the
+   divergence record's `rut_rejected` (the category defaults the direction refuses,
+   owned by [`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md)
+   §4): `rut_rejected` governs where the direction came from, counter-examples govern
+   what the language itself would still reject.
 4. **Signature** — one sentence naming the relationship that makes the product
    recognisable with the logo covered (it is the Signature Relationship from
    [`design-language.md`](design-language.md), stated as visible behaviour).

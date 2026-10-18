@@ -147,8 +147,14 @@ Rules that keep the pillar view honest:
 - **A finding names its pillar.** The same observation can belong to two; pick the
   owning one — the layer that would change to fix it — and cross-reference the
   other rather than filing it twice.
-- **`not reviewed` is not a pass.** Do not sum rows into a verdict. A review with
-  unreviewed pillars is `PARTIAL` regardless of how clean the reviewed ones are.
+- **`not reviewed` is not a pass.** Do not sum rows into a verdict. Name unreviewed
+  pillars explicitly and state why they are outside this review's scope.
+- **Distinguish scoped verdict from incomplete review.** A scoped verdict is complete
+  when every check in the agreed repair scope has been reviewed; pillars named
+  `not reviewed` are explicitly outside that scope and do not prevent this local
+  repair from exiting. Use `PARTIAL` when a full review was requested but remains
+  unfinished, or when any check inside the agreed scope is unreviewed. `PARTIAL`
+  describes incomplete coverage, not a passing verdict.
 - **A `prose_only` rule is a judgment you owe for the applicable rules, not a row-by-row enumeration.** When
   `detect.py` returns a rule as `prose_only`, the machine has declared it cannot
   read the artifact — the judgment is yours and it is owed. For each applicable `prose_only` rule
@@ -172,7 +178,7 @@ State × viewport coverage is complete only when every required state has a conf
 First-viewport review: does the first viewport answer the primary question and expose the primary action without scroll? If not, treat it as a design improvement opportunity, not a hard failure unless it blocks the task chain.
 
 **Visual assertion hard rule — evidence provenance**: record in
-the design record (the brief on a layered tree, or `prototype/discussion.md`) the `visual_evidence` reference, whether
+the design record the `visual_evidence` reference, whether
 `capture_reflects_current_state` is `true` or `false`, and the concrete visual
 conclusion drawn from the current capture. An old capture may be retained for history,
 but `capture_reflects_current_state: false` cannot support a verified finding or

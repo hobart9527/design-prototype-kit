@@ -33,9 +33,16 @@ optional. Unknown keys, unknown enum values and duplicate ids fail closed.
 | `contract:viewports` | list of scalars | each a width in px, 200–4000 |
 | `contract:actions` | list of mappings | `id`, `verb`, `trigger`, `commit`; `proximity_level` optional (default 1), `authority` ∈ `explicit\|derived\|proposed\|hypothesis` (default `derived`), `feedback`/`consequence` optional |
 | `contract:axes` | mapping | any of `density`, `energy`, `materiality`, `rhythm`, `character`; legacy aliases `weight`/`finish` → `materiality`, `seriousness` → `character` |
-| `contract:craft` | mapping | any of `surface_optics`, `spatial_geometry`, `micro_typography`, `data_marks` |
+| `contract:craft` | mapping (optional) | any of `surface_optics`, `spatial_geometry`, `micro_typography`, `data_marks` — a design-judgment projection, never required for a compile |
 | `contract:tokens` | mapping | `accent_seal` (hex), `accent_policy` (text), optional `state_nominal`, `state_warning`, `state_danger`, `state_success`, `state_info` (hex; `state` aliases `state_nominal`) |
-| `contract:meso` | mapping | any of `massing_pattern`, `kinematics`, `data_syntax` |
+| `contract:meso` | mapping (optional) | any of `massing_pattern`, `kinematics`, `data_syntax` — a design-judgment projection, never required for a compile |
+
+`contract:craft` and `contract:meso` are the two kinds with no independent
+machine consumer: they are projected into the IR's `visual_directives` for
+handoff narration, and nothing downstream verifies them. Treat them as optional
+design judgment — author them when they sharpen a decision, never as a form to
+fill. The machine-required kinds are `states`, `required_states`, `actions`,
+`invariants`, `viewports`, `axes` and `tokens`.
 
 A YAML value containing `: ` or beginning with a special character must be
 double-quoted, or the loader reads it as structure and the block fails to parse.
@@ -62,7 +69,7 @@ the line that caused it is named rather than dropped.
 
 Do not conflate these two vocabularies:
 
-- **Frontmatter `stage` (build-scope axis)**: uses the `hero_probe | walking_skeleton | surface_slice | full_product` family. This axis describes *how much product this slice builds* and is consumed directly by `compile_spec_ir.py` and `schemas/prototype-spec.v1.json`.
+- **Frontmatter `build_scope` (build-scope axis; legacy alias `stage`)**: uses the `hero_probe | walking_skeleton | surface_slice | full_product` family. This axis describes *how much product this slice builds* and is consumed directly by `compile_spec_ir.py` and `schemas/prototype-spec.v1.json`.
 - **Resume checkpoint (progress axis, in the `## Resume` block)**: uses the `stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze` family and it describes *where in the 5-Stage delivery pipeline this pass stands*.
 
 No primary enum from the frontmatter table coincides with the Resume checkpoint names: they name different things and are never interchangeable.
@@ -104,7 +111,7 @@ The YAML frontmatter of `templates/briefs/_slice.md` and the slice block defines
 | `spec_schema` | string | `"google-design-md/v2"` |
 | `slice_id` | string | Target slice identifier (must match filename without `.md`) |
 | `authority` | string | `draft` \| `validated` \| `sealed_provisional` \| `frozen_approved` |
-| `stage` (build-scope axis, frontmatter) | string | `hero_probe` \| `walking_skeleton` \| `surface_slice` \| `full_product` — the shipped template initial value is `hero_probe` (a legal Stage-1 starting value); a different axis from the Resume checkpoint vocabulary below. |
+| `build_scope` (preferred frontmatter key) / `stage` (legacy alias) | string | `hero_probe` \| `walking_skeleton` \| `surface_slice` \| `full_product` — both input keys map to the IR's `scope.build_scope.stage`; if both are present, `build_scope` wins. The shipped template uses `hero_probe` (a legal Stage-1 starting value). Neither is the Resume checkpoint vocabulary below. |
 | `viewports` | list of ints | e.g. `[390, 1280]` |
 | `required_states` | list of strings | Verified state IDs for this slice |
 | `applied_methods` | list of strings | e.g. `action-verb-lifecycle`, `context-preservation`, `dense-operational-console`, `progressive-disclosure` |

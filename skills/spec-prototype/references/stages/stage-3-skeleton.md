@@ -4,6 +4,14 @@ Answer one question: *"How does the validated anchor become a cohesive
 multi-surface skeleton within the resolved coverage?"* Stage 3 expands the anchor
 across every in-scope surface derived from the Surface Topology.
 
+**Entry condition.** This stage owns the runnable anchor end to end. When Stage 2
+already produced a merged, captured anchor (a probe ran and a direction won), expand
+it through the topology rollout below. When the direction was already authorized
+without a probe (an explicit extension, a settled convention, a delegated choice),
+the anchor does not exist yet: build it here with the authoring order further down,
+which is the same procedure Stage 2 uses, then expand. Do not build the first screen
+twice — check `prototype/experiments/<slice_id>/anchor/index.html` before composing.
+
 ## Coverage Selection before Expansion
 
 The entry intent routing in [SKILL.md](../../SKILL.md) decides which stages run;

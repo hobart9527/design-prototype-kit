@@ -50,20 +50,7 @@ analogies where helpful, but are never forced upon digital-native products.
 ## Direct Materialization & Multi-Direction Exploration
 
 The path is visual-first:
-1. **Diverge before authoring.** Run the six-step Divergence Generator
-   ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4):
-   name the category rut, generate 3 lifeworld-sourced candidates, optionally draw the
-   seeds with `python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id>
-   --record <the slice's brief or discussion record> --write` (an optional entropy source:
-   never choose them yourself — a self-picked integer converges; if the record has no `## Slice: <id>`
-   block, print the draw without `--write` and record it by hand), fuse at most one
-   catalog challenger each, then pass the two-axis verdict. The verdict is a judgment
-   call, not a script gate: a pair differing on fewer than two axes — or on two axes
-   without **Structure**, the mandatory axis — is merged and replaced, not built. Record
-   the rut, the candidates, the seeds, and the verdict in the design record (the slice's
-   `briefs/<slice>.md` on a layered tree, `prototype/discussion.md` otherwise).
-   Before converging, compare the built slots yourself from their captures: if the two
-   directions share the same region skeleton, the prose verdict was not delivered.
+1. **Diverge before authoring — reuse or reopen.** Inspect the design record first. If it already contains a qualified `### Divergence` block with `rut`, `rut_rejected`, three lifeworld candidates and their two-axis verdict, reuse it without rerunning the generator and proceed directly to build `dirs/a` and `dirs/b`. Reopen the six-step Divergence Generator ([`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md) §4) only when a probe falsified a direction or new evidence changes the choice. On reopening, name the category rut, generate three lifeworld-sourced candidates, optionally draw the seeds with `python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --record <the slice's brief or discussion record> --write` (an optional entropy source: never choose them yourself; if no `## Slice: <id>` block exists, print without `--write` and record by hand), fuse at most one catalog challenger each, then make the two-axis verdict. Fewer than two differing axes, or two without **Structure**, the mandatory axis, means merge and replace rather than build. Record the rut, candidates, seeds and verdict in the design record. Before converging, compare the built slots yourself from their captures: shared region skeletons mean the prose verdict was not delivered.
 2. **Author 2 distinct directions in physical slots**
    (`prototype/experiments/<slice_id>/dirs/a/index.html` and `dirs/b/index.html`).
    Each slot is a minimal skeleton — its region structure, reading order, and one
@@ -71,11 +58,7 @@ The path is visual-first:
    double the Make cost and are not what the comparison needs; two empty prose
    directions make the two-axis verdict a claim instead of an observation.
    Keep layout and styling independent without file collision.
-3. **Author tokens**: Directly write or adjust `prototype/shared/tokens.css` (or local directional tokens)
-   to calibrate theme, contrast, and layout rhythm. The authoring format (the three blocks and
-   the confirmed-section discipline) lives in
-   [`../../templates/world.tokens.example.md`](../../templates/world.tokens.example.md) — copy and edit it;
-   never read `compile_tokens.py` source to learn the format. tokens.css 的首次写入在本 Stage（Turn 2），位于 Make 之前、由设计记录中 `proposed` 的 token 决策驱动，不属 Turn 1。探索期直写属正常路径；Stage 5 编译前须把最终值回写 world.md（或 discussion.md），编译随后重写 tokens.css 并以 sha256 封存，否则编译覆盖手写值。
+3. **Author tokens**: Record token decisions and exploratory adjustments in the source record (`world.md` or `discussion.md`), then run `python3 skills/spec-prototype/scripts/compile_tokens.py` to materialize `prototype/shared/tokens.css` (and `t1.json`). The authoring format (the three blocks and confirmed-section discipline) lives in [`../../templates/world.tokens.example.md`](../../templates/world.tokens.example.md); never read `compile_tokens.py` source to learn the format. This is part of Turn 2 Make, not Turn 1.
    对比度预检用一条命令批量完成，不要逐对调用、也不要用 `&&`/`;`/管道串联（hook 只放行单条命令）：`node skills/spec-prototype/scripts/wcag-check.js --on <bg-hex> <fg-hex> [<fg-hex> ...]`，或 `<fg> <bg> <fg> <bg> …` 成对形式；输出一个 JSON 数组。
 4. **Capture & inspect**: Run `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <declared-widths>`
    with the viewports the slice's design record declares (never a fixed default pair)
@@ -193,8 +176,8 @@ for downstream Loom Entry 2 engineering delivery.
 ## Stage 2 Anchor Presentation Pause
 
 Once the first surface is materialized, present real viewport screenshots at the
-**authored** viewport widths — the `NNNpx` widths declared in the design record
-(the slice's `briefs/<slice>.md` on a layered tree, or `prototype/discussion.md`) and recovered by
+**authored** viewport widths — the `NNNpx` widths declared in the design record,
+and recovered by
 [`compile_spec_ir.py`](../../scripts/compile_spec_ir.py)'s `parse_viewports`, the same
 set the Spec IR binds as `scope.verification_scope.viewports`. Never a hardcoded
 viewport list, and never the assembled envelope payload: that payload is produced

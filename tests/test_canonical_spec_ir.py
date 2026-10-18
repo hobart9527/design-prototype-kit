@@ -683,6 +683,13 @@ def test_lint_canonical_spec_ir_schema_and_boundary(tmp_path: Path):
     assert not errors
 
 
+def test_build_scope_key_and_legacy_stage_key_name_the_same_axis():
+    """`build_scope` is the unambiguous frontmatter key; `stage` stays readable."""
+    text = (Path(__file__).resolve().parents[1] /
+            "skills/spec-prototype/scripts/compile_spec_ir.py").read_text(encoding="utf-8")
+    assert 'fm_data.get("build_scope") or fm_data.get("stage")' in text
+
+
 def test_google_design_md_frontmatter_and_standard_sections_compile_cleanly(tmp_path: Path):
     """Verify that a spec adhering to the Google Design.md architecture compiles cleanly."""
     spec_text = """---
