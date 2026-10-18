@@ -2,7 +2,10 @@
 
 Use this reference when the brief, selected direction, or target viewport benefits
 from a modern platform capability. These techniques enhance the five sensory axes;
-they do not create a second design system or override the product's topology.
+they do not create a second design system or override the product's topology. Treat
+techniques in this file as challenger candidates only: they may inform an authored
+candidate, but they do not define direction-comparison axes or become default scoring
+criteria. Direction axes come from the product tension and its evidence.
 
 | Condition | Read | Rule |
 |---|---|---|

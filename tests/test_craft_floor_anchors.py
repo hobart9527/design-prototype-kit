@@ -217,6 +217,76 @@ def test_html_scan_still_refuses_a_link_escaping_the_scan_root(tmp_path):
     assert result["source_coverage"] == "partial"
 
 
+def test_new_modern_detectors_have_positive_and_negative_examples(tmp_path):
+    """Advisory rules report signals only when the corresponding technique exists."""
+    artifact = tmp_path / "modern-signals.html"
+    artifact.write_text("""<html lang=\"zh-Hans\"><head><style>
+    h1 { text-wrap: balance; }
+    main { min-height: 100dvh; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none; } }
+    </style></head><body>
+    <h1>设计评审</h1><main><button>评审</button></main>
+    <script>document.startViewTransition(() => {});</script>
+    </body></html>""", encoding="utf-8")
+    positives = {rule: detect.RULES[rule]["detector"](artifact) for rule in (
+        "CRAFT-TEXT-WRAP", "CRAFT-VIEWPORT-UNITS", "CRAFT-VIEW-TRANSITION")}
+    assert positives == {
+        "CRAFT-TEXT-WRAP": True,
+        "CRAFT-VIEWPORT-UNITS": True,
+        "CRAFT-VIEW-TRANSITION": True,
+    }
+
+    plain = tmp_path / "plain.html"
+    plain.write_text("<html lang=\"en\"><body><p>Plain</p></body></html>", encoding="utf-8")
+    negatives = {rule: detect.RULES[rule]["detector"](plain) for rule in (
+        "CRAFT-TEXT-WRAP", "CRAFT-VIEWPORT-UNITS", "CRAFT-VIEW-TRANSITION")}
+    assert negatives == {rule: False for rule in negatives}
+
+
+def test_new_modern_detectors_classify_applicability_and_violations(tmp_path):
+    cjk = tmp_path / "cjk.html"
+    cjk.write_text('<html lang="zh-CN"><body>中文</body></html>', encoding="utf-8")
+    en = tmp_path / "en.html"
+    en.write_text('<html lang="en"><body>English</body></html>', encoding="utf-8")
+    assert detect.RULES["CRAFT-CJK-TYPESET"]["detector"](cjk) is False
+    assert detect.RULES["CRAFT-CJK-TYPESET"]["detector"](en) is detect.NOT_APPLICABLE
+    assert detect.RULES["CRAFT-FONT-LOADING"]["detector"](en) is detect.NOT_APPLICABLE
+
+    raw_color = tmp_path / "raw-color.html"
+    raw_color.write_text("<style>.button { color: #123456; }</style>", encoding="utf-8")
+    token_color = tmp_path / "token-color.html"
+    token_color.write_text("<style>:root { --accent: #123456; } .button { color: var(--accent); }</style>", encoding="utf-8")
+    assert detect.RULES["CRAFT-TOKEN-ONLY"]["detector"](raw_color) is True
+    assert detect.RULES["CRAFT-TOKEN-ONLY"]["detector"](token_color) is False
+
+    haptic = tmp_path / "haptic.html"
+    haptic.write_text("<script>navigator.vibrate(20)</script>", encoding="utf-8")
+    paired = tmp_path / "paired-haptic.html"
+    paired.write_text('<script>navigator.vibrate(20)</script><p role="status">Saved</p>', encoding="utf-8")
+    assert detect.RULES["CRAFT-HAPTIC-PAIRING"]["detector"](haptic) is False
+    assert detect.RULES["CRAFT-HAPTIC-PAIRING"]["detector"](paired) is True
+
+
+def test_css_imports_are_scanned_recursively_with_cycle_and_root_guards(tmp_path):
+    root = tmp_path / "repo"
+    (root / ".git").mkdir(parents=True)
+    styles = root / "prototype/experiments/slice/anchor/styles"
+    styles.mkdir(parents=True)
+    html = root / "prototype/experiments/slice/anchor/index.html"
+    html.write_text('<link rel="stylesheet" href="styles/base.css">', encoding="utf-8")
+    (styles / "base.css").write_text('@import "nested.css";\nbody { color: black; }', encoding="utf-8")
+    (styles / "nested.css").write_text('@import "base.css";\nbutton:active { transform: scale(.98); }', encoding="utf-8")
+    result = detect.scan(html)
+    assert str(styles / "base.css") in result["sources"]
+    assert str(styles / "nested.css") in result["sources"]
+    assert result["unresolved_links"] == []
+    assert {f["rule"]: f["status"] for f in result["findings"]}["CRAFT-PRESS-DETENT"] == "hit"
+
+    (styles / "nested.css").write_text('@import "../../../../../../outside.css";', encoding="utf-8")
+    escaped = detect.scan(html)
+    assert escaped["unresolved_links"] == ["../../../../../../outside.css"]
+
+
 def test_the_detector_serialises_for_the_cli(tmp_path):
     artifact = tmp_path / "a.html"
     artifact.write_text("<html><body><button>x</button></body></html>", encoding="utf-8")

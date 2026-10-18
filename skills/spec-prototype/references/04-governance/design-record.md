@@ -18,7 +18,7 @@ prototype/
 └── experiments/<slice>/anchor/index.html   # the runnable prototype
 ```
 
-The tree above is the sole owner of canonical deliverable paths; other references name only the relevant path or link here. `compile_tokens.py` 是 `t1.json`（派生包装）的唯一写者；`tokens.css` 在探索期可由设计师直写，一旦进入 Stage 5 编译则以编译产物为准，探索期手写值需先回写至设计记录（`world.md` 或 `discussion.md`）。
+The tree above is the sole owner of canonical deliverable paths; other references name only the relevant path or link here. `compile_tokens.py` 是 `t1.json`（派生包装）的唯一写者；`tokens.css` 在探索期可由设计师直写；方向探针的局部 token 属于该探针产物，不随方向收敛自动晋升，只有被选定方向显式引用时才回写。进入 Stage 5 编译前，必须先将最终值回写至设计记录（`world.md` 或 `discussion.md`），再运行 `compile_tokens.py`；回写先于编译，避免编译覆盖未记录的手写值。Stage 5 以编译产物为准。此规则不改变 `compile_tokens.py` 的默认行为。
 
 ## Two layouts, one loading seam
 

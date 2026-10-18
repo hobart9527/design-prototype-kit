@@ -12,6 +12,7 @@ from pathlib import Path
 import sys
 from typing import Dict, List
 import json
+import hashlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prototype_context  # noqa: E402
@@ -166,8 +167,32 @@ def discover_directions(root: Path) -> List[Dict[str, str]]:
             "id": f"{slice_name}-{slot_id}",
             "name": f"Direction {slot_id.upper()} [{slice_name}]",
             "url": slot.relative_to(root / "prototype").as_posix(),
+            # A URL is mutable: a comment pinned to the same path after an in-place
+            # edit would silently describe different pixels. The content digest
+            # names the exact revision under review, so a comment stays bound to
+            # what the reviewer actually saw.
+            "revision": _artifact_revision(slot),
         })
     return directions
+
+
+def _artifact_revision(html_path: Path) -> str:
+    """Short content digest of every file in the direction slot, path-qualified.
+
+    The digest is over bytes on disk, not a label, so an in-place edit to the HTML
+    or its stylesheets changes it and an unchanged slot keeps it. Unreadable slots
+    degrade to `unhashed` rather than fabricating a revision that looks authoritative.
+    """
+    parts: list[bytes] = []
+    try:
+        for path in sorted(p for p in html_path.parent.glob("**/*") if p.is_file()):
+            parts.extend((path.relative_to(html_path.parent).as_posix().encode(), path.read_bytes()))
+    except OSError:
+        return "unhashed"
+    if not parts:
+        return "unhashed"
+    digest = hashlib.sha256(b"\0".join(parts)).hexdigest()
+    return f"sha256:{digest[:12]}"
 
 
 def build_decision_html(directions: List[Dict[str, str]]) -> str:
@@ -225,7 +250,9 @@ def build_comment_overlay_html(directions: List[Dict[str, str]]) -> str:
         '<button class="pick-btn" id="comment-mode" data-comment-mode="off" '
         'onclick="toggleCommentMode(this)">COMMENT: OFF</button>'
         '<button class="pick-btn" onclick="copyComments()">COPY AS JSON</button>'
-        '<span class="comment-hint">Pick a direction, turn comment mode on, then click the preview.</span>'
+        '<button class="pick-btn" data-comment-download onclick="downloadComments()">DOWNLOAD JSON</button>'
+        '<span class="comment-hint">Pick a direction, turn comment mode on, then click the preview. '
+        'Comments are a draft you export and record as evidence — they never approve a direction on their own.</span>'
         '</div>'
         '<ol class="comment-list" data-comment-list></ol>'
         '<pre class="comment-out" data-comment-out>No comments recorded yet.</pre>'
@@ -316,13 +343,16 @@ def _comment_script() -> str:
       var y = Math.round(((clientY - rect.top) / rect.height) * 100);
       var text = window.prompt('Comment on ' + currentVariant + ' at ' + x + '%/' + y + '%:');
       if (!text || !text.trim()) return;
-      // Keep direction, page, and viewport together: coordinates alone are
-      // ambiguous when the reviewer switches candidates or frame widths.
+      // Keep direction, page, viewport and the exact reviewed revision together:
+      // coordinates alone are ambiguous when the reviewer switches candidates,
+      // frame widths, or the artifact is edited in place under the same URL.
       var vpFrame = document.querySelector('.viewport-frame');
       var viewport = vpFrame ? (vpFrame.getAttribute('data-viewport-frame') || null) : null;
+      var dir = DIRECTIONS.filter(function (d) { return d.id === currentVariant; })[0];
       comments.push({
         variant: currentVariant,
-        version: document.getElementById('preview-frame').src,
+        version: dir ? (dir.revision || null) : null,
+        url: document.getElementById('preview-frame').src,
         page: currentView,
         viewport: viewport,
         x: x,
@@ -342,6 +372,21 @@ def _comment_script() -> str:
     function copyComments() {
       var text = JSON.stringify(comments, null, 2);
       if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+    }
+
+    // Comments live only in this page's memory until exported; a reviewer who
+    // closes the tab loses them. The download writes the same attributed JSON to
+    // a file the session records as evidence — no feedback database, and the
+    // export never asserts a decision the user did not make.
+    function downloadComments() {
+      var blob = new Blob([JSON.stringify(comments, null, 2)], { type: 'application/json' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'review-comments.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -475,6 +520,7 @@ def _decision_script() -> str:
       var reason = (document.getElementById('decision-reason') || {}).value || '';
       var needsReason = currentVerdict === 'steer' || currentVerdict === 're-roll';
       if (!currentVariant) { out.textContent = 'Pick a direction first.'; return; }
+      if (!currentVerdict) { out.textContent = 'Picked ' + currentVariant + '. Choose a verdict to record a decision.'; return; }
       if (needsReason && !reason.trim()) {
         out.textContent = currentVerdict.toUpperCase() + ' needs a reason before it can be recorded.';
         return;

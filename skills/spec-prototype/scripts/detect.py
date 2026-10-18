@@ -81,6 +81,44 @@ def _scan_root(path: pathlib.Path) -> pathlib.Path:
     return path.parent
 
 
+_CSS_IMPORT_RE = re.compile(
+    r"""@import\s+(?:url\(\s*)?["']?([^"')\s;]+)["']?\s*\)?""", re.IGNORECASE)
+
+
+def _read_css_tree(css_path: pathlib.Path, root: pathlib.Path,
+                   pieces: list[str], sources: list[str], unresolved: list[str],
+                   seen: set[pathlib.Path], display_path: str | None = None) -> None:
+    """Read a local stylesheet and every stylesheet it `@import`s, in file order.
+
+    `@import` is the one link a CSS file can carry, and it is where a modern token
+    layer hides derived rules. Reading only the first level reported a rule living
+    in an imported file as absent — the same false-clean the HTML link scan fixes,
+    one level down. The scan stays bounded by the same root and refuses remote
+    imports rather than fetching them.
+    """
+    resolved = css_path.resolve()
+    if resolved in seen:
+        return
+    seen.add(resolved)
+    try:
+        css_text = resolved.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        unresolved.append(display_path if display_path is not None else str(css_path))
+        return
+    pieces.append(css_text)
+    sources.append(str(resolved))
+    for href in _CSS_IMPORT_RE.findall(css_text):
+        if re.match(r"^[a-z][a-z0-9+.-]*:", href, re.IGNORECASE) or href.startswith("//"):
+            continue
+        imported = (resolved.parent / href.split("#", 1)[0].split("?", 1)[0]).resolve()
+        try:
+            imported.relative_to(root)
+        except ValueError:
+            unresolved.append(href)
+            continue
+        _read_css_tree(imported, root, pieces, sources, unresolved, seen, href)
+
+
 def _artifact_sources(path: pathlib.Path) -> tuple[str, list[str], list[str]]:
     """Read the HTML artifact and local linked CSS without following remote URLs."""
     sources: list[str] = []
@@ -97,6 +135,7 @@ def _artifact_sources(path: pathlib.Path) -> tuple[str, list[str], list[str]]:
         return text, sources, unresolved
     pieces = [text, *parser.inline_styles]
     root = _scan_root(path).resolve()
+    seen: set[pathlib.Path] = set()
     for href in parser.hrefs:
         if re.match(r"^[a-z][a-z0-9+.-]*:", href, re.IGNORECASE) or href.startswith("//"):
             continue
@@ -106,11 +145,7 @@ def _artifact_sources(path: pathlib.Path) -> tuple[str, list[str], list[str]]:
         except ValueError:
             unresolved.append(href)
             continue
-        try:
-            pieces.append(css_path.read_text(encoding="utf-8", errors="replace"))
-            sources.append(str(css_path))
-        except OSError:
-            unresolved.append(href)
+        _read_css_tree(css_path, root, pieces, sources, unresolved, seen, href)
     return "\n".join(pieces), sources, unresolved
 
 

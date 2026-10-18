@@ -247,6 +247,16 @@ def test_palette_only_edit_cannot_pass_dial_annotation_freshness(tmp_path: Path)
     assert "dial annotation" in sync["drift"]
 
 
+def test_design_record_sets_token_promotion_and_compile_order():
+    """Probe tokens stay local until selected; durable values precede compilation."""
+    record = (
+        ROOT / "skills/spec-prototype/references/04-governance/design-record.md"
+    ).read_text(encoding="utf-8")
+    assert "不随方向收敛自动晋升" in record
+    assert "只有被选定方向显式引用时才回写" in record
+    assert record.index("再运行 `compile_tokens.py`") < record.index("Stage 5 以编译产物为准")
+
+
 def test_unsealed_tokens_css_is_out_of_sync(tmp_path: Path):
     """A stylesheet that never went through the compiler carries no seal: rejected."""
     ct = _load_compiler()

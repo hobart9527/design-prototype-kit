@@ -260,6 +260,14 @@ def test_diagnostic_summary_surfaces_partial_viewport_coverage():
     assert summary["unmeasured"]
 
 
+def test_stage_four_audit_requires_state_viewport_result_and_honest_unknowns():
+    text = (REPO_ROOT / "skills/spec-prototype/references/stages/stage-4-audit.md").read_text(encoding="utf-8")
+    assert "State × viewport coverage is complete only" in text
+    assert "`?state=` URL" in text
+    assert "not result evidence by itself" in text
+    assert "`null` or `unmeasured`" in text
+
+
 def test_partial_capture_is_screenshot_only_not_rendered():
     payload = {"result": stub_result(failures=[{"state": "error", "viewport": "390", "error": "timeout"}]), "options": {}}
     meta = eval_seam("cap.buildCaptureMetadata(input.result, input.options)", payload)
@@ -564,7 +572,8 @@ def test_capture_cli_honors_manifest_flag_and_detects_broken_css(tmp_path):
     )
     assert res_404.returncode == 0
     parsed_404 = json.loads(res_404.stdout)
-    assert parsed_404["diagnostics_summary"]["stylesheets_applied"] is False
+    assert parsed_404["diagnostics_summary"]["stylesheets_applied"] is None
+    assert "stylesheets_applied" in parsed_404["diagnostics_summary"]["unmeasured"]
     assert manifest_404.exists()
 
     # HTML with valid stylesheet
@@ -597,7 +606,8 @@ def test_capture_cli_honors_manifest_flag_and_detects_broken_css(tmp_path):
     )
     assert res_200.returncode == 0
     parsed_200 = json.loads(res_200.stdout)
-    assert parsed_200["diagnostics_summary"]["stylesheets_applied"] is True
+    assert parsed_200["diagnostics_summary"]["stylesheets_applied"] is None
+    assert "stylesheets_applied" in parsed_200["diagnostics_summary"]["unmeasured"]
     assert manifest_200.exists()
 
 

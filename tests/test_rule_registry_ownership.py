@@ -57,6 +57,15 @@ def _definitions_outside_owner(rule_id: str) -> list:
     return offenders
 
 
+def test_stage_two_and_modern_platform_keep_direction_axis_ownership():
+    stage_two = (SKILL / "references/stages/stage-2-probe.md").read_text(encoding="utf-8")
+    modern = (SKILL / "references/02-craft-methods/modern-platform.md").read_text(encoding="utf-8")
+    assert "mandatory axis" in stage_two
+    assert "vary exactly one primary axis" in stage_two
+    assert "do not define direction-comparison axes" in modern
+    assert "default scoring" in modern
+
+
 def test_each_craft_rule_text_has_exactly_one_owner():
     owner_text = RULES.read_text(encoding="utf-8")
     for rule_id in RULE_IDS:

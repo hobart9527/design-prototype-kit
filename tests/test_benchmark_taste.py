@@ -763,8 +763,9 @@ def test_review_portal_renders_a_comment_overlay_attribute_to_a_variant():
     assert "data-variant" in html
     assert "currentVariant" in html and "variant: currentVariant" in html
     assert "page: currentView" in html
-    # The reviewed revision is the exact artifact URL under review, not a label.
-    assert "version: document.getElementById('preview-frame').src" in html
+    # Review comments bind to the artifact's content revision and retain its URL.
+    assert "version: dir ? (dir.revision || null) : null" in html
+    assert "url: document.getElementById('preview-frame').src" in html
     assert "viewport: viewport" in html
     assert "data-comment-list" in html
 
