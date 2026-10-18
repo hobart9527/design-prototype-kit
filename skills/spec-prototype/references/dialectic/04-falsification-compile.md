@@ -12,7 +12,10 @@
 ## 2. 5-Second Perceptual Falsification Criteria
 Every Stage 1 closure MUST establish at least one falsification test for the Stage 2 Hero Probe:
 - *Criterion*: "If an operator cannot distinguish between an uncommitted draft and a sealed authority version within 5 seconds of viewport scanning, the design direction is falsified."
-- *Metric*: Documented in r1.md as a primary verifiable design assertion.
+- *Metric*: Recorded in the slice's design record as a primary verifiable design assertion;
+  Stage 5 carries it into `r1.spec.md` through `compile_spec_ir.py`, never by hand.
+- The sealed-versus-draft wording is one worked example of a perceptual criterion; write
+  the criterion in the terms of this product's own decisive distinction.
 
 ## 3. Four-Dimensional Reality Breakers (The Break Protocol)
 Specify concrete test vectors:
@@ -21,9 +24,11 @@ Specify concrete test vectors:
 - **320px Viewport Fold**: Minimum viewport reachability.
 - **Rapid Double Activation**: Idempotent state lock.
 
-## 4. Single-Direction Contract Compilation Trigger
-During Stage 0–3 exploration, prototypes are authored directly without pre-spec locks.
-At Stage 5 Engineering Handoff (or when formal contracts are explicitly requested):
+## 4. Compilation belongs to Stage 5
+This topic only decides *which falsifier to record* in Stage 1. Compilation, the verify
+pipeline and the authority transition are owned by
+[`../stages/stage-5-freeze.md`](../stages/stage-5-freeze.md); the commands are repeated
+there and in the helper table, not redefined here. For reference, at Engineering Handoff:
 ```bash
 python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice-id>
 python3 skills/spec-prototype/scripts/compile_tokens.py

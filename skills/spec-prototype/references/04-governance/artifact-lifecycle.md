@@ -44,7 +44,7 @@ The system defines two closely coordinated lifecycle models: the **Authority Lif
 | **Validated** | Stage 4 (Look / Refine) | `draft` (evidence-cleared) | Human design review and visual inspection complete; key feedback absorbed and stabilized. |
 | **Frozen Approved** | Stage 5 (Silent Governance / Handoff) | `frozen` | Immutable delivery. Spec IR (`r1.spec.json`), RFC specification (`r1.spec.md`), and DTCG tokens (`t1.json`) compiled and bound by SHA-256 digests via `handoff.py freeze`. Downstream engineering delivery admission state. Any subsequent modification requires an explicit successor revision (`superseded`). |
 
-*(Note: Legacy status values like `Sealed Provisional` remain readable for backward compatibility on historical candidate records).*
+*(Note: `sealed_provisional` is a legacy compile-time default that the tooling still emits and reads; it is not an authority state. Authority is certified only by `freeze-manifest.json`.)*
 
 ## Dual-track artifact lifecycle: Exploration vs Formal Delivery
 
@@ -66,7 +66,7 @@ absolute handoff integrity, artifacts operate in two explicit tracks:
   specifications to engineering delivery (Loom).
 - Artifacts transition `draft -> frozen`. `handoff.py freeze` calculates immutable SHA256
   digests across the retained delivery assets: `r1.spec.md`,
-  `tokens.css` (`t1.json`), and the anchor `index.html`. The design record
+  `tokens.css` (`t1.json`), and the anchor (`index.html`, `anchor.css`, `anchor.js`). The design record
   (`discussion.md`, or the layered `truth.md`/`world.md`/`briefs/`) stays evolvable
   and is never a freeze subject.
 - In this track, bytes are strictly immutable; any subsequent change requires an explicit
@@ -79,9 +79,9 @@ prototype/contracts/compiled/<slice-id>/r1.spec.json
 prototype/specifications/<slice-id>/r1.spec.md
 prototype/shared/tokens.css
 prototype/contracts/tokens/t1.json
-prototype/experiments/<slice-id>/<prototype-revision>/
+prototype/experiments/<slice-id>/anchor/            # runnable prototype (index.html, anchor.css, anchor.js)
 prototype/evidence/<slice-id>/<prototype-revision>/
-prototype/reviews/<slice-id>/<prototype-revision>.md
+prototype/reviews/<slice-id>/<prototype-revision>.md   # optional review receipt
 ```
 
 ### Legacy compatibility paths

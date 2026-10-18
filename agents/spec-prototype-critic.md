@@ -33,7 +33,7 @@ name the coverage requiring recheck.
 ## Inspect before explanation
 
 Inspect the actual-size composition before reading its rationale. Use the `Read` tool
-on the supplied `.png` viewport screenshot images (`1280.png`, `390.png`, `320.png`, and state captures)
+on the supplied `.png` viewport screenshot images (one per declared viewport, e.g. `1280.png`, `390.png`, plus state captures)
 to directly inspect the visual layout, typography, contrast, hierarchy, and token application.
 A retained image is usable only when bound to the current target revision, specimen, viewport/state
 and capture provenance; otherwise mark it unverified. Do not perform code-only textual speculation

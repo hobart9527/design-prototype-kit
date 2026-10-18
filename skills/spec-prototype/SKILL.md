@@ -128,7 +128,7 @@ prototype/
 3. NEVER author review portals outside `prototype/review-portal.html`.
 4. NEVER loop on visual guesswork or trial-and-error CSS hacks in the primary delivery flow. Read the structured `diagnostics_summary` from `capture.mjs` directly.
 5. When authoring the RFC specification, ALWAYS compile via `python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>` so `contracts/compiled/<slice>/r1.spec.json` and `specifications/<slice>/r1.spec.md` arrive together; NEVER author `r1.spec.md` alone by hand.
-6. NEVER cite or describe any state, state entry, or runtime behavior whose capture failed, whose screenshot count is 0, or that lacks confirmed passing evidence under `## Verified this turn`. Capture-failed or unconfirmed states belong exclusively under `## 未验证（不得读作已验证）` or `Limitations`, tagged as `[hypothesis]` / `[unverified]`. Placing an unconfirmed state under `## Verified this turn` is a hard-gate authority promotion defect.
+6. NEVER report a state whose capture failed, has 0 screenshots, or lacks confirmed passing evidence under `## Verified this turn`; it belongs under `## 未验证（不得读作已验证）` / `Limitations`, tagged `[hypothesis]` / `[unverified]`. Owner: [`stage-4-audit.md`](references/stages/stage-4-audit.md) "Manifest cross-check".
 
 The machine-read lists in design records (`contract:states`, `contract:invariants`, `contract:actions`,
 `contract:viewports`, `contract:axes`, `contract:craft`, `contract:tokens`, `contract:meso`) are authoritative

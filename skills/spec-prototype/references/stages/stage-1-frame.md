@@ -13,7 +13,8 @@ open alternatives only when a consequential choice is genuinely unresolved.
    adopt and refuse; references inform the decision, they do not dictate the UI.
 4. Form the design proposition through **Polarized Divergence**: define what
    relationship changes, why it helps, what remains familiar, and the explicit trade-off.
-   - **Mandatory Polarized Hypotheses**: produce **at least 2 structurally opposing
+   - **Mandatory Polarized Hypotheses**: unless evidence already predetermines the direction
+     (see the exception below), produce **at least 2 structurally opposing
      hypotheses**, labelled explicitly as **`方向 A (Direction A)`** and **`方向 B (Direction B)`**,
      before converging on the primary prototype. Explicitly name the industry inertia or **category rut** (默认形态/套路),
      assign concrete **seeds** (种子), and ensure directions differ in underlying chassis, mental model, information topology,
@@ -169,10 +170,12 @@ The brief needs only the applicable parts of:
   fill and not a CSS formula; `open` is a legitimate, recorded outcome and is never
   converted into a fabricated numeric value.
 - **Innovation budget, modulated by mode** — name the product's **mode** first, then
-  let it set the split. The default is 70% familiar / 30% Signature Moment; the mode
-  moves it, and the chosen split is recorded with its reason:
+  let it set how much of the surface stays familiar and how much carries the Signature
+  Moment. The ratios below are **ordinal guides, not measurements**: the product-understanding
+  rule against synthetic percentages still applies, so record the direction of the shift
+  (more or less familiar than a neutral default) and its reason, not a computed figure:
 
-  | Mode | When it applies | Split (familiar / signature) | Why the shift |
+  | Mode | When it applies | Guide (familiar / signature) | Why the shift |
   |---|---|---|---|
   | **Operate** | Expert operator, high consequence, repeated daily use | 80 / 20 | Relearning cost is paid on every shift; the signature lives in the one moment the tool exists for. |
   | **Read** | Long-form document, clause, or reference the user must trust | 75 / 25 | The measure and the text carry the experience; novelty competes with legibility. |
@@ -244,7 +247,7 @@ Decisions and authority table, and Five Axes calibration.
 A design brief answers the current question and clearly separates facts, decisions,
 proposals, and open risks, and it carries a complete `### Divergence` record (`rut:`,
 `rut_rejected:` with at least three refused defaults and reasons, three lifeworld
-candidates, `### Divergence seeds`, two-axis verdict naming Structure). **Turn 1 ends here, at the Resume block**: Stage 2 opens in
+candidates, `### Divergence seeds` (drawn, or chosen with that stated; `draw_seed.py` is optional), two-axis verdict naming Structure). **Turn 1 ends here, at the Resume block**: Stage 2 opens in
 the next turn to explore 2–3 distinct visual and structural directions through rapid
 prototyping, without waiting on pre-spec locks. Write no `tokens.css`, HTML or evidence
 in this turn — the Resume block is recovery context for the next turn, not an approval

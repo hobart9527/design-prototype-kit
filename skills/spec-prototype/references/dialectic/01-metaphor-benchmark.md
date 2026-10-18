@@ -167,7 +167,7 @@ the only gate, and it is checked on the two directions side by side.
    donation is explicitly recorded as refused with its reason. Directions are not
    discarded; the non-selected work is where the compound interest sits.
 
-## 4. Settlement
+## 5. Settlement
 Upon user selection, lock the primary metaphor (or its declared absence — a
 physical metaphor is an optional anchor with an explicit transfer / non-transfer
 boundary), core tension, and Character profile. This topic's settlement does not

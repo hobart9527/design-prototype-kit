@@ -14,7 +14,9 @@
 When entered, project tangible sensory moodboards with exact chromatic undertones.
 Moodboards and metaphors are optional anchors: record each one's explicit
 Transfer (what carries into the digital medium) / Non-transfer (what is refused)
-boundary:
+boundary. The two substrates below are **worked examples of the format only** — their
+hex values are not defaults, and a direction that lands on either one without product
+evidence has drawn from this file instead of the domain:
 - **Substrate A: Void Slate & Obsidian (哑光冷玄岩)**
   - *Base*: `#101418` (deep cold rock), hairline borders (`rgba(255,255,255,0.08)`).
   - *Feel*: Zero floating shadow, surgical calm, instrumentation console.
@@ -35,8 +37,9 @@ A Signature Accent is optional and decided per product, never a template mandate
 
 ## 4. Kinetic Timing & Decisive Exchange 3-Frame (5-Axis: Energy)
 Specify the physical response of the decisive commit action:
-- *Timing*: Fixed duration authored from the product's energy decision (e.g. a
-  mechanical press, `cubic-bezier(.16, 1, .3, 1)`); no template-fixed value.
+- *Timing*: Duration and curve authored from the product's energy decision (a
+  mechanical press and a damped slide differ); no template-fixed value. Any curve
+  written in this repository's examples is illustrative only.
 - *Frame 1 (Intent)*: Pointer/key triggers tactile depression (`:active scale(var(--press-scale))`).
 - *Frame 2 (Commit)*: Immediate state freeze; prevents double submission.
 - *Frame 3 (Settlement)*: Badge transitions deterministically; focus deterministically restores to originating trigger.

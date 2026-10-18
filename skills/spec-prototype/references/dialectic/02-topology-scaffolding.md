@@ -11,7 +11,13 @@
   the layout in the product's own density, centroid, and journey decisions.
 
 ## 2. ASCII Wireframe Projections (NO COLOR, ONLY STRUCTURE)
-Present 2~3 distinct spatial layouts via pure text ASCII wireframes:
+Present 2~3 distinct spatial layouts via pure text ASCII wireframes. The three options
+below are **worked examples of the format, not a menu and not defaults**: derive the
+layouts from this product's own organising principle (the Direction Generator's
+lifeworld candidates), and draw a layout from this list only when the product's
+evidence independently calls for it. Three candidates that map cleanly onto A/B/C
+were sourced from the catalog, not the domain.
+
 
 ### Option A: Synchronized Multi-Column Workbench (对标 Linear / CAD)
 ```text
