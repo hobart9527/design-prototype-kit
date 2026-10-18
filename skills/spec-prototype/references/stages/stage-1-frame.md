@@ -126,7 +126,9 @@ The record has two valid layouts, both loaded through the same seam
 
 - **single-record** — one `prototype/discussion.md`, partitioned by lifecycle:
   **product truth** (audience, purpose, constraints — Stage 1 framing), the
-  **visual world** (Direction Contract, Five Axes, taste ledger — one owner
+  **visual world** (Direction Contract, Five Axes, Style Language Card and
+  Reference Deconstruction per [`style-language.md`](../01-foundations/style-language.md) and
+  [`reference-deconstruction.md`](../01-foundations/reference-deconstruction.md), taste ledger — one owner
   for every surface), and one `## Slice: <slice_id>` block per slice carrying
   its frontmatter, surfaces, states, actions, invariants and Stage 2–5 record.
   The Decisions table lives here.

@@ -142,6 +142,28 @@ The craft floor is identical across every direction and every variant. It is not
 an axis and never trades against one. A candidate that wins on looks while
 failing a hard floor is a bug with a nice surface, not a candidate.
 
+## Expression Study & Blind Critique (表达实验与盲评)
+
+Structure decides which direction; expression decides whether it is any good. Run both
+after a direction leads, and before Stage 3 rollout. Both are bounded and optional when
+the direction inherits an existing language or the request is a local repair.
+
+**Expression study.** On the leading direction's decisive surface, build one file with
+`data-variant` variants that move *one* expression family at a time — type roles,
+colour meaning, form (radius/line/edge), or motion — on the same fixture data. Capture
+each at the authored viewports and write the outcome into the
+[Style Language Card](../01-foundations/style-language.md): the Positions the study
+supported, the Vocabulary it fixed, and a Counter-example it exposed. Vary one family
+per comparison, as in *Converge* above; the study is a way to learn what the language
+is, not a polish pass.
+
+**Blind critique.** Before naming a winner, look at the captured directions with labels
+and rationale hidden and write, for each: what it is claiming, what it gives up, and
+which feels more authored. Then reveal the labels and record any disagreement with the
+earlier recommendation. Attended runs show the user the unlabeled captures and ask for
+the call. Unattended runs may take an independent view from `spec-prototype-critic`
+(optional, never a gate); the result stays `proposed`/`provisional` either way.
+
 ## Bounded Materialization
 
 The main designer holds itself to the same bounds a dispatch would have imposed:

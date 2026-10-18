@@ -52,6 +52,9 @@ numerals in an operational readout.
 If a core proposition adjective cannot be expanded into this triple, remove it from the
 rationale. (Routine descriptive grammar and ordinary prose do not require triple expansion;
 this discipline governs the claims that anchor visual and interaction contracts.)
+Run it in both directions: after expanding each adjective, check that the parameters
+together still read as one position (see [`style-language.md`](style-language.md)) rather
+than a list of values that could belong to any product.
 This protocol is generative-side discipline; the audit-side detector
 lives in the quality bar, not here.
 

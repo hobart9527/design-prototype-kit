@@ -68,6 +68,25 @@ state_info: "#rrggbb"
 - `--accent-primary`:
 - `--accent-seal`: (only if declared above)
 
+## Style Language
+
+Method: `references/01-foundations/style-language.md`. Draft with the recommended
+direction; status follows the Decisions table. Do not restate token values here.
+
+- **Positions** (3–5, `We choose X over Y, because …`):
+- **Vocabulary** — Type roles / Colour meaning / Form / Motion / Voice:
+- **Counter-examples** (≥2, correct by the floor yet wrong for this language):
+- **Signature** (one sentence, visible behaviour):
+
+## Reference Deconstruction
+
+Method: `references/01-foundations/reference-deconstruction.md`. Keep only the rows
+that changed a decision; source limits live in `prototype/research.md`.
+
+| Reference (name + link) | Level | Observation | Relationship extracted | Transfers | Refused |
+|---|---|---|---|---|---|
+| | | | | | |
+
 ## Project Taste & Visual Language Ledger
 
 Records user style preferences, chosen aesthetics, and rejected visual

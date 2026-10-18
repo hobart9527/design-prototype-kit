@@ -91,6 +91,72 @@ load-bearing half: the techniques alone are the reskin.
   the reader reads as confidence.
 - **Failure Mode**: Deliberate user hostility or unreadable density.
 
+### F. Magazine Spread / Editorial Rhythm (杂志跨页)
+- **Purpose**: Pace attention across a surface the way a spread paces a reader: entry, rest, payoff.
+- **Techniques**:
+  - Scale jumps (a very large display element against small running text) with a deliberate empty field around it.
+  - Captions, running heads and pull quotes as navigation, not decoration.
+  - Asymmetric columns where one column carries the argument and the other the evidence.
+- **QUALITY BAR**: a reader can say where to start and where the surface rests. Large type
+  that does not mark an entry point, or a pull quote that repeats nearby text, fails the bar.
+- **Failure Mode**: Display type applied to data-heavy surfaces that need scanning, not pacing.
+
+### G. Instrument Label / Industrial Marking (工业标签)
+- **Purpose**: Make state and ownership legible at a glance through the conventions of labelled hardware.
+- **Techniques**:
+  - Stencil-like or condensed uppercase labels, ruled legends, numbered positions.
+  - One signal colour per meaning, always paired with a text or shape cue.
+  - Physical states named as hardware names them (armed, locked, seated).
+- **QUALITY BAR**: every label names something that exists in the product. Decorative
+  hazard stripes, serial-number texture or fake barcodes fail the bar.
+- **Failure Mode**: Costume hardware on a product with no real physical referent.
+
+### H. Drafting Sheet / Architectural Plan (图纸)
+- **Purpose**: Show structure and relationship by drawing it, with dimensions and annotation as first-class content.
+- **Techniques**:
+  - Hairline construction lines, callouts with leader lines, title-block metadata.
+  - Orthogonal geometry; scale and unit shown rather than implied.
+  - Monochrome with a single revision colour.
+- **QUALITY BAR**: the drawing explains something the prose does not. Grid lines or
+  callouts that restate visible labels fail the bar.
+- **Failure Mode**: Technical-drawing texture over content that has no spatial structure.
+
+### I. Title Sequence / Cinematic Frame (影像字幕)
+- **Purpose**: Use time and framing to stage a single decisive moment.
+- **Techniques**:
+  - Letterboxed or full-bleed frames, one subject per frame, deliberate reveal order.
+  - Timing as hierarchy: what appears first is what matters first.
+  - Restrained motion with a clear hold, never continuous loops.
+- **QUALITY BAR**: removing the motion would lose information (order, causality, emphasis).
+  Motion that only adds energy fails the bar; `prefers-reduced-motion` keeps the order.
+- **Failure Mode**: Cinematic staging on task flows where speed is the value.
+
+### J. Letterpress / Print Craft (活版印刷)
+- **Purpose**: Convey care and permanence through the evidence of a made, inked surface.
+- **Techniques**:
+  - Impression and ink-spread cues limited to a single material layer; rule lines and ornaments from a fixed set.
+  - Paper-toned neutrals, two inks at most, tight tracked small caps.
+  - Figures and indices set as tables with real rules.
+- **QUALITY BAR**: the material cue is applied to one layer and is consistent with how
+  the content is used. Texture across every surface, or noise filters on text, fails the bar.
+- **Failure Mode**: Nostalgia pastiche that lowers legibility and contrast.
+
+### K. Physical Material Behavior / Haptic Surface (物性响应)
+- **Purpose**: Let controls behave like what they are made of, so state is felt in the motion.
+- **Techniques**:
+  - Resistance, snap and settle curves chosen per material (detent, spring, damped slide).
+  - Pressed, seated and locked states that differ in travel and shadow, not only colour.
+  - Sound or haptic cues named in the spec when the platform supports them.
+- **QUALITY BAR**: two different controls never share one generic transition; each
+  material has a stated reason. Uniform ease-in-out on everything fails the bar.
+- **Failure Mode**: Springy motion on safety-critical confirmations that need to feel deliberate.
+
+### Sampling rule
+Draw challengers without replacement (`draw_seed.py`); when drawing by hand, pick the
+entry least compatible with the candidate's lifeworld rather than the nearest, then fuse
+only its *technique*. A challenger that makes the candidate look like its own category's
+default has failed and is refused with the reason recorded.
+
 ---
 
 ## 3. Multi-Direction Physical Slots (探索期槽位)

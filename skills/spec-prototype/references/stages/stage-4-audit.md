@@ -82,6 +82,18 @@ purpose of this stage.
    focused pass is normally sufficient. Continue only when the user changes scope or
    new evidence exposes a new cause.
 
+### Taste Statement (品味陈述)
+
+A finding needs a failed trigger; a judgment does not. Beside the findings, write a
+short **Taste Statement** from the screenshots, before reading any rule-hit list:
+what the design is committing to, what it gives up, where it is weakest, and whether
+the [Style Language Card](../01-foundations/style-language.md) Positions and
+Counter-examples are visible in the render (cover test: could a viewer of the first
+viewport guess the category?). It is recorded as judgment, tagged `[taste]`, and never
+filed as a finding or a gate — "Taste is not evidence" still holds. Its job is to make
+the designer's position reviewable and to feed one bounded refinement when the render
+falls short of its own language.
+
 ### Read the render against the Direction Contract, pillar by pillar
 
 The review has a second half that is not a defect hunt: take the Direction Contract
