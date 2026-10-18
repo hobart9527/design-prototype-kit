@@ -42,10 +42,26 @@ def test_tokens_css_before_the_resume_block_is_blocked(tmp_path):
 
 def test_artifacts_after_the_resume_block_pass(tmp_path):
     _write(tmp_path / "prototype/discussion.md",
-           "# Discussion\n\n## Resume\n- Execution boundary: active\n")
+           "# Discussion\n\n## Resume\n- Execution boundary: active\n"
+           "- Stage checkpoint: stage2-probe\n")
     payload = _payload(tmp_path, "prototype/shared/tokens.css")
     eb.check(payload)
     assert "hookSpecificOutput" not in payload
+
+
+def test_pristine_template_scaffold_does_not_open_turn2(tmp_path):
+    """The template ships `## Resume`; the heading alone must not release Turn 2."""
+    _write(tmp_path / "prototype/discussion.md",
+           "# Discussion\n\n## Resume\n- Execution boundary: active\n"
+           "- Stage checkpoint: stage1-contract\n")
+    with pytest.raises(ValueError, match="Turn 2"):
+        eb.check(_payload(tmp_path, "prototype/shared/tokens.css"))
+
+
+def test_released_boundary_opens_turn2_without_checkpoint(tmp_path):
+    _write(tmp_path / "prototype/discussion.md",
+           "# Discussion\n\n## Resume\n- Execution boundary: released\n")
+    eb.check(_payload(tmp_path, "prototype/shared/tokens.css"))
 
 
 def test_layered_resume_seam_closes_the_window(tmp_path):
@@ -53,7 +69,8 @@ def test_layered_resume_seam_closes_the_window(tmp_path):
     _write(tmp_path / "prototype/world.md", "# World\n")
     with pytest.raises(ValueError, match="Turn 2"):
         eb.check(_payload(tmp_path, "prototype/experiments/s/index.html"))
-    _write(tmp_path / "prototype/discussion.md", "## Resume\n- Execution boundary: active\n")
+    _write(tmp_path / "prototype/discussion.md",
+           "## Resume\n- Execution boundary: active\n- Stage checkpoint: stage3-skeleton\n")
     later = _payload(tmp_path, "prototype/experiments/s/index.html")
     eb.check(later)
 
@@ -69,7 +86,8 @@ def test_resume_heading_tolerates_level_suffix_and_chinese(tmp_path):
     proto = tmp_path / "prototype"
     for heading in ("## Resume", "### Resume", "## Resume / Next Steps",
                     "## 恢复", "#### Resume 断点"):
-        _write(proto / "discussion.md", f"# Doc\n\n{heading}\n- Execution boundary: active\n")
+        _write(proto / "discussion.md", f"# Doc\n\n{heading}\n- Execution boundary: active\n"
+               "- Stage checkpoint: stage2-probe\n")
         assert eb.resume_written(tmp_path), heading
 
 

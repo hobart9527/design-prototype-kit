@@ -60,4 +60,25 @@ def test_missing_gate_inputs_are_not_applicable(tmp_path, monkeypatch):
     spec = _build_root(tmp_path)
     monkeypatch.setattr(handoff.subprocess, "run", _fake_run({}))
     assert handoff.freeze_preflight(tmp_path, "reader") == {
-        "verify_prototype_quality": "not_applicable", "wcag_check": "not_applicable"}
+        "verify_prototype_quality": "not_applicable", "wcag_check": "not_applicable",
+        "token_sync": "not_applicable"}
+
+
+def test_out_of_sync_stylesheet_blocks_freeze(tmp_path, monkeypatch):
+    """A stylesheet that drifted from its source is never sealed."""
+    spec = _build_root(tmp_path)
+    _anchor(tmp_path)
+    (tmp_path / "prototype/shared").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/shared/tokens.css").write_text(":root{}", encoding="utf-8")
+    monkeypatch.setattr(handoff.subprocess, "run",
+                        _fake_run({"compile_tokens.py": 1}))
+    with pytest.raises(handoff.HandoffError, match="out of sync"):
+        handoff.freeze(tmp_path, spec.relative_to(tmp_path).as_posix())
+
+
+def test_in_sync_stylesheet_is_recorded(tmp_path, monkeypatch):
+    spec = _build_root(tmp_path)
+    (tmp_path / "prototype/shared").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "prototype/shared/tokens.css").write_text(":root{}", encoding="utf-8")
+    monkeypatch.setattr(handoff.subprocess, "run", _fake_run({}))
+    assert handoff.freeze_preflight(tmp_path, "reader")["token_sync"] == "passed"

@@ -389,15 +389,25 @@ _TURN2_SUFFIXES = {'.html', '.css', '.js', '.mjs', '.png'}
 _TURN2_DIRS = {'evidence', 'experiments', 'shared'}
 
 _RESUME_HEADING_RE = re.compile(r'^#{1,4}\s+(?:Resume|恢复)\b[^\n]*$', re.M)
+# The seam is a checkpoint that has moved past Turn 1, not the heading alone:
+# the template ships `## Resume` pre-scaffolded, so the heading exists from the
+# first whole-file Write. `stage1-contract` is the only checkpoint that still
+# belongs to Turn 1; any later value (or an authored resume block that already
+# dropped the stage1 marker) opens Turn 2. This guarantees write ORDER only —
+# every field here is model-authored, so this gate cannot prove a user reply.
+_RESUME_BLOCK_RE = re.compile(r'^#{1,4}\s+(?:Resume|恢复)\b[^\n]*\n(.*?)(?=^#{1,4}\s|\Z)', re.M | re.S)
+_RESUME_CHECKPOINT_FIELD_RE = re.compile(r'(?im)^\s*[-*]?\s*(?:\*\*)?Stage checkpoint(?:\*\*)?[^\n]*:\s*`?(stage1-contract|stage2-probe|stage3-skeleton|stage4-audit|stage5-freeze)\b')
 
 
 def resume_written(root: Path) -> bool:
     """Whether any design-record file at this root already carries a Resume block.
 
-    Tolerates heading level (`### Resume`), a trailing suffix (`## Resume /
-    Next Steps`), and the Chinese heading (`## 恢复`): under the hard gate this
-    heading is the only key that opens Turn 2, so a format slip must not wedge
-    the run.
+    A design record counts as resumed only when its Resume block records a
+    Stage checkpoint past `stage1-contract`, or an explicitly released
+    boundary. The heading alone is not the key: the shipped template already
+    carries `## Resume`, so a bare heading would open Turn 2 before any work.
+    Heading level, trailing suffix and the Chinese heading still read normally,
+    so a format slip never wedges the gate.
     """
     proto = root/'prototype'
     for name in _DESIGN_RECORD_NAMES:
@@ -408,19 +418,28 @@ def resume_written(root: Path) -> bool:
         has_content = bool(text.strip())
         text = re.sub(r'^\s*(```|~~~).*?^\s*\1\s*$', '', text,
                       flags=re.MULTILINE | re.DOTALL)
-        if has_content and _RESUME_HEADING_RE.search(text):
-            return True
+        if not has_content:
+            continue
+        for block in _RESUME_BLOCK_RE.findall(text):
+            checkpoint = _RESUME_CHECKPOINT_FIELD_RE.search(block)
+            if checkpoint and checkpoint.group(1).lower() != 'stage1-contract':
+                return True
+            if re.search(r'Execution boundary[^\n]*[:：]\s*(?:released)', block, re.I) \
+                    or re.search(r'执行边界[^\n]*[:：]\s*released', block):
+                # An explicitly released boundary is the strongest authoring signal
+                # the record format offers; the pristine template leaves it `active`.
+                return True
     return False
 
 def turn1_window_advisory(target: Path, root: Path) -> str | None:
     """Hard block: runnable artifacts before the Resume seam exists.
 
-    Turn 1 ends the moment the Resume block is written; tokens, HTML and
-    evidence belong to Turn 2. r33–r36 crossed that seam inside Turn 1 (57–90
-    iterations each), and a soft advisory did not stop the model from continuing
-    into the anchor, so the seam is enforced as a gate. The signal is the seam
-    itself: once the Resume block is on disk the artifact is Turn 2 work and
-    this stays silent.
+    Turn 1 ends once the Resume block records a checkpoint past
+    stage1-contract; tokens, HTML and evidence belong to Turn 2. r33–r36 crossed
+    that seam inside Turn 1 (57–90 iterations each), so the seam stays a gate.
+    Scope of the guarantee: the checkpoint text is model-authored, so this gate
+    enforces write ORDER (record before runnable artifact), never proof that the
+    user replied — user selection is a dialogue fact no file gate can certify.
     """
     proto = root/'prototype'
     if not target.is_relative_to(proto) or is_design_record(target, root):
@@ -521,6 +540,17 @@ def post_tool_advisory(payload: dict) -> str | None:
     target = (cwd / args['file_path']).resolve()
     prototype = cwd / 'prototype'
     if not target.is_relative_to(prototype) or not target.is_file() or target.suffix.lower() not in {'.html', '.css', '.js'}:
+        return None
+    # Do not scan a half-written anchor trio. On whichever write completes the
+    # trio, scan the HTML entry (the only complete surface detect.py can assess).
+    detector_target = target
+    if target.parent.name == 'anchor':
+        trio = [target.parent / name for name in ('index.html', 'anchor.css', 'anchor.js')]
+        if not all(path.is_file() for path in trio):
+            return 'Craft advisory pending: anchor trio incomplete; detection runs on index.html once index.html, anchor.css and anchor.js exist.'
+        detector_target = target.parent / 'index.html'
+    elif target.suffix.lower() == '.js':
+        # A standalone JS file has no renderable surface for detect.py.
         return None
     detector = SKILL / 'scripts' / 'detect.py'
     if not detector.is_file():

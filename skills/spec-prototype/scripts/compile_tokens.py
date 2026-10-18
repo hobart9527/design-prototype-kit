@@ -376,14 +376,16 @@ def parse_five_axes(discussion_text: str) -> Dict[str, str]:
     axes: Dict[str, str] = {}
     # 1. Search canonical axes
     for key in CANONICAL_FIVE_AXES:
-        match = re.search(rf"[`*]*{key}[`*]*\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*", discussion_text, re.IGNORECASE)
+        # Values may carry markdown backticks or YAML quotes; both are delimiters,
+        # never part of the axis value.
+        match = re.search(rf"""[`*]*{key}[`*]*\s*:\s*[`*]*["']?([a-zA-Z0-9_-]+)["'`*]*""", discussion_text, re.IGNORECASE)
         if match:
             axes[key] = match.group(1).lower()
 
     # 2. Check legacy dial keys if canonical axes were not declared
     for legacy_key, target_axis in LEGACY_DIAL_MAP.items():
         if target_axis not in axes:
-            match = re.search(rf"[`*]*{legacy_key}[`*]*\s*:\s*[`*]*([a-zA-Z0-9_-]+)[`*]*", discussion_text, re.IGNORECASE)
+            match = re.search(rf"""[`*]*{legacy_key}[`*]*\s*:\s*[`*]*["']?([a-zA-Z0-9_-]+)["'`*]*""", discussion_text, re.IGNORECASE)
             if match:
                 axes[target_axis] = match.group(1).lower()
 

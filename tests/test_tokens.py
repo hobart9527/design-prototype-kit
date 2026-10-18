@@ -247,14 +247,36 @@ def test_palette_only_edit_cannot_pass_dial_annotation_freshness(tmp_path: Path)
     assert "dial annotation" in sync["drift"]
 
 
+def test_five_axes_contract_template_quotes_are_parsed():
+    ct = _load_compiler()
+    template = (ROOT / "skills/spec-prototype/templates/world.tokens.example.md").read_text(encoding="utf-8")
+    axes = ct.parse_five_axes(template)
+    assert set(axes) == {"density", "energy", "materiality", "rhythm", "character"}
+
+
+def test_five_axes_accept_single_and_double_quoted_values():
+    ct = _load_compiler()
+    axes = ct.parse_five_axes("""```contract:axes
+density: "dense"
+energy: 'calm'
+materiality: `paper`
+rhythm: measured
+character: operational
+```""")
+    assert axes == {"density": "dense", "energy": "calm", "materiality": "paper",
+                    "rhythm": "measured", "character": "operational"}
+
+
 def test_design_record_sets_token_promotion_and_compile_order():
     """Probe tokens stay local until selected; durable values precede compilation."""
     record = (
         ROOT / "skills/spec-prototype/references/04-governance/design-record.md"
     ).read_text(encoding="utf-8")
-    assert "不随方向收敛自动晋升" in record
-    assert "只有被选定方向显式引用时才回写" in record
-    assert record.index("再运行 `compile_tokens.py`") < record.index("Stage 5 以编译产物为准")
+    assert "Token authority has one source: the design record" in record
+    assert "`compile_tokens.py` is the sole writer of `tokens.css`" in record
+    assert "不随方向收敛自动晋升" not in record
+    assert "rerunning `compile_tokens.py`" in record
+    assert record.index("rerunning `compile_tokens.py`") < record.index("Stage 5 uses the compiled artifacts")
 
 
 def test_unsealed_tokens_css_is_out_of_sync(tmp_path: Path):

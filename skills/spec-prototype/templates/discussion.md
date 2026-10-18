@@ -48,7 +48,7 @@ refused at the Stage 5 `execution_spec` boundary.
 - Current topology/prototype coverage and evidence links:
 - Pending prerequisite (`none | needs_decision | needs_evidence | blocked`), impact and owner:
 - Next action and its prerequisite:
-- Stage checkpoint (`stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze`), completed in this turn:
+- Stage checkpoint (`stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze`), completed in this turn: `stage1-contract`
 - Turn budget discipline: a checkpoint is a recovery note, not a stop signal.
   Keep working while authorized scope and evidence remain, and write this block
   once per authoring pass. Stop only for an unresolved user decision, a real
@@ -95,36 +95,26 @@ inference from a pain narrative, a persona convention or industry practice is
   below with impact and owner.
 - Unknowns that could change the current decision, impact and owner: (required when any dimension is unknown)
 
-### Working understanding (Nine Pillars Canonical Ontology)
-
-| Pillar | Focus | Current statement | Evidence status (`explicit | observed | derived | hypothesis | unknown`) | Source / impact / owner |
-|---|---|---|---|---|---|
-| **Value** | Product thesis & outcome | | | | |
-| **Research** | Empirical context & constraints | | | | |
-| **Object** | Entities, content & authority | | | | |
-| **Journey** | Tasks, states & continuity | | | | |
-| **Topology** | Derived surface architecture | | | | |
-| **Attention** | Visual hierarchy & cognitive budgeting | | | | |
-| **Expression** | Five-Axis sensory calibration | | | | |
-| **Interaction** | Decisive exchange & action lifecycle | | | | |
-| **Resilience** | Stress limits & error recovery | | | | |
+Use the Nine Pillars as selective analytical lenses, not a Turn 1 form. Name only
+those pillars whose tension could change the direction; Stage 4 may use the full
+pillar set for audit coverage, scoped to the declared review.
 
 Ask only about unknowns that could materially change a consequential decision.
 Proceed on sourced, delegated or reversible details and label assumptions.
 
 ### Problem Framing & Drivers (支柱 1-2: 价值与真实地锚)
-- **Core Tension**: `Throughput vs Liability` (例如：秒级止血吞吐 vs 误操作不可逆风险)
-- **Design Driver**: `tension` | `failure_mode` (例如：信息过载与误判一键排空生产节点)
+- **Core Tension**: `<A>` vs `<B>` — the authentic trade-off that drives this
+  product, in this brief's own terms.
+- **Design Driver**: `tension` | `failure_mode`
 - **Reference Benchmarks**:
-  - `Adopt`: Datadog 密集状态矩阵、Linear 键盘高响应与紧凑排版
-  - `Refuse`: 消费级多步配置向导、高侵入式全屏遮罩
-- **Material Non-transfer Boundaries (Non-transfer)**: 物理仪表触觉可迁移，但严禁脱离数字媒介的伪材质伪阴影
+  - `Adopt`: a real product whose mechanism transfers here, with the mechanism named
+  - `Refuse`: a pattern this product must not copy, with the reason
+- **Material Non-transfer Boundaries**: what the cited analog cannot carry into a
+  digital medium.
 - **OOUX Cardinality-to-Layout Anchor**: `1:1` Canvas | `1:N` Master-Detail | `N:M` Relational Graph
-- **Ruthless Omissions (三大冷酷舍弃 · 绝不脑补未要求的系统能力)**:
-  1. 舍弃事后复盘报告与图表导出（“收尾”仅代表结束事故处理流程，严禁脑补“一键复盘导出/审计归档”等未声明能力）
-  2. 舍弃全局集群配置编辑能力（当前视口仅做应急定位与排空止血）
-  3. 舍弃复杂外部权限审批流（仅保留本地主备指挥官双签）
-- **Content Language (Locked)**: `zh-Hans`
+- **Ruthless Omissions**: what the brief explicitly does not ask for. Name only
+  omissions the brief supports; never invent capability to fill the matrix.
+- **Content Language (Locked)**: `<BCP-47 tag, e.g. zh-Hans | en-US>`
 
 ### Success metrics
 

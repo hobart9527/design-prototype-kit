@@ -615,6 +615,7 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
     selected: list[str] | None = None
     spec_only = False
     sources: list[str] = []
+    missing = {"source marker": True, "locator": True, "banned word": False, "slice id": True}
     for row in _decision_rows(text):
         # Columns: ID | Decision | Status | Reason | quote + locator | affected artifacts.
         status = _normalized(row[2]) if len(row) > 2 else ""
@@ -622,27 +623,35 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
             continue
         evidence = " ".join(row[3:5]).lower()
         if any(marker in evidence for marker in PLANNED_APPROVAL_MARKERS):
+            missing["banned word"] = True
             continue
         if not any(marker.lower() in evidence for marker in APPROVAL_SOURCE_MARKERS):
             continue
+        missing["source marker"] = False
         if not any(marker.lower() in evidence for marker in APPROVAL_LOCATOR_MARKERS):
             continue
+        missing["locator"] = False
         # Ensure the approval row actually binds the target slice. The match is
         # token-bounded: a plain substring test would let an approval for slice
         # 's10' authorize 's1', which is the cross-slice laundering this refuses.
         row_content = " ".join(row).lower()
         if not re.search(rf"(?<![a-z0-9_-]){re.escape(slice_id.lower())}(?![a-z0-9_-])", row_content):
             continue
+        missing["slice id"] = False
         selected = row
         # Direct assignment from current matching row, never accumulated across prior rows
         spec_only = any(m in evidence for m in SPEC_ONLY_MARKERS)
         sources = [token for token in re.findall(r"`([^`]+)`", row[-1]) if "/" in token]
     if selected is None:
+        missing_classes = [name for name, absent in missing.items() if absent]
+        if not missing["source marker"] and not missing["locator"] and not missing["slice id"]:
+            missing_classes = ["banned word"]
         raise HandoffError(
             "Cannot freeze specification: no actual approval or delegated-authority decision "
-            f"for slice '{slice_id}' / '{candidate_id}'. A planned, negated or override-only "
-            "statement, or a bare matching phrase, does not authorize freeze. Record the "
-            f"decision and its locator in {record.relative_to(root).as_posix()}."
+            f"for slice '{slice_id}' / '{candidate_id}'. Check the Decisions row for missing "
+            f"approval evidence class(es): {', '.join(missing_classes) or 'source marker, locator, banned word, slice id'}. "
+            "It needs a source marker, a turn/date/quote locator, no planned/negated banned word, "
+            f"and the exact slice id '{slice_id}'. See {record.relative_to(root).as_posix()}."
         )
     binding = {
         "record": retained(root, record.relative_to(root).as_posix()),
@@ -700,6 +709,24 @@ def freeze_preflight(root: Path, slice_id: str) -> dict:
             raise HandoffError(f"Freeze preflight failed: wcag-check exit {code}\n{tail}")
     else:
         results["wcag_check"] = "not_applicable"
+
+    # A stylesheet that drifted from its recorded token source would freeze bytes
+    # the record does not support. The sync check is the token analogue of the
+    # approval binding: freeze refuses rather than sealing an unsourced value.
+    tokens_css = root / "prototype/shared/tokens.css"
+    record = next((p for p in (root / "prototype/world.md", root / "prototype/discussion.md") if p.is_file()), None)
+    if tokens_css.is_file() and record is not None:
+        code, tail = run([sys.executable, str(here / "compile_tokens.py"),
+                          "--check-sync", "--output-css", str(tokens_css),
+                          "--discussion", str(record)])
+        if code == 0:
+            results["token_sync"] = "passed"
+        elif code == -1:
+            results["token_sync"] = "degraded"
+        else:
+            raise HandoffError(f"Freeze preflight failed: tokens.css is out of sync with its source\nt{tail}")
+    else:
+        results["token_sync"] = "not_applicable"
     return results
 
 
