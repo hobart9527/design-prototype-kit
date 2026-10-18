@@ -117,10 +117,20 @@ def test_stage2_executes_the_generator_before_authoring():
     assert "compare the built slots yourself" in stage2, \
         "the prose verdict is re-checked on the built slots by the designer"
     assert "challenger source, not a direction menu" in stage2
+
+def test_stage2_reuses_qualified_divergence_until_evidence_changes():
+    stage2 = _read(STAGE2)
+    assert "reuse or reopen" in stage2
+    assert "qualified ### Divergence block" in stage2
+    assert "without rerunning the generator" in stage2
+    assert "probe falsified a direction or new evidence changes the choice" in stage2
+    assert "dirs/a and dirs/b" in stage2
     # The draw is a command the stage runs, not a step the model remembers to take.
     assert "draw_seed.py --slice" in stage2
     assert "optionally draw" in stage2, "the draw is an optional entropy source, not a gate"
     assert "never choose them" in stage2
+
+
 
 
 # -- Direction Contract is the chain, compressed -------------------------------

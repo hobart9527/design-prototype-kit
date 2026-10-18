@@ -9,7 +9,7 @@ handoff.
 
 在执行 Stage 5 freeze 之前，必须满足以下前置条件（任一失败将导致 freeze 拒绝并阻断下游）：
 1. **状态模型完整**：`contract:states`, `contract:required_states`, `contract:actions`, `contract:invariants` 已完整声明（修复：补齐 slice brief 或 discussion 对应块）。
-2. **决策授权有效**：Decisions 表包含当前 slice 的 `confirmed | delegated` 行并具备 approval 证据与 locator（修复：在 `truth.md` 或 `discussion.md` 补齐记录）。
+2. **决策授权有效**：Decisions 表包含当前 slice 的 `confirmed | delegated` 行。freeze 实际要求该行同时包含来源标记（如 `用户明确批准`、`explicit approval`、`delegated authority`；完整清单见 `handoff.py` 顶部 `APPROVAL_SOURCE_MARKERS` 常量）、定位标记（如 `turn` / `轮`、`date` / `日期`、`quote` / `原话`）、不含 `planned` / `will approve` 等禁用词，并在该行含精确 `slice_id`。缺项时按提示在 `truth.md` 或 `discussion.md` 补齐。
 3. **Token 已编译**：执行下文 Pipeline 第 2 步后，`prototype/shared/tokens.css` 与 `prototype/contracts/tokens/t1.json` 同时存在（`compile_tokens.py` 是二者唯一写入者；手改 `tokens.css` 会触发 `out_of_sync`）。
 4. **对比度与质量门由 freeze 自带执行**：非 spec-only 的 freeze 会先运行 `wcag-check.js` 与 `verify_prototype_quality.py`。任一失败（退出码非 0 且非降级）即拒绝 freeze；verify 退出码 2（渲染探针未运行）记为 `degraded` 写入 freeze-manifest 的 `preflight`，不等同通过。提前自跑同样命令可更早发现问题。
 
@@ -36,7 +36,7 @@ Stage 5 本身可选：仅在用户要求冻结或下游交付时执行；一旦
    consumes. On a single-record tree the source is `prototype/discussion.md`
    (the default `--discussion`); on a layered tree pass `--discussion
    prototype/world.md` so the token authority is the visual-world file.
-   *Note on token flow discipline*: Direct authoring of `tokens.css` is standard in Stage 1~3 exploration. In Stage 5, token definitions are frozen and immutable; bidirectional writebacks to the design record are prohibited to preserve upstream SHA-256 seal integrity.
+   *Token flow discipline*: The design record (`world.md` or `discussion.md`) is the only token source at every stage. Record exploratory adjustments there and rerun `compile_tokens.py`; Stage 5 freezes the compiled outputs and makes no further source writebacks, preserving upstream SHA-256 seal integrity.
    **Do not substitute a Markdown-table token export for this step.** A re-export
    that groups tokens by CSS custom-property prefix omits the flat `color` group,
    so `wcag-check.js` reads no measurable set and exits non-zero with an explicit
