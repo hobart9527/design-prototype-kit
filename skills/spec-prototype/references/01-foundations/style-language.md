@@ -51,9 +51,10 @@ selects the direction.
 
 ## Testing the language
 
-- **Cover test**: hide the logo and copy; can a viewer of the first-viewport screenshot
-  guess the category? If yes (the common failure), the card has no Position that
-  departs from the category rut named in `rut_rejected`.
+- **Cover test**: hide the logo and copy. Category recognition itself is neutral;
+  the test is whether the design merely falls into generic category ruts (high
+  homogeneity in the forms rejected under `rut_rejected`) or commits to intentional,
+  opinionated relationships that express its Positions without relying on logo or copy.
 - **Transfer test**: apply the Positions to a second surface the card did not mention.
   If a Position cannot decide a layout question there, it is a mood, not a position.
 - **Cost test**: every Position names what it makes harder. A position with no cost is

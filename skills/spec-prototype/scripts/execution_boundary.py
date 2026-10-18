@@ -558,7 +558,7 @@ def post_tool_advisory(payload: dict) -> str | None:
     import subprocess
     try:
         proc = subprocess.run(
-            [sys.executable, str(detector), '--artifact', str(target), '--summary'],
+            [sys.executable, str(detector), '--artifact', str(detector_target), '--summary'],
             cwd=cwd, capture_output=True, text=True, timeout=20, check=False)
     except (OSError, subprocess.SubprocessError) as error:
         return f'Craft advisory unavailable ({error}); no quality verdict was produced.'

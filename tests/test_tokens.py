@@ -267,6 +267,24 @@ character: operational
                     "rhythm": "measured", "character": "operational"}
 
 
+def test_five_axes_contract_block_outranks_prose_and_filters_null():
+    ct = _load_compiler()
+    text = """
+- density: sparse
+- energy: kinetic
+- materiality: paper
+
+```contract:axes
+density: "dense"
+energy: null
+materiality: "instrument"
+```
+"""
+    axes = ct.parse_five_axes(text)
+    assert axes == {"density": "dense", "materiality": "instrument"}
+    assert "energy" not in axes
+
+
 def test_design_record_sets_token_promotion_and_compile_order():
     """Probe tokens stay local until selected; durable values precede compilation."""
     record = (

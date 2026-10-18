@@ -512,7 +512,9 @@ def _action_from_contract_block(block: Dict[str, Any]) -> Optional[Dict[str, Any
     # contract block is a designer's mechanism unless the author marks it
     # otherwise, so the unmarked default is `derived` — never `explicit`, which
     # would promote an unconfirmed mechanism into a user-confirmed fact.
-    authority = str(block.get("authority") or "derived").strip().lower()
+    # `evidence_source` is admitted as an alias for `authority`.
+    authority_val = block.get("evidence_source") or block.get("authority") or "derived"
+    authority = str(authority_val).strip().lower()
     if authority not in AUTHORITY_LEVELS:
         raise ValueError(
             f"contract:actions {action_id} has invalid authority {authority!r}; "

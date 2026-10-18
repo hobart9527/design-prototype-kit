@@ -31,7 +31,7 @@ optional. Unknown keys, unknown enum values and duplicate ids fail closed.
 | `contract:invariants` | list of mappings | `id` (`inv/…`), `statement`; `severity` ∈ `blocking\|warning\|advisory` (default `advisory`), `verification` ∈ `computed_style\|dom_query\|screenshot_review\|manual` (default `manual`), `applies_to` optional |
 | `contract:required_states` | list of scalars | each a state id, at least one |
 | `contract:viewports` | list of scalars | each a width in px, 200–4000 |
-| `contract:actions` | list of mappings | `id`, `verb`, `trigger`, `commit`; `proximity_level` optional (default 1), `authority` ∈ `explicit\|derived\|proposed\|hypothesis` (default `derived`), `feedback`/`consequence` optional |
+| `contract:actions` | list of mappings | `id`, `verb`, `trigger`, `commit`; `proximity_level` optional (default 1), `authority` (or alias `evidence_source`) ∈ `explicit\|derived\|proposed\|hypothesis` (default `derived`), `feedback`/`consequence` optional |
 | `contract:axes` | mapping | any of `density`, `energy`, `materiality`, `rhythm`, `character`; legacy aliases `weight`/`finish` → `materiality`, `seriousness` → `character` |
 | `contract:craft` | mapping (optional) | any of `surface_optics`, `spatial_geometry`, `micro_typography`, `data_marks` — a design-judgment projection, never required for a compile |
 | `contract:tokens` | mapping | `accent_seal` (hex), `accent_policy` (text), optional `state_nominal`, `state_warning`, `state_danger`, `state_success`, `state_info` (hex; `state` aliases `state_nominal`) |

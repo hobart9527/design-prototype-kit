@@ -82,3 +82,30 @@ def test_in_sync_stylesheet_is_recorded(tmp_path, monkeypatch):
     (tmp_path / "prototype/shared/tokens.css").write_text(":root{}", encoding="utf-8")
     monkeypatch.setattr(handoff.subprocess, "run", _fake_run({}))
     assert handoff.freeze_preflight(tmp_path, "reader")["token_sync"] == "passed"
+
+
+def test_freeze_preflight_inherits_modern_token_options(tmp_path):
+    """When tokens.css was compiled with non-default options (e.g. oklch, clamp),
+    freeze_preflight must forward them to compile_tokens --check-sync instead of failing."""
+    import compile_tokens as ct
+    spec = _build_root(tmp_path)
+    disc = tmp_path / "prototype/discussion.md"
+    disc.write_text(
+        disc.read_text(encoding="utf-8") +
+        "\n\n## Visual Design Foundation (Five Axes)\n"
+        "- Energy: Calm\n- Materiality: Digital / Flat\n- Density: Comfortable\n"
+        "- Mood: Technical / Precise\n- Scale: Intimate\n",
+        encoding="utf-8"
+    )
+    tokens_css = tmp_path / "prototype/shared/tokens.css"
+    ct.compile_tokens(
+        str(disc),
+        output_css_path=str(tokens_css),
+        color_format="oklch",
+        type_scale="clamp",
+    )
+
+    results = handoff.freeze_preflight(tmp_path, "reader")
+    assert results["token_sync"] == "passed"
+
+

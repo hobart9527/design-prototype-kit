@@ -2,7 +2,7 @@
 spec_schema: "google-design-md/v2"
 slice_id: "<slice_id>"
 authority: "draft"
-stage: "hero_probe"
+build_scope: "hero_probe"
 viewports: [390, 1280]
 applied_methods: []
 primary_surface: "<surface-id>"

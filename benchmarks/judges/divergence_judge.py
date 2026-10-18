@@ -28,6 +28,9 @@ import bench_lib as bl  # noqa: E402
 
 TAG_RE = re.compile(r"<([a-zA-Z][a-zA-Z0-9-]*)")
 STYLE_RE = re.compile(r"<style[^>]*>(.*?)</style>", re.IGNORECASE | re.DOTALL)
+LINK_TAG_RE = re.compile(r"<link\b([^>]+)>", re.IGNORECASE)
+REL_STYLE_RE = re.compile(r'\brel\s*=\s*["\']?stylesheet["\']?', re.IGNORECASE)
+HREF_RE = re.compile(r'\bhref\s*=\s*["\']?([^"\'\s>]+)', re.IGNORECASE)
 HEX_RE = re.compile(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b")
 FONT_RE = re.compile(r"font-family\s*:\s*([^;}\n]+)")
 CLASS_RE = re.compile(r'class\s*=\s*"([^"]*)"')
@@ -46,12 +49,43 @@ LAYOUT_DECL_RE = re.compile(
 )
 
 
-def _fingerprint(markup: str) -> dict:
-    tags = [t.lower() for t in TAG_RE.findall(markup) if t.lower() not in _NOISE_TAGS]
-    css = "\n".join(STYLE_RE.findall(markup))
-    layout = {name.lower() + ":" + re.sub(r"\s+", " ", value.strip().lower())
-              for name, value in LAYOUT_DECL_RE.findall(css)}
-    colours = {c.lower() for c in HEX_RE.findall(css + markup)}
+def _strip_comments(css: str) -> str:
+    return re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+
+
+def _extract_css(markup: str, base_dir: pathlib.Path | None = None) -> str:
+    chunks = []
+    for block in STYLE_RE.findall(markup):
+        chunks.append(_strip_comments(block))
+    if base_dir:
+        for link in LINK_TAG_RE.finditer(markup):
+            attrs = link.group(1)
+            if REL_STYLE_RE.search(attrs):
+                href_match = HREF_RE.search(attrs)
+                if href_match:
+                    href = href_match.group(1).strip()
+                    if href.startswith(("http://", "https://", "//")):
+                        continue
+                    clean_href = href.split("?")[0].split("#")[0]
+                    target = (base_dir / clean_href).resolve()
+                    if target.is_file():
+                        try:
+                            chunks.append(_strip_comments(target.read_text(encoding="utf-8", errors="replace")))
+                        except OSError:
+                            pass
+    return "\n".join(chunks)
+
+
+def _fingerprint(markup: str, base_dir: pathlib.Path | None = None) -> dict:
+    clean_markup = re.sub(r"<!--.*?-->", "", markup, flags=re.DOTALL)
+    tags = [t.lower() for t in TAG_RE.findall(clean_markup) if t.lower() not in _NOISE_TAGS]
+    css = _extract_css(clean_markup, base_dir)
+    layout = set()
+    for name, value in LAYOUT_DECL_RE.findall(css):
+        norm_val = re.sub(r"!important", "", value, flags=re.IGNORECASE)
+        norm_val = re.sub(r"\s+", " ", norm_val.strip().lower())
+        layout.add(name.lower() + ":" + norm_val)
+    colours = {c.lower() for c in HEX_RE.findall(css + clean_markup)}
     # Normalise 3-digit hex to 6 so #abc and #aabbcc are one colour.
     colours = {c if len(c) == 7 else "#" + "".join(ch * 2 for ch in c[1:]) for c in colours}
     faces = set()
@@ -61,7 +95,7 @@ def _fingerprint(markup: str) -> dict:
             if face and face not in ("serif", "sans-serif", "monospace", "inherit", "initial"):
                 faces.add(face)
     classes = set()
-    for group in CLASS_RE.findall(markup):
+    for group in CLASS_RE.findall(clean_markup):
         classes.update(t for t in re.split(r"\s+", group.strip()) if t)
     return {"tags": tags, "layout": layout, "colours": colours, "faces": faces, "classes": classes}
 
@@ -72,8 +106,10 @@ def _jaccard(a: set, b: set):
     Two empty sets are *unmeasured*, not identical: treating them as a perfect
     match once made two structurally different directions read as one.
     """
-    if not a or not b:
+    if not a and not b:
         return None
+    if not a or not b:
+        return 0.0
     return round(len(a & b) / len(a | b), 4)
 
 
@@ -99,7 +135,7 @@ def judge(artifacts_dir: pathlib.Path) -> dict:
                 "note": f"{len(slots)} direction slot(s) found; divergence needs at least 2 "
                         "(a single-direction extension is out of scope for this judge)"}
 
-    prints = {slot: _fingerprint(path.read_text(encoding="utf-8", errors="replace"))
+    prints = {slot: _fingerprint(path.read_text(encoding="utf-8", errors="replace"), base_dir=path.parent)
               for slot, path in slots.items()}
     results = []
     for left, right in _pairs(sorted(prints)):

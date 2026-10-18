@@ -371,24 +371,38 @@ LEGACY_DIAL_MAP = {
 def parse_five_axes(discussion_text: str) -> Dict[str, str]:
     """Extract optional Five Axes decisions from discussion; returns empty/partial dict if undeclared.
 
+    Priority 0: an authored ```contract:axes block is the machine SSOT.
+    Fallback: prose bullets across discussion text for backwards compatibility.
     Never fails if axes are omitted. Maps legacy 5-dial terms into canonical axes where appropriate.
     """
+    # 0. Check for authoritative contract:axes block first
+    block_match = re.search(r"```contract:axes\s*\n(.*?)\n```", discussion_text, re.DOTALL | re.IGNORECASE)
+    search_text = block_match.group(1) if block_match else discussion_text
+
     axes: Dict[str, str] = {}
+    null_literals = {"null", "none", "~", ""}
+
     # 1. Search canonical axes
     for key in CANONICAL_FIVE_AXES:
         # Values may carry markdown backticks or YAML quotes; both are delimiters,
         # never part of the axis value.
-        match = re.search(rf"""[`*]*{key}[`*]*\s*:\s*[`*]*["']?([a-zA-Z0-9_-]+)["'`*]*""", discussion_text, re.IGNORECASE)
+        match = re.search(rf"""[`*]*{key}[`*]*\s*:\s*[`*]*["']?([a-zA-Z0-9_-]+)["'`*]*""", search_text, re.IGNORECASE)
         if match:
-            axes[key] = match.group(1).lower()
+            val = match.group(1).lower()
+            if val not in null_literals:
+                axes[key] = val
 
     # 2. Check legacy dial keys if canonical axes were not declared
     for legacy_key, target_axis in LEGACY_DIAL_MAP.items():
         if target_axis not in axes:
-            match = re.search(rf"""[`*]*{legacy_key}[`*]*\s*:\s*[`*]*["']?([a-zA-Z0-9_-]+)["'`*]*""", discussion_text, re.IGNORECASE)
+            match = re.search(rf"""[`*]*{legacy_key}[`*]*\s*:\s*[`*]*["']?([a-zA-Z0-9_-]+)["'`*]*""", search_text, re.IGNORECASE)
             if match:
-                axes[target_axis] = match.group(1).lower()
+                val = match.group(1).lower()
+                if val not in null_literals:
+                    axes[target_axis] = val
 
+    # If contract:axes block was present but some canonical axes were missing or empty,
+    # do NOT let ambiguous prose outside the block override the block's SSOT status.
     return axes
 
 

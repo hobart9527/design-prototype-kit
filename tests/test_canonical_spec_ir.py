@@ -284,8 +284,13 @@ def test_contract_actions_yaml_is_authoritative_and_fails_closed():
     # unknown level fails closed rather than defaulting to something.
     marked = actions.replace("  verb: submit", "  authority: explicit\n  verb: submit")
     assert parse_action_verbs(marked)[0]["authority"] == "explicit"
+    # evidence_source alias functions identically to authority
+    alias_marked = actions.replace("  verb: submit", "  evidence_source: explicit\n  verb: submit")
+    assert parse_action_verbs(alias_marked)[0]["authority"] == "explicit"
     with pytest.raises(ValueError, match="invalid authority"):
         parse_action_verbs(actions.replace("  verb: submit", "  authority: confirmed\n  verb: submit"))
+    with pytest.raises(ValueError, match="invalid authority"):
+        parse_action_verbs(actions.replace("  verb: submit", "  evidence_source: confirmed\n  verb: submit"))
 
     duplicate = actions.replace(
         "  feedback: Saved",
@@ -683,11 +688,44 @@ def test_lint_canonical_spec_ir_schema_and_boundary(tmp_path: Path):
     assert not errors
 
 
-def test_build_scope_key_and_legacy_stage_key_name_the_same_axis():
+def test_build_scope_key_and_legacy_stage_key_name_the_same_axis(tmp_path: Path):
     """`build_scope` is the unambiguous frontmatter key; `stage` stays readable."""
     text = (Path(__file__).resolve().parents[1] /
             "skills/spec-prototype/scripts/compile_spec_ir.py").read_text(encoding="utf-8")
     assert 'fm_data.get("build_scope") or fm_data.get("stage")' in text
+
+    brief_with_build_scope = """---
+spec_schema: "google-design-md/v2"
+slice_id: "scope-test"
+authority: "draft"
+build_scope: "walking_skeleton"
+viewports: [1280]
+---
+# Scope Test
+"""
+    disc_with_stage = """---
+spec_schema: "google-design-md/v2"
+slice_id: "stage-test"
+authority: "draft"
+stage: "surface_slice"
+viewports: [1280]
+---
+# Stage Test
+"""
+    ir_scope = compile_canonical_ir(
+        root=_write_discussion(tmp_path / "t1", brief_with_build_scope),
+        slice_id="scope-test",
+        allow_incomplete=True,
+    )
+    assert ir_scope["scope"]["build_scope"]["stage"] == "walking_skeleton"
+
+    ir_stage = compile_canonical_ir(
+        root=_write_discussion(tmp_path / "t2", disc_with_stage),
+        slice_id="stage-test",
+        allow_incomplete=True,
+    )
+    assert ir_stage["scope"]["build_scope"]["stage"] == "surface_slice"
+
 
 
 def test_google_design_md_frontmatter_and_standard_sections_compile_cleanly(tmp_path: Path):

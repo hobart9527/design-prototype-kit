@@ -411,6 +411,43 @@ def test_divergence_with_one_slot_is_not_measured(tmp_path):
     assert result["verdict"] == "not_measured"
 
 
+def test_divergence_strips_css_comments_before_extracting_layout(tmp_path):
+    tags = "<html><head><style>{}</style></head><body><main><section><h2>A</h2><p>B</p></section></main></body></html>"
+    # Commented out grid declaration should be stripped and not count as grid layout
+    _write(tmp_path, "prototype/experiments/s/dirs/a/index.html",
+           tags.format("main{ /* display: grid; */ display: block; }"))
+    _write(tmp_path, "prototype/experiments/s/dirs/b/index.html",
+           tags.format("main{ display: grid; grid-template-columns: 1fr 1fr; }"))
+    result = dj.judge(tmp_path)
+    # Slot a has display: block (not in LAYOUT_DECL_RE) -> layout set is empty.
+    # Slot b has display: grid -> layout set is non-empty.
+    # Layout overlap must be 0.0, NOT None.
+    assert result["pairs"][0]["layout_overlap"] == 0.0
+    assert result["pairs"][0]["verdict"] == "divergent"
+
+
+def test_divergence_reads_external_linked_stylesheets(tmp_path):
+    _write(tmp_path, "prototype/experiments/s/dirs/a/style.css", "main { display: grid; grid-template-columns: 1fr; }")
+    _write(tmp_path, "prototype/experiments/s/dirs/a/index.html",
+           '<html><head><link rel="stylesheet" href="style.css"></head><body><main><p>A</p></main></body></html>')
+    _write(tmp_path, "prototype/experiments/s/dirs/b/style.css", "main { display: flex; flex-direction: column; }")
+    _write(tmp_path, "prototype/experiments/s/dirs/b/index.html",
+           '<html><head><link rel="stylesheet" href="style.css"></head><body><main><p>A</p></main></body></html>')
+    result = dj.judge(tmp_path)
+    assert result["pairs"][0]["layout_overlap"] == 0.0
+    assert result["pairs"][0]["verdict"] == "divergent"
+
+
+def test_divergence_measures_disjoint_layout_overlap_as_zero(tmp_path):
+    tags = "<html><head><style>{}</style></head><body><main><section><h2>A</h2></section></main></body></html>"
+    _write(tmp_path, "prototype/experiments/s/dirs/a/index.html", tags.format(""))
+    _write(tmp_path, "prototype/experiments/s/dirs/b/index.html", tags.format("main{display:flex}"))
+    result = dj.judge(tmp_path)
+    # One empty layout set vs one populated layout set is 0.0 overlap, not unmeasured (None)
+    assert result["pairs"][0]["layout_overlap"] == 0.0
+
+
+
 # -- contract fidelity judge --------------------------------------------------
 
 def test_contract_extraction_finds_the_declared_section(tmp_path):

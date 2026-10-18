@@ -716,15 +716,34 @@ def freeze_preflight(root: Path, slice_id: str) -> dict:
     tokens_css = root / "prototype/shared/tokens.css"
     record = next((p for p in (root / "prototype/world.md", root / "prototype/discussion.md") if p.is_file()), None)
     if tokens_css.is_file() and record is not None:
-        code, tail = run([sys.executable, str(here / "compile_tokens.py"),
-                          "--check-sync", "--output-css", str(tokens_css),
-                          "--discussion", str(record)])
+        cmd = [sys.executable, str(here / "compile_tokens.py"),
+               "--check-sync", "--output-css", str(tokens_css),
+               "--discussion", str(record)]
+        try:
+            import compile_tokens as ct_mod
+            prov = ct_mod.read_tokens_provenance(str(tokens_css))
+        except Exception:
+            prov = {}
+        if prov:
+            if prov.get("mode"):
+                cmd.extend(["--mode", prov["mode"]])
+            opts = prov.get("output", {})
+            if opts.get("color_format"):
+                cmd.extend(["--color-format", opts["color_format"]])
+            if opts.get("color_schemes"):
+                cmd.extend(["--color-schemes", opts["color_schemes"]])
+            if opts.get("type_scale"):
+                cmd.extend(["--type-scale", opts["type_scale"]])
+            if opts.get("dark_source"):
+                cmd.extend(["--dark-source", opts["dark_source"]])
+
+        code, tail = run(cmd)
         if code == 0:
             results["token_sync"] = "passed"
         elif code == -1:
             results["token_sync"] = "degraded"
         else:
-            raise HandoffError(f"Freeze preflight failed: tokens.css is out of sync with its source\nt{tail}")
+            raise HandoffError(f"Freeze preflight failed: tokens.css is out of sync with its source\n{tail}")
     else:
         results["token_sync"] = "not_applicable"
     return results

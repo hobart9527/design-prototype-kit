@@ -75,6 +75,58 @@ def test_post_tool_advisory_summarizes_artifact_without_blocking(tmp_path):
     assert "permissionDecision" not in result["hookSpecificOutput"]
 
 
+def test_post_tool_advisory_scans_entry_when_anchor_triad_is_complete(tmp_path, monkeypatch):
+    root = _active_root(tmp_path)
+    anchor_dir = root / "prototype/experiments/demo/anchor"
+    anchor_dir.mkdir(parents=True, exist_ok=True)
+    _write(anchor_dir / "index.html", '<!doctype html><html><body><button>Go</button></body></html>')
+    _write(anchor_dir / "anchor.css", 'button { color: red; }')
+    _write(anchor_dir / "anchor.js", 'console.log("ready");')
+
+    called_args = []
+    import subprocess
+    class _MockProc:
+        returncode = 0
+        stdout = "craft-floor scan of index.html: all clear"
+        stderr = ""
+
+    def _mock_run(cmd, **kwargs):
+        called_args.append(cmd)
+        return _MockProc()
+
+    monkeypatch.setattr(subprocess, "run", _mock_run)
+
+    payload = {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Write",
+        "tool_input": {"file_path": "prototype/experiments/demo/anchor/anchor.js"},
+        "cwd": str(root),
+    }
+    result = eb.route_hook_payload(payload)
+    assert "additionalContext" in result["hookSpecificOutput"]
+    # The detector must be run on index.html, not anchor.js
+    assert len(called_args) == 1
+    artifact_idx = called_args[0].index("--artifact") + 1
+    assert called_args[0][artifact_idx].endswith("index.html")
+
+
+def test_post_tool_advisory_reports_pending_when_anchor_triad_incomplete(tmp_path):
+    root = _active_root(tmp_path)
+    anchor_dir = root / "prototype/experiments/demo/anchor"
+    anchor_dir.mkdir(parents=True, exist_ok=True)
+    _write(anchor_dir / "anchor.js", 'console.log("ready");')
+
+    payload = {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Write",
+        "tool_input": {"file_path": "prototype/experiments/demo/anchor/anchor.js"},
+        "cwd": str(root),
+    }
+    result = eb.route_hook_payload(payload)
+    summary = result["hookSpecificOutput"]["additionalContext"]
+    assert "anchor trio incomplete" in summary
+
+
 def test_post_tool_advisory_ignores_non_prototype_write(tmp_path):
     root = _active_root(tmp_path)
     payload = {
