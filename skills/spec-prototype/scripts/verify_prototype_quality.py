@@ -1069,14 +1069,33 @@ def _playwright_probe(html: Path, capture: bool) -> tuple[bool, str | None]:
     return True, None
 
 
-def probe_craft_floors(html: Path, viewport_width: int = 1280) -> tuple[bool, str | None]:
-    """Browser-check press feedback, nested radii, and tabular numeric stability."""
-    node = shutil.which("node")
-    probe_mjs = Path(__file__).resolve().parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
-    if not node or not probe_mjs.is_file():
-        return False, "environment_not_ready: craft floor probe needs node and browser_probe.mjs"
+def _browser_probe_path() -> Path | None:
+    """Locate browser_probe.mjs: skill-local copy first (standalone installs),
+    repo-level benchmarks copy as fallback (in-repo runs)."""
+    here = Path(__file__).resolve()
+    skill_local = here.parent / "browser_probe.mjs"
+    if skill_local.is_file():
+        return skill_local
+    repo_level = here.parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
+    return repo_level if repo_level.is_file() else None
 
-    script = r'''(() => {
+
+def _playwright_eval(html: Path, script: str, viewport_width: int, label: str):
+    """Evaluate `script` in the page via playwright; returns (result, reason)."""
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": viewport_width, "height": 900})
+            page.goto(html.resolve().as_uri())
+            result = page.evaluate(script)
+            browser.close()
+    except Exception as exc:  # noqa: BLE001
+        return None, f"environment_not_ready: {label} failed ({exc.__class__.__name__})"
+    return result, None
+
+
+_CRAFT_FLOOR_SCRIPT = r'''(() => {
       const visible = (el) => {
         const r = el.getBoundingClientRect(), s = getComputedStyle(el);
         return r.width > 0 && r.height > 0 && s.display !== "none" && s.visibility !== "hidden";
@@ -1123,25 +1142,45 @@ def probe_craft_floors(html: Path, viewport_width: int = 1280) -> tuple[bool, st
       }
       return { failures, checked: { commit: commit.length, numeric: numeric.length } };
     })()'''
-    import base64
-    import json as _json
-    try:
-        proc = subprocess.run(
-            [node, str(probe_mjs), "craft", "--url", html.resolve().as_uri(),
-             "--viewport", f"{viewport_width}x900", "--script", base64.b64encode(script.encode()).decode()],
-            capture_output=True, text=True, timeout=60, cwd=str(probe_mjs.parents[1]))
-    except (subprocess.TimeoutExpired, OSError) as exc:
-        return False, f"environment_not_ready: craft floor probe failed ({exc.__class__.__name__})"
-    if proc.returncode != 0:
-        return False, f"environment_not_ready: craft floor probe exited {proc.returncode}"
-    try:
-        result = _json.loads(proc.stdout.strip().splitlines()[-1]).get("result")
-        failures = result["failures"]
-    except (KeyError, ValueError, IndexError, TypeError):
-        return False, "environment_not_ready: craft floor probe returned unparseable output"
-    if failures:
-        return False, "craft floor assertion: " + "; ".join(failures[:8])
-    return True, None
+
+
+def probe_craft_floors(html: Path, viewport_width: int = 1280) -> tuple[bool, str | None]:
+    """Browser-check press feedback, nested radii, and tabular numeric stability."""
+    node = shutil.which("node")
+    probe_mjs = _browser_probe_path()
+    if node and probe_mjs is not None:
+        script = _CRAFT_FLOOR_SCRIPT
+        import base64
+        import json as _json
+        try:
+            proc = subprocess.run(
+                [node, str(probe_mjs), "craft", "--url", html.resolve().as_uri(),
+                 "--viewport", f"{viewport_width}x900", "--script", base64.b64encode(script.encode()).decode()],
+                capture_output=True, text=True, timeout=60, cwd=str(probe_mjs.parents[1]))
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            return False, f"environment_not_ready: craft floor probe failed ({exc.__class__.__name__})"
+        if proc.returncode != 0:
+            return False, f"environment_not_ready: craft floor probe exited {proc.returncode}"
+        try:
+            result = _json.loads(proc.stdout.strip().splitlines()[-1]).get("result")
+            failures = result["failures"]
+        except (KeyError, ValueError, IndexError, TypeError):
+            return False, "environment_not_ready: craft floor probe returned unparseable output"
+        if failures:
+            return False, "craft floor assertion: " + "; ".join(failures[:8])
+        return True, None
+
+    if importlib.util.find_spec("playwright") is not None:
+        result, reason = _playwright_eval(html, _CRAFT_FLOOR_SCRIPT, viewport_width, "craft floor probe")
+        if reason is not None:
+            return False, reason
+        failures = (result or {}).get("failures") or []
+        if failures:
+            return False, "craft floor assertion: " + "; ".join(failures[:8])
+        return True, None
+
+    return False, ("environment_not_ready: craft floor probe needs node (browser_probe.mjs) "
+                   "or playwright; neither is available")
 
 
 def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44) -> tuple[bool, str | None]:
@@ -1156,8 +1195,8 @@ def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44)
     """
     node = shutil.which("node")
     # scripts/ -> spec-prototype/ -> skills/ -> repo root
-    probe_mjs = Path(__file__).resolve().parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
-    if node and probe_mjs.is_file():
+    probe_mjs = _browser_probe_path()
+    if node and probe_mjs is not None:
         cached = _TIER_PROBE_CACHE.get(_probe_cache_key(f"touch:{viewport_width}", html))
         if cached is not None:
             return cached
@@ -1236,7 +1275,7 @@ def probe_focus_occlusion(html: Path, viewport_width: int = 1280) -> tuple[bool,
     the covering element rather than reporting the control as absent.
     """
     node = shutil.which("node")
-    probe_mjs = Path(__file__).resolve().parents[3] / "benchmarks" / "runners" / "browser_probe.mjs"
+    probe_mjs = _browser_probe_path()
     if not node or not probe_mjs.is_file():
         return False, "environment_not_ready: focus-occlusion probe needs node and browser_probe.mjs"
 
@@ -1270,24 +1309,13 @@ def probe_focus_occlusion(html: Path, viewport_width: int = 1280) -> tuple[bool,
       }
       return { occluded, measured, total: controlled.length };
     })()'''
-    import base64
-    import json as _json
-    try:
-        proc = subprocess.run(
-            [node, str(probe_mjs), "craft", "--url", html.resolve().as_uri(),
-             "--viewport", f"{viewport_width}x900", "--script", base64.b64encode(script.encode()).decode()],
-            capture_output=True, text=True, timeout=60, cwd=str(probe_mjs.parents[1]))
-    except (subprocess.TimeoutExpired, OSError) as exc:
-        return False, f"environment_not_ready: focus-occlusion probe failed ({exc.__class__.__name__})"
-    if proc.returncode != 0:
-        return False, f"environment_not_ready: focus-occlusion probe exited {proc.returncode}"
-    try:
-        result = _json.loads(proc.stdout.strip().splitlines()[-1]).get("result")
-        occluded = result["occluded"]
-        measured = int(result["measured"])
-        total = int(result["total"])
-    except (KeyError, ValueError, IndexError, TypeError):
-        return False, "environment_not_ready: focus-occlusion probe returned unparseable output"
+
+
+def _focus_occlusion_report(result: dict) -> tuple[bool, str | None]:
+    """Shared verdict for the node and playwright occlusion branches."""
+    occluded = result.get("occluded") or []
+    measured = int(result.get("measured") or 0)
+    total = int(result.get("total") or 0)
     if total and not measured:
         # Every control sat outside the viewport: nothing was actually hit-tested,
         # so "no occluded controls" would be an unmeasured claim, not a pass.
@@ -1296,6 +1324,41 @@ def probe_focus_occlusion(html: Path, viewport_width: int = 1280) -> tuple[bool,
         named = "; ".join(f"{item['control']} covered by {item['covered_by']}" for item in occluded[:5])
         return False, f"focus_occlusion assertion: {len(occluded)} control(s) covered: {named}"
     return True, None
+
+
+def probe_focus_occlusion(html: Path, viewport_width: int = 1280) -> tuple[bool, str | None]:
+    """Browser-check sticky headers do not cover keyboard-focused targets."""
+    node = shutil.which("node")
+    probe_mjs = _browser_probe_path()
+    if node and probe_mjs is not None:
+        script = _FOCUS_OCCLUSION_SCRIPT
+        import base64
+        import json as _json
+        try:
+            proc = subprocess.run(
+                [node, str(probe_mjs), "craft", "--url", html.resolve().as_uri(),
+                 "--viewport", f"{viewport_width}x900", "--script", base64.b64encode(script.encode()).decode()],
+                capture_output=True, text=True, timeout=60, cwd=str(probe_mjs.parents[1]))
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            return False, f"environment_not_ready: focus-occlusion probe failed ({exc.__class__.__name__})"
+        if proc.returncode != 0:
+            return False, f"environment_not_ready: focus-occlusion probe exited {proc.returncode}"
+        try:
+            result = _json.loads(proc.stdout.strip().splitlines()[-1]).get("result")
+        except (ValueError, IndexError, TypeError):
+            return False, "environment_not_ready: focus-occlusion probe returned unparseable output"
+        if result is None:
+            return False, "environment_not_ready: focus-occlusion probe returned unparseable output"
+        return _focus_occlusion_report(result)
+
+    if importlib.util.find_spec("playwright") is not None:
+        result, reason = _playwright_eval(html, _FOCUS_OCCLUSION_SCRIPT, viewport_width, "focus-occlusion probe")
+        if reason is not None:
+            return False, reason
+        return _focus_occlusion_report(result or {})
+
+    return False, ("environment_not_ready: focus-occlusion probe needs node (browser_probe.mjs) "
+                   "or playwright; neither is available")
 
 
 def tiered_quality_evidence(html: Path, l1_failures: list[str]) -> dict[str, object]:

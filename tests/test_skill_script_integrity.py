@@ -65,9 +65,21 @@ def test_documented_script_commands_are_admitted_by_the_boundary(tmp_path, monke
 # a new undocumented helper fails this test until it is either documented or
 # removed. Documenting a name means the author can find it; silence does not.
 UNDOCUMENTED_BACKLOG = {
+    "browser_probe.mjs",  # internal engine of verify_prototype_quality.py probes; not author-invoked
     "generate_review_portal.py",
     "lint_spec_contracts.py",
 }
+
+
+def test_browser_probe_copy_stays_in_sync():
+    """The skill-local probe is a vendored copy; drift breaks standalone installs."""
+    skill_copy = (SCRIPTS / "browser_probe.mjs").read_text(encoding="utf-8").splitlines(keepends=True)
+    repo_copy = (REPO / "benchmarks" / "runners" / "browser_probe.mjs").read_text(encoding="utf-8").splitlines(keepends=True)
+    # The skill copy carries a two-line header noting the vendoring; the rest must match.
+    assert skill_copy[3:] == repo_copy[1:], (
+        "browser_probe.mjs copies diverged; sync skills/spec-prototype/scripts/browser_probe.mjs "
+        "with benchmarks/runners/browser_probe.mjs (or vice versa) and keep the header note"
+    )
 
 
 def test_skill_prose_never_names_a_script_that_does_not_ship():
