@@ -717,3 +717,52 @@ def test_resolve_slice_viewports_missing_brief_returns_null(tmp_path):
     (tmp_path / "prototype").mkdir()
     out = eval_seam("cap.resolveSliceViewports(input.root, input.slice)", {"root": str(tmp_path), "slice": "ghost"})
     assert out is None
+
+def test_resolve_slice_viewports_quoted_yaml_widths_parse(tmp_path):
+    """`- \"1280px\"` is a sanctioned contract form and must not parse as NaN."""
+    brief = tmp_path / "prototype" / "briefs"
+    brief.mkdir(parents=True)
+    (brief / "reader.md").write_text(
+        "```contract:viewports\n- \"1280px\"\n- \"390\"\n```\n",
+        encoding="utf-8")
+    out = eval_seam("cap.resolveSliceViewports(input.root, input.slice)", {"root": str(tmp_path), "slice": "reader"})
+    assert out == [390, 1280] or out == [1280, 390]
+    assert all(isinstance(w, int) for w in out)
+
+def test_resolve_slice_viewports_multi_slice_discussion_matches_requested(tmp_path):
+    """A single discussion.md with two Slice sections must resolve the requested one."""
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    (proto / "discussion.md").write_text(
+        "# Discussion\n\n"
+        "## Slice: overview\n\n```contract:viewports\n- 390\n```\n\n"
+        "## Slice: checkout\n\n```contract:viewports\n- 768\n- 1440\n```\n",
+        encoding="utf-8")
+    out = eval_seam("cap.resolveSliceViewports(input.root, input.slice)", {"root": str(tmp_path), "slice": "checkout"})
+    assert out == [768, 1440]
+
+def test_resolve_slice_states_reads_contract_block(tmp_path):
+    brief = tmp_path / "prototype" / "briefs"
+    brief.mkdir(parents=True)
+    (brief / "reader.md").write_text(
+        "```contract:required_states\n- default\n- degraded\n- draining\n```\n",
+        encoding="utf-8")
+    out = eval_seam("cap.resolveSliceStates(input.root, input.slice)", {"root": str(tmp_path), "slice": "reader"})
+    assert out == ["default", "degraded", "draining"]
+
+def test_resolve_slice_states_frontmatter_and_default_pin(tmp_path):
+    brief = tmp_path / "prototype" / "briefs"
+    brief.mkdir(parents=True)
+    (brief / "reader.md").write_text(
+        "---\nrequired_states: [degraded, draining]\n---\n\n# Surface brief\n",
+        encoding="utf-8")
+    out = eval_seam("cap.resolveSliceStates(input.root, input.slice)", {"root": str(tmp_path), "slice": "reader"})
+    # "default" is pinned by the caller; the resolver returns the declared set.
+    assert out == ["degraded", "draining"]
+
+def test_resolve_slice_states_missing_declaration_returns_null(tmp_path):
+    brief = tmp_path / "prototype" / "briefs"
+    brief.mkdir(parents=True)
+    (brief / "reader.md").write_text("# Surface brief — reader\n", encoding="utf-8")
+    out = eval_seam("cap.resolveSliceStates(input.root, input.slice)", {"root": str(tmp_path), "slice": "reader"})
+    assert out is None

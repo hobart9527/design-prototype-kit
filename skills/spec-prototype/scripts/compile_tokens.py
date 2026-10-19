@@ -685,14 +685,21 @@ def _extract_font_overrides(text: str) -> Dict[str, str]:
     """Authored font-slot overrides from the confirmed/proposed section, if any.
 
     Accepts lines like `font-display: "Georgia, serif"` (with optional backticks,
-    dashes, or quotes). Only the three slots are admissible.
+    dashes, or quotes). Only the three slots are admissible. Font stacks keep
+    their internal quotes — `Charter, "Bitstream Charter", serif` must survive
+    intact — so the value is taken to end-of-line and only a matching outer
+    quote pair (or backticks) is stripped afterwards.
     """
     scope = _extract_confirmed_section(text) or ""
     if not scope:
         return {}
     overrides: Dict[str, str] = {}
-    for m in re.finditer(r"(?:--)?font-(display|sans|mono)\s*[:=]\s*[`'\"]?([^;`'\"\n]+)", scope, re.IGNORECASE):
-        overrides[m.group(1).lower()] = m.group(2).strip()
+    for m in re.finditer(r"(?:--)?font-(display|sans|mono)\s*[:=]\s*([^\n;]+)", scope, re.IGNORECASE):
+        val = m.group(2).strip().strip("`").strip()
+        if len(val) >= 2 and val[0] == val[-1] and val[0] in ("'", '"'):
+            val = val[1:-1].strip()
+        if val:
+            overrides[m.group(1).lower()] = val
     return overrides
 
 

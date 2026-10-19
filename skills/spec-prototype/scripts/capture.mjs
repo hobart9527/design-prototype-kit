@@ -828,38 +828,57 @@ export function buildDiagnosticsSummary(result) {
 // always stays as the fold check. Mirrors compile_spec_ir precedence —
 // contract:viewports block outranks frontmatter. The verifier's
 // check_viewport_receipts is the shared oracle both parsers must satisfy.
-export function resolveSliceViewports(root, sliceId) {
+// Shared slice-contract source: the slice's own brief when present, else the
+// matching `# Slice: <id>` section of a single-record discussion.md. A
+// discussion.md may hold several Slice sections, so every heading is scanned —
+// the first match is not necessarily this slice's.
+function sliceContractText(root, sliceId) {
   const readIfFile = (p) => (fs.existsSync(p) ? fs.readFileSync(p, "utf-8") : null);
   let text = readIfFile(path.join(root, "prototype", "briefs", `${sliceId}.md`));
   if (text === null) {
     const discussion = readIfFile(path.join(root, "prototype", "discussion.md"));
     if (discussion !== null) {
-      const m = discussion.match(/^#{1,6}\s+Slice\s*[:：]\s*(.+)$/im);
-      if (m && m[1].trim() === sliceId) {
-        const start = m.index;
-        const rest = discussion.slice(start + m[0].length);
-        const end = rest.search(/^#{1,2}\s/m);
-        text = rest.slice(0, end === -1 ? undefined : end);
+      for (const m of discussion.matchAll(/^#{1,6}\s+Slice\s*[:：]\s*(.+)$/gim)) {
+        if (m[1].trim() === sliceId) {
+          const rest = discussion.slice(m.index + m[0].length);
+          const end = rest.search(/^#{1,2}\s/m);
+          text = rest.slice(0, end === -1 ? undefined : end);
+          break;
+        }
       }
     }
   }
-  if (text === null || text === undefined) return null;
+  return text ?? null;
+}
 
-  const parseWidths = (raw) => {
-    const out = [];
-    for (const item of raw.split(",")) {
-      const w = parseInt(item.trim().replace(/px$/i, ""), 10);
-      if (!Number.isNaN(w) && w >= 200 && w <= 4000 && !out.includes(w)) out.push(w);
-    }
-    return out.length ? out : null;
-  };
+// Contract blocks are YAML, where `- 390` and `- "1280px"` are both sanctioned
+// forms: surrounding quotes are stripped before the px suffix is.
+const stripYamlQuotes = (raw) => raw.trim().replace(/^['"]+|['"]+$/g, "").trim();
+
+function parseWidths(raw) {
+  const out = [];
+  for (const item of raw.split(",")) {
+    const w = parseInt(stripYamlQuotes(item).replace(/px$/i, ""), 10);
+    if (!Number.isNaN(w) && w >= 200 && w <= 4000 && !out.includes(w)) out.push(w);
+  }
+  return out.length ? out : null;
+}
+
+function contractBlockItems(text, kind) {
+  const block = text.match(new RegExp("```contract:" + kind + "\\s*\\n([\\s\\S]*?)\\n```", "i"));
+  if (!block) return null;
+  return block[1].split("\n")
+    .map((l) => l.replace(/^\s*-\s*/, "").trim())
+    .filter(Boolean);
+}
+
+export function resolveSliceViewports(root, sliceId) {
+  const text = sliceContractText(root, sliceId);
+  if (text === null) return null;
 
   // contract:viewports block outranks frontmatter (compiler precedence).
-  const block = text.match(/```contract:viewports\s*\n([\s\S]*?)\n```/i);
-  if (block) {
-    const items = block[1].split("\n")
-      .map((l) => l.replace(/^\s*-\s*/, "").trim())
-      .filter(Boolean);
+  const items = contractBlockItems(text, "viewports");
+  if (items) {
     const widths = parseWidths(items.join(","));
     if (widths) return widths;
   }
@@ -872,6 +891,30 @@ export function resolveSliceViewports(root, sliceId) {
     }
   }
   return null;
+}
+
+// Mirror of resolveSliceViewports for contract:required_states: the slice's
+// declared test states outrank the hardcoded fallback, exactly as declared
+// viewports outrank the default ladder. "default" stays pinned first so the
+// canonical `${vp}.png` first-impression capture keeps its source.
+export function resolveSliceStates(root, sliceId) {
+  const text = sliceContractText(root, sliceId);
+  if (text === null) return null;
+
+  const items = contractBlockItems(text, "required_states");
+  let raw = items ? items.join(",") : null;
+  if (raw === null) {
+    const fm = text.match(/^---\n([\s\S]*?)\n---/);
+    const m = fm && fm[1].match(/required_states\s*:\s*\[([^\]]+)\]/);
+    if (m) raw = m[1];
+  }
+  if (raw === null) return null;
+  const out = [];
+  for (const tok of raw.split(",")) {
+    const s = stripYamlQuotes(tok).toLowerCase();
+    if (s && !out.includes(s)) out.push(s);
+  }
+  return out.length ? out : null;
 }
 
 async function main() {
@@ -950,7 +993,17 @@ async function main() {
       outputDir = path.join(root, `prototype/evidence/probes/${sliceId}/`);
       // Slice defaults are a fallback: an explicit --viewports/--states wins
       // regardless of argument order, so the envelope's derived gates survive.
-      if (!statesExplicit) states = ["default", "stressed", "empty"];
+      // Declared required_states (brief frontmatter or contract block) outrank
+      // the hardcoded triple, with "default" pinned first for the canonical
+      // `${vp}.png` first-impression capture.
+      if (!statesExplicit) {
+        const declaredStates = resolveSliceStates(root, sliceId);
+        states = declaredStates
+          ? (declaredStates.includes("default")
+              ? declaredStates
+              : ["default", ...declaredStates])
+          : ["default", "stressed", "empty"];
+      }
       // Viewport ladder follows the slice's declared viewports when authored
       // (brief frontmatter or contract:viewports block), keeping 320 as the
       // fold check; otherwise the default ladder applies.

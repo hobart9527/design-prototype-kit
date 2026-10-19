@@ -833,6 +833,30 @@ def test_authored_font_display_override():
     # Overrides join the digest only when authored.
     assert ct._token_input_digest(text, "formal") != ct._token_input_digest("# World\n", "formal")
 
+def test_font_stack_internal_quotes_survive():
+    """A font stack's internal quotes must not truncate the extracted value.
+
+    `Charter, "Bitstream Charter", Georgia, serif` previously collapsed to
+    `Charter,` at the first internal quote, emitting illegal CSS; a fully
+    wrapped `"'Instrument Serif', serif"` collapsed to the empty string and
+    silently blanked the slot.
+    """
+    ct = _load_compiler()
+    text = (
+        "## Confirmed — visual tokens\n"
+        "- font-display: Charter, \"Bitstream Charter\", Georgia, serif\n"
+        "- font-sans: \"'Instrument Serif', Georgia, serif\"\n"
+    )
+    overrides = ct._extract_font_overrides(text)
+    assert overrides["display"] == "Charter, \"Bitstream Charter\", Georgia, serif"
+    assert overrides["sans"] == "'Instrument Serif', Georgia, serif"
+    tokens = ct.compute_tokens({}, ct.NEUTRAL_SCAFFOLD_NAME, font_overrides=overrides)
+    css = ct.generate_css(tokens)
+    assert "--font-display: Charter, \"Bitstream Charter\", Georgia, serif;" in css
+    assert "--font-sans: 'Instrument Serif', Georgia, serif;" in css
+    assert "Charter,;" not in css
+    assert "--font-sans: ;" not in css
+
 
 def test_radius_outer_override_concentric_follows():
     ct = _load_compiler()
