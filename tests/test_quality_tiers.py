@@ -654,3 +654,65 @@ def test_receipt_claiming_confirmations_against_passing_manifest_is_clean(tmp_pa
     (tmp_path / "prototype/evidence/capture-receipt.json").write_text(json.dumps({
         "captures": [{"state": "service", "viewport": 390, "confirmed": True}]}), encoding="utf-8")
     assert vpq.check_evidence_provenance(html) == []
+
+
+def _actions_matrix_contract(tmp_path: Path, body: str) -> Path:
+    contract = tmp_path / "r1.md"
+    contract.write_text(
+        "# Spec\n## Actions Matrix\n" + body,
+        encoding="utf-8",
+    )
+    return contract
+
+
+def _dom_html(tmp_path: Path, feedback_markup: str = "") -> Path:
+    html = tmp_path / "index.html"
+    html.write_text(
+        f"<!DOCTYPE html><html><body><main data-entity=\"x\">{feedback_markup}</main>"
+        "<script>document.querySelector('main').addEventListener('click', () => {});</script>"
+        "</body></html>",
+        encoding="utf-8",
+    )
+    return html
+
+
+def _matrix_signals(tmp_path, contract_body, feedback_markup=""):
+    tmp_path = tmp_path / "case"
+    tmp_path.mkdir()
+    tokens = _write_tokens(tmp_path)
+    html = tmp_path / "index.html"
+    html.write_text(
+        "<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"tokens.css\"></head>"
+        f"<body><main data-entity=\"x\">{feedback_markup}</main>"
+        "<script>document.querySelector('main').addEventListener('click', () => {});</script>"
+        "</body></html>",
+        encoding="utf-8",
+    )
+    contract = _actions_matrix_contract(tmp_path, contract_body)
+    vpq.assert_quality(str(html), str(tokens), contract_path=str(contract))
+    return list(vpq._LAST_ASSERT_SIGNALS)
+
+
+def test_actions_matrix_heading_with_active_verbs_demands_feedback_container(tmp_path):
+    """The compiler emits `### Actions Matrix`; the check must read that heading."""
+    signals = _matrix_signals(
+        tmp_path,
+        "| Action | Verb | Trigger | Commit | Feedback |\n|---|---|---|---|---|\n"
+        "| a1 | submit | click | save | toast |\n",
+    )
+    assert any("action-lifecycle" in s for s in signals), signals
+
+
+def test_actions_matrix_placeholder_is_inactive(tmp_path):
+    signals = _matrix_signals(tmp_path, "_No authored actions declared in discussion.md._\n")
+    assert not any("action-lifecycle" in s for s in signals), signals
+
+
+def test_aria_live_counts_as_feedback_container(tmp_path):
+    signals = _matrix_signals(
+        tmp_path,
+        "| Action | Verb | Trigger | Commit | Feedback |\n|---|---|---|---|---|\n"
+        "| a1 | submit | click | save | inline |\n",
+        feedback_markup='<div aria-live="polite"></div>',
+    )
+    assert not any("action-lifecycle" in s for s in signals), signals

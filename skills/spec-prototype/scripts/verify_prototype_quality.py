@@ -262,6 +262,11 @@ class _Document:
                 return True
             if "data-feedback" in el.attrs or "data-toast" in el.attrs:
                 return True
+            # An element with aria-live is an in-situ feedback container: the
+            # static DOM cannot prove its content mutates, matching the
+            # attribute-presence standard of the sibling checks.
+            if "aria-live" in el.attrs:
+                return True
         return False
 
     def has_touch_binding(self) -> bool:
@@ -909,6 +914,9 @@ _TIER_PROBE_CACHE: dict[str, tuple[bool, str | None]] = {}
 # Tiered evidence record of the last assert_quality run: names which tiers ran
 # and the reason for every tier that did not.
 LAST_TIER_EVIDENCE: dict[str, object] = {}
+# Signals snapshot of the most recent assert_quality call, for tests and the
+# Stage 4 audit surface; assert_quality itself only prints them.
+_LAST_ASSERT_SIGNALS: list[str] = []
 
 
 def _style_engine_command() -> str | None:
@@ -1800,7 +1808,7 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
                 signals.append("ergonomics: declared dual-channel keyboard shortcuts not bound by a keydown/keyup listener")
 
         # Action Verb Lifecycle feedback closure: when commit mutations or toasts are declared
-        verb_sec = _extract_section_text(contract_text, "action verb", "verb lifecycle")
+        verb_sec = _extract_section_text(contract_text, "action verb", "verb lifecycle", "actions matrix")
         verb_rows = [
             line for line in verb_sec.splitlines()
             if line.strip().startswith("|") and not re.match(r"^\|\s*[-:]+\s*\|", line.strip()) and "Action ID" not in line and "Trigger Button" not in line
@@ -1811,7 +1819,7 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
             and len([c for c in r.split("|") if c.strip()]) >= 4
         ]
         has_active_verbs = bool(active_commit_verbs) or (
-            bool(verb_sec) and not bool(re.search(r"(?:Action Verb|Verb Lifecycle).*?(?:N/A|Not Applicable|纯阅读|无状态变迁|无破坏性动作|不适用)", verb_sec, re.IGNORECASE | re.DOTALL))
+            bool(verb_sec) and not bool(re.search(r"(?:(?:Action Verb|Verb Lifecycle|Actions Matrix).*?(?:N/A|Not Applicable|No authored actions|_No authored|纯阅读|无状态变迁|无破坏性动作|不适用)|^\s*_?No authored actions)", verb_sec, re.IGNORECASE | re.DOTALL))
         )
         if has_active_verbs:
             if not dom.has_feedback_container():
@@ -1967,6 +1975,8 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
         print("CRAFT FLOORS: not_verified (" + str(LAST_TIER_EVIDENCE["craft_floor_not_verified"]) + ")")
     for advisory in advisories:
         print(f"  [advisory] {advisory}")
+    _LAST_ASSERT_SIGNALS.clear()
+    _LAST_ASSERT_SIGNALS.extend(signals)
     if signals:
         # Contract-read-back findings, reported for the design review and never
         # counted against the exit code.

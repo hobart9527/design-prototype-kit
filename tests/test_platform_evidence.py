@@ -688,3 +688,32 @@ def test_default_state_confirms_with_implicit_declaration():
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+# --- slice viewport resolution follows the declared ladder -------------------
+
+def test_resolve_slice_viewports_reads_brief_frontmatter(tmp_path):
+    brief = tmp_path / "prototype" / "briefs"
+    brief.mkdir(parents=True)
+    (brief / "reader.md").write_text(
+        "---\nslice_id: reader\nviewports: [768, 1440]\n---\n\n# Surface brief — reader\n",
+        encoding="utf-8")
+    out = eval_seam("cap.resolveSliceViewports(input.root, input.slice)", {"root": str(tmp_path), "slice": "reader"})
+    assert out == [768, 1440]
+
+
+def test_resolve_slice_viewports_contract_block_outranks_frontmatter(tmp_path):
+    brief = tmp_path / "prototype" / "briefs"
+    brief.mkdir(parents=True)
+    (brief / "reader.md").write_text(
+        "---\nslice_id: reader\nviewports: [390, 1280]\n---\n\n"
+        "```contract:viewports\n- 768\n- 1440\n```\n",
+        encoding="utf-8")
+    out = eval_seam("cap.resolveSliceViewports(input.root, input.slice)", {"root": str(tmp_path), "slice": "reader"})
+    assert out == [768, 1440]
+
+
+def test_resolve_slice_viewports_missing_brief_returns_null(tmp_path):
+    (tmp_path / "prototype").mkdir()
+    out = eval_seam("cap.resolveSliceViewports(input.root, input.slice)", {"root": str(tmp_path), "slice": "ghost"})
+    assert out is None

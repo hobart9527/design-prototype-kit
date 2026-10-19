@@ -824,6 +824,56 @@ export function buildDiagnosticsSummary(result) {
   };
 }
 
+// Resolve the capture viewport ladder for a slice: declared widths win, 320
+// always stays as the fold check. Mirrors compile_spec_ir precedence —
+// contract:viewports block outranks frontmatter. The verifier's
+// check_viewport_receipts is the shared oracle both parsers must satisfy.
+export function resolveSliceViewports(root, sliceId) {
+  const readIfFile = (p) => (fs.existsSync(p) ? fs.readFileSync(p, "utf-8") : null);
+  let text = readIfFile(path.join(root, "prototype", "briefs", `${sliceId}.md`));
+  if (text === null) {
+    const discussion = readIfFile(path.join(root, "prototype", "discussion.md"));
+    if (discussion !== null) {
+      const m = discussion.match(/^#{1,6}\s+Slice\s*[:：]\s*(.+)$/im);
+      if (m && m[1].trim() === sliceId) {
+        const start = m.index;
+        const rest = discussion.slice(start + m[0].length);
+        const end = rest.search(/^#{1,2}\s/m);
+        text = rest.slice(0, end === -1 ? undefined : end);
+      }
+    }
+  }
+  if (text === null || text === undefined) return null;
+
+  const parseWidths = (raw) => {
+    const out = [];
+    for (const item of raw.split(",")) {
+      const w = parseInt(item.trim().replace(/px$/i, ""), 10);
+      if (!Number.isNaN(w) && w >= 200 && w <= 4000 && !out.includes(w)) out.push(w);
+    }
+    return out.length ? out : null;
+  };
+
+  // contract:viewports block outranks frontmatter (compiler precedence).
+  const block = text.match(/```contract:viewports\s*\n([\s\S]*?)\n```/i);
+  if (block) {
+    const items = block[1].split("\n")
+      .map((l) => l.replace(/^\s*-\s*/, "").trim())
+      .filter(Boolean);
+    const widths = parseWidths(items.join(","));
+    if (widths) return widths;
+  }
+  const fm = text.match(/^---\n([\s\S]*?)\n---/);
+  if (fm) {
+    const vp = fm[1].match(/viewports\s*:\s*\[([^\]]+)\]/);
+    if (vp) {
+      const widths = parseWidths(vp[1]);
+      if (widths) return widths;
+    }
+  }
+  return null;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   let url = null;
@@ -901,10 +951,15 @@ async function main() {
       // Slice defaults are a fallback: an explicit --viewports/--states wins
       // regardless of argument order, so the envelope's derived gates survive.
       if (!statesExplicit) states = ["default", "stressed", "empty"];
-      // Viewport ladder trimmed to the case-required set plus one narrow fold
-      // check: 4 viewports × N states produced 28 PNGs per slice in r8b while
-      // the case contract only required 390/1280.
-      if (!viewportsExplicit) viewports = ["320", "390", "1280"];
+      // Viewport ladder follows the slice's declared viewports when authored
+      // (brief frontmatter or contract:viewports block), keeping 320 as the
+      // fold check; otherwise the default ladder applies.
+      if (!viewportsExplicit) {
+        const declared = resolveSliceViewports(root, sliceId);
+        viewports = declared
+          ? [...new Set([...declared, 320])].sort((a, b) => a - b).map(String)
+          : ["320", "390", "1280"];
+      }
       isSliceHandoff = true;
     } else if (args[i] === "--output" || args[i] === "--out" || args[i] === "-o") {
       outputDir = args[++i];
