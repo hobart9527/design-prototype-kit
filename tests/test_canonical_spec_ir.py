@@ -1541,3 +1541,33 @@ def test_draw_seed_requires_the_slice_block(tmp_path: Path):
     root = _write_discussion(tmp_path, "# Design discussion\n\n## Product truth\n\nno slices here\n")
     with pytest.raises(DrawError, match="## Slice: cockpit"):
         write_block(root / "prototype/discussion.md", "cockpit", "### Divergence seeds\n")
+
+
+def test_contract_actions_proximity_level_zero_is_honored():
+    from compile_spec_ir import parse_action_verbs
+
+    actions = """```contract:actions
+- id: action-enter
+  verb: submit
+  trigger: Enter
+  proximity_level: 0
+  commit: Commit
+```"""
+    parsed = parse_action_verbs(actions)
+    assert parsed[0]["proximity_level"] == 0
+
+
+def test_contract_actions_proximity_level_out_of_range_fails():
+    import pytest as _pytest
+    from compile_spec_ir import parse_action_verbs
+
+    for bad in (5, -1):
+        actions = f"""```contract:actions
+- id: action-enter
+  verb: submit
+  trigger: Enter
+  proximity_level: {bad}
+  commit: Commit
+```"""
+        with _pytest.raises(ValueError, match="proximity_level"):
+            parse_action_verbs(actions)

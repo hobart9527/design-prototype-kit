@@ -581,11 +581,19 @@ def _axes_from_contract_block(text: str):
             value = str(val or "").strip().lower()
             if not value:
                 raise ValueError(f"contract:axes {key} has an empty value")
-            if name not in _AXES:
+            if name not in _AXES and name != "radius_outer":
                 raise ValueError(
                     f"contract:axes has an unknown axis {key!r}; expected one of "
-                    f"{', '.join(_AXES)} (aliases: {', '.join(sorted(_AXIS_ALIASES))})")
+                    f"{', '.join(_AXES)} (aliases: {', '.join(sorted(_AXIS_ALIASES))}, "
+                    "plus optional radius_outer)")
             dials[name] = value
+    # radius_outer is an optional numeric override (0..32 px), not one of the five
+    # sensory axes; it passes through so compile_tokens can apply it.
+    if "radius_outer" in dials:
+        outer = dials.pop("radius_outer")
+        out = {axis: dials[axis] for axis in _AXES if axis in dials}
+        out["radius_outer"] = outer
+        return out
     return {axis: dials[axis] for axis in _AXES if axis in dials}
 
 _CRAFT_AXES = ("surface_optics", "spatial_geometry", "micro_typography", "data_marks")

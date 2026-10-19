@@ -19,8 +19,9 @@ state_info: "#2563EB"
 
 ## Block 2 — palette values (what the compiler actually compiles into tokens.css)
 
-Author inside a `## Confirmed` section (aliases `## Decision` / `## 决策` / `## Selected`
-are equivalent). `compile_tokens.py`
+Author inside a `## Proposed` section before approval (a `## Confirmed` section — aliases
+`## Decision` / `## 决策` / `## Selected` — outranks it once explicit in-session approval
+lands). `compile_tokens.py`
 extracts the LAST authored `key: #hex` match per key, so the latest decision wins; earlier
 drafts are history, not inputs. Recognised keys (aliases in parentheses):
 
@@ -35,11 +36,11 @@ drafts are history, not inputs. Recognised keys (aliases in parentheses):
 - `status-running` / `state_nominal` / `state`, `status-warning` / `state_warning`, `status-danger` / `state_danger`, `state_success`, `state_info`
 - `accent-seal`
 
-Authored form (a confirmed-section heading — `## Confirmed` / `## Decision` / `## 决策` /
-`## Selected` — is what makes these beat ambient prose):
+Authored form (a scoped heading — `## Proposed` before approval, `## Confirmed` /
+`## Decision` / `## 决策` / `## Selected` after — is what makes these beat ambient prose):
 
 ```markdown
-## Confirmed — visual tokens
+## Proposed — visual tokens
 - bg-void: "#0B0E12"
 - bg-surface: "#14181F"
 - text-primary: "#EDEFF2"
@@ -63,6 +64,8 @@ character: "operational"
 ```
 
 Prose bullets (`- density: dense`) are the fallback when no block exists.
+Optional override inside the block only: `radius_outer: <int 0..32>` — overrides the
+density-derived outer radius while the concentric inner/card/btn formulas still follow.
 
 ## Compile — one command
 
@@ -73,7 +76,7 @@ python3 skills/spec-prototype/scripts/compile_tokens.py
 Defaults: reads `prototype/world.md` (else `prototype/discussion.md`), writes
 `prototype/shared/tokens.css` + `prototype/contracts/tokens/t1.json`.
 Hand edits to tokens.css are overwritten at the next compile — the compiler is the sole
-writer of tokens.css; Stage 2 探索值先回写进 world.md 的 Confirmed 决策区，再编译生效。
+writer of tokens.css; Stage 2 探索值先回写进 world.md 的 Proposed/Confirmed 决策区，再编译生效。
 `--check-sync` verifies freshness without compiling (exit 1 on drift).
 
 ## Contrast precheck — one command, all pairs at once

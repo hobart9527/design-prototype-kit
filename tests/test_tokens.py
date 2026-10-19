@@ -777,3 +777,78 @@ def test_dark_source_without_light_dark_scheme_is_refused(tmp_path: Path):
     with pytest.raises(ValueError, match="only valid with"):
         ct._token_source_digest("# World\n", "formal", dark_source_path="prototype/dark.md",
                                 dark_source_text="# World\n")
+
+def test_proposed_section_scopes_palette_extraction():
+    """A Proposed heading scopes extraction so counter-example hexes stay out."""
+    ct = _load_compiler()
+    text = (
+        "## Counter-examples\n"
+        "- accent-primary: #ff0000\n\n"
+        "## Proposed — visual tokens\n"
+        "- accent-primary: \"#00ff00\"\n"
+    )
+    palette = ct.extract_dynamic_palette(text, mode="formal")
+    assert palette["accent_primary"] == "#00ff00"
+    assert "#ff0000" not in palette.values()
+
+
+def test_confirmed_section_wins_over_proposed():
+    ct = _load_compiler()
+    text = (
+        "## Proposed — visual tokens\n"
+        "- accent-primary: \"#00ff00\"\n\n"
+        "## Confirmed — visual tokens\n"
+        "- accent-primary: \"#0000ff\"\n"
+    )
+    palette = ct.extract_dynamic_palette(text, mode="formal")
+    assert palette["accent_primary"] == "#0000ff"
+
+
+def test_editorial_materiality_emits_font_display():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({"materiality": "editorial"}, ct.NEUTRAL_SCAFFOLD_NAME)
+    css = ct.generate_css(tokens)
+    assert "--font-display: Charter" in css
+    assert "--font-sans: -apple-system" in css
+
+
+def test_default_materiality_font_display_mirrors_sans():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({}, ct.NEUTRAL_SCAFFOLD_NAME)
+    css = ct.generate_css(tokens)
+    assert "--font-display: -apple-system" in css
+
+
+def test_authored_font_display_override():
+    ct = _load_compiler()
+    text = (
+        "## Confirmed — visual tokens\n"
+        "font-display: \"Georgia, serif\"\n"
+    )
+    overrides = ct._extract_font_overrides(text)
+    assert overrides == {"display": "Georgia, serif"}
+    tokens = ct.compute_tokens({}, ct.NEUTRAL_SCAFFOLD_NAME, font_overrides=overrides)
+    css = ct.generate_css(tokens)
+    assert "--font-display: Georgia, serif" in css
+    # Overrides join the digest only when authored.
+    assert ct._token_input_digest(text, "formal") != ct._token_input_digest("# World\n", "formal")
+
+
+def test_radius_outer_override_concentric_follows():
+    ct = _load_compiler()
+    text = "```contract:axes\ndensity: balanced\nradius_outer: 20\n```"
+    dials = ct.parse_five_axes(text)
+    assert dials["radius_outer"] == "20"
+    tokens = ct.compute_tokens(dials, ct.NEUTRAL_SCAFFOLD_NAME)
+    css = ct.generate_css(tokens)
+    assert "--radius-outer: 20px" in css
+    # balanced padding = 6 → inner = 14
+    assert "--radius-inner: 14px" in css
+
+
+def test_radius_outer_out_of_range_warns_and_falls_back():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({"radius_outer": "33"}, ct.NEUTRAL_SCAFFOLD_NAME)
+    css = ct.generate_css(tokens)
+    # density default balanced → 12px
+    assert "--radius-outer: 12px" in css

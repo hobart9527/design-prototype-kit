@@ -401,6 +401,13 @@ def parse_five_axes(discussion_text: str) -> Dict[str, str]:
                 if val not in null_literals:
                     axes[target_axis] = val
 
+    # 3. radius_outer is an optional override (0..32 px), only admissible from the
+    # contract:axes block — prose is too ambiguous for a numeric override.
+    if block_match:
+        m_radius = re.search(r"[`*]*radius_outer[`*]*\s*:\s*[`'\"]*(\d+)[`'\"]*", block_match.group(1), re.IGNORECASE)
+        if m_radius:
+            axes["radius_outer"] = m_radius.group(1)
+
     # If contract:axes block was present but some canonical axes were missing or empty,
     # do NOT let ambiguous prose outside the block override the block's SSOT status.
     return axes
@@ -650,11 +657,21 @@ def _is_light_color(hex_code: str) -> bool:
 
 
 def _extract_confirmed_section(text: str) -> str:
-    """Extract confirmed decisions or active selected option block if present."""
-    # 1. Explicit confirmed decisions heading
+    """Extract confirmed decisions or active selected option block if present.
+
+    Confirmed-family headings (a later decision stage) win; Proposed-family
+    headings are the pre-approval scoping target and only apply when no
+    Confirmed-family section carries content.
+    """
+    # 1a. Explicit confirmed decisions heading
     m_conf = re.search(r"^##+[^\n]*?(?:Confirmed|Selected|Decision|Final|已确认|已选定|决策)[^\n]*\n(.*?)(?=\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
     if m_conf and m_conf.group(1).strip():
         return m_conf.group(1).strip()
+
+    # 1b. Proposed-family heading (pre-approval scope; keeps counter-examples out)
+    m_prop = re.search(r"^##+[^\n]*?(?:Proposed|Provisional|Visual Tokens|提案|令牌)[^\n]*\n(.*?)(?=\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+    if m_prop and m_prop.group(1).strip():
+        return m_prop.group(1).strip()
 
     # 2. Option marked as selected, e.g. Option B (Selected) or [x] Option B
     m_opt = re.search(r"^###+[^\n]*?(?:Option|方案|方向)[^\n]*?(?:Selected|Confirmed|Chosen|已选|✓|\[x\])[^\n]*\n(.*?)(?=\n###+|\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
@@ -662,6 +679,21 @@ def _extract_confirmed_section(text: str) -> str:
         return m_opt.group(1).strip()
 
     return ""
+
+
+def _extract_font_overrides(text: str) -> Dict[str, str]:
+    """Authored font-slot overrides from the confirmed/proposed section, if any.
+
+    Accepts lines like `font-display: "Georgia, serif"` (with optional backticks,
+    dashes, or quotes). Only the three slots are admissible.
+    """
+    scope = _extract_confirmed_section(text) or ""
+    if not scope:
+        return {}
+    overrides: Dict[str, str] = {}
+    for m in re.finditer(r"(?:--)?font-(display|sans|mono)\s*[:=]\s*[`'\"]?([^;`'\"\n]+)", scope, re.IGNORECASE):
+        overrides[m.group(1).lower()] = m.group(2).strip()
+    return overrides
 
 
 def extract_dynamic_palette(
@@ -855,6 +887,7 @@ def compute_tokens(
     palette_or_colors: str | Dict[str, str] = NEUTRAL_SCAFFOLD_NAME,
     mode: str = "formal",
     craft_stack: Dict[str, str] | None = None,
+    font_overrides: Dict[str, str] | None = None,
 ) -> Dict[str, Any]:
     """Derive full design token tree from optional Five Axes / dials and an explicit palette or dynamic color dict.
 
@@ -895,6 +928,17 @@ def compute_tokens(
         r_outer_val = 12
         padding_val = 6
 
+    # Authored radius_outer override (0..32 px); density remains the padding driver.
+    raw_r = dials.get("radius_outer")
+    if raw_r is not None:
+        try:
+            r_candidate = int(raw_r)
+            if not 0 <= r_candidate <= 32:
+                raise ValueError
+            r_outer_val = r_candidate
+        except (TypeError, ValueError):
+            _axis_fallbacks.append(f"radius_outer={raw_r!r} (using density-derived radius)")
+
     # Concentric Radii Rule: R_inner = max(0, R_outer - Padding)
     r_inner_val = max(0, r_outer_val - padding_val)
     r_card_val = max(0, r_outer_val - 2)
@@ -920,7 +964,8 @@ def compute_tokens(
         _axis_fallbacks.append(f"materiality={dials.get('materiality', dials.get('finish'))!r} (using neutral type stack)")
     if any(k in materiality for k in ("editorial", "paper", "reading")):
         fonts = {
-            "sans": 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
+            "display": 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
+            "sans": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             "mono": '"SF Mono", "Fira Code", Menlo, monospace',
         }
     elif any(k in materiality for k in ("somatic", "touch", "mobile", "glass", "organic")):
@@ -928,6 +973,7 @@ def compute_tokens(
             "sans": '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif',
             "mono": '"SF Mono", "Fira Code", monospace',
         }
+        fonts["display"] = fonts["sans"]
         # Touch profiles favor slightly larger card radii and ergonomic buttons
         radii["card"] = f"{r_card_val + 2}px"
         radii["btn"] = "9999px"
@@ -936,6 +982,13 @@ def compute_tokens(
             "sans": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             "mono": '"JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace',
         }
+        fonts["display"] = fonts["sans"]
+
+    # Authored font overrides (scoped section wins over axis-derived defaults).
+    if font_overrides:
+        for _slot in ("display", "sans", "mono"):
+            if _slot in font_overrides:
+                fonts[_slot] = font_overrides[_slot]
 
     # Weight / Tactile Physics Axis calibration
     weight = dials.get("weight", dials.get("materiality", "regular")).lower()
@@ -1340,6 +1393,7 @@ def generate_css(
         f"  --border-warning: {c['border_warning']};",
         "",
         "  /* Typography System */",
+        f"  --font-display: {f['display']};",
         f"  --font-sans: {f['sans']};",
         f"  --font-mono: {f['mono']};",
         "  --font-variant-numeric: tabular-nums;",
@@ -1597,6 +1651,7 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     typography_tokens: Dict[str, Any] = {
+        "font-display": {"$value": f["display"], "$type": "fontFamily", "$description": "Display/heading font family", "authority": typography_auth},
         "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family", "authority": typography_auth},
         "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Code and tabular font family", "authority": typography_auth},
         "line-height-body": {"$value": tokens.get("typography", {}).get("line_height_body", "1.5"), "$type": "number", "$description": "Body copy leading (CJK-safe)", "authority": typography_auth},
@@ -1786,6 +1841,9 @@ def _token_input_digest(
         "authority": "explicit_human" if _has_confirmed_token_authority(
             _confirmed_authority_text(source_text, source_path)) else "derived",
     }
+    font_overrides = _extract_font_overrides(source_text)
+    if font_overrides:
+        inputs["font_overrides"] = dict(sorted(font_overrides.items()))
     if options:
         inputs["output_options"] = options
     payload = json.dumps(inputs, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -1835,7 +1893,8 @@ def compile_tokens(
 
     # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or neutral scaffold
     dynamic_colors = extract_dynamic_palette(disc_text, mode=mode)
-    computed = compute_tokens(dials, dynamic_colors, mode=mode)
+    computed = compute_tokens(dials, dynamic_colors, mode=mode,
+                              font_overrides=_extract_font_overrides(disc_text) or None)
 
     # Authority reflects provenance, not keyword presence: a token list that
     # merely appears in the authored discussion is still agent-derived unless a
@@ -1961,7 +2020,8 @@ def _render_sealed_css(
         dark_tokens = compute_tokens(parse_5dials(dark_text), extract_dynamic_palette(dark_text, mode=mode), mode=mode)
     dials = parse_5dials(source_text)
     dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
-    computed = compute_tokens(dials, dynamic_colors, mode=mode)
+    computed = compute_tokens(dials, dynamic_colors, mode=mode,
+                              font_overrides=_extract_font_overrides(source_text) or None)
     computed["authority"] = "explicit_human" if _has_confirmed_token_authority(
         _confirmed_authority_text(source_text, source_path)) else "derived"
     computed["craft_stack"] = parse_craft_stack(source_text, dials)

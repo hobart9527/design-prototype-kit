@@ -1265,21 +1265,7 @@ def probe_touch_targets(html: Path, viewport_width: int = 390, min_px: int = 44)
                    "or playwright; neither is available")
 
 
-def probe_focus_occlusion(html: Path, viewport_width: int = 1280) -> tuple[bool, str | None]:
-    """Detect interactive controls whose hit area is covered by another element.
-
-    A control can satisfy every size, contrast and ARIA check and still be
-    unusable because a sticky bar, overlay or dialog stacks over it: the user
-    aims at the control and the click lands elsewhere. `elementFromPoint` at the
-    control's centre is the direct measurement of that, so a real overlap names
-    the covering element rather than reporting the control as absent.
-    """
-    node = shutil.which("node")
-    probe_mjs = _browser_probe_path()
-    if not node or not probe_mjs.is_file():
-        return False, "environment_not_ready: focus-occlusion probe needs node and browser_probe.mjs"
-
-    script = r'''(() => {
+_FOCUS_OCCLUSION_SCRIPT = r'''(() => {
       const visible = (el) => {
         const r = el.getBoundingClientRect(), s = getComputedStyle(el);
         return r.width > 0 && r.height > 0 && s.display !== "none"

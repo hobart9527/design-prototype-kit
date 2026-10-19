@@ -502,12 +502,13 @@ def _action_from_contract_block(block: Dict[str, Any]) -> Optional[Dict[str, Any
     missing = [key for key, value in required.items() if not value]
     if missing:
         raise ValueError("contract:actions entry missing required field(s): " + ", ".join(missing))
+    raw_proximity = block.get("proximity_level")
     try:
-        proximity_level = int(block.get("proximity_level") or 1)
+        proximity_level = 1 if raw_proximity is None else int(raw_proximity)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"contract:actions {action_id} has invalid proximity_level") from exc
-    if proximity_level < 1:
-        raise ValueError(f"contract:actions {action_id} proximity_level must be >= 1")
+    if not 0 <= proximity_level <= 4:
+        raise ValueError(f"contract:actions {action_id} proximity_level must be within 0..4")
     # Authority is authored, not assumed. An action declared in the discussion's
     # contract block is a designer's mechanism unless the author marks it
     # otherwise, so the unmarked default is `derived` — never `explicit`, which
