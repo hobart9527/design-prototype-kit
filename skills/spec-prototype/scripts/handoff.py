@@ -551,17 +551,17 @@ APPROVAL_STATUSES = ("confirmed", "delegated")
 # these markers means no approval exists at freeze time.
 PLANNED_APPROVAL_MARKERS = (
     "will approve", "to be approved", "plan to approve", "planned approval",
-    "planned", "would approve", "when approved", "once approved",
-    "after approval", "awaiting approval", "approval pending", "pending approval",
+    "would approve", "awaiting approval", "approval pending", "pending approval",
     "not approved", "no approval", "never approved", "without approval",
     "unapproved", "rejected", "declined",
 )
 
 # The row must cite an actual approval or explicit delegated-authority source.
 APPROVAL_SOURCE_MARKERS = (
-    "用户明确批准", "用户批准", "用户确认", "确认封版", "确认冻结",
+    "用户明确批准", "用户批准", "用户确认", "用户同意", "确认封版", "确认冻结",
     "stakeholder approved", "approved for freeze", "signoff: approved",
     "signoff approved", "explicit approval", "approval source",
+    "user approved", "approved by user",
     "delegated authority", "prior delegation",
 )
 

@@ -364,3 +364,30 @@ def test_boundary_refuses_force_flag_and_foreign_root(tmp_path: Path):
     foreign_root = f"python3 {SCRIPTS}/handoff.py freeze --root {foreign} --spec dummy.md"
     with pytest.raises(ValueError, match="active discussion root"):
         boundary.check(event(foreign_root))
+
+
+# --- Retrospective phrasing must not be mistaken for a pending approval ------
+
+RETROSPECTIVE_ROW = (
+    "| D-1 | Freeze the planned slice scope after approval in Turn 3 | confirmed "
+    "| align on direction "
+    "| \"explicit approval\" (turn 4, 2026-09-01) "
+    "| `prototype/specifications/reader/r1.md` |\n"
+)
+
+def test_retrospective_planned_mention_now_binds(tmp_path: Path):
+    """'planned' inside a retrospective quote is not a future-approval promise."""
+    _build_root(tmp_path, decision_row=RETROSPECTIVE_ROW)
+    binding = handoff.approval_binding(tmp_path, "reader", "r1")
+    assert binding["decision_id"] == "D-1"
+
+
+def test_bare_planned_approval_phrase_still_rejected(tmp_path: Path):
+    """A source phrase of only 'planned approval' carries no approval source."""
+    row = (
+        "| D-1 | Reader slice design direction | confirmed | align on direction "
+        "| planned approval (turn 4) | `prototype/specifications/reader/r1.md` |\n"
+    )
+    _build_root(tmp_path, decision_row=row)
+    with pytest.raises(handoff.HandoffError, match="banned word|source marker"):
+        handoff.approval_binding(tmp_path, "reader", "r1")

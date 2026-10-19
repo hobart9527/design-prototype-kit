@@ -72,3 +72,11 @@ A decision that binds one slice names its `slice_id` in the scope column;
 
 | ID | Question | Depends on | Impact | Recommendation | Owner |
 |---|---|---|---|---|---|
+
+
+## Resume
+
+- Execution boundary: active
+- Stage checkpoint (`stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze`), completed in this turn: `stage1-contract`
+- Active slice / current decision:
+- Next action and its prerequisite:

@@ -452,8 +452,9 @@ def turn1_window_advisory(target: Path, root: Path) -> str | None:
     raise ValueError(
         f'Execution boundary block: {rel.as_posix()} belongs to Turn 2. Turn 1 '
         'ends at the Resume block; tokens.css, HTML and evidence open in Turn 2. '
-        'Write the design record with its ## Resume block, end the reply with '
-        '`USER-INPUT: <direction question>`, and stop this turn.')
+        'Write the design record with its ## Resume block and advance the Stage '
+        'checkpoint past `stage1-contract` (e.g. `stage2-probe`), end the reply '
+        'with `USER-INPUT: <direction question>`, and stop this turn.')
 
 def _edited_text(args, target: Path) -> str:
     """Reconstruct the post-edit text so validation sees the resulting file."""

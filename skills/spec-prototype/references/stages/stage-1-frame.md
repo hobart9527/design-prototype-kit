@@ -144,7 +144,8 @@ compiler reads each slice's verification scope from its own block alone, so a
 second slice is added by appending a block (or a new brief), never by widening
 the first. Templates live under `../../templates/`: `discussion.md` for the
 single-record layout, `truth.md` + `world.md` + `briefs/_slice.md` for the
-layered one.
+layered one; `truth.md` ships with the `## Resume` block built in (the
+`discussion-seam.md` resume seam stays optional).
 
 Wherever the Decisions table lives, each row for a tension-bearing pillar
 cites the applied method registry id inline (e.g. `context-preservation`,

@@ -119,3 +119,15 @@ def test_resume_inside_code_fence_does_not_open_artifact_window(tmp_path):
            "```markdown\n## Resume\n- Execution boundary: active\n```\n")
     with pytest.raises(ValueError, match="Turn 2"):
         eb.check(_payload(tmp_path, "prototype/experiments/s/anchor/index.html"))
+
+
+def test_pristine_layered_truth_resume_does_not_open_turn2(tmp_path):
+    """The truth.md template ships a ## Resume scaffold pinned at stage1-contract;
+    that pristine scaffold must not release Turn 2."""
+    _write(tmp_path / "prototype/truth.md",
+           "# Truth\n\n## Resume\n- Execution boundary: active\n"
+           "- Stage checkpoint (`stage1-contract | stage2-probe | stage3-skeleton | "
+           "stage4-audit | stage5-freeze`), completed in this turn: `stage1-contract`\n")
+    _write(tmp_path / "prototype/world.md", "# World\n")
+    with pytest.raises(ValueError, match="Turn 2"):
+        eb.check(_payload(tmp_path, "prototype/shared/tokens.css"))
