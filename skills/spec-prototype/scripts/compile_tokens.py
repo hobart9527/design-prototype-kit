@@ -2057,9 +2057,9 @@ def check_tokens_sync(
     mode: str = "formal",
     *,
     dark_source_path: str | None = None,
-    color_format: str = "hex",
-    color_schemes: str = "single",
-    type_scale: str = "static",
+    color_format: str | None = None,
+    color_schemes: str | None = None,
+    type_scale: str | None = None,
 ) -> Dict[str, Any]:
     """Freshness fuse: verify tokens.css still derives from its declared source.
 
@@ -2071,6 +2071,12 @@ def check_tokens_sync(
        the stylesheet bytes must equal a fresh compile of the sealed source —
        so a palette-only hand edit to tokens.css fails the freshness check even
        though the source digest itself still matches.
+
+    Options inheritance:
+    When output options (color_format, color_schemes, type_scale, dark_source_path)
+    are omitted (None), they default to the options recorded in the stylesheet's
+    provenance seal. An explicitly provided option is verified against the seal;
+    a mismatch reports drift.
 
     Returns a state dict; never mutates artifacts.
     """
@@ -2091,7 +2097,15 @@ def check_tokens_sync(
     stored_color_schemes = stored_options.get("color_schemes", "single")
     stored_type_scale = stored_options.get("type_scale", "static")
     stored_dark_source = stored_options.get("dark_source")
-    if (color_format, color_schemes, type_scale, dark_source_path) != (
+
+    # If caller did not explicitly specify an option, inherit from the seal.
+    # If caller provided an explicit option, verify it matches the seal.
+    effective_color_format = color_format if color_format is not None else stored_color_format
+    effective_color_schemes = color_schemes if color_schemes is not None else stored_color_schemes
+    effective_type_scale = type_scale if type_scale is not None else stored_type_scale
+    effective_dark_source = dark_source_path if dark_source_path is not None else stored_dark_source
+
+    if (effective_color_format, effective_color_schemes, effective_type_scale, effective_dark_source) != (
         stored_color_format, stored_color_schemes, stored_type_scale, stored_dark_source
     ):
         return {
@@ -2184,9 +2198,26 @@ def check_tokens_sync(
     }
 
 
-def assert_tokens_in_sync(css_path: str, discussion_path: str, mode: str = "formal") -> None:
+def assert_tokens_in_sync(
+    css_path: str,
+    discussion_path: str,
+    mode: str = "formal",
+    *,
+    dark_source_path: str | None = None,
+    color_format: str | None = None,
+    color_schemes: str | None = None,
+    type_scale: str | None = None,
+) -> None:
     """Downstream admission gate: hard-reject consumption of out_of_sync tokens."""
-    result = check_tokens_sync(css_path, discussion_path, mode=mode)
+    result = check_tokens_sync(
+        css_path,
+        discussion_path,
+        mode=mode,
+        dark_source_path=dark_source_path,
+        color_format=color_format,
+        color_schemes=color_schemes,
+        type_scale=type_scale,
+    )
     if result["state"] != "in_sync":
         raise TokensOutOfSyncError(
             f"tokens.css is {result['state']}; downstream consumption rejected: {result.get('drift', '')}"
@@ -2203,10 +2234,10 @@ def main():
     parser.add_argument("--output-css", default="prototype/shared/tokens.css", help="Target CSS file")
     parser.add_argument("--output-json", default="prototype/contracts/tokens/t1.json", help="Target DTCG JSON file")
     parser.add_argument("--mode", choices=("formal", "probe"), default="formal", help="formal: no inferred aesthetics (neutral scaffold); probe: permit heuristic palette inference")
-    parser.add_argument("--color-format", choices=COLOR_FORMATS, default="hex", help="opt in to hex or CSS OKLCH color values")
-    parser.add_argument("--color-schemes", choices=COLOR_SCHEMES, default="single", help="opt in to light-dark() token pairs")
+    parser.add_argument("--color-format", choices=COLOR_FORMATS, default=None, help="opt in to hex or CSS OKLCH color values")
+    parser.add_argument("--color-schemes", choices=COLOR_SCHEMES, default=None, help="opt in to light-dark() token pairs")
     parser.add_argument("--dark-source", default=None, help="dark scheme discussion/world source; required with --color-schemes light-dark")
-    parser.add_argument("--type-scale", choices=TYPE_SCALES, default="static", help="opt in to a modular clamp() --step-* scale")
+    parser.add_argument("--type-scale", choices=TYPE_SCALES, default=None, help="opt in to a modular clamp() --step-* scale")
     parser.add_argument("--check-sync", action="store_true", help="Verify tokens.css freshness against its source instead of compiling; exit 1 on out_of_sync")
     args = parser.parse_args()
 
@@ -2234,9 +2265,9 @@ def main():
     compile_tokens(
         discussion_path, args.output_css, args.output_json, mode=args.mode,
         dark_source_path=args.dark_source,
-        color_format=args.color_format,
-        color_schemes=args.color_schemes,
-        type_scale=args.type_scale,
+        color_format=args.color_format or "hex",
+        color_schemes=args.color_schemes or "single",
+        type_scale=args.type_scale or "static",
     )
 
 

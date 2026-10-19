@@ -111,7 +111,12 @@ For each named frame or exceptional state, expose a deterministic state entry vi
 `CRAFT-STATE-ENTRY` and require `capture.mjs` to confirm the applied `data-state`
 or declared URL state. A screenshot of a state name without the applied trigger
 and confirmation is not evidence. Exercise the central task by interaction as
-well: capture establishes the visual frame, not that the action works. Mark
+well: capture establishes the visual frame, not that the action works. For
+runtime interactive verification, exercise the designated decisive exchange
+(e.g., via browser action runners or Playwright triggers targeted by `[data-action]`):
+verify that the commit action actually updates the DOM, broadcasts to any declared
+`aria-live` region, and cleanly manages or returns focus, rather than relying
+exclusively on query-parameter static state snapshots (`?state=...`). Mark
 unexercised phases or failed state entries `unverified`; never fill a missing
 frame with an inferred state.
 

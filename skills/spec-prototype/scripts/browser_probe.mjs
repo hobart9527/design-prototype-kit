@@ -212,10 +212,12 @@ const CLICK_JS = (match, matchAction, matchIndex) => `(() => {
   };
   // A click only presses. Typing and option choice go through the explicit
   // fill command so every value the page receives is recorded in the trace.
+  // Note: do not force el.focus() synchronously after click() — a native
+  // click event allows page scripts to perform intentional focus return or
+  // management; an unconditional el.focus() would overwrite and corrupt that evidence.
   const doClick = (el, by) => {
     el.scrollIntoView({ block: "center" });
     el.click();
-    if (typeof el.focus === "function") el.focus();
     return { clicked: (el.getAttribute("aria-label") || el.innerText || el.name || el.tagName).toString().trim().slice(0, 90),
              tag: el.tagName.toLowerCase(), by };
   };

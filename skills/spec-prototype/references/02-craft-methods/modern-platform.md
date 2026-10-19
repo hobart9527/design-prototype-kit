@@ -31,6 +31,9 @@ not treated as a pass or a design defect.
 - Use a fluid type scale where the surface changes viewport size. Existing
   `CRAFT-FLUID-TYPE` covers `clamp()`/`min()`/`max()`; named `--step-*` tokens are
   useful when several roles share the same scale, not mandatory for a single size.
+  `compile_tokens.py` supports an opt-in modular clamp scale (`--type-scale clamp`)
+  emitting `--step--1` through `--step-5` interpolating between 390px and 1280px;
+  downstream sync checks inherit the sealed choice automatically.
 - Load a chosen local font with `font-display: swap` (or a direction-appropriate
   fallback strategy) so a failed or delayed font never hides content. Do not add a
   font merely to appear distinctive.
@@ -45,15 +48,21 @@ not treated as a pass or a design defect.
   preserve perceptual hue while deriving hover/selected/disabled colors, but check
   contrast after compositing and keep a fallback declaration when the target
   browser set requires it.
+- For fine hairline dividers that cross layered surfaces (`bg-void` → `bg-surface` →
+  `bg-surface-raised`), a low-alpha foreground mix (e.g. `color-mix(in oklch, var(--text-primary) 8%, transparent)`)
+  or semi-transparent border paired with top-edge `--surface-sheen` adapts optical
+  contrast naturally. Do not use decorative low-contrast hairlines as the sole
+  boundary for interactive controls or focus rings, which must meet WCAG contrast floors.
 - Dark mode is not a mathematical inversion. Preserve hierarchy by retuning
   elevation, neutral surfaces, and saturation. Adapt only when the use scene or
   brief asks for multiple lighting conditions; a committed single-scheme product
   is valid.
 - Do not emit a second primitive palette or write raw colors into component rules.
-  `compile_tokens.py` remains the token authority; OKLCH output and paired
-  `light-dark()` token sets are implemented opt-ins (`--color-format oklch`,
-  `--color-schemes light-dark --dark-source <path>`) whose default output stays
-  byte-for-byte stable.
+  `compile_tokens.py` remains the token authority; OKLCH output, modular clamp
+  scale, and paired `light-dark()` token sets are implemented opt-ins
+  (`--color-format oklch`, `--type-scale clamp`, `--color-schemes light-dark --dark-source <path>`)
+  whose default output stays byte-for-byte stable and whose sealed options are
+  inherited during freshness verification.
 
 ## Adaptive layout
 

@@ -239,6 +239,21 @@ representative content, then choose the smallest optical system that expresses i
   consequential state. A copied recipe that fits unrelated products is evidence
   of weak authorship even when it looks polished.
 
+### Optical edges, surface sheen and translucent dividers
+
+- **Translucent hairlines**: When dividing cards or columns across layered surfaces
+  (`bg-void` → `bg-surface` → `bg-surface-raised`), a low-alpha foreground mix
+  (e.g., `color-mix(in oklch, var(--text-primary) 8%, transparent)` or `rgba(..., 0.08)`)
+  adapts naturally across background luminance steps without creating chalky, opaque
+  dividers.
+- **Top-edge sheen**: On elevated surfaces and dark cards, pairing subtle borders
+  with an inner top highlight (`--surface-sheen: inset 0 1px 0 0 rgba(255, 255, 255, 0.08)`)
+  gives physical precision to the light-facing edge.
+- **Accessibility boundary**: Treat translucent hairlines and sheens as secondary
+  containment and atmospheric polish. Form control boundaries, active selections,
+  and `:focus-visible` indicators must retain high-contrast, perceptible edges
+  that satisfy WCAG non-text contrast floors.
+
 When a treatment is unsettled, compare controlled alternatives on the same
 content and task. Retain the selected relationship, exact values, product reason,
 scope and transfer evidence in the existing design artifacts.
@@ -651,6 +666,25 @@ Balance visual mass across the frame rather than merely centering bounding boxes
 Whitespace can separate decisions, pace reading or give a subject presence; large
 blank areas without one of those jobs are not evidence of sophistication.
 A dense layout can be elegant through shared alignment and clear secondary levels.
+Distinguish active compositional pauses from unintended bottom vacuum (leaving the
+lower viewport blank merely to satisfy a whitespace heuristic).
+
+#### Modern asymmetric space recipes
+
+1. **Editorial margin column (long prose & commentary)**: An asymmetric two-column
+   structure (e.g., 3:9 ratio) where the wide column carries continuous reading and
+   the narrow margin holds references, metadata, or active notes. At narrow widths,
+   notes tuck inline near their anchors rather than leaving an abandoned column.
+   *Failure mode to avoid:* An empty margin column that acts as passive decoration.
+2. **Full-bleed hairline grid (multi-entity comparative surfaces)**: Continuous 1px
+   dividers unifying multiple dense cards or metric tiles into one architectural chassis.
+   At narrow widths, maintain comparative pairs before wrapping lines.
+   *Failure mode to avoid:* Grid borders competing with content or drowning out typography.
+3. **Split-pane asymmetric workbench (master-detail & filtering)**: A fixed or docked
+   control spine (25–30%) alongside a dedicated fluid canvas (70–75%) with independent
+   scroll boundaries. On mobile, transition cleanly into a step-based or sheet-driven
+   drilldown rather than stacking vertically into an endless scroll.
+   *Failure mode to avoid:* Both panes competing for primary scroll gestures or focus.
 
 When composition is genuinely unsettled, compare two relationship sketches on the
 same content: for example continuous versus compartmentalized, balanced versus
