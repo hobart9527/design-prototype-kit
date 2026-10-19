@@ -91,7 +91,7 @@ Turn 1: Frame & Polarized Divergence ──► Turn 2: Direct Make ──► Tur
 |---|---|---|
 | **1 · Frame & Polarized Divergence** | The core product tension plus **at least 2 structurally polarized hypotheses** labelled explicitly as **`方向 A` / `方向 B`** (differing in chassis, mental model, or operating paradigm). Present in chat dialogue: ① category rut (行业固有套路); ② candidate directions with seeds; ③ **两轴裁决** (two-axis verdict explicitly naming Structure as primary axis); ④ recommended direction with rationale; ⑤ end turn with a verbatim `USER-INPUT: <question>` line. The divergence is recorded as a structured `### Divergence` block in the design record. In `world.md` (or `discussion.md`), articulate the full 6-block Direction Contract (THESIS / OWN-WORLD / STORY / FIRST VIEWPORT / FORM / FINISH) for the recommended direction (all rows `proposed`/`provisional`). Unattended runs carry the recommendation as `proposed` + `provisional`, never `confirmed`. Decision status stays `proposed`/`provisional` until explicit user selection. Turn 1 output is the design record only. | [`stage-1-frame.md`](references/stages/stage-1-frame.md) |
 | **2 · Make** | A runnable anchor (`index.html` + `anchor.css` + `anchor.js`) and compiled `tokens.css`. Pre-write prerequisites: all six Direction Contract blocks carry concrete proposed/provisional statements in `world.md` (or `discussion.md`); fill a missing statement only from evidence already recorded. Before the first runnable write, read [`craft-floor.md`](references/02-craft-methods/craft-floor.md) and the author-side sections **Interactive Ergonomics**, **Domain Entity Grounding**, and **Precondition** in [`lean-delivery-rules.md`](references/03-verification/lean-delivery-rules.md); their writer constraints bind from this turn, while receipt/authority sections remain for Turn 3. Progressive enhancement: `index.html` must contain authentic domain entities directly in static markup. Compile `tokens.css` with `compile_tokens.py` (includes `::selection`, `caret-color`, scrollbars, and focus rings to eliminate `SLOP-017`). Author each file in one whole `Write`. No self-authored verification scripts (no `flow-check.cjs`): verification uses capture.mjs, detect.py, and browser tools. Token authoring format comes from [`world.tokens.example.md`](templates/world.tokens.example.md). For the decisive action, use the compact interaction recipe in [`interaction-power.md`](references/02-craft-methods/interaction-power.md); keep it in the existing transition record and capture only applicable frames. For modern platform techniques, follow the condition table in [`modern-platform.md`](references/02-craft-methods/modern-platform.md), loading only the relevant subsection. Capture real viewport evidence: `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <declared>`. Inspect `diagnostics_summary` in stdout: zero runtime errors (`runtime_errors: []`) is a strict prerequisite — fix any JavaScript errors immediately. | [`stage-3-skeleton.md`](references/stages/stage-3-skeleton.md) |
-| **3 · Look & Deliver** | Inspect rendered `.png` screenshots directly with `Read` first; write the design judgment before reading any rule-hit list. Then load [`lean-delivery-rules.md`](references/03-verification/lean-delivery-rules.md) once for truth, authority, and receipt boundaries. Audit hierarchy, real content texture, and contrast. Run `detect.py` as a detector for craft-floor leads. Sync portal via `python3 skills/spec-prototype/scripts/generate_review_portal.py --root .`. Execute at most one focused in-place refinement if needed. Zero runtime errors and honest manifest reconciliation are binding before writing receipts. | [`stage-4-audit.md`](references/stages/stage-4-audit.md) |
+| **3 · Look & Deliver** | Inspect rendered `.png` screenshots directly with `Read` first; write the design judgment before reading any rule-hit list. Then load [`lean-delivery-rules.md`](references/03-verification/lean-delivery-rules.md) once for truth, authority, and receipt boundaries. Audit hierarchy, real content texture, and contrast. Run `detect.py` as a detector for craft-floor leads, then run the delivery gate the freeze itself runs: `python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice <slice_id> --root .` (exit 0 pass, 1 fail, 2 degraded — degraded is not a pass). Sync portal via `python3 skills/spec-prototype/scripts/generate_review_portal.py --root .`. Execute at most one focused in-place refinement if needed. Zero runtime errors and honest manifest reconciliation are binding before writing receipts. | [`stage-4-audit.md`](references/stages/stage-4-audit.md) |
 
 Routing follows decision state: when the direction is materially undecided after Turn 1, load [`stage-2-probe.md`](references/stages/stage-2-probe.md) before Turn 2 (physical `dirs/a|b` comparison, provisional when unattended); when a direction is authorized or only a local repair is needed, skip Stage 2 and go directly to Stage 3/4.
 
@@ -108,19 +108,13 @@ Budget is turns and wall clock, not paperwork. Apply [refine operators](referenc
 
 ## Minimal Design Record & High-Density Deliverables
 
-Consolidate the design lifecycle into four high-density assets:
-```text
-prototype/
-├── discussion.md                           # Single-record layout; on layered tree, thin Resume seam
-│   ├── truth.md                            # Layered: product facts, tension, Decisions & authority table
-│   ├── world.md                            # Layered: visual world, taste ledger, sole token authority
-│   └── briefs/<slice>.md                   # Layered: one slice per file (surface strategy & evidence)
-├── specifications/<slice>/r1.spec.md       # Sole RFC specification: compiled via `compile_spec_ir.py`
-├── contracts/compiled/<slice>/r1.spec.json # Canonical Spec IR: compiled via `compile_spec_ir.py`
-├── shared/tokens.css                       # Compiled W3C DTCG physical stylesheet
-├── contracts/tokens/t1.json               # Optional DTCG machine export (`compile_tokens.py`)
-└── experiments/<slice>/anchor/index.html   # Primary high-fidelity interactive runnable prototype
-```
+Consolidate the design lifecycle into four high-density assets: the decision
+source (the design record), the specification source (`r1.spec.md` plus its
+compiled Spec IR), the style source (`tokens.css`) and the materialization
+source (`experiments/<slice>/anchor/`). The canonical tree, the owner of every
+path, and the record layouts that fill it are owned by
+[`machine-contract.md`](references/04-governance/machine-contract.md); this
+skill names the four roles and does not restate the tree.
 
 **Absolute Refusal List**:
 1. NEVER author the retired fragmented contract set or duplicate `prototype/product.md` in the primary delivery flow; the retirement list is owned by [`artifact-lifecycle.md`](references/04-governance/artifact-lifecycle.md).

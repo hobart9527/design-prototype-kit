@@ -138,8 +138,19 @@ Write each file completely and use targeted `Edit` for local repairs, split by
 responsibility (`index.html` structure + `anchor.css` + `anchor.js`) with the
 initial domain entities authored directly in markup. Resolve internal links against
 their actual directory depth, keep `&` literal in HTML query strings, and on touch
-surfaces make the whole multi-line option row one hit target. The truth and authority
-boundaries stay owned by [`lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md);
+surfaces make the whole multi-line option row one hit target.
+
+**Native-first, zero-build.** The prototype stays immediately runnable with no
+build step, preferring native HTML5 semantics (`<dialog>`, `<details>`, `<form>`)
+and CSS custom properties. Complex frontend componentization (React/Vue/shadcn,
+state libraries) is reserved for downstream engineering delivery, not for this
+prototype. The craft techniques and their numeric parameters are owned by
+[`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md) and
+the binding craft floors by
+[`../02-craft-methods/craft-floor.md`](../02-craft-methods/craft-floor.md);
+this stage cites those authorities and never restates their numbers.
+
+The truth and authority boundaries stay owned by [`lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md);
 reuse verification helpers before creating checks, per
 [`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md).
 

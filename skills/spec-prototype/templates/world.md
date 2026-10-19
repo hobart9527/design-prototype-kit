@@ -40,11 +40,19 @@ rhythm: <measured | fluid | …>
 character: <neutral | technical | editorial | …>
 ```
 
-- `density`: `<value>` (one-line product evidence)
-- `energy`: `<value>` (one-line product evidence)
-- `materiality`: `<value>` (one-line product evidence)
-- `rhythm`: `<value>` (one-line product evidence)
-- `character`: `<value>` (one-line product evidence)
+## Style Language Card
+
+The Style Language Card rides with the Contract above
+(`references/01-foundations/design-language.md`): the Positions say which visual
+choices the direction takes and why, the Vocabulary names the repeatable parts
+(type roles, colour meaning, form, motion, voice), and the Counter-examples are
+the things the craft floor would allow yet this language would still reject.
+Do not restate token values here.
+
+- **Positions** (3–5, `We choose X over Y, because …`):
+- **Vocabulary** — Type roles / Colour meaning / Form / Motion / Voice:
+- **Counter-examples** (≥2, correct by the floor yet wrong for this language):
+- **Signature** (one sentence, visible behaviour):
 
 ## Seed Palette & Tokens
 
@@ -62,36 +70,14 @@ state_success: "#rrggbb"
 state_info: "#rrggbb"
 ```
 
+Author the palette values below under this heading — the compiler reads a
+`## Proposed` / `## Confirmed` section and nothing else, so values written
+elsewhere in this file are not compiled into `tokens.css`.
+
+## Proposed — visual tokens
+
 - `--bg-void`:
 - `--bg-surface`:
 - `--text-primary`:
 - `--accent-primary`:
 - `--accent-seal`: (only if declared above)
-
-## Style Language
-
-Method: `references/01-foundations/style-language.md`. Draft with the recommended
-direction; status follows the Decisions table. Do not restate token values here.
-
-- **Positions** (3–5, `We choose X over Y, because …`):
-- **Vocabulary** — Type roles / Colour meaning / Form / Motion / Voice:
-- **Counter-examples** (≥2, correct by the floor yet wrong for this language):
-- **Signature** (one sentence, visible behaviour):
-
-## Reference Deconstruction
-
-Method: `references/01-foundations/reference-deconstruction.md`. Keep only the rows
-that changed a decision; source limits live in `prototype/research.md`.
-
-| Reference (name + link) | Level | Observation | Relationship extracted | Transfers | Refused |
-|---|---|---|---|---|---|
-| | | | | | |
-
-## Project Taste & Visual Language Ledger
-
-Records user style preferences, chosen aesthetics, and rejected visual
-approaches across iterations:
-
-| Direction / Vocabulary | Disposition (`chosen \| rejected \| under-review`) | Core Reason & User Feedback | Reference Benchmark | Applicable Scope |
-|---|---|---|---|---|
-| | | | | |

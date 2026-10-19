@@ -10,6 +10,84 @@
 > block registry are two halves of one contract, so a change to one is a change
 > to both.
 
+## The deliverable tree and the record that fills it
+
+This file is the sole owner of the canonical deliverable paths and the
+`contract:<kind>` schema. Other references name the object they need or link
+here; they do not restate the tree.
+
+```text
+prototype/
+├── discussion.md                           # single-record layout; on a layered tree, the resume seam only
+├── truth.md                                # layered: product facts, tension, Decisions and authority table
+├── world.md                                # layered: visual world and the sole token authority
+├── briefs/<slice>.md                       # layered: one slice's surface strategy and evidence
+├── specifications/<slice>/r1.spec.md       # the Specification, extracted from what was built
+├── contracts/compiled/<slice>/r1.spec.json # the canonical Spec IR (compiled from r1.spec.md)
+├── shared/tokens.css                       # compiled tokens (written only by compile_tokens.py)
+├── contracts/tokens/t1.json                # optional machine export of the same tokens
+├── experiments/<slice>/anchor/index.html   # the runnable prototype (index.html + anchor.css + anchor.js)
+├── evidence/<slice>/<revision>/            # captured viewport evidence
+└── reviews/<slice>/<revision>.md           # optional review receipt
+```
+
+Token authority has one source: the design record (`world.md` or `discussion.md`). `compile_tokens.py` is the sole writer of `tokens.css` and `t1.json`. Any exploratory token adjustment, including a direction probe's local values, is first recorded in the source record, then materialized by rerunning `compile_tokens.py`. Probe-local values do not promote automatically; only values explicitly adopted by the selected direction are copied into the source record. Stage 5 uses the compiled artifacts as-is. This rule does not change `compile_tokens.py` behavior.
+
+## Two layouts, one loading seam
+
+Every reader loads the record through `read_design_record(root, slice_id)` in
+`spec_contract_blocks.py`. Pick one layout per project and stay in it.
+
+- **single-record** — one `prototype/discussion.md`, partitioned by lifecycle heading:
+  product truth, the shared visual world, then one `## Slice: <slice_id>` block per slice.
+  The **Decisions and authority** table lives in this file.
+- **layered** — `truth.md` (product facts, tension, the **Decisions and authority** table —
+  approval is product-scoped, so the freeze-approval rows live here) + `world.md` (visual
+  world; sole token authority) + `briefs/<slice_id>.md` (this slice's strategy and evidence).
+  `discussion.md` narrows to a resume seam (≤30 lines) that points at the three and
+  carries no Decisions rows; `truth.md` carries its own `## Resume` block.
+
+A partitioned record owes each slice exactly one block; the seam reports an absent or
+doubled block rather than compiling another slice's viewports and states into this one.
+Templates: `templates/discussion.md` (single-record) or `templates/truth.md` +
+`templates/world.md` + `templates/briefs/_slice.md` (layered).
+
+Read discipline on a layered tree: Frame reads `truth`; Propose reads `truth` + `world`;
+Make and Look read `world` + the current brief.
+
+### What makes a delivery evaluable
+
+
+The record carries two blocks, authored for the person who will open the artifact and
+updated as evidence arrives:
+
+- **Success metrics** — how the work is judged: product outcomes with an observation
+  method, never "the prototype exists".
+- **Reviewer's evaluation guide** — what to attempt first, the deciding questions, what
+  would count as failure, known limitations, and what each verdict means.
+
+Keep `explicit`, `observed`, `derived`, `hypothesis` and `unknown` distinctions visible.
+
+### Specification shape
+
+
+The Specification uses the `google-design-md/v2` Markdown contract (YAML frontmatter plus
+semantic sections for problem/drivers, experience direction, spatial anatomy, states and
+actions, resilience/invariants), whose parser-compatible shape is defined by
+[`../spec-md-contract.md`](../spec-md-contract.md). It is this Skill's Google
+Design.md-inspired format, not an official Google standard. Write only the sections the
+requested scope needs.
+
+### Ownership and boundary
+
+
+Durable design decisions live in the design record, never in a root-level design document
+or `prototype/README.md`. A discussion-only request creates no runnable prototype; keep the
+outcome in the record when the repository workflow requires a durable artifact.
+
+The native hook (`execution_boundary.py`) bounds writes to `prototype/`. Hook permission is
+never evidence that a design decision is correct or approved.
+
 ## Why the block is authoritative
 
 The prose form infers a machine value from a human sentence with a regular
@@ -37,12 +115,13 @@ optional. Unknown keys, unknown enum values and duplicate ids fail closed.
 | `contract:tokens` | mapping | `accent_seal` (hex), `accent_policy` (text), optional `state_nominal`, `state_warning`, `state_danger`, `state_success`, `state_info` (hex; `state` aliases `state_nominal`) |
 | `contract:meso` | mapping (optional) | any of `massing_pattern`, `kinematics`, `data_syntax` — a design-judgment projection, never required for a compile |
 
-`contract:craft` and `contract:meso` are the two kinds with no independent
-machine consumer: they are projected into the IR's `visual_directives` for
-handoff narration, and nothing downstream verifies them. Treat them as optional
-design judgment — author them when they sharpen a decision, never as a form to
-fill. The machine-required kinds are `states`, `required_states`, `actions`,
-`invariants`, `viewports`, `axes` and `tokens`.
+`contract:craft` and `contract:meso` are projected into the IR
+(`foundation.craft_stack`, `layout_directives.massing_pattern`,
+`interaction_spec.kinematics`, `visual_directives.data_syntax`) but nothing
+downstream verifies them, so they carry no weight in the stage-boundary gate.
+Treat them as optional design judgment — author them when they sharpen a
+decision, never as a form to fill. The machine-required kinds are `states`,
+`required_states`, `actions`, `invariants`, `viewports`, `axes` and `tokens`.
 
 A YAML value containing `: ` or beginning with a special character must be
 double-quoted, or the loader reads it as structure and the block fails to parse.
@@ -90,9 +169,9 @@ are never interchangeable:
 The **evidence ladder** is a third, separate vocabulary —
 `explicit > observed > derived > hypothesis > unknown` (owned by
 `references/core-kernel.md` §4) — and it is the ordering the semantic judge reads.
-The decision row status `proposed | provisional | confirmed` is a fourth
-(owned by `references/core-kernel.md` §4, same as the evidence ladder). Do not
-read one register's value as another's.
+The decision row status `proposed | provisional | confirmed | delegated | needs-evidence | superseded`
+is a fourth (owned by `references/core-kernel.md` §4, same as the evidence ladder).
+Do not read one register's value as another's.
 
 ## Change rule
 
@@ -111,7 +190,7 @@ The YAML frontmatter of `templates/briefs/_slice.md` and the slice block defines
 | `spec_schema` | string | `"google-design-md/v2"` |
 | `slice_id` | string | Target slice identifier (must match filename without `.md`) |
 | `authority` | string | `draft` \| `validated` \| `sealed_provisional` \| `frozen_approved` |
-| `build_scope` (preferred frontmatter key) / `stage` (legacy alias) | string | `hero_probe` \| `walking_skeleton` \| `surface_slice` \| `full_product` — both input keys map to the IR's `scope.build_scope.stage`; if both are present, `build_scope` wins. The shipped template uses `hero_probe` (a legal Stage-1 starting value). Neither is the Resume checkpoint vocabulary below. |
+| `build_scope` (preferred frontmatter key) / `stage` (legacy alias) | string | `hero_probe` \| `walking_skeleton` \| `surface_slice` \| `full_product` — both input keys map to the IR's `scope.build_scope.stage`; if both are present, `build_scope` wins. The shipped templates use `build_scope: "hero_probe"` (a legal Stage-1 starting value). Neither is the Resume checkpoint vocabulary below. |
 | `viewports` | list of ints | e.g. `[390, 1280]` |
 | `required_states` | list of strings | Verified state IDs for this slice |
 | `applied_methods` | list of strings | e.g. `action-verb-lifecycle`, `context-preservation`, `dense-operational-console`, `progressive-disclosure` |
@@ -119,6 +198,6 @@ The YAML frontmatter of `templates/briefs/_slice.md` and the slice block defines
 | `declared_surfaces` | list of strings | Declared surfaces within this slice |
 
 > Note: the machine-contract registry field names the build-scope axis; the frontmatter
-> example value `stage: "hero_probe"` is the shipped-legal starting point (the same
+> example value `build_scope: "hero_probe"` is the shipped-legal starting point (the same
 > enum lives in `schemas/prototype-spec.v1.json:109` and is consumed by
 > `compile_spec_ir.py`), not a mistaken primary enum leak.

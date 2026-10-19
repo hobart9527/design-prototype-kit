@@ -41,25 +41,19 @@ open alternatives only when a consequential choice is genuinely unresolved.
    - Keep each direction low-fidelity and evaluable on the product question it answers.
      In unattended or autonomous runs, the recommended direction is recorded as
      `proposed` / `provisional` in the Decisions table—never hallucinated as `confirmed`.
-     This holds for every restatement too: a brief's "decisions preserved" line, the
-     Resume block, and a brief that quotes the user's own request all carry the status
-     as recorded (`proposed`/`provisional`). A user's brief is source evidence for a
-     decision row, not a user selection of it; `confirmed` needs the user's explicit
-     choice of that decision in-session, or an explicit delegation. Unconfirmed decisions
-     carried forward across turns must be documented as `unaffected provisional decisions
-     carried forward`, NEVER as `approvals preserved` or claimed as approved. When user
-     injected input introduces new intents (e.g. "needs emergency abort and rollback"),
-     the user intent is explicit fact, but the concrete derived mechanism parameters
-     remain `derived` / `provisional`
-     and must NEVER be promoted to a user `confirmed` decision. Scenario-specific examples
-     live in [legacy rules](../../../../benchmarks/legacy-rules.md), active only at benchmark runtime. When stating confirmed decisions
-     in prose or briefs (`confirmed` or "用户已确认/用户已显性确认"), bound the statement strictly
-     to what the user explicitly confirmed; NEVER bundle derived parameters into the confirmed clause.
-     In THESIS, OWN-WORLD, and STORY, describe visual metaphor, spatial chassis, and interaction
-     ergonomics — NEVER invent unrequested technical capabilities that the brief did not request and the prototype does not implement.
-     NEVER assert unverified empirical industry or market research claims as flat facts (e.g. "No product in this category...",
-     "业界均未提供此类机制", "竞品普遍缺失..."). In `rut:` and lifeworld sections, describe spatial patterns and layout expectations
-     without inventing unverified market landscape surveys. All external or competitive assertions without evidence will be penalized as fabricated capabilities.
+     The authority and carry-forward discipline for every restatement (a brief's
+     "decisions preserved" line, the Resume block, a brief quoting the user's own
+     request) is owned by
+     [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md)
+     "Strict Authority Boundaries & Atomic Tagging". Two local consequences matter here:
+     a user-injected intent is explicit fact while its mechanism parameters stay
+     `derived`/`provisional`, and a `confirmed` clause in prose binds strictly to what
+     the user explicitly confirmed. In THESIS, OWN-WORLD and STORY, describe visual
+     metaphor, spatial chassis and interaction ergonomics only — never an unrequested
+     technical capability, and never an unverified industry or market claim (e.g.
+     "No product in this category…", "竞品普遍缺失…") stated as flat fact. Scenario-specific
+     examples live in [legacy rules](../../../../benchmarks/legacy-rules.md), active
+     only at benchmark runtime.
    - The user's choice of direction is the consequential decision this round exists
      to produce. When evidence already predetermines the direction (an explicit extension
      of an existing surface, a settled convention, or an explicit user delegation),
@@ -83,7 +77,7 @@ Ask the user only when a decision materially changes the direction or scope. Res
 repository facts silently. Preserve settled and delegated choices on continuation.
 A reversible preference proceeds as a marked `proposed` / `provisional` recommendation
 and is not re-asked; actor, core task, permissions, main journey and direction stay with
-the user ([`../04-governance/discussion.md`](../04-governance/discussion.md) Human authority
+the user ([`../04-governance/discussion-governance.md`](../04-governance/discussion-governance.md) Human authority
 and unattended fallback).
 
 Frame is a thinking stage: its output is the design record (`discussion.md`, or
@@ -93,20 +87,21 @@ belong to the stages that follow. Name the scenario with neutral system primitiv
 
 ## Design brief format & Four High-Density Deliverables (单脑四联装)
 
-The entire design prototype lifecycle is consolidated into four high-density assets:
-```text
-prototype/
-├── discussion.md                           # 【唯一决策源】单文件布局；分层布局下的 Resume 索引
-│   ├── truth.md                            #   分层布局：产品事实 + Decisions and authority 表
-│   ├── world.md                            #   分层布局：视觉世界与令牌权威
-│   └── briefs/<slice>.md                   #   分层布局：每个 slice 的表面策略与证据
-├── specifications/<slice>/r1.spec.md       # 【唯一规范源】单文件完整 RFC：由 compile_spec_ir.py 编译生成
-├── contracts/compiled/<slice>/r1.spec.json # 机器契约 IR：由 compile_spec_ir.py 与 r1.spec.md 一并编译，守住构建边界
-├── shared/
-│   └── tokens.css                          # 【唯一样式源】W3C DTCG 编译后的真实样式物理层
-├── contracts/tokens/t1.json               # （可选机器导出层：`compile_tokens.py --output-json` 的默认落点）
-└── experiments/<slice>/anchor/index.html   # 【唯一物化源】高保真、可交互、可独立运行的现代原型
-```
+The entire design prototype lifecycle is consolidated into four high-density assets.
+The canonical tree, the owner of every path, and the record layouts that fill it
+are owned by
+[`../04-governance/machine-contract.md`](../04-governance/machine-contract.md)
+("The deliverable tree and the record that fills it"). This stage names only the
+four roles:
+
+1. **决策源** — the design record (`discussion.md`, or the layered `truth.md` /
+   `world.md` / `briefs/<slice>.md`).
+2. **规范源** — `prototype/specifications/<slice>/r1.spec.md`, compiled to the
+   canonical Spec IR at `prototype/contracts/compiled/<slice>/r1.spec.json`.
+3. **样式源** — `prototype/shared/tokens.css` (plus the optional
+   `prototype/contracts/tokens/t1.json` machine export).
+4. **物化源** — `prototype/experiments/<slice>/anchor/index.html` with
+   `anchor.css` and `anchor.js`.
 
 **Banned in Primary Delivery**: never author the legacy fragmented contract set or a
 duplicate `prototype/product.md`, and never treat `assemble_envelope.py` as an
@@ -126,10 +121,11 @@ The record has two valid layouts, both loaded through the same seam
 (`read_design_record(root, slice_id)` in `spec_contract_blocks.py`):
 
 - **single-record** — one `prototype/discussion.md`, partitioned by lifecycle:
-  **product truth** (audience, purpose, constraints — Stage 1 framing), the
-  **visual world** (Direction Contract, Five Axes, Style Language Card and
-  Reference Deconstruction per [`style-language.md`](../01-foundations/style-language.md) and
-  [`reference-deconstruction.md`](../01-foundations/reference-deconstruction.md), taste ledger — one owner
+  **product truth** (audience, purpose, constraints, Reference Benchmarks —
+  Stage 1 framing), the
+  **visual world** (Direction Contract, Five Axes and Style Language Card per
+  [`design-language.md`](../01-foundations/design-language.md)
+  — one owner
   for every surface), and one `## Slice: <slice_id>` block per slice carrying
   its frontmatter, surfaces, states, actions, invariants and Stage 2–5 record.
   The Decisions table lives here.
@@ -145,7 +141,7 @@ second slice is added by appending a block (or a new brief), never by widening
 the first. Templates live under `../../templates/`: `discussion.md` for the
 single-record layout, `truth.md` + `world.md` + `briefs/_slice.md` for the
 layered one; `truth.md` ships with the `## Resume` block built in (the
-`discussion-seam.md` resume seam stays optional).
+`discussion.md` resume seam stays optional).
 
 Wherever the Decisions table lives, each row for a tension-bearing pillar
 cites the applied method registry id inline (e.g. `context-preservation`,
@@ -157,9 +153,7 @@ The brief needs only the applicable parts of:
 
 - **Problem & proposition** — task, people, source facts, tension, outcome, omissions.
   - **Negative Boundaries & Omissions (第一版不做 · 显式反向边界)**: Record explicit omissions to maintain semantic discipline and prevent scope fabrication. Exclude unrequested lateral domains, integrations, speculative automation and auxiliary workflows not justified by the core tension. Benchmark-only examples live in [legacy rules](../../../../benchmarks/legacy-rules.md).
-  - **Fidelity to Stated Constraints & Invariants (约束与历史守恒)**: Honor all physical constraints, preconditions, and irreversible historical facts stated in the brief. Safety mechanisms and rollback controls must be grounded in actual system capabilities and scoped strictly to active operations, never claiming retroactive resolution of past unrecoverable states.
-  - **Ground Truth Fidelity (真值守恒与零臆测归因)**: Assert as fact only what is explicitly supported by the user brief or session inputs. Never fabricate unprompted research findings, psychological profiles, experience tiers, usage cadence, root causes, telemetry, capacities, metrics, or operational objects. Speculative rationale must be explicitly tagged as `[hypothesis]`, never treated or cited as ground truth facts. Concrete benchmark examples live in [legacy rules](../../../../benchmarks/legacy-rules.md), active only at benchmark runtime.
-  - **Decision Authority Discipline & Atomic Tagging (决策权威纪律与原子化标签)**: The `[explicit]` tag applies SOLELY to pure user statements; never bundle synthetic IDs, operational groupings, or derived boundaries under `[explicit]`. In journeys/flows, unconfirmed design mechanisms (e.g. "双人确认", "必经影响预览") must be explicitly qualified as `[derived, provisional]`, never presented as settled facts. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward` with status `proposed(provisional)` or `derived`, NEVER as `confirmed` or `approvals preserved`. Initial interpretations of brief scope and historical constraints are NOT confirmed decisions until explicitly selected by the user.
+  - **Fidelity to Stated Constraints & Invariants (约束与历史守恒)**: Honor all physical constraints, preconditions, and irreversible historical facts stated in the brief. Safety mechanisms and rollback controls must be grounded in actual system capabilities and scoped strictly to active operations, never claiming retroactive resolution of past unrecoverable states. The anti-fabrication and carry-forward rules for every one of these bullets are owned by [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) "Ground Truth & Attribution Fidelity" and "Strict Authority Boundaries & Atomic Tagging"; this list names the sections a brief carries, that file states the rules.
 - **Experience direction & Five Axes calibration** — product-specific hierarchy, tone,
   visual mechanism, references and what is deliberately conventional. All five axes
   (Density · Energy · Materiality · Rhythm · Character) are accounted for at direction
@@ -258,7 +252,7 @@ further tool call; that line is the observable stop signal for the seam.
 When resuming or receiving the user's reply: if the user provides a neutral, non-committal answer
 (e.g. "没有偏好", "按常规做", generic tool defaults), or the question was already presented without preference,
 do NOT re-ask the same question. Immediately apply the unattended fallback from
-[`../04-governance/discussion.md`](../04-governance/discussion.md): adopt the two-axis verdict's
+[`../04-governance/discussion-governance.md`](../04-governance/discussion-governance.md): adopt the two-axis verdict's
 recommended direction on a `proposed` / `provisional` basis, and proceed directly to Turn 2 make.
 
 ## Routing Out of Frame

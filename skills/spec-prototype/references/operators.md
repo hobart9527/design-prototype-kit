@@ -120,4 +120,7 @@ Two constraints:
 Operators are refinements, so they do not reopen the Direction Contract. Record the
 delta in `prototype/discussion.md` — operator, target, from → to, and the falsifier —
 and keep the Contract's blocks unchanged. If a move turns out to need a contract
-block changed, it was a redirection: stop, and take it through C2.
+block changed, it was a redirection: stop, and take it back through the direction
+lock in Turn 2 (see
+[`04-governance/discussion-governance.md`](04-governance/discussion-governance.md)
+"Co-creation stopping points").

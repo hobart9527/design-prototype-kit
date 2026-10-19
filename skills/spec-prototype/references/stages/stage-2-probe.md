@@ -65,8 +65,7 @@ The path is visual-first:
    (see [`../04-governance/helper-quick-reference.md`](../04-governance/helper-quick-reference.md)).
    Inspect the structured `diagnostics_summary` returned directly in stdout:
    verify zero runtime errors (`runtime_errors: []` — any JS runtime error breaks task interaction and must be fixed immediately),
-   zero horizontal overflow (`horizontal_overflow: false`), styles applied (`stylesheets_applied: true`),
-   and craft floors (`has_active_feedback: true`, `has_tabular_nums: true`) in one quick step.
+   zero horizontal overflow (`horizontal_overflow: false`) and styles applied (`stylesheets_applied: true`) in one quick step.
    页面状态的可观测出口与评审复现方式由 [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md) 的 `CRAFT-STATE-ENTRY` 规定；capture 状态确认以该规则为准。无浏览器运行时环境时，Turn 1/2 出口为 `PARTIAL` + `visual_evidence: unverified`，前向引用 Stage 4 进行静态或后续补验。
 5. **Converge**: Select or synthesize the winning direction into the anchor prototype
    (`prototype/experiments/<slice_id>/anchor/index.html`) for deeper state and coverage expansion in Stage 3.
@@ -135,7 +134,7 @@ the direction inherits an existing language or the request is a local repair.
 `data-variant` variants that move *one* expression family at a time — type roles,
 colour meaning, form (radius/line/edge), or motion — on the same fixture data. Capture
 each at the authored viewports and write the outcome into the
-[Style Language Card](../01-foundations/style-language.md): the Positions the study
+[Style Language Card](../01-foundations/design-language.md#the-style-language-card): the Positions the study
 supported, the Vocabulary it fixed, and a Counter-example it exposed. Vary one family
 per comparison, as in *Converge* above; the study is a way to learn what the language
 is, not a polish pass.
@@ -150,28 +149,14 @@ the call. Unattended runs may take an independent view from `spec-prototype-crit
 ## Bounded Materialization
 
 The main designer holds itself to the same bounds a dispatch would have imposed:
-
-- Author one self-contained HTML/CSS/JS page (`experiments/.../anchor/index.html` or `dirs/{a,b,c}/index.html`).
-- **Write whole files with authentic initial DOM content.** Author each *new* prototype file (`index.html`, `anchor.css`, `anchor.js`) in one `Write` call; once a file exists, a bounded repair or a single-family expression-study change uses `Edit` rather than rewriting it. Split the triad by file responsibility (structure / style / behaviour) so each file stays one coherent pass. Crucially, `index.html` must contain the authentic initial entities, lists, status badges, and topology directly in markup (progressive enhancement) — never render an empty body that depends entirely on client-side JS hydration to populate initial domain objects. Design records (`truth.md`, `world.md`, `briefs/<slice>.md`) are likewise written whole, not patched paragraph by paragraph.
-- Capture real viewport evidence via `node skills/spec-prototype/scripts/capture.mjs`.
-- Mechanical fixes to a broken render are made directly in place. Unbounded filesystem roaming and CSS ping-pong tuning are avoided.
-
-## Design Engineering Floor
-
-Craft serves the experience invariants and is selected by scenario. The craft
-techniques and their numeric parameters — concentric radii, optical alignment,
-tabular numerics, atmospheric undertone — are owned by
-[`../02-craft-methods/visual-craft.md`](../02-craft-methods/visual-craft.md), and
-the binding floors live in
-[`../03-verification/quality-floor.md`](../03-verification/quality-floor.md).
-This stage cites those authorities and never restates their numbers.
-
-## Native-First vs Production Handoff
-
-The prototype stays zero-build and immediately runnable, preferring native HTML5
-semantics (`<dialog>`, `<details>`, `<form>`) and CSS custom properties. Complex
-frontend componentization (React/Vue/shadcn, state libraries) is strictly reserved
-for downstream Loom Entry 2 engineering delivery.
+author one self-contained HTML/CSS/JS page, write each new file whole with
+authentic initial DOM content, capture real viewport evidence, and make
+mechanical fixes in place. The authoring rules themselves — the physical triad
+split, progressive enhancement, the craft floors and the native-first boundary —
+are owned by
+[stage-3-skeleton.md](stage-3-skeleton.md) ("Authoring Order") and
+[`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md);
+this stage applies them to the probe slots and does not restate them.
 
 ## Stage 2 Anchor Presentation Pause
 

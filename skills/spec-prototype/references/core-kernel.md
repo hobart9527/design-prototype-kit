@@ -45,29 +45,39 @@ validated Spec Contract. Exploration stays agile; engineering handoff stays form
 `explicit > observed > derived > hypothesis > unknown`
 
 **Decision-row status is a separate register.** A row in the Decisions and authority
-table carries `proposed | provisional | confirmed`, and this section owns what those
-mean: `proposed` is a candidate the designer put forward, `provisional` is a
-proposal carried forward while the direction is still open, and `confirmed` requires
-the user's own in-session selection. Nothing else — not a brief's wording, not a
-resume block, not an approval-shaped process note — promotes a row to `confirmed`.
-Every other document that names this status cites this section rather than
-redefining it.
+table carries `proposed | provisional | confirmed | delegated | needs-evidence | superseded`,
+and this section owns what those mean: `proposed` is a candidate the
+designer put forward, `provisional` is a proposal carried forward while the
+direction is still open, `confirmed` requires the user's own in-session selection,
+`delegated` means the user authorized AI judgment within a named scope,
+`needs-evidence` means inspectable material is still missing, and `superseded`
+means a retained successor replaced the decision. Nothing else — not a brief's
+wording, not a resume block, not an approval-shaped process note — promotes a row
+to `confirmed` or `delegated`. Every other document that names this status cites
+this section rather than redefining it; the `User source` column is a separate
+register (`confirmed | delegated | synthetic-fixture`) and its values are never
+read as this column's values.
 
-Every decision traces to empirical facts or declared hypotheses. Never invent
-unsupported product capabilities, third-party integrations, or user-research
-claims. When requirements or briefs provide counts or quantities without specific names
-(e.g. downstream service counts, node quantities), use neutral systematic placeholders
-(`<kind>-01 ~ <kind>-NN`) rather than guessing specific lateral
-domain names (e.g. payment, billing, CRM). Platform facts that are unauthored remain `unknown`;
-native validation that was not performed is recorded as `unverified`.
-Design remedies and interaction mechanisms created by the designer (such as confirmation dialogs,
-undo time windows, two-man rules) are `derived` solutions, never promoted to `explicit` user constraints.
-The `[explicit]` tag applies SOLELY to pure user statements; never bundle synthetic IDs, operational groupings, or derived boundaries under `[explicit]`.
-Never fabricate unverified root-cause attributions for historical failures (re-labeling a past
-event with a cause the user did not state).
-Never invent unrequested telemetry metrics or capacity data sources, user-research findings,
-operator psychology, or proficiency tiers. Never invent unprompted lifecycle pipelines or stage
-banners as surface entities unless explicitly named in the brief. Decisions without explicit in-session user choice carry forward as `unaffected provisional decisions carried forward`, NEVER as `confirmed` or `approvals preserved`.
+**Resident invariants.** Every decision traces to empirical facts or declared
+hypotheses. Never invent an unsupported product capability, a third-party
+integration, a user-research finding, an unverified root-cause attribution, an
+unrequested telemetry or capacity source, or an unprompted lifecycle pipeline.
+`[explicit]` marks pure user statements only; a designer-made mechanism
+(confirmation dialog, undo window, two-man rule) stays `derived`, and a brief that
+gives counts without names gets neutral placeholders (`<kind>-01 ~ <kind>-NN`),
+never an invented lateral domain. Platform facts that are unauthored remain
+`unknown`; native validation that was not performed is recorded as `unverified`.
+Decisions without explicit in-session user choice carry forward as `unaffected
+provisional decisions carried forward`, NEVER as `confirmed` or `approvals
+preserved`.
+
+**Full discipline owner.** The tag rules, the anti-fabrication detail, the
+carry-forward wording and the tagging discipline for briefs, code comments and
+downstream records are owned by
+[`03-verification/lean-delivery-rules.md`](03-verification/lean-delivery-rules.md)
+("Strict Authority Boundaries & Atomic Tagging", "Ground Truth & Attribution
+Fidelity", "Domain Entity Grounding & Neutral Seeding"). This kernel states the
+invariants; that file owns the rules and every other file cites it.
 
 ## 5. Rooted Design Ontology: Nine Pillars Lenses & Five Sensory Axes
 

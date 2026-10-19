@@ -137,6 +137,6 @@ Before surface planning, hand off these relationships:
 
 Use [experience validation](research.md) when user need,
 comprehension or findability needs empirical investigation. Use
-[interpretation rules](../04-governance/interpretation-rules.md) when compiling a formal contract
-or resolving source authority. Use [discussion](../04-governance/discussion.md) to retain user
+[contract semantics](../04-governance/discussion-governance.md) when compiling a formal contract
+or resolving source authority. Use [discussion governance](../04-governance/discussion-governance.md) to retain user
 corrections, delegation and the next decision.

@@ -85,7 +85,7 @@ purpose of this stage.
 A finding needs a failed trigger; a judgment does not. Beside the findings, write a
 short **Taste Statement** from the screenshots, before reading any rule-hit list:
 what the design is committing to, what it gives up, where it is weakest, and whether
-the [Style Language Card](../01-foundations/style-language.md) Positions and
+the [Style Language Card](../01-foundations/design-language.md#the-style-language-card) Positions and
 Counter-examples are visible in the render (cover test: could a viewer of the first
 viewport guess the category?). It is recorded as judgment, tagged `[taste]`, and never
 filed as a finding or a gate — "Taste is not evidence" still holds. Its job is to make
@@ -170,6 +170,9 @@ Capture real viewport evidence directly:
 `node skills/spec-prototype/scripts/capture.mjs <url> --out prototype/evidence --viewports <the declared viewports>`
 Read the `diagnostics_summary` in stdout. If `runtime_errors` contains any error (e.g. JS ReferenceError/TypeError), the prototype is broken: resolve the error before writing receipts.
 For craft-floor leads, run `python3 skills/spec-prototype/scripts/detect.py --artifact <file>`. Detector hits are leads to verify against the screenshot, not administrative checklists.
+Then run the gate the freeze itself runs, so Turn 3 sees the same verdict Stage 5 will:
+`python3 skills/spec-prototype/scripts/verify_prototype_quality.py --slice <slice_id> --root .`.
+Exit 0 is a pass, 1 is a failure to fix, 2 is `degraded` (render probes never ran) and is **not** a pass — record it as `visual_evidence: unverified` and forward the evidence question to Stage 4/5.
 Sync the review portal with:
 `python3 skills/spec-prototype/scripts/generate_review_portal.py --root .`
 The canonical portal is `prototype/review-portal.html`; never create or copy ad-hoc review portals under nested paths.

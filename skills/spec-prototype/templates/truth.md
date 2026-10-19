@@ -53,17 +53,16 @@ that names this slice and cites its approval source.
 |---|---|---|---|---|---|---|
 | | | | | | | |
 
-Status: `proposed | confirmed | delegated | needs-evidence | superseded`.
+Status: `proposed | provisional | confirmed | delegated | needs-evidence | superseded`.
 Only an actual user decision or an explicit prior delegation can populate
 `confirmed`/`delegated`; AI recommendations, Builder receipts, Critic reports
-and test passes are not approval. A bare "continue" instruction without a
-chosen direction never resolves an open direction choice into a confirmed
-decision. Initial interpretations of brief scope, historical constraints, and
-architecture directions MUST remain `proposed(provisional)` or `derived` — NEVER
-mark initial decisions as `confirmed` without an in-session explicit user reply
-confirming that specific choice. Decisions without explicit in-session user
-choice carry forward as `unaffected provisional decisions carried forward`, NEVER
-as `approvals preserved` or `confirmed`.
+and test passes are not approval. The full authority discipline — what counts as
+an explicit selection, how a decision carries forward across turns, and how the
+status is restated in briefs and code comments — is owned by
+[`../references/03-verification/lean-delivery-rules.md`](../references/03-verification/lean-delivery-rules.md)
+"Strict Authority Boundaries & Atomic Tagging". A bare "continue" instruction
+without a chosen direction never resolves an open direction choice into a
+confirmed decision.
 
 A decision that binds one slice names its `slice_id` in the scope column;
 `handoff.py` binds a freeze only to rows that name its slice.
@@ -77,6 +76,19 @@ A decision that binds one slice names its `slice_id` in the scope column;
 ## Resume
 
 - Execution boundary: active
-- Stage checkpoint (`stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze`), completed in this turn: `stage1-contract`
+- Route basis (`visual-first | IA-first | IA-only | visual-only | spec-only | review-only | continuation | local-repair`), with source:
+- Requested scope and stopping point:
 - Active slice / current decision:
+- Current prototype, captures and evidence links:
+- Pending prerequisite (`none | needs_decision | needs_evidence | blocked`), impact and owner:
 - Next action and its prerequisite:
+- Stage checkpoint (`stage1-contract | stage2-probe | stage3-skeleton | stage4-audit | stage5-freeze`), completed in this turn: `stage1-contract`
+
+A checkpoint is a recovery note, not a stop signal: keep working while authorized
+scope and evidence remain, and write this block once per authoring pass. Stop only
+for an unresolved user decision, a real stage boundary awaiting review, or an
+explicit session limit. The Turn 1→2 seam of the 3-turn route is such a boundary:
+once the design record and this block are written, end the turn instead of starting
+the anchor — make the final line of the reply `USER-INPUT: <the one direction question
+the user must answer>` and stop. Restate decision status verbatim
+(`proposed`/`provisional`); never upgrade it to `confirmed` here.

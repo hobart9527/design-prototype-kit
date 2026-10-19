@@ -391,3 +391,52 @@ def test_bare_planned_approval_phrase_still_rejected(tmp_path: Path):
     _build_root(tmp_path, decision_row=row)
     with pytest.raises(handoff.HandoffError, match="banned word|source marker"):
         handoff.approval_binding(tmp_path, "reader", "r1")
+
+
+# --- The structured `User source` column is the authority, not a phrase ------
+
+STRUCTURED_HEADER = (
+    "| ID | Decision or authoritative section link | Status | Reason / evidence "
+    "| Actual user quote + turn/date or source locator + delegated scope "
+    "| User source (`confirmed \\| delegated \\| synthetic-fixture`) "
+    "| Affected artifacts / minimal owning scope |\n"
+    "|---|---|---|---|---|---|---|\n"
+)
+
+
+def _structured_record(root: Path, user_source: str) -> Path:
+    """A layered tree whose Decisions row declares its provenance in the column."""
+    (root / "prototype").mkdir(parents=True, exist_ok=True)
+    spec = root / "prototype/specifications/reader/r1.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text("# Prototype Specification: reader / r1\n", encoding="utf-8")
+    row = (
+        f"| D-1 | Reader slice design direction | confirmed | align on direction "
+        f"| \"approved\" (turn 4, 2026-09-01) | {user_source} "
+        f"| `prototype/specifications/reader/r1.md` |\n"
+    )
+    (root / "prototype/truth.md").write_text(
+        "## Decisions and authority\n\n" + STRUCTURED_HEADER + row, encoding="utf-8")
+    return root
+
+
+def test_structured_user_source_confirmed_binds(tmp_path: Path):
+    """A row whose `User source` is `confirmed` binds without a magic phrase."""
+    _structured_record(tmp_path, "confirmed")
+    binding = handoff.approval_binding(tmp_path, "reader", "r1")
+    assert binding["decision_id"] == "D-1"
+    assert binding["status"] == "confirmed"
+
+
+def test_structured_user_source_synthetic_fixture_never_binds(tmp_path: Path):
+    """A benchmark actor is not a person: `synthetic-fixture` carries no authority."""
+    _structured_record(tmp_path, "synthetic-fixture")
+    with pytest.raises(handoff.HandoffError, match="no actual approval"):
+        handoff.approval_binding(tmp_path, "reader", "r1")
+
+
+def test_structured_row_without_a_user_source_does_not_bind(tmp_path: Path):
+    """The column is the authority: an empty cell is not silently inherited."""
+    _structured_record(tmp_path, "")
+    with pytest.raises(handoff.HandoffError, match="no actual approval"):
+        handoff.approval_binding(tmp_path, "reader", "r1")

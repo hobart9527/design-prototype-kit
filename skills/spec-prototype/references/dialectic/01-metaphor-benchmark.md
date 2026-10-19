@@ -145,7 +145,7 @@ the only gate, and it is checked on the two directions side by side.
    - **Invert the rut** — take a `rut_rejected` default and do its opposite on purpose;
      keep it only if the task survives.
    - **Borrow across domains** — bring a mechanism from a distant field via
-     [reference deconstruction](../01-foundations/reference-deconstruction.md).
+     [reference deconstruction](../01-foundations/design-language.md#reference-deconstruction).
    A candidate with no declared lever is a competent default, not a direction.
 
 5. **Two-axis verdict — the gate.** Before building, compare each pair of

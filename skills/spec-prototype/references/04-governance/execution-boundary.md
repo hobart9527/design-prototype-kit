@@ -23,7 +23,7 @@ adapter an approval or readiness owner.
 
 The adapter checks native Write/Edit/Bash and helper dispatches. It does not
 decide actual-user approval, Track completion or design merit;
-[discussion](discussion.md) owns those decisions. Other hosts follow the same
+[discussion governance](discussion-governance.md) owns those decisions. Other hosts follow the same
 roles and report whether native enforcement was actually available.
 
 When a bounded helper dispatch is denied or times out, the current

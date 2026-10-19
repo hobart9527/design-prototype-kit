@@ -43,11 +43,13 @@ prototype/
 - `openspec/` — OpenSpec 变更治理(仅 Loom 任务使用)
 - `tests/` — pytest 套件(760+)
 
-## 退役机制(仅兼容保留,勿用于新流程)
+## 退役机制(仅兼容保留,主流程禁止调用)
 
-- `assemble_envelope.py` 双信封派发 — 仅 legacy/benchmark 兼容;产物生命周期见 `references/04-governance/artifact-lifecycle.md`
-- `lint_spec_contracts.py` 六件套门禁 — 已退役,文件保留
+- `assemble_envelope.py` 双信封派发 — **主流程禁止**:仅 legacy/benchmark 兼容;产物生命周期见 `references/04-governance/artifact-lifecycle.md`
+- `lint_spec_contracts.py` 六件套门禁 — **主流程禁止**:已退役,文件仅供旧流程读取
 - 独立 Critic 固定 5 视口评审 — 验证分层见 `references/03-verification/`
+
+主流程门禁为 `verify_prototype_quality.py`(Turn 3 主动运行,Stage 5 freeze 强制执行),不用上述两个脚本。
 
 ## 升级注记
 
@@ -94,11 +96,13 @@ prototype/
 - `openspec/` — OpenSpec change governance (Loom tasks only)
 - `tests/` — pytest suite (760+)
 
-## Retired mechanisms (kept for compatibility only — do not use in new flows)
+## Retired mechanisms (kept for compatibility only — forbidden on the main path)
 
-- `assemble_envelope.py` dual-envelope dispatch — legacy/benchmark compatibility; see `references/04-governance/artifact-lifecycle.md`
-- `lint_spec_contracts.py` six-piece gate — retired, file retained
+- `assemble_envelope.py` dual-envelope dispatch — **forbidden on the main path**: legacy/benchmark compatibility only; see `references/04-governance/artifact-lifecycle.md`
+- `lint_spec_contracts.py` six-piece gate — **forbidden on the main path**: retired, retained for older flows to read
 - Independent Critic with a fixed 5-viewport review — see `references/03-verification/` for tiered verification
+
+The main-path gate is `verify_prototype_quality.py` — run proactively in Turn 3 and enforced by the Stage 5 freeze — not either script above.
 
 ## Upgrade note
 

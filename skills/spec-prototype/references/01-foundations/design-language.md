@@ -53,7 +53,7 @@ If a core proposition adjective cannot be expanded into this triple, remove it f
 rationale. (Routine descriptive grammar and ordinary prose do not require triple expansion;
 this discipline governs the claims that anchor visual and interaction contracts.)
 Run it in both directions: after expanding each adjective, check that the parameters
-together still read as one position (see [`style-language.md`](style-language.md)) rather
+together still read as one position (see [The Style Language Card](#the-style-language-card)) rather
 than a list of values that could belong to any product.
 This protocol is generative-side discipline; the audit-side detector
 lives in the quality bar, not here.
@@ -291,6 +291,124 @@ Use [visual craft](../02-craft-methods/visual-craft.md), [content and form](../0
 [interaction craft](../02-craft-methods/interaction-power.md) and [trust and critique](../02-craft-methods/resilience-trust.md)
 according to the uncertainty. Their techniques are options to test, never a
 universal house style.
+
+## The Style Language Card
+
+Answers one question: *"What is this product's visual and interaction language,
+stated as a position someone could disagree with?"* Five Axes place a design on
+continuous coordinates; the Direction Contract says what the first screen claims.
+Neither says why this is a *language* rather than a pile of values. The card does,
+in one section of `world.md` — no new file, no new authority.
+
+Read it when a direction is being locked (Stage 1), revised by an expression study
+(Stage 2), or judged against the render (Stage 4). Skip it for a local repair that
+inherits an existing language.
+
+### The card
+
+Author it under `## Style Language` in `prototype/world.md` (or `discussion.md` on a
+single-record tree). Draft it when the recommended direction forms; it stays
+`proposed`/`provisional` under the same status rules as every other row until the user
+selects the direction.
+
+1. **Positions (3–5)** — each written `We choose X over Y, because <product reason>`.
+   Both sides must be defensible. If nobody would choose Y, it is not a position.
+   *Weak:* "clean over cluttered". *Strong:* "dense, ruled tables over card grids,
+   because operators compare rows across 40 items".
+2. **Vocabulary** — the concrete, repeatable parts the language is built from, named so
+   the build and the critique can point at them:
+   - **Type**: roles and what each is for (display, reading, data, label), not a family list.
+   - **Colour**: what colour *means* here (state, ownership, emphasis) and where it may
+     never appear. Hex values live only in `contract:tokens`.
+   - **Form**: radius family, line weight, edge treatment, spacing cadence.
+   - **Motion**: what moves, what never moves, and what a transition communicates.
+   - **Voice**: how labels, empty states and errors speak.
+3. **Counter-examples (≥2)** — things that would be *correct* by the craft floor and
+   still wrong for this language, each with a one-line reason. These are the language's
+   own falsifiers; Stage 4 checks the render against them. They are distinct from the
+   divergence record's `rut_rejected` (the category defaults the direction refuses,
+   owned by [`../dialectic/01-metaphor-benchmark.md`](../dialectic/01-metaphor-benchmark.md)
+   §4): `rut_rejected` governs where the direction came from, counter-examples govern
+   what the language itself would still reject.
+4. **Signature** — one sentence naming the relationship that makes the product
+   recognisable with the logo covered (it is the Signature Relationship from
+   [`design-language.md`](design-language.md), stated as visible behaviour).
+
+### Relationship to existing owners
+
+| Concept | Owner | Card's role |
+|---|---|---|
+| Five Axes values | `contract:axes` in `world.md` | The card explains the choices; it never restates values. |
+| Hex / size / duration | `contract:tokens` (sole token authority) | Vocabulary names *roles*; tokens carry numbers. |
+| Six Direction Contract blocks | [`design-language.md`](design-language.md) | The card is the language behind FORM/FINISH, not a seventh block. |
+| Adjective translation | [`design-language.md`](design-language.md#qualitative-adjective-translation-protocol) | Run it both ways: each adjective becomes a parameter, and the parameters together must still read as one position. |
+
+### Testing the language
+
+- **Cover test**: hide the logo and copy. Category recognition itself is neutral;
+  the test is whether the design merely falls into generic category ruts (high
+  homogeneity in the forms rejected under `rut_rejected`) or commits to intentional,
+  opinionated relationships that express its Positions without relying on logo or copy.
+- **Transfer test**: apply the Positions to a second surface the card did not mention.
+  If a Position cannot decide a layout question there, it is a mood, not a position.
+- **Cost test**: every Position names what it makes harder. A position with no cost is
+  a preference.
+
+A card that fails a test is revised or marked `open` with the reason. It is never
+padded with adjectives to look complete.
+
+## Reference deconstruction
+
+Answers one question: *"What does this reference actually do, which part transfers
+here, and which part must be refused?"* A brand name is not a reference; a named
+mechanism is. [research.md](research.md) owns the evidence record and source hygiene;
+this section owns the method and where the result lands.
+
+### Sources worth taking from
+
+Take at least one reference from outside the product's own category. Same-category
+references explain the rut; cross-domain ones are where a language comes from.
+
+- Editorial and print (grids, running heads, captions, tables)
+- Instruments, cockpits, drafting and lab equipment
+- Architecture and wayfinding
+- Film, title design and motion graphics
+- Typography specimens and signage
+- Adjacent products that solve the same *task* in a different medium
+
+### Three steps
+
+1. **Take apart.** Name what the reference does along the five levels below. Observe;
+   do not interpret yet. Use a real source (URL or local path, accessed date) and the
+   evidence tags from [`core-kernel.md`](../core-kernel.md) §4.
+   - **Structure**: what organises what, and the reading order.
+   - **Type**: roles, scale relationships, case, numerals.
+   - **Colour**: how many hues, what each means, how neutrals are tempered.
+   - **Rhythm / Motion**: repetition, pauses, what transitions explain.
+   - **Material**: surface, edge, depth, texture.
+2. **Extract the relationship.** Reduce the observation to one relationship that makes
+   it work (e.g. "the table is the page: every other element is subordinate to its
+   ruled rows"). Record the condition under which it holds. If the relationship cannot
+   be stated without the reference's name, step 1 was description, not extraction.
+3. **Translate or refuse.** State what transfers to this product's content and task,
+   what is refused and why, and what must change in the translation. Put the adapted
+   proposal beside its source when visual comparison is available. A translation that
+   only borrows the surface (colour, font) is recorded as a reskin.
+
+### Where it lands
+
+The `Reference Benchmarks` of the Problem Framing block — `truth.md` on a layered
+tree, `discussion.md` on a single-record one — carry what transfers and what is
+refused. The Positions of the
+[Style Language Card](#the-style-language-card) carry the resulting choice.
+Source limits and access dates stay in `prototype/research.md` per
+[`research.md`](research.md); the benchmarks link there rather than duplicating it.
+
+### Boundaries
+
+- A reference supplies a mechanism, never a capability, user claim or metric.
+- Popularity is familiarity, not fitness.
+- Never invent a reference or imply a source was read when it was not.
 
 ## Probe the question at the smallest useful fidelity
 

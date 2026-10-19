@@ -212,9 +212,9 @@ def build_decision_html(directions: List[Dict[str, str]]) -> str:
     return (
         '<section id="co-creation" data-decision-bar class="portal-collapsible">'
         '<details>'
-        '<summary>🎯 Direction Decision (C1) — Co-creation Review Bar (Click to toggle)</summary>'
+        '<summary>🎯 Direction Decision — Co-creation Review Bar (Click to toggle)</summary>'
         '<div class="collapsible-content">'
-        '<h2>Direction Decision (C1)</h2>'
+        '<h2>Direction Decision</h2>'
         '<p>Two-axis verdict recorded. Pick the direction that carries the product, '
         'or steer / re-roll with a reason.</p>'
         f'<div class="pick-row">{picks}</div>'

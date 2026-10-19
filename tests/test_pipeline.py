@@ -124,7 +124,11 @@ def test_canonical_design_references_and_floors():
     assert "official Google schema" in stage1_text
 
     stage2_text = (SKILL / "references/stages/stage-2-probe.md").read_text(encoding="utf-8")
-    assert "Native-First vs Production Handoff" in stage2_text
+    # The native-first boundary moved to Stage 3, the single owner of prototype
+    # authoring. Stage 2 must not restate it; Stage 3 must carry it.
+    assert "Native-First vs Production Handoff" not in stage2_text
+    stage3_text = (SKILL / "references/stages/stage-3-skeleton.md").read_text(encoding="utf-8")
+    assert "Native-first, zero-build" in stage3_text
 
     stage4_text = (SKILL / "references/stages/stage-4-audit.md").read_text(encoding="utf-8")
     assert "rendered experience first" in stage4_text
@@ -186,7 +190,7 @@ def test_archetype_routing_and_negative_triggers():
     assert "Archetype B: New Surface 1-to-N" in skill_text
     assert "Archetype C: Refinement & Audit" in skill_text
 
-    usage_text = (SKILL / "references/04-governance/usage.md").read_text(encoding="utf-8")
+    usage_text = (SKILL / "references/04-governance/discussion-governance.md").read_text(encoding="utf-8")
     assert "形态 A：全新产品从零起步" in usage_text
     assert "形态 B：现有产品增设新页面/新功能" in usage_text
     assert "形态 C：现有产品体验优化与评审" in usage_text

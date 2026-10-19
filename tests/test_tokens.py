@@ -288,7 +288,7 @@ materiality: "instrument"
 def test_design_record_sets_token_promotion_and_compile_order():
     """Probe tokens stay local until selected; durable values precede compilation."""
     record = (
-        ROOT / "skills/spec-prototype/references/04-governance/design-record.md"
+        ROOT / "skills/spec-prototype/references/04-governance/machine-contract.md"
     ).read_text(encoding="utf-8")
     assert "Token authority has one source: the design record" in record
     assert "`compile_tokens.py` is the sole writer of `tokens.css`" in record

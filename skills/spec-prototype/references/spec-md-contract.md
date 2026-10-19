@@ -39,7 +39,7 @@ new formal slice, prefer the minimum form below and add only evidenced decisions
 spec_schema: "google-design-md/v2"
 slice_id: "incident-commander"
 authority: "sealed_provisional"          # draft | sealed_provisional | validated | frozen_approved
-stage: "hero_probe"                      # hero_probe | walking_skeleton | surface_slice | full_product
+build_scope: "hero_probe"                # hero_probe | walking_skeleton | surface_slice | full_product
 viewports: [390, 1280]                   # Breakpoint widths in px
 required_states: [state-draft, state-sealed] # Mandatory test states
 tokens_ref: "prototype/shared/tokens.css"# Direct DTCG CSS token binding

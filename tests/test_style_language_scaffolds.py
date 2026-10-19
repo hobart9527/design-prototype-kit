@@ -12,22 +12,33 @@ def _read(p: Path) -> str:
 
 
 def test_style_language_card_has_its_four_parts_and_tests():
-    text = _read(REFS / "01-foundations/style-language.md")
+    text = _read(REFS / "01-foundations/design-language.md")
     for part in ("Positions", "Vocabulary", "Counter-examples", "Signature"):
         assert part in text
     for test in ("Cover test", "Transfer test", "Cost test"):
         assert test in text
 
 
-def test_world_template_carries_the_card_and_deconstruction_table():
+def test_world_template_carries_the_card_and_drops_the_duplicated_tables():
+    """The card's four parts live in the world template; the reference tables do not.
+
+    The Reference Deconstruction table and the Taste Ledger were a second place to
+    record what truth.md's Reference Benchmarks and the `### Divergence` block
+    already own. They are gone; the card stays.
+    """
     world = _read(SKILL / "templates/world.md")
-    assert "## Style Language" in world and "## Reference Deconstruction" in world
+    for part in ("Positions", "Vocabulary", "Counter-examples", "Signature"):
+        assert part in world, f"world.md lost the card part {part}"
+    assert "## Reference Deconstruction" not in world
+    assert "## Project Taste & Visual Language Ledger" not in world
 
 
 def test_owners_link_to_the_new_references():
-    assert "style-language.md" in _read(REFS / "stages/stage-1-frame.md")
-    assert "style-language.md" in _read(REFS / "stages/stage-4-audit.md")
-    assert "reference-deconstruction.md" in _read(REFS / "dialectic/01-metaphor-benchmark.md")
+    """The card and the deconstruction method live in design-language.md now."""
+    assert "design-language.md" in _read(REFS / "stages/stage-1-frame.md")
+    assert "design-language.md" in _read(REFS / "stages/stage-4-audit.md")
+    assert "design-language.md" in _read(REFS / "dialectic/01-metaphor-benchmark.md")
+    assert "design-language.md" in _read(REFS / "stages/stage-2-probe.md")
 
 
 def test_generator_names_levers_and_keeps_structure_mandatory():

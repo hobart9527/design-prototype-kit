@@ -26,7 +26,7 @@ SKILL_MD = SKILL / "SKILL.md"
 CORE_KERNEL = SKILL / "references/core-kernel.md"
 STAGE_3 = SKILL / "references/stages/stage-3-skeleton.md"
 STAGE_5 = SKILL / "references/stages/stage-5-freeze.md"
-USAGE = SKILL / "references/04-governance/usage.md"
+USAGE = SKILL / "references/04-governance/discussion-governance.md"
 HANDOFF = SKILL / "references/04-governance/handoff.md"
 
 ALL_ROUTE_FILES = (SKILL_MD, STAGE_3, USAGE)

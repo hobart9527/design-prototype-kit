@@ -59,7 +59,7 @@ refused at the Stage 5 `execution_spec` boundary.
 
 “Active track” is retained for checker compatibility and means the current
 uncertainty, not a mandatory sequence. The route contract in
-`references/04-governance/discussion.md` owns permitted stopping and exit.
+`references/04-governance/discussion-governance.md` owns permitted stopping and exit.
 
 ## Product truth (产品真理 · 受众、目的、约束)
 
@@ -165,18 +165,21 @@ rhythm: fluid
 character: technical
 ```
 
-- `density`: `dense` (微型间距、高信息吞吐、紧凑行高)
-- `energy`: `kinetic` (80ms 高瞬态响应、触觉回弹)
-- `materiality`: `coated_instrument_dark` (深色物理仪器质感)
-- `rhythm`: `fluid` (无阻尼过渡，支持极速键盘行进)
-- `character`: `technical` (高精密度机械感，等宽数字对齐)
+每个轴的取值只在上方块内；散文只给校准锚点（[`../references/core-kernel.md`](../references/core-kernel.md) §5）。
+
+- `density` — 微型间距、高信息吞吐、紧凑行高
+- `energy` — 80ms 高瞬态响应、触觉回弹
+- `materiality` — 深色物理仪器质感
+- `rhythm` — 无阻尼过渡，支持极速键盘行进
+- `character` — 高精密度机械感，等宽数字对齐
+
 - **Cognitive Budgeting Allocation**:
   - Zero-learning baseline: 惯用导航与高可预测表格 (0 认知成本)
   - High-yield borrowing: 应急主交互区域引入精准微动效
 - **Atmospheric Undertone & Concentric Radius check**:
   - Concentric Radius check: 内外容器圆角同心差对齐
   - Atmospheric Undertone: 依据亮度阶差建立连续空间深度
-- **Seed Palette & Tokens**:
+- **Palette values** (compiled into `prototype/shared/tokens.css`; the block below carries the accent seal and the status hues):
 
 ```contract:tokens
 accent_seal: "#ff3333"
@@ -187,15 +190,6 @@ accent_policy: 常规强调使用 --accent-primary；仅在有不可逆或高风
   - `--bg-surface`: `#141a1d`
   - `--text-primary`: `#e6edf3`
   - `--accent-primary`: `#ff4444` (警报强调)
-
-### Project Taste & Visual Language Ledger (项目品味与视觉档案)
-
-Records user style preferences, chosen aesthetics, and rejected visual approaches across iterations:
-
-| Direction / Vocabulary | Disposition (`chosen \| rejected \| under-review`) | Core Reason & User Feedback | Reference Benchmark | Applicable Scope |
-|---|---|---|---|---|
-| (e.g. Swiss Editorial) | chosen | Clean hierarchy, high legibility for incident timeline | Linear, Substack | Global typography & rhythm |
-| (e.g. Neon Cyberpunk) | rejected | Excessive visual noise, distracting during high stress | - | Color palette |
 
 ## Candidate propositions (when a material choice is open)
 
@@ -211,7 +205,7 @@ different propositions when a choice remains. No candidate quota applies.
 | ID | Decision or authoritative section link | Status | Reason / evidence | Actual user quote + turn/date or source locator + delegated scope | User source (`confirmed \| delegated \| synthetic-fixture`) | Affected artifacts / minimal owning scope |
 |---|---|---|---|---|---|---|
 
-Status: `proposed | confirmed | delegated | needs-evidence | superseded`.
+Status: `proposed | provisional | confirmed | delegated | needs-evidence | superseded`.
 Only an actual user decision or an explicit prior delegation can populate
 `confirmed`/`delegated`; AI recommendations, Builder receipts, Critic reports and
 test passes are not approval. The `User source` column records where authority
@@ -249,7 +243,7 @@ block to start another slice; the frontmatter `slice_id` must equal the heading.
 spec_schema: "google-design-md/v2"
 slice_id: "<slice_id>"
 authority: "draft"
-stage: "hero_probe"
+build_scope: "hero_probe"
 viewports: [390, 1280]
 required_states: [state-draft, state-sealed]
 applied_methods: [action-verb-lifecycle, context-preservation, dense-operational-console, progressive-disclosure]

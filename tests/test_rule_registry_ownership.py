@@ -10,6 +10,12 @@ Two ownership invariants, both static and hermetic:
    the owner; outside it, no other skill file may carry the rule's defining
    sentence pattern (the id immediately followed by a colon — the restatement
    shape this convergence removed).
+3. The three authority registers of the design record (decision `Status`,
+   decision `User source`, Resume pending prerequisite) each have one vocabulary,
+   and every document that names one names the same values. The registers are
+   distinct — a value from one is never a value of another — so the check
+   asserts the sets are stated identically where they are stated, and that no
+   file smuggles one register's value into another's list.
 """
 import pathlib
 import re
@@ -72,3 +78,71 @@ def test_each_craft_rule_text_has_exactly_one_owner():
         assert f"`{rule_id}`" in owner_text, f"{rule_id} lost its owning entry in lean-delivery-rules.md"
         offenders = _definitions_outside_owner(rule_id)
         assert not offenders, f"{rule_id} rule text restated outside the owner: {offenders}"
+
+
+# --- Authority register vocabularies -------------------------------------
+#
+# The design record carries three registers that all speak about authority.
+# They are distinct vocabularies; a value in one is not a value of another.
+# The defect this pins: the decision `Status` register was stated three
+# different ways across the repo, and the declared owner omitted `delegated`
+# — the exact value `handoff.py` and `authority_fidelity.py` bind a freeze on.
+
+STATUS_ENUM = "proposed | provisional | confirmed | delegated | needs-evidence | superseded"
+USER_SOURCE_ENUM = "confirmed | delegated | synthetic-fixture"
+PENDING_ENUM = "none | needs_decision | needs_evidence | blocked"
+
+# Files that state a register's vocabulary. Each must state it verbatim.
+STATUS_SITES = (
+    SKILL / "references" / "core-kernel.md",
+    SKILL / "references" / "04-governance" / "discussion-governance.md",
+    SKILL / "references" / "04-governance" / "machine-contract.md",
+    SKILL / "templates" / "truth.md",
+    SKILL / "templates" / "discussion.md",
+)
+
+
+def test_decision_status_vocabulary_is_stated_identically_everywhere():
+    for path in STATUS_SITES:
+        text = path.read_text(encoding="utf-8")
+        assert STATUS_ENUM in text, (
+            f"{path.relative_to(REPO)} states the decision Status vocabulary "
+            f"differently; expected `{STATUS_ENUM}`"
+        )
+
+
+def test_user_source_vocabulary_is_stated_identically_everywhere():
+    """`User source` is its own register; it must not absorb Status values."""
+    sites = (
+        SKILL / "references" / "04-governance" / "discussion-governance.md",
+        SKILL / "references" / "04-governance" / "handoff.md",
+        SKILL / "templates" / "truth.md",
+        SKILL / "templates" / "discussion.md",
+    )
+    for path in sites:
+        # A table header escapes its inner pipes (`a \| b`); normalize before
+        # matching so the header form and the prose form read the same.
+        text = path.read_text(encoding="utf-8").replace("\\|", "|")
+        assert USER_SOURCE_ENUM in text, (
+            f"{path.relative_to(REPO)} states the User source vocabulary "
+            f"differently; expected `{USER_SOURCE_ENUM}`"
+        )
+        # `proposed` and `needs-evidence` are Status values. A User source
+        # list carrying either has conflated the two registers.
+        assert "proposed | confirmed" not in text, (
+            f"{path.relative_to(REPO)} states a User source list containing a Status value"
+        )
+
+
+def test_pending_prerequisite_uses_underscored_spelling():
+    """`needs_decision` (dependency condition) is not `needs-decision` (Status)."""
+    for path in (
+        SKILL / "references" / "04-governance" / "discussion-governance.md",
+        SKILL / "templates" / "truth.md",
+        SKILL / "templates" / "discussion.md",
+    ):
+        text = path.read_text(encoding="utf-8")
+        assert PENDING_ENUM in text, (
+            f"{path.relative_to(REPO)} states the pending-prerequisite vocabulary "
+            f"differently; expected `{PENDING_ENUM}`"
+        )

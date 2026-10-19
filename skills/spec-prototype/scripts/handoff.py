@@ -556,18 +556,30 @@ PLANNED_APPROVAL_MARKERS = (
     "unapproved", "rejected", "declined",
 )
 
-# The row must cite an actual approval or explicit delegated-authority source.
+# The `User source` column states where the authority came from. It is the
+# structured carrier the freeze binds against: a row that says `confirmed` (the
+# user made this choice) or `delegated` (the user delegated this scope) has
+# recorded its own provenance, so no phrase-guessing is needed. A
+# `synthetic-fixture` actor is a benchmark artefact, not a person, and carries
+# zero human authority.
+APPROVAL_USER_SOURCES = ("confirmed", "delegated")
+
+# The `User source` column must also name a locator for that decision — the
+# turn, date or original quote the approval came from. A row that says only
+# "confirmed" with no locator asserts an approval nobody can find again.
+APPROVAL_LOCATOR_MARKERS = (
+    "turn", "轮", "date", "日期", "quote", "原话", "引用", "locator", "定位",
+)
+
+# Legacy route only: a record written before the `User source` column existed
+# states its approval source as a phrase. This list reads that older form; it
+# is never consulted for a row that carries the structured column.
 APPROVAL_SOURCE_MARKERS = (
     "用户明确批准", "用户批准", "用户确认", "用户同意", "确认封版", "确认冻结",
     "stakeholder approved", "approved for freeze", "signoff: approved",
     "signoff approved", "explicit approval", "approval source",
     "user approved", "approved by user",
     "delegated authority", "prior delegation",
-)
-
-# ... and an actual locator for that decision, not an arbitrary phrase.
-APPROVAL_LOCATOR_MARKERS = (
-    "turn", "轮", "date", "日期", "quote", "原话", "引用", "locator", "定位",
 )
 
 # A spec-only approval retains the design scope without claiming that any
@@ -586,14 +598,46 @@ def _decision_rows(text: str) -> list[Any]:
     return list(parse_decision_table(text))
 
 
+def _row_user_source(row: Any) -> str:
+    """The row's `User source` value, normalized to a bare token."""
+    try:
+        value = row.get("user_source")
+    except AttributeError:
+        return ""
+    if not value:
+        return ""
+    return value.strip().strip("`*_ ").replace("\\|", "|").split("|")[0].strip().lower()
+
+
+def _row_locator(row: Any) -> str:
+    """The row's quote/locator cell — the turn, date or original quote."""
+    try:
+        value = row.get("evidence")
+    except AttributeError:
+        return ""
+    return (value or "").strip()
+
+
 def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
     """Bind a freeze to an actual recorded approval decision and its source.
 
-    A matching phrase inside free text is not approval. The binding requires one
-    decision row with status `confirmed | delegated` that cites an approval or
-    delegated-authority source plus a locator, and that is neither a planned nor
-    a negated statement. The row's retained digest and any source it names are
-    recorded so a later edit invalidates downstream admission.
+    The binding reads the Decisions table's own structured columns rather than
+    guessing from free text. A row binds when it states, in its own columns:
+
+    - `Status` is `confirmed | delegated`;
+    - `User source` is `confirmed | delegated` — the user made this choice, or
+      delegated this scope. A `synthetic-fixture` actor carries zero human
+      authority and never binds;
+    - the quote/locator cell names a turn, date or original quote;
+    - no planned or negated wording anywhere in the row;
+    - the exact target `slice_id` appears in the row.
+
+    A record written before the `User source` column existed has no structured
+    provenance, so the row is read through the legacy phrase route. That route
+    is compatibility, not recommendation.
+
+    The row's retained digest and any source it names are recorded so a later
+    edit invalidates downstream admission.
 
     The Decisions table lives in `prototype/discussion.md` on a single-record
     tree, and in `prototype/truth.md` on a layered tree (approval is
@@ -617,24 +661,36 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
     sources: list[str] = []
     missing = {"source marker": True, "locator": True, "banned word": False, "slice id": True}
     for row in _decision_rows(text):
-        # Columns: ID | Decision | Status | Reason | quote + locator | affected artifacts.
-        status = _normalized(row[2]) if len(row) > 2 else ""
+        status = _normalized(row.get("status", "")) if hasattr(row, "get") else ""
         if status not in APPROVAL_STATUSES:
             continue
+        row_content = " ".join(row).lower()
+        # The reason and quote cells are where a future-approval promise would
+        # be written. The Decision cell may legitimately mention a plan
+        # retrospectively, so it is not scanned here.
         evidence = " ".join(row[3:5]).lower()
         if any(marker in evidence for marker in PLANNED_APPROVAL_MARKERS):
             missing["banned word"] = True
             continue
-        if not any(marker.lower() in evidence for marker in APPROVAL_SOURCE_MARKERS):
-            continue
-        missing["source marker"] = False
+        # The structured route: the row's own `User source` column states where
+        # the authority came from. A row that has the column is judged by it
+        # alone — a phrase elsewhere in the row cannot substitute for it.
+        user_source = _row_user_source(row)
+        if user_source:
+            if user_source not in APPROVAL_USER_SOURCES:
+                continue
+            missing["source marker"] = False
+        else:
+            # Legacy row without the column: fall back to the phrase route.
+            if not any(marker.lower() in evidence for marker in APPROVAL_SOURCE_MARKERS):
+                continue
+            missing["source marker"] = False
         if not any(marker.lower() in evidence for marker in APPROVAL_LOCATOR_MARKERS):
             continue
         missing["locator"] = False
         # Ensure the approval row actually binds the target slice. The match is
         # token-bounded: a plain substring test would let an approval for slice
         # 's10' authorize 's1', which is the cross-slice laundering this refuses.
-        row_content = " ".join(row).lower()
         if not re.search(rf"(?<![a-z0-9_-]){re.escape(slice_id.lower())}(?![a-z0-9_-])", row_content):
             continue
         missing["slice id"] = False
@@ -650,7 +706,8 @@ def approval_binding(root: Path, slice_id: str, candidate_id: str) -> dict:
             "Cannot freeze specification: no actual approval or delegated-authority decision "
             f"for slice '{slice_id}' / '{candidate_id}'. Check the Decisions row for missing "
             f"approval evidence class(es): {', '.join(missing_classes) or 'source marker, locator, banned word, slice id'}. "
-            "It needs a source marker, a turn/date/quote locator, no planned/negated banned word, "
+            "It needs a `User source` of confirmed or delegated, a turn/date/quote locator, "
+            "no planned/negated banned word, "
             f"and the exact slice id '{slice_id}'. See {record.relative_to(root).as_posix()}."
         )
     binding = {

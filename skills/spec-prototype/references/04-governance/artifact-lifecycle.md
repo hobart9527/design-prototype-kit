@@ -2,11 +2,11 @@
 
 Read before creating, revising, freezing, or migrating product-experience artifacts.
 For formal contract semantics and source-to-UI evidence, use
-[interpretation rules](interpretation-rules.md).
+[contract semantics](discussion-governance.md#contract-semantics).
 
-This file is the sole owner of the ban/retire list: which artifacts are canonical,
-which legacy paths are readable-but-never-generated, and which are deprecated. Canonical
-paths and layouts are owned by the [deliverable tree](design-record.md#deliverable-tree);
+This file is the sole owner of the ban/retire list: which legacy paths are
+readable-but-never-generated, and which are deprecated. Canonical paths and
+layouts are owned by the [deliverable tree](machine-contract.md#the-deliverable-tree-and-the-record-that-fills-it);
 other references name the object or link back here rather than restating a retired set.
 
 The four canonical high-density assets are the delivery set. Everything a formal
@@ -74,15 +74,8 @@ absolute handoff integrity, artifacts operate in two explicit tracks:
 
 ## Canonical paths
 
-```text
-prototype/contracts/compiled/<slice-id>/r1.spec.json
-prototype/specifications/<slice-id>/r1.spec.md
-prototype/shared/tokens.css
-prototype/contracts/tokens/t1.json
-prototype/experiments/<slice-id>/anchor/            # runnable prototype (index.html, anchor.css, anchor.js)
-prototype/evidence/<slice-id>/<prototype-revision>/
-prototype/reviews/<slice-id>/<prototype-revision>.md   # optional review receipt
-```
+Owned by the [deliverable tree](machine-contract.md#the-deliverable-tree-and-the-record-that-fills-it).
+This file restates none of them; the paths it needs to retire are listed below.
 
 ### Legacy compatibility paths
 

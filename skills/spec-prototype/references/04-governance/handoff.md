@@ -108,14 +108,17 @@ Both routes then run the same approval binding below against the discussion
 record's decision rows; the canonical path is not exempt.
 
 Freeze binds an actual approval decision, not a matching phrase. The retained
-record must carry one decision row with status `confirmed | delegated` that names
-its approval or delegated-authority source and a locator (turn, original quote,
-date or retained source path). The row must also contain the exact target `slice_id`.
-The implementation's approval match requires four checks together: a source marker
-(e.g. `用户明确批准`, `explicit approval`, `delegated authority`; the complete list
-is `APPROVAL_SOURCE_MARKERS` at the top of `handoff.py`), a locator marker (e.g.
-`turn`, `轮`, `date`, `quote`), no banned planned/negated wording (e.g. `planned`,
-`will approve`, `not approved`), and the exact `slice_id`. On a single-record tree the row lives in
+record must carry one decision row that states, in its own columns: `Status` of
+`confirmed | delegated`; a `User source` of `confirmed | delegated | synthetic-fixture`
+that is `confirmed` or `delegated` (the user made this choice, or delegated this
+scope) — a `synthetic-fixture` actor carries zero
+human authority and never binds; a quote or locator naming the turn, date or
+original quote; no planned or negated wording in the reason and quote cells
+(e.g. `planned`, `will approve`, `not approved`); and the exact target `slice_id`.
+The row's own columns are the authority: a phrase elsewhere in the row cannot
+substitute for a missing `User source`, and a row written before that column
+existed is read through the legacy phrase route for compatibility only. On a
+single-record tree the row lives in
 `prototype/discussion.md`; on a layered tree it lives in `prototype/truth.md`
 (approval is product-scoped, so the layered layout keeps it on the product-truth
 file). A planned, negated or override-only statement

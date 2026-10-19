@@ -61,7 +61,7 @@ it with ad-hoc scripts.
 spec_schema: "google-design-md/v2"
 slice_id: "<slice-id>"
 authority: "sealed_provisional"
-stage: "hero_probe"
+build_scope: "hero_probe"
 viewports: [390, 1280]
 required_states: [state-draft, state-sealed]
 tokens_ref: "prototype/shared/tokens.css"

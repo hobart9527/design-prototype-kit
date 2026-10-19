@@ -9,7 +9,7 @@ handoff.
 
 在执行 Stage 5 freeze 之前，必须满足以下前置条件（任一失败将导致 freeze 拒绝并阻断下游）：
 1. **状态模型完整**：`contract:states`, `contract:required_states`, `contract:actions`, `contract:invariants` 已完整声明（修复：补齐 slice brief 或 discussion 对应块）。
-2. **决策授权有效**：Decisions 表包含当前 slice 的 `confirmed | delegated` 行。freeze 实际要求该行同时包含来源标记（如 `用户明确批准`、`explicit approval`、`delegated authority`；完整清单见 `handoff.py` 顶部 `APPROVAL_SOURCE_MARKERS` 常量）、定位标记（如 `turn` / `轮`、`date` / `日期`、`quote` / `原话`）、不含 `planned` / `will approve` 等禁用词，并在该行含精确 `slice_id`。缺项时按提示在 `truth.md` 或 `discussion.md` 补齐。
+2. **决策授权有效**：Decisions 表包含当前 slice 的 `confirmed | delegated` 行。freeze 按该行的结构化列判定：`Status` 为 `confirmed | delegated`；`User source` 为 `confirmed | delegated`（`synthetic-fixture` 零人类权威，永远不绑定）；引用/定位格给出 `turn` / `轮`、`date` / `日期`、`quote` / `原话` 之一；理由与引用格不含 `planned` / `will approve` / `not approved` 等禁用词；该行含精确 `slice_id`。行内的措辞不能替代缺失的 `User source`；缺项时按提示在 `truth.md` 或 `discussion.md` 补齐。
 3. **Token 已编译**：执行下文 Pipeline 第 2 步后，`prototype/shared/tokens.css` 与 `prototype/contracts/tokens/t1.json` 同时存在（`compile_tokens.py` 是二者唯一写入者；手改 `tokens.css` 会触发 `out_of_sync`）。
 4. **对比度与质量门由 freeze 自带执行**：非 spec-only 的 freeze 会先运行 `wcag-check.js` 与 `verify_prototype_quality.py`。任一失败（退出码非 0 且非降级）即拒绝 freeze；verify 退出码 2（渲染探针未运行）记为 `degraded` 写入 freeze-manifest 的 `preflight`，不等同通过。提前自跑同样命令可更早发现问题。
 
