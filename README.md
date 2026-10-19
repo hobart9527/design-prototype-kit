@@ -1,10 +1,5 @@
 # Design Prototype Kit (v10.2)
 
-> **AI Product Design Operating Harness** — An industrial-grade framework for high-craft experience design decisions, sealed contract specifications, and empirical prototype validation.  
-> **工业级 AI 产品体验设计决策与原型验证线束** — 贯穿真实物理世界锚点、九柱设计本体、五轴知觉校准、机器契约无损编译与多视口客观评测的现代设计交付流水线。
-
----
-
 [中文说明](#中文说明) | [English Documentation](#english-documentation)
 
 ---
@@ -12,267 +7,99 @@
 <a name="中文说明"></a>
 # 中文说明
 
-## 1. 核心设计哲学 (Core Philosophy)
+`design-prototype-kit` 是 AI 产品体验设计的单脑工作流线束:设计决策沉淀为高密度设计记录,机器契约由此编译,原型作为验证耗材走查真实渲染证据。
 
-`design-prototype-kit` 不是一套简单的“生成界面用的 Prompt”，而是一套面向大模型时代、具备现代 P9+ 资深设计专家裁决水准的**产品设计操作系统（Design Operating Harness）**。其底层遵循三大不可动摇的因果律：
+**唯一工作流权威是 [`skills/spec-prototype/SKILL.md`](skills/spec-prototype/SKILL.md)** — 流程、门禁、产物契约以它为准;本 README 只是导览。
 
-1. **规约即持久权威，原型即耗材凭据 (Spec as Durable Contract, Prototype as Disposable Proof)**
-   - 设计决策必须沉淀为四件高密度交付物（`discussion.md`, `r1.spec.md`, `tokens.css`/`t1.json`, `anchor/index.html`）；
-   - 代码原型不是资产终点，而是验证关键假设、暴露交互死角与视口应力的低成本耗材。
-2. **物理因果推导自然结果，拒绝套路标签 (Physical Grounding over Rigid Archetypes)**
-   - 杜绝“为了做阅读器就必须找现成套路”的模板化病灶；
-   - 沿 **现实世界物理锚点 ──► 介质物性 ──► 九柱解构 ──► 双钻收敛 ──► 自然样式** 推导。通过排版测度（Measure）、视网膜对比、容器亲疏度（Container Proximity）自然导出界面，而不是生搬硬套死板的组件框架。
-3. **知觉后果先于绝对数值 (Perceptual Consequences over Rigid Recipes)**
-   - 彻底废除“密 = 4px，静 = 150ms”的死板配方；
-   - 将五轴寄存器（密度/能量/材质/节奏/性格）作为感官知觉意图传导给 Builder，由其结合真实视口上下文行使专业设计裁决权。
+## 流程:3 Turn / 5 Stage(单脑)
 
----
-
-## 2. 核心架构模型 (Canonical Design Operating Model)
-
-系统由 **1 个设计本体 + 3 个辅助模型 + 1 套证据治理协议** 构成：
-
-```text
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ 1. Nine Pillars (WHAT WE DESIGN — 唯一设计本体)                                   │
-│    Value · Research · Object · Journey · Topology · Attention · Expression ·    │
-│    Interaction · Resilience                                                      │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│ 2. Double Diamond (HOW WE DECIDE — 决策发散与收敛)                                │
-│    Problem Space (Discover ──► Define) ──► Solution Space (Develop ──► Deliver)  │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│ 3. Five Axes (HOW IT FEELS — 知觉坐标寄存器)                                      │
-│    Density (密/疏) · Energy (动/静) · Materiality (质感底噪) · Rhythm · Character │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│ 4. Craft Library (HOW WE CRAFT — 专业工法库)                                     │
-│    OOUX 实体生命周期 · 容器亲疏阶梯 · 认知借贷收支账本 · 4-Phase 动词状态机 ·      │
-│    四维破坏协议 (The Break Protocol)                                             │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│ 5. Evidence Protocol (横向防伪造治理)                                            │
-│    显式标注来源与确信度 (`explicit` | `derived` | `hypothesis`)，彻底绝罚臆造      │
-└──────────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 3. 五阶工序状态机 (Canonical 5-Stage Workflow)
-
-流水线严格依照五阶状态机演进，杜绝未经思考直接跳向写代码的平庸倾向：
-
-```text
-[Stage 1: 破 - Understand & Frame]
- └─ 解构核心张力 (Core Tension)，确立 OOUX 实体，推导表面拓扑，OKLab 编译 DTCG tokens，物化 Sealed Provisional Spec 契约。
-     │
-     ▼ (门禁质检：lint_spec_contracts.py 拦截张力污染与空壳)
-[Stage 2: 立 - Propose / Proposition & Hero Probe]
- └─ 自动装配确定性机器信封 (envelope.json)，派发 Builder 单道物化最高风险 Hero Anchor 页面，真实 Headless 走查。
-     │
-     ▼
-[Stage 3: 拓 - Make / Walking Skeleton Rollout]
- └─ 依据拓扑展开为端到端全链路闭环骨架，保证跨页面相对链接与状态机（如书库断点续读、参数协同）完全贯通。
-     │
-     ▼
-[Stage 4: 验 - Holistic Review & Multi-Viewport Verification]
- └─ 独立 Critic 代理在多视口 (320px, 390px, 768px, 1280px, 1600px) 下运行静态断言与破坏压测，捕获真实视觉证据。
-     │
-     ▼
-[Stage 5: 冻 - Silent Packaging & Handoff]
- └─ 生成交互式全景评审看板 (review-portal.html) 与 SHA-256 签名清册 (handoff-manifest.json)，封版为 Frozen Approved 交付。
-```
-
----
-
-## 4. 消除三轨断层：双信封契约编译架构 (Dual-Envelope Protocol)
-
-为了杜绝“思考是一套、契约写一套、大模型代码瞎编一套”的传统弊端，系统实现了绝对单向无损的编译传导：
-
-- **L0 讨论层 (`discussion.md`)**：人类与 AI 探讨高阶价值冲突、现实隐喻与张力取舍。
-- **L1 契约物化 (`compile_spec_ir.py` + `compile_tokens.py`)**：从 `discussion.md` 单一来源编译 Canonical Spec IR (`contracts/compiled/<slice>/r1.spec.json`)、其单文件 RFC 视图 (`specifications/<slice>/r1.spec.md`) 与 DTCG token 样式表。已退役的 6 根契约支柱不再物化。
-- **L1.5 防逃逸门禁 (`lint_spec_contracts.py`)**：硬核校验张力真实性、现实因果、语种锁与断言完备性。
-- **L2 机器信封 (`assemble_envelope.py`)**：单向编译为单一事实源 `envelope.json`，严格解耦为：
-  - `constraint_envelope` (MUST)：业务边界、实体基数、语种硬锁定、无障碍底线。
-  - `creative_envelope` (DESIGN FREEDOM)：五轴知觉坐标、排版节奏、视线引导层级。
-- **L3 终端执行 (`spec-prototype-builder`)**：Builder 仅读单一权威信封，不再翻阅散文文档，执行转译零摩擦。
-
----
-
-## 5. Golden Benchmark 自动化评测线束
-
-仓库内置工业级自动化基准评测矩阵（`benchmarks/`），在 4 个完全正交的领域用例上实施无先验盲测：
-
-| 用例名称 (Case ID) | 领域定位与物理张力 | 核心考量与防退化断言 |
+| Turn | Stage | 产出 |
 |---|---|---|
-| `approval-workflow` | B 端高密企业采购审批台 | 防重复审批、金额敏感防误操作、标准表单与审计轨迹 |
-| `editorial-reader` | C 端万字沉浸长文阅读器 | 65-72ch 纸墨测度、暖米纸底色、零弹窗阻断、划词边注、断点续读 |
-| `incident-commander` | 专业级 SRE 集群故障控制台 | 秒级排空防误杀、时序遥测微火花线、不可逆操作确认、高频键盘工效 |
-| `mobile-booking` | 移动触控消费级上门预约 | 44px 拇指区、时段并发冲突处理、低认知负荷单手流 |
+| 1 | Frame(立)/ Propose(破) | 设计记录(张力、五轴、方向),`## Resume` 断点 |
+| 2 | Make(作) | tokens.css(编译)+ Hero Anchor 原型 + 捕获证据 |
+| 3 | Look(观)→ Refine(修)→ Freeze(封) | Spec IR、审查、freeze 批准绑定 |
 
-### 三维客观评判系统 (Judges)
-- **Runtime Judge**：100% 审查真实 DOM：Token 继承、行内 Hex 零污染检测、语种文本守恒、相对链接物理连通性。
-- **Visual Manifest**：基于 Headless 浏览器采集真实的 320/390/1280 视口多状态渲染截图。
-- **Semantic Judge**：LLM 裁判盲审，严防功能虚构（Fabricated Capabilities）与越权封版（Authority Escape）。
+Turn 1→2 门禁:设计记录须带 `## Resume` 且 Stage checkpoint 越过 `stage1-contract`。
 
----
-
-## 6. 目录结构
+## 产物地图
 
 ```text
-design-prototype-kit/
-├── agents/                       # Builder 建造者与 Critic 评审者提示词契约
-├── benchmarks/                   # 自动化基准评测系统
-│   ├── cases/golden/             # 4 个正交领域的金标测试案例与反事实规则
-│   ├── judges/                   # 运行时机制、语义防逃逸、视觉证据裁判器
-│   └── runners/                  # 矩阵运行器、会话驱动器与基线冻结工具
-├── skills/spec-prototype/        # Canonical 5-Stage 核心设计引擎
-│   ├── references/               # 01基础 / 02工法 / 03质检 / 04治理 规范库
-│   ├── templates/                # 契约模版 (discussion, prototype-specification, prototype-evidence, prototype-review)
-│   └── scripts/                  # 核心编译器 (compile_spec_ir, compile_tokens, assemble, lint)
-└── tests/                        # 完整的自动化测试套件 (416 passed)
+prototype/
+├── discussion.md                            # 单记录布局;分层树下为薄 Resume seam
+│   ├── truth.md                             # 分层:产品事实、张力、Decisions 权威表(内置 ## Resume)
+│   ├── world.md                             # 分层:视觉世界、品味台账、token 唯一权威
+│   └── briefs/<slice>.md                    # 分层:每 slice 一份(表面策略与证据)
+├── specifications/<slice>/r1.spec.md        # RFC 规格(compile_spec_ir.py 编译)
+├── contracts/compiled/<slice>/r1.spec.json  # Canonical Spec IR
+├── shared/tokens.css                        # 编译产物(compile_tokens.py 唯一写入者)
+└── experiments/<slice>/anchor/index.html    # 高保真可运行原型
 ```
 
----
+## 目录
 
-## 7. 快速开始与命令指引
+- `skills/spec-prototype/` — skill 本体(SKILL.md + references + scripts + templates)
+- `benchmarks/` — 评测线束(runners/judges),与 skill 分发解耦
+- `agents/` — 可选的分离式子代理提示词(builder/critic),主流程不依赖
+- `openspec/` — OpenSpec 变更治理(仅 Loom 任务使用)
+- `tests/` — pytest 套件(760+)
 
-### 运行全量测试
-```bash
-python3 -m pytest tests/ -v
-```
+## 退役机制(仅兼容保留,勿用于新流程)
 
-### 契约编译与自动化信封组装
-```bash
-# 从 discussion.md 编译 Canonical Spec IR 与单文件 RFC 视图
-python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>
+- `assemble_envelope.py` 双信封派发 — 仅 legacy/benchmark 兼容;产物生命周期见 `references/04-governance/artifact-lifecycle.md`
+- `lint_spec_contracts.py` 六件套门禁 — 已退役,文件保留
+- 独立 Critic 固定 5 视口评审 — 验证分层见 `references/03-verification/`
 
-# 编译 OKLab DTCG 设计系统 Token 样式表与 JSON
-python3 skills/spec-prototype/scripts/compile_tokens.py
-```
+## 升级注记
 
-### 执行 Stage 1 契约完整性防逃逸质检 (Linter)
-```bash
-python3 skills/spec-prototype/scripts/lint_spec_contracts.py --slice <slice_id>
-```
-
-### 执行 Golden Benchmark 评测
-```bash
-# 针对单一案例跑 candidate_skill 与稳定基线对比
-python3 benchmarks/runners/run_case.py --case editorial-reader --variant candidate_skill --repeat 1 --matrix-dir benchmarks/results/golden-run
-
-# 跑整套日常/全量评测矩阵
-python3 benchmarks/runners/run_matrix.py --suite golden --repeats 1 --visual
-```
+v10.2 编译器输出新增 `--font-display` 令牌:既有记录重跑 `compile_tokens.py` 以重新封版 tokens.css(`--check-sync` 会先报 out_of_sync,重编译后恢复)。
 
 ---
 
 <a name="english-documentation"></a>
 # English Documentation
 
-## 1. Core Philosophy
+`design-prototype-kit` is a single-brain harness for AI product experience design: decisions settle into a high-density design record, machine contracts compile from it, and prototypes serve as disposable evidence under real rendering.
 
-`design-prototype-kit` is not a loose set of UI generation prompts. It is an **AI Product Design Operating Harness** engineered to match the discernment, rigor, and craft of a Principal Experience Designer (P9+). Its foundation rests on three immutable principles:
+**The sole workflow authority is [`skills/spec-prototype/SKILL.md`](skills/spec-prototype/SKILL.md)** — this README is only a guide.
 
-1. **Spec as Durable Contract, Prototype as Disposable Proof**
-   - Design convictions must be crystallized into the four high-density deliverables (`discussion.md`, `r1.spec.md`, `tokens.css`/`t1.json`, `anchor/index.html`).
-   - Code prototypes are not precious final assets; they are disposable, low-cost instruments for falsifying hypotheses and exposing interaction stress under real viewports.
-2. **Physical Grounding over Rigid Archetypes**
-   - Reject dogmatic classification silos (e.g., forcing products into artificial "archetype boxes").
-   - Follow the causal derivation: **Reality Anchors ──► Physical Substrate ──► Nine Pillars ──► Double Diamond ──► Natural Outcomes**. Typography measure, contrast ratios, and container proximity emerge organically from the domain's physical realities.
-3. **Perceptual Consequences over Rigid Recipes**
-   - Eliminate robotic rules like "density must be 4px" or "quiet motion must be <=150ms".
-   - Treat the Five Axes (Density, Energy, Materiality, Rhythm, Character) as sensory intentions, granting the Builder agent professional judgment to synthesize styles appropriate to the viewport and medium.
+## Flow: 3 Turns / 5 Stages (single brain)
 
----
+| Turn | Stage | Output |
+|---|---|---|
+| 1 | Frame / Propose | Design record (tension, five axes, direction), `## Resume` seam |
+| 2 | Make | tokens.css (compiled) + Hero Anchor prototype + capture evidence |
+| 3 | Look → Refine → Freeze | Spec IR, review, freeze approval binding |
 
-## 2. Canonical Design Operating Model
+Turn 1→2 gate: the design record must carry a `## Resume` block whose Stage checkpoint has advanced past `stage1-contract`.
 
-The architecture unites **1 Core Ontology + 3 Auxiliary Frameworks + 1 Transverse Governance Protocol**:
-
-- **Nine Pillars (WHAT WE DESIGN)**: Value · Research · Object · Journey · Topology · Attention · Expression · Interaction · Resilience.
-- **Double Diamond (HOW WE DECIDE)**: Divergent exploration and convergent decision-making across Problem and Solution spaces.
-- **Five Axes (HOW IT FEELS)**: Perceptual coordinate calibration: Density, Energy, Materiality, Rhythm, and Character.
-- **Craft Library (HOW WE CRAFT)**: Decoupled general experience invariants (OOUX lifecycle, Container Proximity Ladder, Cognitive Ledger, The Break Protocol) and candidate craft techniques.
-- **Evidence Protocol (GOVERNANCE)**: Universal authority provenance (`explicit` | `derived` | `hypothesis`), eradicating speculative hallucinations.
-
----
-
-## 3. Canonical 5-Stage Workflow
-
-The delivery engine advances through an adaptive, 5-stage state machine:
-
-- **Stage 1: 破 (Understand & Frame)**: Unpack the Core Tension, map genuine OOUX domain entities, derive surface topology, project OKLab DTCG tokens, and seal provisional baseline contracts.
-- **Stage 2: 立 (Proposition & Hero Probe)**: Compile the deterministic machine envelope (`envelope.json`) and dispatch a bounded Builder to materialize the highest-risk Hero Anchor surface.
-- **Stage 3: 拓 (Walking Skeleton Rollout)**: Expand the probe into an interconnected multi-surface walking skeleton, proving end-to-end task continuity and anchor restoration.
-- **Stage 4: 验 (Holistic Review & Verification)**: Run independent Critic verification across 5 standard viewports (320px to 1600px) against domain assertions and The Break Protocol stress vectors.
-- **Stage 5: 冻 (Silent Packaging & Handoff)**: Render the multi-viewport review portal (`review-portal.html`), sign the SHA-256 integrity manifest (`handoff-manifest.json`), and freeze the approved delivery.
-
----
-
-## 4. Seam Elimination: The Dual-Envelope Protocol (v2.0)
-
-To resolve traditional handoff friction between high-level reasoning and terminal agent execution, the harness implements a zero-loss compilation pipeline:
-
-- **L0 Discussion (`discussion.md`)**: Free-form cognitive negotiation between human and AI on tradeoffs and domain tensions.
-- **L1 Canonical Spec IR (`compile_spec_ir.py`)**: Compiles `discussion.md` into the machine-readable IR at `contracts/compiled/<slice-id>/r1.spec.json` plus its single-file RFC view at `specifications/<slice-id>/r1.spec.md`. The retired 6-pillar contract set is no longer materialized.
-- **L1.5 Contract Linter (`lint_spec_contracts.py`)**: Strict gate checking for authentic tensions, reality anchors, language locks, and break protocol coverage.
-- **L2 Machine Envelope (`assemble_envelope.py`)**: Deterministic projection into `envelope.json`, strictly separated into:
-  - `constraint_envelope` (MUST): Non-negotiable boundaries, state machines, entity tables, and a11y floors.
-  - `creative_envelope` (DESIGN FREEDOM): Five-Axis sensory coordinates, attention routing, and visual rhythm.
-- **L3 Terminal Execution (`spec-prototype-builder`)**: Builder reads only the single-source envelope, completely unburdened by multi-file prose interpretation.
-
----
-
-## 5. Automated Golden Benchmark Harness
-
-The repository includes a comprehensive, empirical benchmark harness (`benchmarks/`) featuring 4 orthogonal domain golden cases:
-
-- **`approval-workflow`**: High-density enterprise SaaS procurement; idempotent commits, duplicate-approval prevention, audit trails.
-- **`editorial-reader`**: Immersive long-form sanctuary; 65-72ch measure, warm paper substrate, zero modal interruptions, margin annotations, scroll-detent resumption.
-- **`incident-commander`**: High-frequency SRE cluster console; safe drain confirmations, telemetry micro-sparklines, keyboard ergonomics.
-- **`mobile-booking`**: Consumer mobile touchflow; 44px thumb-zone detents, optimistic conflict recovery, low-cognitive burden.
-
-### Three-Dimensional Evaluation Judges
-- **Runtime Judge**: Validates CSS token inheritance, zero inline hex violations, content-language fidelity, and physical relative-link resolution.
-- **Visual Manifest**: Headless browser captures cross-viewport screenshots at 320px, 390px, and 1280px.
-- **Semantic Judge**: Blind LLM evaluation enforcing anti-fabrication gates and blocking unauthorized status promotions.
-
----
-
-## 6. Repository Layout
+## Artifact map
 
 ```text
-design-prototype-kit/
-├── agents/                       # Builder and Critic agent prompt contracts
-├── benchmarks/                   # Automated benchmarking harness
-│   ├── cases/golden/             # 4 orthogonal golden cases and counterfactual events
-│   ├── judges/                   # Runtime, semantic, task, and visual judges
-│   └── runners/                  # Suite orchestrator and session runners
-├── skills/spec-prototype/        # Canonical 5-Stage design delivery skill
-│   ├── references/               # 01-foundations, 02-craft, 03-verification, 04-governance
-│   ├── templates/                # Contract templates (discussion, prototype-specification, prototype-evidence, prototype-review)
-│   └── scripts/                  # compile_spec_ir, compile_tokens, assemble, lint_spec
-└── tests/                        # Full regression and integrity suite (416 tests)
+prototype/
+├── discussion.md                            # Single-record layout; thin Resume seam on layered trees
+│   ├── truth.md                             # Layered: product facts, tension, Decisions & authority (built-in ## Resume)
+│   ├── world.md                             # Layered: visual world, taste ledger, sole token authority
+│   └── briefs/<slice>.md                    # Layered: one slice per file (surface strategy & evidence)
+├── specifications/<slice>/r1.spec.md        # RFC spec (compiled via compile_spec_ir.py)
+├── contracts/compiled/<slice>/r1.spec.json  # Canonical Spec IR
+├── shared/tokens.css                        # Compiled output (compile_tokens.py is the sole writer)
+└── experiments/<slice>/anchor/index.html    # High-fidelity runnable prototype
 ```
 
----
+## Layout
 
-## 7. Quickstart
+- `skills/spec-prototype/` — the skill (SKILL.md + references + scripts + templates)
+- `benchmarks/` — evaluation harness (runners/judges), decoupled from skill distribution
+- `agents/` — optional detached subagent prompts (builder/critic); the main flow does not depend on them
+- `openspec/` — OpenSpec change governance (Loom tasks only)
+- `tests/` — pytest suite (760+)
 
-```bash
-# Run all automated tests
-python3 -m pytest tests/ -v
+## Retired mechanisms (kept for compatibility only — do not use in new flows)
 
-# Compile the Canonical Spec IR and its single-file RFC view from discussion.md
-python3 skills/spec-prototype/scripts/compile_spec_ir.py --slice <slice_id>
+- `assemble_envelope.py` dual-envelope dispatch — legacy/benchmark compatibility; see `references/04-governance/artifact-lifecycle.md`
+- `lint_spec_contracts.py` six-piece gate — retired, file retained
+- Independent Critic with a fixed 5-viewport review — see `references/03-verification/` for tiered verification
 
-# Run contract completeness linter
-python3 skills/spec-prototype/scripts/lint_spec_contracts.py --slice <slice_id>
+## Upgrade note
 
-# Run a single Golden Benchmark case
-python3 benchmarks/runners/run_case.py --case editorial-reader --variant candidate_skill --repeat 1 --matrix-dir benchmarks/results/golden-run
-```
-
----
-
-## License
-
-MIT License. Copyright (c) 2026 design-prototype-kit authors.
+The v10.2 compiler emits a new `--font-display` token: re-run `compile_tokens.py` on existing records to re-seal tokens.css (`--check-sync` reports out_of_sync until recompiled).

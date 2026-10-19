@@ -154,7 +154,7 @@ On demand extensions:
 
 ## Lean Delivery & Token Efficiency (轻量化高质交付)
 
-Hard gates block only on semantic fabrication, authority escape, or critical task breaks; craft and performance are advisory. The accumulated negative rules (ergonomics, entity grounding, authority tagging, receipt honesty, lifecycle closure, and the rest) live in [`lean-delivery-rules.md`](references/03-verification/lean-delivery-rules.md). Writer-facing constraints load before the first runnable write in Turn 2; receipt and authority sections load at the start of Turn 3 when receipts are written. Helpers and their flags are listed in [`helper-quick-reference.md`](references/04-governance/helper-quick-reference.md); token authoring format is [`world.tokens.example.md`](templates/world.tokens.example.md). Never read a script's source to learn its calling convention.
+Hard gates block on semantic fabrication, authority escape, or critical task breaks; the craft floors above are hard and verifier-enforced, while craft performance guidance beyond the floors is advisory. The accumulated negative rules (ergonomics, entity grounding, authority tagging, receipt honesty, lifecycle closure, and the rest) live in [`lean-delivery-rules.md`](references/03-verification/lean-delivery-rules.md). Writer-facing constraints load before the first runnable write in Turn 2; receipt and authority sections load at the start of Turn 3 when receipts are written. Helpers and their flags are listed in [`helper-quick-reference.md`](references/04-governance/helper-quick-reference.md); token authoring format is [`world.tokens.example.md`](templates/world.tokens.example.md). Never read a script's source to learn its calling convention.
 
 ## Single-Brain End-to-End Ownership (单脑贯通 · 极速交付)
 

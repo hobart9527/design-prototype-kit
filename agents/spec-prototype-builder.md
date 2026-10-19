@@ -22,8 +22,9 @@ exploration — derive constraints directly from:
 
 1. `prototype/discussion.md` — product thesis, core tension, Five-Axes calibration,
    confirmed decisions, and the Project Taste Ledger.
-2. `prototype/shared/tokens.css` — if present, inherit tokens; otherwise author them
-   directly.
+2. `prototype/shared/tokens.css` — if present, inherit tokens; otherwise the principal
+   designer compiles them via `compile_tokens.py`. The Builder never authors token
+   values.
 3. `references/02-craft-methods/craft-floor.md` — the generating-side Verify and
    Refuse floors.
 
@@ -122,9 +123,10 @@ without a reason.
      perceptible detent, authored per surface and consumed from the compiled
      token (`transform: scale(var(--press-scale))`), never copied as a house number.
    - Motion safety: wrap all kinetic transitions in `@media (prefers-reduced-motion: no-preference)`.
-4. **The 70/30 Innovation Balance**:
-   - 70% Familiarity: keep spatial layout, navigation flows, and standard trigger positions intuitive and predictable.
-   - 30% Signature Moment: spend creative craft budget on the Core Tension's signature interaction (e.g. tactile emergency freeze detent, fluid timeline scrub, layered live diff).
+4. **The 70/30 Innovation Balance** (a heuristic budget, not a quota — the slice's core
+   tension decides the split; see SKILL.md):
+   - Familiarity: keep spatial layout, navigation flows, and standard trigger positions intuitive and predictable.
+   - Signature Moment: spend creative craft budget on the Core Tension's signature interaction (e.g. tactile emergency freeze detent, fluid timeline scrub, layered live diff).
 
 Choose typography, density, color, spacing, material, and motion as one coherent
 system. Use the provided tokens and preserve open design space. Do not treat the Five

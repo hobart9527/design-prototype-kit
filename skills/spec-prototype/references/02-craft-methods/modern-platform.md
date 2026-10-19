@@ -51,8 +51,9 @@ not treated as a pass or a design defect.
   is valid.
 - Do not emit a second primitive palette or write raw colors into component rules.
   `compile_tokens.py` remains the token authority; OKLCH output and paired
-  `light-dark()` token sets are deferred until the compiler has an opt-in mode
-  whose default output remains byte-for-byte stable.
+  `light-dark()` token sets are implemented opt-ins (`--color-format oklch`,
+  `--color-schemes light-dark --dark-source <path>`) whose default output stays
+  byte-for-byte stable.
 
 ## Adaptive layout
 
