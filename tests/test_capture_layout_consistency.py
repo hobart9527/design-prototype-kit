@@ -8,13 +8,15 @@ ladder and compiled at another. These checks pin the two layouts to one
 resolution: the same slice declaration yields the same viewports and states
 whichever layout carries it.
 
+Fixtures are built inline: `.gitignore` ignores `prototype/` everywhere, so a
+checked-in fixture tree could never survive a clean checkout.
+
 Hermetic: `node` + the repo's `python3` only; no browser, no network.
 """
 from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -24,7 +26,6 @@ pytestmark = pytest.mark.unit
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CAPTURE = REPO_ROOT / "skills/spec-prototype/scripts/capture.mjs"
-FIXTURES = Path(__file__).resolve().parent / "fixtures/capture_layout"
 NODE_TIMEOUT = 30
 
 
@@ -56,19 +57,6 @@ _CONTRACT_BLOCK = "```contract:viewports\n- 390\n- 1280\n```\n"
 _STATES_BLOCK = "```contract:required_states\n- default\n- degraded\n```\n"
 
 
-def _fixture(tmp_path: Path, layout: str) -> Path:
-    """Copy the checked-in layout fixture into a scratch tree.
-
-    The fixtures under `tests/fixtures/capture_layout/` are the two layouts of
-    the same slice declaration: `layered/` (truth + world + briefs/<slice>.md)
-    and `single-record/` (discussion.md with a `## Slice:` block). Copying keeps
-    tests write-isolated while the authored shape stays reviewable on disk.
-    """
-    target = tmp_path / layout
-    shutil.copytree(FIXTURES / layout, target)
-    return target
-
-
 def _layered_root(tmp_path: Path, slice_id: str) -> Path:
     _write(tmp_path / "prototype/truth.md", "# Product truth\n")
     _write(tmp_path / "prototype/world.md", "# World\n")
@@ -83,6 +71,16 @@ def _single_record_root(tmp_path: Path, slice_id: str) -> Path:
     return tmp_path
 
 
+def _scb():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "spec_contract_blocks", REPO_ROOT / "skills/spec-prototype/scripts/spec_contract_blocks.py")
+    scb = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(scb)
+    return scb
+
+
 def test_viewports_match_across_both_layouts(tmp_path: Path):
     """The same slice declaration resolves to the same ladder in either layout."""
     layered = _resolve("cap.resolveSliceViewports(input.root, input.slice)",
@@ -91,23 +89,6 @@ def test_viewports_match_across_both_layouts(tmp_path: Path):
                       _single_record_root(tmp_path / "single", "reader"), "reader")
     assert layered == [390, 1280]
     assert single == layered
-
-
-def test_checked_in_fixtures_agree_across_layouts(tmp_path: Path):
-    """The on-disk fixtures — the same declaration in both layouts — resolve equal."""
-    layered = _resolve("cap.resolveSliceViewports(input.root, input.slice)",
-                       _fixture(tmp_path, "layered"), "reader")
-    single = _resolve("cap.resolveSliceViewports(input.root, input.slice)",
-                      _fixture(tmp_path, "single-record"), "reader")
-    assert layered == [390, 1280]
-    assert single == layered
-
-    layered_states = _resolve("cap.resolveSliceStates(input.root, input.slice)",
-                              _fixture(tmp_path / "s2", "layered"), "reader")
-    single_states = _resolve("cap.resolveSliceStates(input.root, input.slice)",
-                             _fixture(tmp_path / "s2", "single-record"), "reader")
-    assert layered_states == ["default", "degraded"]
-    assert single_states == layered_states
 
 
 def test_states_match_across_both_layouts(tmp_path: Path):
@@ -128,12 +109,7 @@ def test_resolution_matches_the_compiler_seam(tmp_path: Path):
     diverge, the capture ladder and the compiled viewport contract disagree —
     the exact defect this seam exists to prevent.
     """
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "spec_contract_blocks", REPO_ROOT / "skills/spec-prototype/scripts/spec_contract_blocks.py")
-    scb = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(scb)
+    scb = _scb()
 
     for layout in (_layered_root, _single_record_root):
         root = layout(tmp_path / layout.__name__, "reader")
@@ -142,12 +118,76 @@ def test_resolution_matches_the_compiler_seam(tmp_path: Path):
         assert py["viewports"] == js, f"{layout.__name__}: seam {py['viewports']} != capture {js}"
 
 
+def test_seam_matches_the_compiled_ir(tmp_path: Path):
+    """The seam resolves exactly what compile_spec_ir puts in the IR.
+
+    `slice_scope` exists so capture and the compiler share one precedence: the
+    contract block, then the Stage 3/4 verification fragment, then the merged
+    frontmatter, then prose. A record that resolves differently in the two
+    readers is the capture/compile divergence this seam was created to close.
+    """
+    import importlib.util
+    import sys
+
+    scripts = REPO_ROOT / "skills/spec-prototype/scripts"
+    sys.path.insert(0, str(scripts))
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "compile_spec_ir", scripts / "compile_spec_ir.py")
+        ir_compiler = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ir_compiler)
+
+        # A record whose only required_states declaration is the labelled prose
+        # form — the shape the old frontmatter-only reader silently dropped.
+        root = _single_record_root(tmp_path, "reader")
+        (root / "prototype/discussion.md").write_text(
+            "# Discussion\n\n## Slice: reader\n\n- Required States: state-error, state-retry\n",
+            encoding="utf-8")
+        scope = _scb().slice_scope(root, "reader")
+        assert scope["required_states"] == ["state-error", "state-retry"]
+        ir = ir_compiler.compile_canonical_ir(root, slice_id="reader", allow_incomplete=True)
+        assert ir["scope"]["verification_scope"]["required_states"] == ["state-error", "state-retry"]
+    finally:
+        sys.path.remove(str(scripts))
+
+
 def test_a_slice_block_does_not_leak_from_a_neighbour(tmp_path: Path):
     """A partitioned record without this slice's block declares nothing here."""
     _write(tmp_path / "prototype/discussion.md",
            "# Discussion\n\n## Slice: other\n\n```contract:viewports\n- 1440\n```\n")
     out = _resolve("cap.resolveSliceViewports(input.root, input.slice)", tmp_path, "reader")
     assert out is None
+
+
+def test_fragment_outranks_frontmatter_in_the_seam(tmp_path: Path):
+    """A Stage 3/4 verification fragment outranks frontmatter, as in the compiler."""
+    root = _layered_root(tmp_path, "reader")
+    _write(root / "prototype/contracts/compiled/reader/state_model.slice.json",
+           json.dumps({"viewports": [1024], "required_states": ["state-fragment"]}))
+    scope = _scb().slice_scope(root, "reader")
+    # The contract block still outranks everything; rewrite it out to expose the
+    # fragment tier, which must outrank the brief's frontmatter carrier.
+    _write(root / "prototype/briefs/reader.md",
+           "---\nslice_id: reader\nviewports: [768]\nrequired_states: [default]\n---\n\n# Brief\n")
+    scope = _scb().slice_scope(root, "reader")
+    assert scope["viewports"] == [1024]
+    assert scope["required_states"] == ["state-fragment"]
+
+
+def test_malformed_contract_fails_closed_not_defaulted(tmp_path: Path):
+    """A malformed contract block must abort the capture, not fall back to defaults.
+
+    `resolveSliceViewports` previously swallowed every helper error into a
+    `null`, so a broken `contract:viewports` block silently captured the default
+    ladder while the record declared something else. The seam must surface the
+    parse failure so the run stops before evidence is recorded against the
+    wrong scope.
+    """
+    root = tmp_path
+    _write(root / "prototype/discussion.md",
+           "# Discussion\n\n## Slice: reader\n\n```contract:viewports\n- bad\n```\n")
+    with pytest.raises(AssertionError, match="design-record scope could not be resolved"):
+        _resolve("cap.resolveSliceViewports(input.root, input.slice)", root, "reader")
 
 
 def test_dump_cli_prints_the_slice_scope(tmp_path: Path):

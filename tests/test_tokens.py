@@ -1078,3 +1078,33 @@ def test_non_bezier_ease_override_is_carried_verbatim_not_invented():
     node = ct.generate_dtcg_json(tokens)["primitives"]["motion"]["ease-hud"]
     assert node["$value"] == "ease-out"
     assert node["$type"] == "string"
+
+
+def test_authored_dimension_overrides_reach_typed_json(tmp_path: Path):
+    """Every authored dimension/duration override must land in the typed JSON.
+
+    The DTCG export previously pinned `space-4`, `duration-fast`, and the line
+    heights to their derived values even when the sheet rendered the author's
+    override, so `t1.json` described a different token set from `tokens.css`.
+    """
+    ct = _load_compiler()
+    discussion = tmp_path / "prototype/discussion.md"
+    discussion.parent.mkdir(parents=True)
+    discussion.write_text(
+        "# Discussion\n\n## Confirmed Decisions\n"
+        "- --space-4: 37px\n"
+        "- --duration-fast: 250ms\n"
+        "- --line-height-body: 1.8\n",
+        encoding="utf-8")
+    out_css = tmp_path / "prototype/shared/tokens.css"
+    out_json = tmp_path / "prototype/contracts/tokens/t1.json"
+    ct.compile_tokens(str(discussion), str(out_css), str(out_json))
+
+    css = out_css.read_text(encoding="utf-8")
+    assert "--space-4: 37px;" in css
+    assert "--duration-fast: 250ms;" in css
+    assert "--line-height-body: 1.8;" in css
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    assert data["primitives"]["spacing"]["4"]["$value"] == "37px"
+    assert data["primitives"]["motion"]["duration-fast"]["$value"] == {"unit": "ms", "value": 250}
+    assert data["primitives"]["typography"]["line-height-body"]["$value"] == "1.8"

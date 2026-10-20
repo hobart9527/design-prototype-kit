@@ -1783,6 +1783,19 @@ def _authored_easing(tokens: Dict[str, Any], slot: str, fallback: str) -> str:
     return custom.get(slot) or (tokens.get("motion") or {}).get(slot.lstrip("-").replace("-", "_"), fallback)
 
 
+def _authored_slot(tokens: Dict[str, Any], slot: str, section: str, key: str, fallback: str) -> str:
+    """The value a generated slot actually renders with.
+
+    Same precedence as the stylesheet: an authored custom property of the same
+    name replaces the derived value in place, so the typed JSON must read that
+    authored value, not the derived one. `key` names the derived slot inside
+    `tokens[section]`; the authored value wins when present.
+    """
+    custom = tokens.get("custom_tokens") or {}
+    derived = (tokens.get(section) or {}).get(key, fallback)
+    return custom.get(slot) or derived
+
+
 def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     """Render W3C DTCG-compliant 3-Tier JSON token specification.
 
@@ -1834,25 +1847,29 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         "bg-base": {"$value": c["bg_base"], "$type": "color", "$description": "App foundation background chassis", "authority": color_auth},
     }
 
+    # The stylesheet emits each generated slot only when no authored custom
+    # property of the same name replaced it in place; the typed JSON must read
+    # that authored value, not the derived one the sheet no longer uses.
     spacing_tokens: Dict[str, Any] = {
-        str(k): {"$value": v, "$type": "dimension", "$description": f"Spacing unit {k}", "authority": spacing_auth}
+        str(k): {"$value": _authored_slot(tokens, f"--space-{k}", "space", k, v),
+                 "$type": "dimension", "$description": f"Spacing unit {k}", "authority": spacing_auth}
         for k, v in sorted(s.items())
     }
 
     radius_tokens: Dict[str, Any] = {
-        "outer": {"$value": r["outer"], "$type": "dimension", "$description": "Outer container boundary", "authority": radius_auth},
-        "inner": {"$value": r["inner"], "$type": "dimension", "$description": "Concentric inner child boundary", "authority": radius_auth},
-        "card": {"$value": r["card"], "$type": "dimension", "$description": "Card entity radius", "authority": radius_auth},
-        "btn": {"$value": r["btn"], "$type": "dimension", "$description": "Interactive control radius", "authority": radius_auth},
-        "pill": {"$value": r["pill"], "$type": "dimension", "$description": "Status badge pill radius", "authority": radius_auth},
+        "outer": {"$value": _authored_slot(tokens, "--radius-outer", "radii", "outer", r["outer"]), "$type": "dimension", "$description": "Outer container boundary", "authority": radius_auth},
+        "inner": {"$value": _authored_slot(tokens, "--radius-inner", "radii", "inner", r["inner"]), "$type": "dimension", "$description": "Concentric inner child boundary", "authority": radius_auth},
+        "card": {"$value": _authored_slot(tokens, "--radius-card", "radii", "card", r["card"]), "$type": "dimension", "$description": "Card entity radius", "authority": radius_auth},
+        "btn": {"$value": _authored_slot(tokens, "--radius-btn", "radii", "btn", r["btn"]), "$type": "dimension", "$description": "Interactive control radius", "authority": radius_auth},
+        "pill": {"$value": _authored_slot(tokens, "--radius-pill", "radii", "pill", r["pill"]), "$type": "dimension", "$description": "Status badge pill radius", "authority": radius_auth},
     }
 
     typography_tokens: Dict[str, Any] = {
         "font-display": {"$value": f["display"], "$type": "fontFamily", "$description": "Display/heading font family", "authority": typography_auth},
         "font-sans": {"$value": f["sans"], "$type": "fontFamily", "$description": "Primary UI font family", "authority": typography_auth},
         "font-mono": {"$value": f["mono"], "$type": "fontFamily", "$description": "Code and tabular font family", "authority": typography_auth},
-        "line-height-body": {"$value": tokens.get("typography", {}).get("line_height_body", "1.5"), "$type": "number", "$description": "Body copy leading (CJK-safe)", "authority": typography_auth},
-        "line-height-heading": {"$value": tokens.get("typography", {}).get("line_height_heading", "1.2"), "$type": "number", "$description": "Display/heading leading", "authority": typography_auth},
+        "line-height-body": {"$value": _authored_slot(tokens, "--line-height-body", "typography", "line_height_body", "1.5"), "$type": "number", "$description": "Body copy leading (CJK-safe)", "authority": typography_auth},
+        "line-height-heading": {"$value": _authored_slot(tokens, "--line-height-heading", "typography", "line_height_heading", "1.2"), "$type": "number", "$description": "Display/heading leading", "authority": typography_auth},
     }
 
     def duration_value(value: str) -> Dict[str, Any]:
@@ -1879,8 +1896,8 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
             "$description": "Rendered --ease-hud value (non-Bezier)", "authority": motion_auth}
 
     motion_tokens: Dict[str, Any] = {
-        "duration-fast": {"$value": duration_value(m.get("duration_fast", "80ms")), "$type": "duration", "$description": "Fast tactile duration", "authority": motion_auth},
-        "duration-normal": {"$value": duration_value(m.get("duration_normal", "180ms")), "$type": "duration", "$description": "Normal transition duration", "authority": motion_auth},
+        "duration-fast": {"$value": duration_value(_authored_slot(tokens, "--duration-fast", "motion", "duration_fast", "80ms")), "$type": "duration", "$description": "Fast tactile duration", "authority": motion_auth},
+        "duration-normal": {"$value": duration_value(_authored_slot(tokens, "--duration-normal", "motion", "duration_normal", "180ms")), "$type": "duration", "$description": "Normal transition duration", "authority": motion_auth},
         "ease-hud": hud_token,
         "spring-settle": {
             "$value": {

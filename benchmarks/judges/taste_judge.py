@@ -15,10 +15,26 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "runners"))
 import bench_lib as bl  # noqa: E402
+
+
+def _calibration_specimens() -> str:
+    """Load the Calibration Specimens section from the skill's reference set.
+
+    Same file the skill's Stage 4 Critic reads; loading it here keeps both
+    sides of the taste judgement anchored to the same observable differences.
+    """
+    path = bl.ROOT / "skills/spec-prototype/references/05-benchmarks/reference-set.md"
+    if not path.is_file():
+        return ""
+    text = path.read_text(encoding="utf-8")
+    m = re.search(r"## Calibration Specimens\n(.*?)(?=\n## |\Z)", text, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
 
 SCHEMA = json.dumps({
     "type": "object",
@@ -64,10 +80,16 @@ def judge(case: dict, screenshots: list, workdir: pathlib.Path, *, model: str | 
     if not staged:
         return {"judge": "taste", "status": "unverified",
                 "note": "no screenshots available to judge", "result": None, "metrics": None}
+    # Load the calibration specimens the skill's Critic also reads, so both
+    # sides anchor "competent vs excellent" to the same observable differences
+    # rather than a bare preference. The specimens are text, not screenshots —
+    # they define what the judge looks for, not what it sees.
+    calibration = _calibration_specimens()
     prompt = bl.render(
         bl.prompt_template("taste-judge.txt"),
         brief=case["brief"],
         shots=", ".join(staged),
+        calibration=calibration,
     )
     response = bl.ask_json(prompt, workdir, schema=SCHEMA, model=model, timeout_s=timeout_s,
                            allowed_tools="Read")

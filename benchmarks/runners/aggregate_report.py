@@ -88,26 +88,20 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
     regression = regression_judge.judge(runs)
 
     variants = sorted({r.get("variant") for r in runs if r.get("variant")})
+    # Identity comes from what each run recorded at execution time, never from
+    # the current checkout: re-running this builder after the source moved must
+    # not let the report claim a newer revision ran when the runs are older.
     skill_manifest = {}
     for variant in variants:
-        identity = bl.source_identity(variant)
-        try:
-            sources = bl.variant_sources(variant)
-        except bl.BenchBlocked:
-            sources = {}
-        source_path = sources.get("skill")
-        commit_hash = None
-        if source_path:
-            if variant == "stable_skill":
-                baseline_manifest = bl.read_json(pathlib.Path(source_path).parents[1] / "MANIFEST.json")
-                commit_hash = baseline_manifest.get("git_rev")
-            else:
-                commit_hash = identity.get("git_rev")
+        run_prov = next((r.get("provenance") for r in runs
+                         if r.get("variant") == variant and r.get("provenance")), None)
+        cand = (run_prov or {}).get("candidate") or {}
+        skill = cand.get("skill") or {}
         skill_manifest[variant] = {
             "variant": variant,
-            "tree_hash": ((identity.get("skill") or {}).get("aggregate_sha256")),
-            "source_path": str(source_path) if source_path else None,
-            "commit_hash": commit_hash,
+            "tree_hash": skill.get("aggregate_sha256"),
+            "commit_hash": cand.get("git_rev"),
+            "recorded": run_prov is not None,
         }
     per_variant = {}
     for variant in variants:

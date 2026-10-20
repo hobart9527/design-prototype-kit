@@ -276,7 +276,7 @@ def _misplaced_in_shared(shared_text: Optional[str], slice_id: str,
     present = {
         "viewports": lambda: _safe(_viewports_from_contract_block),
         "required_states": lambda: (_safe(_required_states_from_contract_block)
-                                    or _required_states_labeled(shared_text)),
+                                    or required_states_labeled(shared_text)),
         "declared_surfaces": lambda: extract_section(shared_text, _SURFACES_HEADING),
     }
     for item in violations:
@@ -486,6 +486,9 @@ from spec_contract_blocks import (  # noqa: E402
     read_design_record,
     split_slice_blocks,
     parse_block_frontmatter,
+    required_states_labeled,
+    required_states_prose,
+    viewports_prose,
     _SLICE_HEADING_RE,
     _FENCE_RE,
     _ATX_HEADING_RE,
@@ -656,29 +659,14 @@ def parse_viewports(text: str) -> List[int]:
 
     Priority 0: a ```contract:viewports``` block is the machine SSOT. Otherwise
     the prose scan admits any `NNNpx` in the text, which is why the block exists:
-    a stray pixel figure in a paragraph is not a declared breakpoint.
+    a stray pixel figure in a paragraph is not a declared breakpoint. The prose
+    scan lives in `spec_contract_blocks` so the compiler and the capture seam
+    read one implementation.
     """
     block = _viewports_from_contract_block(text)
     if block is not None:
         return block
-    return _viewports_prose(text)
-def _viewports_prose(text: str) -> List[int]:
-    """The compatibility scan: any `NNNpx` in the text, most fragile route."""
-    out: List[int] = []
-    lines = []
-    in_fence = False
-    for line in text.splitlines():
-        if line.strip().startswith("```") or line.strip().startswith("~~~"):
-            in_fence = not in_fence
-            continue
-        if not in_fence:
-            lines.append(line)
-    clean_text = "\n".join(lines)
-    for m in re.finditer(r"(?<!\d)(\d{3,4})\s*px", clean_text):
-        v = int(m.group(1))
-        if 200 <= v <= 4000 and v not in out:
-            out.append(v)
-    return sorted(out)
+    return viewports_prose(text)
 
 
 def parse_navigation_topology(text: str, fm_data: Dict[str, Any]) -> Optional[str]:
@@ -868,7 +856,7 @@ def parse_required_states(text: str) -> List[str]:
     block = _required_states_from_contract_block(text)
     if block is not None:
         return block
-    return _required_states_labeled(text) or _required_states_prose(text)
+    return required_states_labeled(text) or required_states_prose(text)
 
 def _required_states_labeled(text: str) -> List[str]:
     """The labelled prose form: `- Required States: state-a, state-b`."""
@@ -1426,13 +1414,13 @@ def compile_canonical_ir(
                           or frag_data.get("viewports")
                           or ([int(v) for v in fm_data.get("viewports", []) if str(v).isdigit()]
                               if isinstance(fm_data.get("viewports"), list) else [])
-                          or _viewports_prose(slice_text)))
+                          or viewports_prose(slice_text)))
     resolved_req_states = (_required_states_from_contract_block(slice_text)
-                           or _required_states_labeled(slice_text)
+                           or required_states_labeled(slice_text)
                            or frag_data.get("required_states")
                            or ([str(s).strip() for s in fm_data.get("required_states", []) if str(s).strip()]
                                if isinstance(fm_data.get("required_states"), list) else [])
-                           or _required_states_prose(slice_text))
+                           or required_states_prose(slice_text))
 
     ir = {
         "schema_version": "prototype-spec/v1",

@@ -841,10 +841,13 @@ function sliceScope(root, sliceId) {
     const out = execFileSync("python3", [script, "--dump", root, sliceId], { encoding: "utf-8" });
     return JSON.parse(out);
   } catch (err) {
-    // A missing record, a missing interpreter or a malformed block resolves to
-    // "nothing declared" rather than crashing the capture: the caller applies
-    // its own default ladder.
-    return null;
+    // "Nothing declared" (the helper exits 0 with nulls) is a legitimate fallback;
+    // a non-zero exit means the seam found a malformed block or a broken fragment
+    // and refused to parse it. The latter must not degrade to a default ladder —
+    // capturing the wrong viewports would record evidence that never covered the
+    // declared scope. Fail the capture with the helper's own diagnosis.
+    const diag = (err && err.stderr) ? String(err.stderr).trim() : String(err && err.message || err);
+    throw new Error(`capture: design-record scope could not be resolved (${diag})`);
   }
 }
 

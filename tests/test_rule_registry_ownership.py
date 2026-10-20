@@ -142,7 +142,62 @@ def test_pending_prerequisite_uses_underscored_spelling():
         SKILL / "templates" / "discussion.md",
     ):
         text = path.read_text(encoding="utf-8")
-        assert PENDING_ENUM in text, (
-            f"{path.relative_to(REPO)} states the pending-prerequisite vocabulary "
-            f"differently; expected `{PENDING_ENUM}`"
+
+
+# --- Wave 2 semantic ownership (C1–C4) -------------------------------------
+#
+# The single-owner convergence moved the decision-wait rules into
+# `discussion-governance.md`; every other file may reference the owner but must
+# not restate the rule. The divergence shape is owned by `core-kernel.md`; the
+# USER-INPUT stop condition is owned by `stage-1-frame.md`. These
+# assertions pin the ownership seams so a future edit cannot silently re-split
+# them.
+
+
+def test_divergence_count_is_owned_by_core_kernel():
+    """Only core-kernel states the minimum hypothesis count."""
+    owner = (SKILL / "references" / "core-kernel.md").read_text(encoding="utf-8")
+    assert "at least 2 polarized structural" in owner
+    assert "evidence has already locked" in owner
+
+    for path in _SKILL_TEXT_FILES:
+        if path == SKILL / "references" / "core-kernel.md":
+            continue
+        text = path.read_text(encoding="utf-8")
+        # References ("at least 2 hypotheses", "see core-kernel") are fine; a
+        # restatement of the exact rule phrase is not.
+        assert "at least 2 polarized structural" not in text, (
+            f"{path.relative_to(REPO)} restates the divergence-count rule owned by core-kernel.md"
+        )
+
+
+def test_user_input_stop_is_owned_by_stage_1_frame():
+    """Only stage-1-frame states the USER-INPUT stop condition."""
+    owner = (SKILL / "references" / "stages" / "stage-1-frame.md").read_text(encoding="utf-8")
+    assert "Emit `USER-INPUT:` and stop **only when an un-delegated human decision remains**" in owner
+
+    for path in _SKILL_TEXT_FILES:
+        if path == SKILL / "references" / "stages" / "stage-1-frame.md":
+            continue
+        text = path.read_text(encoding="utf-8")
+        # References ("end the turn with a verbatim USER-INPUT line", "only an
+        # un-delegated human decision stops the run") are fine; restating the
+        # stop rule itself is not.
+        assert "Emit `USER-INPUT:` and stop" not in text, (
+            f"{path.relative_to(REPO)} restates the USER-INPUT stop rule owned by stage-1-frame.md"
+        )
+
+
+def test_self_written_scripts_rule_is_owned_by_skill_md():
+    """SKILL.md states the no-self-authored-verification-scripts rule; helpers may reference it."""
+    owner = SKILL / "SKILL.md"
+    text = owner.read_text(encoding="utf-8")
+    assert "No self-authored verification scripts" in text
+
+    for path in _SKILL_TEXT_FILES:
+        if path == owner:
+            continue
+        text = path.read_text(encoding="utf-8")
+        assert "self-authored verification scripts" not in text, (
+            f"{path.relative_to(REPO)} restates the self-authored-scripts rule owned by SKILL.md"
         )

@@ -222,16 +222,100 @@ def _states_from_frontmatter(frontmatter: Dict[str, Any]) -> Optional[List[str]]
     return out or None
 
 
-def slice_scope(root: Path, slice_id: str) -> Dict[str, Any]:
+_REQUIRED_STATES_LABEL_RE = re.compile(
+    r"^\s*[-*]?\s*[`*]*(?:Required[ \t]+States?|Mandatory[ \t]+Test[ \t]+States?|强制测试状态)[`*]*[ \t]*[:：]?[ \t]*(.*)$",
+    re.IGNORECASE)
+
+
+def required_states_labeled(text: str) -> List[str]:
+    """The labelled prose form: `- Required States: state-a, state-b`.
+
+    The label is anchored at line start; an unanchored search would read the
+    contract prose's own mention of the label as a declaration. Empty when no
+    labelled line exists, so callers fall through to the next tier.
+    """
+    out: List[str] = []
+    seen: set = set()
+
+    def _add(tok: str) -> None:
+        clean = tok.strip().strip("`*\"'").lower()
+        if clean and clean not in seen:
+            seen.add(clean)
+            out.append(clean)
+
+    for line in text.splitlines():
+        m = _REQUIRED_STATES_LABEL_RE.match(line)
+        if not m:
+            continue
+        for tok in re.findall(r"[`*]?([a-z0-9][a-z0-9_-]*)[`*]?", m.group(1), re.IGNORECASE):
+            _add(tok)
+    return out
+
+
+def viewports_prose(text: str) -> List[int]:
+    """The prose scan for viewport widths, outside fenced blocks; most fragile tier."""
+    lines: List[str] = []
+    in_fence = False
+    for line in text.splitlines():
+        if line.strip().startswith("```") or line.strip().startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            lines.append(line)
+    out: List[int] = []
+    for m in re.finditer(r"(?<!\d)(\d{3,4})\s*px", "\n".join(lines)):
+        width = int(m.group(1))
+        if 200 <= width <= 4000 and width not in out:
+            out.append(width)
+    return sorted(out)
+
+
+def required_states_prose(text: str) -> List[str]:
+    """The bare `state-*` sweep; most fragile tier, reads mentions as declarations."""
+    out: List[str] = []
+    seen: set = set()
+    for tok in re.findall(r"[`*]?(state-[a-z0-9][a-z0-9_-]*)[`*]?", text, re.IGNORECASE):
+        clean = tok.strip().strip("`*\"'").lower()
+        if clean and clean not in seen:
+            seen.add(clean)
+            out.append(clean)
+    return out
+
+
+def _verification_fragment(root: Path, slice_id: str, fragment_path: Optional[Path]) -> Dict[str, Any]:
+    """Load the Stage 3/4 verification fragment the compiler also merges, or {}.
+
+    Same candidate paths as `compile_canonical_ir`: an explicit fragment first,
+    else the compiled `state_model.slice.json`, else the hand-authored
+    `contracts/slices/<slice>/state_model.json`. A malformed fragment raises
+    JSONDecodeError upward — the seam fails closed rather than skipping a tier
+    the compiler honours.
+    """
+    candidates: List[Path] = []
+    if fragment_path is not None:
+        candidates.append(Path(fragment_path))
+    else:
+        candidates.append(root / f"prototype/contracts/compiled/{slice_id}/state_model.slice.json")
+        candidates.append(root / f"prototype/contracts/slices/{slice_id}/state_model.json")
+    for path in candidates:
+        if path.is_file():
+            return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
+def slice_scope(root: Path, slice_id: str, fragment_path: Optional[Path] = None) -> Dict[str, Any]:
     """Resolve one slice's capture scope through the design-record seam.
 
     `capture.mjs` needs only the declared viewport ladder and required states.
     Both are slice-scoped declarations, so they are read from the same loaded
     record the compiler uses instead of a second, JS-side parser that knows
-    only one layout. Precedence matches the compiler and the capture contract:
-    a ```contract:<kind>``` block outranks the frontmatter carrier. Nothing is
-    defaulted — an undeclared value stays None so the caller applies its own
-    fallback.
+    only one layout. The precedence chain is the compiler's own
+    (`compile_canonical_ir`): a ```contract:<kind>``` block, then the Stage 3/4
+    verification fragment, then the merged frontmatter carrier, then the
+    labelled prose form, then the prose scan. Nothing is defaulted — an
+    undeclared value stays None so the caller applies its own fallback; a
+    malformed block or fragment raises, because a declaration that fails to
+    parse must not survive here as an unexamined default.
     """
     root = Path(root)
     record = read_design_record(root, slice_id)
@@ -246,12 +330,20 @@ def slice_scope(root: Path, slice_id: str) -> Dict[str, Any]:
     if slice_text is None:
         return result
     frontmatter = _frontmatter_for_slice(record)
+    fragment = _verification_fragment(root, slice_id, fragment_path)
+    frag_viewports = fragment.get("viewports")
+    frag_states = fragment.get("required_states")
     result["viewports"] = (
         _viewports_from_contract_block(slice_text)
-        or _viewports_from_frontmatter(frontmatter))
+        or (list(frag_viewports) if frag_viewports else None)
+        or _viewports_from_frontmatter(frontmatter)
+        or viewports_prose(slice_text) or None)
     result["required_states"] = (
         _required_states_from_contract_block(slice_text)
-        or _states_from_frontmatter(frontmatter))
+        or (list(frag_states) if frag_states else None)
+        or _states_from_frontmatter(frontmatter)
+        or required_states_labeled(slice_text)
+        or required_states_prose(slice_text) or None)
     return result
 
 

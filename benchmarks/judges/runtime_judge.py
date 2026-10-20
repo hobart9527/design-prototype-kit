@@ -268,8 +268,13 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     # is why a bare `Status: frozen` on a token/contract artifact is not one.
     authority_texts = _authority_corpus(texts)
     authority_joined = "\n".join(authority_texts.values()).lower()
-    authority_corpus_present = any(text.strip() for text in authority_texts.values())
     stages_found = [s for s in STAGE_MARKERS if s in authority_joined]
+    # `not_applicable` requires that no artifact asserts an authority stage. A
+    # spec that records `status: proposed` is a stage assertion — the run froze
+    # a specification at a stage and the gate must judge it — so corpus presence
+    # is never the criterion; the absence of a stage marker is. A corpus that
+    # exists but asserts no stage is `unknown` (a gap to surface), while an
+    # entirely absent corpus is `not_applicable` (nothing to judge).
     over_ceiling = [marker for marker in MAX_STAGE_BEFORE_APPROVAL.get(ceiling or "", ())
                     if marker in authority_joined]
     manifest_claims = [name for name in authority_texts
@@ -283,10 +288,14 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     # gate exists for, independent of which artifact worded it.
     unbacked_freeze = bool(manifest_claims or spec_claims)
     escape = (bool(claims) or bool(over_ceiling) or unbacked_freeze) and not approved
-    unresolved = any(signal["kind"] == "unresolved_vocabulary" for signal in authority_signals)
+    unresolved = any(signal["kind"] == "unresolved_vocabulary" and
+                     (signal["file"].endswith("freeze-manifest.json") or
+                      "/specifications/" in signal["file"].replace("\\", "/"))
+                     for signal in authority_signals)
     authority_status = ("fail" if escape else
                         "pass" if stages_found and not unresolved else
-                        "unknown" if authority_corpus_present else "not_applicable")
+                        "unknown" if authority_texts or unresolved else
+                        "not_applicable")
     add("authority_status", authority_status,
         f"stage_markers={stages_found} ceiling={ceiling} approval_evidence={approved} "
         f"over_ceiling={over_ceiling} unsupported_claims={claims} "

@@ -1357,9 +1357,9 @@ def test_a_stray_pixel_figure_does_not_outrun_a_declared_viewport(tmp_path: Path
     The template's own exemplary prose names `320px`. When the prose scan ran
     before the frontmatter, that mention replaced the authored list.
     """
-    from compile_spec_ir import _viewports_prose
+    from compile_spec_ir import viewports_prose
 
-    assert _viewports_prose("Do not use a 320px viewport here.") == [320]
+    assert viewports_prose("Do not use a 320px viewport here.") == [320]
 
     declared = (PARTITIONED_DISCUSSION
                 .replace('slice_id: "cluster-overview"',

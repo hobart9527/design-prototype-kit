@@ -4,6 +4,10 @@ which tool produced them, and no rationale is shown to you. Judge what is visibl
 Original brief (context only — do not reward the screenshots for restating it):
 {brief}
 
+Calibration specimens (what "competent" vs "excellent" looks like — use these to
+anchor your reading, not to grade the screenshots against them):
+{calibration}
+
 Screenshots: {shots}
 
 Inspect the images before forming any view. Answer three questions honestly.
