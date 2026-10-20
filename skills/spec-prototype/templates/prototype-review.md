@@ -85,9 +85,11 @@ Any confirmed item here is an immediate BLOCK — never averaged away by craft o
 
 ## Pillar coverage (every pillar gets a row, including the ones not examined)
 
-`not reviewed` is not a pass: a review with unreviewed pillars is `PARTIAL`
-however clean the reviewed ones are. See
-`references/stages/stage-4-audit.md` for what each pillar's row owns.
+`not reviewed` is not a pass: a pillar in the agreed repair scope that is unreviewed
+makes the review `PARTIAL`. A pillar *declared out of scope* is different — it does
+not block this local repair from exiting. See
+`references/stages/stage-4-audit.md` (owner) for what each pillar's row owns and for
+the scoped-verdict vs incomplete-review distinction.
 
 | Pillar | Status | Findings | Reason, when `not reviewed` |
 |---|---|---|---|

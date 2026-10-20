@@ -16,9 +16,12 @@ IA-first waterfall.
 
 ## Record and resume
 
-For substantive design work with writes authorized, create
-`prototype/discussion.md` before other design artifacts. Keep its Resume section
-small and current: execution boundary; active Product Experience Model decision;
+For substantive design work with writes authorized, create the design record
+before other design artifacts — `prototype/discussion.md` on a single-record
+tree, or the layered `truth.md`/`world.md`/`briefs/<slice>.md` set; which layout
+applies is decided by the two-layout rule in
+[`machine-contract.md`](machine-contract.md#two-layouts-one-loading-seam). Keep
+its Resume section small and current: execution boundary; active Product Experience Model decision;
 route basis; requested scope/stopping point; pending prerequisite with impact and
 owner; product/source revision; active artifact/evidence references; next action
 and its prerequisite.
@@ -65,9 +68,11 @@ value as another's.
 **Decision `Status` column** — owned by
 [`../core-kernel.md`](../core-kernel.md) §4:
 `proposed | provisional | confirmed | delegated | needs-evidence | superseded`.
-`confirmed` means an actual human user selection or approved external source,
-with scope — never a synthetic PRD persona decision or a simulated role actor.
-`delegated` means the human authorized AI judgment within a stated scope.
+`confirmed` means an actual in-session selection by the user themselves, with
+scope — never a synthetic PRD persona decision or a simulated role actor. An
+approved external source is not `confirmed`: it is recorded at the `explicit`
+evidence grade, which is a separate register. `delegated` means the human
+authorized AI judgment within a stated scope.
 `proposed` is a professional recommendation awaiting authority or evidence,
 `provisional` is a proposal carried forward while the direction is still open,
 `needs-evidence` means inspectable material or observation is missing, and
@@ -412,7 +417,7 @@ Disposition：
 
 - **形态 A：全新产品从零起步 (Greenfield 0 to 1)**
   - 判定：仓库无现成样式、无 Token、无现成界面。
-  - 路线：走全流程五阶工序（张力解构 → 5 Dials 风格刻度 → 单屏 Hero 锚点与全局 Token → 逐层铺展 → 走查与冻结）。
+  - 路线：常见路线是走全五阶工序（张力解构 → 5 Dials 风格刻度 → 单屏 Hero 锚点与全局 Token → 逐层铺展 → 走查与冻结）。这是默认路线而非固定顺序；Stage 2（方向探针）与 Stage 5（Freeze）是条件阶段，按需执行（Freeze 仅在用户要求冻结或下游交付时进行）。
 - **形态 B：现有产品增设新页面/新功能 (New Surface 1 to N)**
   - 判定：仓库已有成熟设计语言、主色、导航壳或现有 Token。
   - 路线：强制**血缘继承**（复用现有 Token，绝不分裂系统造新轮子）；Stage 1 聚焦该新功能的 OOUX 基数映射与决胜交互切片，随后直接展开。

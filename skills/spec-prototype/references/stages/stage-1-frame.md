@@ -239,7 +239,7 @@ Decisions and authority table, and Five Axes calibration.
 A design brief answers the current question and clearly separates facts, decisions,
 proposals, and open risks, and it carries a complete `### Divergence` record (`rut:`,
 `rut_rejected:` with at least three refused defaults and reasons, three lifeworld
-candidates, `### Divergence seeds` (drawn, or chosen with that stated; `draw_seed.py` is optional), two-axis verdict naming Structure). **Turn 1 ends here, at the Resume block**: Stage 2 opens in
+candidates, `### Divergence seeds` (drawn, or chosen with that stated; `draw_seed.py` is optional), two-axis verdict naming Structure) **only while the direction is not already locked**. When evidence has predetermined the direction — an explicit extension of an existing surface, a settled convention, an explicit user delegation, or a local repair — a single recorded proposition is the complete record: the kernel's divergence exemption applies (the Double Diamond mandate to diverge holds *when the direction is undecided*, and one proposition is enough once evidence has locked it; see [`../core-kernel.md`](../core-kernel.md) §5). Manufacturing pseudo-alternatives here is waste, not rigor. **Turn 1 ends here, at the Resume block**: Stage 2 opens in
 the next turn to explore 2–3 distinct visual and structural directions through rapid
 prototyping, without waiting on pre-spec locks. Write no `tokens.css`, HTML or evidence
 in this turn — the Resume block is recovery context for the next turn, not an approval

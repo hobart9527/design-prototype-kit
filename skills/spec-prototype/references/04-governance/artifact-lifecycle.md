@@ -15,7 +15,7 @@ run produces lives in one of them:
 | Object | Scope and owner | Lifecycle | May decide |
 |---|---|---|---|
 | Decision record — `prototype/discussion.md`, or the layered `prototype/truth.md` + `prototype/world.md` + `prototype/briefs/<slice>.md` | The evolvable human/agent co-creation ledger: Product Thesis, confirmed decisions, Five-Axes calibration, coverage selection, evidence status. The Decisions and authority table lives in `discussion.md` on a single-record tree, and in `truth.md` on a layered tree | always mutable; never a freeze subject | Problem framing, product thesis, actors/jobs/outcomes, the chosen proposition and its trade-off, coverage, and what stays `[hypothesis]` |
-| Slice specification — `prototype/specifications/<slice>/r1.spec.md` | The single-file RFC: IA topology, state machine, actions, Break protocol, invariants. Compiled from the canonical IR (`contracts/compiled/<slice>/r1.spec.json`) | `draft -> frozen -> superseded` | The slice's binding generation constraints; nothing new is authored here after compile |
+| Slice specification — `prototype/specifications/<slice>/r1.spec.md` | The single-file RFC: IA topology, state machine, actions, Break protocol, invariants. It and the canonical Spec IR (`contracts/compiled/<slice>/r1.spec.json`) share the design record as their source: the IR is compiled from the design record, then `r1.spec.md` is rendered from that IR for human reading | `draft -> frozen -> superseded` | The slice's binding generation constraints; nothing new is authored here after compile |
 | Token stylesheet — `prototype/shared/tokens.css` (+ `contracts/tokens/t1.json`) | The compiled physical style layer. The token authority is `discussion.md` on a single-record tree and `world.md` on a layered tree, never both; the JSON is derived packaging | `draft -> frozen -> superseded` | The concrete colour, space, radius, type and motion values every surface inherits |
 | Anchor artifact — `prototype/experiments/<slice>/anchor/index.html` | The runnable materialisation of one specification revision | `generated -> verified` or `blocked`; disposable evidence | Nothing; executable proof only |
 
@@ -44,7 +44,7 @@ The system defines two closely coordinated lifecycle models: the **Authority Lif
 | **Validated** | Stage 4 (Look / Refine) | `draft` (evidence-cleared) | Human design review and visual inspection complete; key feedback absorbed and stabilized. |
 | **Frozen Approved** | Stage 5 (Silent Governance / Handoff) | `frozen` | Immutable delivery. Spec IR (`r1.spec.json`), RFC specification (`r1.spec.md`), and DTCG tokens (`t1.json`) compiled and bound by SHA-256 digests via `handoff.py freeze`. Downstream engineering delivery admission state. Any subsequent modification requires an explicit successor revision (`superseded`). |
 
-*(Note: `sealed_provisional` is a legacy compile-time default that the tooling still emits and reads; it is not an authority state. Authority is certified only by `freeze-manifest.json`.)*
+*(Note: `sealed_provisional` is one of the specification-authority values, defined by [`machine-contract.md`](machine-contract.md#two-registers-named-authority-distinct-semantics) alongside `draft`, `validated` and `frozen_approved`; it is the compile-time default the tooling emits and reads. It is not an approval: authority is certified only by `freeze-manifest.json`.)*
 
 ## Dual-track artifact lifecycle: Exploration vs Formal Delivery
 

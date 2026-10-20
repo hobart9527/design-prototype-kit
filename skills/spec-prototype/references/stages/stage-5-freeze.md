@@ -33,9 +33,10 @@ Stage 5 本身可选：仅在用户要求冻结或下游交付时执行；一旦
    `shared/tokens.css` and a W3C DTCG `tokens.json` in one pass. It does not read
    `tokens.css` back: the flow is one-way (record → css + json), and the
    compiled output carries the flat `color` group that the contrast preflight
-   consumes. On a single-record tree the source is `prototype/discussion.md`
-   (the default `--discussion`); on a layered tree pass `--discussion
-   prototype/world.md` so the token authority is the visual-world file.
+   consumes. The source path is auto-detected: when `prototype/world.md` exists it
+   is the token source (layered tree); otherwise the default is
+   `prototype/discussion.md` (single-record tree). Pass `--discussion <path>` only
+   to override that detection.
    *Token flow discipline*: The design record (`world.md` or `discussion.md`) is the only token source at every stage. Record exploratory adjustments there and rerun `compile_tokens.py`; Stage 5 freezes the compiled outputs and makes no further source writebacks, preserving upstream SHA-256 seal integrity.
    **Do not substitute a Markdown-table token export for this step.** A re-export
    that groups tokens by CSS custom-property prefix omits the flat `color` group,

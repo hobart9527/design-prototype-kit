@@ -26,8 +26,10 @@ purpose of this stage.
    then reconciliation. Name the strongest authored relationship that reached the
    render, the task behavior actually exercised, and the highest-impact opportunity
    to improve; the review preserves and strengthens the direction rather than only
-   demonstrating absence of defects. Run the four probes in that first look and
-   record their outcome as one `taste_probe:` line in the design record:
+   demonstrating absence of defects. Write this judgment **once**, in the **Taste
+   Statement** section below — that section is this step's landing place, not a
+   second narrative. Run the four probes in that first look and
+   record their outcome as one `taste_probe:` line beside it:
    **Swap** (replace the palette with the category default — does the structure
    still read as this product?); **Squint** (does the first-glance hierarchy
    survive blur?); **Signature** (is the Stage 1 Signature Moment the thing you
@@ -80,17 +82,18 @@ purpose of this stage.
    focused pass is normally sufficient. Continue only when the user changes scope or
    new evidence exposes a new cause.
 
-### Taste Statement (品味陈述)
+### Taste Statement (品味陈述) — where the 3a judgment is written down
 
-A finding needs a failed trigger; a judgment does not. Beside the findings, write a
-short **Taste Statement** from the screenshots, before reading any rule-hit list:
-what the design is committing to, what it gives up, where it is weakest, and whether
-the [Style Language Card](../01-foundations/design-language.md#the-style-language-card) Positions and
-Counter-examples are visible in the render (cover test: could a viewer of the first
-viewport guess the category?). It is recorded as judgment, tagged `[taste]`, and never
-filed as a finding or a gate — "Taste is not evidence" still holds. Its job is to make
-the designer's position reviewable and to feed one bounded refinement when the render
-falls short of its own language.
+Step 3a's judgment is recorded once, here; this section is its landing place, not a
+second narrative. A finding needs a failed trigger; a judgment does not. Write the
+short **Taste Statement** from the screenshots, before reading any rule-hit list,
+covering what step 3a asked for: what the design is committing to, what it gives up,
+where it is weakest, and whether the [Style Language Card](../01-foundations/design-language.md#the-style-language-card)
+Positions and Counter-examples are visible in the render (cover test: could a viewer of
+the first viewport guess the category?). It is recorded as judgment, tagged `[taste]`,
+and never filed as a finding or a gate — "Taste is not evidence" still holds. Its job is
+to make the designer's position reviewable and to feed one bounded refinement when the
+render falls short of its own language. The 3a `taste_probe:` line lives beside it.
 
 ### Read the render against the Direction Contract, pillar by pillar
 
@@ -207,8 +210,15 @@ failure as a "runner bug" or override it with visual impressions. A manifest fie
 that reads `null` — or a name listed in `unmeasured` — means the runner could not
 measure it (`measurement_tier: cli` cannot read DOM signals); that is `unverified`,
 never `0`, `false`, or `clean`. Report it under `## 未验证（不得读作已验证）` with the
-tier that failed to measure it, and re-capture on the Playwright path when the
-signal decides a verdict. If
+tier that failed to measure it. When the unmeasured signal is a DOM signal the CLI
+tier cannot read (`measurement_tier: cli`) and it decides a verdict — a
+`horizontal_overflow` / `scrollWidth > clientWidth` question, for example, which is
+exactly the editorial-reader case — resolve it with a **one-off browser-tool check**
+(open the artifact, read `documentElement.scrollWidth` vs `clientWidth` at each
+declared viewport) and record the result. That one check closes the question; do not
+re-run `capture.mjs` or add capture rounds to re-measure a signal the CLI path never
+measured. Only re-capture on the Playwright path when the signal genuinely cannot be
+read any other way and the verdict still hangs on it. If
 `metadata.status` is `capture_failed`, or any `viewport_metrics.*.stylesheets_applied`
 is `false`, or `visual`/`human` is `pending_review`, then the receipt must set
 `visual_evidence: unverified` / `status: PARTIAL` and must NOT write

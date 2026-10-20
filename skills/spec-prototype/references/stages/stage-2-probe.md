@@ -127,8 +127,17 @@ failing a hard floor is a bug with a nice surface, not a candidate.
 ## Expression Study & Blind Critique (表达实验与盲评)
 
 Structure decides which direction; expression decides whether it is any good. Run both
-after a direction leads, and before Stage 3 rollout. Both are bounded and optional when
-the direction inherits an existing language or the request is a local repair.
+after a direction leads, and before Stage 3 rollout.
+
+**Trigger condition.** Run this section only while **expression is undecided** — the
+direction is already locked but its visual expression has not converged (unresolved
+type roles, colour meaning, form or motion on the decisive surface). When the direction
+and its expression settle in the same round — a strong brief, an inherited language, or
+a local repair — **skip it**; there is no open expression question for the study to
+answer. Running beautiful-variant studies on a converged expression is polish, not
+research, and belongs in Stage 4's bounded refinement at most.
+
+Both studies are bounded and never gates.
 
 **Expression study.** On the leading direction's decisive surface, build one file with
 `data-variant` variants that move *one* expression family at a time — type roles,

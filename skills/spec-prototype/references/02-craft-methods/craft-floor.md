@@ -191,6 +191,13 @@ made. When you catch one, rewrite the element rather than softening it.
   neutral accent is often correct when the brief's own character supports it.
   Name the choice and its reason either way; see
   [`modern-platform.md`](modern-platform.md).
+- **Passing the checker instead of the design** — an empty implementation added
+  to turn a check green: a no-op event listener, an empty handler, a control
+  wired to nothing, a `preventDefault()` with no behavior behind it. The defect
+  is the absent behavior, and the repair target is the artifact, never the check.
+  If the check cannot be satisfied by real behavior, record the limitation
+  honestly as `Not verified`, or fix the checker when the checker is wrong; do
+  not dress a stub as a fix.
 
 ## Render defect scan
 

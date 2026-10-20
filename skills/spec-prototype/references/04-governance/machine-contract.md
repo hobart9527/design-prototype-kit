@@ -22,8 +22,8 @@ prototype/
 ├── truth.md                                # layered: product facts, tension, Decisions and authority table
 ├── world.md                                # layered: visual world and the sole token authority
 ├── briefs/<slice>.md                       # layered: one slice's surface strategy and evidence
-├── specifications/<slice>/r1.spec.md       # the Specification, extracted from what was built
-├── contracts/compiled/<slice>/r1.spec.json # the canonical Spec IR (compiled from r1.spec.md)
+├── specifications/<slice>/r1.spec.md       # the Specification view, rendered from the compiled IR
+├── contracts/compiled/<slice>/r1.spec.json # the canonical Spec IR (compiled from the design record)
 ├── shared/tokens.css                       # compiled tokens (written only by compile_tokens.py)
 ├── contracts/tokens/t1.json                # optional machine export of the same tokens
 ├── experiments/<slice>/anchor/index.html   # the runnable prototype (index.html + anchor.css + anchor.js)

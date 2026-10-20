@@ -1,6 +1,6 @@
 # Stage 3: Walking Skeleton Rollout (拓 - 骨)
 
-Answer one question: *"How does the validated anchor become a cohesive
+Answer one question: *"How does the selected anchor become a cohesive
 multi-surface skeleton within the resolved coverage?"* Stage 3 expands the anchor
 across every in-scope surface derived from the Surface Topology.
 
@@ -16,7 +16,7 @@ twice — check `prototype/experiments/<slice_id>/anchor/index.html` before comp
 
 The entry intent routing in [SKILL.md](../../SKILL.md) decides which stages run;
 it does not decide how much of the product those stages cover.
-Before expanding beyond the validated anchor, resolve the requested scope against
+Before expanding beyond the selected anchor, resolve the requested scope against
 the current Surface Map, task risks, probe results, and applicable platform
 contexts:
 

@@ -54,12 +54,13 @@ when the underlying design work is already authorized.
 
 ## Formal handoff packet
 
-`lint_spec_contracts.py` is a Stage 5 optional handoff lint helper, not a design-time
-gate. It validates the canonical Spec IR (schema, tier admission, tokens freshness,
-boundary) and is admitted through the execution boundary only when explicitly invoked
-with `--root` and `--slice` arguments for formal delivery validation. Legacy-file
-retirement is owned by [artifact lifecycle](artifact-lifecycle.md); a tree without the
-compiled IR reports the missing IR rather than demanding retired files.
+`lint_spec_contracts.py` is retired — kept for legacy flows to read, not on the main
+path (see [`helper-quick-reference.md`](helper-quick-reference.md)). It validates the
+canonical Spec IR (schema, tier admission, tokens freshness, boundary) and is
+admitted through the execution boundary only when explicitly invoked with `--root`
+and `--slice` arguments for legacy formal-delivery validation. Legacy-file
+retirement is owned by [artifact lifecycle](artifact-lifecycle.md); a tree without
+the compiled IR reports the missing IR rather than demanding retired files.
 
 Prepare prototype handoff artifacts in the current project with their bounded
 scopes, not a separate worktree: packet paths and target evidence belong to this
