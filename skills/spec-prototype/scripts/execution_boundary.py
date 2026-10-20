@@ -542,10 +542,18 @@ def post_tool_advisory(payload: dict) -> str | None:
     prototype = cwd / 'prototype'
     if not target.is_relative_to(prototype) or not target.is_file() or target.suffix.lower() not in {'.html', '.css', '.js'}:
         return None
+    detector_target = target
+    # Exploratory direction probes under dirs/ are pre-convergence drafts: the
+    # craft floor runs on the converged anchor, and a probe stylesheet has no
+    # settled surface to judge. Scan the slot's entry only once it exists.
+    if 'dirs' in target.parts:
+        slot_entry = target.parent / 'index.html' if target.name != 'index.html' else target
+        if not slot_entry.is_file():
+            return None
+        detector_target = slot_entry
     # Do not scan a half-written anchor trio. On whichever write completes the
     # trio, scan the HTML entry (the only complete surface detect.py can assess).
-    detector_target = target
-    if target.parent.name == 'anchor':
+    elif target.parent.name == 'anchor':
         trio = [target.parent / name for name in ('index.html', 'anchor.css', 'anchor.js')]
         if not all(path.is_file() for path in trio):
             return 'Craft advisory pending: anchor trio incomplete; detection runs on index.html once index.html, anchor.css and anchor.js exist.'

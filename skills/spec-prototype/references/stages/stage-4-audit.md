@@ -215,7 +215,7 @@ is `false`, or `visual`/`human` is `pending_review`, then the receipt must set
 `capture_reflects_current_state: true` or color/spacing/typography observations
 tied to rendered output. Any state without confirmed, passing screenshots (`capture_failed`, `screenshots == 0`, `confirmed == false`, or non-empty `unconfirmed_states`) is never placed under `## Verified this turn` — not even as a URL-entry (`?state=conflict`) or feedback-copy note; it belongs under `## 未验证（不得读作已验证）` or `Limitations`, tagged `[hypothesis]` / `[unverified]`. A receipt that records `capture_reflects_current_state:
 true` while the manifest says `capture_failed` is an authority promotion of the
-evidence itself (the r40 A3 class) and fails the audit. Write the reconcile line
+evidence itself and fails the audit. Write the reconcile line
 explicitly: `manifest: <status>, stylesheets_applied: <bool>, receipt reflects:
 <true|false>`.
 

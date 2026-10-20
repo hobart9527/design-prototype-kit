@@ -56,7 +56,11 @@ that names this slice and cites its approval source.
 Status: `proposed | provisional | confirmed | delegated | needs-evidence | superseded`.
 Only an actual user decision or an explicit prior delegation can populate
 `confirmed`/`delegated`; AI recommendations, Builder receipts, Critic reports
-and test passes are not approval. The full authority discipline — what counts as
+and test passes are not approval. Domain policy is a decision too: approval count
+and eligibility, role permissions, reject/reopen behavior, and terminal states
+remain `[hypothesis]` / `proposed` until the user states them. Record only the
+stated outcome as fact; keep derived workflow mechanics separate and provisional.
+The full authority discipline — what counts as
 an explicit selection, how a decision carries forward across turns, and how the
 status is restated in briefs and code comments — is owned by
 [`../references/03-verification/lean-delivery-rules.md`](../references/03-verification/lean-delivery-rules.md)

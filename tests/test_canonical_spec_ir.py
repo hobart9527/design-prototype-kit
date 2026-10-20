@@ -304,6 +304,28 @@ def test_contract_actions_yaml_is_authoritative_and_fails_closed():
         parse_action_verbs("```contract:actions\n- id: [\n```")
 
 
+def test_missing_pyyaml_names_the_remedy():
+    """Without PyYAML the loader fails closed and says what to install.
+
+    A bare `requires PyYAML` left the operator guessing whether the record or
+    the environment was at fault; the found-block count plus the install hint
+    makes the error actionable without reading source.
+    """
+    import importlib
+
+    import spec_contract_blocks as scb
+
+    record = "```contract:actions\n- id: action-enter\n  verb: submit\n```"
+    original = scb.yaml
+    scb.yaml = None
+    try:
+        with pytest.raises(ValueError, match=r"requires PyYAML.*pip install pyyaml"):
+            scb._contract_yaml_values(record, "actions")
+    finally:
+        if original is not None:
+            scb.yaml = original
+
+
 def test_render_single_spec_md(tmp_path: Path):
     """Verify rendering of unified single-file RFC Specification."""
     disc = tmp_path / "prototype/discussion.md"
@@ -1219,7 +1241,7 @@ def test_the_template_contract_block_is_machine_parseable():
     """The template is the authoring SSOT: its own actions block must parse."""
     template = (REPO / "skills/spec-prototype/templates/discussion.md").read_text(encoding="utf-8")
     assert [item["id"] for item in parse_action_verbs(template)] == [
-        "action-space", "action-enter", "action-escape"]
+        "action-open", "action-publish", "action-withdraw"]
 
 
 def test_the_template_compiles_to_the_execution_tier(tmp_path: Path):
@@ -1245,7 +1267,7 @@ def test_the_template_compiles_to_the_execution_tier(tmp_path: Path):
 
     assert ir["spec_tier"] == "execution_spec"
     assert [s["id"] for s in ir["state_model"]["domain_states"]] == [
-        "domain/nominal", "domain/avalanche-alert", "domain/quarantined"]
+        "domain/review-backlog", "domain/publish-ready", "domain/withdrawn"]
     assert ir["state_model"]["interaction_states"] == [
         "interaction/idle", "interaction/inspecting", "interaction/committing"]
     assert [d["id"] for d in ir["state_model"]["data_scenarios"]] == [

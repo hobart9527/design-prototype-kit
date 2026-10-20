@@ -606,8 +606,8 @@ def test_capture_cli_honors_manifest_flag_and_detects_broken_css(tmp_path):
     )
     assert res_200.returncode == 0
     parsed_200 = json.loads(res_200.stdout)
-    assert parsed_200["diagnostics_summary"]["stylesheets_applied"] is None
-    assert "stylesheets_applied" in parsed_200["diagnostics_summary"]["unmeasured"]
+    assert parsed_200["diagnostics_summary"]["stylesheets_applied"] is True
+    assert "stylesheets_applied" not in parsed_200["diagnostics_summary"]["unmeasured"]
     assert manifest_200.exists()
 
 

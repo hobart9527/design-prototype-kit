@@ -671,6 +671,8 @@ def check_capture_reflects_manifest(html: Path) -> list[str]:
     if not record_parts:
         return []
     claim_re = re.compile(r"capture_reflects_current_state\s*:\s*true", re.IGNORECASE)
+    runtime_errors = meta.get("evidence", {}).get("runtime_errors") or []
+    runtime_error = bool(runtime_errors)
     for part in record_parts:
         if claim_re.search(part):
             return [
@@ -679,6 +681,7 @@ def check_capture_reflects_manifest(html: Path) -> list[str]:
                 + (f"status=capture_failed; " if capture_failed else "")
                 + (f"visual=pending_review; " if visual_pending else "")
                 + (f"stylesheets_applied=false; " if any_unapplied else "")
+                + (f"runtime_errors={len(runtime_errors)}; " if runtime_error else "")
                 + "record `visual_evidence: unverified` / `status: PARTIAL` and drop the visual claim"
             ]
     return []
@@ -1126,18 +1129,43 @@ _CRAFT_FLOOR_SCRIPT = r'''(() => {
         });
         if (!hasActive) failures.push(`press feedback: ${label(el)} has no detectable :active visual change`);
       }
+      // The concentric relation is about a container and the panel nested against
+      // its own edge — not every rounded descendant. A pill badge, an avatar, or
+      // a centered card inside a padded surface is a separate object with its own
+      // geometry, so only an inset child whose corner agrees with the parent's
+      // padded corner is held to the relation.
+      const contentBox = (el) => {
+        const s = getComputedStyle(el), r = el.getBoundingClientRect();
+        const pl = parseFloat(s.paddingLeft) || 0, pr = parseFloat(s.paddingRight) || 0;
+        const pt = parseFloat(s.paddingTop) || 0, pb = parseFloat(s.paddingBottom) || 0;
+        return { left: r.left + (parseFloat(s.borderLeftWidth) || 0) + pl, top: r.top + (parseFloat(s.borderTopWidth) || 0) + pt,
+                 right: r.right - (parseFloat(s.borderRightWidth) || 0) - pr, bottom: r.bottom - (parseFloat(s.borderBottomWidth) || 0) - pb };
+      };
+      const cornerBox = (box, corner) => corner.startsWith("Top")
+        ? { x: corner.endsWith("Left") ? box.left : box.right, y: box.top }
+        : { x: corner.endsWith("Left") ? box.left : box.right, y: box.bottom };
       for (const inner of document.querySelectorAll("*")) {
         if (!visible(inner)) continue;
         const parent = inner.parentElement;
         if (!parent || !visible(parent)) continue;
         const childStyle = getComputedStyle(inner), parentStyle = getComputedStyle(parent);
+        const childRect = inner.getBoundingClientRect(), parentRect = parent.getBoundingClientRect();
         if (!corners.some((corner) => radius(childStyle, corner) > 0)
             || !corners.some((corner) => radius(parentStyle, corner) > 0)) continue;
+        // A pill or circle is its own shape, not a nested panel.
+        const shortSide = Math.min(childRect.width, childRect.height);
+        if (corners.some((corner) => radius(childStyle, corner) >= shortSide / 2 - 0.5)) continue;
+        const box = contentBox(parent);
         const p = Math.max(parseFloat(parentStyle.paddingTop) || 0, parseFloat(parentStyle.paddingRight) || 0,
           parseFloat(parentStyle.paddingBottom) || 0, parseFloat(parentStyle.paddingLeft) || 0);
         for (const corner of corners) {
-          const expected = Math.max(0, radius(parentStyle, corner) - p);
           const actual = radius(childStyle, corner);
+          if (actual <= 0) continue;
+          const edge = cornerBox(box, corner);
+          const own = cornerBox(childRect, corner);
+          // Only the corners that sit against the parent's content edge take part.
+          if (Math.abs(edge.x - own.x) > 1 || Math.abs(edge.y - own.y) > 1) continue;
+          const expected = Math.max(0, radius(parentStyle, corner) - p);
           if (Math.abs(actual - expected) > 1)
             failures.push(`concentric radius: ${label(inner)} ${corner} radius ${actual}px, expected ${expected}px within 1px`);
         }
@@ -1561,6 +1589,43 @@ _ASSET_LINK_RELS = (
 )
 
 
+def check_static_dom_ids(html: Path, dom: "_Document") -> list[str]:
+    """Catch literal JavaScript ID lookups that have no static or authored dynamic node."""
+    scripts = [dom.script_text]
+    for script in dom.tags("script"):
+        src = script.get("src").strip()
+        if not src or src.startswith(_EXTERNAL_PREFIXES):
+            continue
+        target = (html.parent / src.split("?")[0].split("#")[0]).resolve()
+        if target.is_file():
+            try:
+                scripts.append(_strip_js_comments(target.read_text(encoding="utf-8")))
+            except OSError:
+                continue
+    js = "\n".join(scripts)
+    references = set()
+    patterns = (
+        r"(?:getElementById\s*\(\s*|querySelector(?:All)?\s*\(\s*|\$\s*\(\s*)['\"]#([A-Za-z][\w:-]*)['\"]",
+    )
+    for pattern in patterns:
+        references.update(re.findall(pattern, js))
+    if not references:
+        return []
+
+    static_ids = {el.get("id") for el in dom.with_attr("id") if el.get("id")}
+    dynamic_ids = set(re.findall(r"\.id\s*=\s*['\"]([A-Za-z][\w:-]*)['\"]", js))
+    dynamic_ids.update(re.findall(r"setAttribute\s*\(\s*['\"]id['\"]\s*,\s*['\"]([A-Za-z][\w:-]*)['\"]", js))
+    # IDs inside authored JS HTML templates represent nodes created at runtime.
+    dynamic_ids.update(re.findall(r"\bid\s*=\s*['\"]([A-Za-z][\w:-]*)['\"]", js))
+    missing = sorted(references - static_ids - dynamic_ids)
+    if not missing:
+        return []
+    return [
+        "DOM assertion: JavaScript references ID(s) absent from static HTML and authored dynamic markup: "
+        + ", ".join(missing[:8])
+    ]
+
+
 def check_token_binding(html: Path, dom: "_Document", tokens: Path) -> list[str]:
     """The delivered document must bind the very stylesheet whose tokens are checked.
 
@@ -1671,6 +1736,7 @@ def assert_quality(html_path: str, tokens_path: str, check_stale: bool = False,
     ]
     if len(inspectable) < 3 and not dom.controls():
         failures.append("DOM assertion: no inspectable semantic elements")
+    failures.extend(check_static_dom_ids(html, dom))
     if not dom.has_event_binding():
         failures.append("interaction assertion: no declarative or imperative event binding")
     if not dom.controls():

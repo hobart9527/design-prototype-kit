@@ -138,6 +138,26 @@ def test_post_tool_advisory_ignores_non_prototype_write(tmp_path):
     assert eb.route_hook_payload(payload) == {}
 
 
+def test_post_tool_advisory_scans_a_complete_dirs_probe_only(tmp_path):
+    root = _active_root(tmp_path)
+    dirs_file = root / "prototype/experiments/demo/dirs/a/index.html"
+    _write(dirs_file, "<!doctype html><html><body><button>Probe A</button></body></html>")
+    payload = {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Write",
+        "tool_input": {"file_path": "prototype/experiments/demo/dirs/a/index.html"},
+        "cwd": str(root),
+    }
+    result = eb.route_hook_payload(payload)
+    # A complete probe entry may be scanned; a stylesheet written before its
+    # entry exists must not generate a misleading partial-surface advisory.
+    assert "hookSpecificOutput" in result
+
+    css_payload = dict(payload)
+    css_payload["tool_input"] = {"file_path": "prototype/experiments/demo/dirs/a/anchor.css"}
+    assert eb.route_hook_payload(css_payload) == {}
+
+
 def test_a_non_spec_write_carries_no_advisory(tmp_path):
     root = _active_root(tmp_path)
     payload = _write_payload(root, "prototype/discussion.md", "# Discussion\n")

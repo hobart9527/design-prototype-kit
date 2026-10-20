@@ -52,10 +52,21 @@ def test_craft_floor_probe_reports_each_violation(tmp_path: Path, monkeypatch, b
 def test_craft_floor_probe_checks_each_corner_radius(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(vpq, "_TIER_PROBE_CACHE", {})
     html = _write(tmp_path, '<div class="outer" style="border-radius:16px 16px 16px 16px; padding:8px">'
-                  '<div class="inner" style="border-radius:8px 8px 8px 2px"></div></div>')
+                  '<div class="inner" style="width:100%; height:100%; border-radius:8px 8px 8px 2px"></div></div>')
     ok, reason = vpq.probe_craft_floors(html)
     assert not ok
     assert reason and "concentric radius" in reason and "BottomLeft" in reason
+
+
+def test_craft_floor_probe_exempts_pills_and_non_edge_children(tmp_path: Path, monkeypatch):
+    """A pill badge or a centered child is its own object, not a nested panel."""
+    monkeypatch.setattr(vpq, "_TIER_PROBE_CACHE", {})
+    html = _write(tmp_path, '<div class="outer"><div class="inner" style="width:40px;height:20px;'
+                  'border-radius:9999px"></div></div>'
+                  '<button class="commit" data-action="save">Save</button>'
+                  '<output class="metric">128</output>')
+    ok, reason = vpq.probe_craft_floors(html)
+    assert ok, reason
 
 
 def test_craft_floor_probe_ignores_navigation_links_and_prose_numbers(tmp_path: Path, monkeypatch):

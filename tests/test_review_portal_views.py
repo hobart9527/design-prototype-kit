@@ -146,3 +146,58 @@ def test_comment_overlay_exports_attributed_draft_without_asserting_a_decision()
     assert "downloadComments" in html, "a comment lost on tab close cannot be recorded as evidence"
     assert "data-comment-download" in html
     assert "never approve a direction on their own" in html
+
+
+def test_review_portal_shortcuts_omits_drain():
+    html = portal()
+    assert "DRAIN" not in html
+    assert "SHORTCUTS: [ESC: CLOSE] [J/K: SELECT]" in html
+
+
+def test_review_portal_renders_declared_viewports(tmp_path):
+    # Renders explicit viewports passed into build_portal_html
+    custom_html = generate_review_portal.build_portal_html(
+        SURFACES, title="Declared Portal", viewports=[1280, 390]
+    )
+    assert 'data-viewport="1280px"' in custom_html
+    assert 'data-viewport="390px"' in custom_html
+    assert "1280px (Desktop)" in custom_html
+    assert "390px (Mobile)" in custom_html
+    assert 'data-viewport="1440px"' not in custom_html
+
+    # Discovers viewports from brief
+    brief = tmp_path / "prototype/briefs/feed.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
+    brief.write_text(
+        "---\nviewports: [1024, 390]\n---\n# Brief\n",
+        encoding="utf-8",
+    )
+    discovered = generate_review_portal.discover_viewports(
+        tmp_path, [{"url": "experiments/feed/anchor/index.html"}]
+    )
+    assert discovered == [1024, 390]
+
+
+def test_discover_viewports_keeps_layered_briefs_within_each_slice(tmp_path):
+    proto = tmp_path / "prototype"
+    proto.mkdir(parents=True, exist_ok=True)
+    (proto / "truth.md").write_text("# Truth\n", encoding="utf-8")
+    (proto / "world.md").write_text("# World\n", encoding="utf-8")
+    for slice_id, width in (("feed", 1024), ("detail", 390)):
+        brief = proto / "briefs" / f"{slice_id}.md"
+        brief.parent.mkdir(parents=True, exist_ok=True)
+        brief.write_text(f"---\nviewports: [{width}]\n---\n# Brief\n", encoding="utf-8")
+        surface = proto / "experiments" / slice_id / "anchor" / "index.html"
+        surface.parent.mkdir(parents=True, exist_ok=True)
+        surface.write_text("<html></html>", encoding="utf-8")
+
+    assert generate_review_portal.discover_viewports(tmp_path, [
+        {"url": "experiments/feed/anchor/index.html"},
+    ]) == [1024]
+    assert generate_review_portal.discover_viewports(tmp_path, [
+        {"url": "experiments/detail/anchor/index.html"},
+    ]) == [390]
+    assert generate_review_portal.discover_viewports(tmp_path, [
+        {"url": "experiments/feed/anchor/index.html"},
+        {"url": "experiments/detail/anchor/index.html"},
+    ]) == [1024, 390]

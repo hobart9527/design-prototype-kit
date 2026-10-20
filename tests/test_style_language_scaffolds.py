@@ -69,3 +69,33 @@ def test_every_challenger_entry_has_a_bar_and_is_drawable(tmp_path):
     sys.path.insert(0, str(SKILL / "scripts"))
     import draw_seed
     assert len(draw_seed.load_challengers(vocab)) >= 10
+
+
+def test_draw_seed_samples_by_archetype_while_preserving_default():
+    vocab = REFS / "02-craft-methods/modern-style-vocabulary.md"
+    sys.path.insert(0, str(SKILL / "scripts"))
+    import draw_seed
+
+    challengers = draw_seed.load_challengers(vocab)
+    # Default without archetype
+    default_picks = draw_seed.draw(3, challengers)
+    assert len(default_picks) == 3
+    assert all("Challenger" in p for p in default_picks)
+
+    # Guided by archetype: every draw comes from the resolved pool, not the full set.
+    pool = draw_seed._filter_challengers_by_archetype(challengers, "dense-workbench")
+    assert pool != challengers
+    assert len(pool) >= 3
+    workbench_picks = draw_seed.draw(3, challengers, archetype="dense-workbench")
+    assert len(workbench_picks) == 3
+    wb_challenger_names = [p["Challenger"] for p in workbench_picks]
+    assert len(set(wb_challenger_names)) == 3
+    assert set(wb_challenger_names) <= set(pool)
+
+    # An archetype name outside the vocabulary keeps the full pool instead of guessing.
+    assert draw_seed._filter_challengers_by_archetype(challengers, "unmapped-thing") == challengers
+
+    # Render block includes archetype note when supplied
+    block = draw_seed.render_block(workbench_picks, archetype="dense-workbench")
+    assert "dense-workbench" in block
+    assert "### Divergence seeds" in block

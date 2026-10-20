@@ -204,7 +204,7 @@ def _has_action_feedback(path: pathlib.Path) -> bool:
         r"(?:data-action|class)\s*=\s*[\"'][^\"']*(?:drain|delete|destroy|terminate|offline|rollback|deploy)",
         text, re.IGNORECASE))
     if not has_commit:
-        return False
+        return NOT_APPLICABLE
     return bool(re.search(
         r"处理中|进行中|执行中|已排空|已完成|已执行|已提交|已生效|已切换|已迁移|已回滚|撤销|撤回|回滚|恢复|"
         r"draining|rollback|undo|revert|restore|in progress|completed",

@@ -13,6 +13,7 @@ import sys
 from typing import Dict, List
 import json
 import hashlib
+import re
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prototype_context  # noqa: E402
@@ -541,7 +542,48 @@ def _decision_script() -> str:
 """
 
 
-def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Review Portal", verification: Dict[str, str] | None = None, directions: List[Dict[str, str]] | None = None) -> str:
+def _viewport_label(width: int) -> str:
+    if width >= 1200:
+        return f"{width}px (Desktop)"
+    elif width >= 700:
+        return f"{width}px (Tablet)"
+    return f"{width}px (Mobile)"
+
+
+def discover_viewports(root: Path, surfaces: List[Dict[str, str]] | None = None) -> List[int]:
+    """The viewports the record actually declares, newest declaration first.
+
+    The declaration parse is delegated to the verifier's `declared_viewports`,
+    which reads authored structure only (`viewports:` frontmatter or a
+    `contract:viewports` block) and owns the layered shared-zone + per-slice
+    ownership. Each discovered surface is asked through its own document path,
+    so a slice's brief speaks for that slice's surfaces rather than for the
+    whole tree; the rail is the union across surfaces. A button for a width
+    nobody declared is a capture claim the record never made. A tree with no
+    record keeps the caller's default rail.
+    """
+    scripts_dir = Path(__file__).resolve().parent
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+    try:
+        import verify_prototype_quality as vpq
+    except ImportError:
+        return []
+    documents = [root / "prototype" / s["url"] for s in (surfaces or []) if s.get("url")]
+    if not documents:
+        documents = [root / "prototype/anchor.html"]
+    widths: set[int] = set()
+    for document in documents:
+        try:
+            parts = vpq._design_record_parts(document)
+        except (OSError, ValueError, TypeError):
+            continue
+        widths.update(width for part in (parts or [])
+                      for width in vpq.declared_viewports(part))
+    return sorted(widths, reverse=True)
+
+
+def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Review Portal", verification: Dict[str, str] | None = None, directions: List[Dict[str, str]] | None = None, viewports: List[int | str] | None = None) -> str:
     default_url = surfaces[0]["url"] if surfaces else "about:blank"
     verification = verification or {}
     verified = (
@@ -583,6 +625,21 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     directions_json = json.dumps(directions)
     decision_html = build_decision_html(directions)
     comment_html = build_comment_overlay_html(directions)
+
+    vp_list = viewports or [1440, 768, 390]
+    vp_buttons = []
+    for vp in vp_list:
+        if isinstance(vp, int) or (isinstance(vp, str) and vp.replace("px", "").isdigit()):
+            w_int = int(str(vp).replace("px", ""))
+            lbl = _viewport_label(w_int)
+            w_str = f"{w_int}px"
+        else:
+            w_str = str(vp)
+            lbl = str(vp)
+        vp_buttons.append(
+            f'<button class="vp-btn" data-viewport="{w_str}" onclick="setViewport(\'{w_str}\', this)">{lbl}</button>'
+        )
+    vp_buttons_html = "\n      ".join(vp_buttons)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -744,9 +801,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
     <div class="viewport-tools" data-viewport-rail>
       <span class="vp-label">VIEWPORT:</span>
       <button class="vp-btn active" data-viewport="100%" onclick="setViewport('100%', this)">FULL</button>
-      <button class="vp-btn" data-viewport="1440px" onclick="setViewport('1440px', this)">1440px (Desktop)</button>
-      <button class="vp-btn" data-viewport="768px" onclick="setViewport('768px', this)">768px (Tablet)</button>
-      <button class="vp-btn" data-viewport="390px" onclick="setViewport('390px', this)">390px (Mobile)</button>
+      {vp_buttons_html}
       <button class="vp-btn" data-break-protocol="off" onclick="setBreakProtocol(null, this)">BREAK: OFF</button>
       <button class="vp-btn" data-break-protocol="overflow" data-stress="overflow" onclick="setBreakProtocol('overflow', this)">BREAK: OVERFLOW</button>
       <button class="vp-btn" data-break-protocol="empty" data-stress="empty" onclick="setBreakProtocol('empty', this)">BREAK: EMPTY</button>
@@ -771,7 +826,7 @@ def build_portal_html(surfaces: List[Dict[str, str]], title: str = "Prototype Re
       <span>QUALITY HARNESS: {status_label} · {evidence_label}</span>
     </div>
     <div class="status-item">
-      <span>SHORTCUTS: [SPACE/P: DRAIN] [ESC: CLOSE] [J/K: SELECT]</span>
+      <span>SHORTCUTS: [ESC: CLOSE] [J/K: SELECT]</span>
     </div>
     <div class="status-item">
       <span>DTCG TOKENS: SEALED_PROVISIONAL</span>
@@ -841,6 +896,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate unified review portal.")
     parser.add_argument("--root", type=str, default=".", help="Repository root")
     parser.add_argument("--output", type=str, default="prototype/review-portal.html", help="Output path")
+    parser.add_argument("--viewports", nargs="*", type=int, help="Override target review viewports")
     parser.add_argument("--open", action="store_true", help="Open generated review portal in default browser")
     args = parser.parse_args()
 
@@ -857,7 +913,8 @@ def main():
         except (json.JSONDecodeError, OSError):
             verification = {}
     directions = discover_directions(root)
-    html = build_portal_html(surfaces, verification=verification, directions=directions)
+    declared_viewports = args.viewports or discover_viewports(root, surfaces) or None
+    html = build_portal_html(surfaces, verification=verification, directions=directions, viewports=declared_viewports)
     coverage_html = ""
     reconciliation = read_coverage(root)
     if reconciliation:

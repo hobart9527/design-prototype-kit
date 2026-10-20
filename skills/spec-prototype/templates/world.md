@@ -82,4 +82,8 @@ elsewhere in this file are not compiled into `tokens.css`.
 - `--bg-surface`:
 - `--text-primary`:
 - `--accent-primary`:
+- `--font-display`:
+- `--font-sans`:
+- `--font-mono`:
+- `--surface-shadow` (optional authored extension):
 - `--accent-seal`: (only if declared above)

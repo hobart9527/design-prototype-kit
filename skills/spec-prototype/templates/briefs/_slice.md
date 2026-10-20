@@ -3,7 +3,6 @@ spec_schema: "google-design-md/v2"
 slice_id: "<slice_id>"
 authority: "draft"
 build_scope: "hero_probe"
-viewports: [390, 1280]
 applied_methods: []
 primary_surface: "<surface-id>"
 declared_surfaces: ["<surface-id>"]
@@ -27,52 +26,14 @@ provenance live in `prototype/truth.md`. Do not restate either here.
 
 ## State Taxonomy & Action Lifecycle
 
-```contract:states
-- id: domain/<id>
-  label: <label>
-  description: <one-line semantics>
-- id: interaction/<id>
-  description: <one-line interaction semantics>
-- id: data/<id>
-  description: <one-line data-scenario semantics>
-```
-
-```contract:actions
-- id: action-<name>
-  verb: <atomic verb>
-  trigger: <key | click | gesture>
-  proximity_level: <0-4>
-  commit: <what commits>
-  consequence: <what is at stake, if destructive>
-  feedback: <what the user sees>
-```
-
-## Viewports & required states
-
-```contract:viewports
-- 390
-- 1280
-```
-
-Add a `required_states:` frontmatter list, or a `contract:required_states` block, only
-with the state ids this slice will actually verify. Leave it out during exploration until
-they are known; before Turn 3 finalization and Stage 5 freeze this section must be filled,
-as freeze fails closed and lists missing items if left unauthored.
-
-## Verifiable Invariants & Break Protocol
-
-```contract:invariants
-- id: inv/<id>
-  statement: "<assertion>"
-  severity: blocking | warning | advisory
-  verification: computed_style | dom_query | screenshot_review | manual
-```
-
-```contract:stress
-- id: stress/<id>
-  vector: "<what breaks>"
-  expected: "<how the surface responds>"
-```
+Stage 1 names the state classes and the atomic action verbs in prose. The machine
+forms — `contract:states`, `contract:actions`, `contract:viewports`,
+`contract:invariants`, `contract:stress`, `contract:required_states` — are authored
+here once the slice reaches Stage 3, in the shape
+[`../../references/04-governance/machine-contract.md`](../../references/04-governance/machine-contract.md)
+registers. A block copied from that registry parses; a block with a placeholder value
+in an enum slot (a `severity: a | b | c` menu left as written) fails closed at the line
+that caused it.
 
 A stress vector the user's brief did not state is the designer's own derivation:
 record it in the Decisions table as `hypothesis`, never as `confirmed`.
@@ -97,4 +58,4 @@ what would count as failure, known limitations, and what each verdict means.
 - Unverified assumptions and bounded implementation freedoms:
 - Feedback received and owning node changed:
 - Decisions explicitly reopened:
-- Unaffected decisions and approvals preserved:
+- Unaffected provisional decisions carried forward:

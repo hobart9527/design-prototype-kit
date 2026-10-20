@@ -46,6 +46,10 @@ Authored form (a scoped heading — `## Proposed` before approval, `## Confirmed
 - text-primary: "#EDEFF2"
 - text-secondary: "#9AA3AE"
 - accent-primary: "#F5A524"
+- --font-display: '"Space Grotesk", sans-serif'
+- --font-sans: '"Inter", system-ui, sans-serif'
+- --font-mono: '"JetBrains Mono", monospace'
+- --surface-shadow: "0 12px 32px rgb(0 0 0 / 18%)"
 - status-danger: "#E5484D"
 - status-warning: "#F5A524"
 ```

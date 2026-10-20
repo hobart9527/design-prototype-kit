@@ -49,6 +49,46 @@ SEED_CEILING = 2 ** 31 - 1
 MAX_REDRAWS = 200
 SEEDS_HEADING = "### Divergence seeds"
 
+ARCHETYPE_PROFILES: dict[str, tuple[str, ...]] = {
+    "instrument": ("Dense Telemetry", "Brutalist Code", "Drafting Sheet", "Instrument Label"),
+    "editorial": ("Swiss Editorial Grid", "Magazine Spread", "Letterpress", "Title Sequence"),
+    "canvas": ("Spatial Canvas", "Drafting Sheet", "Bento Grid", "Swiss Editorial Grid"),
+    "mobile": ("Tactile Neo-Skeuomorphic", "Physical Material Behavior", "Bento Grid", "Instrument Label"),
+    "ambient": ("Ambient / AI-Native", "Letterpress", "Tactile Neo-Skeuomorphic", "Swiss Editorial Grid"),
+}
+
+# The same five archetypes under the names the rest of the skill uses: a layout
+# profile, a product archetype, or a lifeworld word all resolve to one of them, so
+# `--archetype` accepts the vocabulary the author already wrote down.
+ARCHETYPE_ALIASES: dict[str, str] = {
+    "dense-console": "instrument", "dense-workbench": "instrument",
+    "operational-canvas": "canvas", "canvas-inspector": "canvas", "spatial": "canvas",
+    "editorial-reading": "editorial", "reading": "editorial",
+    "somatic-touchflow": "mobile", "touch": "mobile", "adaptive-workspace": "mobile",
+    "greenfield": "ambient", "feature-extension": "canvas", "refinement-audit": "editorial",
+    "conversational": "ambient", "chat": "ambient", "generative": "ambient",
+}
+
+
+def _filter_challengers_by_archetype(challengers: list[str], archetype: str | None) -> list[str]:
+    """Narrow the challenger pool to one archetype's preferred entries.
+
+    The challenger is fused at step 4, not chosen as the direction, so this
+    ordering only decides which techniques are in reach. An unrecognised
+    archetype keeps the full pool rather than guessing.
+    """
+    if not archetype:
+        return challengers
+    norm = archetype.strip().lower().replace("_", "-")
+    key = ARCHETYPE_ALIASES.get(norm)
+    if key is None:
+        key = next((name for name in ARCHETYPE_PROFILES if name in norm), None)
+    if key is None:
+        return challengers
+    preferred = ARCHETYPE_PROFILES[key]
+    matched = [c for c in challengers if any(name.lower() in c.lower() for name in preferred)]
+    return matched or challengers
+
 
 class DrawError(ValueError):
     """Raised when the draw cannot be made or cannot be written."""
@@ -78,7 +118,7 @@ def _spread_enough(triples: list[tuple[str, ...]], minimum: int = 2) -> bool:
                for i, one in enumerate(triples) for other in triples[i + 1:])
 
 
-def draw(candidates: int, challengers: list[str]) -> list[dict]:
+def draw(candidates: int, challengers: list[str], archetype: str | None = None) -> list[dict]:
     """Draw `candidates` seeds whose incidental triples stay spread apart."""
     if candidates > len(challengers):
         raise DrawError(
@@ -96,19 +136,32 @@ def draw(candidates: int, challengers: list[str]) -> list[dict]:
         raise DrawError(
             f"could not draw {candidates} candidates that differ on two incidental "
             f"axes in {MAX_REDRAWS} attempts; widen INCIDENTALS")
-    drawn = secrets.SystemRandom().sample(challengers, candidates)
+
+    preferred = _filter_challengers_by_archetype(challengers, archetype) if archetype else []
+    if preferred and len(preferred) >= candidates:
+        drawn = secrets.SystemRandom().sample(preferred, candidates)
+    elif preferred:
+        remaining = [c for c in challengers if c not in preferred]
+        drawn = list(preferred) + secrets.SystemRandom().sample(remaining, candidates - len(preferred))
+    else:
+        drawn = secrets.SystemRandom().sample(challengers, candidates)
+
     for pick, challenger in zip(picks, drawn):
         pick["Challenger"] = challenger
     return picks
 
 
-def render_block(picks: list[dict]) -> str:
+def render_block(picks: list[dict], archetype: str | None = None) -> str:
     axes = [("Seed", "seed"), *((axis, axis) for axis in INCIDENTALS), ("Challenger", "Challenger")]
-    lines = [SEEDS_HEADING, "",
-             "Drawn by `scripts/draw_seed.py` from the OS entropy pool — not chosen "
-             "by the designer. The seed fixes the incidental choices the direction "
-             "does not argue for; the challenger is fused at step 4, or refused with "
-             "its reason.", "",
+    intro = [
+        "Drawn by `scripts/draw_seed.py` from the OS entropy pool — not chosen "
+        "by the designer. The seed fixes the incidental choices the direction "
+        "does not argue for; the challenger is fused at step 4, or refused with "
+        "its reason."
+    ]
+    if archetype:
+        intro.append(f"Challenger sampling guided by archetype: `{archetype}`.")
+    lines = [SEEDS_HEADING, "", " ".join(intro), "",
              "| Candidate | " + " | ".join(label for label, _ in axes) + " |",
              "|---|" + "---|" * len(axes)]
     for index, pick in enumerate(picks):
@@ -174,14 +227,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--slice", required=True, help="slice_id whose block records the draw")
     parser.add_argument("--candidates", type=int, default=3)
+    parser.add_argument("--archetype", default=None,
+                        help="lifeworld or product archetype to guide challenger sampling")
     parser.add_argument("--record", default="prototype/discussion.md")
     parser.add_argument("--vocabulary", default=str(VOCABULARY))
     parser.add_argument("--write", action="store_true",
                         help="write the draw into the slice block (default: print only)")
     args = parser.parse_args()
 
-    picks = draw(args.candidates, load_challengers(pathlib.Path(args.vocabulary)))
-    block = render_block(picks)
+    picks = draw(args.candidates, load_challengers(pathlib.Path(args.vocabulary)), archetype=args.archetype)
+    block = render_block(picks, archetype=args.archetype)
     if args.write:
         try:
             write_block(pathlib.Path(args.record), args.slice, block)

@@ -186,10 +186,22 @@ accent_seal: "#ff3333"
 accent_policy: 常规强调使用 --accent-primary；仅在有不可逆或高风险时刻时另声明信号色
 ```
 
+#### Proposed — visual tokens
+
+The compiler reads a `## Proposed` / `## Confirmed` section and nothing else, so
+palette, font and any authored custom property belong under this heading. The
+`--font-*` slots fill the type roles; a custom property that no compiled token
+covers (a layered shadow, a non-linear spacing ratio, a bespoke easing) is
+authored with the same `--name: value` shape and passes through, replacing a
+generated variable of the same name.
+
   - `--bg-void`: `#0b0f10`
   - `--bg-surface`: `#141a1d`
   - `--text-primary`: `#e6edf3`
   - `--accent-primary`: `#ff4444` (警报强调)
+  - `--font-display`: `"Space Grotesk", sans-serif`
+  - `--font-sans`: `"Inter", system-ui, sans-serif`
+  - `--font-mono`: `"JetBrains Mono", monospace`
 
 ## Candidate propositions (when a material choice is open)
 
@@ -198,7 +210,10 @@ accent_policy: 常规强调使用 --accent-primary；仅在有不可逆或高风
 | | | | | | | | | `proposed | recommended | confirmed | rejected | inconclusive` |
 
 Use one proposition when evidence determines the direction and enough genuinely
-different propositions when a choice remains. No candidate quota applies.
+different propositions when a choice remains. No candidate quota applies. This
+table's status is evidence maturity only — a `confirmed` here is a confirmed
+*proposition*, never a confirmed *decision*; decision status belongs to the
+table below and its separate enum.
 
 ## Decisions and authority
 
@@ -217,10 +232,10 @@ feedback reopens only that decision and never the whole frontier. A bare
 direction choice into a confirmed decision. After formalization retain a link
 and rationale, not a competing rule.
 
-Authority-source discipline: a user's *pain narrative* ("上个月有人误排空，没法回滚")
+Authority-source discipline: a user's *pain narrative* ("上周有人误发布，无法撤回")
 is context evidence, never a `confirmed` decision — the decision row that reacts
 to it stays `proposed`/`needs-evidence` until the user actually picks the
-direction. Marking a derived mechanism (双签, 30s 回滚, 梯次排空) `explicit` and
+direction. Marking a derived mechanism (双人签发、30s 撤回、分批发布) `explicit` and
 citing the pain quote as its authority is an authority promotion: derived
 lifecycle mechanisms carry `derived` evidence status with the pain point as
 impact context.
@@ -282,56 +297,56 @@ data_marks: micro-trend-compact
 
 - **Primary Operational Surface**: `surfaces/<slice_id>-main` (核心主控工作台，承载高频研判与操作)
 - **Contextual Surface**: `surfaces/<slice_id>-drawer` (下钻检视抽屉，不脱离主视区)
-- **Supporting / Glance Surface**: `surfaces/<slice_id>-mobile` (390px 移动端只读扫视哨兵)
+- **Supporting / Glance Surface**: `surfaces/<slice_id>-mobile` (390px 移动端只读扫视)
 
 ### State Taxonomy & Action Lifecycle (支柱 8: 交互与原子动作闭环)
 
 ```contract:states
-- id: domain/nominal
+- id: domain/review-backlog
   label: 常规态
-  description: 全部节点健康
-- id: domain/avalanche-alert
-  label: 雪崩告警
-  description: 异常节点聚集扩散
-- id: domain/quarantined
-  label: 已隔离
-  description: 机器安全下线
+  description: 待审核稿件按优先级排队
+- id: domain/publish-ready
+  label: 可发布
+  description: 审核意见已闭合，稿件等待发布
+- id: domain/withdrawn
+  label: 已撤回
+  description: 稿件已从发布队列撤回
 - id: interaction/idle
   description: 无焦点动作，等待操作者命中。
 - id: interaction/inspecting
-  description: 命中节点、抽屉展开、等待确认。
+  description: 打开稿件、展开审核意见、等待确认。
 - id: interaction/committing
-  description: 不可逆动作已触发，等待结果回执。
+  description: 发布动作已触发，等待结果回执。
 - id: data/cold-cache
   description: 首次加载、缓存未命中、指标抖动。
 - id: data/burst-traffic
   description: 遭遇 10x 流量峰值时的批处理渲染。
 ```
 
-- **Domain States**: `domain/nominal` (常规态) / `domain/avalanche-alert` (雪崩告警) / `domain/quarantined` (已隔离)
+- **Domain States**: `domain/review-backlog` (常规态) / `domain/publish-ready` (可发布) / `domain/withdrawn` (已撤回)
 - **Interaction States**: `interaction/idle` / `interaction/inspecting` / `interaction/committing`
 - **Data Scenarios**: `data/cold-cache` (冷缓存) / `data/burst-traffic` (流量峰值)
 - **Action Verb Lifecycle (必须包含破坏性操作的确认与回滚出口)**:
   ```contract:actions
-  - id: action-space
-    verb: 检视异常节点详情
-    trigger: Space key / row click
+  - id: action-open
+    verb: 打开稿件详情
+    trigger: row click / Enter on focused row
     proximity_level: 1
-    commit: 打开 Level 1 Flyout
+    commit: 打开稿件侧栏
     feedback: 高亮锁定
-  - id: action-enter
-    verb: 提交机器排空方案
+  - id: action-publish
+    verb: 发布审核通过的稿件
     trigger: Enter key / button click
     proximity_level: 4
-    commit: 签发梯次排空 / 确认隔离下线
-    consequence: Level 4 dialog 展示不可逆操作后果；快捷双签必须确定且可用
-    feedback: 立即显示“排空中 / 已排空”状态
-  - id: action-escape
-    verb: 紧急熔断与回滚
-    trigger: Escape key / button click
-    proximity_level: 1
-    commit: 撤销 / 回滚 / 撤回上线
-    feedback: 已回滚 / 已撤销
+    commit: 提交发布 / 确认发布范围
+    consequence: 确认框展示发布范围与后果；需要的审批入口必须可达
+    feedback: 立即显示“发布中 / 已发布”状态
+  - id: action-withdraw
+    verb: 撤回已发布稿件
+    trigger: button click
+    proximity_level: 4
+    commit: 撤回发布 / 恢复草稿
+    feedback: 已撤回 / 已恢复
   ```
   机器权威来源为上述 YAML；下方散文只解释，不得另行声明不同 ID 或生命周期。
 - **Decisive Exchange 3-Frame Verification**: 触发 (Frame 1: 80ms) -> 提交 (Frame 2: 150ms) -> 结果 (Frame 3: 持久)
@@ -353,7 +368,7 @@ data_marks: micro-trend-compact
   severity: blocking
   verification: computed_style
 - id: inv/action-safety
-  statement: "高危排空必须弹出 <dialog> 二次确认；模态内必须确保双人签发可被快速/确定性解锁；提交后 DOM 必须渲染明确的状态反馈（含 \"已排空\" 或 \"排空中\"）；且必须持久展示可触达的 \"撤回 / 撤销 / 回滚\" 动作按钮"
+  statement: "发布或撤回必须弹出 <dialog> 二次确认；确认框必须清楚展示范围与后果；提交后 DOM 必须渲染明确的状态反馈（含 \"已发布\" 或 \"发布中\"）；且必须持久展示可触达的 \"撤回 / 恢复\" 动作按钮"
   severity: blocking
   verification: dom_query
 - id: inv/discoverable-critical-path
@@ -364,11 +379,11 @@ data_marks: micro-trend-compact
 
 ```contract:stress
 - id: stress/unbreakable-string
-  vector: "超长节点标识与微服务名"
+  vector: "超长稿件标题与内容 ID"
   expected: "自动截断，禁止破坏横向布局"
 - id: stress/zero-data
-  vector: "0 异常机器空状态"
-  expected: "展示常态自愈健康指示，严禁白屏"
+  vector: "0 篇待审核稿件的空状态"
+  expected: "展示审核队列为空的下一步指引，严禁白屏"
 - id: stress/320px-fold
   vector: "320px / 390px 视口"
   expected: "单列自然流动，全容器 box-sizing: border-box，严格消除横向溢出滚动条（scrollWidth == clientWidth）"
@@ -411,4 +426,4 @@ look at and what would count as a failure, so the review is not a taste contest.
 - Unverified assumptions and bounded implementation freedoms:
 - Feedback received and owning node changed:
 - Decisions explicitly reopened:
-- Unaffected decisions and approvals preserved (copy each row's recorded status; a restatement never promotes `proposed` to `confirmed`):
+- Unaffected provisional decisions carried forward (copy each row's recorded status; a restatement never promotes `proposed` to `confirmed`):

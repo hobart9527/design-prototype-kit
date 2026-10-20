@@ -230,12 +230,14 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, sche
           const failedSet = new Set(failed || []);
           let hasActiveRule = false;
           let stylesheetsApplied = false;
-          let sheetsEnumerated = 0;
+          let stylesheetsUnmeasured = false;
           try {
             for (const sheet of document.styleSheets) {
-              sheetsEnumerated += 1;
               const isFailed = sheet.href && failedSet.has(sheet.href);
-              if (isFailed) continue;
+              if (isFailed) {
+                stylesheetsUnmeasured = true;
+                continue;
+              }
               try {
                 if (sheet.cssRules && sheet.cssRules.length > 0) {
                   stylesheetsApplied = true;
@@ -246,14 +248,15 @@ async function captureWithPlaywright(baseUrl, outputDir, viewports, states, sche
                   }
                 }
               } catch (e) {
-                // If sheet.cssRules throws SecurityError due to cross-origin CORS,
-                // but the network response succeeded (not in failedSet), treat as applied.
-                if (e.name === "SecurityError" && !sheet.href?.startsWith("file:") && !isFailed) {
-                  stylesheetsApplied = true;
-                }
+                // A successful cross-origin response may be applied, but its
+                // inaccessible rules cannot prove application or absence.
+                if (e.name === "SecurityError") stylesheetsUnmeasured = true;
               }
             }
-          } catch {}
+          } catch {
+            stylesheetsUnmeasured = true;
+          }
+          if (stylesheetsUnmeasured) stylesheetsApplied = null;
 
           let hasTabularNums = false;
           for (const el of document.querySelectorAll("td, th, span, div, p, code")) {

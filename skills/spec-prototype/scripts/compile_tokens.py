@@ -360,6 +360,16 @@ PALETTE_ALIASES = {
 
 # Canonical v10 Five Axes (Optional & Composable)
 CANONICAL_FIVE_AXES = ("density", "energy", "materiality", "rhythm", "character")
+
+# Vocabulary aliases keep the authoring templates and dialectic operators aligned
+# with the compiler's existing calibration branches. The authored value remains in
+# the provenance record; only the runtime calibration value is normalised.
+AXIS_VALUE_ALIASES = {
+    "energy": {"settled": "calm", "smooth": "steady"},
+    "rhythm": {"fluid": "steady", "flowing": "measured", "static": "brisk"},
+    "character": {"technical": "operational"},
+}
+
 # Legacy dial aliases for backwards compatibility
 LEGACY_DIAL_MAP = {
     "finish": "materiality",
@@ -461,14 +471,32 @@ def _decision_table_status_index(header: list[str]) -> int | None:
 
 def _decision_table_source_index(header: list[str]) -> int | None:
     normalized = [re.sub(r"[^a-z]+", "", cell.lower()) for cell in header]
+    # The template column carries its enum inline (`User source (\| ...)`),
+    # so normalising to `usersource` alone never matches; a startswith match
+    # keeps the synthetic-fixture exclusion live on authored records.
     return next((i for i, value in enumerate(normalized)
-                 if value in {"usersource", "source"}), None)
+                 if value == "source" or value.startswith("usersource")), None)
 
 
 def _decision_table_subject_index(header: list[str]) -> int | None:
     normalized = [re.sub(r"[^a-z]+", "", cell.lower()) for cell in header]
-    return next((i for i, value in enumerate(normalized) if value == "decision"), None)
+    # The authored template spells the column "Decision or authoritative
+    # section link"; an exact match would leave every real record headerless
+    # and its confirmed rows unable to grant authority.
+    return next((i for i, value in enumerate(normalized) if value.startswith("decision")), None)
 
+
+def _split_table_line(line: str) -> list[str]:
+    # Protect escaped pipes `\|` (the template's enum columns use them) so a
+    # `confirmed \| delegated` cell stays one column instead of splitting into
+    # three and failing the header/separator column count.
+    placeholder = "\x00PIPE\x00"
+    protected = line.replace(r"\|", placeholder).strip()
+    if protected.startswith("|"):
+        protected = protected[1:]
+    if protected.endswith("|"):
+        protected = protected[:-1]
+    return [cell.replace(placeholder, "|").strip() for cell in protected.split("|")]
 
 def _markdown_table_rows(source_text: str):
     """Yield table header and rows, keeping each table's column roles explicit."""
@@ -476,14 +504,14 @@ def _markdown_table_rows(source_text: str):
     for index, line in enumerate(lines[:-1]):
         if not line.strip().startswith("|") or not lines[index + 1].strip().startswith("|"):
             continue
-        header = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        separator = lines[index + 1].strip().strip("|").split("|")
+        header = _split_table_line(line)
+        separator = _split_table_line(lines[index + 1])
         if len(header) != len(separator) or not all(re.fullmatch(r"\s*:?-{3,}:?\s*", cell) for cell in separator):
             continue
         for row in lines[index + 2:]:
             if not row.strip().startswith("|"):
                 break
-            yield header, [cell.strip() for cell in row.strip().strip("|").split("|")]
+            yield header, _split_table_line(row)
 
 
 def _names_domain_decision(text: str, domain: str = "color") -> bool:
@@ -663,8 +691,10 @@ def _extract_confirmed_section(text: str) -> str:
     headings are the pre-approval scoping target and only apply when no
     Confirmed-family section carries content.
     """
-    # 1a. Explicit confirmed decisions heading
-    m_conf = re.search(r"^##+[^\n]*?(?:Confirmed|Selected|Decision|Final|已确认|已选定|决策)[^\n]*\n(.*?)(?=\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+    # 1a. Explicit confirmed decisions heading. A heading naming `authority`
+    # (`## Decisions and authority`) is the provenance table, not a token scope:
+    # matching it made every palette/font read fall back to a full-text scan.
+    m_conf = re.search(r"^##+(?![^\n]*authority)[^\n]*?(?:Confirmed|Selected|Decision|Final|已确认|已选定|决策)[^\n]*\n(.*?)(?=\n##+|\Z)", text, re.DOTALL | re.MULTILINE | re.IGNORECASE)
     if m_conf and m_conf.group(1).strip():
         return m_conf.group(1).strip()
 
@@ -694,13 +724,79 @@ def _extract_font_overrides(text: str) -> Dict[str, str]:
     if not scope:
         return {}
     overrides: Dict[str, str] = {}
-    for m in re.finditer(r"(?:--)?font-(display|sans|mono)\s*[:=]\s*([^\n;]+)", scope, re.IGNORECASE):
+    for m in re.finditer(r"(?:--)?font-(display|sans|mono)`?\s*[:=]\s*([^\n;]+)", scope, re.IGNORECASE):
         val = m.group(2).strip().strip("`").strip()
+        # Markdown examples often leave an explanatory parenthetical after the
+        # value; it must not become part of the CSS font stack.
+        val = re.sub(r"\s+\([^)]*\)\s*$", "", val).strip().strip("`").strip()
         if len(val) >= 2 and val[0] == val[-1] and val[0] in ("'", '"'):
             val = val[1:-1].strip()
         if val:
             overrides[m.group(1).lower()] = val
     return overrides
+
+
+_PALETTE_TOKEN_KEYS = {
+    "accent_primary": ["accent-primary", "accent_primary", "primary-accent", "accent"],
+    "accent_hover": ["accent-hover", "accent_hover"],
+    "bg_void": ["bg-void", "bg_void", "background-void", "void-bg"],
+    "bg_base": ["bg-base", "bg_base", "background-base"],
+    "bg_surface": ["bg-surface", "bg_surface", "surface-bg"],
+    "bg_surface_raised": ["bg-surface-raised", "bg_surface_raised", "surface-raised"],
+    "bg_overlay": ["bg-overlay", "bg_overlay"],
+    "border_dim": ["border-dim", "border_dim"],
+    "border_subtle": ["border-subtle", "border_subtle", "border"],
+    "border_bright": ["border-bright", "border_bright", "border-focus"],
+    "text_primary": ["text-primary", "text_primary", "primary-text"],
+    "text_secondary": ["text-secondary", "text_secondary"],
+    "text_tertiary": ["text-tertiary", "text_tertiary"],
+    "status_running": ["status-running", "status_running", "state-nominal", "state_nominal", "state"],
+    "status_warning": ["status-warning", "status_warning", "state-warning", "state_warning"],
+    "status_danger": ["status-danger", "status_danger", "state-danger", "state_danger"],
+    "accent_seal": ["accent-seal", "accent_seal", "seal-color", "seal_color"],
+    "status_success": ["status-success", "status_success", "state-success", "state_success"],
+    "status_info": ["status-info", "status_info", "state-info", "state_info"],
+}
+
+_PALETTE_ALIAS_NAMES = frozenset(a for aliases in _PALETTE_TOKEN_KEYS.values() for a in aliases)
+_CUSTOM_TOKEN_NAME_RE = re.compile(r"^--[a-z][a-z0-9-]*$")
+_CUSTOM_TOKEN_UNSAFE_RE = re.compile(r"[;{}<>]")
+
+
+def _extract_custom_tokens(text: str) -> Dict[str, str]:
+    """Authored custom properties from the confirmed/proposed section.
+
+    Lets a designer extend the compiled system beyond the fixed palette and
+    spacing ladder: layered shadows, editorial spacing ratios, custom easing,
+    blur radii. Values are passthrough, so this is a trust boundary: names must
+    be a plain custom-property name and values may not carry a declaration or
+    block delimiter. Generated variables of the same name are replaced in place
+    by `generate_css`, so an authored `--radius-outer` overrides the computed one.
+    """
+    scope = _extract_confirmed_section(text) or ""
+    if not scope:
+        return {}
+    tokens: Dict[str, str] = {}
+    for line in scope.splitlines():
+        m = re.match(r"\s*[-*]?\s*`?(--[a-z][a-z0-9-]*)`?\s*[:=]\s*(.+?)\s*$", line, re.IGNORECASE)
+        if not m:
+            continue
+        name = m.group(1).lower()
+        value = m.group(2).strip().strip("`").strip()
+        value = re.sub(r"\s+\([^)]*\)\s*$", "", value).strip().strip("`").strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1].strip()
+        if not _CUSTOM_TOKEN_NAME_RE.match(name) or not value:
+            continue
+        if re.fullmatch(r"--font-(display|sans|mono)", name):
+            continue  # font slots have one owner: _extract_font_overrides
+        if re.sub(r"^--(?:color-)?", "", name) in _PALETTE_ALIAS_NAMES:
+            continue  # palette tokens have one owner: extract_dynamic_palette
+        if _CUSTOM_TOKEN_UNSAFE_RE.search(value):
+            _warn(f"custom token {name!r} carries a declaration delimiter; skipped", None)
+            continue
+        tokens[name] = value
+    return tokens
 
 
 def extract_dynamic_palette(
@@ -714,28 +810,8 @@ def extract_dynamic_palette(
     In `formal` mode, absent any authored palette/token the neutral scaffold is returned rather
     than a heuristic brand theme; `probe` mode permits domain-keyword inference.
     """
-    token_keys = {
-        "accent_primary": ["accent-primary", "accent_primary", "primary-accent", "accent"],
-        "accent_hover": ["accent-hover", "accent_hover"],
-        "bg_void": ["bg-void", "bg_void", "background-void", "void-bg"],
-        "bg_base": ["bg-base", "bg_base", "background-base"],
-        "bg_surface": ["bg-surface", "bg_surface", "surface-bg"],
-        "bg_surface_raised": ["bg-surface-raised", "bg_surface_raised", "surface-raised"],
-        "bg_overlay": ["bg-overlay", "bg_overlay"],
-        "border_dim": ["border-dim", "border_dim"],
-        "border_subtle": ["border-subtle", "border_subtle", "border"],
-        "border_bright": ["border-bright", "border_bright", "border-focus"],
-        "text_primary": ["text-primary", "text_primary", "primary-text"],
-        "text_secondary": ["text-secondary", "text_secondary"],
-        "text_tertiary": ["text-tertiary", "text_tertiary"],
-        "status_running": ["status-running", "status_running", "state-nominal", "state_nominal", "state"],
-        "status_warning": ["status-warning", "status_warning", "state-warning", "state_warning"],
-        "status_danger": ["status-danger", "status_danger", "state-danger", "state_danger"],
-        "accent_seal": ["accent-seal", "accent_seal", "seal-color", "seal_color"],
-        "status_success": ["status-success", "status_success", "state-success", "state_success"],
-        "status_info": ["status-info", "status_info", "state-info", "state_info"],
-    }
 
+    token_keys = _PALETTE_TOKEN_KEYS
     confirmed_block = _extract_confirmed_section(discussion_text)
     extracted: Dict[str, str] = {}
 
@@ -882,11 +958,44 @@ def parse_craft_stack(text: str, dials: Dict[str, str] | None = None) -> Dict[st
 
 
 def _craft_specular(optics: str) -> str:
-    """Specular treatment from the authored surface optics: coated instruments
-    carry a machined top highlight; matte pigment washes stay flat."""
+    """Specular treatment from the authored surface optics."""
     if optics in {"matte_pigment_wash", "neutral"}:
         return "none"
     return "inset 0 1px 0 0 rgba(255, 255, 255, 0.15)"
+
+
+CRAFT_PHYSICS = {
+    "surface_backdrop": (("frosted", "glass", "acrylic"), "blur(16px) saturate(1.4)"),
+    "surface_grain": (("grain", "noise"), "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E\")"),
+}
+
+
+def _craft_physics(craft: Dict[str, str]) -> Dict[str, str]:
+    """Physical CSS primitives for the four craft axes.
+
+    The mapping table is the machine half of the `contract:craft` vocabulary
+    owned by `machine-contract.md`; a value outside the table stays neutral
+    rather than inventing a material the author never asked for.
+    """
+    optics = craft.get("surface_optics", "neutral")
+    geometry = craft.get("spatial_geometry", "neutral")
+    typography = craft.get("micro_typography", "neutral")
+    marks = craft.get("data_marks", "native")
+
+    def mapped(axis: str, value: str) -> str:
+        keywords, rendered = CRAFT_PHYSICS[axis]
+        return rendered if any(k in value for k in keywords) else "none"
+
+    return {
+        "surface_backdrop": mapped("surface_backdrop", optics),
+        "surface_grain": mapped("surface_grain", optics),
+        "corner_cut": "8px" if "cut" in geometry else "0px",
+        "font_features": ('"tnum" 1' if "tabular" in typography
+                          else '"onum" 1, "pnum" 1' if "oldstyle" in typography
+                          else "normal"),
+        "mark_stroke": "1.5px" if "trend" in marks else "1px",
+        "sparkline_height": "20px" if "trend" in marks else "0px",
+    }
 
 
 def compute_tokens(
@@ -895,6 +1004,7 @@ def compute_tokens(
     mode: str = "formal",
     craft_stack: Dict[str, str] | None = None,
     font_overrides: Dict[str, str] | None = None,
+    custom_tokens: Dict[str, str] | None = None,
 ) -> Dict[str, Any]:
     """Derive full design token tree from optional Five Axes / dials and an explicit palette or dynamic color dict.
 
@@ -904,6 +1014,23 @@ def compute_tokens(
     """
     if dials is None:
         dials = {}
+    # Normalize documented aliases once at the compiler boundary. Keep the
+    # authored mapping intact in the provenance digest, while all calibration
+    # branches consume the canonical runtime vocabulary.
+    dials = dict(dials)
+    for axis, aliases in AXIS_VALUE_ALIASES.items():
+        value = dials.get(axis)
+        if value is not None:
+            dials[axis] = aliases.get(str(value).lower(), str(value).lower())
+
+    # A custom property that drives a derived relation is a dial, not a raw
+    # override: `--radius-outer` must recompute the concentric ladder rather
+    # than leave `--radius-card` describing a radius the sheet no longer uses.
+    custom_tokens = dict(custom_tokens or {})
+    for prop, axis in (("--radius-outer", "radius_outer"),):
+        value = custom_tokens.pop(prop, None)
+        if value is not None and axis not in dials:
+            dials[axis] = value.removesuffix("px").strip()
 
     if isinstance(palette_or_colors, dict):
         colors = palette_or_colors
@@ -981,9 +1108,11 @@ def compute_tokens(
             "mono": '"SF Mono", "Fira Code", monospace',
         }
         fonts["display"] = fonts["sans"]
-        # Touch profiles favor slightly larger card radii and ergonomic buttons
-        radii["card"] = f"{r_card_val + 2}px"
-        radii["btn"] = "9999px"
+        # Touch profiles favor slightly larger card radii and ergonomic buttons.
+        # An authored radius is a stronger decision and must not be overwritten.
+        if raw_r is None:
+            radii["card"] = f"{r_card_val + 2}px"
+            radii["btn"] = "9999px"
     else:
         fonts = {
             "sans": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -1131,6 +1260,7 @@ def compute_tokens(
         "typography": typography,
         "semantics": semantics,
         "components": components,
+        "custom_tokens": dict(custom_tokens or {}),
     }
 
 
@@ -1364,6 +1494,7 @@ def generate_css(
     craft = {**{"surface_optics": "neutral", "spatial_geometry": "neutral",
                 "micro_typography": "neutral", "data_marks": "native"},
              **(tokens.get("craft_stack") or parse_craft_stack("", d))}
+    physics = _craft_physics(craft)
 
     lines = [
         "/* ==========================================================================",
@@ -1479,6 +1610,12 @@ def generate_css(
         f"  --pattern-hatch-45: {HATCH_PATTERN if craft['data_marks'] == 'hatching_dither' else 'none'};",
         f"  --font-display-tracking: {CRAFT_TYPOGRAPHY.get(craft['micro_typography'], ('0', '500'))[0]};",
         f"  --font-display-weight: {CRAFT_TYPOGRAPHY.get(craft['micro_typography'], ('0', '500'))[1]};",
+        f"  --surface-backdrop: {physics['surface_backdrop']};",
+        f"  --surface-grain: {physics['surface_grain']};",
+        f"  --corner-cut: {physics['corner_cut']};",
+        f"  --font-feature-numeric: {physics['font_features']};",
+        f"  --mark-stroke: {physics['mark_stroke']};",
+        f"  --sparkline-height: {physics['sparkline_height']};",
         "",
         "  /* ==========================================================================",
         "     Layer 2: Semantic Tokens (Functional Roles & Expressive Intent)",
@@ -1584,6 +1721,27 @@ def generate_css(
         "  display: none !important;",
         "}",
     ])
+    authored = tokens.get("custom_tokens") or {}
+    if authored:
+        remaining: Dict[str, str] = {}
+        for name, value in sorted(authored.items()):
+            # A generated slot of the same name is overridden in place, so the
+            # sheet keeps one declaration per custom property and the cascade
+            # stays order-independent. Derived relations (e.g. concentric radii)
+            # do not follow an authored override; the craft-floor probe catches a
+            # relation the override breaks.
+            replaced = False
+            for index, line in enumerate(lines):
+                if line.strip().startswith(f"{name}:"):
+                    lines[index] = f"  {name}: {value};"
+                    replaced = True
+            if not replaced:
+                remaining[name] = value
+        if remaining:
+            lines.extend(["", "/* Authored extensions (source-record custom properties) */", ":root {"])
+            for name, value in remaining.items():
+                lines.append(f"  {name}: {value};")
+            lines.append("}")
     if color_format == "oklch":
         lines.extend(_oklch_upgrade_lines(raw_c))
     if color_schemes == "light-dark":
@@ -1760,6 +1918,14 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
         "typography": typography_tokens,
         "motion": motion_tokens,
     }
+    # ponytail: authored extensions carry no `$type` until an author declares one;
+    # a guessed type would mislead consumers more than a plain string.
+    custom = tokens.get("custom_tokens") or {}
+    if custom:
+        result["extensions"] = {
+            name.lstrip("-"): {"$value": value, "$description": "Authored source-record custom property"}
+            for name, value in sorted(custom.items())
+        }
 
     def namespace_authority(node: Any) -> None:
         if isinstance(node, dict):
@@ -1845,6 +2011,7 @@ def _token_input_digest(
         "dials": dict(sorted(dials.items())),
         "colors": dict(sorted(dynamic_colors.items())),
         "craft_stack": dict(sorted(parse_craft_stack(source_text, dials).items())),
+        "custom_tokens": dict(sorted(_extract_custom_tokens(source_text).items())),
         "authority": "explicit_human" if _has_confirmed_token_authority(
             _confirmed_authority_text(source_text, source_path)) else "derived",
     }
@@ -1901,7 +2068,8 @@ def compile_tokens(
     # Dynamic LLM chromatic derivation: extracts authored tokens, palette alias, or neutral scaffold
     dynamic_colors = extract_dynamic_palette(disc_text, mode=mode)
     computed = compute_tokens(dials, dynamic_colors, mode=mode,
-                              font_overrides=_extract_font_overrides(disc_text) or None)
+                              font_overrides=_extract_font_overrides(disc_text) or None,
+                              custom_tokens=_extract_custom_tokens(disc_text) or None)
 
     # Authority reflects provenance, not keyword presence: a token list that
     # merely appears in the authored discussion is still agent-derived unless a
@@ -2028,7 +2196,8 @@ def _render_sealed_css(
     dials = parse_5dials(source_text)
     dynamic_colors = extract_dynamic_palette(source_text, mode=mode)
     computed = compute_tokens(dials, dynamic_colors, mode=mode,
-                              font_overrides=_extract_font_overrides(source_text) or None)
+                              font_overrides=_extract_font_overrides(source_text) or None,
+                              custom_tokens=_extract_custom_tokens(source_text) or None)
     computed["authority"] = "explicit_human" if _has_confirmed_token_authority(
         _confirmed_authority_text(source_text, source_path)) else "derived"
     computed["craft_stack"] = parse_craft_stack(source_text, dials)

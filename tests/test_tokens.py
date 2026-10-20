@@ -859,6 +859,37 @@ def test_authored_font_display_override():
     # Overrides join the digest only when authored.
     assert ct._token_input_digest(text, "formal") != ct._token_input_digest("# World\n", "formal")
 
+
+def test_world_markdown_font_slots_and_custom_extensions():
+    ct = _load_compiler()
+    text = ("## Proposed — visual tokens\n"
+            "- `--font-display`: \"Fraunces\", serif\n"
+            "- `--shadow-ambient`: 0 1px 0 rgba(0,0,0,.2)\n")
+    assert ct._extract_font_overrides(text) == {"display": '"Fraunces", serif'}
+    custom = ct._extract_custom_tokens(text)
+    assert custom["--shadow-ambient"].startswith("0 1px")
+    tokens = ct.compute_tokens({}, ct.NEUTRAL_SCAFFOLD_NAME,
+                               font_overrides=ct._extract_font_overrides(text),
+                               custom_tokens=custom)
+    css = ct.generate_css(tokens)
+    assert '--font-display: "Fraunces", serif' in css
+    assert "--shadow-ambient: 0 1px" in css
+    exported = ct.generate_dtcg_json(tokens)
+    assert "extensions" in exported and "shadow-ambient" in exported["extensions"]
+
+
+def test_template_axis_aliases_use_canonical_calibration():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({"energy": "smooth", "rhythm": "fluid", "character": "technical"})
+    assert tokens["motion"]["duration_normal"] == "250ms"
+    assert tokens["typography"]["line_height_body"] == "1.5"
+
+
+def test_touch_radius_respects_authored_radius_outer():
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({"materiality": "touch", "radius_outer": "12"}, ct.NEUTRAL_SCAFFOLD_NAME)
+    assert tokens["radii"]["btn"] != "9999px"
+
 def test_font_stack_internal_quotes_survive():
     """A font stack's internal quotes must not truncate the extracted value.
 
@@ -883,6 +914,62 @@ def test_font_stack_internal_quotes_survive():
     assert "Charter,;" not in css
     assert "--font-sans: ;" not in css
 
+def test_authority_heading_does_not_hijack_confirmed_scope():
+    """`## Decisions and authority` must not become the confirmed-token scope.
+
+    The heading contains the substring `Decision`, so the first-priority scope
+    regex used to capture the governance table body instead of the token
+    section, silently dropping every `--font-*` override in a single-record
+    tree. The lookahead `(?![^\n]*authority)` keeps the provenance table out.
+    """
+    ct = _load_compiler()
+    text = (
+        "## Proposed — visual tokens\n"
+        "- `--font-display`: \"Space Grotesk\", sans-serif\n"
+        "- `--font-sans`: \"Inter\", system-ui, sans-serif\n"
+        "- `--font-mono`: \"JetBrains Mono\", monospace\n"
+        "\n"
+        "## Decisions and authority\n"
+        "\n"
+        "| ID | Decision or authoritative section link | Status |\n"
+        "|---|---|---|\n"
+        "| D1 | Palette | confirmed |\n"
+    )
+    scope = ct._extract_confirmed_section(text)
+    assert scope is not None and "Space Grotesk" in scope, (
+        "the confirmed scope must stay on the token section, not the governance table")
+    overrides = ct._extract_font_overrides(text)
+    assert overrides == {
+        "display": '"Space Grotesk", sans-serif',
+        "sans": '"Inter", system-ui, sans-serif',
+        "mono": '"JetBrains Mono", monospace',
+    }
+
+def test_authored_template_header_grants_domain_authority():
+    """The template's long decision column must not read as a headerless table.
+
+    `Decision or authoritative section link` normalises to a non-`decision`
+    string, so an exact subject match left every authored record unable to
+    grant authority — fail-closed past the point of usability. A confirmed
+    row on the template header elevates its own domain only; the root stays
+    a consensus rollup.
+    """
+    ct = _load_compiler()
+    header = ("| ID | Decision or authoritative section link | Status | Reason / evidence |"
+              " Actual user quote | User source (`confirmed \\| delegated \\| synthetic-fixture`) |"
+              " Affected artifacts / minimal owning scope |\n")
+    table = (
+        header
+        + "|---|---|---|---|---|---|---|\n"
+        + "| D1 | Palette `--accent-primary: #9333ea` | confirmed | r | q | confirmed | slice-a |\n"
+    )
+    auth = ct.resolve_domain_authorities(table)
+    assert auth["color"] == "explicit_human"
+    assert auth["spacing"] == "derived"
+    # synthetic-fixture provenance never grants authority even when confirmed.
+    fixture_row = table.replace("| q | confirmed |", "| q | synthetic-fixture |")
+    assert ct.resolve_domain_authorities(fixture_row)["color"] == "derived"
+
 
 def test_radius_outer_override_concentric_follows():
     ct = _load_compiler()
@@ -902,3 +989,36 @@ def test_radius_outer_out_of_range_warns_and_falls_back():
     css = ct.generate_css(tokens)
     # density default balanced → 12px
     assert "--radius-outer: 12px" in css
+
+
+def test_custom_token_value_keeps_functional_notation_and_drops_trailing_note():
+    ct = _load_compiler()
+    text = (
+        "## Proposed — visual tokens\n"
+        "- --font-display: \"Fraunces\", serif (headline face)\n"
+        "- --shadow-layered: 0 1px 2px rgba(0,0,0,.1) (soft)\n"
+        "- --ease-x: cubic-bezier(.2,.8,.2,1)\n"
+    )
+    custom = ct._extract_custom_tokens(text)
+    assert custom == {"--shadow-layered": "0 1px 2px rgba(0,0,0,.1)",
+                      "--ease-x": "cubic-bezier(.2,.8,.2,1)"}
+    assert ct._extract_font_overrides(text) == {"display": '"Fraunces", serif'}
+
+
+def test_craft_physics_recognises_every_documented_optics_value():
+    ct = _load_compiler()
+    assert ct._craft_physics({"surface_optics": "frosted_acrylic_40"})["surface_backdrop"] != "none"
+    assert ct._craft_physics({"surface_optics": "grain_paper"})["surface_grain"] != "none"
+    assert ct._craft_physics({"surface_optics": "coated_instrument_dark"})["surface_backdrop"] == "none"
+
+
+def test_custom_tokens_leave_palette_and_font_slots_to_their_owners():
+    ct = _load_compiler()
+    text = (
+        "## Proposed — visual tokens\n"
+        "- --color-accent: #ff6600\n"
+        "- --bg-base: #101010\n"
+        "- --font-mono: \"JetBrains Mono\", monospace\n"
+        "- --ease-snap: cubic-bezier(.3,0,0,1)\n"
+    )
+    assert ct._extract_custom_tokens(text) == {"--ease-snap": "cubic-bezier(.3,0,0,1)"}

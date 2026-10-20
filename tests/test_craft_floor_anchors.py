@@ -128,11 +128,17 @@ def test_action_feedback_accepts_chinese_settlement_and_recovery(tmp_path):
     assert detect.RULES["CRAFT-ACTION-FEEDBACK"]["detector"](artifact)
 
 
-def test_action_feedback_stays_clear_without_a_commit_control(tmp_path):
+def test_action_feedback_is_not_applicable_without_a_commit_control(tmp_path):
+    """Prose that mentions a flow is not a surface with a commit control.
+
+    Reporting `clear` here asserted that a page with no destructive control had
+    satisfied the rule — a verdict about something that does not apply. The
+    status is `NOT_APPLICABLE`, the same shape the CJK and font-loading rules use.
+    """
     artifact = tmp_path / "action.html"
     artifact.write_text("<p>排空处理中，已完成，可撤销。</p>", encoding="utf-8")
 
-    assert not detect.RULES["CRAFT-ACTION-FEEDBACK"]["detector"](artifact)
+    assert detect.RULES["CRAFT-ACTION-FEEDBACK"]["detector"](artifact) is detect.NOT_APPLICABLE
 
 
 def test_scan_surfaces_a_broken_detector_rather_than_reading_it_as_clean(tmp_path):

@@ -151,6 +151,18 @@ load-bearing half: the techniques alone are the reskin.
   material has a stated reason. Uniform ease-in-out on everything fails the bar.
 - **Failure Mode**: Springy motion on safety-critical confirmations that need to feel deliberate.
 
+### L. Spatial Canvas / Infinite Board (空间画布)
+- **Purpose**: Help users reason across objects whose relationships matter more than a fixed reading order.
+- **Techniques**: Persistent spatial anchors, direct manipulation, contextual inspectors, minimaps only when orientation needs them.
+- **QUALITY BAR**: Position encodes a meaningful relation; navigation remains recoverable at every scale.
+- **Failure Mode**: An infinite canvas where a sortable list or focused workflow would be faster.
+
+### M. Ambient / AI-Native Conversational (环境式 / AI 原生对话)
+- **Purpose**: Keep users oriented while a system assists, reasons, or acts over time.
+- **Techniques**: Visible task context, incremental result disclosure, provenance beside generated claims, interruptible actions.
+- **QUALITY BAR**: Users distinguish system state, sourced evidence, generated suggestions, and committed outcomes.
+- **Failure Mode**: A chat transcript that hides controls, provenance, or action consequences.
+
 ### Sampling rule
 Draw challengers without replacement (`draw_seed.py`); when drawing by hand, pick the
 entry least compatible with the candidate's lifeworld rather than the nearest, then fuse

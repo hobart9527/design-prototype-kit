@@ -111,7 +111,7 @@ optional. Unknown keys, unknown enum values and duplicate ids fail closed.
 | `contract:viewports` | list of scalars | each a width in px, 200–4000 |
 | `contract:actions` | list of mappings | `id`, `verb`, `trigger`, `commit`; `proximity_level` optional (default 1), `authority` (or alias `evidence_source`) ∈ `explicit\|derived\|proposed\|hypothesis` (default `derived`), `feedback`/`consequence` optional |
 | `contract:axes` | mapping | any of `density`, `energy`, `materiality`, `rhythm`, `character`; legacy aliases `weight`/`finish` → `materiality`, `seriousness` → `character`; optional override `radius_outer` (int 0–32, px) |
-| `contract:craft` | mapping (optional) | any of `surface_optics`, `spatial_geometry`, `micro_typography`, `data_marks` — a design-judgment projection, never required for a compile |
+| `contract:craft` | mapping (optional) | `surface_optics`: `neutral`, `coated_instrument_dark`, `frosted_acrylic_40`, `grain_*`; `spatial_geometry`: `neutral`, `concentric-nested`, `soft_bento_pill`, `cut-corner`, `square`; `micro_typography`: `neutral`, `tabular-numeric`, `tight_display_polarized`, `oldstyle_*`; `data_marks`: `native`, `micro-trend-compact`, `hatching_dither` — a design-judgment projection, never required for a compile |
 | `contract:tokens` | mapping | `accent_seal` (hex), `accent_policy` (text), optional `state_nominal`, `state_warning`, `state_danger`, `state_success`, `state_info` (hex; `state` aliases `state_nominal`) |
 | `contract:meso` | mapping (optional) | any of `massing_pattern`, `kinematics`, `data_syntax` — a design-judgment projection, never required for a compile |
 

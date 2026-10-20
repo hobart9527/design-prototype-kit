@@ -111,7 +111,7 @@ the only gate, and it is checked on the two directions side by side.
    structure differs. Draw them from a real entropy source instead (optional; skip or print-only when the record cannot take the block):
 
    ```
-   python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --write
+   python3 skills/spec-prototype/scripts/draw_seed.py --slice <slice_id> --archetype <instrument|editorial|canvas|mobile|ambient> --write
    ```
 
    The script draws one seed per candidate from the OS entropy pool, derives the

@@ -716,3 +716,45 @@ def test_aria_live_counts_as_feedback_container(tmp_path):
         feedback_markup='<div aria-live="polite"></div>',
     )
     assert not any("action-lifecycle" in s for s in signals), signals
+
+def _dom_of(html: Path) -> "vpq._Document":
+    return vpq._Document(html.read_text(encoding="utf-8"))
+
+def test_static_dom_ids_flags_lookup_without_any_node(tmp_path):
+    """A `$('#id')` with no static node and no authored dynamic node is a defect.
+
+    r16 evidence: the agent clicked a dialog toggle whose `$` lookup matched
+    nothing, so the handler ran on `null` every time (`TypeError: Cannot set
+    properties of null`); the DOM assertion must name the ID at audit time.
+    """
+    html = tmp_path / "a.html"
+    html.write_text(
+        '<html><body><script>var $=s=>document.querySelector(s);'
+        "$('#dialog-intro').textContent='hi';</script></body></html>",
+        encoding="utf-8",
+    )
+    failures = vpq.check_static_dom_ids(html, _dom_of(html))
+    assert failures and "dialog-intro" in failures[0], failures
+
+def test_static_dom_ids_passes_static_and_dynamic_ids(tmp_path):
+    """Both a static `id=` node and an authored JS-built node satisfy the check."""
+    html = tmp_path / "a.html"
+    html.write_text(
+        '<html><body><p id="intro"></p><script>'
+        "var $=s=>document.querySelector(s);$('#intro').textContent='hi';"
+        "var d=document.createElement('div');d.id='f-item';$('#f-item').textContent='x';"
+        "</script></body></html>",
+        encoding="utf-8",
+    )
+    assert vpq.check_static_dom_ids(html, _dom_of(html)) == []
+
+def test_static_dom_ids_reads_linked_local_script(tmp_path):
+    """A local `<script src>` file's lookups are checked, not just inline JS."""
+    html = tmp_path / "a.html"
+    (tmp_path / "app.js").write_text(
+        "document.querySelector('#missing-node').textContent='x';\n",
+        encoding="utf-8",
+    )
+    html.write_text('<html><body><script src="app.js"></script></body></html>', encoding="utf-8")
+    failures = vpq.check_static_dom_ids(html, _dom_of(html))
+    assert failures and "missing-node" in failures[0], failures

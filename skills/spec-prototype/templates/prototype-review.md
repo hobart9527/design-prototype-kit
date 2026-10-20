@@ -109,7 +109,7 @@ however clean the reviewed ones are. See
 
 - Before/after evidence:
 - Upstream decision reopened:
-- Unaffected decisions/approvals preserved:
+- Unaffected provisional decisions carried forward:
 - Remaining uncertainty:
 
 When external scoring is explicitly requested, retain rubric/version,

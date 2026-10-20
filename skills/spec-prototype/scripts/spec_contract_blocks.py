@@ -353,7 +353,10 @@ def _contract_yaml_values(text: str, kind: str) -> List[Any]:
     """
     matches = list(re.finditer(rf"^[ \t]*```contract:{kind}\s*\n(.*?)^[ \t]*```", text, re.DOTALL | re.MULTILINE))
     if matches and yaml is None:
-        raise ValueError(f"contract:{kind} requires PyYAML to parse its authoritative block")
+        raise ValueError(
+            f"contract:{kind} requires PyYAML to parse its authoritative block "
+            f"({len(matches)} block(s) found). Install it (`pip install pyyaml`) "
+            f"or the compiler cannot read the record.")
     values: List[Any] = []
     for m in matches:
         # Dedent before stripping: a fence nested under a bullet carries a common
