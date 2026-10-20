@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import random
 import shutil
@@ -67,7 +68,8 @@ def _run_sessions(cases, variants, repeats, matrix_dir, args) -> list:
                 bl.eprint(f"[matrix] {index}/{total} {case_id}/{variant}/r{repeat}")
                 cmd = [sys.executable, str(bl.BENCH / "runners" / "run_case.py"),
                        "--case", case_id, "--variant", variant, "--repeat", str(repeat),
-                       "--matrix-dir", str(matrix_dir)]
+                       "--matrix-dir", str(matrix_dir),
+                       "--baseline-tag", getattr(args, "baseline_tag", bl.STABLE_TAG)]
                 if args.model:
                     cmd += ["--model", args.model]
                 if args.max_turns:
@@ -129,7 +131,8 @@ def _rejudge_existing(cases, variants, repeats, matrix_dir, args) -> list:
                 bl.eprint(f"[rejudge] {case_id}/{variant}/r{repeat}")
                 cmd = [sys.executable, str(bl.BENCH / "runners" / "run_case.py"),
                        "--case", case_id, "--variant", variant, "--repeat", str(repeat),
-                       "--matrix-dir", str(matrix_dir), "--rejudge"]
+                       "--matrix-dir", str(matrix_dir), "--rejudge",
+                       "--baseline-tag", getattr(args, "baseline_tag", bl.STABLE_TAG)]
                 if args.model:
                     cmd += ["--model", args.model]
                 if args.task_trace:
@@ -191,6 +194,8 @@ def main() -> int:
                         choices=["daily", "golden", "calibration", "holdout", "release", "custom"])
     parser.add_argument("--cases", default=None, help="comma-separated case ids (overrides --suite)")
     parser.add_argument("--variants", default="stable_skill,candidate_skill")
+    parser.add_argument("--baseline-tag", default=bl.STABLE_TAG,
+                        help="frozen stable_skill source tag (default: v10.2.1-stable)")
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--model", default="flash", help="Claude model name (default: flash)")
     parser.add_argument("--max-turns", type=int, default=None)
@@ -216,6 +221,7 @@ def main() -> int:
     parser.add_argument("--carry-over-control", default=None, metavar="MATRIX_DIR",
                         help="copy the no_skill control runs from another matrix dir (reuse an expensive control)")
     args = parser.parse_args()
+    os.environ["BENCH_BASELINE_TAG"] = args.baseline_tag
 
     run_id = args.run_id or bl.now_stamp()
     matrix_dir = bl.RESULTS_DIR / run_id
@@ -230,7 +236,7 @@ def main() -> int:
     bl.write_json(matrix_dir / "matrix-plan.json", {
         "run_id": run_id, "suite": args.suite, "cases": cases, "variants": variants,
         "repeats": args.repeats, "model": args.model or "cli-default",
-        "router": bl.claude_router_identity(), "baseline_tag": bl.STABLE_TAG,
+        "router": bl.claude_router_identity(), "baseline_tag": args.baseline_tag,
         "rejected_inputs": ["ground-truth.yaml", "rubric.yaml", "mock-user.md", "tasks.yaml"],
     })
 

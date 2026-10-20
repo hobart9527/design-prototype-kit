@@ -59,6 +59,8 @@ Do not restate token values here.
 Declare `accent_seal` only when the product has an irreversible or high-stakes
 moment that earns one reserved colour. Optional `state_nominal`, `state_warning`,
 `state_danger`, `state_success`, and `state_info` keys provide authored status hues.
+Replace every `#rrggbb` placeholder with an authored hex colour before compiling;
+the compiler rejects placeholders rather than treating them as valid token values.
 
 ```contract:tokens
 accent_seal: "#rrggbb"

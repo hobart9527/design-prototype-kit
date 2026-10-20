@@ -1,0 +1,356 @@
+{
+  "tag": "pre-four-knives",
+  "git_rev": "bad195a5ce33a5bd4cebe77eb2d133473426b811",
+  "frozen_at": "20261020_080131",
+  "skill_files": 103,
+  "hashes": {
+    "scripts/assemble_envelope.py": {
+      "sha256": "31c7296be95e1c2db9ab3d1a0f3f1c8096defc987e8afe1d4cdd8f8369d76c96",
+      "bytes": 115351
+    },
+    "scripts/authority_fidelity.py": {
+      "sha256": "10d265d382409c8395ec18aac98b96eb7d975711005aae0630362c6fcb78fb1f",
+      "bytes": 10570
+    },
+    "scripts/compile_spec_ir.py": {
+      "sha256": "4166953c83f8dbdcae67310e3b7872ec6156e5b4562752340ec15fcd2cc65ceb",
+      "bytes": 88909
+    },
+    "scripts/compile_tokens.py": {
+      "sha256": "28bf8e9099a0729caa05b0c5c930c05cf1bf7399b3ed7ac971eb2cc9484ff8f9",
+      "bytes": 106780
+    },
+    "scripts/detect.py": {
+      "sha256": "3aceb1bc765c6b8804f2194c9445e37d3fb1800db94b6826bdf95d95cdaa8017",
+      "bytes": 27704
+    },
+    "scripts/draw_seed.py": {
+      "sha256": "342658b0a0e7f71d46acf1e54e1e750e479133df442e9d4a2be535fddc62ee38",
+      "bytes": 8783
+    },
+    "scripts/execution_boundary.py": {
+      "sha256": "c4f2cb4875d129a82c43b279d2f23416e4e531f440a8d5ed7a985d7cca65e54f",
+      "bytes": 30582
+    },
+    "scripts/generate_review_portal.py": {
+      "sha256": "0b13f231a516c0e752aa8c5d7cfe6beddd1884c1b93b0e28e49293f697904c7c",
+      "bytes": 36867
+    },
+    "scripts/handoff.py": {
+      "sha256": "9f3fda42c50989fba96abda65a43efa4f97320cbcd6bd8370212c1378400243b",
+      "bytes": 55587
+    },
+    "scripts/lint_spec_contracts.py": {
+      "sha256": "d8effbd3cb8020a1ff620842c6e866a69f5ab6ec33cd4bc4cdb784c5c8bfee9a",
+      "bytes": 16821
+    },
+    "scripts/prototype_context.py": {
+      "sha256": "f99a1c3d4c68b5dcc2902b991430d53948c37dec9c9682e9bda3176e944f3eee",
+      "bytes": 17072
+    },
+    "scripts/spec_contract_blocks.py": {
+      "sha256": "da7d55851327443a3aeddd8d883f5097b43dd59d0e0b853d2f709c692d252437",
+      "bytes": 36730
+    },
+    "scripts/verify_prototype_quality.py": {
+      "sha256": "06dbcd24b0ffb2067c2622820db559631f7f4d65b5e016560ef475a10e5aea7a",
+      "bytes": 100697
+    },
+    "scripts/browser_probe.mjs": {
+      "sha256": "5b65680e651d7ffb09872bae099fc6c21dae36149be8d681b249bc3479e6e2df",
+      "bytes": 20184
+    },
+    "scripts/capture.mjs": {
+      "sha256": "cbb25020c658e910298252eeec31d5c064a1db63c4cc93616a47884e77cea8c4",
+      "bytes": 52443
+    },
+    "scripts/preview.mjs": {
+      "sha256": "fc0ec1458950bf3656430f38d3e183cde7ca01b78e57d9a6cafe6f3e73000425",
+      "bytes": 13740
+    },
+    "scripts/wcag-check.js": {
+      "sha256": "9c81e3a09a0164418b14bbaa84d4b960a3eb5e6ae3cb698b775eef62bdf197d4",
+      "bytes": 10806
+    },
+    "CONTEXT.md": {
+      "sha256": "1fd6714bc178616e39f80a4b97322d4b0d3613071dbba6774f8644e82e096013",
+      "bytes": 11043
+    },
+    "SKILL.md": {
+      "sha256": "0b7c9a21830b677c1fc169da1965b146f7cc40f1c8fdd1ff6dac0289cb6dd90e",
+      "bytes": 18293
+    },
+    "references/01-foundations/design-language.md": {
+      "sha256": "59fa3012d1e75b8ba58096c6ff2d4b8abae40904c8dd5850aa772a7e8bb53273",
+      "bytes": 23656
+    },
+    "references/01-foundations/design-methods.md": {
+      "sha256": "2902be95ea3b7f1c4ab418b1b495dc75b3d904c571ed71638299d80297cfdbf2",
+      "bytes": 14847
+    },
+    "references/01-foundations/product-understanding.md": {
+      "sha256": "fae72efb1a21fcf2a8aebddb79ae463de6a2f703b1d884d223957f5d847743f1",
+      "bytes": 8682
+    },
+    "references/01-foundations/reference-deconstruction.md": {
+      "sha256": "6148d391f79260518b4786ee443cd8c229bc8404d61f86c7faba6c232e7c2b2a",
+      "bytes": 2808
+    },
+    "references/01-foundations/research.md": {
+      "sha256": "f623eddf8db3ff7ea8f031dce5bc9c2704d5dff34010190d8855ed3cab540f87",
+      "bytes": 9230
+    },
+    "references/01-foundations/style-language.md": {
+      "sha256": "1ca75f063af363069911ebd1f1ab45097cc2f39ea7d4e8d29fef3306903e7643",
+      "bytes": 4096
+    },
+    "references/02-craft-methods/ai-native-ux.md": {
+      "sha256": "7322eb5ca7a05dc5c1bb6142fdc944a6e8b041f91037c102779657ae08f7dd0e",
+      "bytes": 7542
+    },
+    "references/02-craft-methods/component-implementation.md": {
+      "sha256": "f87cdb9401247248a097b6faa68c6071fcf5e553922fcd1c90f9751dbf10515d",
+      "bytes": 18620
+    },
+    "references/02-craft-methods/craft-floor.md": {
+      "sha256": "ecc0b9ff2e7804b570d1baf20e9d4dcbeb5a459812e6888554fee98a38898aa5",
+      "bytes": 17510
+    },
+    "references/02-craft-methods/data-information.md": {
+      "sha256": "7d9022c9fa723625bd3d91fa65f784ec5816b9c04a7ad243fe58f6c55c7affeb",
+      "bytes": 9389
+    },
+    "references/02-craft-methods/form-ergonomics.md": {
+      "sha256": "7def573942cc659773620eef9fb2e66c8c7e2b058e686ad15f91d082f71061a4",
+      "bytes": 6565
+    },
+    "references/02-craft-methods/ia-interaction.md": {
+      "sha256": "0fe2b1856906e4c8fad86ea584baddc4a7c2c7ed37934d1cdd3fc11745f39012",
+      "bytes": 14228
+    },
+    "references/02-craft-methods/interaction-power.md": {
+      "sha256": "e29a45dd1e5c90b0cead97470b61cb2534724758906adf7c1f22e35c114ed604",
+      "bytes": 49039
+    },
+    "references/02-craft-methods/mobile-ux.md": {
+      "sha256": "9e41629c79643a7ece0e2aa73bbbbc5084a6375b4be2eae2b363e19fec147963",
+      "bytes": 5209
+    },
+    "references/02-craft-methods/modern-platform.md": {
+      "sha256": "d6e9d4f8ddfbf6d8cec4fe17847e5130a4523f13edb35299573d41dfa1539d4c",
+      "bytes": 6267
+    },
+    "references/02-craft-methods/modern-style-vocabulary.md": {
+      "sha256": "e44eed41879ff1560b8349b77760ee98ed0a6e1558389178cea9285061025a18",
+      "bytes": 10754
+    },
+    "references/02-craft-methods/resilience-trust.md": {
+      "sha256": "99348791610f25d66449d773034eb2f2f386eba106d84a4c2f8429beb5778a67",
+      "bytes": 22979
+    },
+    "references/02-craft-methods/visual-craft.md": {
+      "sha256": "f3bbb8764c9247002ece48d4e47f389a52d987031a568ad86d06310ba9c75449",
+      "bytes": 57701
+    },
+    "references/03-verification/lean-delivery-rules.md": {
+      "sha256": "c2a485b14d1171bc8d681afe3a2f75c232a471fbe613a235d8b62dc8d9e20fad",
+      "bytes": 24655
+    },
+    "references/03-verification/quality-floor.md": {
+      "sha256": "d7564fa6afadef6ee745d793bcb9a43a04504c22db5aeb2b12771d716729cd8d",
+      "bytes": 15310
+    },
+    "references/04-governance/artifact-lifecycle.md": {
+      "sha256": "3a0a3a343aed5ec870e91bbac13406a13979f729d3c7efa9098b571dca9a0b8c",
+      "bytes": 12262
+    },
+    "references/04-governance/design-record.md": {
+      "sha256": "6c6de0e06e227f3059efe7246698db779858c00bea668a9e88666074e96d104f",
+      "bytes": 5308
+    },
+    "references/04-governance/discussion.md": {
+      "sha256": "360c3ea9047785551b768323d2e3646f191ca248f2654e881b60b5a2b22682e3",
+      "bytes": 11206
+    },
+    "references/04-governance/execution-boundary.md": {
+      "sha256": "adbbe1901ecb916eaa7a70b67aea8380d7b548b546e15414b056826d15d2b2da",
+      "bytes": 6227
+    },
+    "references/04-governance/handoff.md": {
+      "sha256": "43710e98b1d5f28e182a46fe2f7568a2f63634ec19dd714348cba7b32f92317c",
+      "bytes": 15623
+    },
+    "references/04-governance/helper-quick-reference.md": {
+      "sha256": "5376f3dd0146eb99a3b12c162004c7bff0af972bebcbf33dcb01eaa9c511a964",
+      "bytes": 3456
+    },
+    "references/04-governance/interpretation-rules.md": {
+      "sha256": "fa51a724031e4dd8eee9328c68e54a0bfe7306d9bfa56a21f974c53a41df5b92",
+      "bytes": 7650
+    },
+    "references/04-governance/machine-contract.md": {
+      "sha256": "512e05df9066002e8c2f8e2a08ba403601d864988d292ae38ee94fceb387dafe",
+      "bytes": 8138
+    },
+    "references/04-governance/usage.md": {
+      "sha256": "dcef121fe70052ec111c0dd19e17d2fd2bd625a940f59397b2f8f0132e126276",
+      "bytes": 10255
+    },
+    "references/05-benchmarks/reference-set.md": {
+      "sha256": "52b38b83af2702cc25801f76d4c4300fabd382e291eed9fc93a9a1ef46f18083",
+      "bytes": 6932
+    },
+    "references/core-kernel.md": {
+      "sha256": "86c9a3e425a29ca4cf6954d7b0dd0facd143f01f35ae25d20ce8d73daab32180",
+      "bytes": 9469
+    },
+    "references/core-workflow.md": {
+      "sha256": "f032e3520601b8b6873edc766a6b37b6c4a178448cd0e0199cdacf4b144071c7",
+      "bytes": 297
+    },
+    "references/dialectic/01-metaphor-benchmark.md": {
+      "sha256": "ab056707f5182f33bad457029f903cdf59c97fc7924912525baedcc333c8968c",
+      "bytes": 11346
+    },
+    "references/dialectic/02-topology-scaffolding.md": {
+      "sha256": "f416111dd6b069b38862a221b9d158efdb7a7accf83e75d6f0d812220c283040",
+      "bytes": 5662
+    },
+    "references/dialectic/03-sensory-kinetic.md": {
+      "sha256": "3e1c2ef5894b5c3cca710ac2f813c9e06bc963eed1d7d16be82efab9446cdf4b",
+      "bytes": 3724
+    },
+    "references/dialectic/04-falsification-compile.md": {
+      "sha256": "d15820a008958cc2f95f59c7a0c741ee096efa214325a6bc97658b1c32dc0001",
+      "bytes": 5092
+    },
+    "references/operators.md": {
+      "sha256": "f0911bde60cb3e7661c2440018fe575e8ec3333242d56db7fb2d437bb08dc7b9",
+      "bytes": 7807
+    },
+    "references/spec-md-contract.md": {
+      "sha256": "82c89c9950cda30c3d3eb8f942f876dfd95aa0bedb48bb10c2bbe206665041bc",
+      "bytes": 10139
+    },
+    "references/stages/stage-0-explore.md": {
+      "sha256": "2ebd760bab3f0690c224d6891f0ccbcf09628a8a9eb4b8ceb19963ceb62270d7",
+      "bytes": 3634
+    },
+    "references/stages/stage-1-frame.md": {
+      "sha256": "35b39450b3e878de7f74b43987e35f941beae231739c675a9855a2f830dee863",
+      "bytes": 22293
+    },
+    "references/stages/stage-2-probe.md": {
+      "sha256": "71c86e6bb0f99a184186a23de626484e38a7f746fc723140f5d9fa5295c65670",
+      "bytes": 14876
+    },
+    "references/stages/stage-3-skeleton.md": {
+      "sha256": "77bdd015949c6f8c65bf93d1779acca107a27e9322d618ab88f50bc3d8c32a0b",
+      "bytes": 14537
+    },
+    "references/stages/stage-4-audit.md": {
+      "sha256": "83464967c5e5355c3fa0bb78a4b3d86b952dc6a1e1c50787585f9ff8cd09014c",
+      "bytes": 20683
+    },
+    "references/stages/stage-5-freeze.md": {
+      "sha256": "eec4f2199f31c5adf2b36ba2f7f910a1e48b9393a1da13b6d0d94612f4c489c6",
+      "bytes": 6310
+    },
+    "templates/briefs/_slice.md": {
+      "sha256": "95421f5d8e941260a4f35db663f086e91e54f0a6a31a3c178a9a6d93a93c68a5",
+      "bytes": 3204
+    },
+    "templates/discussion-seam.md": {
+      "sha256": "5cc44a1a7a37b3c78e2ba451a118ff234f44243e1e8934378a375832d84f4605",
+      "bytes": 1589
+    },
+    "templates/discussion.md": {
+      "sha256": "0d48973b493d583e2a3a0b5e96a03c32a3c8941bc2dfaf535fe46a3e787863ae",
+      "bytes": 20951
+    },
+    "templates/prototype-evidence.md": {
+      "sha256": "53a6ed2161ebbff237d4556f139babcd9a764425c2d191e0bc057d80443a2d56",
+      "bytes": 5520
+    },
+    "templates/prototype-review.md": {
+      "sha256": "e39a0f48bdf87b71e18b6acaec9adaec9f7072148de89ca0f732214a21ccec72",
+      "bytes": 5460
+    },
+    "templates/prototype-specification.md": {
+      "sha256": "d2d5fd8a388d67240a26ef493a289f84fa80cfe37c106be2f4b4ef0ab9f7b1eb",
+      "bytes": 9232
+    },
+    "templates/truth.md": {
+      "sha256": "304b4fcada91a61f2ff792101e76d262d7a0dd8337158986ae89f8d513fa68cc",
+      "bytes": 3988
+    },
+    "templates/world.md": {
+      "sha256": "8d1c1ecd3a2215ad614e10dadce658998a9ae45ad7609db1b978ce3eac0385f4",
+      "bytes": 3952
+    },
+    "templates/world.tokens.example.md": {
+      "sha256": "d32ac9e17b511037e66053e753e98959f980fc06322959d0e4da86612c560e65",
+      "bytes": 3662
+    },
+    "agents/openai.yaml": {
+      "sha256": "d3d1d85e0bda87880bb550c395cedcf0966e86894a55e2c2b504e328a1bf4b6c",
+      "bytes": 287
+    },
+    "evals/cases/confirmed-resume.yaml": {
+      "sha256": "43cbcebc77ece41589fbcd8b93131547c0061c91208be876966a53b7eef73a4a",
+      "bytes": 1117
+    },
+    "evals/cases/high-frequency-editor.yaml": {
+      "sha256": "f1f93877ea59c40d6de18f3338fdeedb8e7c63a2b767206c2b33a637524d6dc8",
+      "bytes": 1025
+    },
+    "evals/cases/ia-choice-continue.yaml": {
+      "sha256": "acacebabdedc9ddbbe93e88abcc69062749de16615abf93eba1a48d35cf603ed",
+      "bytes": 1059
+    },
+    "evals/cases/ia-only.yaml": {
+      "sha256": "392fd0592684f48e95873573054dfecc8bc65392d427c9d030bb41a0002533f5",
+      "bytes": 675
+    },
+    "evals/cases/legacy-assets.yaml": {
+      "sha256": "c104a173266bad8a1c20320e5058eec15ffeb0b99280648efcdd691687d6aee3",
+      "bytes": 729
+    },
+    "evals/cases/long-form-reader.yaml": {
+      "sha256": "85fb1c3f808e76066f63efca4cddfe14fe7ac02a87046b470cfbd6a7fabeb908",
+      "bytes": 811
+    },
+    "evals/cases/mobile-field-app.yaml": {
+      "sha256": "3de2f1c7c4338b1752254f2d3b11ef8836746ba6a4b80f22918df6c4e86b9929",
+      "bytes": 1108
+    },
+    "evals/cases/novel-coordination.yaml": {
+      "sha256": "0bebf0af000c757b3b6e85cf00fdaeaceb0be9079bbd2c51e9cd03a2734aa38f",
+      "bytes": 922
+    },
+    "evals/cases/scoped-feedback.yaml": {
+      "sha256": "88fbc0cfa9ec7c0fd6ca9ec86805e86e5526c34ca2dfb7333e1517640ae5dabd",
+      "bytes": 1258
+    },
+    "evals/eval.yaml": {
+      "sha256": "b14608ecbec4eeb1c092c1a9439691320345df45d88119e53362665fe7a911fa",
+      "bytes": 1207
+    },
+    "methods/registry.yaml": {
+      "sha256": "6ae93bb0c6782c25e08b222e1652edd038d8fb5f179dec18abe025b867c4fa8b",
+      "bytes": 9421
+    },
+    "schemas/intent.v1.json": {
+      "sha256": "a56bcedd32e5ce09b1fa435f0ce2953972e900968a2fb6258cbc73a050ab13fe",
+      "bytes": 2165
+    },
+    "schemas/prototype-spec.v1.json": {
+      "sha256": "21f3e57ef5ba917585dee45872695909087acd17a4556e4cc81387341a1ee90c",
+      "bytes": 12990
+    },
+    "templates/intent.json": {
+      "sha256": "bdf74ce61fa143155ef256bf41980b8d8b742eed6c95480c0a3e9d4e41eb08c9",
+      "bytes": 272
+    }
+  }
+}

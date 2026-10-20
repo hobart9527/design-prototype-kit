@@ -40,30 +40,28 @@ def _call_timeout(call_index: int, remaining: float, total: float) -> tuple[int,
 
 
 def _resume_next_action(workspace: Path) -> str:
-    """The agent's own recorded Next action, read from its Resume block.
-
-    Layered layouts keep it in discussion-seam.md; the single-record layout in
-    discussion.md. Returns "" when no Resume block exists yet (Turn 1 cut
-    before the seam was written).
-    """
+    """The agent's own recorded Next action, read from its Resume block."""
     proto = workspace / "prototype"
-    for name in ("discussion-seam.md", "discussion.md"):
+    for name in ("truth.md", "discussion.md"):
         path = proto / name
         if not path.is_file():
             continue
         try:
-            text = path.read_text(encoding="utf-8")
+            lines = path.read_text(encoding="utf-8").splitlines()
         except OSError:
             continue
-        for line in text.splitlines():
-            if "next action" in line.lower():
+        in_resume = False
+        for line in lines:
+            if line.startswith("## "):
+                in_resume = line[3:].strip().lower() == "resume"
+            elif in_resume and "next action" in line.lower():
                 return line.lstrip("-* ").strip()[:300]
     return ""
 
 
 def _auto_continue_prompt(workspace: Path | None = None) -> str:
     hint = _resume_next_action(workspace) if workspace else ""
-    base = "继续。从 prototype/discussion.md 的 Resume 块的 Next action 继续执行，不要重新规划已完成的部分。"
+    base = "继续。从设计记录的 Resume 块的 Next action 继续执行，不要重新规划已完成的部分。"
     return f"{base}（Resume 记录：{hint}）" if hint else base
 
 

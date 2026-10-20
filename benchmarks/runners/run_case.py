@@ -10,6 +10,7 @@ unmeasured dimension into a pass.
 from __future__ import annotations
 
 import argparse
+import os
 import pathlib
 import sys
 import traceback
@@ -379,7 +380,11 @@ def main() -> int:
     parser.add_argument("--open", action="store_true",
                         help="automatically open the review portal / prototype in browser upon completion")
     parser.add_argument("--out", default=None)
+    parser.add_argument("--baseline-tag", default=None,
+                        help="frozen stable_skill source tag (default: v10.2.1-stable)")
     args = parser.parse_args()
+    if args.baseline_tag:
+        os.environ["BENCH_BASELINE_TAG"] = args.baseline_tag
     result = run_one(args.case, args.variant, args.repeat, pathlib.Path(args.matrix_dir), model=args.model,
                      max_turns=args.max_turns, timeout_s=args.timeout, budget_usd=args.budget_usd,
                      do_task_trace=args.task_trace, max_task_steps=args.max_task_steps, do_visual=args.visual,

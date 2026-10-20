@@ -261,7 +261,16 @@ def require_complete_skill(skill_root, origin: str,
                            f"missing {', '.join(gaps)}")
 
 
-def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
+def baseline_tag() -> str:
+    """The control baseline this process compares against.
+
+    Defaults to the frozen stable tag; BENCH_BASELINE_TAG points a matrix at a
+    different control (for example a pre-change revision) without editing code,
+    and every runner records the tag it actually used.
+    """
+    return os.environ.get("BENCH_BASELINE_TAG") or STABLE_TAG
+
+def ensure_baseline(tag: str | None = None) -> pathlib.Path:
     """Restore a frozen baseline's file tree on demand, verifying it against MANIFEST.json.
 
     The baseline tree is derived data: MANIFEST.json pins the commit it was frozen at and
@@ -269,6 +278,7 @@ def ensure_baseline(tag: str = STABLE_TAG) -> pathlib.Path:
     rebuilt from that commit when absent. A tag whose content no longer matches the manifest
     is refused rather than silently used as a control condition.
     """
+    tag = tag or baseline_tag()
     base = BASELINES_DIR / tag
     if not (base / "MANIFEST.json").is_file():
         raise BenchBlocked(f"baseline {tag}: no MANIFEST.json at {base}, cannot restore a control tree")
@@ -321,7 +331,7 @@ def variant_sources(variant: str) -> dict:
     if variant == "no_skill":
         return {"skill": None, "agents": None}
     if variant == "stable_skill":
-        base = ensure_baseline()
+        base = ensure_baseline(baseline_tag())
         return {"skill": base / "skills/spec-prototype", "agents": base / "agents"}
     if variant == "candidate_skill":
         require_complete_skill(ROOT / "skills/spec-prototype", "candidate_skill")

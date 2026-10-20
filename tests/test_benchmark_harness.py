@@ -553,6 +553,17 @@ def test_no_skill_variant_resolves_without_a_skill():
     assert bl.variant_sources("no_skill") == {"skill": None, "agents": None}
 
 
+def test_baseline_tag_is_stable_by_default_and_overridable(tmp_path, monkeypatch):
+    monkeypatch.delenv("BENCH_BASELINE_TAG", raising=False)
+    assert bl.baseline_tag() == bl.STABLE_TAG
+    monkeypatch.setenv("BENCH_BASELINE_TAG", "pre-four-knives")
+    assert bl.baseline_tag() == "pre-four-knives"
+    monkeypatch.setattr(bl, "BASELINES_DIR", tmp_path)
+    with pytest.raises(bl.BenchBlocked) as excinfo:
+        bl.ensure_baseline()
+    assert "pre-four-knives" in str(excinfo.value), "the selected tag must be the one restored"
+
+
 def test_frozen_baseline_restores_from_its_recorded_rev(tmp_path, monkeypatch):
     """The baseline tree is git-ignored derived data: it must rebuild, verified, from MANIFEST.json."""
     base = bl.BASELINES_DIR / bl.STABLE_TAG
@@ -818,6 +829,25 @@ def test_auto_continue_carries_the_agents_recorded_next_action(tmp_path):
     prompt = run_claude_session._auto_continue_prompt(tmp_path)
     assert "进入 Make 写 tokens.css" in prompt
     assert run_claude_session._auto_continue_prompt(tmp_path / "none").startswith("继续。")
+
+
+def test_layered_auto_continue_reads_next_action_only_from_truth_resume(tmp_path):
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    (proto / "truth.md").write_text(
+        "## Decisions\n- Next action: ignore this\n\n## Resume\n"
+        "- Next action and its prerequisite: 继续校准 hero\n")
+    prompt = run_claude_session._auto_continue_prompt(tmp_path)
+    assert "继续校准 hero" in prompt
+    assert "ignore this" not in prompt
+    assert "discussion.md" not in prompt
+
+
+def test_layered_auto_continue_ignores_next_action_outside_resume(tmp_path):
+    proto = tmp_path / "prototype"
+    proto.mkdir()
+    (proto / "truth.md").write_text("## Decisions\n- Next action: not a resume action\n")
+    assert run_claude_session._resume_next_action(tmp_path) == ""
 
 
 def test_iteration_rollup_reports_input_and_cache_usage(tmp_path):

@@ -8,23 +8,15 @@ the control condition is unchanged).
 from __future__ import annotations
 
 import argparse
+import io
 import shutil
 import subprocess
 import sys
+import tarfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bench_lib as bl  # noqa: E402
-
-IGNORE = shutil.ignore_patterns("__pycache__", ".pytest_cache", "*.pyc", "node_modules")
-
-
-def git_rev() -> str:
-    try:
-        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=bl.ROOT, capture_output=True,
-                              text=True, timeout=30).stdout.strip() or "unknown"
-    except Exception:
-        return "unknown"
 
 
 def uncommitted(paths: list[str]) -> list[str]:
@@ -41,6 +33,7 @@ def uncommitted(paths: list[str]) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tag", default=bl.STABLE_TAG)
+    parser.add_argument("--rev", default="HEAD", help="Git revision to freeze (default: HEAD)")
     parser.add_argument("--force", action="store_true", help="replace an existing tag (breaks comparability)")
     args = parser.parse_args()
 
@@ -48,21 +41,33 @@ def main() -> int:
     if dest.exists() and not args.force:
         print(f"BLOCKED baseline already frozen: {dest}")
         return 2
-    dirty = uncommitted(["skills/spec-prototype", "agents"])
-    if dirty and not args.force:
-        print(f"BLOCKED working tree is dirty for {len(dirty)} path(s); the recorded git_rev "
-              f"would not reproduce this baseline. Commit first, or pass --force to freeze a "
-              f"baseline that cannot be restored.\n  " + "\n  ".join(dirty[:5]))
+    try:
+        rev = subprocess.run(["git", "rev-parse", "--verify", f"{args.rev}^{{commit}}"],
+                             cwd=bl.ROOT, capture_output=True, text=True, check=True, timeout=30).stdout.strip()
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        print(f"BLOCKED revision is not a commit: {args.rev}")
         return 2
+    if args.rev == "HEAD":
+        dirty = uncommitted(["skills/spec-prototype", "agents"])
+        if dirty and not args.force:
+            print(f"BLOCKED working tree is dirty for {len(dirty)} path(s); the recorded git_rev "
+                  f"would not reproduce this baseline. Commit first, or pass --force to freeze a "
+                  f"baseline that cannot be restored.\n  " + "\n  ".join(dirty[:5]))
+            return 2
 
+    archive = subprocess.run(["git", "archive", rev, "--format=tar", "skills/spec-prototype", "agents"],
+                             cwd=bl.ROOT, capture_output=True)
+    if archive.returncode:
+        print(f"BLOCKED git archive {rev[:12]} failed: {archive.stderr.decode(errors='replace')[:200]}")
+        return 2
     if dest.exists():
         shutil.rmtree(dest)
-
-    shutil.copytree(bl.ROOT / "skills" / "spec-prototype", dest / "skills" / "spec-prototype", ignore=IGNORE)
-    shutil.copytree(bl.ROOT / "agents", dest / "agents", ignore=IGNORE)
+    dest.mkdir(parents=True)
+    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as tf:
+        tf.extractall(dest, filter="data")
     manifest = {
         "tag": args.tag,
-        "git_rev": git_rev(),
+        "git_rev": rev,
         "frozen_at": bl.now_stamp(),
         "skill_files": len(list((dest / "skills" / "spec-prototype").rglob("*"))),
         "hashes": bl.hash_tree(dest / "skills" / "spec-prototype", patterns=("*.py", "*.mjs", "*.js", "*.md", "*.yaml", "*.json")),
