@@ -1583,10 +1583,10 @@ def compile_canonical_ir(
                 "key": "physical_anchor",
                 "label": "物理锚点 (physical_anchor)",
                 "section": "Stage 1 §2 (Physical Anchor Declaration)",
-                "form": "- Physical Anchor: <declared chassis or none>",
-                "example": "- Physical Anchor: desktop workstation",
+                "form": "- Physical Anchor: <domain physical object/room/procedure, or none — reason>",
+                "example": "- Physical Anchor: short-haul flight deck: two operator positions, instrument clusters in sightline sectors",
             }],
-            header="Stage 2 原型入口被阻断：discussion.md 必须显式声明 Physical Anchor；无设备锚点时填写 none。",
+            header="Stage 2 原型入口被阻断：discussion.md 必须显式声明 Physical Anchor（领域物理机制或设备底盘均可）；无锚点时填写 none。",
         )
 
     if required_tier == "execution_spec" and spec_tier != "execution_spec":

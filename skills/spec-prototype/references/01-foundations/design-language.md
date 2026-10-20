@@ -129,7 +129,9 @@ references name a block or link here; none restate the block list as a second de
 
 When a direction is locked, publish it as a **Direction Contract** — the chain above
 compressed to what a reader can *see* on a screen. Author it under a
-`## Direction Contract` heading in `prototype/discussion.md`, in six labelled blocks.
+`## Direction Contract` heading in the record's shared visual world — the
+**Visual world** zone of `prototype/discussion.md`, or the same section in
+`prototype/world.md` on the layered layout — in six labelled blocks.
 The contract is a projection of the chain, not a second proposition: every block cites
 the chain step it compresses, and no block may introduce a claim the chain does not carry.
 
@@ -147,6 +149,14 @@ and *7 · falsification and transfer test*. They are accounting and a test, not 
 a viewer sees, so they stay in the record beside the contract. Their absence from the
 contract is not permission to skip them — a direction locked without its accounting and
 its falsification test is not locked.
+
+One further line is recorded beside the contract, also not a block: the
+**Signature Moment** — the single interaction the product exists to prove, named so
+one reader and a later reviewer mean the same screen when they say it. Write it as
+`- Signature Moment: <the moment> — carries <Observed Mechanism from the Physical Anchor>`,
+or `- Signature Moment: none — <why the task needs no distinctive moment>`. It is the
+target Stage 4's Signature probe checks; without it that check has nothing to compare
+against, and a `none` is an answer, not a gap.
 
 The contract is checked against the built artifact, block by block. A block that is
 declared here and absent in the render is a finding; a block that is absent here cannot
@@ -192,13 +202,38 @@ Do not force products into pre-packaged aesthetic archetypes or imitate generic 
 
 Apply whichever dimensions genuinely reduce uncertainty for this product. Multiple dimensions may combine; none is mandatory. Real-World Mapping is optional when no reference improves the design decision — record `not needed` rather than fabricating a precedent.
 
+#### From an observed mechanism to a compiled token
+
+When a dimension does become load-bearing, derive rather than borrow. The chain has
+five steps and stops at the evidence:
+
+1. **Mechanism** — what the anchor physically does (a detent holds until pressure
+   passes a threshold; a lens bezel occludes at the rim).
+2. **Observable property** — the sensorily checkable quantity it implies (travel,
+   dwell, damping, occlusion order, spacing rhythm, contrast falloff).
+3. **Token role** — which compiled token or authored custom property carries that
+   quantity: an axis pair drives the generated set (`density` → spacing and radius,
+   `energy` → duration and easing, `rhythm` → pacing scale, `materiality` → type and
+   surface, `character` → typographic tone), while a quantity no axis covers is
+   authored under `## Proposed` as a named custom property.
+4. **Value from product evidence** — the number comes from the anchor, the domain's
+   tempo, or a measured constraint; it is never a default lifted from a pattern
+   library. A value written here without a cited source is a guess wearing a token.
+5. **Falsifier** — the observation at Stage 4 that would show the translation failed:
+   a commit that gives no perceptible travel, a rhythm the operator's cadence
+   outruns, an occlusion that hides the value it was meant to frame.
+
+Steps 1–3 are authored before the anchor is built; step 5 is checked after. Values
+in this derivation are product-specific by construction — a worked example is a
+shape to reason from, never a lookup number to copy.
+
 ### Aesthetic Courage and Anti-Banal Self-Questioning
 
 Do not retreat into generic, risk-averse safe designs that lack character. Before freezing an expressive direction, challenge the composition with four critical self-inquiries:
 - **Default Check**: Did this direction choose its palette, typography, and density because of the product thesis, or simply because it is the standard safe template of popular component libraries?
 - **Signature Stance**: If all brand logos and product titles were removed, does this surface still possess an unmistakable visual voice and interaction rhythm that distinguishes it from competitor tools?
 - **Restraint vs Emptiness**: Is the negative space an active compositional pause (tempo) that frames critical data, or an unintended vacuum resulting from missing context?
-- **Expressive Tension**: Where does the design take its deliberate creative risk (e.g. bold scale jumps, non-standard layout grid, tactile tactile borders)? A design with zero aesthetic courage is a mediocre tool.
+- **Expressive Tension**: Where does the design take its deliberate creative risk (e.g. bold scale jumps, non-standard layout grid, tactile borders)? A design with zero aesthetic courage is a mediocre tool.
 
 ### Real-Content Adaptation and Visual Editing Stress Tests
 

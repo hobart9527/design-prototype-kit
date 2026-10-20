@@ -13,6 +13,11 @@ these three; it carries no decisions of its own.
 
 ## Problem Framing & Drivers
 
+- **Physical Anchor**: `<the domain's physical object, room or procedure, or none — reason>`
+  Name the real-world object or procedure a practitioner actually works with,
+  its mechanism, and what must not transfer. Required for Stage 2 admission;
+  its content guides spatial logic and is never scored. Device chassis belongs
+  in FORM and `contract:viewports`, not here.
 - **Core Tension**: `<A>` vs `<B>` — the authentic trade-off that drives the
   design. A default fallback tension is a defect; cite what makes it true here.
 - **Design Driver**: `tension` | `failure_mode`

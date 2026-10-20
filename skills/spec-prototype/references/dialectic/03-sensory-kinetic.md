@@ -8,11 +8,12 @@
 - This topic is selectable, not sequenced: enter it when Materiality or Energy
   is the active uncertainty, regardless of which other topics have settled.
 - Ground material substrate and kinetic response in whatever decisions the
-  product has actually settled; a physical metaphor is an optional anchor.
+  product has actually settled; the physical anchor is declared (or `none` with
+  a reason), while the metaphor built on it stays optional.
 
 ## 2. Material Substrate & Atmospheric Undertone (5-Axis: Materiality)
 When entered, project tangible sensory moodboards with exact chromatic undertones.
-Moodboards and metaphors are optional anchors: record each one's explicit
+Moodboards and metaphors are optional: record each one's explicit
 Transfer (what carries into the digital medium) / Non-transfer (what is refused)
 boundary. The two substrates below are **worked examples of the format only** — their
 hex values are not defaults, and a direction that lands on either one without product

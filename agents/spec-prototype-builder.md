@@ -105,39 +105,50 @@ list in `references/02-craft-methods/craft-floor.md` rejects any of them applied
 without a reason.
 
 1. **Material, Borders & Depth**:
-   - Declare elevation once: a border or a shadow, not both. A 1px border under a
-     wide soft shadow is the ghost card, and it reads as neither.
+   - Which containment system this surface uses — hairline border, elevation, or
+     both — is decided by the direction's FINISH block, not by reflex. Declaring
+     both without the direction asking for it produces the ghost card, which reads
+     as neither.
    - Where a border is the chosen system, a translucent hairline
      (`1px solid rgba(255,255,255,0.08)` on dark, `rgba(0,0,0,0.08)` on light)
      often beats an opaque `#ccc`/`#333` rule; where shadow is the chosen system,
      pair a tight contact shadow with soft ambient falloff and skip the border.
    - Frosted overlays (`backdrop-filter`) are a specific effect, not decoration.
 2. **Typographic Rhythm & Number Stability**:
-   - Modern font stack: default to `-apple-system, BlinkMacSystemFont, "Inter", "Geist", "Segoe UI", sans-serif` with `-webkit-font-smoothing: antialiased`.
-   - Tight scale, strong contrast: keep type scales restrained (11-12px badges/meta, 13-14px primary body, 15-18px section titles, 20-24px hero headers); create hierarchy through weight (`500`/`600`) and opacity contrast (`rgba(..., 0.9)` vs `rgba(..., 0.45)`).
-   - Numerical data, metrics, telemetry, and timestamps MUST declare `font-variant-numeric: tabular-nums` (or `font-feature-settings: "tnum"`).
+   - Consume the compiled type tokens: `--font-display`, `--font-sans`, `--font-mono`
+     (the `materiality` axis picks the stack; an authored `--font-*` under
+     `## Proposed` overrides it). Do not hard-code a font stack into the artifact —
+     the compiled token is the one place a face is chosen.
+   - Tight scale, strong contrast: create hierarchy through weight (`500`/`600`) and
+     opacity contrast (`rgba(..., 0.9)` vs `rgba(..., 0.45)`) over a restrained scale.
+     The scale itself follows the `density` and `character` axes as compiled, not a
+     fixed pixel ladder.
+   - Numerical data, metrics, telemetry, and timestamps declare the
+     `CRAFT-TABULAR-NUMS` floor (see `craft-floor.md`).
    - Theme the browser surfaces: selection, caret, scrollbars, focus rings.
 3. **Kinetic Affordance & Physical Interaction**:
-   - Natural damping curves: avoid linear ease. Use spring/deceleration transitions (e.g. `transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease`).
-   - Micro-affordance on `:active`: commit controls yield on press with a
-     perceptible detent, authored per surface and consumed from the compiled
-     token (`transform: scale(var(--press-scale))`), never copied as a house number.
+   - Motion comes from the compiled motion tokens (`--duration-*`, `--ease-*`,
+     `--press-scale`), which the `energy` and `rhythm` axes generate. A hand-written
+     curve that bypasses them is a second motion language.
+   - `:active` press feedback is the `CRAFT-PRESS-DETENT` floor: consumed from the
+     compiled token, authored per surface, never copied as a house number.
    - Motion safety: wrap all kinetic transitions in `@media (prefers-reduced-motion: no-preference)`.
-4. **The 70/30 Innovation Balance** (a heuristic budget, not a quota — the slice's core
-   tension decides the split; see SKILL.md):
-   - Familiarity: keep spatial layout, navigation flows, and standard trigger positions intuitive and predictable.
-   - Signature Moment: spend creative craft budget on the Core Tension's signature interaction (e.g. tactile emergency freeze detent, fluid timeline scrub, layered live diff).
+4. **Signature budget**: the Direction Contract's Signature Moment is where the
+   creative craft budget goes; the rest of the surface stays conventional. The
+   split is a judgment the slice's core tension decides — see the Mode table in
+   `stage-1-frame.md` — never a fixed ratio applied to every product.
 
 Choose typography, density, color, spacing, material, and motion as one coherent
 system. Use the provided tokens and preserve open design space. Do not treat the Five
 Axes or craft declarations as a recipe table. A restrained or familiar result may be
 high craft when it fits the product; novelty earns its place through task value.
 
-Apply the hard floors only where relevant: commit controls have visible `:active`
-feedback; nested rounded surfaces use `R_inner = max(0, R_outer - P)`; aligned or
-changing numeric values use `font-variant-numeric: tabular-nums`; and touch controls
-provide at least 44×44px hit areas in touch contexts. Honor `prefers-reduced-motion`
-when adding motion. A visual preference is not a hard floor.
+Hard floors are owned by `references/02-craft-methods/craft-floor.md` and named
+here by id only — read the rule there: `CRAFT-PRESS-DETENT`,
+`CRAFT-CONCENTRIC-RADII`, `CRAFT-TABULAR-NUMS`, `CRAFT-TOUCH-TARGET` (44×44px in
+touch contexts), and `CRAFT-ACTION-FEEDBACK`. Honor `prefers-reduced-motion` when
+adding motion. A visual preference is not a hard floor; everything beyond these
+ids is open design space the direction earns.
 
 ## 2. Hard Execution Turn Budget & Single-Pass Write Invariant
 

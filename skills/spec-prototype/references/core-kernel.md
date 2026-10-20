@@ -122,6 +122,9 @@ request, or a local refinement does not trigger it. This is a Stage 1 decision,
 not an approval gate or a reason to extend discovery beyond the active uncertainty.
 Authentic reference products (e.g. Linear, Stripe, Raycast, Vercel) serve as
 empirical anchors for these coordinates, not visual templates to clone blindly.
+The words the token compiler actually maps per axis, and its fallback signal when a
+value misses, are tabulated in [`../templates/world.tokens.example.md`](../templates/world.tokens.example.md)
+Block 3 — read it before choosing an axis value.
 
 ## 6. Semantic Preservation and Coverage Selection
 

@@ -84,8 +84,10 @@ These are the professional-judgment viewpoints a reviewer applies; they sit
 beside the Nine Pillars, not in place of them. The Nine Pillars are the design
 ontology — what the design *is made of* — and live in `core-kernel.md` §5 and
 `01-foundations/design-methods.md`. The eight lenses below are the reviewer's
-*stances* — the directions from which the work is checked for completeness.
-They do not prescribe order, weight, page count, state count or style.
+*stances* — a compressed index of the fuller judgment model in
+[`03-verification/quality-floor.md`](references/03-verification/quality-floor.md),
+which owns the dimensions and their scoring discipline. They do not prescribe
+order, weight, page count, state count or style.
 
 1. Value and outcomes.
 2. Research and context.

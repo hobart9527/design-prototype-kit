@@ -35,9 +35,10 @@ decorate the interface.
   `physical_anchor: none — pure digital native product` and derive spatial
   logic directly from the object model and journey topology instead.
 
-**This step is not optional and not bypassed by time pressure.** A chassis
-or layout selected without a physical anchor or explicit `none` declaration
-is a template default, not a design decision.
+A declaration is required — the anchor, or an explicit `none` with a reason. It is
+scored for nothing: an anchor that is small or absent passes, and the mechanism it
+supplies is what later stages check the artifact against. The **metaphor** built on
+the anchor is optional; a proposition with no metaphor is not a defect.
 
 Generate 2–3 **structurally distinct** real-world mechanisms from the domain's own
 work — the room, tool, or procedure an expert would recognize — and derive the
@@ -101,7 +102,10 @@ the only gate, and it is checked on the two directions side by side.
    instrument, the ritual, the record — not from an aesthetic adjective. Each
    candidate names its world, its organising principle (what determines what goes
    where), and its native reading order. At least one candidate must come from a
-   world no other product in this category currently occupies.
+   world no other product in this category currently occupies. Three are generated
+   so the choice is real; the number **built** is governed by the divergence rule
+   in [`../core-kernel.md`](../core-kernel.md) §5 (at least two while the direction
+   is open, one when evidence has locked it).
 3. **Draw seeds — do not choose them.** The seed varies the *incidental* choices
    the design does not argue for — which face, which neutral temperature, which
    corner family. Two directions must not converge on the same incidental
@@ -188,7 +192,5 @@ the only gate, and it is checked on the two directions side by side.
    discarded; the non-selected work is where the compound interest sits.
 
 ## 5. Settlement
-Upon user selection, lock the primary metaphor (or its declared absence — a
-physical metaphor is an optional anchor with an explicit transfer / non-transfer
-boundary), core tension, and Character profile. This topic's settlement does not
-gate any other topic.
+Upon user selection, lock the primary metaphor (or its declared absence), core
+tension, and Character profile. The non-transfer boundary is recorded with it.

@@ -197,11 +197,17 @@ Axes are the one exception: account for all five, but a value is not owed where 
 product has not earned one — `open` with its reason is a complete entry. Keep the
 human brief about decisions; machine IR and CSS tokens are compiled outputs.
 
-## Physical Anchor Declaration (Optional Guidance)
+## Physical Anchor Declaration (Required, Not Scored)
 
-Declare the anticipated physical chassis or usage context in the design record if known (for example, `desktop workstation`, `mobile device`, or `physical_anchor: none`).
-This provides structural guidance for layout choices without acting as a blocking gate
-against beginning prototype exploration.
+Declare the domain's physical anchor in the design record as
+`- Physical Anchor: <object or procedure, its mechanism, its transfer boundary>`,
+or `- Physical Anchor: none — <reason>` when the product has no authentic one.
+The declaration is required for Stage 2 admission, but its content is guidance,
+not a quality gate: no anchor and a minimal anchor are both passable, and the
+Critic never scores anchor ambition. A device chassis (`desktop workstation`,
+`mobile device`) is not an anchor — it belongs in FORM and `contract:viewports`.
+The mechanism the anchor supplies is what the Direction Contract's Signature
+Moment must trace back to.
 
 ## Progressive Prototyping Without Pre-Spec Lock
 
@@ -232,7 +238,10 @@ execution tier (`execution_spec`) compiled during engineering handoff (Stage 5),
 and their complete schema is documented in
 [`../04-governance/machine-contract.md`](../04-governance/machine-contract.md).
 Stage 1 focuses solely on problem framing, polarized divergence directions, the
-Decisions and authority table, and Five Axes calibration.
+Decisions and authority table, the Direction Contract (six blocks plus the
+Signature Moment line, authored per
+[`../01-foundations/design-language.md`](../01-foundations/design-language.md)),
+and Five Axes calibration.
 
 ## Exit
 

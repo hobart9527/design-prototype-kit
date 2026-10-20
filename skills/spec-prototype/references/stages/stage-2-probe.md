@@ -44,8 +44,9 @@ A reference-derived mechanism is optional when the brief already supplies a stro
 visual language or the task is a local repair. Do not multiply directions merely to
 show technique; compare only when the choice can change the design.
 
-Physical anchors (e.g. cockpit, workbench, paper codex) serve as optional structural
-analogies where helpful, but are never forced upon digital-native products.
+The physical anchor is declared in the record (or `none` with a reason) and its
+mechanism constrains both directions; the metaphor drawn from it is optional
+(e.g. cockpit, workbench, paper codex), never forced on a digital-native product.
 
 ## Direct Materialization & Multi-Direction Exploration
 

@@ -12,6 +12,10 @@ this file cites it and never restates its numbers.
 Checks on the built result, not on intentions. Run them together in the batched
 inspection pass, not as separate screenshot trips.
 
+**The floor** — a violation here is a defect. **Advisory techniques** — a
+direction-selected technique, listed separately below because choosing not to use
+one is not a defect. Both carry ids; only the floor's ids are hard.
+
 - **Press feedback** `CRAFT-PRESS-DETENT`: every commit control (submit, confirm,
   apply, destructive action) shows a perceptible `:active` change. Plain links and
   pure navigation are out of scope. The value is authored per surface, never copied
@@ -31,15 +35,6 @@ inspection pass, not as separate screenshot trips.
   [`../03-verification/lean-delivery-rules.md`](../03-verification/lean-delivery-rules.md)
   § Interactive Ergonomics; apply it here. The floor reads: consequence visible before
   commit, immediate state feedback after commit, and a reachable recovery or safe exit.
-- **Surface optics and top sheen** `CRAFT-SURFACE-SHEEN`: use hairline highlights
-  (`var(--surface-sheen)`) only when that optical character supports the committed
-  direction. Flat surfaces and border-only containment are equally valid.
-  Advisory — a technique the direction selects, not a universal floor.
-- **Kinetic physics** `CRAFT-KINETIC-SPRING`: choose motion from the task's precision
-  and the committed direction. Spring, easing, linear motion and instant changes
-  are legitimate choices; no spring token is required. Advisory — a technique the
-  direction selects, not a universal floor; the motion decision itself is owned by
-  [`interaction-power.md`](interaction-power.md).
 - **Browser surfaces** `CRAFT-SELECTION` `CRAFT-CARET` `CRAFT-SCROLLBAR`
   `CRAFT-FOCUS-RING`: the parts you did not draw still carry the design. Text
   selection, the caret (`caret-color`), custom scrollbars, focus rings, underline offset, and
@@ -80,18 +75,9 @@ inspection pass, not as separate screenshot trips.
   `assertive` for urgent) so assistive technology perceives the change. A
   progress bar the screen reader cannot hear is a state change that never
   happened for that user.
-- **Fluid type** `CRAFT-FLUID-TYPE`: display and body sizes scale with the
-  viewport through `clamp()` (or `min()`/`max()`), so the 390 and 1280 frames are
-  one type system rather than two hand-set tables. Advisory.
 - **Font loading** `CRAFT-FONT-LOADING`: a self-hosted `@font-face` carries a
   `font-display` strategy so a delayed or failed face never hides content. Not
   applicable when the design intentionally uses system fonts.
-- **Wrapping** `CRAFT-TEXT-WRAP`: headings carry `text-wrap: balance` and running
-  text `text-wrap: pretty`, so a heading does not strand a single word on its last
-  line. Advisory — a modern typographic floor, not a mandate to wrap differently.
-- **Dynamic viewport units** `CRAFT-VIEWPORT-UNITS`: a full-height layout measures
-  in `dvh`/`svh`/`lvh`, not `100vh`, so mobile browser chrome does not clip the
-  bottom of the surface. Advisory.
 - **View transitions** `CRAFT-VIEW-TRANSITION`: a `startViewTransition` pairs with
   a `prefers-reduced-motion` fallback that neutralizes the motion, exactly like any
   other transition. The state change is the contract; the cross-fade is the
@@ -104,20 +90,40 @@ inspection pass, not as separate screenshot trips.
 - **Haptic pairing** `CRAFT-HAPTIC-PAIRING`: a `navigator.vibrate` call pairs with
   a visual or ARIA channel carrying the same signal, so the feedback survives on a
   device that cannot vibrate. Not applicable when the surface does not vibrate.
-- **Token-only color** `CRAFT-TOKEN-ONLY`: component declarations reference design
-  tokens; a raw hex outside the token layer (`--*` custom-property declarations)
-  breaks the one-way inheritance from [`world.md`](../01-foundations/design-language.md).
-  Advisory, and the detector reads text only — a hex in a comment is noise, not a
-  violation to chase.
-- **Color scheme** `CRAFT-COLOR-SCHEME`: the chosen theme declares
-  `color-scheme` (light, dark, or both) so native controls, scrollbars and form
-  fields follow it. A dark surface with a white scrollbar reads as unfinished.
-  Advisory; a second theme is optional unless the brief asks for one.
-- **Loading state** `CRAFT-LOADING-STATE`: a region that loads or refreshes shows
-  a skeleton or `aria-busy="true"` rather than blank space. Advisory.
 - **Contextual metric** `CRAFT-CONTEXTUAL-METRIC`: a number on a surface carries a
   baseline, unit, delta, or sparkline. This is the id for the VPQ `data-craft`
   signal; it has no text detector.
+
+### Advisory techniques (direction-selected)
+
+Choosing not to use one of these is not a defect; misusing one is. They carry ids
+so a direction can adopt them by name.
+
+- **Surface optics and top sheen** `CRAFT-SURFACE-SHEEN`: use hairline highlights
+  (`var(--surface-sheen)`) only when that optical character supports the committed
+  direction. Flat surfaces and border-only containment are equally valid.
+- **Kinetic physics** `CRAFT-KINETIC-SPRING`: choose motion from the task's precision
+  and the committed direction. Spring, easing, linear motion and instant changes
+  are legitimate choices; no spring token is required. The motion decision itself is
+  owned by [`interaction-power.md`](interaction-power.md).
+- **Fluid type** `CRAFT-FLUID-TYPE`: display and body sizes scale with the
+  viewport through `clamp()` (or `min()`/`max()`), so the 390 and 1280 frames are
+  one type system rather than two hand-set tables.
+- **Wrapping** `CRAFT-TEXT-WRAP`: headings carry `text-wrap: balance` and running
+  text `text-wrap: pretty`, so a heading does not strand a single word on its last
+  line.
+- **Dynamic viewport units** `CRAFT-VIEWPORT-UNITS`: a full-height layout measures
+  in `dvh`/`svh`/`lvh`, not `100vh`, so mobile browser chrome does not clip the
+  bottom of the surface.
+- **Token-only color** `CRAFT-TOKEN-ONLY`: component declarations reference design
+  tokens; a raw hex outside the token layer (`--*` custom-property declarations)
+  breaks the one-way inheritance from [`world.md`](../01-foundations/design-language.md).
+  The detector reads text only — a hex in a comment is noise, not a violation to chase.
+- **Color scheme** `CRAFT-COLOR-SCHEME`: the chosen theme declares
+  `color-scheme` (light, dark, or both) so native controls, scrollbars and form
+  fields follow it. A dark surface with a white scrollbar reads as unfinished.
+- **Loading state** `CRAFT-LOADING-STATE`: a region that loads or refreshes shows
+  a skeleton or `aria-busy="true"` rather than blank space.
 
 ### Three universal design invariants
 

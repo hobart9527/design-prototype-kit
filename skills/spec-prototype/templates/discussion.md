@@ -67,11 +67,15 @@ Owns what the product is and for whom. Visual choices never live here.
 
 ### Cold-start inference & seed status
 
-- Physical Anchor: `<declared chassis, e.g. desktop workstation / mobile device, or none>`
-  State the real-world object or space whose physicality drives the spatial
-  chassis. This provides structural guidance for layout choices without acting
-  as a blocking gate; `none` is an intentional non-device decision, not missing
-  information.
+- Physical Anchor: `<the domain's physical object, room or procedure, or none — reason>`
+  Name the real-world object or procedure a practitioner in this domain actually
+  works with (e.g. `short-haul flight deck: two operator positions, instrument
+  clusters in sightline sectors`), together with the mechanism it supplies and
+  what must not transfer. The declaration is required; `none — <reason>` is a
+  complete non-device decision, not missing information. Anchor content guides
+  spatial logic and is never scored as a quality gate. Device chassis
+  (`desktop workstation`, `mobile device`) belongs in FORM and `contract:viewports`,
+  not here: an anchor is a mechanism, not a screen size.
 
 Infer silently from every workspace source before speaking. Each dimension's
 evidence status records what the *sources actually support* — `[explicit]`
@@ -153,6 +157,11 @@ before authoring prototype HTML/CSS. Never leave them empty or write
 - **FIRST VIEWPORT**: <exact content composition of the opening 1440/1280 screen>
 - **FORM**: <spatial massing, grid rhythm, density, and responsive recomposition>
 - **FINISH**: <surface optics, hairline border vs elevation, palette discipline, detents>
+
+Recorded beside the six blocks, not as a seventh: the **Signature Moment** —
+`- Signature Moment: <the moment> — carries <Observed Mechanism from the Physical Anchor>`,
+or `none — <why no distinctive moment is needed>`. Stage 4's Signature probe checks
+this line, so a `none` is a complete answer and silence is not.
 
 ### Experience Foundation & Five Axes (支柱 6-7: 视觉刻度与五轴)
 - **5-Dial Style Register**:

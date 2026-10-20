@@ -26,6 +26,11 @@ before authoring prototype HTML/CSS. Never leave them empty or write
 - **FORM**: <spatial massing, grid rhythm, density, and responsive recomposition>
 - **FINISH**: <surface optics, hairline border vs elevation, palette discipline, detents>
 
+Recorded beside the six blocks, not as a seventh: the **Signature Moment** —
+`- Signature Moment: <the moment> — carries <Observed Mechanism from the Physical Anchor>`,
+or `none — <why no distinctive moment is needed>`. Stage 4's Signature probe checks
+this line, so a `none` is a complete answer and silence is not.
+
 ## Experience Foundation & Five Axes
 
 All five axes are accounted for at direction lock: each carries a value with

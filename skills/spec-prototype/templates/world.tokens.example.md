@@ -101,6 +101,26 @@ Prose bullets (`- density: dense`) are the fallback when no block exists.
 Optional override inside the block only: `radius_outer: <int 0..32>` — overrides the
 density-derived outer radius while the concentric inner/card/btn formulas still follow.
 
+**The compiler reads a fixed vocabulary per axis.** A value outside it still compiles,
+but the axis silently falls back to the neutral branch and the compile prints a
+`fallback` line. That line is the signal that the axis never reached the tokens —
+either pick a word the compiler knows or state the quantity as a custom property
+below, never leave the axis nominally set while its token stayed neutral.
+
+| Axis | Words the compiler maps | What it drives |
+|---|---|---|
+| `density` | `dense` `compact` `high` / `balanced` `medium` / `sparse` `spacious` `comfortable` `generous` `relaxed` `low` `airy` | spacing scale, outer radius, panel padding, derived inner/card/btn radii |
+| `energy` | `kinetic` `snappy` `aggressive` `driven` `hud` / `calm` `serene` `quiet` `low` / `steady` | duration scale and easing; the only axis that can opt into a tactile `:active` detent |
+| `rhythm` | `measured` `stately` `deliberate` `relaxed` / `rapid` `brisk` `instant` `snappy` / `steady` `tabular` `uniform` | multiplies the energy duration scale (pacing, not speed) |
+| `materiality` | `editorial` `paper` `reading` / `somatic` `touch` `mobile` `glass` `organic` / `flat` `instrument` `console` `tool` | type stack and card radius |
+| `character` | `scholarly` `editorial` `academic` / `playful` `expressive` `friendly` / `operational` `utilitarian` `neutral` | line height and feedback prominence |
+
+**Axis coverage is not full coverage.** A quantity the five axes cannot express — a
+specific damping curve, a detent travel, a measured column rhythm — is authored under
+`## Proposed` as a named custom property (`--name: value`) and passes through to
+`tokens.css`. That is the route for an anchor's own physics; an axis is the route for
+the product's overall register.
+
 ## Compile — one command
 
 ```

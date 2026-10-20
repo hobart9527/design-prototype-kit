@@ -123,10 +123,15 @@ When the browser is unavailable, record visual checks as `Not verified` rather t
 
 Judge the whole product experience with the rigor of a principal designer, not merely mechanical syntax:
 
-- **70/30 Innovation Boundary & Signature Moment:**
-  Does the prototype preserve 70% familiar mental models for navigation and spatial topology?
-  Is novelty concentrated purposefully in the 30% that resolves the Signature Moment, or is
-  creative effort squandered on non-standard basics (e.g. reinventing standard scrolling or forms)?
+- **Signature budget & Signature Moment:**
+  Does the prototype preserve familiar mental models for navigation and spatial
+  topology, so no basic affordance must be relearned? Is novelty concentrated in
+  the moment the Direction Contract declares, and does that moment actually carry
+  the Physical Anchor mechanism the record says it carries? Creative effort spent
+  on non-standard basics (reinventing scrolling or forms) is a misallocation. The
+  split itself is a judgment from the slice's core tension and Mode — never a
+  fixed ratio applied to every product, and a declared `Signature Moment: none`
+  is checked for the restraint it promised.
 - **Anti-Slop Hard Audit (Flag Generic AI Tropes as Flaws):**
   - **Unearned card grids:** Flag equal-height repeated cards unless the domain objects possess identical semantic symmetry.
   - **Gratuitous AI glow / cyber-purple gradients:** Flag decorative gradients disconnected from brand identity, status semantics, or physical materials.

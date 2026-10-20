@@ -33,7 +33,7 @@ purpose of this stage.
    **Swap** (replace the palette with the category default — does the structure
    still read as this product?); **Squint** (does the first-glance hierarchy
    survive blur?); **Signature** (is the Stage 1 Signature Moment the thing you
-   see first?); **Token** (does any competitor's stylesheet drop in unchanged?).
+   see first, and does it carry the anchor mechanism the record names?); **Token** (does any competitor's stylesheet drop in unchanged?).
    A probe that fails is a judgment, not yet a finding — it becomes one only when
    it names the floor, contract block, or task it breaks (step 4).
    **Honest Rendering Precondition**: if capture failed, had runtime errors, or the
@@ -61,7 +61,8 @@ purpose of this stage.
    compressed desktop is a defect, not a pass.
 3d. **Signature-mechanism delivery**: every mechanism the proposition depends on
    is observable in the render — the **Signature Moment** named in Stage 1 and built
-   in Stage 3, checked here under the same name. Two-person control, reversibility, and audit
+   in Stage 3, checked here under the same name, traced to the Physical Anchor
+   mechanism the record declares it carries. Two-person control, reversibility, and audit
    claims are checked against what the artifact actually does; an unimplemented
    promise is recorded as such rather than described as delivered.
 4. Preserve the strongest design relationship. Report only consequential findings,
