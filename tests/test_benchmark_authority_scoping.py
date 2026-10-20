@@ -46,6 +46,20 @@ def _base(root: pathlib.Path) -> None:
               "- Compilation status: sealed provisional\n- Authority status: sealed provisional\n")
 
 
+def test_authority_without_freeze_corpus_is_not_applicable(tmp_path):
+    _artifact(tmp_path, "prototype/discussion.md", "# Discussion\n" + "x" * 300)
+    result = _judge(tmp_path)
+    status = next(c["status"] for c in result["checks"] if c["id"] == "authority_status")
+    assert status == "not_applicable"
+
+
+def test_nonempty_authority_corpus_without_stage_markers_is_unknown(tmp_path):
+    _artifact(tmp_path, "prototype/specifications/reader/r1.md", "status: proposed\n")
+    result = _judge(tmp_path)
+    status = next(c["status"] for c in result["checks"] if c["id"] == "authority_status")
+    assert status == "unknown"
+
+
 def test_contract_lifecycle_status_is_not_an_authority_claim(tmp_path):
     """`Status: frozen` on a tokens/contract artifact is its own lifecycle, not authority."""
     _base(tmp_path)

@@ -88,6 +88,27 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
     regression = regression_judge.judge(runs)
 
     variants = sorted({r.get("variant") for r in runs if r.get("variant")})
+    skill_manifest = {}
+    for variant in variants:
+        identity = bl.source_identity(variant)
+        try:
+            sources = bl.variant_sources(variant)
+        except bl.BenchBlocked:
+            sources = {}
+        source_path = sources.get("skill")
+        commit_hash = None
+        if source_path:
+            if variant == "stable_skill":
+                baseline_manifest = bl.read_json(pathlib.Path(source_path).parents[1] / "MANIFEST.json")
+                commit_hash = baseline_manifest.get("git_rev")
+            else:
+                commit_hash = identity.get("git_rev")
+        skill_manifest[variant] = {
+            "variant": variant,
+            "tree_hash": ((identity.get("skill") or {}).get("aggregate_sha256")),
+            "source_path": str(source_path) if source_path else None,
+            "commit_hash": commit_hash,
+        }
     per_variant = {}
     for variant in variants:
         subset = [r for r in runs if r.get("variant") == variant]
@@ -267,6 +288,7 @@ def build(matrix_dir: pathlib.Path, suite: str, run_id: str) -> dict:
         "variants": variants,
         "runs": [{k: r.get(k) for k in ("case_id", "variant", "repeat", "status", "metrics", "notes",
                                         "session_fidelity", "evaluation_provenance")} for r in runs],
+        "skill_manifest": skill_manifest,
         "hard_gates": hard_gates,
         "per_variant": per_variant,
         "provenance": _provenance(runs),

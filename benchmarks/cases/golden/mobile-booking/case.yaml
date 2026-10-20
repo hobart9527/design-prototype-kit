@@ -34,6 +34,7 @@ evaluation:
   task_trace: true
   visual_pairwise: true
   frontend_reproduction: false
+  taste: true
 
 method_expectation:
   must_consider:

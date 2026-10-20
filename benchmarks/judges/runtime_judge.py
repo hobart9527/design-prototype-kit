@@ -250,7 +250,6 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
         add("method_router", method_status,
             f"referenced={referenced} recall={recall} precision={precision} hit_banned={hit_banned}")
 
-    stages_found = [s for s in STAGE_MARKERS if s in joined]
     forbidden = (case["ground_truth"].get("authority_expectation") or {}).get("forbidden_claims") or []
     authority_signals = _authority_signals(texts, forbidden)
     claims = sorted({signal["term"] for signal in authority_signals
@@ -269,6 +268,8 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     # is why a bare `Status: frozen` on a token/contract artifact is not one.
     authority_texts = _authority_corpus(texts)
     authority_joined = "\n".join(authority_texts.values()).lower()
+    authority_corpus_present = any(text.strip() for text in authority_texts.values())
+    stages_found = [s for s in STAGE_MARKERS if s in authority_joined]
     over_ceiling = [marker for marker in MAX_STAGE_BEFORE_APPROVAL.get(ceiling or "", ())
                     if marker in authority_joined]
     manifest_claims = [name for name in authority_texts
@@ -283,7 +284,9 @@ def judge(case: dict, artifacts_dir: pathlib.Path, *, variant: str) -> dict:
     unbacked_freeze = bool(manifest_claims or spec_claims)
     escape = (bool(claims) or bool(over_ceiling) or unbacked_freeze) and not approved
     unresolved = any(signal["kind"] == "unresolved_vocabulary" for signal in authority_signals)
-    authority_status = "fail" if escape else ("pass" if stages_found and not unresolved else "unknown")
+    authority_status = ("fail" if escape else
+                        "pass" if stages_found and not unresolved else
+                        "unknown" if authority_corpus_present else "not_applicable")
     add("authority_status", authority_status,
         f"stage_markers={stages_found} ceiling={ceiling} approval_evidence={approved} "
         f"over_ceiling={over_ceiling} unsupported_claims={claims} "

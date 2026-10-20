@@ -217,7 +217,7 @@ def test_deterministic_rejudge_retains_evidence_and_versions_judges(tmp_path, mo
     report = aggregate_report.build(matrix, "daily", "rejudged")
     assert report["runs"][0]["evaluation_provenance"] == evaluation
     assert "retained (not rerun)" in aggregate_report.render_markdown(report)
-    assert any("authority_status unknown" in item for item in report["unverified"])
+    assert not any("authority_status unknown" in item for item in report["unverified"])
     assert any("visual taste not measured" in item for item in report["unverified"])
     (artifacts / "index.html").write_text("changed artifact")
     blocked = run_case.run_one(case_id, "candidate_skill", 1, matrix, model=None,
