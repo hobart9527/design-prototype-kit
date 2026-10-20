@@ -1,0 +1,1080 @@
+{
+  "run_id": "20261020-daily-r16",
+  "suite": "daily",
+  "generated_at": "20261020_121045",
+  "status": "REGRESSION",
+  "status_divergence": null,
+  "hard_gate_arms": [
+    "candidate_skill",
+    "stable_skill"
+  ],
+  "cases": [
+    "approval-workflow",
+    "content-studio",
+    "editorial-reader",
+    "mobile-booking"
+  ],
+  "variants": [
+    "candidate_skill",
+    "stable_skill"
+  ],
+  "runs": [
+    {
+      "case_id": "approval-workflow",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 6,
+        "elapsed_seconds": 1499.39,
+        "cost_usd": 21.7451
+      },
+      "notes": [
+        "session PARTIAL: turn 6 timeout: timeout after 39s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "7548f52f-22ef-495a-96db-045576088478",
+        "workspace": "/tmp/design-bench/approval-workflow/candidate_skill/20261020_083302-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261020_090054",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "cb7e39ce54b8e9979803cc4a66dd3c15c1a5844709b2f50581a154d7fadab9a5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "194d9ac549ab8a06c43d95403da289402653c461d2a382a9c13e691d886a78d4",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "bf80b65ac4ee950ad42a6d2b6a17c1be711b835215aaa4ec8b87e6a349e37cb3",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "29383da438ce1838cefdcfd3da36f5abe470d364262197799e6f05bdca8ecf54",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "93288563a725545d601d1072a398b3673043c0ab0127369cd831439bc4596e56",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "a2e05721f2139a2f2418bd635e1a6edc6aed63e58d78c2fb1d40bf6df2525814",
+              "browser_probe.mjs": "95ef7be9592c886eb290b71f83cc30d5635fa1cbead89e680c40f86112970723",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "8c0d06ad4f07be7fc9286e5c600e4e7cda6f02646ffcdcbe91703a90a0fe2ae4",
+              "run_case.py": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+              "run_claude_session.py": "835309c3f22b24867b3007e616a144c9f75668da688c331d713948128bdccb0a",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "c5cf3789d19f76ad192e6ea23919bfd3e5c1a895c74e10bc58288eb8fb110583",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "5dbab5f1cf541b2567454c358e16aaa8a732035b5bd9c8366564a514e710cbd8",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "872b356021cdb4e8701edec264e9fae65569d49be92dc3d1723c0e52d745f2bd"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "0b80d8505bc36191f4461b42b27e0a572c1ca8ed3a838f9741aef177fc8df50f",
+            "session-summary.json": "578f7939113649700121c5848be69a9b3836ebb3f59550de47d48f180922bd9b",
+            "task-traces.json": "526606601a2d285cba133c15125afc25304183d6299fc2b91cafb0985e0c74ec",
+            "visual-manifest.json": "bf0a3aefeeae26408343212c5d57dd6373dfcd56cfc01bc7a7cef8abdcb21f80",
+            "session-transcript.md": "51a63b240041abb4bb59f3ebf0a10dada0671439d01a521ea22046e64a68d80d"
+          },
+          "aggregate_sha256": "2c55ce64fc5ddab21914efa777196045e7aeda0c25bb96098d4a3515bb32483f",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "approval-workflow",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "INCONCLUSIVE",
+      "metrics": {
+        "turns": 6,
+        "elapsed_seconds": 1500.03,
+        "cost_usd": 26.1406
+      },
+      "notes": [
+        "session PARTIAL: turn 6 timeout: timeout after 120s",
+        "session PARTIAL: not promoted to PASS"
+      ],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "4fc815ae-36b5-43b1-86f4-84e9df65ca71",
+        "workspace": "/tmp/design-bench/approval-workflow/stable_skill/20261020_090054-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261020_092701",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "cb7e39ce54b8e9979803cc4a66dd3c15c1a5844709b2f50581a154d7fadab9a5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "194d9ac549ab8a06c43d95403da289402653c461d2a382a9c13e691d886a78d4",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "bf80b65ac4ee950ad42a6d2b6a17c1be711b835215aaa4ec8b87e6a349e37cb3",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "29383da438ce1838cefdcfd3da36f5abe470d364262197799e6f05bdca8ecf54",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "93288563a725545d601d1072a398b3673043c0ab0127369cd831439bc4596e56",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "a2e05721f2139a2f2418bd635e1a6edc6aed63e58d78c2fb1d40bf6df2525814",
+              "browser_probe.mjs": "95ef7be9592c886eb290b71f83cc30d5635fa1cbead89e680c40f86112970723",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "8c0d06ad4f07be7fc9286e5c600e4e7cda6f02646ffcdcbe91703a90a0fe2ae4",
+              "run_case.py": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+              "run_claude_session.py": "835309c3f22b24867b3007e616a144c9f75668da688c331d713948128bdccb0a",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "c5cf3789d19f76ad192e6ea23919bfd3e5c1a895c74e10bc58288eb8fb110583",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "5dbab5f1cf541b2567454c358e16aaa8a732035b5bd9c8366564a514e710cbd8",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "872b356021cdb4e8701edec264e9fae65569d49be92dc3d1723c0e52d745f2bd"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "9056ff8d167f2435bcd754288c798ae3a44f52f910337f837f5845631e6c5f25",
+            "session-summary.json": "80dc4c89972375c1b8c03f3ec9cb459f0c6d089b727c52b46b9da5c2ed50166e",
+            "task-traces.json": "6167478e184ec0a43afa5d8ac96ac2e71709d3f20a1d37d3b849e29e22f01520",
+            "visual-manifest.json": "544b9f4006eef76181a8bca589301231807161256fb65b10aa194874a1ea39cf",
+            "session-transcript.md": "6be9c0e6f517037ce04e4ba8db3119f52a05a7416368b26b793260cb5b55c811"
+          },
+          "aggregate_sha256": "d91e9b3d6a78d34b71835dd3047827ec4ab2ecc753489283022b7c35683367f2",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "content-studio",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "INCONCLUSIVE",
+      "metrics": {
+        "turns": 4,
+        "elapsed_seconds": 1499.72,
+        "cost_usd": 22.6366
+      },
+      "notes": [
+        "session PARTIAL: turn 4 timeout: timeout after 558s",
+        "session PARTIAL: not promoted to PASS"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "3713ac7d-730a-46d0-8576-522caec555db",
+        "workspace": "/tmp/design-bench/content-studio/candidate_skill/20261020_092701-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261020_095649",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "cb7e39ce54b8e9979803cc4a66dd3c15c1a5844709b2f50581a154d7fadab9a5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "194d9ac549ab8a06c43d95403da289402653c461d2a382a9c13e691d886a78d4",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "bf80b65ac4ee950ad42a6d2b6a17c1be711b835215aaa4ec8b87e6a349e37cb3",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "29383da438ce1838cefdcfd3da36f5abe470d364262197799e6f05bdca8ecf54",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "93288563a725545d601d1072a398b3673043c0ab0127369cd831439bc4596e56",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "a2e05721f2139a2f2418bd635e1a6edc6aed63e58d78c2fb1d40bf6df2525814",
+              "browser_probe.mjs": "95ef7be9592c886eb290b71f83cc30d5635fa1cbead89e680c40f86112970723",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "8c0d06ad4f07be7fc9286e5c600e4e7cda6f02646ffcdcbe91703a90a0fe2ae4",
+              "run_case.py": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+              "run_claude_session.py": "835309c3f22b24867b3007e616a144c9f75668da688c331d713948128bdccb0a",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "c5cf3789d19f76ad192e6ea23919bfd3e5c1a895c74e10bc58288eb8fb110583",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "5dbab5f1cf541b2567454c358e16aaa8a732035b5bd9c8366564a514e710cbd8",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "872b356021cdb4e8701edec264e9fae65569d49be92dc3d1723c0e52d745f2bd"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "8876d84eb5af73afd5d1ae1593b25333eb53bca9aaaef0120d7090042f11802c",
+            "session-summary.json": "54c6c9e7909cdcab7f15f5b44405bd949aad1fad7cf90b1e247a801753c9d67e",
+            "task-traces.json": "3255d8876f71862e00b8d39c29a51c49a3bc9c01eb1e82af42556aaeb4c2905e",
+            "visual-manifest.json": "ab66470a206b1e9fc041d058321b3299a302da4d70b55bcca197700b1844e5e9",
+            "session-transcript.md": "58e6ae6664b7ae935fce9a995627e63674e83a8efb562c1db25a5f0d5af7a97e"
+          },
+          "aggregate_sha256": "e7798a55ab19e51153a66cfaa5e5843d0be012615d6476cd6411f10dea1b6064",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "content-studio",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 4,
+        "elapsed_seconds": 1409.03,
+        "cost_usd": 18.8341
+      },
+      "notes": [],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "4b5da0a9-a62c-49dc-81fb-5c2bd46b65e1",
+        "workspace": "/tmp/design-bench/content-studio/stable_skill/20261020_095649-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261020_103140",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "cb7e39ce54b8e9979803cc4a66dd3c15c1a5844709b2f50581a154d7fadab9a5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "194d9ac549ab8a06c43d95403da289402653c461d2a382a9c13e691d886a78d4",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "bf80b65ac4ee950ad42a6d2b6a17c1be711b835215aaa4ec8b87e6a349e37cb3",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "29383da438ce1838cefdcfd3da36f5abe470d364262197799e6f05bdca8ecf54",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "93288563a725545d601d1072a398b3673043c0ab0127369cd831439bc4596e56",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "a2e05721f2139a2f2418bd635e1a6edc6aed63e58d78c2fb1d40bf6df2525814",
+              "browser_probe.mjs": "95ef7be9592c886eb290b71f83cc30d5635fa1cbead89e680c40f86112970723",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "8c0d06ad4f07be7fc9286e5c600e4e7cda6f02646ffcdcbe91703a90a0fe2ae4",
+              "run_case.py": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+              "run_claude_session.py": "835309c3f22b24867b3007e616a144c9f75668da688c331d713948128bdccb0a",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "c5cf3789d19f76ad192e6ea23919bfd3e5c1a895c74e10bc58288eb8fb110583",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "5dbab5f1cf541b2567454c358e16aaa8a732035b5bd9c8366564a514e710cbd8",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "872b356021cdb4e8701edec264e9fae65569d49be92dc3d1723c0e52d745f2bd"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "8115c844b9b6f9f6f5dfc8aea81524e38bddf21c35ea8fde9b739de0c9931783",
+            "session-summary.json": "05261af2dbafeb6c63fbec493a836aa79b3530079930f17cfe3d06bd53001fc1",
+            "task-traces.json": "16684b1a83b26cfabf0f893ef2cd99b05df99de16d90d66320978a71560e7d61",
+            "visual-manifest.json": "2c3fc0f03a48a939b9aef3ea818228525ac65094c7b2b5bb0bec189d124a2c24",
+            "session-transcript.md": "dd6d01690039388854a5874b6f725ff955b341c18e4ad8f354b13e196926574b"
+          },
+          "aggregate_sha256": "87cbf81f91927d9fe61504c1e803b571e86d52b6ab3da77e144058d9e4aa945c",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "editorial-reader",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 4,
+        "elapsed_seconds": 1499.77,
+        "cost_usd": 21.5985
+      },
+      "notes": [
+        "session PARTIAL: turn 4 timeout: timeout after 476s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "2249b1b5-ac9a-40c9-8833-15f3a3cb83c0",
+        "workspace": "/tmp/design-bench/editorial-reader/candidate_skill/20261020_103141-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261020_110035",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "cb7e39ce54b8e9979803cc4a66dd3c15c1a5844709b2f50581a154d7fadab9a5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "194d9ac549ab8a06c43d95403da289402653c461d2a382a9c13e691d886a78d4",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "bf80b65ac4ee950ad42a6d2b6a17c1be711b835215aaa4ec8b87e6a349e37cb3",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "29383da438ce1838cefdcfd3da36f5abe470d364262197799e6f05bdca8ecf54",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "93288563a725545d601d1072a398b3673043c0ab0127369cd831439bc4596e56",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "a2e05721f2139a2f2418bd635e1a6edc6aed63e58d78c2fb1d40bf6df2525814",
+              "browser_probe.mjs": "95ef7be9592c886eb290b71f83cc30d5635fa1cbead89e680c40f86112970723",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "8c0d06ad4f07be7fc9286e5c600e4e7cda6f02646ffcdcbe91703a90a0fe2ae4",
+              "run_case.py": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+              "run_claude_session.py": "835309c3f22b24867b3007e616a144c9f75668da688c331d713948128bdccb0a",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "c5cf3789d19f76ad192e6ea23919bfd3e5c1a895c74e10bc58288eb8fb110583",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "5dbab5f1cf541b2567454c358e16aaa8a732035b5bd9c8366564a514e710cbd8",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "872b356021cdb4e8701edec264e9fae65569d49be92dc3d1723c0e52d745f2bd"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "8768374a9d8615a2bafc998aec6b09dce1d6cf91d19af2e8cf01954cab73ab4b",
+            "session-summary.json": "2145ebfcfa8d817bdab49a2ee61c814589c2bb6dfaf61725729209e44fc202e6",
+            "task-traces.json": "9290a9bc1bdda8ad3357fd114fa678bb66ab37c1259cabf5c79ed8d495c2f0ad",
+            "visual-manifest.json": "1c2eea58eccc144e8b44e787059331e0d7a9d59f874b5fad00b7c749e6ff6e7f",
+            "session-transcript.md": "7bfe4fba8be1a2cb142ffd1af2cde862adcd0c9780ce3eaa68ca1b56d03b208d"
+          },
+          "aggregate_sha256": "929c47f41a0427ed4c67d5c735ab8ab2d4c58706d1d0c2588a061d8ab390dc02",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "editorial-reader",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 5,
+        "elapsed_seconds": 1499.47,
+        "cost_usd": 26.9945
+      },
+      "notes": [
+        "session PARTIAL: turn 5 timeout: timeout after 333s"
+      ],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "b6d2bf0d-9774-429f-8640-dd00ff62f929",
+        "workspace": "/tmp/design-bench/editorial-reader/stable_skill/20261020_110036-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261020_112907",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "cb7e39ce54b8e9979803cc4a66dd3c15c1a5844709b2f50581a154d7fadab9a5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "194d9ac549ab8a06c43d95403da289402653c461d2a382a9c13e691d886a78d4",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "bf80b65ac4ee950ad42a6d2b6a17c1be711b835215aaa4ec8b87e6a349e37cb3",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "29383da438ce1838cefdcfd3da36f5abe470d364262197799e6f05bdca8ecf54",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "93288563a725545d601d1072a398b3673043c0ab0127369cd831439bc4596e56",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "a2e05721f2139a2f2418bd635e1a6edc6aed63e58d78c2fb1d40bf6df2525814",
+              "browser_probe.mjs": "95ef7be9592c886eb290b71f83cc30d5635fa1cbead89e680c40f86112970723",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "8c0d06ad4f07be7fc9286e5c600e4e7cda6f02646ffcdcbe91703a90a0fe2ae4",
+              "run_case.py": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+              "run_claude_session.py": "835309c3f22b24867b3007e616a144c9f75668da688c331d713948128bdccb0a",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "c5cf3789d19f76ad192e6ea23919bfd3e5c1a895c74e10bc58288eb8fb110583",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "5dbab5f1cf541b2567454c358e16aaa8a732035b5bd9c8366564a514e710cbd8",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "872b356021cdb4e8701edec264e9fae65569d49be92dc3d1723c0e52d745f2bd"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "47265f32e49f800d751e25bf011f12d532f2d8ee222880cdb347e3195b6f1938",
+            "session-summary.json": "a308ce2164d5ba4f8aaae042c10441551e6bcf6ebd8193420eb878091f9f0f80",
+            "task-traces.json": "7820700c9ff36a2a7a4940c4f2f7e3216b82f3e40e4480c4e3316db6130789ce",
+            "visual-manifest.json": "2941b5d69227fc957fd15137de5f65b6953a566958af6b5614b229df73e55bd6",
+            "session-transcript.md": "8ba889ba333c49c28192654819742760d2ed76469bd09566e5745362fedf7f58"
+          },
+          "aggregate_sha256": "f644aa785c35a9d4279fabc0e98ea4ed7532018afbfe9dae408dbe426fd7290a",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "mobile-booking",
+      "variant": "candidate_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 5,
+        "elapsed_seconds": 1499.69,
+        "cost_usd": 19.2887
+      },
+      "notes": [
+        "session PARTIAL: turn 5 timeout: timeout after 72s"
+      ],
+      "session_fidelity": {
+        "variant": "candidate_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "01b8ee97-3a38-4a39-8e04-5b7b20afa285",
+        "workspace": "/tmp/design-bench/mobile-booking/candidate_skill/20261020_112907-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261020_115810",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "cb7e39ce54b8e9979803cc4a66dd3c15c1a5844709b2f50581a154d7fadab9a5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "194d9ac549ab8a06c43d95403da289402653c461d2a382a9c13e691d886a78d4",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "bf80b65ac4ee950ad42a6d2b6a17c1be711b835215aaa4ec8b87e6a349e37cb3",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "29383da438ce1838cefdcfd3da36f5abe470d364262197799e6f05bdca8ecf54",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "93288563a725545d601d1072a398b3673043c0ab0127369cd831439bc4596e56",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "a2e05721f2139a2f2418bd635e1a6edc6aed63e58d78c2fb1d40bf6df2525814",
+              "browser_probe.mjs": "95ef7be9592c886eb290b71f83cc30d5635fa1cbead89e680c40f86112970723",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "8c0d06ad4f07be7fc9286e5c600e4e7cda6f02646ffcdcbe91703a90a0fe2ae4",
+              "run_case.py": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+              "run_claude_session.py": "835309c3f22b24867b3007e616a144c9f75668da688c331d713948128bdccb0a",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "c5cf3789d19f76ad192e6ea23919bfd3e5c1a895c74e10bc58288eb8fb110583",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "5dbab5f1cf541b2567454c358e16aaa8a732035b5bd9c8366564a514e710cbd8",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "872b356021cdb4e8701edec264e9fae65569d49be92dc3d1723c0e52d745f2bd"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "0c3260e2551ca0dbb45c5c82aca88f74d21ce1d6a8519b39a4ac86ec99de2a5c",
+            "session-summary.json": "f2234266435bc5f24a74e1be7003a5a33f752f972393cfb03411a4ee7924f0a5",
+            "task-traces.json": "930e3bd8012b26306ddc875b8b959faed89935f6ae0d9555398ef4caf783b375",
+            "visual-manifest.json": "6dc6a1465dbf8bd441cea23abde10c58db92689adc580b1e03ede6d13247b8ce",
+            "session-transcript.md": "e6eefe1b6447d5ff54a64e5408d6ed0527d960ba9d69c8eb1d852f0d6879453b"
+          },
+          "aggregate_sha256": "cc740721bf2c4d2f1115c7d32afdc759e5f2dc533addd18e18e50d8b737e8523",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    },
+    {
+      "case_id": "mobile-booking",
+      "variant": "stable_skill",
+      "repeat": 1,
+      "status": "FAIL",
+      "metrics": {
+        "turns": 3,
+        "elapsed_seconds": 506.38,
+        "cost_usd": 13.313
+      },
+      "notes": [],
+      "session_fidelity": {
+        "variant": "stable_skill",
+        "model": "flash",
+        "router_host": "router360.duckdns.org",
+        "session_id": "4781bc71-d839-40ce-8c70-5185cc32f12f",
+        "workspace": "/tmp/design-bench/mobile-booking/stable_skill/20261020_115810-r1",
+        "skill_manifest": null,
+        "prompt_protocol": "benchmarks/prompts/protocol.txt"
+      },
+      "evaluation_provenance": {
+        "evaluated_at": "20261020_121045",
+        "judge_sources": {
+          "file_count": 13,
+          "aggregate_sha256": "cb7e39ce54b8e9979803cc4a66dd3c15c1a5844709b2f50581a154d7fadab9a5",
+          "files": {
+            "cocreation_judge.py": "0425309d4410e690bf9b219dd57a9aa50d115acb894a55e8be877691ad6c77df",
+            "contract_fidelity_judge.py": "b63c41b0d338f8aefd42032180d731957f1d9d2d9bd4ea48cb90bbe4817c42ea",
+            "contract_judge.py": "cddb62d89cca740e344dade221bacdba5b964e8dba858cffa78db08c384ecb8d",
+            "craft_floor_crosswalk.py": "88303e1347a7287e523204ad68c5475370184787a1b1d5bca9ae85f91bad6090",
+            "divergence_judge.py": "194d9ac549ab8a06c43d95403da289402653c461d2a382a9c13e691d886a78d4",
+            "pairwise_judge.py": "9d7360b7d5b37b410b142a701303d70b6e9e3073aa09ff7194095f99db6d0c2b",
+            "regression_judge.py": "bf80b65ac4ee950ad42a6d2b6a17c1be711b835215aaa4ec8b87e6a349e37cb3",
+            "runtime_judge.py": "106cae9b33f80c6dacf44de2bfb1dde5c528965a6a1f636e75de7c62339a3a19",
+            "semantic_judge.py": "8059e8f535670d99556eeca91af715d1554f29bb8f789c6f21b838e6ef1ee006",
+            "slop_detector.py": "413ba7a5674ddc6d4f756300b703f4cae61445e0724aecd9f4ad282a08660ac0",
+            "task_judge.py": "8b1efcaafd236e3114fb51a3d8d500cd6eed265aff366f9401bd756923b5b42c",
+            "taste_judge.py": "29383da438ce1838cefdcfd3da36f5abe470d364262197799e6f05bdca8ecf54",
+            "visual_manifest.py": "dfba519fd18a4691701dcb141710efb1ae39d1ef2b661937e705dd6d1b952aeb"
+          },
+          "excluded": [],
+          "runner_sha256": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+          "runners": {
+            "file_count": 10,
+            "aggregate_sha256": "93288563a725545d601d1072a398b3673043c0ab0127369cd831439bc4596e56",
+            "files": {
+              "aggregate_report.py": "b321e122ee63d38e3c773de3433f4507c6da69f347d5ec47cafdd32d109a94fd",
+              "bench_lib.py": "a2e05721f2139a2f2418bd635e1a6edc6aed63e58d78c2fb1d40bf6df2525814",
+              "browser_probe.mjs": "95ef7be9592c886eb290b71f83cc30d5635fa1cbead89e680c40f86112970723",
+              "collect_artifacts.py": "1dd50c2970a0dd671ff164122ed517b676fa221c53cb404729f8e668884d6c8f",
+              "freeze_baseline.py": "8c0d06ad4f07be7fc9286e5c600e4e7cda6f02646ffcdcbe91703a90a0fe2ae4",
+              "run_case.py": "6b552ee5e62d7ba5cedaf92d43bf2f53cda2019bf2892c97950e57ea363b1ec4",
+              "run_claude_session.py": "835309c3f22b24867b3007e616a144c9f75668da688c331d713948128bdccb0a",
+              "run_frontend_reproduction.py": "2ffc3c9600009e8d515d5cfdb05816d8148e3184b5c2bda4ed2901b1845fc00c",
+              "run_matrix.py": "c5cf3789d19f76ad192e6ea23919bfd3e5c1a895c74e10bc58288eb8fb110583",
+              "run_task_trace.py": "e765ea9019d11acded6ff61a016a695b3301bd89ee9aa6dd4d2a5265b9bade10"
+            },
+            "excluded": []
+          },
+          "prompts": {
+            "file_count": 9,
+            "aggregate_sha256": "5dbab5f1cf541b2567454c358e16aaa8a732035b5bd9c8366564a514e710cbd8",
+            "files": {
+              "contract-fidelity-judge.txt": "51cb88be13b299ce9f51018d09f36cee2580b9fa4a3a56ed9dc84366bb609198",
+              "frontend-implementation.txt": "039b60e7a0e0ba0b0f6cf3e526b84edfa81654e4c0246d588f92f5aad86fbef8",
+              "no-skill.txt": "b2815b671dccc3608609fb85132d971888b1867a2d852fb20134fb980e402060",
+              "pairwise-judge.txt": "76a37fd9b8a97dbb23653831bf9eb3383bc48131d291f069880a1ad60dc7ca4b",
+              "protocol.txt": "0830d400ff864fb7bc720dc6aacb56029ad316c823e7c00307f79b5439d9042b",
+              "semantic-judge.txt": "046490f4657c8125a263e4fdb6a4907dd3fd9a570c76d1b6057f80a9ef23b0a4",
+              "skill-run.txt": "c7b7fb479c123adad6cb3142f4a24ef0588d44e387e92e975858375e3d31888b",
+              "task-agent.txt": "dfac938920a8a9750041a3242bb83860e1a08562a8865fc8b9a59b948f3a1aa7",
+              "taste-judge.txt": "872b356021cdb4e8701edec264e9fae65569d49be92dc3d1723c0e52d745f2bd"
+            },
+            "excluded": []
+          }
+        },
+        "judge_inputs": {
+          "files": {
+            "artifacts-manifest.json": "5be526502b10f8018f5526307c09184197982f05fad6489a0694675e563d5d01",
+            "session-summary.json": "14070e7dc4b397a577c259344fad36e0c9a741cd4788e05d211dddb1ac8fe20f",
+            "task-traces.json": "6c5060227c1ac2fff2712d221bb7a90c45e914565b339e204f77387556f2d25c",
+            "visual-manifest.json": "959b420cc227817a3efa3f70d5cfec547ed63232d6be9e96ed4baa012a792d84",
+            "session-transcript.md": "8f72d9f760eaa9a3e9886120a4ce930ec0736e405d424bdae830c7ff5308bc72"
+          },
+          "aggregate_sha256": "f39e1ed2035ab4560860a61169d1d176dd7c073c319ce9b773e4de9e5547b937",
+          "file_count": 5
+        },
+        "mode": "initial",
+        "retained_evidence": [],
+        "previous_evaluation": null
+      }
+    }
+  ],
+  "hard_gates": {
+    "semantic_fabrication": 2,
+    "authority_escape": 0,
+    "critical_task_break": 5,
+    "critical_accessibility_violation": 0
+  },
+  "per_variant": {
+    "candidate_skill": {
+      "runs": 4,
+      "completed": 3,
+      "blocked": 0,
+      "partial": 4,
+      "task_success_rate": 0.5,
+      "method_recall": 0.75,
+      "method_precision": 0.938,
+      "semantic_gate_pass": 3,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 4.75,
+      "cost_usd": 85.2689,
+      "elapsed_seconds": 5998.6,
+      "inline_hex_failures": 0,
+      "slop_score": 3.5,
+      "slop_high_findings": 3,
+      "taste_judged": 0,
+      "ai_slop_fail": 0,
+      "category_guessable_high": 0,
+      "first_viewport_thesis_present": 0,
+      "divergence_verdicts": [
+        "divergent",
+        "not_measured"
+      ],
+      "contract_blocks_fulfilled": null,
+      "contract_blocks_absent": null,
+      "cocreation_verdicts": [
+        "not_measured",
+        "partial"
+      ],
+      "cocreation_before_build": 3,
+      "cocreation_measured": 4
+    },
+    "stable_skill": {
+      "runs": 4,
+      "completed": 3,
+      "blocked": 0,
+      "partial": 2,
+      "task_success_rate": 0.542,
+      "method_recall": 0.583,
+      "method_precision": 0.722,
+      "semantic_gate_pass": 3,
+      "semantic_gate_fail": 1,
+      "semantic_gate_unverified": 0,
+      "semantic_signals": 0,
+      "artifact_turns": 4.5,
+      "cost_usd": 85.2822,
+      "elapsed_seconds": 4914.9,
+      "inline_hex_failures": 0,
+      "slop_score": 5.75,
+      "slop_high_findings": 4,
+      "taste_judged": 0,
+      "ai_slop_fail": 0,
+      "category_guessable_high": 0,
+      "first_viewport_thesis_present": 0,
+      "divergence_verdicts": [
+        "not_measured"
+      ],
+      "contract_blocks_fulfilled": null,
+      "contract_blocks_absent": null,
+      "cocreation_verdicts": [
+        "partial",
+        "reveal_only"
+      ],
+      "cocreation_before_build": 3,
+      "cocreation_measured": 4
+    }
+  },
+  "provenance": {
+    "runs_with_provenance": 8,
+    "runs_missing_provenance": 0,
+    "missing": [],
+    "identical_across_runs": false,
+    "source_identity": [
+      "5d05e563857ff03231d2498cc19281a2fc1c76c2fb231bcd22bde812ad55b959",
+      "b0403aef7df6f4e8516b8143689b79e3bbca5f37e8cd95ff508bb29aa827abf2"
+    ],
+    "disclosure": "all 8 runs recorded provenance"
+  },
+  "metrics": {
+    "pairwise_preference": {
+      "alpha_wins": 0,
+      "beta_wins": 0,
+      "tie": 0
+    },
+    "pairwise_pairs": 0,
+    "pairwise_agreement": null,
+    "pairwise_confidence_counts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "pairwise_cost_usd": 0,
+    "pairwise_cost_recorded": 0,
+    "pairwise_cost_missing": 0,
+    "pairwise_cost_total_complete": true,
+    "pairwise_unverified": 0,
+    "design_reinterpretation_rate": null,
+    "frontend_contract_gaps": 0
+  },
+  "slop_rules": {
+    "candidate_skill": {
+      "SLOP-009": {
+        "count": 2,
+        "severity": "high"
+      },
+      "SLOP-003": {
+        "count": 1,
+        "severity": "medium"
+      },
+      "SLOP-004": {
+        "count": 1,
+        "severity": "high"
+      },
+      "SLOP-012": {
+        "count": 1,
+        "severity": "medium"
+      },
+      "SLOP-021": {
+        "count": 1,
+        "severity": "low"
+      }
+    },
+    "stable_skill": {
+      "SLOP-014": {
+        "count": 1,
+        "severity": "low"
+      },
+      "SLOP-004": {
+        "count": 7,
+        "severity": "high"
+      },
+      "SLOP-021": {
+        "count": 1,
+        "severity": "low"
+      }
+    }
+  },
+  "regression": {
+    "judge": "regression",
+    "verdict": "REGRESSION",
+    "pairs_compared": 4,
+    "compared_dimensions": 16,
+    "verified_dimensions": [
+      {
+        "case_id": "approval-workflow",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "pass_with_unknowns",
+        "candidate": "pass_with_unknowns"
+      },
+      {
+        "case_id": "approval-workflow",
+        "repeat": 1,
+        "dimension": "taste",
+        "stable": 0,
+        "candidate": 0
+      },
+      {
+        "case_id": "content-studio",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "pass_with_unknowns",
+        "candidate": "pass_with_unknowns"
+      },
+      {
+        "case_id": "content-studio",
+        "repeat": 1,
+        "dimension": "semantic",
+        "stable": "pass",
+        "candidate": "pass"
+      },
+      {
+        "case_id": "mobile-booking",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "pass_with_unknowns",
+        "candidate": "pass_with_unknowns"
+      },
+      {
+        "case_id": "mobile-booking",
+        "repeat": 1,
+        "dimension": "semantic",
+        "stable": "pass",
+        "candidate": "pass"
+      },
+      {
+        "case_id": "mobile-booking",
+        "repeat": 1,
+        "dimension": "task",
+        "stable": "fail",
+        "candidate": "fail"
+      },
+      {
+        "case_id": "mobile-booking",
+        "repeat": 1,
+        "dimension": "taste",
+        "stable": 22,
+        "candidate": 9
+      }
+    ],
+    "unverifiable_dimensions": [],
+    "regressions": [
+      {
+        "case_id": "approval-workflow",
+        "repeat": 1,
+        "dimension": "semantic",
+        "stable": "pass",
+        "candidate": "fail"
+      },
+      {
+        "case_id": "approval-workflow",
+        "repeat": 1,
+        "dimension": "task",
+        "stable": "pass",
+        "candidate": "fail"
+      },
+      {
+        "case_id": "content-studio",
+        "repeat": 1,
+        "dimension": "taste",
+        "stable": 1,
+        "candidate": 3,
+        "signal": "slop_score"
+      },
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "runtime",
+        "stable": "pass_with_unknowns",
+        "candidate": "fail"
+      },
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "taste",
+        "stable": 0,
+        "candidate": 2,
+        "signal": "slop_score"
+      }
+    ],
+    "improvements": [
+      {
+        "case_id": "content-studio",
+        "repeat": 1,
+        "dimension": "task",
+        "stable": "fail",
+        "candidate": "pass"
+      },
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "semantic",
+        "stable": "fail",
+        "candidate": "pass"
+      },
+      {
+        "case_id": "editorial-reader",
+        "repeat": 1,
+        "dimension": "task",
+        "stable": "fail",
+        "candidate": "pass"
+      }
+    ],
+    "missing_pairs": []
+  },
+  "pairwise": [],
+  "frontend": [],
+  "unverified": [
+    "approval-workflow/candidate_skill: runtime authority_status unknown",
+    "approval-workflow/candidate_skill: visual taste not measured",
+    "approval-workflow/stable_skill: runtime authority_status unknown",
+    "approval-workflow/stable_skill: runtime method_router unknown",
+    "approval-workflow/stable_skill: visual taste not measured",
+    "content-studio/candidate_skill: runtime authority_status unknown",
+    "content-studio/candidate_skill: visual taste not measured",
+    "content-studio/stable_skill: runtime authority_status unknown",
+    "content-studio/stable_skill: visual taste not measured",
+    "editorial-reader/candidate_skill: runtime authority_status unknown",
+    "editorial-reader/candidate_skill: runtime document_lang unknown",
+    "editorial-reader/candidate_skill: visual taste not measured",
+    "editorial-reader/stable_skill: runtime authority_status unknown",
+    "editorial-reader/stable_skill: visual taste not measured",
+    "mobile-booking/candidate_skill: runtime authority_status unknown",
+    "mobile-booking/candidate_skill: visual taste not measured",
+    "mobile-booking/stable_skill: runtime authority_status unknown",
+    "mobile-booking/stable_skill: visual taste not measured"
+  ],
+  "unmeasured_dimensions": [
+    "approval-workflow/candidate_skill: taste not measured",
+    "approval-workflow/stable_skill: taste not measured",
+    "content-studio/candidate_skill: taste not measured",
+    "content-studio/stable_skill: taste not measured",
+    "editorial-reader/candidate_skill: taste not measured",
+    "editorial-reader/stable_skill: taste not measured",
+    "mobile-booking/candidate_skill: taste not measured",
+    "mobile-booking/stable_skill: taste not measured"
+  ]
+}
