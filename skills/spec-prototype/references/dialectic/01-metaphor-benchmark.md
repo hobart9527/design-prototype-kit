@@ -148,6 +148,26 @@ the only gate, and it is checked on the two directions side by side.
      [reference deconstruction](../01-foundations/design-language.md#reference-deconstruction).
    A candidate with no declared lever is a competent default, not a direction.
 
+   **Trend-tension four questions.** A technique that was fresh two years ago is
+   today's default, and a candidate built on one is a reskin of the current rut
+   even when it is new to this product. Before a fused candidate is admitted,
+   answer four questions about its borrowed technique — this is an explicit
+   direction-decision step, not an afterthought:
+   1. **Category saturation** — how many competitors in this category already use
+      this visual technique? Name them or state that the count is unknown.
+   2. **Freshness** — is it still surprising today, or has it become the new
+      default? A technique everyone just adopted is a response to the market, not
+      a position.
+   3. **Brand continuity** — does it continue this product's existing signals
+      (colour, structure, tone), or break from them? A break needs a THESIS that
+      argues for it; continuity needs only fit.
+   4. **Lifespan** — will it read as dated in 12–24 months? Name the signal that
+      would date it (a specific finish, a signature animation, a typographic
+      trope).
+   The conclusions land in the Direction Contract's **THESIS** block as one line
+   (e.g. `trend: low saturation / still fresh / continuity / durable`); the four
+   answers are the evidence for that line, not a separate essay.
+
 5. **Two-axis verdict — the gate.** Before building, compare each pair of
    candidates and name the **two or more axes** on which they differ. **Structure
    must be one of them**: the two candidates must not share an organising principle,

@@ -161,12 +161,20 @@ of them back; reaching for one while the axis is free means the choice was not
 made. When you catch one, rewrite the element rather than softening it.
 
 - **Same-size card grids** `CRAFT-CARD-GRID-EARNED` — icon + heading + text
-  repeated as the page structure. Cards are the lazy container; nested cards are
-  always wrong. Earn it: a genuinely peer set of comparable objects.
+  repeated as the page structure. Cards are the lazy container; nesting a card
+  inside a card is the default-refused move. Earn it: a genuinely peer set of
+  comparable objects, and — for a nested card — a real containment relation the
+  inner card expresses (a line item inside its parent record, a step inside its
+  run) where the outer surface is not itself a card grid. Nesting two card grids
+  to say "a section that contains sections" is still the default.
 - **Hero-metric template** — one large number, a small label, supporting stats,
   an accent. Earn it: the number is the product and its context is real.
-- **Eyebrow or kicker above a heading** `CRAFT-NO-EYEBROW`. No brief earns this
-  one back: the heading carries its own weight. Delete the label.
+- **Eyebrow or kicker above a heading** `CRAFT-NO-EYEBROW` — refused by default:
+  the heading carries its own weight; delete the label. Rare win-back: the
+  product's own structure is a masthead or publication, and the eyebrow carries
+  real section semantics (a column, a series, a dated issue) a reader navigates
+  by — not a decorative tagline restating the heading. Name the section it
+  denotes; if it cannot be named, it was decoration.
 - **Section numbers** (`01 / 02 / 03`) unless the sequence itself carries
   information the reader needs.
 - **Gradient text** `CRAFT-NO-GRADIENT-TEXT` for emphasis. Emphasis comes from

@@ -11,15 +11,27 @@ The thumb's natural arc — not the finger's reach — is the primary spatial
 constraint. It determines what is reachable without grip shift, not what is
 merely visible.
 
-- **Primary commit zone** (bottom 40% of screen height): the most consequential
-  and most frequent actions. The zone contracts on screens below 375px.
-- **Secondary reach zone** (middle 40%): content, status, contextual controls.
-  Actions here require deliberate reach; reserve for non-urgent taps.
-- **Hazard zone** (top 20%): never place primary navigation or commit controls
-  here. Acceptable for passive status display (time, signal, battery).
+These proportions are a default calibration, not a fixed law. They hold for a
+one-handed phone grip at typical hand sizes; a product tested against its actual
+users may move them, and a domain whose physical handling differs (a handheld
+scanner gripped with both hands, a mounted terminal) supplies its own zones.
 
-Never mirror a desktop layout by centering the action at the top of the screen.
-The mental model is a physical tool held in one hand, not a shrunken desktop.
+- **Primary commit zone** (around the bottom 40% by default): the most
+  consequential and most frequent actions. The zone contracts on screens below
+  375px.
+- **Secondary reach zone** (around the middle 40% by default): content, status,
+  contextual controls. Actions here require deliberate reach; reserve for
+  non-urgent taps.
+- **Hazard zone** (around the top 20% by default): primary navigation and commit
+  controls do not belong here. Acceptable for passive status display (time,
+  signal, battery).
+
+Do not mirror a desktop layout by centering the action at the top of the screen
+without a stated reason. The default mental model is a physical tool held in one
+hand, not a shrunken desktop. When user testing or a documented domain convention
+gives contrary evidence — the tested thumb reaches further, or the domain's grip
+is two-handed — record the evidence and recompose to it; the zones follow the
+evidence, not the reverse.
 
 ## Gesture Priority and Conflict Resolution
 
@@ -72,8 +84,10 @@ modal replacements.
 - **Drawer from edge**: for navigation or secondary panels; triggered from an
   edge affordance. Never launched by a center-screen button.
 
-A bottom sheet for a single-field input is always wrong. Use in-situ expansion
-or an anchored popover instead.
+A bottom sheet for a single-field input is the default-refused move. Use in-situ
+expansion or an anchored popover instead, unless user testing or a documented
+domain convention gives contrary evidence (a scan-driven flow where the sheet is
+the established idiom) — then record the evidence and follow it.
 
 ## Single-Hand Flow Invariant
 

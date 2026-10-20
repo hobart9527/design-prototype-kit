@@ -19,19 +19,32 @@ failure, not a polish decision.
 Long-form AI output streams token-by-token. The interface must communicate
 genuine progress without implying false certainty about what is coming.
 
-- **Incremental reveal**: render tokens as they arrive. Never buffer to a
-  complete response before showing — buffering makes the system appear instant
-  and the wait opaque.
-- **Streaming cursor**: a visible, moving cursor on the live generation boundary
-  signals active output. Static text blocks are indistinguishable from finished
-  content; users scroll away prematurely.
+Streaming is a default graded by **interaction distance** — how closely the human
+is watching this generation — not a rule applied to every surface. The closer the
+human's attention sits to the output, the more of this treatment is owed; a
+background or batch generation the human is not watching carries none of the
+streaming furniture and reports only its settled result.
+
+| Interaction distance | What is owed |
+|---|---|
+| **Attended, in the reading position** (the human is waiting on this output) | Full treatment below: incremental reveal, streaming cursor, interrupt affordance, elapsed-time progress |
+| **Attended, off to the side** (a panel the human glances at) | Incremental reveal and interrupt affordance; cursor optional |
+| **Unattended / batch** (the human is elsewhere, output is collected) | No streaming furniture; a settled result, a completion state, and a durable record |
+
+- **Incremental reveal**: render tokens as they arrive in the attended case. Never
+  buffer to a complete response before showing when the human is watching —
+  buffering makes the system appear instant and the wait opaque. A batch job the
+  human is not watching may settle before it is shown at all.
+- **Streaming cursor**: in the attended case, a visible, moving cursor on the live
+  generation boundary signals active output. Static text blocks are
+  indistinguishable from finished content; users scroll away prematurely.
 - **No progress percentage for language model output**: token count is not
   useful time-to-completion data. Do not fabricate a progress bar that implies
   known completion time. Show elapsed time or a pulse indicator instead.
-- **Interrupt affordance**: always provide a visible, reachable stop control
-  during generation. Place it in the primary thumb zone on mobile, adjacent to
-  the generation boundary on desktop. A stopped generation is an honest result;
-  hide nothing about what was interrupted.
+- **Interrupt affordance**: when the generation is attended, always provide a
+  visible, reachable stop control. Place it in the primary thumb zone on mobile,
+  adjacent to the generation boundary on desktop. A stopped generation is an
+  honest result; hide nothing about what was interrupted.
 
 ## Uncertainty Representation
 
@@ -105,20 +118,26 @@ spatial logic must reflect the work being done, not the chat paradigm.
 
 ## AI-Native States (Status Machine)
 
-Every AI surface must have authored states for:
+An AI surface must have authored states for every state its users actually reach.
+Which states apply is graded by **interaction distance**, the same axis streaming
+is graded on: an attended, in-place generation walks the full ladder, while an
+unattended batch job the human never watches needs only its settled and failed
+outcomes. Do not pad a surface with states its interaction model never produces,
+and do not leave a state its users do reach undesigned — an unstyled state is a
+blank page or a raw error string, and both are design failures.
 
-| State | Visual form |
-|---|---|
-| **Idle — awaiting input** | Clear input affordance, context summary visible |
-| **Generating** | Streaming cursor, interrupt control, elapsed time |
-| **Paused / interrupted** | Partial output preserved, resume and discard affordances |
-| **Limit reached** | Named limit (context window, rate, capability), recovery path |
-| **Error** | Error type distinguished from limit; retry or alternative path |
-| **Confirmation required** | Full action preview, named consequence, escape route |
-| **Completed** | Output settled, copy/share/act affordances, iteration entry |
+| State | Applies when | Visual form |
+|---|---|---|
+| **Idle — awaiting input** | Attended surface | Clear input affordance, context summary visible |
+| **Generating** | Attended (in-place or side panel) | Streaming cursor, interrupt control, elapsed time |
+| **Paused / interrupted** | Attended, interruptible | Partial output preserved, resume and discard affordances |
+| **Limit reached** | Any generation | Named limit (context window, rate, capability), recovery path |
+| **Error** | Any generation | Error type distinguished from limit; retry or alternative path |
+| **Confirmation required** | Any consequential action | Full action preview, named consequence, escape route |
+| **Completed** | Any generation | Output settled, copy/share/act affordances, iteration entry |
 
-Do not leave any of these states undesigned. An unstyled state is a blank page
-or a raw error string — both are design failures.
+An unattended job's ladder is short: **Queued → Completed / Failed**, each with a
+durable record — no streaming cursor, no pause, no in-place interrupt.
 
 ## Agentic Flow: Multi-Step Visibility
 

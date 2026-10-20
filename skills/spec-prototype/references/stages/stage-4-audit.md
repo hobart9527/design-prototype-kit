@@ -93,7 +93,12 @@ Positions and Counter-examples are visible in the render (cover test: could a vi
 the first viewport guess the category?). It is recorded as judgment, tagged `[taste]`,
 and never filed as a finding or a gate — "Taste is not evidence" still holds. Its job is
 to make the designer's position reviewable and to feed one bounded refinement when the
-render falls short of its own language. The 3a `taste_probe:` line lives beside it.
+render falls short of its own language. Its strengths and weaknesses are anchored
+against the calibration specimens in
+[`../05-benchmarks/reference-set.md`](../05-benchmarks/reference-set.md#calibration-specimens)
+(typography / motion / composition / colour, each with a competent and a failing
+tier), so "weak" names a visible characteristic rather than a bare preference.
+The 3a `taste_probe:` line lives beside it.
 
 ### Read the render against the Direction Contract, pillar by pillar
 

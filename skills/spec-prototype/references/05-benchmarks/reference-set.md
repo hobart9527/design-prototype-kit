@@ -40,6 +40,104 @@ before you lean on one, and drop or correct an entry that no longer holds.
 | [**Apple HIG undo/redo**](https://developer.apple.com/design/human-interface-guidelines/undo-and-redo) | Undo offered for every content-changing action, with a redo whenever undo exists and an action-specific label (*Undo Quarantine*), bound to `Cmd+Z` / `Shift+Cmd+Z` | Reversible correction as the safety mechanism, so people can act with confidence | Undo offered as a substitute for confirming an action that cannot be reversed | Interaction pillar · Energy axis |
 | **Vercel / Geist** | Dark-surface restraint: elevation carried by one mechanism (border or shadow), never both | Single-mechanism elevation; monochrome discipline | Purple-on-dark gradients and glass as decoration | Expression pillar · Materiality axis |
 
+## Calibration Specimens
+
+The table above names mechanisms to borrow from real products. This section is the
+other half of the upper bound: **observable specimens** for judging a render on the
+four craft pillars — typography, motion, composition, colour. A specimen is not a
+rule (rules live in `craft-floor.md`); it is a three-tier reading of one concrete
+UI situation, so a Critic or a taste judge has an anchor for "competent" versus
+"excellent" rather than a bare preference.
+
+Each entry is written as **object → competent tier → excellent tier → failing tier**.
+Every characteristic is something a screenshot can be checked against: a measurable
+value, a named alignment, a visible relationship. If a claim here cannot be seen in
+a render, it does not belong in this section.
+
+### Typography
+
+- **Long-form reading page, 390px viewport.**
+  *Competent*: body 16–18px, measure 45–75 characters, line-height 1.5+. *Excellent*:
+  the heading size ladder tracks the content hierarchy (h1/h2/h3 differ by a
+  consistent ratio, not ad-hoc sizes); CJK and Latin share a baseline and a line box
+  when mixed; the paragraph-gap : line-height ratio stays constant across sections.
+  *Failing*: measure 100+ characters, line-height 1.3, body 14px.
+- **Dense data table, desktop.**
+  *Competent*: numeric columns right-aligned, header row visually distinct, row
+  height consistent. *Excellent*: digits are `tabular-nums` so columns align on the
+  decimal; units are de-emphasised relative to the value; the header stays visible
+  when the body scrolls. *Failing*: proportional digits in a numeric column, ragged
+  decimal alignment, header scrolls away from its data.
+- **A heading above body copy.**
+  *Competent*: heading larger and heavier than body. *Excellent*: heading weight and
+  size express a deliberate type-scale step (not a default `h2`); the gap above the
+  heading exceeds the gap below it, binding it to its own content. *Failing*: equal
+  space above and below the heading (it floats between two sections).
+
+### Motion
+
+- **A destructive commit (delete, send, publish).**
+  *Competent*: the control responds to press with a visible `:active` state.
+  *Excellent*: the press detent is paired with a settling animation at the commit
+  (a state change the eye can follow), and the result is legible in under ~250ms so
+  the action feels finished, not pending. *Failing*: no press feedback, or a
+  multi-second entrance animation that delays the settled state.
+- **A state transition (panel open, list filter, tab change).**
+  *Competent*: the change is animated rather than instantaneous. *Excellent*: the
+  transition's easing matches the direction (ease-out on entry), related elements
+  move on one timeline, and it honours `prefers-reduced-motion` by resolving to the
+  end state. *Failing*: an abrupt jump-cut, or a bounce easing on a utilitarian
+  transition.
+- **A loading or generating state.**
+  *Competent*: a spinner or skeleton occupies the space the content will fill.
+  *Excellent*: the skeleton matches the real content's shape and rhythm; streaming
+  text shows a live boundary; elapsed time is shown instead of a fabricated
+  percentage. *Failing*: a centred spinner over a blank page, or a progress bar with
+  no knowable completion.
+
+### Composition
+
+- **A primary action surface (390px, one-handed).**
+  *Competent*: the primary action is reachable and distinct from secondary actions.
+  *Excellent*: the primary commit sits in the thumb zone, secondary actions are
+  visually subordinated, and the layout is composed for the narrow frame rather than
+  a compressed desktop. *Failing*: the commit control in the top corner, or a
+  desktop two-column layout scaled down.
+- **A list of comparable objects.**
+  *Competent*: items are visually consistent and scannable. *Excellent*: the
+  container is chosen for the objects (rows for records, not cards for everything);
+  density is calibrated to the scan task; the selected/active item is marked by a
+  cue that is not a container stripe. *Failing*: every object in an identical
+  icon-heading-text card, nesting cards inside cards to express grouping.
+- **The first viewport.**
+  *Competent*: it shows the product's primary object. *Excellent*: it states a
+  thesis — one committed idea a viewer could guess the category from — with a clear
+  focal relationship, not a neutral frame of equal-weight blocks. *Failing*: a
+  hero-metric template with no real context, or equal-weight tiles that commit to
+  nothing.
+
+### Colour
+
+- **A semantic status system.**
+  *Competent*: success / warning / danger are visually distinct. *Excellent*: the
+  hues are chosen for the use scene (not stock red-amber-green), each holds WCAG
+  contrast on its surface, and the status carries a second channel (icon, label) so
+  colour is not the only signal. *Failing*: status conveyed by hue alone, or a
+  palette whose warning and danger are indistinguishable.
+- **An accent's restraint.**
+  *Competent*: one accent, used consistently. *Excellent*: the accent marks exactly
+  one thing per view (the primary action, or the live state), the surface hierarchy
+  carries structure without it, and the palette reads as one system in light and
+  dark. *Failing*: the accent on every interactive element, or a gradient accent
+  used as decoration.
+- **Light/dark as a use-scene decision.**
+  *Competent*: the theme is applied consistently. *Excellent*: light or dark is
+  chosen from the scene the product is used in (a night-shift console is dark for a
+  reason), elevation is carried by one mechanism (border or shadow, not both), and
+  the neutral temperature is authored rather than pure grey. *Failing*: dark mode
+  chosen because the category "looks technical", or elevation faked with both a
+  border and a shadow.
+
 ## When a benchmark is load-bearing, bind it to evidence
 
 If a direction's rationale rests on a benchmark mechanism, do not leave it as a
