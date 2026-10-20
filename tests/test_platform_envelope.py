@@ -402,3 +402,45 @@ def test_shell_read_admits_and_chains_and_refuses_escapes(tmp_path):
     with pytest.raises(ValueError):
         execution_boundary.shell_read(
             "python3 skills/spec-prototype/scripts/compile_tokens.py & python3 skills/spec-prototype/scripts/compile_tokens.py", root)
+
+
+def test_shell_read_does_not_split_inside_quotes(tmp_path):
+    """A quoted `|` is a grep pattern, not a pipe.
+
+    Splitting on a bare regex cut `grep -E "a|b" file` into two commands and
+    refused a legitimate single read.
+    """
+    root = tmp_path / "repo"
+    root.mkdir()
+    execution_boundary.shell_read('grep -E "a|b" file', root)
+    execution_boundary.shell_read("grep -E 'a|b' file", root)
+    execution_boundary.shell_read('rg "foo && bar" file', root)
+
+    # The quoted form chains like any other command: each side is still checked.
+    execution_boundary.shell_read('grep -E "a|b" file | cat', root)
+    with pytest.raises(ValueError):
+        execution_boundary.shell_read('grep -E "a|b" file | sh', root)
+
+
+def test_shell_read_still_refuses_real_separators_outside_quotes(tmp_path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    for command in (
+        "a; b",
+        'grep -E "a|b" file; rm -rf /',
+        "cat f & rm -rf /",
+        "a;b",
+        'grep "a;b" f; rm -rf /',
+        "a &&| b",
+    ):
+        with pytest.raises(ValueError):
+            execution_boundary.shell_read(command, root)
+
+
+def test_shell_read_still_refuses_expansion_inside_double_quotes(tmp_path):
+    """Double quotes protect syntax, not expansion: `$(...)` and backticks stay refused."""
+    root = tmp_path / "repo"
+    root.mkdir()
+    for command in ('echo "$(rm -rf /)"', "echo `x`", 'echo "$HOME"'):
+        with pytest.raises(ValueError):
+            execution_boundary.shell_read(command, root)

@@ -14,11 +14,14 @@ re-exports every name here, so the two are one contract seen from two files.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
+import json
 import re
+import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 try:
     import yaml  # type: ignore
@@ -164,6 +167,113 @@ def split_slice_blocks(text: str) -> tuple[str, Dict[str, List[str]]]:
 
 def _record_digest(text: str) -> str:
     return f"sha256:{hashlib.sha256(text.encode('utf-8')).hexdigest()}"
+
+
+def _slice_scope_text(record: DesignRecord) -> Optional[str]:
+    """The text a slice-scoped declaration must be read from, or None.
+
+    Mirrors the compiler's lifecycle partition: an unpartitioned legacy record
+    reads whole, a partitioned record reads this slice's block alone, and a
+    partitioned record that does not carry this slice's block resolves to None
+    (the caller reports `record.missing` rather than borrowing another slice).
+    """
+    if record.shared is None:
+        return record.text
+    return record.slice_block
+
+
+def _frontmatter_for_slice(record: DesignRecord) -> Dict[str, Any]:
+    """Merge record-level frontmatter with the slice block's own frontmatter.
+
+    The compiler merges these two carriers (`parse_frontmatter(record.text)` and
+    `parse_block_frontmatter(slice_block)`), so a slice-scoped reader must read
+    the same pair or a layered brief's declaration becomes invisible.
+    """
+    merged, _ = parse_frontmatter(record.text)
+    if record.slice_block is not None:
+        merged = {**merged, **parse_block_frontmatter(record.slice_block)}
+    return merged
+
+
+def _viewports_from_frontmatter(frontmatter: Dict[str, Any]) -> Optional[List[int]]:
+    raw = frontmatter.get("viewports")
+    if not isinstance(raw, list):
+        return None
+    out: List[int] = []
+    for item in raw:
+        try:
+            width = int(str(item).strip().strip("\"'").lower().removesuffix("px").strip())
+        except (TypeError, ValueError):
+            continue
+        if 200 <= width <= 4000 and width not in out:
+            out.append(width)
+    return out or None
+
+
+def _states_from_frontmatter(frontmatter: Dict[str, Any]) -> Optional[List[str]]:
+    raw = frontmatter.get("required_states")
+    if not isinstance(raw, list):
+        return None
+    out: List[str] = []
+    for item in raw:
+        state = str(item).strip().strip("`*\"'").lower()
+        if state and state not in out:
+            out.append(state)
+    return out or None
+
+
+def slice_scope(root: Path, slice_id: str) -> Dict[str, Any]:
+    """Resolve one slice's capture scope through the design-record seam.
+
+    `capture.mjs` needs only the declared viewport ladder and required states.
+    Both are slice-scoped declarations, so they are read from the same loaded
+    record the compiler uses instead of a second, JS-side parser that knows
+    only one layout. Precedence matches the compiler and the capture contract:
+    a ```contract:<kind>``` block outranks the frontmatter carrier. Nothing is
+    defaulted — an undeclared value stays None so the caller applies its own
+    fallback.
+    """
+    root = Path(root)
+    record = read_design_record(root, slice_id)
+    result: Dict[str, Any] = {
+        "slice_id": slice_id,
+        "source": record.path.relative_to(root).as_posix() if record.path.is_file() else None,
+        "missing": list(record.missing),
+        "viewports": None,
+        "required_states": None,
+    }
+    slice_text = _slice_scope_text(record)
+    if slice_text is None:
+        return result
+    frontmatter = _frontmatter_for_slice(record)
+    result["viewports"] = (
+        _viewports_from_contract_block(slice_text)
+        or _viewports_from_frontmatter(frontmatter))
+    result["required_states"] = (
+        _required_states_from_contract_block(slice_text)
+        or _states_from_frontmatter(frontmatter))
+    return result
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Read one slice's declared capture scope (viewports, required states).")
+    parser.add_argument(
+        "--dump", nargs=2, metavar=("ROOT", "SLICE"),
+        help="Print this slice's declared viewports and required_states as JSON.")
+    args = parser.parse_args(argv)
+    if not args.dump:
+        parser.print_help(sys.stderr)
+        return 2
+    root, slice_id = args.dump
+    try:
+        scope = slice_scope(Path(root), slice_id)
+    except ValueError as exc:
+        sys.stderr.write(f"spec_contract_blocks: {exc}\n")
+        return 2
+    print(json.dumps(scope, ensure_ascii=False))
+    return 0
+
 
 
 def parse_block_frontmatter(block: str) -> Dict[str, Any]:
@@ -800,3 +910,7 @@ def _unadmitted_state_kinds(text: str) -> List[Dict[str, str]]:
         "form": "每个状态类至少一条：`domain/`、`interaction/`、`data/`",
         "example": "contract:states 缺少 " + ", ".join(missing),
     }]
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -245,9 +245,11 @@ prototyping, without waiting on pre-spec locks. Write no `tokens.css`, HTML or e
 in this turn — the Resume block is recovery context for the next turn, not an approval
 gate, and the Turn 1→2 seam is where a capped or resumed run picks up. Avoid mentioning
 unwritten `.html` file paths in Turn 1 prose to keep execution boundaries clean.
-End the reply with one line, `USER-INPUT: <the direction question for the user>` (all uppercase
-ASCII `USER-INPUT:`, never translate to Chinese or alter punctuation), and make no
-further tool call; that line is the observable stop signal for the seam.
+Emit `USER-INPUT:` and stop **only when an un-delegated human decision remains**. In that
+case end the reply with one line, `USER-INPUT: <the direction question for the user>` (all
+uppercase ASCII `USER-INPUT:`, never translate to Chinese or alter punctuation), and make
+no further tool call; that line is the observable stop signal for the seam. When the
+direction is already delegated or locked by evidence, do the work and emit no `USER-INPUT:`.
 
 When resuming or receiving the user's reply: if the user provides a neutral, non-committal answer
 (e.g. "没有偏好", "按常规做", generic tool defaults), or the question was already presented without preference,

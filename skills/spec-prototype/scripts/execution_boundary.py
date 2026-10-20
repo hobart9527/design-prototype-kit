@@ -148,10 +148,48 @@ def dispatch(args, active):
                 'Pass the exact handoff.py packet JSON unchanged to Builder.')
 
 
+def _unquoted_metachar(command: str) -> str | None:
+    """First shell metacharacter that is not safely quoted, or None.
+
+    The argv seam reads the command as written, but a quote still decides what
+    the shell treats as syntax. `grep -E "a|b" f` runs one command and the `|`
+    is a literal pattern, so it is not a metacharacter here. Single-quoted text
+    protects everything; double-quoted text protects the syntax characters but
+    still expands `$` and backticks, so those stay unsafe inside it. Newlines
+    are refused everywhere — they split one call into two.
+    """
+    quote: str | None = None
+    i = 0
+    while i < len(command):
+        ch = command[i]
+        if ch in "\n\r":
+            return ch
+        if quote == "'":
+            if ch == "'":
+                quote = None
+        elif quote == '"':
+            if ch == "\\" and i + 1 < len(command):
+                i += 2
+                continue
+            if ch == '"':
+                quote = None
+            elif ch in "$`":
+                return ch
+        elif ch in ("'", '"'):
+            quote = ch
+        elif ch == "\\" and i + 1 < len(command):
+            i += 2
+            continue
+        elif ch in ";|&><`$":
+            return ch
+        i += 1
+    return None
+
+
 def shell_read_single(command, root):
     # A small argv seam, not a heuristic shell-write detector.
-    require(not any(c in command for c in '\n\r;|&><`$'),
-            'Use one read command or an installed project helper.')
+    unsafe = _unquoted_metachar(command)
+    require(unsafe is None, 'Use one read command or an installed project helper.')
     args = shlex.split(command)
     require(bool(args), 'Missing command.')
     tool = args[0]
@@ -206,22 +244,100 @@ def shell_read_single(command, root):
     raise ValueError('Use read-only tools or an installed project helper for this command.')
 
 
+def _shell_segments(scrubbed: str) -> list[str]:
+    """Split a command on top-level `&&`/`|`, leaving quoted text intact.
+
+    A regex split on `&&|\\|` also cuts inside quotes, so `grep -E "a|b" file`
+    was read as a two-command chain — a read the tool would actually run as one
+    command, refused for no reason. A small state machine tracks quote state
+    (single, double, backslash escapes) and splits only at unquoted operators.
+    Semicolons, background `&` and mixed operators (`&&|`) are not chain
+    separators here; they stay in the segment so `shell_read_single` refuses
+    them as one malformed command.
+    """
+    segments: list[str] = []
+    buf: list[str] = []
+    quote: str | None = None
+    i = 0
+    while i < len(scrubbed):
+        ch = scrubbed[i]
+        if quote:
+            buf.append(ch)
+            if ch == "\\" and quote == '"' and i + 1 < len(scrubbed):
+                buf.append(scrubbed[i + 1])
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in ("'", '"'):
+            quote = ch
+            buf.append(ch)
+            i += 1
+            continue
+        if ch == "\\" and i + 1 < len(scrubbed):
+            buf.extend((ch, scrubbed[i + 1]))
+            i += 2
+            continue
+        if scrubbed.startswith("&&", i) or ch == "|":
+            segments.append("".join(buf))
+            buf = []
+            i += 2 if scrubbed.startswith("&&", i) else 1
+            continue
+        buf.append(ch)
+        i += 1
+    segments.append("".join(buf))
+    return [segment.strip() for segment in segments]
+
+
+def _has_unquoted(command: str, chars: str) -> bool:
+    """Whether any of `chars` appears outside a quoted span.
+
+    The chain gate is about shell syntax the tool would act on. A `|` inside
+    `grep -E "a|b"` is data, not a pipe, so it must not trip the gate that keeps
+    chained commands from being smuggled through.
+    """
+    quote: str | None = None
+    i = 0
+    while i < len(command):
+        ch = command[i]
+        if quote:
+            if ch == "\\" and quote == '"' and i + 1 < len(command):
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+        elif ch in ("'", '"'):
+            quote = ch
+        elif ch == "\\" and i + 1 < len(command):
+            i += 2
+            continue
+        elif ch in chars:
+            return True
+        i += 1
+    return False
+
+
 def shell_read(command, root):
     # `2>&1` only merges stderr into stdout; it opens no file and writes
     # nothing. Drop it before the redirection check so a diagnostic-preserving
     # read is not mistaken for a write. A real file redirection still fails.
-    scrubbed = re.sub(r'\s*2>&1', '', command)
-    if '&&' in scrubbed or '|' in scrubbed:
+    scrubbed = re.sub(r"\s*2>&1", "", command)
+    # Only an unquoted operator chains commands. A quoted `|` or `&&` is an
+    # argument (a grep pattern, a literal string) and stays inside one segment.
+    if _has_unquoted(scrubbed, "|&"):
         # A chained read/helper sequence: every segment must pass
         # shell_read_single independently. Redirecting into a file, command
         # substitution and backgrounding remain forbidden.
-        require(not any(c in scrubbed for c in '\n\r;><`$'),
-                'Use one read command or an installed project helper.')
-        segments = re.split(r'&&|\|', scrubbed)
-        require(bool(segments) and all(s.strip() for s in segments), 'Empty command in chain.')
+        require(not any(c in scrubbed for c in "\n\r;><`$"),
+                "Use one read command or an installed project helper.")
+        segments = _shell_segments(scrubbed)
+        require(bool(segments) and all(segments), "Empty command in chain.")
         for seg in segments:
-            require('&' not in seg, 'Use one read command or an installed project helper.')
-            shell_read_single(seg.strip(), root)
+            require(not _has_unquoted(seg, "&"),
+                    "Use one read command or an installed project helper.")
+            shell_read_single(seg, root)
         return
     shell_read_single(scrubbed, root)
 

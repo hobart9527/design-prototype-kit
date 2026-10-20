@@ -692,7 +692,20 @@ if __name__ == "__main__":  # pragma: no cover
 
 # --- slice viewport resolution follows the declared ladder -------------------
 
+def _layered(root: Path) -> None:
+    """Establish the documented layered layout anchor (truth.md + world.md).
+
+    A `briefs/<slice>.md` is a slice block of a layered record, not a standalone
+    record: `read_design_record` recognises the layout by these shared anchors.
+    """
+    proto = root / "prototype"
+    proto.mkdir(parents=True, exist_ok=True)
+    (proto / "truth.md").write_text("# Product truth\n", encoding="utf-8")
+    (proto / "world.md").write_text("# World\n", encoding="utf-8")
+
+
 def test_resolve_slice_viewports_reads_brief_frontmatter(tmp_path):
+    _layered(tmp_path)
     brief = tmp_path / "prototype" / "briefs"
     brief.mkdir(parents=True)
     (brief / "reader.md").write_text(
@@ -703,6 +716,7 @@ def test_resolve_slice_viewports_reads_brief_frontmatter(tmp_path):
 
 
 def test_resolve_slice_viewports_contract_block_outranks_frontmatter(tmp_path):
+    _layered(tmp_path)
     brief = tmp_path / "prototype" / "briefs"
     brief.mkdir(parents=True)
     (brief / "reader.md").write_text(
@@ -720,9 +734,11 @@ def test_resolve_slice_viewports_missing_brief_returns_null(tmp_path):
 
 def test_resolve_slice_viewports_quoted_yaml_widths_parse(tmp_path):
     """`- \"1280px\"` is a sanctioned contract form and must not parse as NaN."""
+    _layered(tmp_path)
     brief = tmp_path / "prototype" / "briefs"
     brief.mkdir(parents=True)
     (brief / "reader.md").write_text(
+        "---\nslice_id: reader\n---\n\n"
         "```contract:viewports\n- \"1280px\"\n- \"390\"\n```\n",
         encoding="utf-8")
     out = eval_seam("cap.resolveSliceViewports(input.root, input.slice)", {"root": str(tmp_path), "slice": "reader"})
@@ -742,6 +758,7 @@ def test_resolve_slice_viewports_multi_slice_discussion_matches_requested(tmp_pa
     assert out == [768, 1440]
 
 def test_resolve_slice_states_reads_contract_block(tmp_path):
+    _layered(tmp_path)
     brief = tmp_path / "prototype" / "briefs"
     brief.mkdir(parents=True)
     (brief / "reader.md").write_text(
@@ -751,6 +768,7 @@ def test_resolve_slice_states_reads_contract_block(tmp_path):
     assert out == ["default", "degraded", "draining"]
 
 def test_resolve_slice_states_frontmatter_and_default_pin(tmp_path):
+    _layered(tmp_path)
     brief = tmp_path / "prototype" / "briefs"
     brief.mkdir(parents=True)
     (brief / "reader.md").write_text(
@@ -761,6 +779,7 @@ def test_resolve_slice_states_frontmatter_and_default_pin(tmp_path):
     assert out == ["degraded", "draining"]
 
 def test_resolve_slice_states_missing_declaration_returns_null(tmp_path):
+    _layered(tmp_path)
     brief = tmp_path / "prototype" / "briefs"
     brief.mkdir(parents=True)
     (brief / "reader.md").write_text("# Surface brief — reader\n", encoding="utf-8")

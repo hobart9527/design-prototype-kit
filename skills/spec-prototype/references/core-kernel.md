@@ -88,9 +88,10 @@ used to locate the core dialectic tensions shaping the product slice. In Stage 1
 identify the 2–3 pillars bearing the primary tension, resolve their trade-offs, and
 treat the remaining pillars as ambient constraints.
 
-The Double Diamond governs when to diverge and converge: **divergence is mandatory in
-Stage 1** (exploring at least 2 polarized structural hypotheses) before converging onto
-a physical anchor.
+The Double Diamond governs when to diverge and converge: when the direction is undecided,
+**divergence is mandatory in Stage 1** (exploring at least 2 polarized structural
+hypotheses) before converging onto a physical anchor; when evidence has already locked
+the direction, one proposition is enough.
 
 The Five Axes (Density · Energy · Materiality · Rhythm · Character) are **continuous
 sensory coordinates** that calibrate the physical feeling of the product and directly

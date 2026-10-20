@@ -828,72 +828,29 @@ export function buildDiagnosticsSummary(result) {
 }
 
 // Resolve the capture viewport ladder for a slice: declared widths win, 320
-// always stays as the fold check. Mirrors compile_spec_ir precedence —
-// contract:viewports block outranks frontmatter. The verifier's
-// check_viewport_receipts is the shared oracle both parsers must satisfy.
-// Shared slice-contract source: the slice's own brief when present, else the
-// matching `# Slice: <id>` section of a single-record discussion.md. A
-// discussion.md may hold several Slice sections, so every heading is scanned —
-// the first match is not necessarily this slice's.
-function sliceContractText(root, sliceId) {
-  const readIfFile = (p) => (fs.existsSync(p) ? fs.readFileSync(p, "utf-8") : null);
-  let text = readIfFile(path.join(root, "prototype", "briefs", `${sliceId}.md`));
-  if (text === null) {
-    const discussion = readIfFile(path.join(root, "prototype", "discussion.md"));
-    if (discussion !== null) {
-      for (const m of discussion.matchAll(/^#{1,6}\s+Slice\s*[:：]\s*(.+)$/gim)) {
-        if (m[1].trim() === sliceId) {
-          const rest = discussion.slice(m.index + m[0].length);
-          const end = rest.search(/^#{1,2}\s/m);
-          text = rest.slice(0, end === -1 ? undefined : end);
-          break;
-        }
-      }
-    }
+// always stays as the fold check. The declarations are read through the one
+// design-record seam (`spec_contract_blocks.read_design_record`), never a
+// second JS parser: a single-record `discussion.md` and a layered
+// `truth.md`/`world.md`/`briefs/<slice>.md` tree resolve identically, and a
+// declaration the compiler drops cannot survive here as a divergent parse.
+// The seam's precedence mirrors the compiler: contract:viewports outranks the
+// frontmatter carrier.
+function sliceScope(root, sliceId) {
+  const script = path.join(__dirname, "spec_contract_blocks.py");
+  try {
+    const out = execFileSync("python3", [script, "--dump", root, sliceId], { encoding: "utf-8" });
+    return JSON.parse(out);
+  } catch (err) {
+    // A missing record, a missing interpreter or a malformed block resolves to
+    // "nothing declared" rather than crashing the capture: the caller applies
+    // its own default ladder.
+    return null;
   }
-  return text ?? null;
-}
-
-// Contract blocks are YAML, where `- 390` and `- "1280px"` are both sanctioned
-// forms: surrounding quotes are stripped before the px suffix is.
-const stripYamlQuotes = (raw) => raw.trim().replace(/^['"]+|['"]+$/g, "").trim();
-
-function parseWidths(raw) {
-  const out = [];
-  for (const item of raw.split(",")) {
-    const w = parseInt(stripYamlQuotes(item).replace(/px$/i, ""), 10);
-    if (!Number.isNaN(w) && w >= 200 && w <= 4000 && !out.includes(w)) out.push(w);
-  }
-  return out.length ? out : null;
-}
-
-function contractBlockItems(text, kind) {
-  const block = text.match(new RegExp("```contract:" + kind + "\\s*\\n([\\s\\S]*?)\\n```", "i"));
-  if (!block) return null;
-  return block[1].split("\n")
-    .map((l) => l.replace(/^\s*-\s*/, "").trim())
-    .filter(Boolean);
 }
 
 export function resolveSliceViewports(root, sliceId) {
-  const text = sliceContractText(root, sliceId);
-  if (text === null) return null;
-
-  // contract:viewports block outranks frontmatter (compiler precedence).
-  const items = contractBlockItems(text, "viewports");
-  if (items) {
-    const widths = parseWidths(items.join(","));
-    if (widths) return widths;
-  }
-  const fm = text.match(/^---\n([\s\S]*?)\n---/);
-  if (fm) {
-    const vp = fm[1].match(/viewports\s*:\s*\[([^\]]+)\]/);
-    if (vp) {
-      const widths = parseWidths(vp[1]);
-      if (widths) return widths;
-    }
-  }
-  return null;
+  const scope = sliceScope(root, sliceId);
+  return scope && Array.isArray(scope.viewports) ? scope.viewports : null;
 }
 
 // Mirror of resolveSliceViewports for contract:required_states: the slice's
@@ -901,23 +858,8 @@ export function resolveSliceViewports(root, sliceId) {
 // viewports outrank the default ladder. "default" stays pinned first so the
 // canonical `${vp}.png` first-impression capture keeps its source.
 export function resolveSliceStates(root, sliceId) {
-  const text = sliceContractText(root, sliceId);
-  if (text === null) return null;
-
-  const items = contractBlockItems(text, "required_states");
-  let raw = items ? items.join(",") : null;
-  if (raw === null) {
-    const fm = text.match(/^---\n([\s\S]*?)\n---/);
-    const m = fm && fm[1].match(/required_states\s*:\s*\[([^\]]+)\]/);
-    if (m) raw = m[1];
-  }
-  if (raw === null) return null;
-  const out = [];
-  for (const tok of raw.split(",")) {
-    const s = stripYamlQuotes(tok).toLowerCase();
-    if (s && !out.includes(s)) out.push(s);
-  }
-  return out.length ? out : null;
+  const scope = sliceScope(root, sliceId);
+  return scope && Array.isArray(scope.required_states) ? scope.required_states : null;
 }
 
 async function main() {

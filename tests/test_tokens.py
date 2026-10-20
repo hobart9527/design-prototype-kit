@@ -1022,3 +1022,59 @@ def test_custom_tokens_leave_palette_and_font_slots_to_their_owners():
         "- --ease-snap: cubic-bezier(.3,0,0,1)\n"
     )
     assert ct._extract_custom_tokens(text) == {"--ease-snap": "cubic-bezier(.3,0,0,1)"}
+
+
+# -- easing handoff fidelity: the sheet and the typed JSON name one curve -----
+
+def test_dtcg_ease_hud_matches_the_stylesheet_curve():
+    """The typed easing must be the curve the sheet actually emits.
+
+    `ease-hud` was pinned to `[0.16, 1, 0.3, 1]` in the JSON while the sheet
+    derived a curve from the authored energy axis, so `t1.json` and `tokens.css`
+    described different motion for the same compile.
+    """
+    ct = _load_compiler()
+    for dials in ({}, {"energy": "kinetic"}, {"energy": "calm"}):
+        tokens = ct.compute_tokens(dials)
+        css = ct.generate_css(tokens)
+        json_curve = ct.generate_dtcg_json(tokens)["primitives"]["motion"]["ease-hud"]["$value"]
+        css_curve = re.search(r"--ease-hud:\s*cubic-bezier\(([^)]+)\)", css)
+        assert css_curve, "the sheet must emit --ease-hud"
+        expected = [float(v) for v in css_curve.group(1).split(",")]
+        assert json_curve == expected, f"{dials}: JSON {json_curve} != CSS {expected}"
+
+
+def test_authored_ease_hud_override_reaches_both_artifacts(tmp_path: Path):
+    """An authored `--ease-hud` replaces the sheet's slot; the JSON must follow.
+
+    The CSS override path rewrites the generated declaration in place. Before
+    this, the typed JSON kept the hardcoded default, so an author's custom curve
+    never reached the machine token export.
+    """
+    ct = _load_compiler()
+    discussion = tmp_path / "prototype/discussion.md"
+    discussion.parent.mkdir(parents=True)
+    discussion.write_text(
+        "# Discussion\n\n## Confirmed Decisions\n"
+        "- --ease-hud: cubic-bezier(.3, 0, 0, 1)\n",
+        encoding="utf-8")
+    out_css = tmp_path / "prototype/shared/tokens.css"
+    out_json = tmp_path / "prototype/contracts/tokens/t1.json"
+    ct.compile_tokens(str(discussion), str(out_css), str(out_json))
+
+    css = out_css.read_text(encoding="utf-8")
+    assert "--ease-hud: cubic-bezier(.3, 0, 0, 1);" in css
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    assert data["primitives"]["motion"]["ease-hud"]["$value"] == [0.3, 0.0, 0.0, 1.0]
+    assert data["primitives"]["motion"]["ease-hud"]["$type"] == "cubicBezier"
+
+
+def test_non_bezier_ease_override_is_carried_verbatim_not_invented():
+    """A keyword override is emitted as authored; translating it invents a curve."""
+    ct = _load_compiler()
+    tokens = ct.compute_tokens({}, custom_tokens={"--ease-hud": "ease-out"})
+    css = ct.generate_css(tokens)
+    assert "--ease-hud: ease-out;" in css
+    node = ct.generate_dtcg_json(tokens)["primitives"]["motion"]["ease-hud"]
+    assert node["$value"] == "ease-out"
+    assert node["$type"] == "string"

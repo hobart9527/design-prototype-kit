@@ -56,6 +56,8 @@ direction. The AI owns professional investigation, synthesis, recommendation,
 critique and execution inside delegated scope. Do not ask the user to decide
 researchable facts, CSS parameters, page quotas or low-risk reversible details.
 Honor explicit delegation and advance without asking for each micro-decision.
+When a decision is marked `delegated`, the direction choice it covers does not wait
+for human confirmation; only an un-delegated human decision stops the run.
 
 Three registers carry authority in the design record; never read one register's
 value as another's.

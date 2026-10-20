@@ -170,7 +170,10 @@ only by `assemble_envelope.py`, which the Refusal List keeps off the primary pat
 
 This is a presentation, not a gate. Show what was built and say plainly what the
 user's confirmation would change; then keep working under the authorized scope.
-Do not stop the run to wait for a nod, and do not treat silence as approval.
+Whether a run must wait for a human decision is owned by
+[`../04-governance/discussion-governance.md`](../04-governance/discussion-governance.md)
+("Human authority and delegated agency"): when the direction is already `delegated`,
+the choice does not wait for human confirmation, and silence is never approval.
 Revert or redirect only on a real user decision; an unattended run continues to
 [Stage 3](stage-3-skeleton.md) with the design brief and direction decisions it
 already holds. Absorb any later tone or token correction in place, and record the

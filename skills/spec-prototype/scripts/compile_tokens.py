@@ -1751,6 +1751,38 @@ def generate_css(
     return "\n".join(lines) + "\n"
 
 
+_CUBIC_BEZIER_RE = re.compile(
+    r"^\s*cubic-bezier\(\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*\)\s*$",
+    re.IGNORECASE)
+
+
+def _cubic_bezier_tuple(value: Any) -> list[float] | None:
+    """Parse a CSS `cubic-bezier(a, b, c, d)` string into its four control values.
+
+    The typed JSON carries the Bezier as numbers, while the stylesheet carries
+    the authored CSS text. Both must name the same curve, so the JSON reads the
+    exact value the sheet emits instead of pinning a default. Returns None for a
+    non-Bezier keyword (`ease-out`, `linear`, …): a keyword is not the same
+    declaration and must not be silently translated into one curve.
+    """
+    match = _CUBIC_BEZIER_RE.match(str(value or ""))
+    if not match:
+        return None
+    return [float(part) for part in match.groups()]
+
+
+def _authored_easing(tokens: Dict[str, Any], slot: str, fallback: str) -> str:
+    """The CSS easing a slot actually renders with.
+
+    `generate_css` lets an authored custom property replace a generated slot in
+    place, so the sheet's value is the authored override when present, else the
+    derived slot. The typed JSON must resolve through the same precedence or the
+    two artifacts describe different curves.
+    """
+    custom = tokens.get("custom_tokens") or {}
+    return custom.get(slot) or (tokens.get("motion") or {}).get(slot.lstrip("-").replace("-", "_"), fallback)
+
+
 def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
     """Render W3C DTCG-compliant 3-Tier JSON token specification.
 
@@ -1829,10 +1861,27 @@ def generate_dtcg_json(tokens: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError(f"Invalid DTCG duration token: {value}")
         return {"value": float(match.group(1)) if "." in match.group(1) else int(match.group(1)), "unit": match.group(2)}
 
+    # The sheet emits `--ease-hud` from the derived motion slot, unless an
+    # authored custom property replaces it in place. The JSON must name the same
+    # curve the sheet renders, so it resolves through that same precedence
+    # rather than pinning one default. A non-Bezier value (a keyword override)
+    # is emitted as the authored string with its own `$type`; translating it
+    # into a Bezier would invent a curve the author never wrote.
+    hud_easing = _authored_easing(tokens, "--ease-hud", "cubic-bezier(0, 0, 0.2, 1)")
+    hud_bezier = _cubic_bezier_tuple(hud_easing)
+    if hud_bezier is not None:
+        hud_token: Dict[str, Any] = {
+            "$value": hud_bezier, "$type": "cubicBezier",
+            "$description": "Rendered --ease-hud curve", "authority": motion_auth}
+    else:
+        hud_token = {
+            "$value": hud_easing, "$type": "string",
+            "$description": "Rendered --ease-hud value (non-Bezier)", "authority": motion_auth}
+
     motion_tokens: Dict[str, Any] = {
         "duration-fast": {"$value": duration_value(m.get("duration_fast", "80ms")), "$type": "duration", "$description": "Fast tactile duration", "authority": motion_auth},
         "duration-normal": {"$value": duration_value(m.get("duration_normal", "180ms")), "$type": "duration", "$description": "Normal transition duration", "authority": motion_auth},
-        "ease-hud": {"$value": [0.16, 1, 0.3, 1], "$type": "cubicBezier", "$description": "Authored easing curve", "authority": motion_auth},
+        "ease-hud": hud_token,
         "spring-settle": {
             "$value": {
                 "duration": duration_value(m.get("duration_normal", "180ms")),
